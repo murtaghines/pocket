@@ -4,11 +4,18 @@ import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { BalanceChart } from "@/components/dashboard/BalanceChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { UploadSection } from "@/components/dashboard/UploadSection";
+import { UploadCard } from "@/components/dashboard/UploadCard";
+import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
+import { BankDistributionChart } from "@/components/dashboard/BankDistributionChart";
+import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
+import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
+import { MonthComparisonCard } from "@/components/dashboard/MonthComparisonCard";
+import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { 
   mockTransactions, 
   mockMonthlyData, 
   getCategoryExpenses,
+  getBankExpenses,
   getMonthSummary 
 } from "@/lib/mockData";
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
@@ -16,8 +23,8 @@ import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
 export default function Index() {
   const summary = getMonthSummary(mockTransactions);
   const categoryData = getCategoryExpenses(mockTransactions);
+  const bankData = getBankExpenses(mockTransactions);
 
-  // Calculate change from previous month
   const currentMonth = mockMonthlyData[mockMonthlyData.length - 1];
   const previousMonth = mockMonthlyData[mockMonthlyData.length - 2];
   
@@ -47,8 +54,8 @@ export default function Index() {
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {/* KPIs + Upload Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title="Ingresos del Mes"
             value={formatCurrency(summary.income)}
@@ -74,24 +81,32 @@ export default function Index() {
             icon={<Wallet className="w-5 h-5" />}
             delay={200}
           />
+          <UploadCard />
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-1">
-            <UploadSection />
-          </div>
-          <div className="lg:col-span-1">
-            <CategoryChart data={categoryData} />
-          </div>
-          <div className="lg:col-span-1">
-            <BalanceChart data={mockMonthlyData} />
-          </div>
-        </div>
-
-        {/* Monthly Evolution */}
+        {/* Monthly Evolution - Full Width */}
         <div className="mb-8">
           <MonthlyChart data={mockMonthlyData} />
+        </div>
+
+        {/* Analysis Grid - 4 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <CategoryChart data={categoryData} />
+          <SavingsRateCard income={summary.income} expenses={summary.expenses} delay={250} />
+          <BankDistributionChart data={bankData} />
+          <MonthComparisonCard currentMonth={currentMonth} previousMonth={previousMonth} />
+        </div>
+
+        {/* Secondary Charts Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <BalanceChart data={mockMonthlyData} />
+          <TopExpensesCard transactions={mockTransactions} />
+          <WeeklyComparisonChart />
+        </div>
+
+        {/* Yearly Balance */}
+        <div className="mb-8">
+          <YearlyBalanceChart data={mockMonthlyData} />
         </div>
 
         {/* Transactions Table */}
