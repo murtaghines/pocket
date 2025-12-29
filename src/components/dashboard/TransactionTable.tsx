@@ -1,0 +1,179 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Transaction, categoryLabels, Category } from "@/lib/mockData";
+import { Search, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface TransactionTableProps {
+  transactions: Transaction[];
+}
+
+const categoryBadgeColors: Record<Category, string> = {
+  food: 'bg-category-food/20 text-category-food border-category-food/30',
+  transport: 'bg-category-transport/20 text-category-transport border-category-transport/30',
+  housing: 'bg-category-housing/20 text-category-housing border-category-housing/30',
+  subscriptions: 'bg-category-subscriptions/20 text-category-subscriptions border-category-subscriptions/30',
+  leisure: 'bg-category-leisure/20 text-category-leisure border-category-leisure/30',
+  health: 'bg-category-health/20 text-category-health border-category-health/30',
+  education: 'bg-category-education/20 text-category-education border-category-education/30',
+  travel: 'bg-category-travel/20 text-category-travel border-category-travel/30',
+  other: 'bg-category-other/20 text-category-other border-category-other/30',
+  income: 'bg-success/20 text-success border-success/30',
+};
+
+export function TransactionTable({ transactions }: TransactionTableProps) {
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [bankFilter, setBankFilter] = useState<string>("all");
+
+  const uniqueBanks = [...new Set(transactions.map(t => t.bank))];
+  const categories = Object.keys(categoryLabels) as Category[];
+
+  const filteredTransactions = transactions.filter(t => {
+    const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || t.category === categoryFilter;
+    const matchesBank = bankFilter === "all" || t.bank === bankFilter;
+    return matchesSearch && matchesCategory && matchesBank;
+  });
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+  };
+
+  const formatAmount = (amount: number) => {
+    return amount.toLocaleString('es-ES', { 
+      style: 'currency', 
+      currency: 'EUR',
+      signDisplay: 'never'
+    });
+  };
+
+  return (
+    <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+      <CardHeader>
+        <CardTitle className="text-lg">Transacciones</CardTitle>
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar transacciones..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las categorías</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat} value={cat}>
+                  {categoryLabels[cat]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={bankFilter} onValueChange={setBankFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Banco" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los bancos</SelectItem>
+              {uniqueBanks.map(bank => (
+                <SelectItem key={bank} value={bank}>
+                  {bank}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-[100px]">Fecha</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead className="hidden md:table-cell">Categoría</TableHead>
+                <TableHead className="hidden sm:table-cell">Cuenta</TableHead>
+                <TableHead className="text-right">Importe</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTransactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    No se encontraron transacciones
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTransactions.map((transaction) => (
+                  <TableRow 
+                    key={transaction.id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell className="font-medium text-muted-foreground">
+                      {formatDate(transaction.date)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className={cn(
+                          "p-1.5 rounded-full flex-shrink-0",
+                          transaction.type === 'income' 
+                            ? "bg-success/20" 
+                            : "bg-destructive/20"
+                        )}>
+                          {transaction.type === 'income' ? (
+                            <ArrowDownRight className="w-3 h-3 text-success" />
+                          ) : (
+                            <ArrowUpRight className="w-3 h-3 text-destructive" />
+                          )}
+                        </div>
+                        <span className="truncate">{transaction.description}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "font-normal",
+                          categoryBadgeColors[transaction.category]
+                        )}
+                      >
+                        {categoryLabels[transaction.category]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell text-muted-foreground">
+                      <div className="text-sm">
+                        <div>{transaction.bank}</div>
+                        <div className="text-xs opacity-70">{transaction.account}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className={cn(
+                      "text-right font-semibold tabular-nums",
+                      transaction.type === 'income' ? "text-success" : "text-destructive"
+                    )}>
+                      {transaction.type === 'income' ? '+' : '-'}
+                      {formatAmount(Math.abs(transaction.amount))}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <p className="text-sm text-muted-foreground mt-4">
+          Mostrando {filteredTransactions.length} de {transactions.length} transacciones
+        </p>
+      </CardContent>
+    </Card>
+  );
+}

@@ -1,0 +1,82 @@
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+
+interface StatCardProps {
+  title: string;
+  value: string;
+  change?: number;
+  changeLabel?: string;
+  type?: 'income' | 'expense' | 'neutral';
+  icon?: React.ReactNode;
+  delay?: number;
+}
+
+export function StatCard({ 
+  title, 
+  value, 
+  change, 
+  changeLabel,
+  type = 'neutral',
+  icon,
+  delay = 0 
+}: StatCardProps) {
+  const isPositive = change && change > 0;
+  const isNegative = change && change < 0;
+
+  return (
+    <Card 
+      variant={type}
+      className={cn(
+        "animate-slide-up",
+      )}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-muted-foreground">{title}</span>
+          {icon && (
+            <div className={cn(
+              "p-2 rounded-lg",
+              type === 'income' && "bg-success/20 text-success",
+              type === 'expense' && "bg-destructive/20 text-destructive",
+              type === 'neutral' && "bg-muted text-muted-foreground",
+            )}>
+              {icon}
+            </div>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <p className={cn(
+            "text-3xl font-display font-bold tracking-tight",
+            type === 'income' && "text-success",
+            type === 'expense' && "text-destructive",
+          )}>
+            {value}
+          </p>
+          
+          {change !== undefined && (
+            <div className="flex items-center gap-1.5 text-sm">
+              {isPositive && <TrendingUp className="w-4 h-4 text-success" />}
+              {isNegative && <TrendingDown className="w-4 h-4 text-destructive" />}
+              {!isPositive && !isNegative && <Minus className="w-4 h-4 text-muted-foreground" />}
+              <span className={cn(
+                "font-medium",
+                isPositive && "text-success",
+                isNegative && "text-destructive",
+                !isPositive && !isNegative && "text-muted-foreground",
+              )}>
+                {isPositive && "+"}
+                {change}%
+              </span>
+              {changeLabel && (
+                <span className="text-muted-foreground">{changeLabel}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
