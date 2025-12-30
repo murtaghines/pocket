@@ -92,12 +92,14 @@ export default function Index() {
           <MonthComparisonCard currentMonth={currentMonth} previousMonth={previousMonth} />
         </div>
 
-        {/* Section 3: Análisis de Gastos - Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        {/* Section 3: Análisis de Gastos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <CategoryChart data={categoryData} />
           <TopExpensesCard transactions={mockTransactions} />
-          <WeeklyComparisonChart />
-          <BankDistributionChart data={bankData} />
+          <div className="flex flex-col gap-4">
+            <WeeklyComparisonChart />
+            <BankDistributionChart data={bankData} />
+          </div>
         </div>
 
         {/* Section 4: Balance y Ahorro */}

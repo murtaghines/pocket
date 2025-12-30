@@ -45,16 +45,16 @@ export const categoryLabels: Record<Category, string> = {
 };
 
 export const categoryColors: Record<Category, string> = {
-  food: 'hsl(142, 76%, 36%)',       // Verde
-  transport: 'hsl(217, 91%, 60%)',  // Azul
-  housing: 'hsl(47, 96%, 53%)',     // Amarillo
-  subscriptions: 'hsl(280, 87%, 65%)', // Morado
-  leisure: 'hsl(199, 89%, 48%)',    // Cyan
-  health: 'hsl(340, 82%, 52%)',     // Rosa/Rojo
-  education: 'hsl(25, 95%, 53%)',   // Naranja
-  travel: 'hsl(262, 83%, 58%)',     // Violeta
-  other: 'hsl(220, 14%, 46%)',      // Gris
-  income: 'hsl(142, 76%, 45%)',     // Verde ingreso
+  food: 'hsl(45, 100%, 55%)',       // Amarillo (Lebend)
+  transport: 'hsl(220, 80%, 50%)',  // Azul oscuro (Lebend)
+  housing: 'hsl(30, 100%, 50%)',    // Naranja (Lebend)
+  subscriptions: 'hsl(300, 50%, 55%)', // Morado (Lebend)
+  leisure: 'hsl(200, 75%, 65%)',    // Azul claro (Lebend)
+  health: 'hsl(0, 75%, 55%)',       // Rojo
+  education: 'hsl(35, 100%, 55%)',  // Naranja claro
+  travel: 'hsl(175, 55%, 50%)',     // Verde/Teal (Lebend)
+  other: 'hsl(220, 10%, 55%)',      // Gris
+  income: 'hsl(155, 60%, 45%)',     // Verde (Lebend)
 };
 
 export const banks = [
