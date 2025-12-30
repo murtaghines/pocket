@@ -92,19 +92,19 @@ export default function Index() {
           <MonthComparisonCard currentMonth={currentMonth} previousMonth={previousMonth} />
         </div>
 
-        {/* Section 3: Análisis de Gastos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Section 3: Análisis de Gastos - Row 1 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <CategoryChart data={categoryData} />
           <TopExpensesCard transactions={mockTransactions} />
-          <div className="space-y-4">
-            <WeeklyComparisonChart />
-          </div>
+          <WeeklyComparisonChart />
           <BankDistributionChart data={bankData} />
         </div>
 
         {/* Section 4: Balance y Ahorro */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-          <BalanceChart data={mockMonthlyData} />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+          <div className="lg:col-span-3">
+            <BalanceChart data={mockMonthlyData} />
+          </div>
           <SavingsRateCard income={summary.income} expenses={summary.expenses} delay={250} />
         </div>
 
