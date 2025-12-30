@@ -2,10 +2,17 @@ import { useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileText, X, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileSpreadsheet, X, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { banks } from "@/lib/mockData";
 import { useToast } from "@/hooks/use-toast";
+
+const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
+const ACCEPTED_TYPES = [
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'text/csv'
+];
 
 interface UploadedFile {
   id: string;
@@ -37,19 +44,22 @@ export function UploadCard() {
     status: 'pending',
   });
 
+  const isValidFile = (file: File) => {
+    const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+    return ACCEPTED_TYPES.includes(file.type) || ACCEPTED_EXTENSIONS.includes(extension);
+  };
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
 
-    const droppedFiles = Array.from(e.dataTransfer.files).filter(
-      file => file.type === 'application/pdf'
-    );
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(isValidFile);
 
     if (droppedFiles.length === 0) {
       toast({
         title: "Formato no soportado",
-        description: "Por favor, sube archivos PDF únicamente.",
+        description: "Por favor, sube archivos Excel (.xlsx, .xls) o CSV.",
         variant: "destructive",
       });
       return;
@@ -63,11 +73,9 @@ export function UploadCard() {
     const selectedFiles = e.target.files;
     if (!selectedFiles) return;
 
-    const pdfFiles = Array.from(selectedFiles).filter(
-      file => file.type === 'application/pdf'
-    );
+    const validFiles = Array.from(selectedFiles).filter(isValidFile);
 
-    const newFiles = pdfFiles.map(processFile);
+    const newFiles = validFiles.map(processFile);
     setFiles(prev => [...prev, ...newFiles]);
   };
 
@@ -123,7 +131,7 @@ export function UploadCard() {
           >
             <input
               type="file"
-              accept=".pdf"
+              accept=".xlsx,.xls,.csv"
               multiple
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -142,7 +150,7 @@ export function UploadCard() {
                 {isDragging ? "Suelta aquí" : "Subir Extractos"}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Arrastra PDFs o haz clic
+                Arrastra Excel o CSV
               </p>
             </div>
           </div>
@@ -182,7 +190,7 @@ export function UploadCard() {
               ) : file.status === 'completed' ? (
                 <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
               ) : (
-                <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <FileSpreadsheet className="w-4 h-4 text-primary flex-shrink-0" />
               )}
               
               <span className="flex-1 truncate text-xs">{file.name}</span>

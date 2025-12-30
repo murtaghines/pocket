@@ -54,7 +54,7 @@ export default function Index() {
           </p>
         </div>
 
-        {/* KPIs + Upload Grid */}
+        {/* Section 1: KPIs + Upload */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title="Ingresos del Mes"
@@ -84,27 +84,31 @@ export default function Index() {
           <UploadCard />
         </div>
 
-        {/* Monthly Evolution - Full Width */}
-        <div className="mb-8">
-          <MonthlyChart data={mockMonthlyData} />
-        </div>
-
-        {/* Analysis Grid - 4 columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <CategoryChart data={categoryData} />
-          <SavingsRateCard income={summary.income} expenses={summary.expenses} delay={250} />
-          <BankDistributionChart data={bankData} />
+        {/* Section 2: Evolución Mensual + Comparación Mes Anterior */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+          <div className="lg:col-span-3">
+            <MonthlyChart data={mockMonthlyData} />
+          </div>
           <MonthComparisonCard currentMonth={currentMonth} previousMonth={previousMonth} />
         </div>
 
-        {/* Secondary Charts Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <BalanceChart data={mockMonthlyData} />
+        {/* Section 3: Análisis de Gastos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <CategoryChart data={categoryData} />
           <TopExpensesCard transactions={mockTransactions} />
-          <WeeklyComparisonChart />
+          <div className="space-y-4">
+            <WeeklyComparisonChart />
+          </div>
+          <BankDistributionChart data={bankData} />
         </div>
 
-        {/* Yearly Balance */}
+        {/* Section 4: Balance y Ahorro */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+          <BalanceChart data={mockMonthlyData} />
+          <SavingsRateCard income={summary.income} expenses={summary.expenses} delay={250} />
+        </div>
+
+        {/* Section 5: Balance Anual */}
         <div className="mb-8">
           <YearlyBalanceChart data={mockMonthlyData} />
         </div>
