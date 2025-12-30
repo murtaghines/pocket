@@ -38,39 +38,39 @@ export function WeeklyComparisonChart() {
   };
 
   return (
-    <Card className="animate-slide-up" style={{ animationDelay: '600ms' }}>
+    <Card className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Calendar className="w-4 h-4" />
           Esta Semana
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-2xl font-bold">{formatCurrency(totalSpent)}</span>
+      <CardContent className="pb-4">
+        <div className="flex items-baseline gap-2 mb-3">
+          <span className="text-xl font-bold">{formatCurrency(totalSpent)}</span>
           <span className="text-xs text-muted-foreground">gastados</span>
         </div>
         
-        <div className="h-[100px]">
+        <div className="h-[80px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyData} barCategoryGap="20%">
               <XAxis 
                 dataKey="day" 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
               />
               <YAxis hide />
               <Tooltip content={<CustomTooltip />} cursor={false} />
               <Bar 
                 dataKey="amount" 
-                radius={[4, 4, 0, 0]}
+                radius={[3, 3, 0, 0]}
               >
                 {weeklyData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`}
                     fill={entry.isToday 
-                      ? 'hsl(var(--primary))' 
+                      ? 'hsl(155, 60%, 45%)' 
                       : entry.amount > 0 
                         ? 'hsl(var(--muted-foreground) / 0.3)' 
                         : 'hsl(var(--muted))'
@@ -82,7 +82,7 @@ export function WeeklyComparisonChart() {
           </ResponsiveContainer>
         </div>
 
-        <div className="mt-3 pt-3 border-t flex justify-between text-xs">
+        <div className="mt-2 pt-2 border-t flex justify-between text-xs">
           <span className="text-muted-foreground">Media diaria</span>
           <span className="font-medium">{formatCurrency(averageDaily)}/día</span>
         </div>

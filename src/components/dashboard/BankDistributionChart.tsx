@@ -48,24 +48,24 @@ export function BankDistributionChart({ data }: BankDistributionChartProps) {
   };
 
   return (
-    <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+    <Card className="animate-slide-up flex-1" style={{ animationDelay: '400ms' }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <CreditCard className="w-4 h-4" />
           Gastos por Banco
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4">
-          <div className="relative w-32 h-32">
+      <CardContent className="pb-4">
+        <div className="flex items-center gap-3">
+          <div className="relative w-24 h-24">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={35}
-                  outerRadius={55}
+                  innerRadius={28}
+                  outerRadius={42}
                   paddingAngle={3}
                   dataKey="value"
                   strokeWidth={0}
@@ -81,19 +81,19 @@ export function BankDistributionChart({ data }: BankDistributionChartProps) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-lg font-bold">{formatCurrency(total)}</span>
-              <span className="text-[10px] text-muted-foreground">Total</span>
+              <span className="text-sm font-bold">{formatCurrency(total)}</span>
+              <span className="text-[9px] text-muted-foreground">Total</span>
             </div>
           </div>
           
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-1.5">
             {data.map((item, index) => {
               const percentage = ((item.value / total) * 100).toFixed(0);
               const color = BANK_COLORS[item.name] || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
               return (
                 <div key={item.name} className="flex items-center gap-2">
                   <div 
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: color }}
                   />
                   <span className="text-xs flex-1 truncate">{item.name}</span>
