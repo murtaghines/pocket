@@ -1,4 +1,4 @@
 project_id = "oqngrwevaazcxeotyrdg"
 
 [functions.process-financial-file]
-verify_jwt = true
+verify_jwt = false
