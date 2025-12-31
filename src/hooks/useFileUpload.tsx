@@ -207,8 +207,27 @@ export function useFileUpload() {
           description: `${uploadFile.name}: ${description}`,
         });
 
-        // Refresh transactions
+        // Refresh transactions and uploads
         queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["uploads"] });
+        
+        // Run integrity check after processing
+        try {
+          const { data: integrityData } = await supabase.functions.invoke(
+            "check-data-integrity",
+            { body: { userId: user.id } }
+          );
+          
+          if (integrityData?.stats?.duplicatesRemoved > 0 || integrityData?.stats?.transfersLinked > 0) {
+            toast({
+              title: "Integridad verificada",
+              description: `${integrityData.stats.duplicatesRemoved} duplicados globales eliminados, ${integrityData.stats.transfersLinked} transferencias vinculadas`,
+            });
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          }
+        } catch (integrityError) {
+          console.error("Integrity check error:", integrityError);
+        }
       } catch (error: any) {
         console.error("Error processing file:", error);
         setFiles((prev) =>

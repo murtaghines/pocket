@@ -5,6 +5,7 @@ import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { BalanceChart } from "@/components/dashboard/BalanceChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { UploadCard } from "@/components/dashboard/UploadCard";
+import { UploadsManager } from "@/components/dashboard/UploadsManager";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { BankDistributionChart } from "@/components/dashboard/BankDistributionChart";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
@@ -136,6 +137,11 @@ export default function Index() {
             {/* Section 5: Balance Anual */}
             <div className="mb-8">
               <YearlyBalanceChart data={monthlyData} />
+            </div>
+
+            {/* Uploads Manager */}
+            <div className="mb-8">
+              <UploadsManager />
             </div>
 
             {/* Transactions Table */}
