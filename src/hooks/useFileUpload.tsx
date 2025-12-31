@@ -4,6 +4,40 @@ import { useAuth } from "./useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+
+async function extractPdfText(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+  const pdf = await loadingTask.promise;
+
+  const maxPages = Math.min(pdf.numPages, 30);
+  let content = "";
+
+  for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const textContent = await page.getTextContent();
+
+    const pageText = (textContent.items as any[])
+      .map((item) => (typeof item?.str === "string" ? item.str : ""))
+      .filter(Boolean)
+      .join(" ");
+
+    content += `\n\n--- Page ${pageNum} ---\n${pageText}`;
+  }
+
+  const trimmed = content.trim();
+  if (trimmed.length < 50) {
+    throw new Error(
+      "Este PDF no tiene texto seleccionable (probablemente escaneado). Prueba con un PDF con texto o un Excel/CSV."
+    );
+  }
+
+  return trimmed;
+}
 
 interface UploadedFile {
   id: string;
@@ -57,7 +91,11 @@ export function useFileUpload() {
       return content;
     }
     
-    // For PDFs and other files, return the raw text if possible
+    if (extension === "pdf") {
+      return await extractPdfText(file);
+    }
+
+    // For other files, return the raw text if possible
     try {
       return await file.text();
     } catch {
