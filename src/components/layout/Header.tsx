@@ -1,9 +1,11 @@
-import { Wallet, Bell, Settings, Moon, Sun } from "lucide-react";
+import { Wallet, Bell, Settings, Moon, Sun, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
+  const { signOut } = useAuth();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -29,18 +31,16 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
-            {isDark ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </Button>
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
           </Button>
           <Button variant="ghost" size="icon">
             <Settings className="w-5 h-5" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={signOut}>
+            <LogOut className="w-5 h-5" />
           </Button>
         </div>
       </div>
