@@ -12,6 +12,7 @@ import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
 import { MonthComparisonCard } from "@/components/dashboard/MonthComparisonCard";
 import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
+import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { useTransactions } from "@/hooks/useTransactions";
 import { TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
 
@@ -78,8 +79,8 @@ export default function Index() {
         {/* Dashboard with Data */}
         {!isLoading && hasData && (
           <>
-            {/* Section 1: KPIs + Upload */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {/* Section 1: KPIs + Upload + Investment Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <StatCard
                 title="Ingresos del Mes"
                 value={formatCurrency(summary.income)}
@@ -105,6 +106,7 @@ export default function Index() {
                 icon={<Wallet className="w-5 h-5" />}
                 delay={200}
               />
+              <InvestmentSummaryCard />
               <UploadCard />
             </div>
 
