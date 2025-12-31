@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Transaction, categoryLabels, Category } from "@/lib/mockData";
-import { Search, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Search, ArrowUpRight, ArrowDownRight, ArrowLeftRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TransactionTableProps {
@@ -23,6 +23,7 @@ const categoryBadgeColors: Record<Category, string> = {
   travel: 'bg-category-travel/20 text-category-travel border-category-travel/30',
   other: 'bg-category-other/20 text-category-other border-category-other/30',
   income: 'bg-success/20 text-success border-success/30',
+  transfer: 'bg-purple-500/20 text-purple-500 border-purple-500/30',
 };
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
@@ -129,10 +130,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           "p-1.5 rounded-full flex-shrink-0",
                           transaction.type === 'income' 
                             ? "bg-success/20" 
+                            : transaction.type === 'transfer'
+                            ? "bg-purple-500/20"
                             : "bg-destructive/20"
                         )}>
                           {transaction.type === 'income' ? (
                             <ArrowDownRight className="w-3 h-3 text-success" />
+                          ) : transaction.type === 'transfer' ? (
+                            <ArrowLeftRight className="w-3 h-3 text-purple-500" />
                           ) : (
                             <ArrowUpRight className="w-3 h-3 text-destructive" />
                           )}
@@ -159,9 +164,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                     </TableCell>
                     <TableCell className={cn(
                       "text-right font-semibold tabular-nums",
-                      transaction.type === 'income' ? "text-success" : "text-destructive"
+                      transaction.type === 'income' ? "text-success" 
+                        : transaction.type === 'transfer' ? "text-purple-500" 
+                        : "text-destructive"
                     )}>
-                      {transaction.type === 'income' ? '+' : '-'}
+                      {transaction.type === 'income' ? '+' : transaction.type === 'transfer' ? '↔' : '-'}
                       {formatAmount(Math.abs(transaction.amount))}
                     </TableCell>
                   </TableRow>

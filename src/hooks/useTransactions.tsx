@@ -11,11 +11,13 @@ interface DbTransaction {
   date: string;
   description: string;
   amount: number;
-  type: "income" | "expense";
+  type: "income" | "expense" | "transfer";
   category: string;
   bank: string | null;
   original_text: string | null;
   created_at: string;
+  transaction_hash: string | null;
+  linked_transaction_id: string | null;
 }
 
 export function useTransactions() {
@@ -64,13 +66,17 @@ export function useTransactions() {
     },
   });
 
-  // Calculate monthly data from transactions
+  // Filter out transfers for financial calculations
+  const financialTransactions = transactions.filter((t) => t.type !== "transfer");
+  const transfers = transactions.filter((t) => t.type === "transfer");
+
+  // Calculate monthly data from transactions (excluding transfers)
   const monthlyData: MonthlyData[] = (() => {
-    if (!transactions.length) return [];
+    if (!financialTransactions.length) return [];
 
     const monthlyTotals: Record<string, { income: number; expenses: number }> = {};
     
-    transactions.forEach((t) => {
+    financialTransactions.forEach((t) => {
       const date = new Date(t.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       
@@ -100,9 +106,9 @@ export function useTransactions() {
       });
   })();
 
-  // Calculate category expenses
+  // Calculate category expenses (excluding transfers)
   const categoryData = (() => {
-    const expenses = transactions.filter((t) => t.type === "expense");
+    const expenses = financialTransactions.filter((t) => t.type === "expense");
     const categoryTotals: Record<string, number> = {};
     
     expenses.forEach((t) => {
@@ -118,9 +124,9 @@ export function useTransactions() {
     }));
   })();
 
-  // Calculate bank expenses
+  // Calculate bank expenses (excluding transfers)
   const bankData = (() => {
-    const expenses = transactions.filter((t) => t.type === "expense");
+    const expenses = financialTransactions.filter((t) => t.type === "expense");
     const bankTotals: Record<string, number> = {};
     
     expenses.forEach((t) => {
@@ -134,14 +140,14 @@ export function useTransactions() {
     }));
   })();
 
-  // Calculate month summary
+  // Calculate month summary (excluding transfers)
   const summary = (() => {
-    const income = transactions
+    const income = financialTransactions
       .filter((t) => t.type === "income")
       .reduce((sum, t) => sum + t.amount, 0);
     
     const expenses = Math.abs(
-      transactions
+      financialTransactions
         .filter((t) => t.type === "expense")
         .reduce((sum, t) => sum + t.amount, 0)
     );
@@ -155,6 +161,7 @@ export function useTransactions() {
 
   return {
     transactions,
+    transfers,
     monthlyData,
     categoryData,
     bankData,
@@ -163,5 +170,6 @@ export function useTransactions() {
     error,
     deleteTransaction,
     hasData: transactions.length > 0,
+    transfersCount: transfers.length,
   };
 }
