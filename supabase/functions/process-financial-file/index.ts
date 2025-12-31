@@ -151,17 +151,25 @@ serve(async (req) => {
     console.log(`Parsed ${transactions.length} transactions`);
 
     // Insert transactions into the database
-    const transactionsToInsert = transactions.map((t: any) => ({
-      user_id: userId,
-      upload_id: uploadId,
-      date: t.date,
-      description: t.description,
-      amount: t.amount,
-      type: t.type,
-      category: t.category,
-      bank: t.bank,
-      original_text: null,
-    }));
+    const transactionsToInsert = transactions.map((t: any) => {
+      // Normalize type to ensure it matches the check constraint
+      let type = 'expense';
+      if (t.type === 'income' || t.amount > 0) {
+        type = 'income';
+      }
+      
+      return {
+        user_id: userId,
+        upload_id: uploadId,
+        date: t.date,
+        description: t.description || 'Sin descripción',
+        amount: t.amount,
+        type,
+        category: t.category || 'other',
+        bank: t.bank || null,
+        original_text: null,
+      };
+    });
 
     const { error: insertError } = await supabase
       .from('transactions')
