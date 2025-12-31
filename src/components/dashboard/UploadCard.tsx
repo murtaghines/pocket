@@ -1,48 +1,27 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileSpreadsheet, X, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileSpreadsheet, X, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { banks } from "@/lib/mockData";
 import { useToast } from "@/hooks/use-toast";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
-const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
+const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.pdf'];
 const ACCEPTED_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.ms-excel',
-  'text/csv'
+  'text/csv',
+  'application/pdf'
 ];
 
-interface UploadedFile {
-  id: string;
-  name: string;
-  size: number;
-  bank?: string;
-  status: 'pending' | 'processing' | 'completed' | 'error';
-}
-
 export function UploadCard() {
-  const [files, setFiles] = useState<UploadedFile[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
+  const { files, addFiles, removeFile, processFiles, isProcessing, hasPending } = useFileUpload();
   const { toast } = useToast();
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setIsDragging(true);
-    } else if (e.type === "dragleave") {
-      setIsDragging(false);
-    }
   }, []);
-
-  const processFile = (file: File): UploadedFile => ({
-    id: Math.random().toString(36).substr(2, 9),
-    name: file.name,
-    size: file.size,
-    status: 'pending',
-  });
 
   const isValidFile = (file: File) => {
     const extension = '.' + file.name.split('.').pop()?.toLowerCase();
@@ -52,62 +31,36 @@ export function UploadCard() {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
 
     const droppedFiles = Array.from(e.dataTransfer.files).filter(isValidFile);
 
     if (droppedFiles.length === 0) {
       toast({
         title: "Formato no soportado",
-        description: "Por favor, sube archivos Excel (.xlsx, .xls) o CSV.",
+        description: "Por favor, sube archivos Excel (.xlsx, .xls), CSV o PDF.",
         variant: "destructive",
       });
       return;
     }
 
-    const newFiles = droppedFiles.map(processFile);
-    setFiles(prev => [...prev, ...newFiles]);
-  }, [toast]);
+    addFiles(droppedFiles);
+  }, [toast, addFiles]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles) return;
 
     const validFiles = Array.from(selectedFiles).filter(isValidFile);
-
-    const newFiles = validFiles.map(processFile);
-    setFiles(prev => [...prev, ...newFiles]);
+    addFiles(validFiles);
+    
+    // Reset input
+    e.target.value = '';
   };
 
-  const removeFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id));
-  };
-
-  const updateFileBank = (id: string, bank: string) => {
-    setFiles(prev => prev.map(f => 
-      f.id === id ? { ...f, bank } : f
-    ));
-  };
-
-  const simulateProcessing = () => {
-    if (files.some(f => !f.bank)) {
-      toast({
-        title: "Banco requerido",
-        description: "Asigna un banco a todos los archivos antes de procesar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setFiles(prev => prev.map(f => ({ ...f, status: 'processing' as const })));
-
-    setTimeout(() => {
-      setFiles(prev => prev.map(f => ({ ...f, status: 'completed' as const })));
-      toast({
-        title: "Procesamiento completado",
-        description: `Se han procesado ${files.length} archivo(s) correctamente.`,
-      });
-    }, 2000);
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   if (files.length === 0) {
@@ -124,33 +77,23 @@ export function UploadCard() {
             onDrop={handleDrop}
             className={cn(
               "relative h-full min-h-[180px] border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-3 transition-all duration-200",
-              isDragging 
-                ? "border-primary bg-primary/10 scale-[1.02]" 
-                : "border-border hover:border-primary/50 hover:bg-muted/50 group-hover:border-primary/50"
+              "border-border hover:border-primary/50 hover:bg-muted/50 group-hover:border-primary/50"
             )}
           >
             <input
               type="file"
-              accept=".xlsx,.xls,.csv"
+              accept=".xlsx,.xls,.csv,.pdf"
               multiple
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-            <div className={cn(
-              "p-3 rounded-full transition-colors",
-              isDragging ? "bg-primary/20" : "bg-muted group-hover:bg-primary/10"
-            )}>
-              <Upload className={cn(
-                "w-6 h-6 transition-colors",
-                isDragging ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-              )} />
+            <div className="p-3 rounded-full transition-colors bg-muted group-hover:bg-primary/10">
+              <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
             </div>
             <div className="text-center">
-              <p className="font-medium text-sm">
-                {isDragging ? "Suelta aquí" : "Subir Extractos"}
-              </p>
+              <p className="font-medium text-sm">Subir Extractos</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Arrastra Excel o CSV
+                Excel, CSV o PDF
               </p>
             </div>
           </div>
@@ -167,15 +110,15 @@ export function UploadCard() {
           <Button 
             size="sm"
             variant="gradient"
-            onClick={simulateProcessing}
-            disabled={files.some(f => f.status === 'processing')}
+            onClick={processFiles}
+            disabled={isProcessing || !hasPending}
           >
-            {files.some(f => f.status === 'processing') ? (
+            {isProcessing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Upload className="w-4 h-4" />
             )}
-            Procesar
+            {isProcessing ? "Procesando..." : "Procesar con IA"}
           </Button>
         </div>
         
@@ -189,28 +132,23 @@ export function UploadCard() {
                 <Loader2 className="w-4 h-4 text-warning animate-spin flex-shrink-0" />
               ) : file.status === 'completed' ? (
                 <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
+              ) : file.status === 'error' ? (
+                <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4 text-primary flex-shrink-0" />
               )}
               
-              <span className="flex-1 truncate text-xs">{file.name}</span>
-
-              <Select 
-                value={file.bank} 
-                onValueChange={(value) => updateFileBank(file.id, value)}
-                disabled={file.status !== 'pending'}
-              >
-                <SelectTrigger className="w-[100px] h-7 text-xs">
-                  <SelectValue placeholder="Banco" />
-                </SelectTrigger>
-                <SelectContent>
-                  {banks.map(bank => (
-                    <SelectItem key={bank.id} value={bank.id}>
-                      {bank.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-xs font-medium">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {file.status === 'completed' && file.transactionsCount 
+                    ? `${file.transactionsCount} transacciones`
+                    : file.status === 'error' && file.error
+                    ? file.error
+                    : formatFileSize(file.size)
+                  }
+                </p>
+              </div>
 
               {file.status === 'pending' && (
                 <Button
@@ -224,6 +162,21 @@ export function UploadCard() {
               )}
             </div>
           ))}
+        </div>
+        
+        {/* Add more files button */}
+        <div className="relative">
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv,.pdf"
+            multiple
+            onChange={handleFileInput}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          <Button variant="outline" size="sm" className="w-full">
+            <Upload className="w-4 h-4 mr-2" />
+            Agregar más archivos
+          </Button>
         </div>
       </CardContent>
     </Card>
