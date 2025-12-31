@@ -47,6 +47,12 @@ interface UploadedFile {
   status: "pending" | "processing" | "completed" | "error";
   error?: string;
   transactionsCount?: number;
+  stats?: {
+    newTransactions: number;
+    duplicatesIgnored: number;
+    transfersDetected: number;
+    totalParsed: number;
+  };
 }
 
 export function useFileUpload() {
@@ -172,21 +178,33 @@ export function useFileUpload() {
 
         if (error) throw error;
 
+        const stats = data.stats;
+        
         setFiles((prev) =>
           prev.map((f) =>
             f.id === uploadFile.id
               ? {
                   ...f,
                   status: "completed" as const,
-                  transactionsCount: data.transactionsCount,
+                  transactionsCount: stats?.newTransactions || 0,
+                  stats,
                 }
               : f
           )
         );
 
+        // Build detailed message
+        let description = `${stats?.newTransactions || 0} transacciones nuevas`;
+        if (stats?.duplicatesIgnored > 0) {
+          description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
+        }
+        if (stats?.transfersDetected > 0) {
+          description += `, ${stats.transfersDetected} transferencias internas`;
+        }
+
         toast({
           title: "Archivo procesado",
-          description: `Se extrajeron ${data.transactionsCount} transacciones de ${uploadFile.name}`,
+          description: `${uploadFile.name}: ${description}`,
         });
 
         // Refresh transactions

@@ -23,7 +23,9 @@ export type Database = {
           date: string
           description: string
           id: string
+          linked_transaction_id: string | null
           original_text: string | null
+          transaction_hash: string | null
           type: string
           upload_id: string | null
           user_id: string
@@ -36,7 +38,9 @@ export type Database = {
           date: string
           description: string
           id?: string
+          linked_transaction_id?: string | null
           original_text?: string | null
+          transaction_hash?: string | null
           type: string
           upload_id?: string | null
           user_id: string
@@ -49,12 +53,21 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          linked_transaction_id?: string | null
           original_text?: string | null
+          transaction_hash?: string | null
           type?: string
           upload_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_linked_transaction_id_fkey"
+            columns: ["linked_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_upload_id_fkey"
             columns: ["upload_id"]

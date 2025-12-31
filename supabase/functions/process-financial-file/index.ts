@@ -11,43 +11,69 @@ const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const FINANCIAL_ANALYSIS_PROMPT = `You are a financial data extraction expert. Your task is to analyze messy, unstructured financial data from bank statements, spreadsheets, or documents and extract clean transaction data.
+const FINANCIAL_ANALYSIS_PROMPT = `You are a financial data extraction expert specialized in Spanish and European bank statements. Your task is to analyze messy, unstructured financial data and extract clean transaction data.
 
-IMPORTANT: Respond ONLY with a valid JSON array, no markdown, no explanation.
+CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
 
-For each transaction you identify, extract:
-- date: ISO format (YYYY-MM-DD). If day is missing, use 01. If month is missing, infer from context.
-- description: Clean, readable description of the transaction
-- amount: Numeric value (positive for income, negative for expenses)
-- type: "income" or "expense"
-- category: One of: food, transport, housing, subscriptions, leisure, health, education, travel, other, income
-- bank: Bank name if identifiable, otherwise null
+For each transaction, extract:
+- date: ISO format (YYYY-MM-DD). If day missing, use 01. If month missing, infer from context.
+- description: Clean, readable description
+- amount: Numeric value (positive for income, negative for expenses/transfers out)
+- type: "income", "expense", or "transfer" (for internal movements between accounts)
+- category: See rules below
+- bank: Bank name if identifiable (Santander, BBVA, CaixaBank, Sabadell, ING, Revolut, N26, Wise, etc.)
+- hash_source: String combining date|absoluteAmount|normalizedDescription for duplicate detection
 
-Category assignment rules:
-- food: supermarkets, restaurants, food delivery (Mercadona, Carrefour, Lidl, restaurants)
-- transport: gas, uber, taxi, public transport, parking
-- housing: rent, utilities, electricity, water, gas, internet
-- subscriptions: Netflix, Spotify, Amazon Prime, recurring services
-- leisure: entertainment, cinema, bars, hobbies
-- health: pharmacy, doctors, gym, medical
-- education: courses, books, training
-- travel: flights, hotels, vacation expenses
-- income: salary, freelance, dividends, transfers received
-- other: anything that doesn't fit above
+TRANSFER DETECTION - Mark as type "transfer" if:
+- Description contains: "Transferencia a", "Transferencia de", "Traspaso", "Bizum enviado", "Bizum recibido"
+- Between known banks/neobanks: "a Revolut", "desde Santander", "N26", "Wise"
+- Self-transfers: "a cuenta propia", "entre cuentas"
+- Round amounts that match incoming amounts in other accounts
 
-Handle these messy patterns:
-- Dates in any format (DD/MM/YYYY, MM-DD-YYYY, "15 Dic", etc.)
-- Amounts with different notations (€50, 50.00, -50, (50), 50-)
-- Mixed languages
-- Inconsistent column orders
-- Missing headers
-- Extra whitespace or formatting
+CATEGORY RULES:
+- food: supermarkets, restaurants, delivery (Mercadona, Carrefour, Lidl, Glovo, JustEat)
+- transport: gas, Uber, taxi, metro, bus, parking, Cabify
+- housing: rent, utilities, electricity, water, gas, internet, Endesa, Naturgy, Vodafone
+- subscriptions: Netflix, Spotify, Amazon Prime, HBO, Disney+, gym memberships
+- leisure: entertainment, cinema, bars, hobbies, gaming
+- health: pharmacy, doctors, medical, gym
+- education: courses, books, training, Udemy, Coursera
+- travel: flights, hotels, Booking, Airbnb, Renfe, vacation
+- income: salary (Nómina), freelance, dividends, interest
+- transfer: internal movements between own accounts (DO NOT count as income/expense)
+- other: anything else
 
-Example output format:
+HANDLE MESSY DATA:
+- Dates: DD/MM/YYYY, DD-MM-YY, "15 Dic", "Diciembre 2024", any format
+- Amounts: €50, 50.00€, -50, (50), 50-, 50,00, 1.234,56
+- Headers/footers/bank logos: Ignore non-transaction text
+- Multiple accounts in one file: Detect bank from context
+- Partial data: Extract what's available
+
+HASH_SOURCE FORMAT:
+Create a normalized string: "YYYYMMDD|amount|NORMALIZED_DESC"
+- Date in YYYYMMDD
+- Amount as absolute value with 2 decimals
+- Description: uppercase, no accents, only alphanumeric, first 30 chars
+Example: "20241215|87.43|SUPERMERCADO MERCADONA"
+
+Example output:
 [
-  {"date":"2024-12-15","description":"Supermercado Mercadona","amount":-87.43,"type":"expense","category":"food","bank":"Santander"},
-  {"date":"2024-12-14","description":"Nómina Diciembre","amount":2850.00,"type":"income","category":"income","bank":"Santander"}
+  {"date":"2024-12-15","description":"Supermercado Mercadona","amount":-87.43,"type":"expense","category":"food","bank":"Santander","hash_source":"20241215|87.43|SUPERMERCADO MERCADONA"},
+  {"date":"2024-12-14","description":"Nómina Diciembre","amount":2850.00,"type":"income","category":"income","bank":"Santander","hash_source":"20241214|2850.00|NOMINA DICIEMBRE"},
+  {"date":"2024-12-13","description":"Transferencia a Revolut","amount":-500.00,"type":"transfer","category":"transfer","bank":"Santander","hash_source":"20241213|500.00|TRANSFERENCIA A REVOLUT"}
 ]`;
+
+// Simple hash function for duplicate detection
+function generateHash(hashSource: string): string {
+  let hash = 0;
+  for (let i = 0; i < hashSource.length; i++) {
+    const char = hashSource.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(16);
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -86,7 +112,7 @@ serve(async (req) => {
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: FINANCIAL_ANALYSIS_PROMPT },
-          { role: 'user', content: `Analyze this financial data and extract transactions:\n\n${fileContent}` }
+          { role: 'user', content: `Analyze this financial data and extract ALL transactions. Pay attention to internal transfers between accounts:\n\n${fileContent}` }
         ],
         temperature: 0.1,
       }),
@@ -148,17 +174,63 @@ serve(async (req) => {
       throw new Error('AI response is not an array');
     }
 
-    console.log(`Parsed ${transactions.length} transactions`);
+    console.log(`Parsed ${transactions.length} transactions from AI`);
 
-    // Insert transactions into the database
-    const transactionsToInsert = transactions.map((t: any) => {
-      // Normalize type to ensure it matches the check constraint
-      let type = 'expense';
-      if (t.type === 'income' || t.amount > 0) {
-        type = 'income';
+    // Get existing transaction hashes for this user to detect duplicates
+    const { data: existingTransactions } = await supabase
+      .from('transactions')
+      .select('transaction_hash')
+      .eq('user_id', userId)
+      .not('transaction_hash', 'is', null);
+
+    const existingHashes = new Set(
+      existingTransactions?.map(t => t.transaction_hash) || []
+    );
+
+    console.log(`Found ${existingHashes.size} existing transaction hashes`);
+
+    // Process transactions and detect duplicates
+    const newTransactions: any[] = [];
+    const duplicateCount = { count: 0 };
+    const transferCount = { count: 0 };
+    const seenHashesInBatch = new Set<string>();
+
+    for (const t of transactions) {
+      // Generate hash from AI-provided hash_source or create one
+      let hashSource = t.hash_source;
+      if (!hashSource) {
+        const normalizedDesc = (t.description || '')
+          .toUpperCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^A-Z0-9]/g, '')
+          .substring(0, 30);
+        const dateStr = (t.date || '').replace(/-/g, '');
+        const amountStr = Math.abs(t.amount || 0).toFixed(2);
+        hashSource = `${dateStr}|${amountStr}|${normalizedDesc}`;
       }
       
-      return {
+      const hash = generateHash(hashSource);
+
+      // Check for duplicates (existing in DB or in current batch)
+      if (existingHashes.has(hash) || seenHashesInBatch.has(hash)) {
+        duplicateCount.count++;
+        console.log(`Duplicate detected: ${t.description} - ${t.date}`);
+        continue;
+      }
+
+      seenHashesInBatch.add(hash);
+
+      // Normalize type
+      let type = 'expense';
+      if (t.type === 'transfer') {
+        type = 'transfer';
+        transferCount.count++;
+      } else if (t.type === 'income' || t.amount > 0) {
+        type = 'income';
+      }
+
+      newTransactions.push({
         user_id: userId,
         upload_id: uploadId,
         date: t.date,
@@ -168,16 +240,22 @@ serve(async (req) => {
         category: t.category || 'other',
         bank: t.bank || null,
         original_text: null,
-      };
-    });
+        transaction_hash: hash,
+      });
+    }
 
-    const { error: insertError } = await supabase
-      .from('transactions')
-      .insert(transactionsToInsert);
+    console.log(`New transactions to insert: ${newTransactions.length}, Duplicates: ${duplicateCount.count}, Transfers: ${transferCount.count}`);
 
-    if (insertError) {
-      console.error('Error inserting transactions:', insertError);
-      throw new Error(`Failed to insert transactions: ${insertError.message}`);
+    // Insert only new transactions
+    if (newTransactions.length > 0) {
+      const { error: insertError } = await supabase
+        .from('transactions')
+        .insert(newTransactions);
+
+      if (insertError) {
+        console.error('Error inserting transactions:', insertError);
+        throw new Error(`Failed to insert transactions: ${insertError.message}`);
+      }
     }
 
     // Update upload status to completed
@@ -185,18 +263,27 @@ serve(async (req) => {
       .from('uploads')
       .update({ 
         status: 'completed', 
-        transactions_count: transactions.length,
+        transactions_count: newTransactions.length,
         processed_at: new Date().toISOString()
       })
       .eq('id', uploadId);
 
-    console.log(`Successfully processed ${transactions.length} transactions for upload ${uploadId}`);
+    const message = `Procesadas ${newTransactions.length} transacciones nuevas` +
+      (duplicateCount.count > 0 ? `, ${duplicateCount.count} duplicados ignorados` : '') +
+      (transferCount.count > 0 ? `, ${transferCount.count} transferencias internas detectadas` : '');
+
+    console.log(`Successfully processed upload ${uploadId}: ${message}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        transactionsCount: transactions.length,
-        transactions 
+        message,
+        stats: {
+          newTransactions: newTransactions.length,
+          duplicatesIgnored: duplicateCount.count,
+          transfersDetected: transferCount.count,
+          totalParsed: transactions.length
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

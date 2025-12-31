@@ -8,9 +8,10 @@ export type Category =
   | 'education' 
   | 'travel' 
   | 'other'
-  | 'income';
+  | 'income'
+  | 'transfer';
 
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = 'income' | 'expense' | 'transfer';
 
 export interface Transaction {
   id: string;
@@ -42,6 +43,7 @@ export const categoryLabels: Record<Category, string> = {
   travel: 'Viajes',
   other: 'Otros',
   income: 'Ingreso',
+  transfer: 'Transferencia',
 };
 
 export const categoryColors: Record<Category, string> = {
@@ -55,6 +57,7 @@ export const categoryColors: Record<Category, string> = {
   travel: 'hsl(175, 55%, 50%)',     // Verde/Teal (Lebend)
   other: 'hsl(220, 10%, 55%)',      // Gris
   income: 'hsl(155, 60%, 45%)',     // Verde (Lebend)
+  transfer: 'hsl(260, 50%, 60%)',   // Púrpura (Transferencias)
 };
 
 export const banks = [
