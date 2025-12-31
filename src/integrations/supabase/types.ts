@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      investment_accounts: {
+        Row: {
+          account_name: string
+          created_at: string
+          current_value: number
+          id: string
+          last_updated: string
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          account_name: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          last_updated?: string
+          platform: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          last_updated?: string
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      investments: {
+        Row: {
+          amount: number
+          asset_type: string | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          original_text: string | null
+          platform: string
+          transaction_hash: string | null
+          type: string
+          upload_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          asset_type?: string | null
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          original_text?: string | null
+          platform: string
+          transaction_hash?: string | null
+          type: string
+          upload_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asset_type?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          original_text?: string | null
+          platform?: string
+          transaction_hash?: string | null
+          type?: string
+          upload_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investments_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number

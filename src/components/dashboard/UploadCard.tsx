@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet, X, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, X, CheckCircle2, Loader2, AlertCircle, PiggyBank } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
@@ -14,8 +14,12 @@ const ACCEPTED_TYPES = [
   'application/pdf'
 ];
 
-export function UploadCard() {
-  const { files, addFiles, removeFile, processFiles, isProcessing, hasPending } = useFileUpload();
+interface UploadCardProps {
+  isInvestment?: boolean;
+}
+
+export function UploadCard({ isInvestment = false }: UploadCardProps) {
+  const { files, addFiles, removeFile, processFiles, isProcessing, hasPending } = useFileUpload(isInvestment);
   const { toast } = useToast();
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -63,6 +67,10 @@ export function UploadCard() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  const Icon = isInvestment ? PiggyBank : Upload;
+  const title = isInvestment ? "Subir Extractos de Inversión" : "Subir Extractos";
+  const subtitle = "Excel, CSV o PDF";
+
   if (files.length === 0) {
     return (
       <Card 
@@ -87,13 +95,19 @@ export function UploadCard() {
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-            <div className="p-3 rounded-full transition-colors bg-muted group-hover:bg-primary/10">
-              <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
+            <div className={cn(
+              "p-3 rounded-full transition-colors bg-muted group-hover:bg-primary/10",
+              isInvestment && "group-hover:bg-purple-500/10"
+            )}>
+              <Icon className={cn(
+                "w-6 h-6 text-muted-foreground group-hover:text-primary",
+                isInvestment && "group-hover:text-purple-500"
+              )} />
             </div>
             <div className="text-center">
-              <p className="font-medium text-sm">Subir Extractos</p>
+              <p className="font-medium text-sm">{title}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Excel, CSV o PDF
+                {subtitle}
               </p>
             </div>
           </div>
@@ -142,7 +156,7 @@ export function UploadCard() {
                 <p className="truncate text-xs font-medium">{file.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {file.status === 'completed' && file.transactionsCount 
-                    ? `${file.transactionsCount} transacciones`
+                    ? `${file.transactionsCount} ${isInvestment ? 'movimientos' : 'transacciones'}`
                     : file.status === 'error' && file.error
                     ? file.error
                     : formatFileSize(file.size)

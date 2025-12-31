@@ -55,7 +55,7 @@ interface UploadedFile {
   };
 }
 
-export function useFileUpload() {
+export function useFileUpload(_isInvestment: boolean = false) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const { user } = useAuth();
   const queryClient = useQueryClient();
