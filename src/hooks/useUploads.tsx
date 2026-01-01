@@ -14,6 +14,7 @@ export interface Upload {
   error_message: string | null;
   created_at: string;
   processed_at: string | null;
+  target_month: string | null;
 }
 
 export function useUploads() {

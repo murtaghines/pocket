@@ -171,6 +171,7 @@ export type Database = {
           id: string
           processed_at: string | null
           status: string
+          target_month: string
           transactions_count: number | null
           user_id: string
         }
@@ -184,6 +185,7 @@ export type Database = {
           id?: string
           processed_at?: string | null
           status?: string
+          target_month: string
           transactions_count?: number | null
           user_id: string
         }
@@ -197,6 +199,7 @@ export type Database = {
           id?: string
           processed_at?: string | null
           status?: string
+          target_month?: string
           transactions_count?: number | null
           user_id?: string
         }

@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UploadsManager } from "@/components/dashboard/UploadsManager";
+import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
 import { useAuth } from "@/hooks/useAuth";
 import { User, Mail, Calendar, LogOut } from "lucide-react";
 
@@ -73,9 +73,9 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Uploads Manager */}
+        {/* Monthly Uploads Organizer */}
         <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <UploadsManager />
+          <MonthlyUploadsOrganizer />
         </div>
       </main>
 

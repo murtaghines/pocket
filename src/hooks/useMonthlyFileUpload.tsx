@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,7 +39,7 @@ async function extractPdfText(file: File): Promise<string> {
   return trimmed;
 }
 
-interface UploadedFile {
+interface PendingFile {
   id: string;
   name: string;
   size: number;
@@ -47,34 +47,42 @@ interface UploadedFile {
   status: "pending" | "processing" | "completed" | "error";
   error?: string;
   transactionsCount?: number;
-  stats?: {
-    newTransactions: number;
-    duplicatesIgnored: number;
-    transfersDetected: number;
-    totalParsed: number;
-  };
 }
 
-export function useFileUpload(isInvestment: boolean = false) {
-  const [files, setFiles] = useState<UploadedFile[]>([]);
+type PendingFilesByMonth = Record<string, PendingFile[]>;
+
+function getMonthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function useMonthlyFileUpload() {
+  const [pendingFilesByMonth, setPendingFilesByMonth] = useState<PendingFilesByMonth>({});
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const addFiles = (newFiles: File[]) => {
-    const uploadFiles: UploadedFile[] = newFiles.map((file) => ({
+  const addFilesForMonth = useCallback((files: File[], targetMonth: Date) => {
+    const monthKey = getMonthKey(targetMonth);
+    const newFiles: PendingFile[] = files.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       size: file.size,
       file,
       status: "pending" as const,
     }));
-    setFiles((prev) => [...prev, ...uploadFiles]);
-  };
 
-  const removeFile = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
-  };
+    setPendingFilesByMonth((prev) => ({
+      ...prev,
+      [monthKey]: [...(prev[monthKey] || []), ...newFiles],
+    }));
+  }, []);
+
+  const removeFileFromMonth = useCallback((monthKey: string, fileId: string) => {
+    setPendingFilesByMonth((prev) => ({
+      ...prev,
+      [monthKey]: (prev[monthKey] || []).filter((f) => f.id !== fileId),
+    }));
+  }, []);
 
   const extractFileContent = async (file: File): Promise<string> => {
     const extension = file.name.split(".").pop()?.toLowerCase();
@@ -101,7 +109,6 @@ export function useFileUpload(isInvestment: boolean = false) {
       return await extractPdfText(file);
     }
 
-    // For other files, return the raw text if possible
     try {
       return await file.text();
     } catch {
@@ -109,7 +116,7 @@ export function useFileUpload(isInvestment: boolean = false) {
     }
   };
 
-  const processFiles = async () => {
+  const processFilesForMonth = useCallback(async (targetMonth: Date) => {
     if (!user) {
       toast({
         title: "Error",
@@ -119,18 +126,26 @@ export function useFileUpload(isInvestment: boolean = false) {
       return;
     }
 
-    const pendingFiles = files.filter((f) => f.status === "pending");
+    const monthKey = getMonthKey(targetMonth);
+    const pendingFiles = (pendingFilesByMonth[monthKey] || []).filter(
+      (f) => f.status === "pending"
+    );
+    
     if (pendingFiles.length === 0) return;
 
+    // Format target_month as first day of month (YYYY-MM-DD)
+    const targetMonthStr = `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`;
+
     for (const uploadFile of pendingFiles) {
-      setFiles((prev) =>
-        prev.map((f) =>
+      // Update status to processing
+      setPendingFilesByMonth((prev) => ({
+        ...prev,
+        [monthKey]: (prev[monthKey] || []).map((f) =>
           f.id === uploadFile.id ? { ...f, status: "processing" as const } : f
-        )
-      );
+        ),
+      }));
 
       try {
-        // Extract file content
         const fileContent = await extractFileContent(uploadFile.file);
         
         if (!fileContent.trim()) {
@@ -145,11 +160,9 @@ export function useFileUpload(isInvestment: boolean = false) {
 
         if (uploadError) {
           console.error("Storage upload error:", uploadError);
-          // Continue even if storage fails - we can still process the content
         }
 
-        // Create upload record - use created_at month as target_month for legacy uploads
-        const targetMonthStr = new Date().toISOString().slice(0, 7) + '-01';
+        // Create upload record with target_month
         const { data: uploadRecord, error: insertError } = await supabase
           .from("uploads")
           .insert({
@@ -166,10 +179,9 @@ export function useFileUpload(isInvestment: boolean = false) {
 
         if (insertError) throw insertError;
 
-        // Call appropriate edge function based on type
-        const functionName = isInvestment ? "process-investment-file" : "process-financial-file";
+        // Call edge function
         const { data, error } = await supabase.functions.invoke(
-          functionName,
+          "process-financial-file",
           {
             body: {
               fileContent,
@@ -183,36 +195,23 @@ export function useFileUpload(isInvestment: boolean = false) {
 
         const stats = data.stats;
         
-        setFiles((prev) =>
-          prev.map((f) =>
+        // Update to completed
+        setPendingFilesByMonth((prev) => ({
+          ...prev,
+          [monthKey]: (prev[monthKey] || []).map((f) =>
             f.id === uploadFile.id
-              ? {
-                  ...f,
-                  status: "completed" as const,
-                  transactionsCount: stats?.newTransactions || 0,
-                  stats,
-                }
+              ? { ...f, status: "completed" as const, transactionsCount: stats?.newTransactions || 0 }
               : f
-          )
-        );
+          ),
+        }));
 
-        // Build detailed message
-        let description: string;
-        if (isInvestment) {
-          const newCount = stats?.newInvestments || 0;
-          description = `${newCount} inversiones procesadas`;
-          if (stats?.deposits > 0) description += ` (${stats.deposits} depósitos`;
-          if (stats?.withdrawals > 0) description += `, ${stats.withdrawals} retiros)`;
-          else if (stats?.deposits > 0) description += ')';
-          if (stats?.duplicatesIgnored > 0) description += `, ${stats.duplicatesIgnored} duplicados`;
-        } else {
-          description = `${stats?.newTransactions || 0} transacciones nuevas`;
-          if (stats?.duplicatesIgnored > 0) {
-            description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
-          }
-          if (stats?.transfersDetected > 0) {
-            description += `, ${stats.transfersDetected} transferencias internas`;
-          }
+        // Build message
+        let description = `${stats?.newTransactions || 0} transacciones nuevas`;
+        if (stats?.duplicatesIgnored > 0) {
+          description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
+        }
+        if (stats?.transfersDetected > 0) {
+          description += `, ${stats.transfersDetected} transferencias internas`;
         }
 
         toast({
@@ -221,15 +220,10 @@ export function useFileUpload(isInvestment: boolean = false) {
         });
 
         // Refresh data
-        if (isInvestment) {
-          queryClient.invalidateQueries({ queryKey: ["investments"] });
-          queryClient.invalidateQueries({ queryKey: ["investment_accounts"] });
-        } else {
-          queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        }
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
         queryClient.invalidateQueries({ queryKey: ["uploads"] });
         
-        // Run integrity check after processing
+        // Run integrity check
         try {
           const { data: integrityData } = await supabase.functions.invoke(
             "check-data-integrity",
@@ -239,26 +233,32 @@ export function useFileUpload(isInvestment: boolean = false) {
           if (integrityData?.stats?.duplicatesRemoved > 0 || integrityData?.stats?.transfersLinked > 0) {
             toast({
               title: "Integridad verificada",
-              description: `${integrityData.stats.duplicatesRemoved} duplicados globales eliminados, ${integrityData.stats.transfersLinked} transferencias vinculadas`,
+              description: `${integrityData.stats.duplicatesRemoved} duplicados eliminados, ${integrityData.stats.transfersLinked} transferencias vinculadas`,
             });
             queryClient.invalidateQueries({ queryKey: ["transactions"] });
           }
         } catch (integrityError) {
           console.error("Integrity check error:", integrityError);
         }
+
+        // Remove completed file from pending after a delay
+        setTimeout(() => {
+          setPendingFilesByMonth((prev) => ({
+            ...prev,
+            [monthKey]: (prev[monthKey] || []).filter((f) => f.id !== uploadFile.id),
+          }));
+        }, 2000);
+
       } catch (error: any) {
         console.error("Error processing file:", error);
-        setFiles((prev) =>
-          prev.map((f) =>
+        setPendingFilesByMonth((prev) => ({
+          ...prev,
+          [monthKey]: (prev[monthKey] || []).map((f) =>
             f.id === uploadFile.id
-              ? {
-                  ...f,
-                  status: "error" as const,
-                  error: error.message || "Error desconocido",
-                }
+              ? { ...f, status: "error" as const, error: error.message || "Error desconocido" }
               : f
-          )
-        );
+          ),
+        }));
 
         toast({
           title: "Error al procesar",
@@ -267,20 +267,24 @@ export function useFileUpload(isInvestment: boolean = false) {
         });
       }
     }
-  };
+  }, [user, pendingFilesByMonth, toast, queryClient]);
 
-  const clearCompleted = () => {
-    setFiles((prev) => prev.filter((f) => f.status !== "completed"));
-  };
+  const isProcessingMonth = useCallback((monthKey: string): boolean => {
+    return (pendingFilesByMonth[monthKey] || []).some((f) => f.status === "processing");
+  }, [pendingFilesByMonth]);
+
+  const getPendingCountForMonth = useCallback((monthKey: string): number => {
+    return (pendingFilesByMonth[monthKey] || []).filter(
+      (f) => f.status === "pending" || f.status === "processing"
+    ).length;
+  }, [pendingFilesByMonth]);
 
   return {
-    files,
-    addFiles,
-    removeFile,
-    processFiles,
-    clearCompleted,
-    hasFiles: files.length > 0,
-    hasPending: files.some((f) => f.status === "pending"),
-    isProcessing: files.some((f) => f.status === "processing"),
+    pendingFilesByMonth,
+    addFilesForMonth,
+    removeFileFromMonth,
+    processFilesForMonth,
+    isProcessingMonth,
+    getPendingCountForMonth,
   };
 }
