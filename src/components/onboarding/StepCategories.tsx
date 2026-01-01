@@ -76,9 +76,17 @@ export function StepCategories({ data, updateData }: StepCategoriesProps) {
         })}
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Selected: {data.categories.length} categories
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Selected: {data.categories.length} categories
+        </p>
+      </div>
+
+      <div className="p-4 rounded-lg bg-muted/50">
+        <p className="text-sm text-muted-foreground">
+          🎉 Almost done! Click "Get Started" to begin tracking your finances.
+        </p>
+      </div>
     </div>
   );
 }
