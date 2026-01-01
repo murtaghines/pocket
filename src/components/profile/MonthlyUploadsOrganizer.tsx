@@ -59,7 +59,7 @@ export function MonthlyUploadsOrganizer() {
   }, [uploads]);
 
   const handleLoadMore = () => {
-    setMonthsToShow((prev) => prev + 6);
+    setMonthsToShow((prev) => prev + 3);
   };
 
   if (isLoading) {
