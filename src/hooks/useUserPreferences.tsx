@@ -9,7 +9,6 @@ export interface UserPreferences {
   base_currency: string;
   locale: string;
   language: string;
-  date_format: string;
   country?: string;
   selected_categories?: string[];
   onboarding_completed?: boolean;
@@ -23,29 +22,20 @@ function detectBrowserLanguage(): string {
 }
 
 function detectDefaultCurrency(): string {
-  // Try to detect from timezone
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
   
-  // Map timezones to currencies
   if (timezone.includes('Buenos_Aires') || timezone.includes('Argentina')) return 'ARS';
   if (timezone.includes('Mexico')) return 'MXN';
   if (timezone.includes('Bogota') || timezone.includes('Colombia')) return 'COP';
   if (timezone.includes('Santiago') || timezone.includes('Chile')) return 'CLP';
   if (timezone.includes('Sao_Paulo') || timezone.includes('Brazil')) return 'BRL';
-  if (timezone.includes('New_York') || timezone.includes('Los_Angeles') || timezone.includes('Chicago') || timezone.includes('America/')) {
-    // Check if it's a Latin American timezone
-    if (timezone.includes('Lima') || timezone.includes('Peru')) return 'USD'; // Peru uses USD often
-    if (!timezone.includes('Argentina') && !timezone.includes('Mexico') && !timezone.includes('Bogota') && !timezone.includes('Santiago') && !timezone.includes('Sao_Paulo')) {
-      return 'USD';
-    }
-  }
+  if (timezone.includes('New_York') || timezone.includes('Los_Angeles') || timezone.includes('Chicago')) return 'USD';
   if (timezone.includes('London')) return 'GBP';
   if (timezone.includes('Europe/')) return 'EUR';
   if (timezone.includes('Tokyo') || timezone.includes('Japan')) return 'JPY';
   if (timezone.includes('Sydney') || timezone.includes('Australia')) return 'AUD';
   if (timezone.includes('Toronto') || timezone.includes('Canada')) return 'CAD';
   
-  // Default to EUR if we can't detect
   return 'EUR';
 }
 
@@ -65,7 +55,7 @@ export function useUserPreferences() {
       
       try {
         const { data, error } = await supabase
-          .from('user_preferences' as any)
+          .from('user_preferences')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
@@ -82,11 +72,10 @@ export function useUserPreferences() {
             base_currency: browserDefaults.currency,
             locale: browserDefaults.language === 'en' ? 'en-US' : browserDefaults.language === 'pt' ? 'pt-BR' : 'es-ES',
             language: browserDefaults.language,
-            date_format: browserDefaults.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy',
           };
           
           const { data: created, error: createError } = await supabase
-            .from('user_preferences' as any)
+            .from('user_preferences')
             .insert(newPrefs)
             .select()
             .single();
@@ -96,10 +85,10 @@ export function useUserPreferences() {
             return null;
           }
           
-          return created as unknown as UserPreferences;
+          return created as UserPreferences;
         }
         
-        return data as unknown as UserPreferences;
+        return data as UserPreferences;
       } catch (err) {
         console.error('Preferences error:', err);
         return null;
@@ -113,15 +102,45 @@ export function useUserPreferences() {
     mutationFn: async (updates: Partial<UserPreferences>): Promise<UserPreferences> => {
       if (!user) throw new Error('User not authenticated');
       
+      // Check if preferences exist first
+      const { data: existing } = await supabase
+        .from('user_preferences')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (!existing) {
+        // Create new preferences with updates
+        const newPrefs = {
+          user_id: user.id,
+          base_currency: updates.base_currency || browserDefaults.currency,
+          locale: updates.locale || 'en-US',
+          language: updates.language || 'en',
+          country: updates.country,
+          selected_categories: updates.selected_categories,
+          onboarding_completed: updates.onboarding_completed,
+        };
+        
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .insert(newPrefs)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return data as UserPreferences;
+      }
+      
+      // Update existing preferences
       const { data, error } = await supabase
-        .from('user_preferences' as any)
+        .from('user_preferences')
         .update(updates)
         .eq('user_id', user.id)
         .select()
         .single();
       
       if (error) throw error;
-      return data as unknown as UserPreferences;
+      return data as UserPreferences;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_preferences', user?.id] });
@@ -135,7 +154,6 @@ export function useUserPreferences() {
     base_currency: browserDefaults.currency,
     locale: browserDefaults.language === 'en' ? 'en-US' : browserDefaults.language === 'pt' ? 'pt-BR' : 'es-ES',
     language: browserDefaults.language,
-    date_format: browserDefaults.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
