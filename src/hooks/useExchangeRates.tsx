@@ -56,20 +56,31 @@ export function useExchangeRates(baseCurrency: string = 'EUR') {
     toCurrency: string
   ): number => {
     if (fromCurrency === toCurrency) return amount;
-    if (!rates) return amount;
+    if (!rates || Object.keys(rates).length === 0) return amount;
 
-    // If we have direct rate
+    // Both currencies are the same as base
+    if (fromCurrency === baseCurrency && toCurrency === baseCurrency) {
+      return amount;
+    }
+
+    // Converting from base currency to target
     if (fromCurrency === baseCurrency && rates[toCurrency]) {
       return amount * rates[toCurrency];
     }
 
-    // If we need to convert through base currency
+    // Converting from source to base currency
+    if (toCurrency === baseCurrency && rates[fromCurrency]) {
+      return amount / rates[fromCurrency];
+    }
+
+    // Converting between two non-base currencies (through base)
     if (rates[fromCurrency] && rates[toCurrency]) {
       const amountInBase = amount / rates[fromCurrency];
       return amountInBase * rates[toCurrency];
     }
 
     // Fallback: return original amount
+    console.warn(`No rate found for ${fromCurrency} -> ${toCurrency}`);
     return amount;
   };
 
