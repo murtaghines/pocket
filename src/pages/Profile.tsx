@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
+import { PeriodManager } from "@/components/dashboard/PeriodManager";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocalization } from "@/hooks/useLocalization";
-import { User, Mail, Calendar, LogOut, FileText, TrendingUp, Settings } from "lucide-react";
+import { User, Mail, Calendar, LogOut, FileText, TrendingUp, CalendarCheck } from "lucide-react";
 
 export default function Profile() {
   const { user, signOut } = useAuth();
@@ -72,8 +73,13 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            {/* Preferences */}
+            {/* Period Manager */}
             <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+              <PeriodManager />
+            </div>
+
+            {/* Preferences */}
+            <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
               <PreferencesForm />
             </div>
           </div>

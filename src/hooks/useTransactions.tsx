@@ -4,37 +4,62 @@ import { useAuth } from "./useAuth";
 import type { Transaction, MonthlyData, Category } from "@/lib/mockData";
 import { categoryLabels, categoryColors } from "@/lib/mockData";
 import { isInvestmentMovementDescription } from "@/lib/investmentDetection";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppDomain = Database["public"]["Enums"]["app_domain"];
 
 interface DbTransaction {
   id: string;
   user_id: string;
   upload_id: string | null;
+  import_id: string | null;
+  period_id: string | null;
   date: string;
   description: string;
+  description_norm: string | null;
   amount: number;
+  amount_base: number | null;
   type: "income" | "expense" | "transfer";
+  tx_type: string | null;
   category: string;
+  category_id: string | null;
   bank: string | null;
+  currency: string | null;
   original_text: string | null;
   created_at: string;
   transaction_hash: string | null;
+  fingerprint: string | null;
   linked_transaction_id: string | null;
+  domain: AppDomain | null;
 }
 
-export function useTransactions() {
+interface UseTransactionsOptions {
+  domain?: AppDomain;
+  periodId?: string;
+}
+
+export function useTransactions(options: UseTransactionsOptions = {}) {
+  const { domain = "CASHFLOW", periodId } = options;
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: transactions = [], isLoading, error } = useQuery({
-    queryKey: ["transactions", user?.id],
+    queryKey: ["transactions", user?.id, domain, periodId],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("transactions")
         .select("*")
         .eq("user_id", user.id)
+        .eq("domain", domain)
         .order("date", { ascending: false });
+
+      if (periodId) {
+        query = query.eq("period_id", periodId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -48,9 +73,9 @@ export function useTransactions() {
         return {
           id: t.id,
           date: t.date,
-          description: t.description,
-          amount: t.amount,
-          currency: "EUR",
+          description: t.description_norm || t.description,
+          amount: t.amount_base || t.amount,
+          currency: t.currency || "EUR",
           type: t.type,
           category: normalizedCategory,
           account: "Cuenta Principal",
