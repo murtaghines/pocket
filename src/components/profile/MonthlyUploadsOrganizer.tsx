@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar, ChevronDown, FolderOpen } from "lucide-react";
 import { useUploads } from "@/hooks/useUploads";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
@@ -95,26 +94,24 @@ export function MonthlyUploadsOrganizer() {
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
-        <ScrollArea className="max-h-[500px] pr-2">
-          <div className="space-y-3">
-            {monthSlots.map((slot) => (
-              <MonthUploadSlot
-                key={slot.key}
-                monthKey={slot.key}
-                monthLabel={slot.label}
-                monthDate={slot.date}
-                uploads={uploadsByMonth[slot.key] || []}
-                onAddFiles={addFilesForMonth}
-                onProcessFiles={processFilesForMonth}
-                onDeleteUpload={deleteUpload}
-                isProcessing={isProcessingMonth(slot.key)}
-                hasPendingFiles={getPendingCountForMonth(slot.key) > 0}
-                pendingFilesCount={getPendingCountForMonth(slot.key)}
-                isDeleting={isDeleting}
-              />
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="space-y-3">
+          {monthSlots.map((slot) => (
+            <MonthUploadSlot
+              key={slot.key}
+              monthKey={slot.key}
+              monthLabel={slot.label}
+              monthDate={slot.date}
+              uploads={uploadsByMonth[slot.key] || []}
+              onAddFiles={addFilesForMonth}
+              onProcessFiles={processFilesForMonth}
+              onDeleteUpload={deleteUpload}
+              isProcessing={isProcessingMonth(slot.key)}
+              hasPendingFiles={getPendingCountForMonth(slot.key) > 0}
+              pendingFilesCount={getPendingCountForMonth(slot.key)}
+              isDeleting={isDeleting}
+            />
+          ))}
+        </div>
 
         <Button 
           variant="outline" 
