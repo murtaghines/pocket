@@ -63,19 +63,6 @@ export function Header() {
                 Inversiones
               </Button>
             </Link>
-            <Link to="/profile">
-              <Button 
-                variant={isActive('/profile') ? 'secondary' : 'ghost'} 
-                size="sm"
-                className={cn(
-                  "gap-2",
-                  isActive('/profile') && "bg-primary/10 text-primary"
-                )}
-              >
-                <User className="w-4 h-4" />
-                Perfil
-              </Button>
-            </Link>
           </nav>
         </div>
 
@@ -92,11 +79,6 @@ export function Header() {
                 <PiggyBank className="w-5 h-5" />
               </Button>
             </Link>
-            <Link to="/profile">
-              <Button variant={isActive('/profile') ? 'secondary' : 'ghost'} size="icon">
-                <User className="w-5 h-5" />
-              </Button>
-            </Link>
           </div>
           
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
@@ -105,9 +87,15 @@ export function Header() {
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <Link to="/profile">
+            <Button 
+              variant={isActive('/profile') ? 'secondary' : 'ghost'} 
+              size="icon"
+              className={cn(isActive('/profile') && "bg-primary/10 text-primary")}
+            >
+              <User className="w-5 h-5" />
+            </Button>
+          </Link>
         </div>
       </div>
     </header>

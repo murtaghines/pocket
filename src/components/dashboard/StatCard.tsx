@@ -61,7 +61,7 @@ export function StatCard({
             "text-3xl font-display font-bold tracking-tight",
             type === 'income' && "text-success",
             type === 'expense' && "text-destructive",
-            type === 'balance' && "text-foreground",
+            type === 'balance' && "text-muted-foreground",
           )}>
             {value}
           </p>

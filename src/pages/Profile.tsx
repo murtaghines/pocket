@@ -1,11 +1,12 @@
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { UploadsManager } from "@/components/dashboard/UploadsManager";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Mail, Calendar } from "lucide-react";
+import { User, Mail, Calendar, LogOut } from "lucide-react";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('es-ES', {
@@ -59,6 +60,16 @@ export default function Profile() {
                 </div>
               </div>
             )}
+            <div className="pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={signOut}
+                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="w-4 h-4" />
+                Cerrar sesión
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
