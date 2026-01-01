@@ -63,17 +63,27 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     }
   };
 
+  const getLocaleFromLanguage = (lang: string) => {
+    const localeMap: Record<string, string> = {
+      en: 'en-US',
+      es: 'es-ES',
+      pt: 'pt-BR',
+      fr: 'fr-FR',
+      it: 'it-IT',
+      de: 'de-DE',
+    };
+    return localeMap[lang] || 'en-US';
+  };
+
   const handleComplete = async () => {
     setSaving(true);
     try {
-      const locale = data.language === 'en' ? 'en-US' : data.language === 'pt' ? 'pt-BR' : 'es-ES';
-      
       await updatePreferences({
         country: data.country,
         base_currency: data.currency,
         selected_categories: data.categories,
         language: data.language,
-        locale,
+        locale: getLocaleFromLanguage(data.language),
         onboarding_completed: true,
       } as any);
 
@@ -97,13 +107,13 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return !!data.country;
-      case 2:
-        return !!data.currency;
-      case 3:
-        return data.categories.length > 0;
-      case 4:
         return !!data.language;
+      case 2:
+        return !!data.country;
+      case 3:
+        return !!data.currency;
+      case 4:
+        return data.categories.length > 0;
       default:
         return true;
     }
@@ -112,13 +122,13 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <StepCountry data={data} updateData={updateData} />;
-      case 2:
-        return <StepCurrency data={data} updateData={updateData} />;
-      case 3:
-        return <StepCategories data={data} updateData={updateData} />;
-      case 4:
         return <StepLanguage data={data} updateData={updateData} />;
+      case 2:
+        return <StepCountry data={data} updateData={updateData} />;
+      case 3:
+        return <StepCurrency data={data} updateData={updateData} />;
+      case 4:
+        return <StepCategories data={data} updateData={updateData} />;
       default:
         return null;
     }
@@ -130,9 +140,9 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         <DialogHeader>
           <DialogTitle className="text-2xl font-display">
             {step === 1 && 'Welcome to FinanceFlow! 👋'}
-            {step === 2 && 'Choose Your Currency'}
-            {step === 3 && 'Select Your Categories'}
-            {step === 4 && 'Language Preference'}
+            {step === 2 && 'Your Region'}
+            {step === 3 && 'Base Currency'}
+            {step === 4 && 'Expense Categories'}
           </DialogTitle>
         </DialogHeader>
 

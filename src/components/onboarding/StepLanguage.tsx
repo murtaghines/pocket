@@ -14,18 +14,18 @@ export function StepLanguage({ data, updateData }: StepLanguageProps) {
     <div className="space-y-6">
       <div className="flex items-center gap-3 text-muted-foreground">
         <Languages className="w-5 h-5" />
-        <p>Choose your preferred language for the interface. You can change this later in your profile settings.</p>
+        <p>Choose your preferred language for the interface. You can change this later in settings.</p>
       </div>
 
       <RadioGroup
         value={data.language}
         onValueChange={(value) => updateData({ language: value })}
-        className="space-y-3"
+        className="space-y-2"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
           <div
             key={lang.code}
-            className={`flex items-center space-x-4 p-4 rounded-lg border transition-colors cursor-pointer ${
+            className={`flex items-center space-x-4 p-3 rounded-lg border transition-colors cursor-pointer ${
               data.language === lang.code
                 ? 'bg-primary/5 border-primary/20'
                 : 'bg-background hover:bg-muted/50'
@@ -40,12 +40,6 @@ export function StepLanguage({ data, updateData }: StepLanguageProps) {
           </div>
         ))}
       </RadioGroup>
-
-      <div className="p-4 rounded-lg bg-muted/50">
-        <p className="text-sm text-muted-foreground">
-          🎉 You're all set! Click "Get Started" to begin tracking your finances.
-        </p>
-      </div>
     </div>
   );
 }

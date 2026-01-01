@@ -14,11 +14,11 @@ export function StepCurrency({ data, updateData }: StepCurrencyProps) {
     <div className="space-y-6">
       <div className="flex items-center gap-3 text-muted-foreground">
         <Banknote className="w-5 h-5" />
-        <p>Choose the currency you want to use for your financial overview. All amounts will be converted to this currency.</p>
+        <p>Select your <strong>base currency</strong> — the primary currency you'll use to upload transactions and compare values.</p>
       </div>
 
       <div className="space-y-3">
-        <Label htmlFor="currency">Display Currency</Label>
+        <Label htmlFor="currency">Base Currency</Label>
         <Select 
           value={data.currency} 
           onValueChange={(value) => updateData({ currency: value })}
@@ -40,11 +40,15 @@ export function StepCurrency({ data, updateData }: StepCurrencyProps) {
         </Select>
       </div>
 
-      <div className="p-4 rounded-lg bg-muted/50">
+      <div className="p-4 rounded-lg bg-muted/50 space-y-2">
         <p className="text-sm">
-          <strong>Note:</strong> Your uploaded bank statements can be in any currency. 
-          We'll automatically convert amounts to {data.currency} for a unified view.
+          <strong>💡 How it works:</strong>
         </p>
+        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+          <li>All exchange rate comparisons will use <strong>{data.currency}</strong> as reference</li>
+          <li>You can view your dashboard in any currency later</li>
+          <li>Bank statements can be uploaded in any currency</li>
+        </ul>
       </div>
     </div>
   );
