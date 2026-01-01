@@ -78,39 +78,44 @@ export default function Index() {
         {/* Dashboard with Data */}
         {!isLoading && hasData && (
           <>
-            {/* Section 1: KPIs + Upload + Investment Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-              <StatCard
-                title={`Ingresos ${currentMonth.month || 'Mes'}`}
-                value={formatCurrency(currentMonth.income)}
-                change={incomeChange}
-                changeLabel="vs mes anterior"
-                type="income"
-                icon={<TrendingUp className="w-5 h-5" />}
-                delay={0}
-              />
-              <StatCard
-                title={`Gastos ${currentMonth.month || 'Mes'}`}
-                value={formatCurrency(currentMonth.expenses)}
-                change={expenseChange}
-                changeLabel="vs mes anterior"
-                type="expense"
-                icon={<TrendingDown className="w-5 h-5" />}
-                delay={100}
-                invertChangeColor={true}
-              />
-              <StatCard
-                title={`Balance ${currentMonth.month || 'Mes'}`}
-                value={formatCurrency(currentMonth.balance)}
-                change={previousMonth.balance !== 0 ? Math.round(((currentMonth.balance - previousMonth.balance) / Math.abs(previousMonth.balance)) * 100) : 0}
-                changeLabel="vs mes anterior"
-                type={currentMonth.balance >= 0 ? 'income' : 'expense'}
-                icon={<Wallet className="w-5 h-5" />}
-                delay={200}
-              />
-              <InvestmentSummaryCard />
-              <UploadCard />
-            </div>
+        {/* Month Title */}
+        <h3 className="text-xl font-semibold mb-4 capitalize">
+          {currentMonth.month || currentMonthName}
+        </h3>
+
+        {/* Section 1: KPIs + Upload + Investment Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <StatCard
+            title="Ingresos"
+            value={formatCurrency(currentMonth.income)}
+            change={incomeChange}
+            changeLabel="vs mes anterior"
+            type="income"
+            icon={<TrendingUp className="w-5 h-5" />}
+            delay={0}
+          />
+          <StatCard
+            title="Gastos"
+            value={formatCurrency(currentMonth.expenses)}
+            change={expenseChange}
+            changeLabel="vs mes anterior"
+            type="expense"
+            icon={<TrendingDown className="w-5 h-5" />}
+            delay={100}
+            invertChangeColor={true}
+          />
+          <StatCard
+            title="Balance"
+            value={formatCurrency(currentMonth.balance)}
+            change={previousMonth.balance !== 0 ? Math.round(((currentMonth.balance - previousMonth.balance) / Math.abs(previousMonth.balance)) * 100) : 0}
+            changeLabel="vs mes anterior"
+            type="balance"
+            icon={<Wallet className="w-5 h-5" />}
+            delay={200}
+          />
+          <InvestmentSummaryCard />
+          <UploadCard />
+        </div>
 
             {/* Section 2: Evolución Mensual + Comparación Mes Anterior */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">

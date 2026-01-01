@@ -54,6 +54,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [bankFilter, setBankFilter] = useState<string>("all");
+  const [movementFilter, setMovementFilter] = useState<string>("all");
 
   const uniqueBanks = [...new Set(transactions.map(t => t.bank))];
   const categories = Object.keys(categoryLabels) as Category[];
@@ -62,7 +63,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = categoryFilter === "all" || t.category === categoryFilter;
     const matchesBank = bankFilter === "all" || t.bank === bankFilter;
-    return matchesSearch && matchesCategory && matchesBank;
+    const movementType = getMovementType(t);
+    const matchesMovement = movementFilter === "all" || movementType === movementFilter;
+    return matchesSearch && matchesCategory && matchesBank && matchesMovement;
   });
 
   const formatDate = (dateStr: string) => {
@@ -97,6 +100,18 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               className="pl-9"
             />
           </div>
+          <Select value={movementFilter} onValueChange={setMovementFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Movimiento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="income">Ingreso</SelectItem>
+              <SelectItem value="expense">Gasto</SelectItem>
+              <SelectItem value="transfer">Transferencia</SelectItem>
+              <SelectItem value="investment">Inversión</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Categoría" />

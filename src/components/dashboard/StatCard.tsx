@@ -7,7 +7,7 @@ interface StatCardProps {
   value: string;
   change?: number;
   changeLabel?: string;
-  type?: 'income' | 'expense' | 'neutral';
+  type?: 'income' | 'expense' | 'neutral' | 'balance';
   icon?: React.ReactNode;
   delay?: number;
   invertChangeColor?: boolean; // For expenses: increase is bad (red)
@@ -30,9 +30,12 @@ export function StatCard({
   const isPositive = invertChangeColor ? rawNegative : rawPositive;
   const isNegative = invertChangeColor ? rawPositive : rawNegative;
 
+  // For balance type, use neutral card styling
+  const cardVariant = type === 'balance' ? 'neutral' : type;
+
   return (
     <Card 
-      variant={type}
+      variant={cardVariant}
       className={cn(
         "animate-slide-up",
       )}
@@ -46,7 +49,7 @@ export function StatCard({
               "p-2 rounded-lg",
               type === 'income' && "bg-success/20 text-success",
               type === 'expense' && "bg-destructive/20 text-destructive",
-              type === 'neutral' && "bg-muted text-muted-foreground",
+              (type === 'neutral' || type === 'balance') && "bg-muted text-muted-foreground",
             )}>
               {icon}
             </div>
@@ -58,6 +61,7 @@ export function StatCard({
             "text-3xl font-display font-bold tracking-tight",
             type === 'income' && "text-success",
             type === 'expense' && "text-destructive",
+            type === 'balance' && "text-foreground",
           )}>
             {value}
           </p>
