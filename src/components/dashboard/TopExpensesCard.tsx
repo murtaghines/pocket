@@ -8,8 +8,9 @@ interface TopExpensesCardProps {
 }
 
 export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
+  // Exclude investment movements from top expenses (they're neutral movements)
   const topExpenses = transactions
-    .filter(t => t.type === 'expense')
+    .filter(t => t.type === 'expense' && t.category !== 'investment')
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
     .slice(0, 5);
 
