@@ -1,5 +1,8 @@
 project_id = "oqngrwevaazcxeotyrdg"
 
+[functions.get-exchange-rates]
+verify_jwt = false
+
 [functions.process-financial-file]
 verify_jwt = false
 

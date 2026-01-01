@@ -6,17 +6,17 @@ export interface Currency {
 
 export const SUPPORTED_CURRENCIES: Currency[] = [
   { code: 'EUR', name: 'Euro', symbol: '€' },
-  { code: 'USD', name: 'Dólar estadounidense', symbol: '$' },
-  { code: 'GBP', name: 'Libra esterlina', symbol: '£' },
-  { code: 'ARS', name: 'Peso argentino', symbol: '$' },
-  { code: 'MXN', name: 'Peso mexicano', symbol: '$' },
-  { code: 'COP', name: 'Peso colombiano', symbol: '$' },
-  { code: 'CLP', name: 'Peso chileno', symbol: '$' },
-  { code: 'BRL', name: 'Real brasileño', symbol: 'R$' },
-  { code: 'CHF', name: 'Franco suizo', symbol: 'CHF' },
-  { code: 'JPY', name: 'Yen japonés', symbol: '¥' },
-  { code: 'CAD', name: 'Dólar canadiense', symbol: 'C$' },
-  { code: 'AUD', name: 'Dólar australiano', symbol: 'A$' },
+  { code: 'USD', name: 'US Dollar', symbol: '$' },
+  { code: 'GBP', name: 'British Pound', symbol: '£' },
+  { code: 'ARS', name: 'Argentine Peso', symbol: '$' },
+  { code: 'MXN', name: 'Mexican Peso', symbol: '$' },
+  { code: 'COP', name: 'Colombian Peso', symbol: '$' },
+  { code: 'CLP', name: 'Chilean Peso', symbol: '$' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
 ];
 
 export const SUPPORTED_LANGUAGES = [
@@ -32,7 +32,7 @@ export function getLocaleForLanguage(language: string): string {
     'en': 'en-US',
     'pt': 'pt-BR',
   };
-  return localeMap[language] || 'es-ES';
+  return localeMap[language] || 'en-US';
 }
 
 // Map language to date-fns format pattern

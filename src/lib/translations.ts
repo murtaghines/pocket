@@ -299,6 +299,6 @@ export const translations: Translations = {
 };
 
 export function getTranslation(language: string, key: string): string {
-  const lang = translations[language] || translations['es'];
+  const lang = translations[language] || translations['en'];
   return lang[key] || key;
 }
