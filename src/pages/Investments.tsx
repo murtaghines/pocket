@@ -1,13 +1,14 @@
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useInvestments } from "@/hooks/useInvestments";
-import { Loader2, TrendingUp, Wallet, PiggyBank, Building2, Plus } from "lucide-react";
-import { UploadCard } from "@/components/dashboard/UploadCard";
+import { Loader2, TrendingUp, Wallet, PiggyBank, Building2, Upload } from "lucide-react";
 import { InvestmentAccountsManager } from "@/components/investments/InvestmentAccountsManager";
 import { InvestmentsByPlatform } from "@/components/investments/InvestmentsByPlatform";
 import { InvestmentsByAssetType } from "@/components/investments/InvestmentsByAssetType";
 import { InvestmentsHistory } from "@/components/investments/InvestmentsHistory";
 import { InvestmentsTable } from "@/components/investments/InvestmentsTable";
+import { Link } from "react-router-dom";
 
 export default function Investments() {
   const {
@@ -61,11 +62,17 @@ export default function Investments() {
           <div className="text-center py-12 mb-8">
             <PiggyBank className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Sin inversiones registradas</h3>
-            <p className="text-muted-foreground mb-6">
-              Sube un archivo de tu plataforma de inversión o añade tus cuentas manualmente.
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Ve a tu perfil para subir archivos de tu plataforma de inversión 
+              organizados por mes, o añade tus cuentas manualmente.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <UploadCard isInvestment />
+              <Link to="/profile">
+                <Button variant="gradient" size="lg">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Ir a Mi Perfil
+                </Button>
+              </Link>
             </div>
           </div>
         )}
@@ -140,9 +147,8 @@ export default function Investments() {
               </Card>
             </div>
 
-            {/* Section 2: Upload + Accounts Manager */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-              <UploadCard isInvestment />
+            {/* Section 2: Accounts Manager */}
+            <div className="mb-8">
               <InvestmentAccountsManager accounts={accounts} />
             </div>
 
