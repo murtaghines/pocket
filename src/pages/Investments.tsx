@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useInvestments } from "@/hooks/useInvestments";
+import { useLocalization } from "@/hooks/useLocalization";
 import { Loader2, TrendingUp, Wallet, PiggyBank, Building2, Upload } from "lucide-react";
 import { InvestmentAccountsManager } from "@/components/investments/InvestmentAccountsManager";
 import { InvestmentsByPlatform } from "@/components/investments/InvestmentsByPlatform";
@@ -24,10 +25,9 @@ export default function Investments() {
     monthlyHistory,
   } = useInvestments();
 
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+  const { formatCurrency, formatMonth, t } = useLocalization();
 
-  const currentMonthName = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const currentMonthName = formatMonth(new Date());
 
   // Calculate profit/loss
   const profitLoss = totalCurrentValue - netInvestedAllTime;
@@ -43,10 +43,10 @@ export default function Investments() {
         {/* Page Title */}
         <div className="mb-8 animate-fade-in">
           <h2 className="font-display text-3xl font-bold tracking-tight">
-            Inversiones y Ahorro
+            {t('investments.title')}
           </h2>
           <p className="text-muted-foreground mt-1">
-            Gestiona tus inversiones y cuentas de ahorro • {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)}
+            {t('investments.subtitle')} • {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)}
           </p>
         </div>
 
@@ -61,16 +61,15 @@ export default function Investments() {
         {!isLoading && !hasData && (
           <div className="text-center py-12 mb-8">
             <PiggyBank className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Sin inversiones registradas</h3>
+            <h3 className="text-xl font-semibold mb-2">{t('investments.no_data')}</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Ve a tu perfil para subir archivos de tu plataforma de inversión 
-              organizados por mes, o añade tus cuentas manualmente.
+              {t('investments.upload_prompt')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/profile">
                 <Button variant="gradient" size="lg">
                   <Upload className="w-4 h-4 mr-2" />
-                  Ir a Mi Perfil
+                  {t('dashboard.go_to_profile')}
                 </Button>
               </Link>
             </div>
@@ -85,7 +84,7 @@ export default function Investments() {
               <Card className="animate-fade-in">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Invertido Este Mes
+                    {t('investments.this_month')}
                   </CardTitle>
                   <TrendingUp className="w-5 h-5 text-primary" />
                 </CardHeader>
@@ -99,7 +98,7 @@ export default function Investments() {
               <Card className="animate-fade-in" style={{ animationDelay: '100ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Invertido
+                    {t('investments.total_invested')}
                   </CardTitle>
                   <PiggyBank className="w-5 h-5 text-blue-500" />
                 </CardHeader>
@@ -113,7 +112,7 @@ export default function Investments() {
               <Card className="animate-fade-in" style={{ animationDelay: '200ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Valor Actual
+                    {t('investments.current_value')}
                   </CardTitle>
                   <Wallet className="w-5 h-5 text-green-500" />
                 </CardHeader>
@@ -132,7 +131,7 @@ export default function Investments() {
               <Card className="animate-fade-in" style={{ animationDelay: '300ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Plataformas
+                    {t('investments.platforms')}
                   </CardTitle>
                   <Building2 className="w-5 h-5 text-purple-500" />
                 </CardHeader>

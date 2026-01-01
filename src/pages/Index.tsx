@@ -13,6 +13,7 @@ import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryC
 import { MonthClosingBanner } from "@/components/dashboard/MonthClosingBanner";
 import { MonthStatusIndicator } from "@/components/dashboard/MonthStatusIndicator";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useLocalization } from "@/hooks/useLocalization";
 import { TrendingUp, TrendingDown, Wallet, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -26,6 +27,8 @@ export default function Index() {
     isLoading,
     hasData 
   } = useTransactions();
+  
+  const { formatCurrency, formatMonth, t } = useLocalization();
 
   const currentMonth = monthlyData[monthlyData.length - 1] || { month: '', income: 0, expenses: 0, balance: 0 };
   const previousMonth = monthlyData[monthlyData.length - 2] || { month: '', income: 0, expenses: 0, balance: 0 };
@@ -38,11 +41,8 @@ export default function Index() {
     ? Math.round(((currentMonth.expenses - previousMonth.expenses) / previousMonth.expenses) * 100)
     : 0;
 
-  const formatCurrency = (amount: number) => 
-    amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
-
-  // Get current month name in Spanish
-  const currentMonthName = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  // Get current month name
+  const currentMonthName = formatMonth(new Date());
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,10 +52,10 @@ export default function Index() {
         {/* Page Title */}
         <div className="mb-8 animate-fade-in">
           <h2 className="font-display text-3xl font-bold tracking-tight">
-            Dashboard
+            {t('dashboard.title')}
           </h2>
           <p className="text-muted-foreground mt-1">
-            Resumen de tus finanzas personales • {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)}
+            {t('dashboard.subtitle')} • {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)}
           </p>
         </div>
 
@@ -72,13 +72,12 @@ export default function Index() {
             <Upload className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Bienvenido a FinanceFlow</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Para comenzar, ve a tu perfil y sube los extractos de tu banco. 
-              Vuelve aquí para ver tu análisis financiero.
+              {t('dashboard.upload_prompt')}
             </p>
             <Link to="/profile">
               <Button variant="gradient" size="lg">
                 <Upload className="w-4 h-4 mr-2" />
-                Ir a Mi Perfil
+                {t('dashboard.go_to_profile')}
               </Button>
             </Link>
           </div>
@@ -98,29 +97,29 @@ export default function Index() {
         {/* Section 1: KPIs + Investment Summary + Month Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard
-            title="Ingresos"
+            title={t('dashboard.income')}
             value={formatCurrency(currentMonth.income)}
             change={incomeChange}
-            changeLabel="vs mes anterior"
+            changeLabel={t('dashboard.vs_last_month')}
             type="income"
             icon={<TrendingUp className="w-5 h-5" />}
             delay={0}
           />
           <StatCard
-            title="Gastos"
+            title={t('dashboard.expenses')}
             value={formatCurrency(currentMonth.expenses)}
             change={expenseChange}
-            changeLabel="vs mes anterior"
+            changeLabel={t('dashboard.vs_last_month')}
             type="expense"
             icon={<TrendingDown className="w-5 h-5" />}
             delay={100}
             invertChangeColor={true}
           />
           <StatCard
-            title="Balance"
+            title={t('dashboard.balance')}
             value={formatCurrency(currentMonth.balance)}
             change={previousMonth.balance !== 0 ? Math.round(((currentMonth.balance - previousMonth.balance) / Math.abs(previousMonth.balance)) * 100) : 0}
-            changeLabel="vs mes anterior"
+            changeLabel={t('dashboard.vs_last_month')}
             type="balance"
             icon={<Wallet className="w-5 h-5" />}
             delay={200}
