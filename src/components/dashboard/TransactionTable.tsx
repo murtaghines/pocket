@@ -23,8 +23,8 @@ const categoryBadgeColors: Record<Category, string> = {
   travel: 'bg-category-travel/20 text-category-travel border-category-travel/30',
   other: 'bg-category-other/20 text-category-other border-category-other/30',
   income: 'bg-success/20 text-success border-success/30',
-  transfer: 'bg-purple-500/20 text-purple-500 border-purple-500/30',
-  investment: 'bg-muted text-muted-foreground border-muted-foreground/30',
+  transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
+  investment: 'bg-success/20 text-success border-success/30',
 };
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
@@ -141,17 +141,17 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           transaction.type === 'income'
                             ? "bg-success/20"
                             : transaction.category === 'investment'
-                            ? "bg-muted"
+                            ? "bg-success/20"
                             : transaction.type === 'transfer'
-                            ? "bg-purple-500/20"
+                            ? "bg-muted"
                             : "bg-destructive/20"
                         )}>
                           {transaction.type === 'income' ? (
                             <ArrowDownRight className="w-3 h-3 text-success" />
                           ) : transaction.category === 'investment' ? (
-                            <Minus className="w-3 h-3 text-muted-foreground" />
+                            <Minus className="w-3 h-3 text-success" />
                           ) : transaction.type === 'transfer' ? (
-                            <ArrowLeftRight className="w-3 h-3 text-purple-500" />
+                            <Minus className="w-3 h-3 text-muted-foreground" />
                           ) : (
                             <ArrowUpRight className="w-3 h-3 text-destructive" />
                           )}
@@ -179,11 +179,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                     <TableCell className={cn(
                       "text-right font-semibold tabular-nums",
                       transaction.type === 'income' ? "text-success"
-                        : transaction.category === 'investment' ? "text-muted-foreground"
-                        : transaction.type === 'transfer' ? "text-purple-500"
+                        : transaction.category === 'investment' ? "text-success"
+                        : transaction.type === 'transfer' ? "text-muted-foreground"
                         : "text-destructive"
                     )}>
-                      {transaction.type === 'income' ? '+' : transaction.category === 'investment' ? '-' : transaction.type === 'transfer' ? '↔' : '-'}
+                      {transaction.type === 'income' ? '+' : '-'}
                       {formatAmount(Math.abs(transaction.amount))}
                     </TableCell>
                   </TableRow>
