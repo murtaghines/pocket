@@ -24,7 +24,30 @@ const categoryBadgeColors: Record<Category, string> = {
   other: 'bg-category-other/20 text-category-other border-category-other/30',
   income: 'bg-success/20 text-success border-success/30',
   transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
-  investment: 'bg-success/20 text-success border-success/30',
+  investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+};
+
+type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
+
+const movementLabels: Record<MovementType, string> = {
+  income: 'Ingreso',
+  expense: 'Gasto',
+  transfer: 'Transferencia',
+  investment: 'Inversión',
+};
+
+const movementBadgeColors: Record<MovementType, string> = {
+  income: 'bg-success/20 text-success border-success/30',
+  expense: 'bg-destructive/20 text-destructive border-destructive/30',
+  transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
+  investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+};
+
+const getMovementType = (transaction: Transaction): MovementType => {
+  if (transaction.type === 'income') return 'income';
+  if (transaction.category === 'investment') return 'investment';
+  if (transaction.type === 'transfer' || transaction.category === 'transfer') return 'transfer';
+  return 'expense';
 };
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
@@ -110,6 +133,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <TableHead className="w-[80px]">Mes</TableHead>
                 <TableHead className="w-[90px]">Fecha</TableHead>
                 <TableHead>Descripción</TableHead>
+                <TableHead className="hidden lg:table-cell">Movimiento</TableHead>
                 <TableHead className="hidden md:table-cell">Categoría</TableHead>
                 <TableHead className="hidden sm:table-cell">Cuenta</TableHead>
                 <TableHead className="text-right">Importe</TableHead>
@@ -118,76 +142,91 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <TableBody>
               {filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No se encontraron transacciones
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredTransactions.map((transaction) => (
-                  <TableRow 
-                    key={transaction.id}
-                    className="hover:bg-muted/50 transition-colors"
-                  >
-                    <TableCell className="text-xs text-muted-foreground uppercase">
-                      {formatMonth(transaction.date)}
-                    </TableCell>
-                    <TableCell className="font-medium text-muted-foreground">
-                      {formatDate(transaction.date)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className={cn(
-                          "p-1.5 rounded-full flex-shrink-0",
-                          transaction.type === 'income'
-                            ? "bg-success/20"
-                            : transaction.category === 'investment'
-                            ? "bg-success/20"
-                            : transaction.type === 'transfer'
-                            ? "bg-muted"
-                            : "bg-destructive/20"
-                        )}>
-                          {transaction.type === 'income' ? (
-                            <ArrowDownRight className="w-3 h-3 text-success" />
-                          ) : transaction.category === 'investment' ? (
-                            <Minus className="w-3 h-3 text-success" />
-                          ) : transaction.type === 'transfer' ? (
-                            <Minus className="w-3 h-3 text-muted-foreground" />
-                          ) : (
-                            <ArrowUpRight className="w-3 h-3 text-destructive" />
-                          )}
+                filteredTransactions.map((transaction) => {
+                  const movementType = getMovementType(transaction);
+                  return (
+                    <TableRow 
+                      key={transaction.id}
+                      className="hover:bg-muted/50 transition-colors"
+                    >
+                      <TableCell className="text-xs text-muted-foreground uppercase">
+                        {formatMonth(transaction.date)}
+                      </TableCell>
+                      <TableCell className="font-medium text-muted-foreground">
+                        {formatDate(transaction.date)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            "p-1.5 rounded-full flex-shrink-0",
+                            movementType === 'income' ? "bg-success/20"
+                              : movementType === 'investment' ? "bg-blue-500/20"
+                              : movementType === 'transfer' ? "bg-muted"
+                              : "bg-destructive/20"
+                          )}>
+                            {movementType === 'income' ? (
+                              <ArrowDownRight className="w-3 h-3 text-success" />
+                            ) : movementType === 'investment' ? (
+                              <Minus className="w-3 h-3 text-blue-500" />
+                            ) : movementType === 'transfer' ? (
+                              <Minus className="w-3 h-3 text-muted-foreground" />
+                            ) : (
+                              <ArrowUpRight className="w-3 h-3 text-destructive" />
+                            )}
+                          </div>
+                          <span className="truncate">{transaction.description}</span>
                         </div>
-                        <span className="truncate">{transaction.description}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "font-normal",
-                          categoryBadgeColors[transaction.category]
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "font-normal",
+                            movementBadgeColors[movementType]
+                          )}
+                        >
+                          {movementLabels[movementType]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {movementType === 'transfer' ? (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        ) : (
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "font-normal",
+                              categoryBadgeColors[transaction.category]
+                            )}
+                          >
+                            {categoryLabels[transaction.category]}
+                          </Badge>
                         )}
-                      >
-                        {categoryLabels[transaction.category]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell text-muted-foreground">
-                      <div className="text-sm">
-                        <div>{transaction.bank}</div>
-                        <div className="text-xs opacity-70">{transaction.account}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell className={cn(
-                      "text-right font-semibold tabular-nums",
-                      transaction.type === 'income' ? "text-success"
-                        : transaction.category === 'investment' ? "text-success"
-                        : transaction.type === 'transfer' ? "text-muted-foreground"
-                        : "text-destructive"
-                    )}>
-                      {transaction.type === 'income' ? '+' : '-'}
-                      {formatAmount(Math.abs(transaction.amount))}
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-muted-foreground">
+                        <div className="text-sm">
+                          <div>{transaction.bank}</div>
+                          <div className="text-xs opacity-70">{transaction.account}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className={cn(
+                        "text-right font-semibold tabular-nums",
+                        movementType === 'income' ? "text-success"
+                          : movementType === 'investment' ? "text-blue-500"
+                          : movementType === 'transfer' ? "text-muted-foreground"
+                          : "text-destructive"
+                      )}>
+                        {movementType === 'income' ? '+' : '-'}
+                        {formatAmount(Math.abs(transaction.amount))}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

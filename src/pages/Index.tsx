@@ -7,7 +7,7 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { UploadCard } from "@/components/dashboard/UploadCard";
 import { UploadsManager } from "@/components/dashboard/UploadsManager";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
-import { BankDistributionChart } from "@/components/dashboard/BankDistributionChart";
+
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
 import { MonthComparisonCard } from "@/components/dashboard/MonthComparisonCard";
@@ -21,7 +21,6 @@ export default function Index() {
     transactions, 
     monthlyData, 
     categoryData, 
-    bankData, 
     summary, 
     isLoading,
     hasData 
@@ -125,10 +124,7 @@ export default function Index() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               <CategoryChart data={categoryData} />
               <TopExpensesCard transactions={transactions} />
-              <div className="flex flex-col gap-4">
-                <WeeklyComparisonChart />
-                <BankDistributionChart data={bankData} />
-              </div>
+              <WeeklyComparisonChart />
             </div>
 
             {/* Section 4: Balance y Ahorro */}
@@ -142,11 +138,6 @@ export default function Index() {
             {/* Section 5: Balance Anual */}
             <div className="mb-8">
               <YearlyBalanceChart data={monthlyData} />
-            </div>
-
-            {/* Uploads Manager */}
-            <div className="mb-8">
-              <UploadsManager />
             </div>
 
             {/* Transactions Table */}
