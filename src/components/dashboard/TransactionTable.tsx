@@ -47,6 +47,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
   };
 
+  const formatMonth = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+  };
+
   const formatAmount = (amount: number) => {
     return amount.toLocaleString('es-ES', { 
       style: 'currency', 
@@ -102,7 +107,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-[100px]">Fecha</TableHead>
+                <TableHead className="w-[80px]">Mes</TableHead>
+                <TableHead className="w-[90px]">Fecha</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead className="hidden md:table-cell">Categoría</TableHead>
                 <TableHead className="hidden sm:table-cell">Cuenta</TableHead>
@@ -112,7 +118,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <TableBody>
               {filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     No se encontraron transacciones
                   </TableCell>
                 </TableRow>
@@ -122,6 +128,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                     key={transaction.id}
                     className="hover:bg-muted/50 transition-colors"
                   >
+                    <TableCell className="text-xs text-muted-foreground uppercase">
+                      {formatMonth(transaction.date)}
+                    </TableCell>
                     <TableCell className="font-medium text-muted-foreground">
                       {formatDate(transaction.date)}
                     </TableCell>

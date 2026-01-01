@@ -10,6 +10,7 @@ interface StatCardProps {
   type?: 'income' | 'expense' | 'neutral';
   icon?: React.ReactNode;
   delay?: number;
+  invertChangeColor?: boolean; // For expenses: increase is bad (red)
 }
 
 export function StatCard({ 
@@ -19,10 +20,15 @@ export function StatCard({
   changeLabel,
   type = 'neutral',
   icon,
-  delay = 0 
+  delay = 0,
+  invertChangeColor = false
 }: StatCardProps) {
-  const isPositive = change && change > 0;
-  const isNegative = change && change < 0;
+  const rawPositive = change && change > 0;
+  const rawNegative = change && change < 0;
+  
+  // For expenses, invert the color logic (increase is bad)
+  const isPositive = invertChangeColor ? rawNegative : rawPositive;
+  const isNegative = invertChangeColor ? rawPositive : rawNegative;
 
   return (
     <Card 
@@ -67,7 +73,7 @@ export function StatCard({
                 isNegative && "text-destructive",
                 !isPositive && !isNegative && "text-muted-foreground",
               )}>
-                {isPositive && "+"}
+                {rawPositive && "+"}
                 {change}%
               </span>
               {changeLabel && (

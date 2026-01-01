@@ -25,18 +25,29 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const CustomLegend = ({ payload }: any) => {
+interface LegendEntry {
+  color: string;
+  value: string;
+  payload?: { value: number };
+}
+
+const CustomLegend = ({ payload, total }: { payload?: LegendEntry[]; total: number }) => {
   return (
     <div className="grid grid-cols-2 gap-2 mt-4">
-      {payload?.map((entry: any, index: number) => (
-        <div key={index} className="flex items-center gap-2 text-sm">
-          <div 
-            className="w-3 h-3 rounded-full flex-shrink-0"
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="text-muted-foreground truncate">{entry.value}</span>
-        </div>
-      ))}
+      {payload?.map((entry: LegendEntry, index: number) => {
+        const value = entry.payload?.value || 0;
+        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+        return (
+          <div key={index} className="flex items-center gap-2 text-sm">
+            <div 
+              className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-muted-foreground truncate">{entry.value}</span>
+            <span className="text-xs text-muted-foreground/70 ml-auto">{percentage}%</span>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -50,15 +61,15 @@ export function CategoryChart({ data }: CategoryChartProps) {
         <CardTitle className="text-lg">Gastos por Categoría</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
+        <div className="h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
-                cy="45%"
-                innerRadius={60}
-                outerRadius={100}
+                cy="40%"
+                innerRadius={50}
+                outerRadius={85}
                 paddingAngle={2}
                 dataKey="value"
                 strokeWidth={0}
@@ -72,15 +83,9 @@ export function CategoryChart({ data }: CategoryChartProps) {
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
-              <Legend content={<CustomLegend />} />
+              <Legend content={<CustomLegend total={total} />} />
             </PieChart>
           </ResponsiveContainer>
-        </div>
-        <div className="text-center mt-2">
-          <p className="text-sm text-muted-foreground">Total</p>
-          <p className="text-2xl font-display font-bold">
-            {total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-          </p>
         </div>
       </CardContent>
     </Card>
