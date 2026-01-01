@@ -3,12 +3,15 @@ import { useUserPreferences } from './useUserPreferences';
 import { getTranslation } from '@/lib/translations';
 import { getLocaleForLanguage, getDateFormatForLanguage } from '@/lib/currencies';
 import { format, parseISO } from 'date-fns';
-import { es, enUS, ptBR, type Locale } from 'date-fns/locale';
+import { es, enUS, ptBR, fr, it, de, type Locale } from 'date-fns/locale';
 
 const dateFnsLocales: Record<string, Locale> = {
   es: es,
   en: enUS,
   pt: ptBR,
+  fr: fr,
+  it: it,
+  de: de,
 };
 
 export function useLocalization() {

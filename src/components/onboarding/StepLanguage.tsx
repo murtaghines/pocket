@@ -2,17 +2,12 @@ import { OnboardingData } from './OnboardingModal';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Languages } from 'lucide-react';
+import { SUPPORTED_LANGUAGES } from '@/lib/currencies';
 
 interface StepLanguageProps {
   data: OnboardingData;
   updateData: (updates: Partial<OnboardingData>) => void;
 }
-
-const LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'pt', name: 'Português', flag: '🇧🇷' },
-];
 
 export function StepLanguage({ data, updateData }: StepLanguageProps) {
   return (
@@ -27,7 +22,7 @@ export function StepLanguage({ data, updateData }: StepLanguageProps) {
         onValueChange={(value) => updateData({ language: value })}
         className="space-y-3"
       >
-        {LANGUAGES.map((lang) => (
+        {SUPPORTED_LANGUAGES.map((lang) => (
           <div
             key={lang.code}
             className={`flex items-center space-x-4 p-4 rounded-lg border transition-colors cursor-pointer ${
