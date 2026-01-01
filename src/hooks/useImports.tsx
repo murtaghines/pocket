@@ -1,0 +1,200 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
+import { toast } from "sonner";
+
+export type ImportStatus = 'UPLOADED' | 'PARSED' | 'NORMALIZED' | 'FAILED';
+export type SourceType = 'BANK' | 'BROKER' | 'SAVINGS' | 'CARD' | 'OTHER';
+export type AppDomain = 'CASHFLOW' | 'INVESTING';
+
+export interface Import {
+  id: string;
+  user_id: string;
+  period_id: string | null;
+  account_id: string | null;
+  domain: AppDomain;
+  source_type: SourceType;
+  file_name: string;
+  file_mime: string | null;
+  file_size: number | null;
+  file_storage_url: string | null;
+  file_hash_sha256: string;
+  uploaded_at: string;
+  status: ImportStatus;
+  error_message: string | null;
+  transactions_count: number | null;
+}
+
+interface ProcessImportParams {
+  fileContent: string;
+  fileName: string;
+  fileSize?: number;
+  fileMime?: string;
+  domain: AppDomain;
+  targetMonth: string; // 'YYYY-MM'
+  sourceType?: SourceType;
+  fileHash?: string;
+}
+
+interface ProcessImportResult {
+  success: boolean;
+  message: string;
+  importId?: string;
+  stats?: {
+    totalParsed: number;
+    newTransactions: number;
+    duplicatesIgnored: number;
+    dateWarnings: number;
+  };
+  dateWarnings?: Array<{
+    date: string;
+    description: string;
+    expected: string;
+    found: string;
+  }>;
+  error?: string;
+}
+
+export function useImports(domain?: AppDomain) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: imports = [], isLoading, error } = useQuery({
+    queryKey: ['imports', user?.id, domain],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      let query = supabase
+        .from('imports')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('uploaded_at', { ascending: false });
+      
+      if (domain) {
+        query = query.eq('domain', domain);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching imports:', error);
+        throw error;
+      }
+
+      return (data || []) as Import[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const processImport = useMutation({
+    mutationFn: async (params: ProcessImportParams): Promise<ProcessImportResult> => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('process-import', {
+        body: {
+          fileContent: params.fileContent,
+          fileName: params.fileName,
+          fileSize: params.fileSize,
+          fileMime: params.fileMime,
+          fileHash: params.fileHash,
+          userId: user.id,
+          domain: params.domain,
+          targetMonth: params.targetMonth,
+          sourceType: params.sourceType || 'OTHER'
+        }
+      });
+
+      if (error) throw error;
+      
+      // Check for duplicate file error
+      if (data?.error === 'duplicate_file') {
+        throw new Error(data.message || 'Este archivo ya fue importado');
+      }
+
+      // Check for period closed error
+      if (data?.error === 'period_closed') {
+        throw new Error(data.message || 'El período está cerrado');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      return data as ProcessImportResult;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['imports'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['periods'] });
+      
+      if (data.dateWarnings && data.dateWarnings.length > 0) {
+        toast.warning(`${data.message}. ${data.dateWarnings.length} transacciones con fechas fuera del mes.`);
+      } else {
+        toast.success(data.message);
+      }
+    },
+    onError: (error) => {
+      console.error('Error processing import:', error);
+      toast.error(error instanceof Error ? error.message : 'Error al procesar el archivo');
+    }
+  });
+
+  const deleteImport = useMutation({
+    mutationFn: async (importId: string) => {
+      // First delete related transactions
+      const { error: txError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('import_id', importId);
+
+      if (txError) throw txError;
+
+      // Then delete the import (import_rows cascade automatically)
+      const { error } = await supabase
+        .from('imports')
+        .delete()
+        .eq('id', importId);
+
+      if (error) throw error;
+
+      // Log to audit
+      if (user?.id) {
+        await supabase.from('audit_log').insert({
+          user_id: user.id,
+          entity_type: 'import',
+          entity_id: importId,
+          action: 'delete',
+          diff_json: { deleted_at: new Date().toISOString() }
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['imports'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Archivo eliminado correctamente');
+    },
+    onError: (error) => {
+      console.error('Error deleting import:', error);
+      toast.error('Error al eliminar el archivo');
+    }
+  });
+
+  const getImportsByMonth = (monthKey: string): Import[] => {
+    return imports.filter(i => {
+      // Extract month from the uploaded_at or check period
+      const importMonth = i.uploaded_at.substring(0, 7);
+      return importMonth === monthKey;
+    });
+  };
+
+  return {
+    imports,
+    isLoading,
+    error,
+    processImport: processImport.mutateAsync,
+    deleteImport: deleteImport.mutate,
+    isProcessing: processImport.isPending,
+    isDeleting: deleteImport.isPending,
+    getImportsByMonth
+  };
+}
