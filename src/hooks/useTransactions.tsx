@@ -66,9 +66,12 @@ export function useTransactions() {
     },
   });
 
-  // Filter out transfers for financial calculations
-  const financialTransactions = transactions.filter((t) => t.type !== "transfer");
+  // Filter out transfers and investments for financial calculations
+  const financialTransactions = transactions.filter(
+    (t) => t.type !== "transfer" && t.category !== "investment"
+  );
   const transfers = transactions.filter((t) => t.type === "transfer");
+  const investmentMovements = transactions.filter((t) => t.category === "investment");
 
   // Calculate monthly data from transactions (excluding transfers)
   const monthlyData: MonthlyData[] = (() => {
@@ -162,6 +165,7 @@ export function useTransactions() {
   return {
     transactions,
     transfers,
+    investmentMovements,
     monthlyData,
     categoryData,
     bankData,
@@ -171,5 +175,6 @@ export function useTransactions() {
     deleteTransaction,
     hasData: transactions.length > 0,
     transfersCount: transfers.length,
+    investmentMovementsCount: investmentMovements.length,
   };
 }

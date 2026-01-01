@@ -24,6 +24,7 @@ const categoryBadgeColors: Record<Category, string> = {
   other: 'bg-category-other/20 text-category-other border-category-other/30',
   income: 'bg-success/20 text-success border-success/30',
   transfer: 'bg-purple-500/20 text-purple-500 border-purple-500/30',
+  investment: 'bg-muted text-muted-foreground border-muted-foreground/30',
 };
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
@@ -130,14 +131,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           "p-1.5 rounded-full flex-shrink-0",
                           transaction.type === 'income' 
                             ? "bg-success/20" 
-                            : transaction.type === 'transfer'
-                            ? "bg-purple-500/20"
+                            : transaction.type === 'transfer' || transaction.category === 'investment'
+                            ? "bg-muted"
                             : "bg-destructive/20"
                         )}>
                           {transaction.type === 'income' ? (
                             <ArrowDownRight className="w-3 h-3 text-success" />
-                          ) : transaction.type === 'transfer' ? (
-                            <ArrowLeftRight className="w-3 h-3 text-purple-500" />
+                          ) : transaction.type === 'transfer' || transaction.category === 'investment' ? (
+                            <ArrowLeftRight className="w-3 h-3 text-muted-foreground" />
                           ) : (
                             <ArrowUpRight className="w-3 h-3 text-destructive" />
                           )}
@@ -165,10 +166,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                     <TableCell className={cn(
                       "text-right font-semibold tabular-nums",
                       transaction.type === 'income' ? "text-success" 
-                        : transaction.type === 'transfer' ? "text-purple-500" 
+                        : transaction.type === 'transfer' || transaction.category === 'investment' ? "text-muted-foreground" 
                         : "text-destructive"
                     )}>
-                      {transaction.type === 'income' ? '+' : transaction.type === 'transfer' ? '↔' : '-'}
+                      {transaction.type === 'income' ? '+' : (transaction.type === 'transfer' || transaction.category === 'investment') ? '↔' : '-'}
                       {formatAmount(Math.abs(transaction.amount))}
                     </TableCell>
                   </TableRow>

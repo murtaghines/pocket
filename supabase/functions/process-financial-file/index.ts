@@ -30,6 +30,16 @@ TRANSFER DETECTION - Mark as type "transfer" if:
 - Self-transfers: "a cuenta propia", "entre cuentas"
 - Round amounts that match incoming amounts in other accounts
 
+INVESTMENT DETECTION - Mark as category "investment" (with type "expense" for outgoing, "income" for dividends/returns):
+- Investment platforms: Savings, Cocos, MyInvestor, Trade Republic, DEGIRO, eToro, Interactive Brokers
+- Revolut Savings, Instant Access Savings, Flexible Account
+- Crypto: Binance, Coinbase, Kraken, Crypto.com
+- Crowdfunding: Crowdcube, Urbanitae, Housers, Mintos, Bondora
+- Robo-advisors: Indexa Capital, Finizens, InbestMe
+- Keywords: "To Instant Access", "To Savings", "inversión", "fondos", "acciones"
+- Description patterns: "To [Platform Name]", "From Savings" (returns)
+CRITICAL: Investments are NOT regular expenses. They are money movements to/from investment platforms.
+
 CATEGORY RULES:
 - food: supermarkets, restaurants, delivery (Mercadona, Carrefour, Lidl, Glovo, JustEat)
 - transport: gas, Uber, taxi, metro, bus, parking, Cabify
@@ -40,7 +50,8 @@ CATEGORY RULES:
 - education: courses, books, training, Udemy, Coursera
 - travel: flights, hotels, Booking, Airbnb, Renfe, vacation
 - income: salary (Nómina), freelance, dividends, interest
-- transfer: internal movements between own accounts (DO NOT count as income/expense)
+- investment: money to/from investment platforms (see INVESTMENT DETECTION above)
+- transfer: internal movements between own bank accounts (NOT investment platforms)
 - other: anything else
 
 HANDLE MESSY DATA:
@@ -193,6 +204,7 @@ serve(async (req) => {
     const newTransactions: any[] = [];
     const duplicateCount = { count: 0 };
     const transferCount = { count: 0 };
+    const investmentCount = { count: 0 };
     const seenHashesInBatch = new Set<string>();
 
     for (const t of transactions) {
@@ -221,6 +233,11 @@ serve(async (req) => {
 
       seenHashesInBatch.add(hash);
 
+      // Track investment movements
+      if (t.category === 'investment') {
+        investmentCount.count++;
+      }
+
       // Normalize type
       let type = 'expense';
       if (t.type === 'transfer') {
@@ -244,7 +261,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`New transactions to insert: ${newTransactions.length}, Duplicates: ${duplicateCount.count}, Transfers: ${transferCount.count}`);
+    console.log(`New transactions to insert: ${newTransactions.length}, Duplicates: ${duplicateCount.count}, Transfers: ${transferCount.count}, Investments: ${investmentCount.count}`);
 
     // Insert only new transactions
     if (newTransactions.length > 0) {
@@ -270,7 +287,8 @@ serve(async (req) => {
 
     const message = `Procesadas ${newTransactions.length} transacciones nuevas` +
       (duplicateCount.count > 0 ? `, ${duplicateCount.count} duplicados ignorados` : '') +
-      (transferCount.count > 0 ? `, ${transferCount.count} transferencias internas detectadas` : '');
+      (transferCount.count > 0 ? `, ${transferCount.count} transferencias internas detectadas` : '') +
+      (investmentCount.count > 0 ? `, ${investmentCount.count} movimientos de inversión detectados` : '');
 
     console.log(`Successfully processed upload ${uploadId}: ${message}`);
 
@@ -282,6 +300,7 @@ serve(async (req) => {
           newTransactions: newTransactions.length,
           duplicatesIgnored: duplicateCount.count,
           transfersDetected: transferCount.count,
+          investmentsDetected: investmentCount.count,
           totalParsed: transactions.length
         }
       }),
