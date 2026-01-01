@@ -48,8 +48,8 @@ export function MonthlyUploadsOrganizer() {
     
     uploads.forEach((upload) => {
       if (upload.target_month) {
-        const date = new Date(upload.target_month);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        // Extract YYYY-MM directly from the string to avoid timezone issues
+        const key = upload.target_month.substring(0, 7);
         if (!grouped[key]) grouped[key] = [];
         grouped[key].push(upload);
       }
