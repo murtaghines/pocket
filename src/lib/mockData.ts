@@ -59,8 +59,8 @@ export const categoryColors: Record<Category, string> = {
   travel: 'hsl(175, 55%, 50%)',     // Verde/Teal (Lebend)
   other: 'hsl(220, 10%, 55%)',      // Gris
   income: 'hsl(155, 60%, 45%)',     // Verde (Lebend)
-  transfer: 'hsl(260, 50%, 60%)',   // Púrpura (Transferencias)
-  investment: 'hsl(220, 10%, 65%)', // Gris claro (Movimientos neutrales)
+  transfer: 'hsl(220, 10%, 55%)',   // Gris (Transferencias - movimiento neutral)
+  investment: 'hsl(155, 60%, 45%)', // Verde (Inversión - destino del dinero)
 };
 
 export const banks = [
