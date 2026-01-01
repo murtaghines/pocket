@@ -4,17 +4,18 @@ import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { BalanceChart } from "@/components/dashboard/BalanceChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { UploadCard } from "@/components/dashboard/UploadCard";
-import { UploadsManager } from "@/components/dashboard/UploadsManager";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
-
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
 import { MonthComparisonCard } from "@/components/dashboard/MonthComparisonCard";
 import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
+import { MonthClosingBanner } from "@/components/dashboard/MonthClosingBanner";
+import { MonthStatusIndicator } from "@/components/dashboard/MonthStatusIndicator";
 import { useTransactions } from "@/hooks/useTransactions";
-import { TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Loader2, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export default function Index() {
   const { 
@@ -68,22 +69,33 @@ export default function Index() {
         {/* Empty State */}
         {!isLoading && !hasData && (
           <div className="text-center py-12 mb-8">
-            <p className="text-muted-foreground mb-4">
-              No hay transacciones todavía. Sube un archivo Excel, CSV o PDF para comenzar.
+            <Upload className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Bienvenido a FinanceFlow</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Para comenzar, ve a tu perfil y sube los extractos de tu banco. 
+              Vuelve aquí para ver tu análisis financiero.
             </p>
-            <UploadCard />
+            <Link to="/profile">
+              <Button variant="gradient" size="lg">
+                <Upload className="w-4 h-4 mr-2" />
+                Ir a Mi Perfil
+              </Button>
+            </Link>
           </div>
         )}
 
         {/* Dashboard with Data */}
         {!isLoading && hasData && (
           <>
+        {/* Month Closing Banner */}
+        <MonthClosingBanner />
+
         {/* Month Title */}
         <h3 className="text-xl font-semibold mb-4 capitalize">
           {currentMonth.month || currentMonthName}
         </h3>
 
-        {/* Section 1: KPIs + Upload + Investment Summary */}
+        {/* Section 1: KPIs + Investment Summary + Month Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <StatCard
             title="Ingresos"
@@ -114,7 +126,7 @@ export default function Index() {
             delay={200}
           />
           <InvestmentSummaryCard />
-          <UploadCard />
+          <MonthStatusIndicator />
         </div>
 
             {/* Section 2: Evolución Mensual + Comparación Mes Anterior */}

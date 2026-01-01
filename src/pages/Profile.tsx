@@ -2,8 +2,9 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
+import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Mail, Calendar, LogOut } from "lucide-react";
+import { User, Mail, Calendar, LogOut, FileText, TrendingUp } from "lucide-react";
 
 export default function Profile() {
   const { user, signOut } = useAuth();
@@ -73,9 +74,25 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Monthly Uploads Organizer */}
-        <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <MonthlyUploadsOrganizer />
+        {/* Upload Sections */}
+        <div className="space-y-8">
+          {/* Bank Statements Section */}
+          <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">Extractos Bancarios</h3>
+            </div>
+            <MonthlyUploadsOrganizer />
+          </div>
+
+          {/* Investments Section */}
+          <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">Inversiones y Ahorro</h3>
+            </div>
+            <InvestmentUploadsOrganizer />
+          </div>
         </div>
       </main>
 
