@@ -62,7 +62,10 @@ export function PreferencesForm() {
             <SelectContent>
               {SUPPORTED_LANGUAGES.map((lang) => (
                 <SelectItem key={lang.code} value={lang.code}>
-                  {lang.name}
+                  <span className="flex items-center gap-2">
+                    <span>{lang.flag}</span>
+                    <span>{lang.name}</span>
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
