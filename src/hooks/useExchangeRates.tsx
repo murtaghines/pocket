@@ -114,15 +114,17 @@ function getStaticFallbackRates(baseCurrency: string): Record<string, number> {
     EUR: 1,
     USD: 1.08,
     GBP: 0.86,
-    ARS: 1050,
+    ARS: 1150,  // Argentine Peso
     MXN: 18.5,
-    COP: 4200,
-    CLP: 980,
+    COP: 4500,  // Colombian Peso
+    CLP: 1020,  // Chilean Peso
     BRL: 5.4,
     CHF: 0.95,
     JPY: 162,
     CAD: 1.47,
     AUD: 1.65,
+    PEN: 4.1,   // Peruvian Sol
+    UYU: 44,    // Uruguayan Peso
   };
 
   if (baseCurrency === 'EUR') {
