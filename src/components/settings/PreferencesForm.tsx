@@ -21,7 +21,6 @@ export function PreferencesForm() {
       base_currency: currency,
       language: language,
       locale: getLocaleForLanguage(language),
-      date_format: language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy',
     }, {
       onSuccess: () => {
         toast.success(t('profile.preferences_saved'));
