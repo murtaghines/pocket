@@ -82,8 +82,8 @@ export default function Index() {
             {/* Section 1: KPIs + Upload + Investment Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <StatCard
-                title="Ingresos del Mes"
-                value={formatCurrency(summary.income)}
+                title={`Ingresos ${currentMonth.month || 'Mes'}`}
+                value={formatCurrency(currentMonth.income)}
                 change={incomeChange}
                 changeLabel="vs mes anterior"
                 type="income"
@@ -91,18 +91,21 @@ export default function Index() {
                 delay={0}
               />
               <StatCard
-                title="Gastos del Mes"
-                value={formatCurrency(summary.expenses)}
+                title={`Gastos ${currentMonth.month || 'Mes'}`}
+                value={formatCurrency(currentMonth.expenses)}
                 change={expenseChange}
                 changeLabel="vs mes anterior"
                 type="expense"
                 icon={<TrendingDown className="w-5 h-5" />}
                 delay={100}
+                invertChangeColor={true}
               />
               <StatCard
-                title="Balance Neto"
-                value={formatCurrency(summary.balance)}
-                type={summary.balance >= 0 ? 'income' : 'expense'}
+                title={`Balance ${currentMonth.month || 'Mes'}`}
+                value={formatCurrency(currentMonth.balance)}
+                change={previousMonth.balance !== 0 ? Math.round(((currentMonth.balance - previousMonth.balance) / Math.abs(previousMonth.balance)) * 100) : 0}
+                changeLabel="vs mes anterior"
+                type={currentMonth.balance >= 0 ? 'income' : 'expense'}
                 icon={<Wallet className="w-5 h-5" />}
                 delay={200}
               />
