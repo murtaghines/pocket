@@ -27,6 +27,14 @@ const categoryBadgeColors: Record<Category, string> = {
   investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
 };
 
+// Categories available for each movement type
+const categoriesByMovement: Record<MovementType, Category[]> = {
+  income: ['income'],
+  expense: ['housing', 'health', 'transport', 'subscriptions', 'food', 'other', 'leisure', 'travel'],
+  transfer: [],
+  investment: ['investment'],
+};
+
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
 
 const movementLabels: Record<MovementType, string> = {
@@ -53,19 +61,30 @@ const getMovementType = (transaction: Transaction): MovementType => {
 export function TransactionTable({ transactions }: TransactionTableProps) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [bankFilter, setBankFilter] = useState<string>("all");
   const [movementFilter, setMovementFilter] = useState<string>("all");
 
-  const uniqueBanks = [...new Set(transactions.map(t => t.bank))];
-  const categories = Object.keys(categoryLabels) as Category[];
+  // Get available categories based on selected movement filter
+  const availableCategories = movementFilter === "all" 
+    ? Object.keys(categoryLabels) as Category[]
+    : categoriesByMovement[movementFilter as MovementType] || [];
+
+  // Reset category filter when movement filter changes and category is no longer available
+  const handleMovementChange = (value: string) => {
+    setMovementFilter(value);
+    if (value !== "all") {
+      const newCategories = categoriesByMovement[value as MovementType] || [];
+      if (!newCategories.includes(categoryFilter as Category)) {
+        setCategoryFilter("all");
+      }
+    }
+  };
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = categoryFilter === "all" || t.category === categoryFilter;
-    const matchesBank = bankFilter === "all" || t.bank === bankFilter;
     const movementType = getMovementType(t);
     const matchesMovement = movementFilter === "all" || movementType === movementFilter;
-    return matchesSearch && matchesCategory && matchesBank && matchesMovement;
+    return matchesSearch && matchesCategory && matchesMovement;
   });
 
   const formatDate = (dateStr: string) => {
@@ -100,44 +119,41 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               className="pl-9"
             />
           </div>
-          <Select value={movementFilter} onValueChange={setMovementFilter}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder="Movimiento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="income">Ingreso</SelectItem>
-              <SelectItem value="expense">Gasto</SelectItem>
-              <SelectItem value="transfer">Transferencia</SelectItem>
-              <SelectItem value="investment">Inversión</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las categorías</SelectItem>
-              {categories.map(cat => (
-                <SelectItem key={cat} value={cat}>
-                  {categoryLabels[cat]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={bankFilter} onValueChange={setBankFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Banco" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los bancos</SelectItem>
-              {uniqueBanks.map(bank => (
-                <SelectItem key={bank} value={bank}>
-                  {bank}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-muted-foreground">Movimientos</span>
+            <Select value={movementFilter} onValueChange={handleMovementChange}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">todos</SelectItem>
+                <SelectItem value="income">Ingreso</SelectItem>
+                <SelectItem value="expense">Gasto</SelectItem>
+                <SelectItem value="transfer">Transferencia</SelectItem>
+                <SelectItem value="investment">Inversión</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-muted-foreground">Categorías</span>
+            <Select 
+              value={categoryFilter} 
+              onValueChange={setCategoryFilter}
+              disabled={movementFilter === 'transfer' || availableCategories.length === 0}
+            >
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">todas</SelectItem>
+                {availableCategories.map(cat => (
+                  <SelectItem key={cat} value={cat}>
+                    {categoryLabels[cat]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
