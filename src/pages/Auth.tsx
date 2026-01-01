@@ -27,14 +27,14 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Error al registrarse",
+        title: "Error signing up",
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "¡Cuenta creada!",
-        description: "Ya puedes iniciar sesión.",
+        title: "Account created!",
+        description: "You can now sign in.",
       });
     }
     setLoading(false);
@@ -51,7 +51,7 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Error al iniciar sesión",
+        title: "Error signing in",
         description: error.message,
         variant: "destructive",
       });
@@ -71,16 +71,16 @@ export default function Auth() {
             </div>
             <span className="font-display text-xl font-bold">FinanceFlow</span>
           </div>
-          <CardTitle>Bienvenido</CardTitle>
+          <CardTitle>Welcome</CardTitle>
           <CardDescription>
-            Inicia sesión o crea una cuenta para gestionar tus finanzas
+            Sign in or create an account to manage your finances
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-              <TabsTrigger value="register">Registrarse</TabsTrigger>
+              <TabsTrigger value="login">Sign In</TabsTrigger>
+              <TabsTrigger value="register">Sign Up</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -90,14 +90,14 @@ export default function Auth() {
                   <Input
                     id="email-login"
                     type="email"
-                    placeholder="tu@email.com"
+                    placeholder="you@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-login">Contraseña</Label>
+                  <Label htmlFor="password-login">Password</Label>
                   <Input
                     id="password-login"
                     type="password"
@@ -109,7 +109,7 @@ export default function Auth() {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Iniciar Sesión
+                  Sign In
                 </Button>
               </form>
             </TabsContent>
@@ -121,14 +121,14 @@ export default function Auth() {
                   <Input
                     id="email-register"
                     type="email"
-                    placeholder="tu@email.com"
+                    placeholder="you@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-register">Contraseña</Label>
+                  <Label htmlFor="password-register">Password</Label>
                   <Input
                     id="password-register"
                     type="password"
@@ -141,7 +141,7 @@ export default function Auth() {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Crear Cuenta
+                  Create Account
                 </Button>
               </form>
             </TabsContent>

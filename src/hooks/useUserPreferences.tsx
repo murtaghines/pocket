@@ -10,17 +10,16 @@ export interface UserPreferences {
   locale: string;
   language: string;
   date_format: string;
+  country?: string;
+  selected_categories?: string[];
+  onboarding_completed?: boolean;
   created_at: string;
   updated_at: string;
 }
 
 function detectBrowserLanguage(): string {
-  const browserLang = navigator.language?.split('-')[0] || 'es';
-  // Only support es, en, pt
-  if (['es', 'en', 'pt'].includes(browserLang)) {
-    return browserLang;
-  }
-  return 'es';
+  // Always default to English regardless of browser settings
+  return 'en';
 }
 
 function detectDefaultCurrency(): string {

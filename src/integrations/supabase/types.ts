@@ -612,28 +612,37 @@ export type Database = {
       user_preferences: {
         Row: {
           base_currency: string
+          country: string | null
           created_at: string | null
           id: string
           language: string
           locale: string
+          onboarding_completed: boolean | null
+          selected_categories: string[] | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           base_currency?: string
+          country?: string | null
           created_at?: string | null
           id?: string
           language?: string
           locale?: string
+          onboarding_completed?: boolean | null
+          selected_categories?: string[] | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           base_currency?: string
+          country?: string | null
           created_at?: string | null
           id?: string
           language?: string
           locale?: string
+          onboarding_completed?: boolean | null
+          selected_categories?: string[] | null
           updated_at?: string | null
           user_id?: string
         }
