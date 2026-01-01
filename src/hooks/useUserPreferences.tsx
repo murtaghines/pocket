@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -14,89 +14,100 @@ export interface UserPreferences {
   updated_at: string;
 }
 
-const DEFAULT_PREFERENCES: Omit<UserPreferences, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
-  base_currency: 'EUR',
-  locale: 'es-ES',
-  language: 'es',
-  date_format: 'DD/MM/YYYY',
-};
+function detectBrowserLanguage(): string {
+  const browserLang = navigator.language?.split('-')[0] || 'es';
+  // Only support es, en, pt
+  if (['es', 'en', 'pt'].includes(browserLang)) {
+    return browserLang;
+  }
+  return 'es';
+}
 
-function detectBrowserLocale(): { locale: string; language: string; currency: string } {
-  const browserLocale = navigator.language || 'es-ES';
-  const language = browserLocale.split('-')[0] || 'es';
+function detectDefaultCurrency(): string {
+  // Try to detect from timezone
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
   
-  // Map common locales to currencies
-  const localeToCurrency: Record<string, string> = {
-    'es-ES': 'EUR',
-    'es-AR': 'ARS',
-    'es-MX': 'MXN',
-    'es-CO': 'COP',
-    'es-CL': 'CLP',
-    'en-US': 'USD',
-    'en-GB': 'GBP',
-    'pt-BR': 'BRL',
-    'de-DE': 'EUR',
-    'fr-FR': 'EUR',
-    'it-IT': 'EUR',
-    'ja-JP': 'JPY',
-    'en-CA': 'CAD',
-    'en-AU': 'AUD',
-  };
+  // Map timezones to currencies
+  if (timezone.includes('Buenos_Aires') || timezone.includes('Argentina')) return 'ARS';
+  if (timezone.includes('Mexico')) return 'MXN';
+  if (timezone.includes('Bogota') || timezone.includes('Colombia')) return 'COP';
+  if (timezone.includes('Santiago') || timezone.includes('Chile')) return 'CLP';
+  if (timezone.includes('Sao_Paulo') || timezone.includes('Brazil')) return 'BRL';
+  if (timezone.includes('New_York') || timezone.includes('Los_Angeles') || timezone.includes('Chicago') || timezone.includes('America/')) {
+    // Check if it's a Latin American timezone
+    if (timezone.includes('Lima') || timezone.includes('Peru')) return 'USD'; // Peru uses USD often
+    if (!timezone.includes('Argentina') && !timezone.includes('Mexico') && !timezone.includes('Bogota') && !timezone.includes('Santiago') && !timezone.includes('Sao_Paulo')) {
+      return 'USD';
+    }
+  }
+  if (timezone.includes('London')) return 'GBP';
+  if (timezone.includes('Europe/')) return 'EUR';
+  if (timezone.includes('Tokyo') || timezone.includes('Japan')) return 'JPY';
+  if (timezone.includes('Sydney') || timezone.includes('Australia')) return 'AUD';
+  if (timezone.includes('Toronto') || timezone.includes('Canada')) return 'CAD';
   
-  const currency = localeToCurrency[browserLocale] || 'EUR';
-  
-  return { locale: browserLocale, language, currency };
+  // Default to EUR if we can't detect
+  return 'EUR';
 }
 
 export function useUserPreferences() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [browserDefaults] = useState(detectBrowserLocale);
+  
+  const [browserDefaults] = useState(() => ({
+    language: detectBrowserLanguage(),
+    currency: detectDefaultCurrency(),
+  }));
 
   const { data: preferences, isLoading } = useQuery({
     queryKey: ['user_preferences', user?.id],
     queryFn: async (): Promise<UserPreferences | null> => {
       if (!user) return null;
       
-      // Use raw SQL query since types may not be updated yet
-      const { data, error } = await supabase
-        .from('user_preferences' as any)
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching preferences:', error);
-        return null;
-      }
-      
-      // If no preferences exist, create with browser defaults
-      if (!data) {
-        const newPrefs = {
-          user_id: user.id,
-          base_currency: browserDefaults.currency,
-          locale: browserDefaults.locale,
-          language: browserDefaults.language,
-          date_format: browserDefaults.locale.startsWith('en-US') ? 'MM/DD/YYYY' : 'DD/MM/YYYY',
-        };
-        
-        const { data: created, error: createError } = await supabase
+      try {
+        const { data, error } = await supabase
           .from('user_preferences' as any)
-          .insert(newPrefs)
-          .select()
-          .single();
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
         
-        if (createError) {
-          console.error('Error creating preferences:', createError);
+        if (error) {
+          console.error('Error fetching preferences:', error);
           return null;
         }
         
-        return created as unknown as UserPreferences;
+        // If no preferences exist, create with detected defaults
+        if (!data) {
+          const newPrefs = {
+            user_id: user.id,
+            base_currency: browserDefaults.currency,
+            locale: browserDefaults.language === 'en' ? 'en-US' : browserDefaults.language === 'pt' ? 'pt-BR' : 'es-ES',
+            language: browserDefaults.language,
+            date_format: browserDefaults.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy',
+          };
+          
+          const { data: created, error: createError } = await supabase
+            .from('user_preferences' as any)
+            .insert(newPrefs)
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error('Error creating preferences:', createError);
+            return null;
+          }
+          
+          return created as unknown as UserPreferences;
+        }
+        
+        return data as unknown as UserPreferences;
+      } catch (err) {
+        console.error('Preferences error:', err);
+        return null;
       }
-      
-      return data as unknown as UserPreferences;
     },
     enabled: !!user,
+    retry: 1,
   });
 
   const updatePreferences = useMutation({
@@ -123,9 +134,9 @@ export function useUserPreferences() {
     id: '',
     user_id: user?.id || '',
     base_currency: browserDefaults.currency,
-    locale: browserDefaults.locale,
+    locale: browserDefaults.language === 'en' ? 'en-US' : browserDefaults.language === 'pt' ? 'pt-BR' : 'es-ES',
     language: browserDefaults.language,
-    date_format: browserDefaults.locale.startsWith('en-US') ? 'MM/DD/YYYY' : 'DD/MM/YYYY',
+    date_format: browserDefaults.language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

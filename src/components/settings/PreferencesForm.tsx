@@ -5,25 +5,23 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useLocalization } from '@/hooks/useLocalization';
-import { SUPPORTED_CURRENCIES, SUPPORTED_LOCALES, DATE_FORMATS } from '@/lib/currencies';
+import { SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES, getLocaleForLanguage } from '@/lib/currencies';
 import { toast } from 'sonner';
-import { Globe, DollarSign, Calendar, Loader2 } from 'lucide-react';
+import { Globe, DollarSign, Loader2 } from 'lucide-react';
 
 export function PreferencesForm() {
   const { preferences, updatePreferences, isUpdating } = useUserPreferences();
-  const { formatCurrency, formatDate, t } = useLocalization();
+  const { formatCurrency, t } = useLocalization();
   
   const [currency, setCurrency] = useState(preferences.base_currency);
-  const [locale, setLocale] = useState(preferences.locale);
-  const [dateFormat, setDateFormat] = useState(preferences.date_format);
+  const [language, setLanguage] = useState(preferences.language);
 
   const handleSave = () => {
-    const selectedLocale = SUPPORTED_LOCALES.find(l => l.code === locale);
     updatePreferences({
       base_currency: currency,
-      locale: locale,
-      language: selectedLocale?.language || 'es',
-      date_format: dateFormat,
+      language: language,
+      locale: getLocaleForLanguage(language),
+      date_format: language === 'en' ? 'MM/dd/yyyy' : 'dd/MM/yyyy',
     }, {
       onSuccess: () => {
         toast.success(t('profile.preferences_saved'));
@@ -36,7 +34,7 @@ export function PreferencesForm() {
 
   // Preview values
   const previewAmount = 1234.56;
-  const previewDate = new Date();
+  const previewLocale = getLocaleForLanguage(language);
 
   return (
     <Card>
@@ -46,24 +44,26 @@ export function PreferencesForm() {
           {t('profile.regional_settings')}
         </CardTitle>
         <CardDescription>
-          Configura cómo quieres ver las fechas, números y monedas
+          {language === 'en' ? 'Configure your language and currency preferences' : 
+           language === 'pt' ? 'Configure suas preferências de idioma e moeda' :
+           'Configura tu idioma y moneda preferidos'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Language/Locale */}
+        {/* Language */}
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
             {t('profile.language')}
           </Label>
-          <Select value={locale} onValueChange={setLocale}>
+          <Select value={language} onValueChange={setLanguage}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {SUPPORTED_LOCALES.map((loc) => (
-                <SelectItem key={loc.code} value={loc.code}>
-                  {loc.name}
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -90,54 +90,16 @@ export function PreferencesForm() {
           </Select>
         </div>
 
-        {/* Date Format */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            {t('profile.date_format')}
-          </Label>
-          <Select value={dateFormat} onValueChange={setDateFormat}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DATE_FORMATS.map((fmt) => (
-                <SelectItem key={fmt.code} value={fmt.code}>
-                  {fmt.code} ({fmt.example})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Preview */}
         <div className="rounded-lg bg-muted p-4 space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">Vista previa:</p>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Moneda:</span>
-            <span className="font-medium">
-              {new Intl.NumberFormat(locale, {
-                style: 'currency',
-                currency: currency,
-              }).format(previewAmount)}
-            </span>
-            <span className="text-muted-foreground">Fecha:</span>
-            <span className="font-medium">
-              {(() => {
-                const formatMap: Record<string, string> = {
-                  'DD/MM/YYYY': 'dd/MM/yyyy',
-                  'MM/DD/YYYY': 'MM/dd/yyyy',
-                  'YYYY-MM-DD': 'yyyy-MM-dd',
-                };
-                const day = String(previewDate.getDate()).padStart(2, '0');
-                const month = String(previewDate.getMonth() + 1).padStart(2, '0');
-                const year = previewDate.getFullYear();
-                
-                if (dateFormat === 'DD/MM/YYYY') return `${day}/${month}/${year}`;
-                if (dateFormat === 'MM/DD/YYYY') return `${month}/${day}/${year}`;
-                return `${year}-${month}-${day}`;
-              })()}
-            </span>
+          <p className="text-sm font-medium text-muted-foreground">
+            {language === 'en' ? 'Preview:' : language === 'pt' ? 'Prévia:' : 'Vista previa:'}
+          </p>
+          <div className="text-lg font-medium">
+            {new Intl.NumberFormat(previewLocale, {
+              style: 'currency',
+              currency: currency,
+            }).format(previewAmount)}
           </div>
         </div>
 
@@ -145,7 +107,7 @@ export function PreferencesForm() {
           {isUpdating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Guardando...
+              {language === 'en' ? 'Saving...' : language === 'pt' ? 'Salvando...' : 'Guardando...'}
             </>
           ) : (
             t('profile.save_preferences')
