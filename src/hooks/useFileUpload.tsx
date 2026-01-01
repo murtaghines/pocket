@@ -55,7 +55,7 @@ interface UploadedFile {
   };
 }
 
-export function useFileUpload(_isInvestment: boolean = false) {
+export function useFileUpload(isInvestment: boolean = false) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -164,9 +164,10 @@ export function useFileUpload(_isInvestment: boolean = false) {
 
         if (insertError) throw insertError;
 
-        // Call edge function to process with AI
+        // Call appropriate edge function based on type
+        const functionName = isInvestment ? "process-investment-file" : "process-financial-file";
         const { data, error } = await supabase.functions.invoke(
-          "process-financial-file",
+          functionName,
           {
             body: {
               fileContent,
@@ -194,12 +195,22 @@ export function useFileUpload(_isInvestment: boolean = false) {
         );
 
         // Build detailed message
-        let description = `${stats?.newTransactions || 0} transacciones nuevas`;
-        if (stats?.duplicatesIgnored > 0) {
-          description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
-        }
-        if (stats?.transfersDetected > 0) {
-          description += `, ${stats.transfersDetected} transferencias internas`;
+        let description: string;
+        if (isInvestment) {
+          const newCount = stats?.newInvestments || 0;
+          description = `${newCount} inversiones procesadas`;
+          if (stats?.deposits > 0) description += ` (${stats.deposits} depósitos`;
+          if (stats?.withdrawals > 0) description += `, ${stats.withdrawals} retiros)`;
+          else if (stats?.deposits > 0) description += ')';
+          if (stats?.duplicatesIgnored > 0) description += `, ${stats.duplicatesIgnored} duplicados`;
+        } else {
+          description = `${stats?.newTransactions || 0} transacciones nuevas`;
+          if (stats?.duplicatesIgnored > 0) {
+            description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
+          }
+          if (stats?.transfersDetected > 0) {
+            description += `, ${stats.transfersDetected} transferencias internas`;
+          }
         }
 
         toast({
@@ -207,8 +218,13 @@ export function useFileUpload(_isInvestment: boolean = false) {
           description: `${uploadFile.name}: ${description}`,
         });
 
-        // Refresh transactions and uploads
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        // Refresh data
+        if (isInvestment) {
+          queryClient.invalidateQueries({ queryKey: ["investments"] });
+          queryClient.invalidateQueries({ queryKey: ["investment_accounts"] });
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        }
         queryClient.invalidateQueries({ queryKey: ["uploads"] });
         
         // Run integrity check after processing
