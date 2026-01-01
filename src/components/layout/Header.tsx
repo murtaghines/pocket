@@ -4,11 +4,14 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { CurrencySelector } from "./CurrencySelector";
+import { useLocalization } from "@/hooks/useLocalization";
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
   const { signOut } = useAuth();
   const location = useLocation();
+  const { t } = useLocalization();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -30,7 +33,7 @@ export function Header() {
                 FinanceFlow
               </h1>
               <p className="text-xs text-muted-foreground hidden sm:block">
-                Tu control financiero personal
+                Personal finance control
               </p>
             </div>
           </div>
@@ -47,7 +50,7 @@ export function Header() {
                 )}
               >
                 <LayoutDashboard className="w-4 h-4" />
-                Dashboard
+                {t('nav.dashboard')}
               </Button>
             </Link>
             <Link to="/investments">
@@ -60,13 +63,16 @@ export function Header() {
                 )}
               >
                 <PiggyBank className="w-4 h-4" />
-                Inversiones
+                {t('nav.investments')}
               </Button>
             </Link>
           </nav>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Currency Selector */}
+          <CurrencySelector />
+          
           {/* Mobile navigation */}
           <div className="flex md:hidden items-center gap-1">
             <Link to="/">
