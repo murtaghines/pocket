@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { Transaction, MonthlyData, Category } from "@/lib/mockData";
 import { categoryLabels, categoryColors } from "@/lib/mockData";
+import { isInvestmentMovementDescription } from "@/lib/investmentDetection";
 
 interface DbTransaction {
   id: string;
@@ -38,17 +39,24 @@ export function useTransactions() {
       if (error) throw error;
       
       // Transform DB transactions to app format
-      return (data as DbTransaction[]).map((t): Transaction => ({
-        id: t.id,
-        date: t.date,
-        description: t.description,
-        amount: t.amount,
-        currency: "EUR",
-        type: t.type,
-        category: t.category as Category,
-        account: "Cuenta Principal",
-        bank: t.bank || "Desconocido",
-      }));
+      return (data as DbTransaction[]).map((t): Transaction => {
+        const normalizedCategory =
+          t.category === "investment" || isInvestmentMovementDescription(t.description)
+            ? "investment"
+            : (t.category as Category);
+
+        return {
+          id: t.id,
+          date: t.date,
+          description: t.description,
+          amount: t.amount,
+          currency: "EUR",
+          type: t.type,
+          category: normalizedCategory,
+          account: "Cuenta Principal",
+          bank: t.bank || "Desconocido",
+        };
+      });
     },
     enabled: !!user,
   });

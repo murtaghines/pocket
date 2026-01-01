@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Transaction, categoryLabels, Category } from "@/lib/mockData";
-import { Search, ArrowUpRight, ArrowDownRight, ArrowLeftRight } from "lucide-react";
+import { Search, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TransactionTableProps {
@@ -129,16 +129,20 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       <div className="flex items-center gap-2">
                         <div className={cn(
                           "p-1.5 rounded-full flex-shrink-0",
-                          transaction.type === 'income' 
-                            ? "bg-success/20" 
-                            : transaction.type === 'transfer' || transaction.category === 'investment'
+                          transaction.type === 'income'
+                            ? "bg-success/20"
+                            : transaction.category === 'investment'
                             ? "bg-muted"
+                            : transaction.type === 'transfer'
+                            ? "bg-purple-500/20"
                             : "bg-destructive/20"
                         )}>
                           {transaction.type === 'income' ? (
                             <ArrowDownRight className="w-3 h-3 text-success" />
-                          ) : transaction.type === 'transfer' || transaction.category === 'investment' ? (
-                            <ArrowLeftRight className="w-3 h-3 text-muted-foreground" />
+                          ) : transaction.category === 'investment' ? (
+                            <Minus className="w-3 h-3 text-muted-foreground" />
+                          ) : transaction.type === 'transfer' ? (
+                            <ArrowLeftRight className="w-3 h-3 text-purple-500" />
                           ) : (
                             <ArrowUpRight className="w-3 h-3 text-destructive" />
                           )}
@@ -165,11 +169,12 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                     </TableCell>
                     <TableCell className={cn(
                       "text-right font-semibold tabular-nums",
-                      transaction.type === 'income' ? "text-success" 
-                        : transaction.type === 'transfer' || transaction.category === 'investment' ? "text-muted-foreground" 
+                      transaction.type === 'income' ? "text-success"
+                        : transaction.category === 'investment' ? "text-muted-foreground"
+                        : transaction.type === 'transfer' ? "text-purple-500"
                         : "text-destructive"
                     )}>
-                      {transaction.type === 'income' ? '+' : (transaction.type === 'transfer' || transaction.category === 'investment') ? '↔' : '-'}
+                      {transaction.type === 'income' ? '+' : transaction.category === 'investment' ? '-' : transaction.type === 'transfer' ? '↔' : '-'}
                       {formatAmount(Math.abs(transaction.amount))}
                     </TableCell>
                   </TableRow>
