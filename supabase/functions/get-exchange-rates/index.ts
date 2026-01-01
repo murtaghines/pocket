@@ -6,6 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Extra currencies not in frankfurter.app (manual rates updated periodically)
+const EXTRA_CURRENCY_RATES: Record<string, number> = {
+  ARS: 1150,  // Argentine Peso - volatile, approximate
+  COP: 4500,  // Colombian Peso
+  CLP: 1020,  // Chilean Peso
+  PEN: 4.1,   // Peruvian Sol
+  UYU: 44,    // Uruguayan Peso
+  VES: 45,    // Venezuelan Bolivar
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -59,6 +69,23 @@ serve(async (req) => {
     const apiData = await response.json();
     const rates = apiData.rates;
 
+    // Add extra currencies with calculated rates
+    // These are approximate rates from EUR, we need to convert if base is different
+    const eurRateForBase = baseCurrency === 'EUR' ? 1 : (rates['EUR'] ? 1 / rates['EUR'] : null);
+    
+    if (eurRateForBase !== null || baseCurrency === 'EUR') {
+      Object.entries(EXTRA_CURRENCY_RATES).forEach(([currency, eurRate]) => {
+        if (!rates[currency]) {
+          if (baseCurrency === 'EUR') {
+            rates[currency] = eurRate;
+          } else if (eurRateForBase) {
+            // Convert from EUR rate to base currency rate
+            rates[currency] = eurRate * eurRateForBase;
+          }
+        }
+      });
+    }
+
     // Store all rates in the database
     const rateRecords = Object.entries(rates).map(([currency, rate]) => ({
       base_currency: baseCurrency,
@@ -91,6 +118,8 @@ serve(async (req) => {
     if (targetCurrency) {
       resultRates = rateRecords.filter(r => r.target_currency === targetCurrency);
     }
+
+    console.log('Returning fresh rates, total currencies:', rateRecords.length);
 
     return new Response(
       JSON.stringify({ 
