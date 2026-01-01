@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import { useUserPreferences } from './useUserPreferences';
 import { getTranslation } from '@/lib/translations';
+import { getLocaleForLanguage, getDateFormatForLanguage } from '@/lib/currencies';
 import { format, parseISO } from 'date-fns';
 import { es, enUS, ptBR, type Locale } from 'date-fns/locale';
 
@@ -13,10 +14,9 @@ const dateFnsLocales: Record<string, Locale> = {
 export function useLocalization() {
   const { preferences, isLoading, updatePreferences, isUpdating } = useUserPreferences();
 
-  const locale = preferences.locale;
   const language = preferences.language;
   const baseCurrency = preferences.base_currency;
-  const dateFormat = preferences.date_format;
+  const locale = getLocaleForLanguage(language);
 
   // Format currency according to user preferences
   const formatCurrency = useCallback((amount: number, currency?: string) => {
@@ -71,25 +71,17 @@ export function useLocalization() {
     }).format(value / 100);
   }, [locale]);
 
-  // Format date according to user preferences
+  // Format date according to language
   const formatDate = useCallback((date: string | Date) => {
     try {
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
       const dateFnsLocale = dateFnsLocales[language] || dateFnsLocales['es'];
-      
-      // Map user date format to date-fns format
-      const formatMap: Record<string, string> = {
-        'DD/MM/YYYY': 'dd/MM/yyyy',
-        'MM/DD/YYYY': 'MM/dd/yyyy',
-        'YYYY-MM-DD': 'yyyy-MM-dd',
-      };
-      
-      const fnsFormat = formatMap[dateFormat] || 'dd/MM/yyyy';
-      return format(dateObj, fnsFormat, { locale: dateFnsLocale });
+      const datePattern = getDateFormatForLanguage(language);
+      return format(dateObj, datePattern, { locale: dateFnsLocale });
     } catch {
       return String(date);
     }
-  }, [language, dateFormat]);
+  }, [language]);
 
   // Format date with time
   const formatDateTime = useCallback((date: string | Date) => {
@@ -160,7 +152,6 @@ export function useLocalization() {
     locale,
     language,
     baseCurrency,
-    dateFormat,
     isLoading,
     isUpdating,
     updatePreferences,
@@ -179,7 +170,7 @@ export function useLocalization() {
     // Translation
     t,
   }), [
-    locale, language, baseCurrency, dateFormat, isLoading, isUpdating, updatePreferences,
+    locale, language, baseCurrency, isLoading, isUpdating, updatePreferences,
     formatCurrency, formatCurrencyCompact, formatNumber, formatPercent,
     formatDate, formatDateTime, formatRelativeDate, formatMonth, formatMonthShort, t
   ]);
