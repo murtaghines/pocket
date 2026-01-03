@@ -110,23 +110,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       <CardHeader>
         <CardTitle className="text-lg">Transacciones</CardTitle>
         <div className="flex flex-col sm:flex-row gap-3 mt-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar transacciones..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-muted-foreground">Movimientos</span>
             <Select value={movementFilter} onValueChange={handleMovementChange}>
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="todos" />
+                <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="income">Ingreso</SelectItem>
                 <SelectItem value="expense">Gasto</SelectItem>
                 <SelectItem value="transfer">Transferencia</SelectItem>
@@ -142,10 +133,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               disabled={movementFilter === 'transfer' || availableCategories.length === 0}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="todas" />
+                <SelectValue placeholder="Todas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">todas</SelectItem>
+                <SelectItem value="all">Todas</SelectItem>
                 {availableCategories.map(cat => (
                   <SelectItem key={cat} value={cat}>
                     {categoryLabels[cat]}
@@ -153,6 +144,15 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar transacciones..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 mt-5"
+            />
           </div>
         </div>
       </CardHeader>

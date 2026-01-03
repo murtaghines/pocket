@@ -78,7 +78,7 @@ export default function Index() {
     ? Math.round(((currentMonth.expenses - previousMonth.expenses) / previousMonth.expenses) * 100)
     : 0;
 
-  const currentMonthName = formatMonth(new Date());
+  const currentMonthName = new Date().toLocaleDateString(preferences?.language || 'es', { month: 'long' });
 
   // Convert monthly data for charts
   const convertedMonthlyData = monthlyData.map(m => ({
