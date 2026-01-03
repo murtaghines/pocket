@@ -12,29 +12,60 @@ import { Loader2, TrendingUp } from "lucide-react";
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Las contraseñas no coinciden",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "La contraseña debe tener al menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
+
+    const redirectUrl = `${window.location.origin}/`;
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        }
+      }
     });
 
     if (error) {
       toast({
-        title: "Error signing up",
+        title: "Error al crear cuenta",
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Account created!",
-        description: "You can now sign in.",
+        title: "¡Cuenta creada!",
+        description: "Ya puedes iniciar sesión.",
       });
     }
     setLoading(false);
@@ -51,7 +82,7 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Error signing in",
+        title: "Error al iniciar sesión",
         description: error.message,
         variant: "destructive",
       });
@@ -71,16 +102,16 @@ export default function Auth() {
             </div>
             <span className="font-display text-xl font-bold">FinanceFlow</span>
           </div>
-          <CardTitle>Welcome</CardTitle>
+          <CardTitle>Bienvenido</CardTitle>
           <CardDescription>
-            Sign in or create an account to manage your finances
+            Inicia sesión o crea una cuenta para gestionar tus finanzas
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="register">Sign Up</TabsTrigger>
+              <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+              <TabsTrigger value="register">Registrarse</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -90,14 +121,14 @@ export default function Auth() {
                   <Input
                     id="email-login"
                     type="email"
-                    placeholder="you@email.com"
+                    placeholder="tu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-login">Password</Label>
+                  <Label htmlFor="password-login">Contraseña</Label>
                   <Input
                     id="password-login"
                     type="password"
@@ -109,26 +140,50 @@ export default function Auth() {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Sign In
+                  Iniciar Sesión
                 </Button>
               </form>
             </TabsContent>
             
             <TabsContent value="register">
               <form onSubmit={handleSignUp} className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="first-name">Nombre</Label>
+                    <Input
+                      id="first-name"
+                      type="text"
+                      placeholder="Juan"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last-name">Apellido</Label>
+                    <Input
+                      id="last-name"
+                      type="text"
+                      placeholder="Pérez"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="email-register">Email</Label>
                   <Input
                     id="email-register"
                     type="email"
-                    placeholder="you@email.com"
+                    placeholder="tu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-register">Password</Label>
+                  <Label htmlFor="password-register">Contraseña</Label>
                   <Input
                     id="password-register"
                     type="password"
@@ -139,9 +194,21 @@ export default function Auth() {
                     minLength={6}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Create Account
+                  Crear Cuenta
                 </Button>
               </form>
             </TabsContent>
