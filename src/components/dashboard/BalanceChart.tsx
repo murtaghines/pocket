@@ -1,5 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface MonthlyData {
   month: string;
@@ -10,26 +11,28 @@ interface BalanceChartProps {
   data: MonthlyData[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const value = payload[0].value;
-    return (
-      <div className="bg-card border border-border rounded-lg shadow-lg p-4">
-        <p className="font-display font-semibold text-foreground mb-1">{label}</p>
-        <p className={`text-lg font-bold ${value >= 0 ? 'text-success' : 'text-destructive'}`}>
-          {value >= 0 ? '+' : ''}{value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
 export function BalanceChart({ data }: BalanceChartProps) {
+  const { t, formatCurrency } = useLocalization();
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const value = payload[0].value;
+      return (
+        <div className="bg-card border border-border rounded-lg shadow-lg p-4">
+          <p className="font-display font-semibold text-foreground mb-1">{label}</p>
+          <p className={`text-lg font-bold ${value >= 0 ? 'text-success' : 'text-destructive'}`}>
+            {value >= 0 ? '+' : ''}{formatCurrency(value)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '350ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">Balance Mensual</CardTitle>
+        <CardTitle className="text-lg">{t('dashboard.monthly_balance')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">

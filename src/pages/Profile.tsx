@@ -21,7 +21,7 @@ export default function Profile() {
             {t('profile.title')}
           </h2>
           <p className="text-muted-foreground mt-1">
-            Información de tu cuenta y archivos subidos
+            {t('profile.subtitle')}
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export default function Profile() {
             <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-semibold">Extractos Bancarios</h3>
+                <h3 className="text-lg font-semibold">{t('profile.bank_statements')}</h3>
               </div>
               <MonthlyUploadsOrganizer />
             </div>
@@ -56,7 +56,7 @@ export default function Profile() {
             <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-semibold">Inversiones y Ahorro</h3>
+                <h3 className="text-lg font-semibold">{t('profile.investments_savings')}</h3>
               </div>
               <InvestmentUploadsOrganizer />
             </div>
@@ -68,7 +68,7 @@ export default function Profile() {
       <footer className="border-t mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            FinanceFlow • Control financiero personal
+            FinanceFlow • {t('dashboard.personal_finance')}
           </p>
         </div>
       </footer>

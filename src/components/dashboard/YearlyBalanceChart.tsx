@@ -2,18 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, ReferenceLine } from "recharts";
 import { Scale } from "lucide-react";
 import { MonthlyData } from "@/lib/mockData";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface YearlyBalanceChartProps {
   data: MonthlyData[];
 }
 
 export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
+  const { t, formatCurrency } = useLocalization();
+
   const totalBalance = data.reduce((sum, d) => sum + d.balance, 0);
   const averageBalance = Math.round(totalBalance / data.length);
   const maxBalance = Math.max(...data.map(d => d.balance));
-
-  const formatCurrency = (value: number) =>
-    value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -33,11 +33,11 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Scale className="w-4 h-4" />
-            Balance Anual
+            {t('dashboard.yearly_balance')}
           </CardTitle>
           <div className="text-right">
             <p className="text-lg font-bold text-success">{formatCurrency(totalBalance)}</p>
-            <p className="text-xs text-muted-foreground">Ahorro total</p>
+            <p className="text-xs text-muted-foreground">{t('dashboard.total_savings')}</p>
           </div>
         </div>
       </CardHeader>
@@ -58,7 +58,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
                 stroke="hsl(var(--muted-foreground) / 0.5)" 
                 strokeDasharray="3 3"
                 label={{ 
-                  value: `Media: ${formatCurrency(averageBalance)}`,
+                  value: `${t('dashboard.average')}: ${formatCurrency(averageBalance)}`,
                   position: 'insideTopRight',
                   fontSize: 10,
                   fill: 'hsl(var(--muted-foreground))'

@@ -37,12 +37,15 @@ export default function Index() {
   const { convertAmount } = useExchangeRates('EUR');
   
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
 
-  // Check if onboarding is needed
+  // Check if onboarding is needed - only after preferences are fully loaded
   useEffect(() => {
-    if (!prefsLoading && preferences) {
-      const needsOnboarding = !preferences.onboarding_completed;
+    if (!prefsLoading && preferences && preferences.id) {
+      // Only check onboarding once preferences are loaded from DB (have an id)
+      const needsOnboarding = preferences.onboarding_completed === false || preferences.onboarding_completed === null || preferences.onboarding_completed === undefined;
       setShowOnboarding(needsOnboarding);
+      setOnboardingChecked(true);
     }
   }, [preferences, prefsLoading]);
 
@@ -105,11 +108,13 @@ export default function Index() {
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Onboarding Modal */}
-      <OnboardingModal 
-        open={showOnboarding} 
-        onComplete={() => setShowOnboarding(false)} 
-      />
+      {/* Onboarding Modal - only show after checking preferences */}
+      {onboardingChecked && (
+        <OnboardingModal 
+          open={showOnboarding} 
+          onComplete={() => setShowOnboarding(false)} 
+        />
+      )}
       
       <main className="container px-4 md:px-6 py-8">
         {/* Page Title */}
@@ -133,7 +138,7 @@ export default function Index() {
         {!isLoading && !prefsLoading && !hasData && (
           <div className="text-center py-12 mb-8">
             <Upload className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Welcome to FinanceFlow</h3>
+            <h3 className="text-xl font-semibold mb-2">{t('dashboard.welcome')}</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               {t('dashboard.upload_prompt')}
             </p>
@@ -229,7 +234,7 @@ export default function Index() {
       <footer className="border-t mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            FinanceFlow • Personal finance control
+            FinanceFlow • {t('dashboard.personal_finance')}
           </p>
         </div>
       </footer>

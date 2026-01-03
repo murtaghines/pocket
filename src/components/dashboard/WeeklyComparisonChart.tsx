@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { Calendar } from "lucide-react";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface WeeklyData {
   day: string;
@@ -8,22 +9,41 @@ interface WeeklyData {
   isToday?: boolean;
 }
 
-const weeklyData: WeeklyData[] = [
-  { day: 'L', amount: 45 },
-  { day: 'M', amount: 120 },
-  { day: 'X', amount: 35 },
-  { day: 'J', amount: 89, isToday: true },
-  { day: 'V', amount: 0 },
-  { day: 'S', amount: 0 },
-  { day: 'D', amount: 0 },
-];
-
 export function WeeklyComparisonChart() {
+  const { t, formatCurrency, language } = useLocalization();
+
+  // Day abbreviations based on language
+  const getDayAbbreviations = () => {
+    switch (language) {
+      case 'en':
+        return ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+      case 'pt':
+        return ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+      case 'fr':
+        return ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+      case 'it':
+        return ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
+      case 'de':
+        return ['M', 'D', 'M', 'D', 'F', 'S', 'S'];
+      default:
+        return ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    }
+  };
+
+  const dayAbbrevs = getDayAbbreviations();
+
+  const weeklyData: WeeklyData[] = [
+    { day: dayAbbrevs[0], amount: 45 },
+    { day: dayAbbrevs[1], amount: 120 },
+    { day: dayAbbrevs[2], amount: 35 },
+    { day: dayAbbrevs[3], amount: 89, isToday: true },
+    { day: dayAbbrevs[4], amount: 0 },
+    { day: dayAbbrevs[5], amount: 0 },
+    { day: dayAbbrevs[6], amount: 0 },
+  ];
+
   const totalSpent = weeklyData.reduce((sum, d) => sum + d.amount, 0);
   const averageDaily = Math.round(totalSpent / weeklyData.filter(d => d.amount > 0).length || 1);
-
-  const formatCurrency = (value: number) =>
-    value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -42,13 +62,13 @@ export function WeeklyComparisonChart() {
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          Esta Semana
+          {t('dashboard.this_week')}
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-4">
         <div className="flex items-baseline gap-2 mb-3">
           <span className="text-xl font-bold">{formatCurrency(totalSpent)}</span>
-          <span className="text-xs text-muted-foreground">gastados</span>
+          <span className="text-xs text-muted-foreground">{t('dashboard.spent')}</span>
         </div>
         
         <div className="h-[80px]">
@@ -83,8 +103,8 @@ export function WeeklyComparisonChart() {
         </div>
 
         <div className="mt-2 pt-2 border-t flex justify-between text-xs">
-          <span className="text-muted-foreground">Media diaria</span>
-          <span className="font-medium">{formatCurrency(averageDaily)}/día</span>
+          <span className="text-muted-foreground">{t('dashboard.daily_average')}</span>
+          <span className="font-medium">{formatCurrency(averageDaily)}{t('dashboard.per_day')}</span>
         </div>
       </CardContent>
     </Card>

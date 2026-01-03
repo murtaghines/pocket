@@ -140,7 +140,7 @@ export default function Investments() {
                     {Object.keys(byPlatform).length}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {accounts.length} cuentas activas
+                    {accounts.length} {t('investments.active_accounts')}
                   </p>
                 </CardContent>
               </Card>
@@ -178,7 +178,7 @@ export default function Investments() {
       <footer className="border-t mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            FinanceFlow • Control financiero personal
+            FinanceFlow • {t('dashboard.personal_finance')}
           </p>
         </div>
       </footer>
