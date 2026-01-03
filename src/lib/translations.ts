@@ -20,6 +20,23 @@ export const translations: Translations = {
     'dashboard.no_data': 'Sin datos',
     'dashboard.upload_prompt': 'Sube tus extractos bancarios para empezar a analizar tus finanzas',
     'dashboard.go_to_profile': 'Ir a Perfil para subir',
+    'dashboard.welcome': 'Bienvenido a FinanceFlow',
+    'dashboard.monthly_evolution': 'Evolución Mensual',
+    'dashboard.expenses_by_category': 'Gastos por Categoría',
+    'dashboard.monthly_balance': 'Balance Mensual',
+    'dashboard.yearly_balance': 'Balance Anual',
+    'dashboard.total_savings': 'Ahorro total',
+    'dashboard.average': 'Media',
+    'dashboard.vs_previous_month': 'vs Mes Anterior',
+    'dashboard.top_expenses': 'Mayores Gastos',
+    'dashboard.this_week': 'Esta Semana',
+    'dashboard.spent': 'gastados',
+    'dashboard.daily_average': 'Media diaria',
+    'dashboard.per_day': '/día',
+    'dashboard.excellent': 'Excelente',
+    'dashboard.good': 'Buena',
+    'dashboard.improvable': 'Mejorable',
+    'dashboard.personal_finance': 'Control financiero personal',
     
     // Investments
     'investments.title': 'Inversiones',
@@ -34,8 +51,10 @@ export const translations: Translations = {
     'investments.recent_movements': 'Movimientos Recientes',
     'investments.no_data': 'Sin datos de inversiones',
     'investments.upload_prompt': 'Sube tus extractos de inversión o añade cuentas manualmente',
+    'investments.active_accounts': 'cuentas activas',
     
     // Transactions
+    'transactions.title': 'Transacciones',
     'transactions.date': 'Fecha',
     'transactions.description': 'Descripción',
     'transactions.category': 'Categoría',
@@ -44,6 +63,21 @@ export const translations: Translations = {
     'transactions.type': 'Tipo',
     'transactions.deposit': 'Depósito',
     'transactions.withdrawal': 'Retiro',
+    'transactions.month': 'Mes',
+    'transactions.account': 'Cuenta',
+    'transactions.movement': 'Movimiento',
+    'transactions.movements': 'Movimientos',
+    'transactions.categories': 'Categorías',
+    'transactions.all': 'Todos',
+    'transactions.all_f': 'Todas',
+    'transactions.income': 'Ingreso',
+    'transactions.expense': 'Gasto',
+    'transactions.transfer': 'Transferencia',
+    'transactions.investment': 'Inversión',
+    'transactions.search': 'Buscar transacciones...',
+    'transactions.showing': 'Mostrando',
+    'transactions.of': 'de',
+    'transactions.no_results': 'No se encontraron transacciones',
     
     // Categories
     'category.food': 'Alimentación',
@@ -54,6 +88,13 @@ export const translations: Translations = {
     'category.health': 'Salud',
     'category.education': 'Educación',
     'category.other': 'Otros',
+    'category.housing': 'Vivienda',
+    'category.subscriptions': 'Suscripciones',
+    'category.leisure': 'Ocio',
+    'category.travel': 'Viajes',
+    'category.income': 'Ingreso',
+    'category.transfer': 'Transferencia',
+    'category.investment': 'Inversión',
     
     // Asset types
     'asset.stocks': 'Acciones',
@@ -66,14 +107,37 @@ export const translations: Translations = {
     
     // Profile
     'profile.title': 'Perfil',
+    'profile.subtitle': 'Información de tu cuenta y archivos subidos',
     'profile.uploads': 'Subidas',
     'profile.preferences': 'Preferencias',
     'profile.regional_settings': 'Configuración Regional',
+    'profile.regional_description': 'Configura tu idioma y moneda preferidos',
     'profile.language': 'Idioma',
     'profile.currency': 'Moneda base',
     'profile.date_format': 'Formato de fecha',
     'profile.save_preferences': 'Guardar preferencias',
     'profile.preferences_saved': 'Preferencias guardadas',
+    'profile.preview': 'Vista previa:',
+    'profile.saving': 'Guardando...',
+    'profile.bank_statements': 'Extractos Bancarios',
+    'profile.investments_savings': 'Inversiones y Ahorro',
+    
+    // Onboarding
+    'onboarding.welcome': '¡Bienvenido a FinanceFlow! 👋',
+    'onboarding.your_region': 'Tu Región',
+    'onboarding.base_currency': 'Moneda Base',
+    'onboarding.expense_categories': 'Categorías de Gastos',
+    'onboarding.step': 'Paso',
+    'onboarding.of': 'de',
+    'onboarding.back': 'Atrás',
+    'onboarding.next': 'Siguiente',
+    'onboarding.get_started': 'Comenzar',
+    'onboarding.preferences_saved': 'Preferencias guardadas',
+    'onboarding.error_saving': 'Error al guardar preferencias. Inténtalo de nuevo.',
+    
+    // Charts
+    'chart.area': 'Área',
+    'chart.bar': 'Barras',
     
     // Common
     'common.loading': 'Cargando...',
@@ -118,6 +182,23 @@ export const translations: Translations = {
     'dashboard.no_data': 'No data',
     'dashboard.upload_prompt': 'Upload your bank statements to start analyzing your finances',
     'dashboard.go_to_profile': 'Go to Profile to upload',
+    'dashboard.welcome': 'Welcome to FinanceFlow',
+    'dashboard.monthly_evolution': 'Monthly Evolution',
+    'dashboard.expenses_by_category': 'Expenses by Category',
+    'dashboard.monthly_balance': 'Monthly Balance',
+    'dashboard.yearly_balance': 'Yearly Balance',
+    'dashboard.total_savings': 'Total savings',
+    'dashboard.average': 'Average',
+    'dashboard.vs_previous_month': 'vs Previous Month',
+    'dashboard.top_expenses': 'Top Expenses',
+    'dashboard.this_week': 'This Week',
+    'dashboard.spent': 'spent',
+    'dashboard.daily_average': 'Daily average',
+    'dashboard.per_day': '/day',
+    'dashboard.excellent': 'Excellent',
+    'dashboard.good': 'Good',
+    'dashboard.improvable': 'Needs improvement',
+    'dashboard.personal_finance': 'Personal finance control',
     
     // Investments
     'investments.title': 'Investments',
@@ -132,8 +213,10 @@ export const translations: Translations = {
     'investments.recent_movements': 'Recent Movements',
     'investments.no_data': 'No investment data',
     'investments.upload_prompt': 'Upload your investment statements or add accounts manually',
+    'investments.active_accounts': 'active accounts',
     
     // Transactions
+    'transactions.title': 'Transactions',
     'transactions.date': 'Date',
     'transactions.description': 'Description',
     'transactions.category': 'Category',
@@ -142,6 +225,21 @@ export const translations: Translations = {
     'transactions.type': 'Type',
     'transactions.deposit': 'Deposit',
     'transactions.withdrawal': 'Withdrawal',
+    'transactions.month': 'Month',
+    'transactions.account': 'Account',
+    'transactions.movement': 'Movement',
+    'transactions.movements': 'Movements',
+    'transactions.categories': 'Categories',
+    'transactions.all': 'All',
+    'transactions.all_f': 'All',
+    'transactions.income': 'Income',
+    'transactions.expense': 'Expense',
+    'transactions.transfer': 'Transfer',
+    'transactions.investment': 'Investment',
+    'transactions.search': 'Search transactions...',
+    'transactions.showing': 'Showing',
+    'transactions.of': 'of',
+    'transactions.no_results': 'No transactions found',
     
     // Categories
     'category.food': 'Food',
@@ -152,6 +250,13 @@ export const translations: Translations = {
     'category.health': 'Health',
     'category.education': 'Education',
     'category.other': 'Other',
+    'category.housing': 'Housing',
+    'category.subscriptions': 'Subscriptions',
+    'category.leisure': 'Leisure',
+    'category.travel': 'Travel',
+    'category.income': 'Income',
+    'category.transfer': 'Transfer',
+    'category.investment': 'Investment',
     
     // Asset types
     'asset.stocks': 'Stocks',
@@ -164,14 +269,37 @@ export const translations: Translations = {
     
     // Profile
     'profile.title': 'Profile',
+    'profile.subtitle': 'Your account info and uploaded files',
     'profile.uploads': 'Uploads',
     'profile.preferences': 'Preferences',
     'profile.regional_settings': 'Regional Settings',
+    'profile.regional_description': 'Configure your language and currency preferences',
     'profile.language': 'Language',
     'profile.currency': 'Base currency',
     'profile.date_format': 'Date format',
     'profile.save_preferences': 'Save preferences',
     'profile.preferences_saved': 'Preferences saved',
+    'profile.preview': 'Preview:',
+    'profile.saving': 'Saving...',
+    'profile.bank_statements': 'Bank Statements',
+    'profile.investments_savings': 'Investments & Savings',
+    
+    // Onboarding
+    'onboarding.welcome': 'Welcome to FinanceFlow! 👋',
+    'onboarding.your_region': 'Your Region',
+    'onboarding.base_currency': 'Base Currency',
+    'onboarding.expense_categories': 'Expense Categories',
+    'onboarding.step': 'Step',
+    'onboarding.of': 'of',
+    'onboarding.back': 'Back',
+    'onboarding.next': 'Next',
+    'onboarding.get_started': 'Get Started',
+    'onboarding.preferences_saved': 'Preferences saved',
+    'onboarding.error_saving': 'Failed to save preferences. Please try again.',
+    
+    // Charts
+    'chart.area': 'Area',
+    'chart.bar': 'Bar',
     
     // Common
     'common.loading': 'Loading...',
@@ -216,6 +344,23 @@ export const translations: Translations = {
     'dashboard.no_data': 'Sem dados',
     'dashboard.upload_prompt': 'Envie seus extratos bancários para começar a analisar suas finanças',
     'dashboard.go_to_profile': 'Ir ao Perfil para enviar',
+    'dashboard.welcome': 'Bem-vindo ao FinanceFlow',
+    'dashboard.monthly_evolution': 'Evolução Mensal',
+    'dashboard.expenses_by_category': 'Despesas por Categoria',
+    'dashboard.monthly_balance': 'Saldo Mensal',
+    'dashboard.yearly_balance': 'Saldo Anual',
+    'dashboard.total_savings': 'Poupança total',
+    'dashboard.average': 'Média',
+    'dashboard.vs_previous_month': 'vs Mês Anterior',
+    'dashboard.top_expenses': 'Maiores Despesas',
+    'dashboard.this_week': 'Esta Semana',
+    'dashboard.spent': 'gastos',
+    'dashboard.daily_average': 'Média diária',
+    'dashboard.per_day': '/dia',
+    'dashboard.excellent': 'Excelente',
+    'dashboard.good': 'Boa',
+    'dashboard.improvable': 'Precisa melhorar',
+    'dashboard.personal_finance': 'Controle financeiro pessoal',
     
     // Investments
     'investments.title': 'Investimentos',
@@ -230,8 +375,10 @@ export const translations: Translations = {
     'investments.recent_movements': 'Movimentos Recentes',
     'investments.no_data': 'Sem dados de investimentos',
     'investments.upload_prompt': 'Envie seus extratos de investimento ou adicione contas manualmente',
+    'investments.active_accounts': 'contas ativas',
     
     // Transactions
+    'transactions.title': 'Transações',
     'transactions.date': 'Data',
     'transactions.description': 'Descrição',
     'transactions.category': 'Categoria',
@@ -240,6 +387,21 @@ export const translations: Translations = {
     'transactions.type': 'Tipo',
     'transactions.deposit': 'Depósito',
     'transactions.withdrawal': 'Saque',
+    'transactions.month': 'Mês',
+    'transactions.account': 'Conta',
+    'transactions.movement': 'Movimento',
+    'transactions.movements': 'Movimentos',
+    'transactions.categories': 'Categorias',
+    'transactions.all': 'Todos',
+    'transactions.all_f': 'Todas',
+    'transactions.income': 'Receita',
+    'transactions.expense': 'Despesa',
+    'transactions.transfer': 'Transferência',
+    'transactions.investment': 'Investimento',
+    'transactions.search': 'Buscar transações...',
+    'transactions.showing': 'Mostrando',
+    'transactions.of': 'de',
+    'transactions.no_results': 'Nenhuma transação encontrada',
     
     // Categories
     'category.food': 'Alimentação',
@@ -250,6 +412,13 @@ export const translations: Translations = {
     'category.health': 'Saúde',
     'category.education': 'Educação',
     'category.other': 'Outros',
+    'category.housing': 'Moradia',
+    'category.subscriptions': 'Assinaturas',
+    'category.leisure': 'Lazer',
+    'category.travel': 'Viagens',
+    'category.income': 'Receita',
+    'category.transfer': 'Transferência',
+    'category.investment': 'Investimento',
     
     // Asset types
     'asset.stocks': 'Ações',
@@ -262,14 +431,37 @@ export const translations: Translations = {
     
     // Profile
     'profile.title': 'Perfil',
+    'profile.subtitle': 'Informações da sua conta e arquivos enviados',
     'profile.uploads': 'Uploads',
     'profile.preferences': 'Preferências',
     'profile.regional_settings': 'Configurações Regionais',
+    'profile.regional_description': 'Configure suas preferências de idioma e moeda',
     'profile.language': 'Idioma',
     'profile.currency': 'Moeda base',
     'profile.date_format': 'Formato de data',
     'profile.save_preferences': 'Salvar preferências',
     'profile.preferences_saved': 'Preferências salvas',
+    'profile.preview': 'Prévia:',
+    'profile.saving': 'Salvando...',
+    'profile.bank_statements': 'Extratos Bancários',
+    'profile.investments_savings': 'Investimentos e Poupança',
+    
+    // Onboarding
+    'onboarding.welcome': 'Bem-vindo ao FinanceFlow! 👋',
+    'onboarding.your_region': 'Sua Região',
+    'onboarding.base_currency': 'Moeda Base',
+    'onboarding.expense_categories': 'Categorias de Despesas',
+    'onboarding.step': 'Passo',
+    'onboarding.of': 'de',
+    'onboarding.back': 'Voltar',
+    'onboarding.next': 'Próximo',
+    'onboarding.get_started': 'Começar',
+    'onboarding.preferences_saved': 'Preferências salvas',
+    'onboarding.error_saving': 'Erro ao salvar preferências. Tente novamente.',
+    
+    // Charts
+    'chart.area': 'Área',
+    'chart.bar': 'Barras',
     
     // Common
     'common.loading': 'Carregando...',
@@ -314,6 +506,23 @@ export const translations: Translations = {
     'dashboard.no_data': 'Aucune donnée',
     'dashboard.upload_prompt': 'Téléchargez vos relevés bancaires pour analyser vos finances',
     'dashboard.go_to_profile': 'Aller au Profil pour télécharger',
+    'dashboard.welcome': 'Bienvenue sur FinanceFlow',
+    'dashboard.monthly_evolution': 'Évolution Mensuelle',
+    'dashboard.expenses_by_category': 'Dépenses par Catégorie',
+    'dashboard.monthly_balance': 'Solde Mensuel',
+    'dashboard.yearly_balance': 'Solde Annuel',
+    'dashboard.total_savings': 'Épargne totale',
+    'dashboard.average': 'Moyenne',
+    'dashboard.vs_previous_month': 'vs Mois Précédent',
+    'dashboard.top_expenses': 'Principales Dépenses',
+    'dashboard.this_week': 'Cette Semaine',
+    'dashboard.spent': 'dépensés',
+    'dashboard.daily_average': 'Moyenne quotidienne',
+    'dashboard.per_day': '/jour',
+    'dashboard.excellent': 'Excellent',
+    'dashboard.good': 'Bon',
+    'dashboard.improvable': 'À améliorer',
+    'dashboard.personal_finance': 'Contrôle des finances personnelles',
     
     // Investments
     'investments.title': 'Investissements',
@@ -328,8 +537,10 @@ export const translations: Translations = {
     'investments.recent_movements': 'Mouvements récents',
     'investments.no_data': "Aucune donnée d'investissement",
     'investments.upload_prompt': "Téléchargez vos relevés d'investissement ou ajoutez des comptes",
+    'investments.active_accounts': 'comptes actifs',
     
     // Transactions
+    'transactions.title': 'Transactions',
     'transactions.date': 'Date',
     'transactions.description': 'Description',
     'transactions.category': 'Catégorie',
@@ -338,6 +549,21 @@ export const translations: Translations = {
     'transactions.type': 'Type',
     'transactions.deposit': 'Dépôt',
     'transactions.withdrawal': 'Retrait',
+    'transactions.month': 'Mois',
+    'transactions.account': 'Compte',
+    'transactions.movement': 'Mouvement',
+    'transactions.movements': 'Mouvements',
+    'transactions.categories': 'Catégories',
+    'transactions.all': 'Tous',
+    'transactions.all_f': 'Toutes',
+    'transactions.income': 'Revenu',
+    'transactions.expense': 'Dépense',
+    'transactions.transfer': 'Transfert',
+    'transactions.investment': 'Investissement',
+    'transactions.search': 'Rechercher des transactions...',
+    'transactions.showing': 'Affichage de',
+    'transactions.of': 'sur',
+    'transactions.no_results': 'Aucune transaction trouvée',
     
     // Categories
     'category.food': 'Alimentation',
@@ -348,6 +574,13 @@ export const translations: Translations = {
     'category.health': 'Santé',
     'category.education': 'Éducation',
     'category.other': 'Autres',
+    'category.housing': 'Logement',
+    'category.subscriptions': 'Abonnements',
+    'category.leisure': 'Loisirs',
+    'category.travel': 'Voyages',
+    'category.income': 'Revenu',
+    'category.transfer': 'Transfert',
+    'category.investment': 'Investissement',
     
     // Asset types
     'asset.stocks': 'Actions',
@@ -360,14 +593,37 @@ export const translations: Translations = {
     
     // Profile
     'profile.title': 'Profil',
+    'profile.subtitle': 'Informations de votre compte et fichiers téléchargés',
     'profile.uploads': 'Téléchargements',
     'profile.preferences': 'Préférences',
     'profile.regional_settings': 'Paramètres régionaux',
+    'profile.regional_description': 'Configurez vos préférences de langue et de devise',
     'profile.language': 'Langue',
     'profile.currency': 'Devise de base',
     'profile.date_format': 'Format de date',
     'profile.save_preferences': 'Enregistrer',
     'profile.preferences_saved': 'Préférences enregistrées',
+    'profile.preview': 'Aperçu:',
+    'profile.saving': 'Enregistrement...',
+    'profile.bank_statements': 'Relevés Bancaires',
+    'profile.investments_savings': 'Investissements et Épargne',
+    
+    // Onboarding
+    'onboarding.welcome': 'Bienvenue sur FinanceFlow! 👋',
+    'onboarding.your_region': 'Votre Région',
+    'onboarding.base_currency': 'Devise de Base',
+    'onboarding.expense_categories': 'Catégories de Dépenses',
+    'onboarding.step': 'Étape',
+    'onboarding.of': 'sur',
+    'onboarding.back': 'Retour',
+    'onboarding.next': 'Suivant',
+    'onboarding.get_started': 'Commencer',
+    'onboarding.preferences_saved': 'Préférences enregistrées',
+    'onboarding.error_saving': "Échec de l'enregistrement des préférences. Veuillez réessayer.",
+    
+    // Charts
+    'chart.area': 'Aire',
+    'chart.bar': 'Barres',
     
     // Common
     'common.loading': 'Chargement...',
@@ -412,6 +668,23 @@ export const translations: Translations = {
     'dashboard.no_data': 'Nessun dato',
     'dashboard.upload_prompt': 'Carica i tuoi estratti conto per analizzare le tue finanze',
     'dashboard.go_to_profile': 'Vai al Profilo per caricare',
+    'dashboard.welcome': 'Benvenuto su FinanceFlow',
+    'dashboard.monthly_evolution': 'Evoluzione Mensile',
+    'dashboard.expenses_by_category': 'Spese per Categoria',
+    'dashboard.monthly_balance': 'Saldo Mensile',
+    'dashboard.yearly_balance': 'Saldo Annuale',
+    'dashboard.total_savings': 'Risparmio totale',
+    'dashboard.average': 'Media',
+    'dashboard.vs_previous_month': 'vs Mese Precedente',
+    'dashboard.top_expenses': 'Maggiori Spese',
+    'dashboard.this_week': 'Questa Settimana',
+    'dashboard.spent': 'spesi',
+    'dashboard.daily_average': 'Media giornaliera',
+    'dashboard.per_day': '/giorno',
+    'dashboard.excellent': 'Eccellente',
+    'dashboard.good': 'Buono',
+    'dashboard.improvable': 'Da migliorare',
+    'dashboard.personal_finance': 'Controllo delle finanze personali',
     
     // Investments
     'investments.title': 'Investimenti',
@@ -426,8 +699,10 @@ export const translations: Translations = {
     'investments.recent_movements': 'Movimenti recenti',
     'investments.no_data': 'Nessun dato sugli investimenti',
     'investments.upload_prompt': 'Carica i tuoi estratti conto o aggiungi conti manualmente',
+    'investments.active_accounts': 'conti attivi',
     
     // Transactions
+    'transactions.title': 'Transazioni',
     'transactions.date': 'Data',
     'transactions.description': 'Descrizione',
     'transactions.category': 'Categoria',
@@ -436,6 +711,21 @@ export const translations: Translations = {
     'transactions.type': 'Tipo',
     'transactions.deposit': 'Deposito',
     'transactions.withdrawal': 'Prelievo',
+    'transactions.month': 'Mese',
+    'transactions.account': 'Conto',
+    'transactions.movement': 'Movimento',
+    'transactions.movements': 'Movimenti',
+    'transactions.categories': 'Categorie',
+    'transactions.all': 'Tutti',
+    'transactions.all_f': 'Tutte',
+    'transactions.income': 'Entrata',
+    'transactions.expense': 'Spesa',
+    'transactions.transfer': 'Trasferimento',
+    'transactions.investment': 'Investimento',
+    'transactions.search': 'Cerca transazioni...',
+    'transactions.showing': 'Visualizzazione di',
+    'transactions.of': 'di',
+    'transactions.no_results': 'Nessuna transazione trovata',
     
     // Categories
     'category.food': 'Alimentazione',
@@ -446,6 +736,13 @@ export const translations: Translations = {
     'category.health': 'Salute',
     'category.education': 'Istruzione',
     'category.other': 'Altro',
+    'category.housing': 'Casa',
+    'category.subscriptions': 'Abbonamenti',
+    'category.leisure': 'Svago',
+    'category.travel': 'Viaggi',
+    'category.income': 'Entrata',
+    'category.transfer': 'Trasferimento',
+    'category.investment': 'Investimento',
     
     // Asset types
     'asset.stocks': 'Azioni',
@@ -458,14 +755,37 @@ export const translations: Translations = {
     
     // Profile
     'profile.title': 'Profilo',
+    'profile.subtitle': 'Informazioni del tuo account e file caricati',
     'profile.uploads': 'Caricamenti',
     'profile.preferences': 'Preferenze',
     'profile.regional_settings': 'Impostazioni regionali',
+    'profile.regional_description': 'Configura le tue preferenze di lingua e valuta',
     'profile.language': 'Lingua',
     'profile.currency': 'Valuta base',
     'profile.date_format': 'Formato data',
     'profile.save_preferences': 'Salva preferenze',
     'profile.preferences_saved': 'Preferenze salvate',
+    'profile.preview': 'Anteprima:',
+    'profile.saving': 'Salvataggio...',
+    'profile.bank_statements': 'Estratti Conto',
+    'profile.investments_savings': 'Investimenti e Risparmio',
+    
+    // Onboarding
+    'onboarding.welcome': 'Benvenuto su FinanceFlow! 👋',
+    'onboarding.your_region': 'La Tua Regione',
+    'onboarding.base_currency': 'Valuta Base',
+    'onboarding.expense_categories': 'Categorie di Spesa',
+    'onboarding.step': 'Passo',
+    'onboarding.of': 'di',
+    'onboarding.back': 'Indietro',
+    'onboarding.next': 'Avanti',
+    'onboarding.get_started': 'Inizia',
+    'onboarding.preferences_saved': 'Preferenze salvate',
+    'onboarding.error_saving': 'Impossibile salvare le preferenze. Riprova.',
+    
+    // Charts
+    'chart.area': 'Area',
+    'chart.bar': 'Barre',
     
     // Common
     'common.loading': 'Caricamento...',
@@ -510,6 +830,23 @@ export const translations: Translations = {
     'dashboard.no_data': 'Keine Daten',
     'dashboard.upload_prompt': 'Laden Sie Ihre Kontoauszüge hoch, um Ihre Finanzen zu analysieren',
     'dashboard.go_to_profile': 'Zum Profil zum Hochladen',
+    'dashboard.welcome': 'Willkommen bei FinanceFlow',
+    'dashboard.monthly_evolution': 'Monatliche Entwicklung',
+    'dashboard.expenses_by_category': 'Ausgaben nach Kategorie',
+    'dashboard.monthly_balance': 'Monatlicher Saldo',
+    'dashboard.yearly_balance': 'Jährlicher Saldo',
+    'dashboard.total_savings': 'Gesamtersparnis',
+    'dashboard.average': 'Durchschnitt',
+    'dashboard.vs_previous_month': 'vs Vormonat',
+    'dashboard.top_expenses': 'Größte Ausgaben',
+    'dashboard.this_week': 'Diese Woche',
+    'dashboard.spent': 'ausgegeben',
+    'dashboard.daily_average': 'Tagesdurchschnitt',
+    'dashboard.per_day': '/Tag',
+    'dashboard.excellent': 'Ausgezeichnet',
+    'dashboard.good': 'Gut',
+    'dashboard.improvable': 'Verbesserungsfähig',
+    'dashboard.personal_finance': 'Persönliche Finanzkontrolle',
     
     // Investments
     'investments.title': 'Investitionen',
@@ -524,8 +861,10 @@ export const translations: Translations = {
     'investments.recent_movements': 'Letzte Bewegungen',
     'investments.no_data': 'Keine Investitionsdaten',
     'investments.upload_prompt': 'Laden Sie Ihre Anlageauszüge hoch oder fügen Sie Konten hinzu',
+    'investments.active_accounts': 'aktive Konten',
     
     // Transactions
+    'transactions.title': 'Transaktionen',
     'transactions.date': 'Datum',
     'transactions.description': 'Beschreibung',
     'transactions.category': 'Kategorie',
@@ -534,6 +873,21 @@ export const translations: Translations = {
     'transactions.type': 'Typ',
     'transactions.deposit': 'Einzahlung',
     'transactions.withdrawal': 'Abhebung',
+    'transactions.month': 'Monat',
+    'transactions.account': 'Konto',
+    'transactions.movement': 'Bewegung',
+    'transactions.movements': 'Bewegungen',
+    'transactions.categories': 'Kategorien',
+    'transactions.all': 'Alle',
+    'transactions.all_f': 'Alle',
+    'transactions.income': 'Einnahme',
+    'transactions.expense': 'Ausgabe',
+    'transactions.transfer': 'Überweisung',
+    'transactions.investment': 'Investition',
+    'transactions.search': 'Transaktionen suchen...',
+    'transactions.showing': 'Anzeige von',
+    'transactions.of': 'von',
+    'transactions.no_results': 'Keine Transaktionen gefunden',
     
     // Categories
     'category.food': 'Lebensmittel',
@@ -544,6 +898,13 @@ export const translations: Translations = {
     'category.health': 'Gesundheit',
     'category.education': 'Bildung',
     'category.other': 'Sonstiges',
+    'category.housing': 'Wohnung',
+    'category.subscriptions': 'Abonnements',
+    'category.leisure': 'Freizeit',
+    'category.travel': 'Reisen',
+    'category.income': 'Einnahme',
+    'category.transfer': 'Überweisung',
+    'category.investment': 'Investition',
     
     // Asset types
     'asset.stocks': 'Aktien',
@@ -556,14 +917,37 @@ export const translations: Translations = {
     
     // Profile
     'profile.title': 'Profil',
+    'profile.subtitle': 'Ihre Kontoinformationen und hochgeladene Dateien',
     'profile.uploads': 'Uploads',
     'profile.preferences': 'Einstellungen',
     'profile.regional_settings': 'Regionale Einstellungen',
+    'profile.regional_description': 'Konfigurieren Sie Ihre Sprach- und Währungseinstellungen',
     'profile.language': 'Sprache',
     'profile.currency': 'Basiswährung',
     'profile.date_format': 'Datumsformat',
     'profile.save_preferences': 'Speichern',
     'profile.preferences_saved': 'Einstellungen gespeichert',
+    'profile.preview': 'Vorschau:',
+    'profile.saving': 'Speichern...',
+    'profile.bank_statements': 'Kontoauszüge',
+    'profile.investments_savings': 'Investitionen und Ersparnisse',
+    
+    // Onboarding
+    'onboarding.welcome': 'Willkommen bei FinanceFlow! 👋',
+    'onboarding.your_region': 'Ihre Region',
+    'onboarding.base_currency': 'Basiswährung',
+    'onboarding.expense_categories': 'Ausgabenkategorien',
+    'onboarding.step': 'Schritt',
+    'onboarding.of': 'von',
+    'onboarding.back': 'Zurück',
+    'onboarding.next': 'Weiter',
+    'onboarding.get_started': 'Loslegen',
+    'onboarding.preferences_saved': 'Einstellungen gespeichert',
+    'onboarding.error_saving': 'Fehler beim Speichern der Einstellungen. Bitte versuchen Sie es erneut.',
+    
+    // Charts
+    'chart.area': 'Fläche',
+    'chart.bar': 'Balken',
     
     // Common
     'common.loading': 'Laden...',
@@ -594,5 +978,5 @@ export const translations: Translations = {
 
 export function getTranslation(language: string, key: string): string {
   const lang = translations[language] || translations['en'];
-  return lang[key] || key;
+  return lang[key] || translations['en'][key] || key;
 }

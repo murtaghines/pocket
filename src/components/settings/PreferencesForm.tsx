@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,12 @@ export function PreferencesForm() {
   const [currency, setCurrency] = useState(preferences.base_currency);
   const [language, setLanguage] = useState(preferences.language);
 
+  // Update local state when preferences change
+  useEffect(() => {
+    setCurrency(preferences.base_currency);
+    setLanguage(preferences.language);
+  }, [preferences.base_currency, preferences.language]);
+
   const handleSave = () => {
     updatePreferences({
       base_currency: currency,
@@ -26,7 +32,7 @@ export function PreferencesForm() {
         toast.success(t('profile.preferences_saved'));
       },
       onError: (error) => {
-        toast.error(`Error: ${error.message}`);
+        toast.error(`${t('common.error')}: ${error.message}`);
       },
     });
   };
@@ -43,9 +49,7 @@ export function PreferencesForm() {
           {t('profile.regional_settings')}
         </CardTitle>
         <CardDescription>
-          {language === 'en' ? 'Configure your language and currency preferences' : 
-           language === 'pt' ? 'Configure suas preferências de idioma e moeda' :
-           'Configura tu idioma y moneda preferidos'}
+          {t('profile.regional_description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -95,7 +99,7 @@ export function PreferencesForm() {
         {/* Preview */}
         <div className="rounded-lg bg-muted p-4 space-y-2">
           <p className="text-sm font-medium text-muted-foreground">
-            {language === 'en' ? 'Preview:' : language === 'pt' ? 'Prévia:' : 'Vista previa:'}
+            {t('profile.preview')}
           </p>
           <div className="text-lg font-medium">
             {new Intl.NumberFormat(previewLocale, {
@@ -109,7 +113,7 @@ export function PreferencesForm() {
           {isUpdating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {language === 'en' ? 'Saving...' : language === 'pt' ? 'Salvando...' : 'Guardando...'}
+              {t('profile.saving')}
             </>
           ) : (
             t('profile.save_preferences')

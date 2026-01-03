@@ -7,6 +7,7 @@ import { StepCurrency } from './StepCurrency';
 import { StepCategories } from './StepCategories';
 import { StepLanguage } from './StepLanguage';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useLocalization } from '@/hooks/useLocalization';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
 
@@ -38,6 +39,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const { updatePreferences } = useUserPreferences();
+  const { t } = useLocalization();
   const { toast } = useToast();
 
   const [data, setData] = useState<OnboardingData>({
@@ -75,6 +77,85 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     return localeMap[lang] || 'en-US';
   };
 
+  // Get translation based on current onboarding language selection
+  const getOnboardingText = (key: string) => {
+    const texts: Record<string, Record<string, string>> = {
+      welcome: {
+        en: 'Welcome to FinanceFlow! 👋',
+        es: '¡Bienvenido a FinanceFlow! 👋',
+        pt: 'Bem-vindo ao FinanceFlow! 👋',
+        fr: 'Bienvenue sur FinanceFlow! 👋',
+        it: 'Benvenuto su FinanceFlow! 👋',
+        de: 'Willkommen bei FinanceFlow! 👋',
+      },
+      your_region: {
+        en: 'Your Region',
+        es: 'Tu Región',
+        pt: 'Sua Região',
+        fr: 'Votre Région',
+        it: 'La Tua Regione',
+        de: 'Ihre Region',
+      },
+      base_currency: {
+        en: 'Base Currency',
+        es: 'Moneda Base',
+        pt: 'Moeda Base',
+        fr: 'Devise de Base',
+        it: 'Valuta Base',
+        de: 'Basiswährung',
+      },
+      expense_categories: {
+        en: 'Expense Categories',
+        es: 'Categorías de Gastos',
+        pt: 'Categorias de Despesas',
+        fr: 'Catégories de Dépenses',
+        it: 'Categorie di Spesa',
+        de: 'Ausgabenkategorien',
+      },
+      step: {
+        en: 'Step',
+        es: 'Paso',
+        pt: 'Passo',
+        fr: 'Étape',
+        it: 'Passo',
+        de: 'Schritt',
+      },
+      of: {
+        en: 'of',
+        es: 'de',
+        pt: 'de',
+        fr: 'sur',
+        it: 'di',
+        de: 'von',
+      },
+      back: {
+        en: 'Back',
+        es: 'Atrás',
+        pt: 'Voltar',
+        fr: 'Retour',
+        it: 'Indietro',
+        de: 'Zurück',
+      },
+      next: {
+        en: 'Next',
+        es: 'Siguiente',
+        pt: 'Próximo',
+        fr: 'Suivant',
+        it: 'Avanti',
+        de: 'Weiter',
+      },
+      get_started: {
+        en: 'Get Started',
+        es: 'Comenzar',
+        pt: 'Começar',
+        fr: 'Commencer',
+        it: 'Inizia',
+        de: 'Loslegen',
+      },
+    };
+    return texts[key]?.[data.language] || texts[key]?.['en'] || key;
+  };
+
   const handleComplete = async () => {
     setSaving(true);
     try {
@@ -88,15 +169,15 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       } as any);
 
       toast({
-        title: 'Welcome!',
-        description: 'Your preferences have been saved.',
+        title: getOnboardingText('get_started'),
+        description: t('onboarding.preferences_saved'),
       });
       onComplete();
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to save preferences. Please try again.',
+        title: t('common.error'),
+        description: t('onboarding.error_saving'),
         variant: 'destructive',
       });
     } finally {
@@ -134,22 +215,34 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     }
   };
 
+  const getStepTitle = () => {
+    switch (step) {
+      case 1:
+        return getOnboardingText('welcome');
+      case 2:
+        return getOnboardingText('your_region');
+      case 3:
+        return getOnboardingText('base_currency');
+      case 4:
+        return getOnboardingText('expense_categories');
+      default:
+        return '';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-2xl font-display">
-            {step === 1 && 'Welcome to FinanceFlow! 👋'}
-            {step === 2 && 'Your Region'}
-            {step === 3 && 'Base Currency'}
-            {step === 4 && 'Expense Categories'}
+            {getStepTitle()}
           </DialogTitle>
         </DialogHeader>
 
         <div className="mt-4">
           <Progress value={(step / TOTAL_STEPS) * 100} className="h-2" />
           <p className="text-sm text-muted-foreground mt-2">
-            Step {step} of {TOTAL_STEPS}
+            {getOnboardingText('step')} {step} {getOnboardingText('of')} {TOTAL_STEPS}
           </p>
         </div>
 
@@ -164,12 +257,12 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
             disabled={step === 1 || saving}
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
+            {getOnboardingText('back')}
           </Button>
 
           {step < TOTAL_STEPS ? (
             <Button onClick={handleNext} disabled={!canProceed()}>
-              Next
+              {getOnboardingText('next')}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
@@ -179,7 +272,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
               ) : (
                 <Check className="w-4 h-4 mr-2" />
               )}
-              Get Started
+              {getOnboardingText('get_started')}
             </Button>
           )}
         </div>

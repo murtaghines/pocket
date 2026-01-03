@@ -1,6 +1,7 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface MonthlyData {
   month: string;
@@ -13,40 +14,42 @@ interface MonthlyChartProps {
   data: MonthlyData[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-card border border-border rounded-lg shadow-lg p-4">
-        <p className="font-display font-semibold text-foreground mb-2">{label}</p>
-        {payload.map((item: any, index: number) => (
-          <div key={index} className="flex items-center gap-2 text-sm">
-            <div 
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-muted-foreground">{item.name}:</span>
-            <span className="font-medium text-foreground">
-              {item.value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
 export function MonthlyChart({ data }: MonthlyChartProps) {
+  const { t, formatCurrency } = useLocalization();
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-card border border-border rounded-lg shadow-lg p-4">
+          <p className="font-display font-semibold text-foreground mb-2">{label}</p>
+          {payload.map((item: any, index: number) => (
+            <div key={index} className="flex items-center gap-2 text-sm">
+              <div 
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-muted-foreground">{item.name}:</span>
+              <span className="font-medium text-foreground">
+                {formatCurrency(item.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '300ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">Evolución Mensual</CardTitle>
+        <CardTitle className="text-lg">{t('dashboard.monthly_evolution')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="area" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="area">Área</TabsTrigger>
-            <TabsTrigger value="bar">Barras</TabsTrigger>
+            <TabsTrigger value="area">{t('chart.area')}</TabsTrigger>
+            <TabsTrigger value="bar">{t('chart.bar')}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="area">
@@ -83,7 +86,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Area 
                     type="monotone" 
                     dataKey="income" 
-                    name="Ingresos"
+                    name={t('dashboard.income')}
                     stroke="hsl(160, 84%, 45%)" 
                     strokeWidth={2}
                     fill="url(#incomeGradient)"
@@ -91,7 +94,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Area 
                     type="monotone" 
                     dataKey="expenses" 
-                    name="Gastos"
+                    name={t('dashboard.expenses')}
                     stroke="hsl(0, 72%, 51%)" 
                     strokeWidth={2}
                     fill="url(#expenseGradient)"
@@ -122,13 +125,13 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar 
                     dataKey="income" 
-                    name="Ingresos"
+                    name={t('dashboard.income')}
                     fill="hsl(160, 84%, 45%)" 
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar 
                     dataKey="expenses" 
-                    name="Gastos"
+                    name={t('dashboard.expenses')}
                     fill="hsl(0, 72%, 51%)" 
                     radius={[4, 4, 0, 0]}
                   />

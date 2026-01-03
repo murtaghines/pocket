@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Transaction, categoryLabels, Category } from "@/lib/mockData";
-import { Search, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Minus } from "lucide-react";
+import { Transaction, Category } from "@/lib/mockData";
+import { Search, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -27,21 +28,14 @@ const categoryBadgeColors: Record<Category, string> = {
   investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
 };
 
+type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
+
 // Categories available for each movement type
 const categoriesByMovement: Record<MovementType, Category[]> = {
   income: ['income'],
   expense: ['housing', 'health', 'transport', 'subscriptions', 'food', 'other', 'leisure', 'travel'],
   transfer: [],
   investment: ['investment'],
-};
-
-type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
-
-const movementLabels: Record<MovementType, string> = {
-  income: 'Ingreso',
-  expense: 'Gasto',
-  transfer: 'Transferencia',
-  investment: 'Inversión',
 };
 
 const movementBadgeColors: Record<MovementType, string> = {
@@ -62,10 +56,41 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [movementFilter, setMovementFilter] = useState<string>("all");
+  const { t, formatCurrency, formatDate, language } = useLocalization();
+
+  // Category labels using translations
+  const getCategoryLabel = (category: Category): string => {
+    const categoryMap: Record<Category, string> = {
+      food: t('category.food'),
+      transport: t('category.transport'),
+      housing: t('category.housing'),
+      subscriptions: t('category.subscriptions'),
+      leisure: t('category.leisure'),
+      health: t('category.health'),
+      education: t('category.education'),
+      travel: t('category.travel'),
+      other: t('category.other'),
+      income: t('category.income'),
+      transfer: t('category.transfer'),
+      investment: t('category.investment'),
+    };
+    return categoryMap[category] || category;
+  };
+
+  // Movement labels using translations
+  const getMovementLabel = (movement: MovementType): string => {
+    const movementMap: Record<MovementType, string> = {
+      income: t('transactions.income'),
+      expense: t('transactions.expense'),
+      transfer: t('transactions.transfer'),
+      investment: t('transactions.investment'),
+    };
+    return movementMap[movement] || movement;
+  };
 
   // Get available categories based on selected movement filter
   const availableCategories = movementFilter === "all" 
-    ? Object.keys(categoryLabels) as Category[]
+    ? Object.keys(categoryBadgeColors) as Category[]
     : categoriesByMovement[movementFilter as MovementType] || [];
 
   // Reset category filter when movement filter changes and category is no longer available
@@ -87,59 +112,51 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     return matchesSearch && matchesCategory && matchesMovement;
   });
 
-  const formatDate = (dateStr: string) => {
+  const formatTransactionDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+    return date.toLocaleDateString(language === 'en' ? 'en-US' : language === 'pt' ? 'pt-BR' : language === 'fr' ? 'fr-FR' : language === 'it' ? 'it-IT' : language === 'de' ? 'de-DE' : 'es-ES', { day: '2-digit', month: 'short' });
   };
 
   const formatMonth = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
-  };
-
-  const formatAmount = (amount: number) => {
-    return amount.toLocaleString('es-ES', { 
-      style: 'currency', 
-      currency: 'EUR',
-      signDisplay: 'never'
-    });
+    return date.toLocaleDateString(language === 'en' ? 'en-US' : language === 'pt' ? 'pt-BR' : language === 'fr' ? 'fr-FR' : language === 'it' ? 'it-IT' : language === 'de' ? 'de-DE' : 'es-ES', { month: 'short', year: '2-digit' });
   };
 
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">Transacciones</CardTitle>
+        <CardTitle className="text-lg">{t('transactions.title')}</CardTitle>
         <div className="flex flex-col sm:flex-row gap-3 mt-4">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">Movimientos</span>
+            <span className="text-xs font-medium text-muted-foreground">{t('transactions.movements')}</span>
             <Select value={movementFilter} onValueChange={handleMovementChange}>
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Todos" />
+                <SelectValue placeholder={t('transactions.all')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="income">Ingreso</SelectItem>
-                <SelectItem value="expense">Gasto</SelectItem>
-                <SelectItem value="transfer">Transferencia</SelectItem>
-                <SelectItem value="investment">Inversión</SelectItem>
+                <SelectItem value="all">{t('transactions.all')}</SelectItem>
+                <SelectItem value="income">{t('transactions.income')}</SelectItem>
+                <SelectItem value="expense">{t('transactions.expense')}</SelectItem>
+                <SelectItem value="transfer">{t('transactions.transfer')}</SelectItem>
+                <SelectItem value="investment">{t('transactions.investment')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">Categorías</span>
+            <span className="text-xs font-medium text-muted-foreground">{t('transactions.categories')}</span>
             <Select 
               value={categoryFilter} 
               onValueChange={setCategoryFilter}
               disabled={movementFilter === 'transfer' || availableCategories.length === 0}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Todas" />
+                <SelectValue placeholder={t('transactions.all_f')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="all">{t('transactions.all_f')}</SelectItem>
                 {availableCategories.map(cat => (
                   <SelectItem key={cat} value={cat}>
-                    {categoryLabels[cat]}
+                    {getCategoryLabel(cat)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -148,7 +165,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar transacciones..."
+              placeholder={t('transactions.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 mt-5"
@@ -161,20 +178,20 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-[80px]">Mes</TableHead>
-                <TableHead className="w-[90px]">Fecha</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead className="hidden lg:table-cell">Movimiento</TableHead>
-                <TableHead className="hidden md:table-cell">Categoría</TableHead>
-                <TableHead className="hidden sm:table-cell">Cuenta</TableHead>
-                <TableHead className="text-right">Importe</TableHead>
+                <TableHead className="w-[80px]">{t('transactions.month')}</TableHead>
+                <TableHead className="w-[90px]">{t('transactions.date')}</TableHead>
+                <TableHead>{t('transactions.description')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('transactions.movement')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('transactions.category')}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t('transactions.account')}</TableHead>
+                <TableHead className="text-right">{t('transactions.amount')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTransactions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No se encontraron transacciones
+                    {t('transactions.no_results')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -189,7 +206,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         {formatMonth(transaction.date)}
                       </TableCell>
                       <TableCell className="font-medium text-muted-foreground">
-                        {formatDate(transaction.date)}
+                        {formatTransactionDate(transaction.date)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -221,7 +238,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                             movementBadgeColors[movementType]
                           )}
                         >
-                          {movementLabels[movementType]}
+                          {getMovementLabel(movementType)}
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
@@ -235,7 +252,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                               categoryBadgeColors[transaction.category]
                             )}
                           >
-                            {categoryLabels[transaction.category]}
+                            {getCategoryLabel(transaction.category)}
                           </Badge>
                         )}
                       </TableCell>
@@ -253,7 +270,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           : "text-destructive"
                       )}>
                         {movementType === 'income' ? '+' : '-'}
-                        {formatAmount(Math.abs(transaction.amount))}
+                        {formatCurrency(Math.abs(transaction.amount))}
                       </TableCell>
                     </TableRow>
                   );
@@ -263,7 +280,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           </Table>
         </div>
         <p className="text-sm text-muted-foreground mt-4">
-          Mostrando {filteredTransactions.length} de {transactions.length} transacciones
+          {t('transactions.showing')} {filteredTransactions.length} {t('transactions.of')} {transactions.length} {t('transactions.title').toLowerCase()}
         </p>
       </CardContent>
     </Card>
