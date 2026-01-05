@@ -1,4 +1,4 @@
-import { Wallet, Bell, Moon, Sun, LogOut, PiggyBank, LayoutDashboard, User } from "lucide-react";
+import { Bell, Moon, Sun, LogOut, PiggyBank, LayoutDashboard, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +6,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { useLocalization } from "@/hooks/useLocalization";
+import fintLogo from "@/assets/fint-logo.png";
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
@@ -24,19 +25,12 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
-              <Wallet className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="font-display text-xl font-bold tracking-tight">
-                FinanceFlow
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                Personal finance control
-              </p>
-            </div>
-          </div>
+          <Link to="/" className="flex items-center gap-3">
+            <img src={fintLogo} alt="Fint" className="w-10 h-10" />
+            <h1 className="font-display text-xl font-bold tracking-tight">
+              Fint
+            </h1>
+          </Link>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-1">

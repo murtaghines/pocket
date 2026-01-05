@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, TrendingUp } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import fintLogo from "@/assets/fint-logo.png";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -97,10 +98,8 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <TrendingUp className="w-6 h-6 text-primary" />
-            </div>
-            <span className="font-display text-xl font-bold">FinanceFlow</span>
+            <img src={fintLogo} alt="Fint" className="w-10 h-10" />
+            <span className="font-display text-xl font-bold">Fint</span>
           </div>
           <CardTitle>Bienvenido</CardTitle>
           <CardDescription>

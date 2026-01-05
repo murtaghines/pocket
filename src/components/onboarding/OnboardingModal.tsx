@@ -81,12 +81,12 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const getOnboardingText = (key: string) => {
     const texts: Record<string, Record<string, string>> = {
       welcome: {
-        en: 'Welcome to FinanceFlow! 👋',
-        es: '¡Bienvenido a FinanceFlow! 👋',
-        pt: 'Bem-vindo ao FinanceFlow! 👋',
-        fr: 'Bienvenue sur FinanceFlow! 👋',
-        it: 'Benvenuto su FinanceFlow! 👋',
-        de: 'Willkommen bei FinanceFlow! 👋',
+        en: 'Welcome to Fint! 👋',
+        es: '¡Bienvenido a Fint! 👋',
+        pt: 'Bem-vindo ao Fint! 👋',
+        fr: 'Bienvenue sur Fint! 👋',
+        it: 'Benvenuto su Fint! 👋',
+        de: 'Willkommen bei Fint! 👋',
       },
       your_region: {
         en: 'Your Region',

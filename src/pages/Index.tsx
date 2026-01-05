@@ -234,7 +234,7 @@ export default function Index() {
       <footer className="border-t mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            FinanceFlow • {t('dashboard.personal_finance')}
+            Fint • {t('dashboard.personal_finance')}
           </p>
         </div>
       </footer>

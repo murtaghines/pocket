@@ -20,7 +20,7 @@ export const translations: Translations = {
     'dashboard.no_data': 'Sin datos',
     'dashboard.upload_prompt': 'Sube tus extractos bancarios para empezar a analizar tus finanzas',
     'dashboard.go_to_profile': 'Ir a Perfil para subir',
-    'dashboard.welcome': 'Bienvenido a FinanceFlow',
+    'dashboard.welcome': 'Bienvenido a Fint',
     'dashboard.monthly_evolution': 'Evolución Mensual',
     'dashboard.expenses_by_category': 'Gastos por Categoría',
     'dashboard.monthly_balance': 'Balance Mensual',
@@ -123,7 +123,7 @@ export const translations: Translations = {
     'profile.investments_savings': 'Inversiones y Ahorro',
     
     // Onboarding
-    'onboarding.welcome': '¡Bienvenido a FinanceFlow! 👋',
+    'onboarding.welcome': '¡Bienvenido a Fint! 👋',
     'onboarding.your_region': 'Tu Región',
     'onboarding.base_currency': 'Moneda Base',
     'onboarding.expense_categories': 'Categorías de Gastos',
@@ -182,7 +182,7 @@ export const translations: Translations = {
     'dashboard.no_data': 'No data',
     'dashboard.upload_prompt': 'Upload your bank statements to start analyzing your finances',
     'dashboard.go_to_profile': 'Go to Profile to upload',
-    'dashboard.welcome': 'Welcome to FinanceFlow',
+    'dashboard.welcome': 'Welcome to Fint',
     'dashboard.monthly_evolution': 'Monthly Evolution',
     'dashboard.expenses_by_category': 'Expenses by Category',
     'dashboard.monthly_balance': 'Monthly Balance',
@@ -285,7 +285,7 @@ export const translations: Translations = {
     'profile.investments_savings': 'Investments & Savings',
     
     // Onboarding
-    'onboarding.welcome': 'Welcome to FinanceFlow! 👋',
+    'onboarding.welcome': 'Welcome to Fint! 👋',
     'onboarding.your_region': 'Your Region',
     'onboarding.base_currency': 'Base Currency',
     'onboarding.expense_categories': 'Expense Categories',
@@ -344,7 +344,7 @@ export const translations: Translations = {
     'dashboard.no_data': 'Sem dados',
     'dashboard.upload_prompt': 'Envie seus extratos bancários para começar a analisar suas finanças',
     'dashboard.go_to_profile': 'Ir ao Perfil para enviar',
-    'dashboard.welcome': 'Bem-vindo ao FinanceFlow',
+    'dashboard.welcome': 'Bem-vindo ao Fint',
     'dashboard.monthly_evolution': 'Evolução Mensal',
     'dashboard.expenses_by_category': 'Despesas por Categoria',
     'dashboard.monthly_balance': 'Saldo Mensal',
@@ -447,7 +447,7 @@ export const translations: Translations = {
     'profile.investments_savings': 'Investimentos e Poupança',
     
     // Onboarding
-    'onboarding.welcome': 'Bem-vindo ao FinanceFlow! 👋',
+    'onboarding.welcome': 'Bem-vindo ao Fint! 👋',
     'onboarding.your_region': 'Sua Região',
     'onboarding.base_currency': 'Moeda Base',
     'onboarding.expense_categories': 'Categorias de Despesas',
@@ -506,7 +506,7 @@ export const translations: Translations = {
     'dashboard.no_data': 'Aucune donnée',
     'dashboard.upload_prompt': 'Téléchargez vos relevés bancaires pour analyser vos finances',
     'dashboard.go_to_profile': 'Aller au Profil pour télécharger',
-    'dashboard.welcome': 'Bienvenue sur FinanceFlow',
+    'dashboard.welcome': 'Bienvenue sur Fint',
     'dashboard.monthly_evolution': 'Évolution Mensuelle',
     'dashboard.expenses_by_category': 'Dépenses par Catégorie',
     'dashboard.monthly_balance': 'Solde Mensuel',
@@ -609,7 +609,7 @@ export const translations: Translations = {
     'profile.investments_savings': 'Investissements et Épargne',
     
     // Onboarding
-    'onboarding.welcome': 'Bienvenue sur FinanceFlow! 👋',
+    'onboarding.welcome': 'Bienvenue sur Fint! 👋',
     'onboarding.your_region': 'Votre Région',
     'onboarding.base_currency': 'Devise de Base',
     'onboarding.expense_categories': 'Catégories de Dépenses',
@@ -668,7 +668,7 @@ export const translations: Translations = {
     'dashboard.no_data': 'Nessun dato',
     'dashboard.upload_prompt': 'Carica i tuoi estratti conto per analizzare le tue finanze',
     'dashboard.go_to_profile': 'Vai al Profilo per caricare',
-    'dashboard.welcome': 'Benvenuto su FinanceFlow',
+    'dashboard.welcome': 'Benvenuto su Fint',
     'dashboard.monthly_evolution': 'Evoluzione Mensile',
     'dashboard.expenses_by_category': 'Spese per Categoria',
     'dashboard.monthly_balance': 'Saldo Mensile',
@@ -771,7 +771,7 @@ export const translations: Translations = {
     'profile.investments_savings': 'Investimenti e Risparmio',
     
     // Onboarding
-    'onboarding.welcome': 'Benvenuto su FinanceFlow! 👋',
+    'onboarding.welcome': 'Benvenuto su Fint! 👋',
     'onboarding.your_region': 'La Tua Regione',
     'onboarding.base_currency': 'Valuta Base',
     'onboarding.expense_categories': 'Categorie di Spesa',
@@ -830,7 +830,7 @@ export const translations: Translations = {
     'dashboard.no_data': 'Keine Daten',
     'dashboard.upload_prompt': 'Laden Sie Ihre Kontoauszüge hoch, um Ihre Finanzen zu analysieren',
     'dashboard.go_to_profile': 'Zum Profil zum Hochladen',
-    'dashboard.welcome': 'Willkommen bei FinanceFlow',
+    'dashboard.welcome': 'Willkommen bei Fint',
     'dashboard.monthly_evolution': 'Monatliche Entwicklung',
     'dashboard.expenses_by_category': 'Ausgaben nach Kategorie',
     'dashboard.monthly_balance': 'Monatlicher Saldo',
@@ -933,7 +933,7 @@ export const translations: Translations = {
     'profile.investments_savings': 'Investitionen und Ersparnisse',
     
     // Onboarding
-    'onboarding.welcome': 'Willkommen bei FinanceFlow! 👋',
+    'onboarding.welcome': 'Willkommen bei Fint! 👋',
     'onboarding.your_region': 'Ihre Region',
     'onboarding.base_currency': 'Basiswährung',
     'onboarding.expense_categories': 'Ausgabenkategorien',
