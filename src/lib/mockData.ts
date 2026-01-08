@@ -1,3 +1,7 @@
+import type { Database } from "@/integrations/supabase/types";
+
+type MovementType = Database["public"]["Enums"]["movement_type"];
+
 export type Category = 
   | 'food' 
   | 'transport' 
@@ -10,7 +14,18 @@ export type Category =
   | 'other'
   | 'income'
   | 'transfer'
-  | 'investment';
+  | 'investment'
+  // New category slugs from DB
+  | 'salary'
+  | 'refunds'
+  | 'sales'
+  | 'transfers_in'
+  | 'other_income'
+  | 'groceries'
+  | 'restaurants'
+  | 'shopping'
+  | 'own_transfer'
+  | 'to_investment';
 
 export type TransactionType = 'income' | 'expense' | 'transfer';
 
@@ -21,7 +36,9 @@ export interface Transaction {
   amount: number;
   currency: string;
   type: TransactionType;
+  movement?: MovementType | null;
   category: Category;
+  categorySlug?: string;
   account: string;
   bank: string;
 }
@@ -33,7 +50,7 @@ export interface MonthlyData {
   balance: number;
 }
 
-export const categoryLabels: Record<Category, string> = {
+export const categoryLabels: Partial<Record<Category, string>> = {
   food: 'Alimentación',
   transport: 'Transporte',
   housing: 'Vivienda',
@@ -46,21 +63,43 @@ export const categoryLabels: Record<Category, string> = {
   income: 'Ingreso',
   transfer: 'Transferencia',
   investment: 'Inversión',
+  // New slugs
+  salary: 'Sueldo',
+  refunds: 'Reembolsos',
+  sales: 'Ventas',
+  transfers_in: 'Transferencias',
+  other_income: 'Otros ingresos',
+  groceries: 'Supermercado',
+  restaurants: 'Restaurantes',
+  shopping: 'Compras',
+  own_transfer: 'Propia',
+  to_investment: 'A inversión',
 };
 
-export const categoryColors: Record<Category, string> = {
-  food: 'hsl(45, 100%, 55%)',       // Amarillo (Lebend)
-  transport: 'hsl(220, 80%, 50%)',  // Azul oscuro (Lebend)
-  housing: 'hsl(30, 100%, 50%)',    // Naranja (Lebend)
-  subscriptions: 'hsl(300, 50%, 55%)', // Morado (Lebend)
-  leisure: 'hsl(200, 75%, 65%)',    // Azul claro (Lebend)
-  health: 'hsl(0, 75%, 55%)',       // Rojo
-  education: 'hsl(35, 100%, 55%)',  // Naranja claro
-  travel: 'hsl(175, 55%, 50%)',     // Verde/Teal (Lebend)
-  other: 'hsl(220, 10%, 55%)',      // Gris
-  income: 'hsl(155, 60%, 45%)',     // Verde (Lebend)
-  transfer: 'hsl(220, 10%, 55%)',   // Gris (Transferencias - movimiento neutral)
-  investment: 'hsl(210, 80%, 55%)', // Azul (Inversión)
+export const categoryColors: Partial<Record<Category, string>> = {
+  food: 'hsl(45, 100%, 55%)',
+  transport: 'hsl(220, 80%, 50%)',
+  housing: 'hsl(30, 100%, 50%)',
+  subscriptions: 'hsl(300, 50%, 55%)',
+  leisure: 'hsl(200, 75%, 65%)',
+  health: 'hsl(0, 75%, 55%)',
+  education: 'hsl(35, 100%, 55%)',
+  travel: 'hsl(175, 55%, 50%)',
+  other: 'hsl(220, 10%, 55%)',
+  income: 'hsl(155, 60%, 45%)',
+  transfer: 'hsl(220, 10%, 55%)',
+  investment: 'hsl(210, 80%, 55%)',
+  // New slugs
+  salary: 'hsl(155, 60%, 45%)',
+  refunds: 'hsl(155, 50%, 50%)',
+  sales: 'hsl(155, 40%, 55%)',
+  transfers_in: 'hsl(155, 30%, 60%)',
+  other_income: 'hsl(155, 25%, 55%)',
+  groceries: 'hsl(45, 100%, 55%)',
+  restaurants: 'hsl(15, 90%, 55%)',
+  shopping: 'hsl(280, 60%, 55%)',
+  own_transfer: 'hsl(220, 10%, 55%)',
+  to_investment: 'hsl(210, 80%, 55%)',
 };
 
 export const banks = [

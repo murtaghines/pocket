@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { Transaction, MonthlyData, Category } from "@/lib/mockData";
-import { categoryLabels, categoryColors } from "@/lib/mockData";
-import { isInvestmentMovementDescription } from "@/lib/investmentDetection";
+import { categoryColors } from "@/lib/mockData";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppDomain = Database["public"]["Enums"]["app_domain"];
+type MovementType = Database["public"]["Enums"]["movement_type"];
 
 interface DbTransaction {
   id: string;
@@ -21,6 +22,7 @@ interface DbTransaction {
   amount_base: number | null;
   type: "income" | "expense" | "transfer";
   tx_type: string | null;
+  movement: MovementType | null;
   category: string;
   category_id: string | null;
   bank: string | null;
@@ -31,6 +33,7 @@ interface DbTransaction {
   fingerprint: string | null;
   linked_transaction_id: string | null;
   domain: AppDomain | null;
+  account_id: string | null;
 }
 
 interface UseTransactionsOptions {
@@ -65,10 +68,16 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       
       // Transform DB transactions to app format
       return (data as DbTransaction[]).map((t): Transaction => {
-        const normalizedCategory =
-          t.category === "investment" || isInvestmentMovementDescription(t.description)
-            ? "investment"
-            : (t.category as Category);
+        // Map movement to legacy type for backward compatibility
+        const movementToType: Record<string, "income" | "expense" | "transfer"> = {
+          INCOME: "income",
+          EXPENSE: "expense", 
+          TRANSFER: "transfer",
+        };
+        
+        const type = t.movement 
+          ? movementToType[t.movement] || t.type
+          : t.type;
 
         return {
           id: t.id,
@@ -76,8 +85,10 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           description: t.description_norm || t.description,
           amount: t.amount_base || t.amount,
           currency: t.currency || "EUR",
-          type: t.type,
-          category: normalizedCategory,
+          type,
+          movement: t.movement,
+          category: t.category as Category,
+          categorySlug: t.category,
           account: "Cuenta Principal",
           bank: t.bank || "Desconocido",
         };
@@ -99,12 +110,16 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     },
   });
 
-  // Filter out transfers and investments for financial calculations
+  // Filter out transfers for financial calculations (use movement field)
   const financialTransactions = transactions.filter(
-    (t) => t.type !== "transfer" && t.category !== "investment"
+    (t) => (t.movement ? t.movement !== "TRANSFER" : t.type !== "transfer")
   );
-  const transfers = transactions.filter((t) => t.type === "transfer");
-  const investmentMovements = transactions.filter((t) => t.category === "investment");
+  const transfers = transactions.filter(
+    (t) => t.movement === "TRANSFER" || t.type === "transfer"
+  );
+  const investmentMovements = transactions.filter(
+    (t) => t.categorySlug === "to_investment"
+  );
 
   // Calculate monthly data from transactions (excluding transfers)
   const monthlyData: MonthlyData[] = (() => {
@@ -120,8 +135,9 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         monthlyTotals[monthKey] = { income: 0, expenses: 0 };
       }
       
-      if (t.type === "income") {
-        monthlyTotals[monthKey].income += t.amount;
+      const isIncome = t.movement === "INCOME" || t.type === "income";
+      if (isIncome) {
+        monthlyTotals[monthKey].income += Math.abs(t.amount);
       } else {
         monthlyTotals[monthKey].expenses += Math.abs(t.amount);
       }
@@ -144,16 +160,19 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
   // Calculate category expenses (excluding transfers)
   const categoryData = (() => {
-    const expenses = financialTransactions.filter((t) => t.type === "expense");
+    const expenses = financialTransactions.filter(
+      (t) => t.movement === "EXPENSE" || t.type === "expense"
+    );
     const categoryTotals: Record<string, number> = {};
     
     expenses.forEach((t) => {
+      const categoryKey = t.categorySlug || t.category;
       const absAmount = Math.abs(t.amount);
-      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + absAmount;
+      categoryTotals[categoryKey] = (categoryTotals[categoryKey] || 0) + absAmount;
     });
     
     return Object.entries(categoryTotals).map(([category, value]) => ({
-      name: categoryLabels[category as Category] || category,
+      name: getCategoryLabel(category, 'es'),
       value: Math.round(value * 100) / 100,
       category: category as Category,
       color: categoryColors[category as Category] || "hsl(220, 10%, 55%)",
@@ -162,7 +181,9 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
   // Calculate bank expenses (excluding transfers)
   const bankData = (() => {
-    const expenses = financialTransactions.filter((t) => t.type === "expense");
+    const expenses = financialTransactions.filter(
+      (t) => t.movement === "EXPENSE" || t.type === "expense"
+    );
     const bankTotals: Record<string, number> = {};
     
     expenses.forEach((t) => {
@@ -179,14 +200,12 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
   // Calculate month summary (excluding transfers)
   const summary = (() => {
     const income = financialTransactions
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter((t) => t.movement === "INCOME" || t.type === "income")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     
-    const expenses = Math.abs(
-      financialTransactions
-        .filter((t) => t.type === "expense")
-        .reduce((sum, t) => sum + t.amount, 0)
-    );
+    const expenses = financialTransactions
+      .filter((t) => t.movement === "EXPENSE" || t.type === "expense")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     
     return {
       income: Math.round(income * 100) / 100,

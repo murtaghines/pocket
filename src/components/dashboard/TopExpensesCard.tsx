@@ -13,21 +13,10 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
 
   // Category labels using translations
   const getCategoryLabel = (category: Category): string => {
-    const categoryMap: Record<Category, string> = {
-      food: t('category.food'),
-      transport: t('category.transport'),
-      housing: t('category.housing'),
-      subscriptions: t('category.subscriptions'),
-      leisure: t('category.leisure'),
-      health: t('category.health'),
-      education: t('category.education'),
-      travel: t('category.travel'),
-      other: t('category.other'),
-      income: t('category.income'),
-      transfer: t('category.transfer'),
-      investment: t('category.investment'),
-    };
-    return categoryMap[category] || category;
+    // Try translation key first, fallback to category name
+    const translationKey = `category.${category}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : category;
   };
 
   // Exclude investment movements from top expenses (they're neutral movements)
