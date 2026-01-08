@@ -5,11 +5,13 @@ import { ChevronDown, TrendingUp } from "lucide-react";
 import { useUploads } from "@/hooks/useUploads";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
+import { useLocalization } from "@/hooks/useLocalization";
 
 const DEFAULT_MONTHS_TO_SHOW = 6;
 
 export function InvestmentUploadsOrganizer() {
-  const { uploads, isLoading, deleteUpload, isDeleting } = useUploads();
+  // Only fetch INVESTING uploads
+  const { uploads, isLoading, deleteUpload, isDeleting } = useUploads("INVESTING");
   const { 
     pendingFilesByMonth, 
     addFilesForMonth, 
@@ -17,8 +19,12 @@ export function InvestmentUploadsOrganizer() {
     isProcessingMonth,
     getPendingCountForMonth 
   } = useMonthlyInvestmentUpload();
+  const { t, language } = useLocalization();
   
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS_TO_SHOW);
+
+  const locale = language === 'es' ? 'es-ES' :
+                 language === 'pt' ? 'pt-BR' : 'en-US';
 
   const getLastClosedMonth = (): Date => {
     const now = new Date();
@@ -33,22 +39,17 @@ export function InvestmentUploadsOrganizer() {
     for (let i = 0; i < monthsToShow; i++) {
       const monthDate = new Date(lastClosed.getFullYear(), lastClosed.getMonth() - i, 1);
       const key = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}-inv`;
-      const label = monthDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      const label = monthDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
       slots.push({ key, label, date: monthDate });
     }
     
     return slots;
-  }, [monthsToShow]);
-
-  // Filter uploads that are investment-related (stored in investments/ path)
-  const investmentUploads = useMemo(() => {
-    return uploads.filter(u => u.file_path?.includes('/investments/'));
-  }, [uploads]);
+  }, [monthsToShow, locale]);
 
   const uploadsByMonth = useMemo(() => {
-    const grouped: Record<string, typeof investmentUploads> = {};
+    const grouped: Record<string, typeof uploads> = {};
     
-    investmentUploads.forEach((upload) => {
+    uploads.forEach((upload) => {
       if (upload.target_month) {
         // Extract YYYY-MM directly from the string to avoid timezone issues
         const key = `${upload.target_month.substring(0, 7)}-inv`;
@@ -58,7 +59,7 @@ export function InvestmentUploadsOrganizer() {
     });
     
     return grouped;
-  }, [investmentUploads]);
+  }, [uploads]);
 
   const handleLoadMore = () => {
     setMonthsToShow((prev) => prev + 3);
@@ -70,7 +71,7 @@ export function InvestmentUploadsOrganizer() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            Inversiones por Mes
+            {t('profile.investments_by_month')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -89,10 +90,10 @@ export function InvestmentUploadsOrganizer() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
-          Inversiones por Mes
+          {t('profile.investments_by_month')}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Archivos de plataformas de inversión y ahorro
+          {t('profile.investment_platform_files')}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -124,7 +125,7 @@ export function InvestmentUploadsOrganizer() {
           onClick={handleLoadMore}
         >
           <ChevronDown className="w-4 h-4 mr-2" />
-          Cargar meses anteriores
+          {t('common.load_more')}
         </Button>
       </CardContent>
     </Card>

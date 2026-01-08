@@ -199,6 +199,7 @@ export function useMonthlyFileUpload() {
             file_size: uploadFile.size,
             status: "pending",
             target_month: targetMonthStr,
+            domain: "CASHFLOW" as const,
           });
 
         // Call the process-import edge function

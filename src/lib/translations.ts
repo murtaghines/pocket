@@ -131,6 +131,10 @@ export const translations: Translations = {
     'profile.saving': 'Guardando...',
     'profile.bank_statements': 'Extractos Bancarios',
     'profile.investments_savings': 'Inversiones y Ahorro',
+    'profile.files_by_month': 'Archivos por Mes',
+    'profile.organize_bank_statements': 'Organiza tus extractos bancarios por mes contable',
+    'profile.investments_by_month': 'Inversiones por Mes',
+    'profile.investment_platform_files': 'Archivos de plataformas de inversión y ahorro',
     
     // Onboarding
     'onboarding.welcome': '¡Bienvenido a Fint! 👋',
@@ -303,6 +307,10 @@ export const translations: Translations = {
     'profile.saving': 'Saving...',
     'profile.bank_statements': 'Bank Statements',
     'profile.investments_savings': 'Investments & Savings',
+    'profile.files_by_month': 'Files by Month',
+    'profile.organize_bank_statements': 'Organize your bank statements by accounting month',
+    'profile.investments_by_month': 'Investments by Month',
+    'profile.investment_platform_files': 'Investment and savings platform files',
     
     // Onboarding
     'onboarding.welcome': 'Welcome to Fint! 👋',
@@ -475,6 +483,10 @@ export const translations: Translations = {
     'profile.saving': 'Salvando...',
     'profile.bank_statements': 'Extratos Bancários',
     'profile.investments_savings': 'Investimentos e Poupança',
+    'profile.files_by_month': 'Arquivos por Mês',
+    'profile.organize_bank_statements': 'Organize seus extratos bancários por mês contábil',
+    'profile.investments_by_month': 'Investimentos por Mês',
+    'profile.investment_platform_files': 'Arquivos de plataformas de investimento e poupança',
     
     // Onboarding
     'onboarding.welcome': 'Bem-vindo ao Fint! 👋',
@@ -637,6 +649,10 @@ export const translations: Translations = {
     'profile.saving': 'Enregistrement...',
     'profile.bank_statements': 'Relevés Bancaires',
     'profile.investments_savings': 'Investissements et Épargne',
+    'profile.files_by_month': 'Fichiers par Mois',
+    'profile.organize_bank_statements': 'Organisez vos relevés bancaires par mois comptable',
+    'profile.investments_by_month': 'Investissements par Mois',
+    'profile.investment_platform_files': 'Fichiers des plateformes d\'investissement et d\'épargne',
     
     // Onboarding
     'onboarding.welcome': 'Bienvenue sur Fint! 👋',
@@ -799,6 +815,10 @@ export const translations: Translations = {
     'profile.saving': 'Salvataggio...',
     'profile.bank_statements': 'Estratti Conto',
     'profile.investments_savings': 'Investimenti e Risparmio',
+    'profile.files_by_month': 'File per Mese',
+    'profile.organize_bank_statements': 'Organizza i tuoi estratti conto per mese contabile',
+    'profile.investments_by_month': 'Investimenti per Mese',
+    'profile.investment_platform_files': 'File delle piattaforme di investimento e risparmio',
     
     // Onboarding
     'onboarding.welcome': 'Benvenuto su Fint! 👋',
@@ -961,6 +981,10 @@ export const translations: Translations = {
     'profile.saving': 'Speichern...',
     'profile.bank_statements': 'Kontoauszüge',
     'profile.investments_savings': 'Investitionen und Ersparnisse',
+    'profile.files_by_month': 'Dateien nach Monat',
+    'profile.organize_bank_statements': 'Organisieren Sie Ihre Kontoauszüge nach Buchungsmonat',
+    'profile.investments_by_month': 'Investitionen nach Monat',
+    'profile.investment_platform_files': 'Dateien von Investment- und Sparplattformen',
     
     // Onboarding
     'onboarding.welcome': 'Willkommen bei Fint! 👋',
