@@ -449,12 +449,16 @@ export type Database = {
           amount_base: number | null
           auth_date: string | null
           bank: string | null
+          categorization_rule_id: string | null
           category: string
           category_id: string | null
+          category_source: string | null
+          counterparty_raw: string | null
           created_at: string
           currency: string | null
           date: string
           description: string
+          description_clean: string | null
           description_norm: string | null
           description_raw: string | null
           domain: Database["public"]["Enums"]["app_domain"] | null
@@ -465,15 +469,19 @@ export type Database = {
           linked_transaction_id: string | null
           merchant_norm: string | null
           original_text: string | null
+          payment_channel: string | null
           period_id: string | null
           posted_date: string | null
+          running_balance: number | null
           source_row_hash: string | null
+          source_transaction_id: string | null
           subcategory_id: string | null
           transaction_hash: string | null
           tx_type: string | null
           type: string
           upload_id: string | null
           user_id: string
+          value_date: string | null
         }
         Insert: {
           account_id?: string | null
@@ -481,12 +489,16 @@ export type Database = {
           amount_base?: number | null
           auth_date?: string | null
           bank?: string | null
+          categorization_rule_id?: string | null
           category: string
           category_id?: string | null
+          category_source?: string | null
+          counterparty_raw?: string | null
           created_at?: string
           currency?: string | null
           date: string
           description: string
+          description_clean?: string | null
           description_norm?: string | null
           description_raw?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
@@ -497,15 +509,19 @@ export type Database = {
           linked_transaction_id?: string | null
           merchant_norm?: string | null
           original_text?: string | null
+          payment_channel?: string | null
           period_id?: string | null
           posted_date?: string | null
+          running_balance?: number | null
           source_row_hash?: string | null
+          source_transaction_id?: string | null
           subcategory_id?: string | null
           transaction_hash?: string | null
           tx_type?: string | null
           type: string
           upload_id?: string | null
           user_id: string
+          value_date?: string | null
         }
         Update: {
           account_id?: string | null
@@ -513,12 +529,16 @@ export type Database = {
           amount_base?: number | null
           auth_date?: string | null
           bank?: string | null
+          categorization_rule_id?: string | null
           category?: string
           category_id?: string | null
+          category_source?: string | null
+          counterparty_raw?: string | null
           created_at?: string
           currency?: string | null
           date?: string
           description?: string
+          description_clean?: string | null
           description_norm?: string | null
           description_raw?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
@@ -529,15 +549,19 @@ export type Database = {
           linked_transaction_id?: string | null
           merchant_norm?: string | null
           original_text?: string | null
+          payment_channel?: string | null
           period_id?: string | null
           posted_date?: string | null
+          running_balance?: number | null
           source_row_hash?: string | null
+          source_transaction_id?: string | null
           subcategory_id?: string | null
           transaction_hash?: string | null
           tx_type?: string | null
           type?: string
           upload_id?: string | null
           user_id?: string
+          value_date?: string | null
         }
         Relationships: [
           {
@@ -545,6 +569,13 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_categorization_rule_id_fkey"
+            columns: ["categorization_rule_id"]
+            isOneToOne: false
+            referencedRelation: "categorization_rules"
             referencedColumns: ["id"]
           },
           {
