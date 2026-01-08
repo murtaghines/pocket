@@ -1,15 +1,17 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, ChevronDown, FolderOpen } from "lucide-react";
+import { ChevronDown, FolderOpen } from "lucide-react";
 import { useUploads } from "@/hooks/useUploads";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
+import { useLocalization } from "@/hooks/useLocalization";
 
 const DEFAULT_MONTHS_TO_SHOW = 6;
 
 export function MonthlyUploadsOrganizer() {
-  const { uploads, isLoading, deleteUpload, isDeleting } = useUploads();
+  // Only fetch CASHFLOW uploads
+  const { uploads, isLoading, deleteUpload, isDeleting } = useUploads("CASHFLOW");
   const { 
     pendingFilesByMonth, 
     addFilesForMonth, 
@@ -17,8 +19,12 @@ export function MonthlyUploadsOrganizer() {
     isProcessingMonth,
     getPendingCountForMonth 
   } = useMonthlyFileUpload();
+  const { t, language } = useLocalization();
   
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS_TO_SHOW);
+
+  const locale = language === 'es' ? 'es-ES' :
+                 language === 'pt' ? 'pt-BR' : 'en-US';
 
   // Calculate the last closed month (if today is Jan 1, last closed is December)
   const getLastClosedMonth = (): Date => {
@@ -35,12 +41,12 @@ export function MonthlyUploadsOrganizer() {
     for (let i = 0; i < monthsToShow; i++) {
       const monthDate = new Date(lastClosed.getFullYear(), lastClosed.getMonth() - i, 1);
       const key = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
-      const label = monthDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      const label = monthDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
       slots.push({ key, label, date: monthDate });
     }
     
     return slots;
-  }, [monthsToShow]);
+  }, [monthsToShow, locale]);
 
   // Group uploads by target_month
   const uploadsByMonth = useMemo(() => {
@@ -67,8 +73,8 @@ export function MonthlyUploadsOrganizer() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Archivos por Mes
+            <FolderOpen className="w-5 h-5" />
+            {t('profile.files_by_month')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -87,10 +93,10 @@ export function MonthlyUploadsOrganizer() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FolderOpen className="w-5 h-5" />
-          Archivos por Mes
+          {t('profile.files_by_month')}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Organiza tus extractos bancarios por mes contable
+          {t('profile.organize_bank_statements')}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -119,7 +125,7 @@ export function MonthlyUploadsOrganizer() {
           onClick={handleLoadMore}
         >
           <ChevronDown className="w-4 h-4 mr-2" />
-          Cargar meses anteriores
+          {t('common.load_more')}
         </Button>
       </CardContent>
     </Card>

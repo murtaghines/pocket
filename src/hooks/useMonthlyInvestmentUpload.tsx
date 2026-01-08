@@ -169,6 +169,7 @@ export function useMonthlyInvestmentUpload() {
             file_size: uploadFile.size,
             status: "pending",
             target_month: targetMonthStr,
+            domain: "INVESTING" as const,
           })
           .select()
           .single();

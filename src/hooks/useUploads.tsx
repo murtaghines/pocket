@@ -2,6 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppDomain = Database["public"]["Enums"]["app_domain"];
 
 export interface Upload {
   id: string;
@@ -15,23 +18,31 @@ export interface Upload {
   created_at: string;
   processed_at: string | null;
   target_month: string | null;
+  domain: AppDomain;
 }
 
-export function useUploads() {
+export function useUploads(domain?: AppDomain) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: uploads = [], isLoading } = useQuery({
-    queryKey: ["uploads", user?.id],
+    queryKey: ["uploads", user?.id, domain],
     queryFn: async () => {
       if (!user) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("uploads")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
+
+      // Filter by domain if specified
+      if (domain) {
+        query = query.eq("domain", domain);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as Upload[];
@@ -43,22 +54,33 @@ export function useUploads() {
     mutationFn: async (uploadId: string) => {
       if (!user) throw new Error("No user");
 
-      // Get the upload first to get file path
+      // Get the upload first to get file path and domain
       const { data: upload, error: fetchError } = await supabase
         .from("uploads")
-        .select("file_path")
+        .select("file_path, domain")
         .eq("id", uploadId)
         .single();
 
       if (fetchError) throw fetchError;
 
-      // Delete associated transactions
-      const { error: txError } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("upload_id", uploadId);
+      // Delete associated data based on domain
+      if (upload?.domain === "INVESTING") {
+        // Delete associated investments
+        const { error: invError } = await supabase
+          .from("investments")
+          .delete()
+          .eq("upload_id", uploadId);
 
-      if (txError) throw txError;
+        if (invError) throw invError;
+      } else {
+        // Delete associated transactions (CASHFLOW)
+        const { error: txError } = await supabase
+          .from("transactions")
+          .delete()
+          .eq("upload_id", uploadId);
+
+        if (txError) throw txError;
+      }
 
       // Delete from storage
       if (upload?.file_path) {
@@ -90,14 +112,15 @@ export function useUploads() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["uploads"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["investments"] });
       toast({
-        title: "Archivo eliminado",
-        description: "El archivo y sus transacciones han sido eliminados. Integridad de datos verificada.",
+        title: "File deleted",
+        description: "The file and its data have been removed.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al eliminar",
+        title: "Error deleting file",
         description: error.message,
         variant: "destructive",
       });
@@ -108,7 +131,7 @@ export function useUploads() {
   const uploadsByMonth = uploads.reduce((acc, upload) => {
     const date = new Date(upload.created_at);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const monthLabel = date.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+    const monthLabel = date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     
     if (!acc[monthKey]) {
       acc[monthKey] = { label: monthLabel, uploads: [] };
