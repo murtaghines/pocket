@@ -79,7 +79,7 @@ export const translations: Translations = {
     'transactions.of': 'de',
     'transactions.no_results': 'No se encontraron transacciones',
     
-    // Categories
+    // Categories (legacy)
     'category.food': 'Alimentación',
     'category.transport': 'Transporte',
     'category.entertainment': 'Ocio',
@@ -95,6 +95,16 @@ export const translations: Translations = {
     'category.income': 'Ingreso',
     'category.transfer': 'Transferencia',
     'category.investment': 'Inversión',
+    // New category slugs
+    'category.salary': 'Sueldo',
+    'category.refunds': 'Reembolsos',
+    'category.sales': 'Ventas',
+    'category.transfers_in': 'Transferencias',
+    'category.other_income': 'Otros ingresos',
+    'category.groceries': 'Supermercado',
+    'category.restaurants': 'Restaurantes',
+    'category.own_transfer': 'Propia',
+    'category.to_investment': 'A inversión',
     
     // Asset types
     'asset.stocks': 'Acciones',
@@ -241,7 +251,7 @@ export const translations: Translations = {
     'transactions.of': 'of',
     'transactions.no_results': 'No transactions found',
     
-    // Categories
+    // Categories (legacy)
     'category.food': 'Food',
     'category.transport': 'Transport',
     'category.entertainment': 'Entertainment',
@@ -257,6 +267,16 @@ export const translations: Translations = {
     'category.income': 'Income',
     'category.transfer': 'Transfer',
     'category.investment': 'Investment',
+    // New category slugs
+    'category.salary': 'Salary',
+    'category.refunds': 'Refunds',
+    'category.sales': 'Sales',
+    'category.transfers_in': 'Transfers',
+    'category.other_income': 'Other income',
+    'category.groceries': 'Groceries',
+    'category.restaurants': 'Restaurants',
+    'category.own_transfer': 'Own transfer',
+    'category.to_investment': 'To investment',
     
     // Asset types
     'asset.stocks': 'Stocks',
@@ -403,7 +423,7 @@ export const translations: Translations = {
     'transactions.of': 'de',
     'transactions.no_results': 'Nenhuma transação encontrada',
     
-    // Categories
+    // Categories (legacy)
     'category.food': 'Alimentação',
     'category.transport': 'Transporte',
     'category.entertainment': 'Lazer',
@@ -419,6 +439,16 @@ export const translations: Translations = {
     'category.income': 'Receita',
     'category.transfer': 'Transferência',
     'category.investment': 'Investimento',
+    // New category slugs
+    'category.salary': 'Salário',
+    'category.refunds': 'Reembolsos',
+    'category.sales': 'Vendas',
+    'category.transfers_in': 'Transferências',
+    'category.other_income': 'Outras receitas',
+    'category.groceries': 'Supermercado',
+    'category.restaurants': 'Restaurantes',
+    'category.own_transfer': 'Própria',
+    'category.to_investment': 'Para investimento',
     
     // Asset types
     'asset.stocks': 'Ações',

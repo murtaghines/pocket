@@ -13,7 +13,7 @@ interface TransactionTableProps {
   transactions: Transaction[];
 }
 
-const categoryBadgeColors: Record<Category, string> = {
+const categoryBadgeColors: Partial<Record<Category, string>> = {
   food: 'bg-category-food/20 text-category-food border-category-food/30',
   transport: 'bg-category-transport/20 text-category-transport border-category-transport/30',
   housing: 'bg-category-housing/20 text-category-housing border-category-housing/30',
@@ -26,6 +26,17 @@ const categoryBadgeColors: Record<Category, string> = {
   income: 'bg-success/20 text-success border-success/30',
   transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
   investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+  // New slugs
+  salary: 'bg-success/20 text-success border-success/30',
+  refunds: 'bg-success/20 text-success border-success/30',
+  sales: 'bg-success/20 text-success border-success/30',
+  transfers_in: 'bg-success/20 text-success border-success/30',
+  other_income: 'bg-success/20 text-success border-success/30',
+  groceries: 'bg-category-food/20 text-category-food border-category-food/30',
+  restaurants: 'bg-category-leisure/20 text-category-leisure border-category-leisure/30',
+  shopping: 'bg-category-subscriptions/20 text-category-subscriptions border-category-subscriptions/30',
+  own_transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
+  to_investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
 };
 
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
@@ -60,21 +71,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   // Category labels using translations
   const getCategoryLabel = (category: Category): string => {
-    const categoryMap: Record<Category, string> = {
-      food: t('category.food'),
-      transport: t('category.transport'),
-      housing: t('category.housing'),
-      subscriptions: t('category.subscriptions'),
-      leisure: t('category.leisure'),
-      health: t('category.health'),
-      education: t('category.education'),
-      travel: t('category.travel'),
-      other: t('category.other'),
-      income: t('category.income'),
-      transfer: t('category.transfer'),
-      investment: t('category.investment'),
-    };
-    return categoryMap[category] || category;
+    const translationKey = `category.${category}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : category;
   };
 
   // Movement labels using translations
