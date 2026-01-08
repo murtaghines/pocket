@@ -10,6 +10,10 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useLocalization } from '@/hooks/useLocalization';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
+import {
+  DEFAULT_INCOME_CATEGORIES,
+  DEFAULT_EXPENSE_CATEGORIES,
+} from '@/lib/categoryTranslations';
 
 interface OnboardingModalProps {
   open: boolean;
@@ -19,21 +23,13 @@ interface OnboardingModalProps {
 export interface OnboardingData {
   country: string;
   currency: string;
-  categories: string[];
+  categories: string[]; // Legacy: combined categories for backward compat
+  incomeCategories: string[];
+  expenseCategories: string[];
   language: string;
 }
 
 const TOTAL_STEPS = 4;
-
-const DEFAULT_CATEGORIES = [
-  'food',
-  'transport',
-  'shopping',
-  'entertainment',
-  'bills',
-  'health',
-  'others',
-];
 
 export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(1);
@@ -45,12 +41,14 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const [data, setData] = useState<OnboardingData>({
     country: '',
     currency: 'EUR',
-    categories: DEFAULT_CATEGORIES,
+    categories: [], // Legacy
+    incomeCategories: DEFAULT_INCOME_CATEGORIES,
+    expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
     language: 'en',
   });
 
   const updateData = (updates: Partial<OnboardingData>) => {
-    setData(prev => ({ ...prev, ...updates }));
+    setData((prev) => ({ ...prev, ...updates }));
   };
 
   const handleNext = () => {
@@ -104,13 +102,13 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         it: 'Valuta Base',
         de: 'Basiswährung',
       },
-      expense_categories: {
-        en: 'Expense Categories',
-        es: 'Categorías de Gastos',
-        pt: 'Categorias de Despesas',
-        fr: 'Catégories de Dépenses',
-        it: 'Categorie di Spesa',
-        de: 'Ausgabenkategorien',
+      categories: {
+        en: 'Categories',
+        es: 'Categorías',
+        pt: 'Categorias',
+        fr: 'Catégories',
+        it: 'Categorie',
+        de: 'Kategorien',
       },
       step: {
         en: 'Step',
@@ -159,10 +157,13 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const handleComplete = async () => {
     setSaving(true);
     try {
+      // Combine income and expense categories for storage
+      const allCategories = [...data.incomeCategories, ...data.expenseCategories];
+
       await updatePreferences({
         country: data.country,
         base_currency: data.currency,
-        selected_categories: data.categories,
+        selected_categories: allCategories,
         language: data.language,
         locale: getLocaleFromLanguage(data.language),
         onboarding_completed: true,
@@ -194,7 +195,8 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 3:
         return !!data.currency;
       case 4:
-        return data.categories.length > 0;
+        // Must have at least one income and one expense category
+        return data.incomeCategories.length > 0 && data.expenseCategories.length > 0;
       default:
         return true;
     }
@@ -224,7 +226,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 3:
         return getOnboardingText('base_currency');
       case 4:
-        return getOnboardingText('expense_categories');
+        return getOnboardingText('categories');
       default:
         return '';
     }
@@ -234,9 +236,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-display">
-            {getStepTitle()}
-          </DialogTitle>
+          <DialogTitle className="text-2xl font-display">{getStepTitle()}</DialogTitle>
         </DialogHeader>
 
         <div className="mt-4">
@@ -246,16 +246,10 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
           </p>
         </div>
 
-        <div className="py-6 min-h-[300px]">
-          {renderStep()}
-        </div>
+        <div className="py-6 min-h-[300px]">{renderStep()}</div>
 
         <div className="flex justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={step === 1 || saving}
-          >
+          <Button variant="outline" onClick={handleBack} disabled={step === 1 || saving}>
             <ChevronLeft className="w-4 h-4 mr-2" />
             {getOnboardingText('back')}
           </Button>
