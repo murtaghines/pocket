@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import fintLogo from "@/assets/fint-logo.png";
+
+const REMEMBER_EMAIL_KEY = "fint_remember_email";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -16,9 +19,19 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Load remembered email on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +39,7 @@ export default function Auth() {
     if (password !== confirmPassword) {
       toast({
         title: "Error",
-        description: "Las contraseñas no coinciden",
+        description: "Passwords do not match",
         variant: "destructive",
       });
       return;
@@ -35,7 +48,7 @@ export default function Auth() {
     if (password.length < 6) {
       toast({
         title: "Error",
-        description: "La contraseña debe tener al menos 6 caracteres",
+        description: "Password must be at least 6 characters",
         variant: "destructive",
       });
       return;
@@ -59,14 +72,14 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Error al crear cuenta",
+        title: "Error creating account",
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "¡Cuenta creada!",
-        description: "Ya puedes iniciar sesión.",
+        title: "Account created!",
+        description: "You can now sign in.",
       });
     }
     setLoading(false);
@@ -83,11 +96,17 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Error al iniciar sesión",
+        title: "Sign in error",
         description: error.message,
         variant: "destructive",
       });
     } else {
+      // Save or clear remembered email
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+      } else {
+        localStorage.removeItem(REMEMBER_EMAIL_KEY);
+      }
       navigate("/");
     }
     setLoading(false);
@@ -101,16 +120,16 @@ export default function Auth() {
             <img src={fintLogo} alt="Fint" className="w-10 h-10" />
             <span className="font-display text-xl font-bold">Fint</span>
           </div>
-          <CardTitle>Bienvenido</CardTitle>
+          <CardTitle>Welcome</CardTitle>
           <CardDescription>
-            Inicia sesión o crea una cuenta para gestionar tus finanzas
+            Sign in or create an account to manage your finances
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-              <TabsTrigger value="register">Registrarse</TabsTrigger>
+              <TabsTrigger value="login">Sign In</TabsTrigger>
+              <TabsTrigger value="register">Sign Up</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -120,14 +139,14 @@ export default function Auth() {
                   <Input
                     id="email-login"
                     type="email"
-                    placeholder="tu@email.com"
+                    placeholder="you@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-login">Contraseña</Label>
+                  <Label htmlFor="password-login">Password</Label>
                   <Input
                     id="password-login"
                     type="password"
@@ -137,9 +156,19 @@ export default function Auth() {
                     required
                   />
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember-me"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked === true)}
+                  />
+                  <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
+                    Remember me
+                  </Label>
+                </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Iniciar Sesión
+                  Sign In
                 </Button>
               </form>
             </TabsContent>
@@ -148,22 +177,22 @@ export default function Auth() {
               <form onSubmit={handleSignUp} className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="first-name">Nombre</Label>
+                    <Label htmlFor="first-name">First Name</Label>
                     <Input
                       id="first-name"
                       type="text"
-                      placeholder="Juan"
+                      placeholder="John"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="last-name">Apellido</Label>
+                    <Label htmlFor="last-name">Last Name</Label>
                     <Input
                       id="last-name"
                       type="text"
-                      placeholder="Pérez"
+                      placeholder="Doe"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
@@ -175,14 +204,14 @@ export default function Auth() {
                   <Input
                     id="email-register"
                     type="email"
-                    placeholder="tu@email.com"
+                    placeholder="you@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-register">Contraseña</Label>
+                  <Label htmlFor="password-register">Password</Label>
                   <Input
                     id="password-register"
                     type="password"
@@ -194,7 +223,7 @@ export default function Auth() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
                   <Input
                     id="confirm-password"
                     type="password"
@@ -207,7 +236,7 @@ export default function Auth() {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Crear Cuenta
+                  Create Account
                 </Button>
               </form>
             </TabsContent>
