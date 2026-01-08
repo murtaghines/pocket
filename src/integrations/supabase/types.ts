@@ -84,8 +84,10 @@ export type Database = {
           domain: Database["public"]["Enums"]["app_domain"]
           icon: string | null
           id: string
+          movement_type: Database["public"]["Enums"]["movement_type"] | null
           name: string
           parent_id: string | null
+          slug: string | null
         }
         Insert: {
           color?: string | null
@@ -93,8 +95,10 @@ export type Database = {
           domain: Database["public"]["Enums"]["app_domain"]
           icon?: string | null
           id?: string
+          movement_type?: Database["public"]["Enums"]["movement_type"] | null
           name: string
           parent_id?: string | null
+          slug?: string | null
         }
         Update: {
           color?: string | null
@@ -102,8 +106,10 @@ export type Database = {
           domain?: Database["public"]["Enums"]["app_domain"]
           icon?: string | null
           id?: string
+          movement_type?: Database["public"]["Enums"]["movement_type"] | null
           name?: string
           parent_id?: string | null
+          slug?: string | null
         }
         Relationships: [
           {
@@ -468,6 +474,7 @@ export type Database = {
           import_id: string | null
           linked_transaction_id: string | null
           merchant_norm: string | null
+          movement: Database["public"]["Enums"]["movement_type"] | null
           original_text: string | null
           payment_channel: string | null
           period_id: string | null
@@ -508,6 +515,7 @@ export type Database = {
           import_id?: string | null
           linked_transaction_id?: string | null
           merchant_norm?: string | null
+          movement?: Database["public"]["Enums"]["movement_type"] | null
           original_text?: string | null
           payment_channel?: string | null
           period_id?: string | null
@@ -548,6 +556,7 @@ export type Database = {
           import_id?: string | null
           linked_transaction_id?: string | null
           merchant_norm?: string | null
+          movement?: Database["public"]["Enums"]["movement_type"] | null
           original_text?: string | null
           payment_channel?: string | null
           period_id?: string | null
@@ -717,6 +726,7 @@ export type Database = {
       account_role: "CASH" | "INVESTMENT"
       app_domain: "CASHFLOW" | "INVESTING"
       import_status: "UPLOADED" | "PARSED" | "NORMALIZED" | "FAILED"
+      movement_type: "INCOME" | "EXPENSE" | "TRANSFER"
       period_status: "OPEN" | "READY_TO_CLOSE" | "CLOSED"
       source_type: "BANK" | "BROKER" | "SAVINGS" | "CARD" | "OTHER"
     }
@@ -849,6 +859,7 @@ export const Constants = {
       account_role: ["CASH", "INVESTMENT"],
       app_domain: ["CASHFLOW", "INVESTING"],
       import_status: ["UPLOADED", "PARSED", "NORMALIZED", "FAILED"],
+      movement_type: ["INCOME", "EXPENSE", "TRANSFER"],
       period_status: ["OPEN", "READY_TO_CLOSE", "CLOSED"],
       source_type: ["BANK", "BROKER", "SAVINGS", "CARD", "OTHER"],
     },
