@@ -562,15 +562,6 @@ serve(async (req) => {
       .single();
 
     if (importError) {
-      if (importError.code === '23505') {
-        return new Response(
-          JSON.stringify({ 
-            error: 'duplicate_file',
-            message: 'Este archivo ya fue procesado anteriormente'
-          }),
-          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
       console.error('[process-import] Error creating import:', importError);
       throw new Error(`Failed to create import: ${importError.message}`);
     }
