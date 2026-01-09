@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   ChevronDown, 
@@ -84,12 +85,37 @@ export function MonthUploadSlot({
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [showReopenDialog, setShowReopenDialog] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
   const isClosed = period?.status === 'CLOSED';
 
   const totalFiles = uploads.length + pendingFilesCount;
   const totalTransactions = uploads.reduce((sum, u) => sum + (u.transactions_count || 0), 0);
+
+  // Animate progress bar during processing
+  useEffect(() => {
+    if (isProcessing) {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          // Quick start, then slow down approaching 90%
+          if (prev < 30) return prev + 3;
+          if (prev < 60) return prev + 2;
+          if (prev < 85) return prev + 0.5;
+          if (prev < 95) return prev + 0.1;
+          return prev;
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    } else {
+      // Complete the progress bar when done
+      if (progress > 0 && progress < 100) {
+        setProgress(100);
+        setTimeout(() => setProgress(0), 500);
+      }
+    }
+  }, [isProcessing]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -243,6 +269,20 @@ export function MonthUploadSlot({
 
         <CollapsibleContent>
           <CardContent className="pt-0 pb-4 px-4 space-y-3">
+            {/* Processing progress bar */}
+            {isProcessing && (
+              <div className="space-y-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                  <span className="text-sm font-medium text-primary">Procesando archivos...</span>
+                  <span className="text-xs text-muted-foreground ml-auto">{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  Extrayendo transacciones y categorizando automáticamente
+                </p>
+              </div>
+            )}
             {/* Existing uploads */}
             {uploads.length > 0 && (
               <div className="space-y-2">
