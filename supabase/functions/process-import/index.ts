@@ -658,15 +658,25 @@ serve(async (req) => {
       }
     }
 
-    // 11. Get existing fingerprints to detect duplicates
+    // 11. Get existing transactions to detect duplicates (by fingerprint AND by natural key)
     const { data: existingTxs } = await supabase
       .from('transactions')
-      .select('fingerprint')
+      .select('fingerprint, date, amount, description_norm')
       .eq('user_id', userId)
-      .eq('domain', domain)
-      .not('fingerprint', 'is', null);
+      .eq('domain', domain);
 
-    const existingFingerprints = new Set(existingTxs?.map(t => t.fingerprint) || []);
+    const existingFingerprints = new Set(
+      existingTxs?.filter(t => t.fingerprint).map(t => t.fingerprint) || []
+    );
+    
+    // Natural key = date|amount|description_normalizada (para detectar duplicados con fingerprints diferentes)
+    const existingNaturalKeys = new Set(
+      existingTxs?.map(t => 
+        `${t.date}|${t.amount}|${(t.description_norm || '').toLowerCase()}`
+      ) || []
+    );
+    
+    console.log(`[process-import] Found ${existingFingerprints.size} existing fingerprints, ${existingNaturalKeys.size} natural keys`);
 
     // 12. Process and create transactions
     const stats = {
@@ -682,6 +692,7 @@ serve(async (req) => {
 
     const newTransactions: any[] = [];
     const seenFingerprints = new Set<string>();
+    const seenNaturalKeys = new Set<string>();
 
     for (let i = 0; i < transactions.length; i++) {
       const t = transactions[i];
@@ -740,11 +751,23 @@ serve(async (req) => {
       // Check for duplicates via fingerprint
       if (existingFingerprints.has(fingerprint) || seenFingerprints.has(fingerprint)) {
         stats.duplicatesIgnored++;
-        console.log(`[process-import] Duplicate transaction: ${descriptionClean.substring(0, 50)}`);
+        console.log(`[process-import] Duplicate by fingerprint: ${descriptionClean.substring(0, 50)}`);
+        continue;
+      }
+
+      // Check for duplicates via natural key (date|amount|description_norm)
+      // This catches duplicates from old imports with different fingerprint algorithms
+      const normalizedDesc = normalizeDescription(descriptionRaw);
+      const naturalKey = `${postedDate}|${amountSigned}|${normalizedDesc.toLowerCase()}`;
+      
+      if (existingNaturalKeys.has(naturalKey) || seenNaturalKeys.has(naturalKey)) {
+        stats.duplicatesIgnored++;
+        console.log(`[process-import] Duplicate by natural key: ${naturalKey.substring(0, 60)}`);
         continue;
       }
 
       seenFingerprints.add(fingerprint);
+      seenNaturalKeys.add(naturalKey);
 
       // === CATEGORIZATION LOGIC ===
       
