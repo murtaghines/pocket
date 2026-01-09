@@ -18,9 +18,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
-import { TrendingUp, TrendingDown, Wallet, Loader2, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
 
 export default function Index() {
   const { 
@@ -28,8 +26,7 @@ export default function Index() {
     monthlyData, 
     categoryData, 
     summary, 
-    isLoading,
-    hasData 
+    isLoading 
   } = useTransactions();
   
   const { formatCurrency, formatMonth, t } = useLocalization();
@@ -134,25 +131,8 @@ export default function Index() {
           </div>
         )}
 
-        {/* Empty State */}
-        {!isLoading && !prefsLoading && !hasData && (
-          <div className="text-center py-12 mb-8">
-            <Upload className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">{t('dashboard.welcome')}</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              {t('dashboard.upload_prompt')}
-            </p>
-            <Link to="/profile">
-              <Button variant="gradient" size="lg">
-                <Upload className="w-4 h-4 mr-2" />
-                {t('dashboard.go_to_profile')}
-              </Button>
-            </Link>
-          </div>
-        )}
-
-        {/* Dashboard with Data */}
-        {!isLoading && !prefsLoading && hasData && (
+        {/* Dashboard Content - Always show, even with empty data */}
+        {!isLoading && !prefsLoading && (
           <>
             {/* Month Closing Banner */}
             <MonthClosingBanner />
