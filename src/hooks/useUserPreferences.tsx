@@ -102,15 +102,21 @@ export function useUserPreferences() {
     mutationFn: async (updates: Partial<UserPreferences>): Promise<UserPreferences> => {
       if (!user) throw new Error('User not authenticated');
       
-      // Check if preferences exist first
-      const { data: existing } = await supabase
+      // Try to update first (most common case)
+      const { data: updated, error: updateError } = await supabase
         .from('user_preferences')
-        .select('id')
+        .update(updates)
         .eq('user_id', user.id)
+        .select()
         .maybeSingle();
       
-      if (!existing) {
-        // Create new preferences with updates
+      // If update succeeded and returned data, we're done
+      if (updated) {
+        return updated as UserPreferences;
+      }
+      
+      // If no row was updated, create new preferences
+      if (!updated && !updateError) {
         const newPrefs = {
           user_id: user.id,
           base_currency: updates.base_currency || browserDefaults.currency,
@@ -131,16 +137,8 @@ export function useUserPreferences() {
         return data as UserPreferences;
       }
       
-      // Update existing preferences
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .update(updates)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data as UserPreferences;
+      if (updateError) throw updateError;
+      throw new Error('Failed to update preferences');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_preferences', user?.id] });
