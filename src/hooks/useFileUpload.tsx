@@ -152,12 +152,6 @@ export function useFileUpload(isInvestment: boolean = false) {
       );
 
       try {
-        const fileContent = await extractFileContent(uploadFile.file);
-        
-        if (!fileContent.trim()) {
-          throw new Error("El archivo está vacío");
-        }
-
         const filePath = `${user.id}/${Date.now()}_${uploadFile.name}`;
         const { error: uploadError } = await supabase.storage
           .from("financial-files")
@@ -167,45 +161,60 @@ export function useFileUpload(isInvestment: boolean = false) {
           console.error("Storage upload error:", uploadError);
         }
 
-        const targetMonthStr = new Date().toISOString().slice(0, 7) + '-01';
-        const { data: uploadRecord, error: insertError } = await supabase
-          .from("uploads")
+        // Generate file hash for imports table
+        const fileContent = await extractFileContent(uploadFile.file);
+        
+        if (!fileContent.trim()) {
+          throw new Error("El archivo está vacío");
+        }
+        
+        const encoder = new TextEncoder();
+        const hashData = encoder.encode(fileContent);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', hashData);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        // Create import record (unified system)
+        const { data: importRecord, error: insertError } = await supabase
+          .from("imports")
           .insert({
             user_id: user.id,
             file_name: uploadFile.name,
-            file_path: filePath,
-            file_type: uploadFile.file.type || "unknown",
+            file_storage_url: filePath,
+            file_mime: uploadFile.file.type || "application/octet-stream",
             file_size: uploadFile.size,
-            status: "pending",
-            target_month: targetMonthStr,
+            file_hash_sha256: fileHash,
+            status: "UPLOADED",
+            domain: "CASHFLOW",
+            source_type: "BANK",
           })
           .select()
           .single();
 
         if (insertError) throw insertError;
 
-        const { data, error } = await supabase.functions.invoke(
+        const { data: processResult, error: processError } = await supabase.functions.invoke(
           "process-financial-file",
           {
             body: {
               fileContent,
-              uploadId: uploadRecord.id,
+              importId: importRecord.id,
               userId: user.id,
               previewOnly: true,
             },
           }
         );
 
-        if (error) throw error;
+        if (processError) throw processError;
 
         // Transform response to PreviewData format with movement type
-        const transactions: PreviewTransaction[] = (data.transactions || []).map(
+        const transactions: PreviewTransaction[] = (processResult.transactions || []).map(
           (t: any, index: number) => {
             const movement = normalizeMovement(t.movement, t.type, t.amount);
             // Normalize category to handle legacy values
             const category = normalizeCategory(t.category || "other_expense");
             return {
-              tempId: `${uploadRecord.id}-${index}`,
+              tempId: `${importRecord.id}-${index}`,
               date: t.date,
               description: t.description,
               amount: t.amount,
@@ -223,8 +232,8 @@ export function useFileUpload(isInvestment: boolean = false) {
 
         setPreviewData({
           transactions,
-          stats: data.stats,
-          uploadId: uploadRecord.id,
+          stats: processResult.stats,
+          uploadId: importRecord.id, // Using importId but keeping field name for compatibility
           fileName: uploadFile.name,
         });
 
@@ -399,7 +408,7 @@ export function useFileUpload(isInvestment: boolean = false) {
         "process-financial-file",
         {
           body: {
-            uploadId: previewData.uploadId,
+            importId: previewData.uploadId, // Now using imports table
             userId: user.id,
             confirmTransactions: true,
             transactions: previewData.transactions.map((t) => ({
@@ -428,7 +437,7 @@ export function useFileUpload(isInvestment: boolean = false) {
       setPreviewData(null);
       setFiles([]);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["uploads"] });
+      queryClient.invalidateQueries({ queryKey: ["imports"] });
 
       try {
         const { data: integrityData } = await supabase.functions.invoke(

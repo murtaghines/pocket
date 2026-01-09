@@ -171,7 +171,10 @@ serve(async (req) => {
   }
 
   try {
-    const { fileContent, uploadId, userId, previewOnly, confirmTransactions, transactions } = await req.json();
+    const { fileContent, importId, uploadId, userId, previewOnly, confirmTransactions, transactions } = await req.json();
+    
+    // Support both importId (new) and uploadId (legacy) for backwards compatibility
+    const recordId = importId || uploadId;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -201,8 +204,8 @@ serve(async (req) => {
     });
 
     // CONFIRM MODE: Save pre-validated transactions
-    if (confirmTransactions && transactions && uploadId && userId) {
-      console.log(`Confirming ${transactions.length} transactions for upload ${uploadId}`);
+    if (confirmTransactions && transactions && recordId && userId) {
+      console.log(`Confirming ${transactions.length} transactions for import ${recordId}`);
       
       const transactionsToInsert = transactions.map((t: any) => {
         const movement = normalizeMovement(t.movement || t.type, t.amount);
@@ -211,7 +214,7 @@ serve(async (req) => {
         
         return {
           user_id: userId,
-          upload_id: uploadId,
+          import_id: recordId, // Using import_id for unified system
           date: t.date,
           description: t.description || 'Sin descripción',
           amount: t.amount,
@@ -234,14 +237,14 @@ serve(async (req) => {
         throw new Error(`Failed to insert transactions: ${insertError.message}`);
       }
 
+      // Update imports table (unified system)
       await supabase
-        .from('uploads')
+        .from('imports')
         .update({ 
-          status: 'completed', 
+          status: 'NORMALIZED', 
           transactions_count: transactions.length,
-          processed_at: new Date().toISOString()
         })
-        .eq('id', uploadId);
+        .eq('id', recordId);
 
       return new Response(
         JSON.stringify({ 
@@ -253,20 +256,21 @@ serve(async (req) => {
     }
 
     // PROCESS MODE: Analyze file content
-    if (!fileContent || !uploadId || !userId) {
-      console.error('Missing required fields:', { hasContent: !!fileContent, uploadId, userId });
+    if (!fileContent || !recordId || !userId) {
+      console.error('Missing required fields:', { hasContent: !!fileContent, recordId, userId });
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: fileContent, uploadId, userId' }),
+        JSON.stringify({ error: 'Missing required fields: fileContent, importId/uploadId, userId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Processing file for upload ${uploadId}, content length: ${fileContent.length}, previewOnly: ${!!previewOnly}`);
+    console.log(`Processing file for import ${recordId}, content length: ${fileContent.length}, previewOnly: ${!!previewOnly}`);
 
+    // Update imports status to PARSED (processing)
     await supabase
-      .from('uploads')
-      .update({ status: 'processing' })
-      .eq('id', uploadId);
+      .from('imports')
+      .update({ status: 'PARSED' })
+      .eq('id', recordId);
 
     // Call Lovable AI to analyze the financial data
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -291,9 +295,9 @@ serve(async (req) => {
       
       if (aiResponse.status === 429) {
         await supabase
-          .from('uploads')
-          .update({ status: 'failed', error_message: 'Rate limit exceeded. Please try again later.' })
-          .eq('id', uploadId);
+          .from('imports')
+          .update({ status: 'FAILED', error_message: 'Rate limit exceeded. Please try again later.' })
+          .eq('id', recordId);
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -302,9 +306,9 @@ serve(async (req) => {
 
       if (aiResponse.status === 402) {
         await supabase
-          .from('uploads')
-          .update({ status: 'failed', error_message: 'AI credits exhausted. Please add credits.' })
-          .eq('id', uploadId);
+          .from('imports')
+          .update({ status: 'FAILED', error_message: 'AI credits exhausted. Please add credits.' })
+          .eq('id', recordId);
         return new Response(
           JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -418,7 +422,7 @@ serve(async (req) => {
 
       newTransactions.push({
         user_id: userId,
-        upload_id: uploadId,
+        import_id: recordId, // Using import_id for unified system
         date: t.date,
         description: t.description || 'Sin descripción',
         amount: t.amount,
@@ -434,12 +438,12 @@ serve(async (req) => {
 
     console.log(`New: ${newTransactions.length}, Duplicates: ${stats.duplicates}, Transfers: ${stats.transfers}`);
 
-    // PREVIEW MODE
+    // PREVIEW MODE - Keep status as PARSED, don't save transactions yet
     if (previewOnly) {
       await supabase
-        .from('uploads')
-        .update({ status: 'preview' })
-        .eq('id', uploadId);
+        .from('imports')
+        .update({ status: 'PARSED' })
+        .eq('id', recordId);
 
       return new Response(
         JSON.stringify({ 
@@ -470,14 +474,14 @@ serve(async (req) => {
       }
     }
 
+    // Update imports status to NORMALIZED
     await supabase
-      .from('uploads')
+      .from('imports')
       .update({ 
-        status: 'completed', 
+        status: 'NORMALIZED', 
         transactions_count: newTransactions.length,
-        processed_at: new Date().toISOString()
       })
-      .eq('id', uploadId);
+      .eq('id', recordId);
 
     return new Response(
       JSON.stringify({ 
