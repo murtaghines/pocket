@@ -852,40 +852,43 @@ serve(async (req) => {
       newTransactions.push(txRecord);
     }
 
-    // 13. Batch insert transactions with duplicate handling
+    // 13. Batch insert transactions - handle duplicates individually
     if (newTransactions.length > 0) {
-      const { error: insertError, data: insertedData } = await supabase
-        .from('transactions')
-        .upsert(newTransactions, {
-          onConflict: 'user_id,domain,fingerprint',
-          ignoreDuplicates: true
-        })
-        .select('id');
-
-      if (insertError) {
-        if (insertError.code === '23505') {
-          console.log('[process-import] Some transactions already existed, continuing...');
-          let actualNew = 0;
-          for (const tx of newTransactions) {
-            const { error: singleError } = await supabase
-              .from('transactions')
-              .insert(tx);
-            if (!singleError) {
-              actualNew++;
-            }
+      let successCount = 0;
+      let duplicateCount = 0;
+      
+      // Insert transactions one by one to properly handle duplicates
+      // (Partial unique indexes don't work with upsert onConflict)
+      for (const tx of newTransactions) {
+        const { error: insertError } = await supabase
+          .from('transactions')
+          .insert(tx);
+        
+        if (insertError) {
+          if (insertError.code === '23505') {
+            // Duplicate - skip silently
+            duplicateCount++;
+          } else {
+            console.error('[process-import] Error inserting transaction:', insertError);
+            // Continue with other transactions instead of failing completely
           }
-          stats.newTransactions = actualNew;
-          stats.duplicatesIgnored += (newTransactions.length - actualNew);
         } else {
-          console.error('[process-import] Error inserting transactions:', insertError);
-          await supabase.from('imports').update({ 
-            status: 'FAILED', 
-            error_message: insertError.message 
-          }).eq('id', importId);
-          throw new Error(`Failed to insert transactions: ${insertError.message}`);
+          successCount++;
         }
-      } else {
-        stats.newTransactions = insertedData?.length || newTransactions.length;
+      }
+      
+      stats.newTransactions = successCount;
+      stats.duplicatesIgnored += duplicateCount;
+      
+      console.log(`[process-import] Inserted ${successCount} transactions, ${duplicateCount} duplicates skipped`);
+      
+      if (successCount === 0 && duplicateCount === newTransactions.length) {
+        // All transactions were duplicates
+        await supabase.from('imports').update({ 
+          status: 'NORMALIZED',
+          transactions_count: 0,
+          error_message: 'Todas las transacciones ya existían'
+        }).eq('id', importId);
       }
     }
 
