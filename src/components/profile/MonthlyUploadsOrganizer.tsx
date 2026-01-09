@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, FolderOpen } from "lucide-react";
-import { useUploads } from "@/hooks/useUploads";
+import { useImports } from "@/hooks/useImports";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -11,8 +11,8 @@ import { usePeriods } from "@/hooks/usePeriods";
 const DEFAULT_MONTHS_TO_SHOW = 6;
 
 export function MonthlyUploadsOrganizer() {
-  // Only fetch CASHFLOW uploads
-  const { uploads, isLoading, deleteUpload, isDeleting } = useUploads("CASHFLOW");
+  // Use imports instead of uploads (unified system)
+  const { imports, isLoading, deleteImport, isDeleting } = useImports("CASHFLOW");
   const { 
     pendingFilesByMonth, 
     addFilesForMonth, 
@@ -57,21 +57,19 @@ export function MonthlyUploadsOrganizer() {
     return slots;
   }, [monthsToShow, locale]);
 
-  // Group uploads by target_month
-  const uploadsByMonth = useMemo(() => {
-    const grouped: Record<string, typeof uploads> = {};
+  // Group imports by target month (from uploaded_at date)
+  const importsByMonth = useMemo(() => {
+    const grouped: Record<string, typeof imports> = {};
     
-    uploads.forEach((upload) => {
-      if (upload.target_month) {
-        // Extract YYYY-MM directly from the string to avoid timezone issues
-        const key = upload.target_month.substring(0, 7);
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(upload);
-      }
+    imports.forEach((imp) => {
+      // Extract YYYY-MM from uploaded_at
+      const key = imp.uploaded_at.substring(0, 7);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(imp);
     });
     
     return grouped;
-  }, [uploads]);
+  }, [imports]);
 
   const handleLoadMore = () => {
     setMonthsToShow((prev) => prev + 3);
@@ -110,7 +108,7 @@ export function MonthlyUploadsOrganizer() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-3">
-          {monthSlots.map((slot) => {
+        {monthSlots.map((slot) => {
             const period = getPeriodByMonthKey(slot.key, "CASHFLOW");
             return (
               <MonthUploadSlot
@@ -118,10 +116,10 @@ export function MonthlyUploadsOrganizer() {
                 monthKey={slot.key}
                 monthLabel={slot.label}
                 monthDate={slot.date}
-                uploads={uploadsByMonth[slot.key] || []}
+                imports={importsByMonth[slot.key] || []}
                 onAddFiles={addFilesForMonth}
                 onProcessFiles={processFilesForMonth}
-                onDeleteUpload={deleteUpload}
+                onDeleteImport={deleteImport}
                 isProcessing={isProcessingMonth(slot.key)}
                 hasPendingFiles={getPendingCountForMonth(slot.key) > 0}
                 pendingFilesCount={getPendingCountForMonth(slot.key)}

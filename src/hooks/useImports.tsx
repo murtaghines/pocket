@@ -224,8 +224,21 @@ export function useImports(domain?: AppDomain) {
     });
   };
 
+  // Group imports by target month (derived from period)
+  const importsByMonth = imports.reduce((acc, imp) => {
+    // We need to get month from period - for now use uploaded_at month
+    // This will be improved when periods are linked
+    const monthKey = imp.uploaded_at.substring(0, 7);
+    if (!acc[monthKey]) {
+      acc[monthKey] = [];
+    }
+    acc[monthKey].push(imp);
+    return acc;
+  }, {} as Record<string, Import[]>);
+
   return {
     imports,
+    importsByMonth,
     isLoading,
     error,
     processImport: processImport.mutateAsync,
