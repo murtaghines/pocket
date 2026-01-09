@@ -12,7 +12,8 @@ import {
   Loader2, 
   AlertCircle,
   X,
-  Trash2
+  Trash2,
+  FileCheck2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { MonthReviewModal } from "./MonthReviewModal";
 
 const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.pdf'];
 const ACCEPTED_TYPES = [
@@ -65,6 +67,7 @@ export function MonthUploadSlot({
   isDeleting,
 }: MonthUploadSlotProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const { toast } = useToast();
 
   const totalFiles = uploads.length + pendingFilesCount;
@@ -294,23 +297,41 @@ export function MonthUploadSlot({
 
             {/* Add more files button */}
             {!isEmpty && !hasPendingFiles && (
-              <div className="relative">
-                <input
-                  type="file"
-                  accept=".xlsx,.xls,.csv,.pdf"
-                  multiple
-                  onChange={handleFileInput}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <Button variant="outline" size="sm" className="w-full">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Agregar más archivos
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.pdf"
+                    multiple
+                    onChange={handleFileInput}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Agregar más archivos
+                  </Button>
+                </div>
+                <Button 
+                  variant="gradient" 
+                  size="sm"
+                  onClick={() => setShowReviewModal(true)}
+                >
+                  <FileCheck2 className="w-4 h-4 mr-2" />
+                  Listo
                 </Button>
               </div>
             )}
           </CardContent>
         </CollapsibleContent>
       </Card>
+
+      {/* Review Modal */}
+      <MonthReviewModal
+        open={showReviewModal}
+        onOpenChange={setShowReviewModal}
+        monthKey={monthKey}
+        monthLabel={monthLabel}
+      />
     </Collapsible>
   );
 }
