@@ -147,6 +147,24 @@ function validateCategory(category: string, movement: 'INCOME' | 'EXPENSE' | 'TR
   }
 }
 
+// Check if transaction description contains user's name (for self-transfer detection)
+function containsUserName(description: string, firstName: string | null, lastName: string | null): boolean {
+  if (!description) return false;
+  const descNorm = description.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  if (firstName) {
+    const firstNorm = firstName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (firstNorm.length >= 3 && descNorm.includes(firstNorm)) return true;
+  }
+  
+  if (lastName) {
+    const lastNorm = lastName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (lastNorm.length >= 3 && descNorm.includes(lastNorm)) return true;
+  }
+  
+  return false;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -156,6 +174,18 @@ serve(async (req) => {
     const { fileContent, uploadId, userId, previewOnly, confirmTransactions, transactions } = await req.json();
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Fetch user profile for self-transfer detection
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('user_id', userId)
+      .single();
+
+    const userFirstName = profile?.first_name || null;
+    const userLastName = profile?.last_name || null;
+
+    console.log(`User profile loaded: ${userFirstName} ${userLastName}`);
 
     // Fetch category IDs from database for mapping
     const { data: categories } = await supabase
@@ -356,8 +386,30 @@ serve(async (req) => {
       seenHashesInBatch.add(hash);
 
       // Normalize movement and validate category
-      const movement = normalizeMovement(t.movement || t.type, t.amount);
-      const categorySlug = validateCategory(t.category, movement);
+      let movement = normalizeMovement(t.movement || t.type, t.amount);
+      
+      // POST-PROCESSING: If user's name is in the description, it's likely a self-transfer
+      const description = t.description || '';
+      if (containsUserName(description, userFirstName, userLastName)) {
+        // Override to TRANSFER/own_transfer when user's name appears in payment/transfer descriptions
+        const descLower = description.toLowerCase();
+        const isPaymentOrTransfer = descLower.includes('payment') || 
+                                     descLower.includes('transfer') || 
+                                     descLower.includes('pago') ||
+                                     descLower.includes('bizum') ||
+                                     descLower.includes('from') ||
+                                     descLower.includes('to') ||
+                                     descLower.includes('de ') ||
+                                     descLower.includes('a ');
+        if (isPaymentOrTransfer) {
+          console.log(`Self-transfer detected: "${description}" contains user name`);
+          movement = 'TRANSFER';
+        }
+      }
+      
+      const categorySlug = movement === 'TRANSFER' && containsUserName(description, userFirstName, userLastName)
+        ? 'own_transfer'
+        : validateCategory(t.category, movement);
       const categoryInfo = categoryMap.get(categorySlug);
 
       // Track stats
