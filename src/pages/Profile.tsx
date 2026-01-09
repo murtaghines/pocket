@@ -2,7 +2,6 @@ import { Header } from "@/components/layout/Header";
 import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
-import { PeriodManager } from "@/components/dashboard/PeriodManager";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { useLocalization } from "@/hooks/useLocalization";
 import { FileText, TrendingUp } from "lucide-react";
@@ -30,13 +29,8 @@ export default function Profile() {
           <div className="space-y-6">
             <ProfileInfoCard />
 
-            {/* Period Manager */}
-            <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-              <PeriodManager />
-            </div>
-
             {/* Preferences */}
-            <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+            <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
               <PreferencesForm />
             </div>
           </div>
