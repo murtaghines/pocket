@@ -149,7 +149,8 @@ export function MonthUploadSlot({
     switch (status) {
       case 'completed': return 'text-success';
       case 'processing': return 'text-warning';
-      case 'error': return 'text-destructive';
+      case 'error':
+      case 'failed': return 'text-destructive';
       default: return 'text-muted-foreground';
     }
   };
@@ -158,7 +159,8 @@ export function MonthUploadSlot({
     switch (status) {
       case 'completed': return <CheckCircle2 className="w-4 h-4 text-success" />;
       case 'processing': return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
-      case 'error': return <AlertCircle className="w-4 h-4 text-destructive" />;
+      case 'error':
+      case 'failed': return <AlertCircle className="w-4 h-4 text-destructive" />;
       default: return <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />;
     }
   };
@@ -255,7 +257,7 @@ export function MonthUploadSlot({
                       <p className="text-xs text-muted-foreground">
                         {upload.status === 'completed' && upload.transactions_count 
                           ? `${upload.transactions_count} transacciones`
-                          : upload.status === 'error' && upload.error_message
+                          : (upload.status === 'error' || upload.status === 'failed') && upload.error_message
                           ? upload.error_message
                           : `${formatDate(upload.created_at)} • ${formatFileSize(upload.file_size)}`
                         }

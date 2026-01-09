@@ -170,7 +170,7 @@ export function useMonthlyFileUpload() {
             await supabase
               .from("uploads")
               .update({
-                status: "error",
+                status: "failed",
                 error_message: message,
               })
               .eq("id", uploadDbId);
@@ -275,7 +275,7 @@ export function useMonthlyFileUpload() {
         await supabase
           .from("uploads")
           .update({
-            status: "error",
+            status: "failed",
             error_message: error.message || "Error desconocido",
           })
           .eq("id", uploadDbId);
