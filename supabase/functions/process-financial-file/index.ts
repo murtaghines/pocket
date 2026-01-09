@@ -114,9 +114,26 @@ function normalizeMovement(movement: string, amount: number): 'INCOME' | 'EXPENS
   return 'EXPENSE';
 }
 
-// Validate category belongs to movement type
+// Legacy slug mapping - maps old/incorrect AI outputs to correct slugs
+const legacySlugMap: Record<string, string> = {
+  'investment': 'investments_income',
+  'income': 'other_income',
+  'other': 'other_expense',
+  'food': 'groceries',
+  'leisure': 'entertainment',
+  'transfer': 'own_transfer',
+  'bills': 'housing',
+  'utilities': 'housing',
+};
+
+// Normalize and validate category
 function validateCategory(category: string, movement: 'INCOME' | 'EXPENSE' | 'TRANSFER'): string {
-  const slug = (category || '').toLowerCase();
+  let slug = (category || '').toLowerCase().trim();
+  
+  // Apply legacy mapping
+  if (legacySlugMap[slug]) {
+    slug = legacySlugMap[slug];
+  }
   
   switch (movement) {
     case 'INCOME':
