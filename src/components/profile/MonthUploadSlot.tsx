@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -17,7 +18,8 @@ import {
   FileCheck2,
   Lock,
   Unlock,
-  Eye
+  Eye,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -293,11 +295,43 @@ export function MonthUploadSlot({
                         {imp.status === 'NORMALIZED' && imp.transactions_count 
                           ? `${imp.transactions_count} transacciones`
                           : imp.status === 'FAILED' && imp.error_message
-                          ? imp.error_message
+                          ? <span className="text-destructive truncate">{imp.error_message.slice(0, 40)}...</span>
                           : `${formatDate(imp.uploaded_at)} • ${formatFileSize(imp.file_size)}`
                         }
                       </p>
                     </div>
+                    
+                    {/* Error details hover card for FAILED imports */}
+                    {imp.status === 'FAILED' && imp.error_message && (
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                          >
+                            <Info className="w-3.5 h-3.5" />
+                          </Button>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80" align="end">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-destructive" />
+                              <h4 className="text-sm font-semibold">Error de procesamiento</h4>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {imp.error_message}
+                            </p>
+                            <div className="pt-2 border-t">
+                              <p className="text-xs text-muted-foreground">
+                                <strong>Sugerencia:</strong> Si es un PDF escaneado, intenta convertirlo a CSV o Excel antes de subirlo.
+                              </p>
+                            </div>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    )}
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
