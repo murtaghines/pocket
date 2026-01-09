@@ -11,6 +11,11 @@ const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Category slugs from database - must match exactly
+const INCOME_CATEGORIES = ['salary', 'refunds', 'sales', 'transfers_in', 'other_income', 'investments_income', 'gifts_received', 'freelance', 'rental_income'];
+const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'other_expense', 'pets', 'gifts_given', 'personal_services', 'taxes', 'family', 'donations', 'insurance'];
+const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment'];
+
 const FINANCIAL_ANALYSIS_PROMPT = `You are a financial data extraction expert specialized in Spanish and European bank statements. Your task is to analyze messy, unstructured financial data and extract clean transaction data.
 
 CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
@@ -19,60 +24,75 @@ For each transaction, extract:
 - date: ISO format (YYYY-MM-DD). If day missing, use 01. If month missing, infer from context.
 - description: Clean, readable description
 - amount: Numeric value (positive for income, negative for expenses/transfers out)
-- type: "income", "expense", or "transfer" (for internal movements between accounts)
-- category: See rules below
-- bank: Bank name if identifiable (Santander, BBVA, CaixaBank, Sabadell, ING, Revolut, N26, Wise, etc.)
+- movement: MUST be one of: "INCOME", "EXPENSE", "TRANSFER"
+- category: MUST be one of the slugs listed below (match the movement type)
+- bank: Bank name if identifiable
 - hash_source: String combining date|absoluteAmount|normalizedDescription for duplicate detection
 
-TRANSFER DETECTION - Mark as type "transfer" if:
-- Description contains: "Transferencia a", "Transferencia de", "Traspaso", "Bizum enviado", "Bizum recibido"
-- Between known banks/neobanks: "a Revolut", "desde Santander", "N26", "Wise"
-- Self-transfers: "a cuenta propia", "entre cuentas"
-- Round amounts that match incoming amounts in other accounts
+MOVEMENT TYPES AND VALID CATEGORIES:
 
-INVESTMENT DETECTION - Mark as category "investment" (with type "expense" for outgoing, "income" for dividends/returns):
-- Investment platforms: Savings, Cocos, MyInvestor, Trade Republic, DEGIRO, eToro, Interactive Brokers
-- Revolut Savings, Instant Access Savings, Flexible Account
-- Crypto: Binance, Coinbase, Kraken, Crypto.com
-- Crowdfunding: Crowdcube, Urbanitae, Housers, Mintos, Bondora
-- Robo-advisors: Indexa Capital, Finizens, InbestMe
-- Keywords: "To Instant Access", "To Savings", "inversión", "fondos", "acciones"
-- Description patterns: "To [Platform Name]", "From Savings" (returns)
-CRITICAL: Investments are NOT regular expenses. They are money movements to/from investment platforms.
+INCOME (positive amounts - money coming in):
+- salary: Regular job payments (Nómina, salario, sueldo)
+- freelance: Independent work, consulting, side gigs
+- refunds: Money returned from purchases
+- sales: Selling items, marketplace sales
+- investments_income: Dividends, interests, capital gains returns
+- gifts_received: Birthday money, inheritance, monetary gifts
+- rental_income: Rent received from properties
+- transfers_in: Incoming transfers from other banks (not investment-related)
+- other_income: Any other income not fitting above
 
-CATEGORY RULES:
-- food: supermarkets, restaurants, delivery (Mercadona, Carrefour, Lidl, Glovo, JustEat)
-- transport: gas, Uber, taxi, metro, bus, parking, Cabify
-- housing: rent, utilities, electricity, water, gas, internet, Endesa, Naturgy, Vodafone
-- subscriptions: Netflix, Spotify, Amazon Prime, HBO, Disney+, gym memberships
-- leisure: entertainment, cinema, bars, hobbies, gaming
-- health: pharmacy, doctors, medical, gym
-- education: courses, books, training, Udemy, Coursera
-- travel: flights, hotels, Booking, Airbnb, Renfe, vacation
-- income: salary (Nómina), freelance, dividends, interest
-- investment: money to/from investment platforms (see INVESTMENT DETECTION above)
-- transfer: internal movements between own bank accounts (NOT investment platforms)
-- other: anything else
+EXPENSE (negative amounts - money going out):
+- housing: Rent, mortgage, utilities, electricity, water, gas, internet (Endesa, Naturgy, Vodafone)
+- groceries: Supermarkets (Mercadona, Carrefour, Lidl, Dia, Aldi)
+- restaurants: Eating out, delivery (Glovo, JustEat, UberEats), cafes, bars
+- transport: Gas, Uber, taxi, metro, bus, parking, Cabify, car maintenance
+- health: Pharmacy, doctors, dentist, medical, hospital
+- entertainment: Cinema, concerts, bars, hobbies, gaming, streaming content
+- shopping: Clothing, electronics, general retail (Amazon, Zara, H&M)
+- education: Courses, books, training, university, Udemy, Coursera
+- subscriptions: Netflix, Spotify, Amazon Prime, HBO, Disney+, gym memberships, recurring payments
+- travel: Flights, hotels, Booking, Airbnb, Renfe, vacation expenses
+- pets: Veterinary, pet food, pet accessories
+- gifts_given: Presents for others, celebrations
+- personal_services: Hairdresser, laundry, cleaning services
+- taxes: Government taxes, IRPF, IVA payments, municipal fees
+- family: Childcare, school, kids activities, family support
+- donations: Charity, NGOs, contributions
+- insurance: Car, life, home, health insurance premiums
+- other_expense: Anything else not fitting above
 
-HANDLE MESSY DATA:
-- Dates: DD/MM/YYYY, DD-MM-YY, "15 Dic", "Diciembre 2024", any format
-- Amounts: €50, 50.00€, -50, (50), 50-, 50,00, 1.234,56
-- Headers/footers/bank logos: Ignore non-transaction text
-- Multiple accounts in one file: Detect bank from context
-- Partial data: Extract what's available
+TRANSFER (money moving between own accounts):
+- own_transfer: Between own bank accounts (Santander to BBVA, between own accounts)
+- to_investment: To investment platforms (Revolut Savings, MyInvestor, Trade Republic, DEGIRO, eToro, Indexa, Finizens, crypto exchanges)
+
+DETECTION RULES:
+
+1. TRANSFER detection - Mark movement as "TRANSFER" if:
+   - Description contains: "Transferencia a", "Transferencia de", "Traspaso", "Bizum enviado", "Bizum recibido"
+   - Between known banks/neobanks: "a Revolut", "desde Santander", "N26", "Wise"
+   - Self-transfers: "a cuenta propia", "entre cuentas"
+   - Use "to_investment" for transfers to: Savings, MyInvestor, Trade Republic, DEGIRO, Indexa, crypto platforms
+   - Use "own_transfer" for transfers between regular bank accounts
+
+2. INCOME detection - Mark movement as "INCOME" if:
+   - Amount is positive
+   - Keywords: "Nómina", "Ingreso", "Abono", "Devolución", "Bizum recibido"
+
+3. EXPENSE detection - Mark movement as "EXPENSE" if:
+   - Amount is negative
+   - Any purchase, payment, withdrawal
 
 HASH_SOURCE FORMAT:
-Create a normalized string: "YYYYMMDD|amount|NORMALIZED_DESC"
-- Date in YYYYMMDD
-- Amount as absolute value with 2 decimals
-- Description: uppercase, no accents, only alphanumeric, first 30 chars
-Example: "20241215|87.43|SUPERMERCADO MERCADONA"
+Create: "YYYYMMDD|absoluteAmount|NORMALIZED_DESC"
+- NORMALIZED_DESC: uppercase, no accents, only alphanumeric, first 30 chars
 
 Example output:
 [
-  {"date":"2024-12-15","description":"Supermercado Mercadona","amount":-87.43,"type":"expense","category":"food","bank":"Santander","hash_source":"20241215|87.43|SUPERMERCADO MERCADONA"},
-  {"date":"2024-12-14","description":"Nómina Diciembre","amount":2850.00,"type":"income","category":"income","bank":"Santander","hash_source":"20241214|2850.00|NOMINA DICIEMBRE"},
-  {"date":"2024-12-13","description":"Transferencia a Revolut","amount":-500.00,"type":"transfer","category":"transfer","bank":"Santander","hash_source":"20241213|500.00|TRANSFERENCIA A REVOLUT"}
+  {"date":"2024-12-15","description":"Supermercado Mercadona","amount":-87.43,"movement":"EXPENSE","category":"groceries","bank":"Santander","hash_source":"20241215|87.43|SUPERMERCADO MERCADONA"},
+  {"date":"2024-12-14","description":"Nómina Diciembre","amount":2850.00,"movement":"INCOME","category":"salary","bank":"Santander","hash_source":"20241214|2850.00|NOMINA DICIEMBRE"},
+  {"date":"2024-12-13","description":"Transferencia a Revolut Savings","amount":-500.00,"movement":"TRANSFER","category":"to_investment","bank":"Santander","hash_source":"20241213|500.00|TRANSFERENCIA A REVOLUT SAVINGS"},
+  {"date":"2024-12-12","description":"Netflix","amount":-15.99,"movement":"EXPENSE","category":"subscriptions","bank":"Santander","hash_source":"20241212|15.99|NETFLIX"}
 ]`;
 
 // Simple hash function for duplicate detection
@@ -81,9 +101,33 @@ function generateHash(hashSource: string): string {
   for (let i = 0; i < hashSource.length; i++) {
     const char = hashSource.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   return Math.abs(hash).toString(16);
+}
+
+// Validate and normalize movement type
+function normalizeMovement(movement: string, amount: number): 'INCOME' | 'EXPENSE' | 'TRANSFER' {
+  const upper = (movement || '').toUpperCase();
+  if (upper === 'TRANSFER') return 'TRANSFER';
+  if (upper === 'INCOME' || amount > 0) return 'INCOME';
+  return 'EXPENSE';
+}
+
+// Validate category belongs to movement type
+function validateCategory(category: string, movement: 'INCOME' | 'EXPENSE' | 'TRANSFER'): string {
+  const slug = (category || '').toLowerCase();
+  
+  switch (movement) {
+    case 'INCOME':
+      return INCOME_CATEGORIES.includes(slug) ? slug : 'other_income';
+    case 'EXPENSE':
+      return EXPENSE_CATEGORIES.includes(slug) ? slug : 'other_expense';
+    case 'TRANSFER':
+      return TRANSFER_CATEGORIES.includes(slug) ? slug : 'own_transfer';
+    default:
+      return 'other_expense';
+  }
 }
 
 serve(async (req) => {
@@ -96,21 +140,43 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Fetch category IDs from database for mapping
+    const { data: categories } = await supabase
+      .from('categories')
+      .select('id, slug, movement_type')
+      .eq('domain', 'CASHFLOW');
+
+    const categoryMap = new Map<string, { id: string; movement_type: string }>();
+    categories?.forEach(cat => {
+      if (cat.slug) {
+        categoryMap.set(cat.slug, { id: cat.id, movement_type: cat.movement_type });
+      }
+    });
+
     // CONFIRM MODE: Save pre-validated transactions
     if (confirmTransactions && transactions && uploadId && userId) {
       console.log(`Confirming ${transactions.length} transactions for upload ${uploadId}`);
       
-      const transactionsToInsert = transactions.map((t: any) => ({
-        user_id: userId,
-        upload_id: uploadId,
-        date: t.date,
-        description: t.description || 'Sin descripción',
-        amount: t.amount,
-        type: t.type,
-        category: t.category || 'other',
-        bank: t.bank || null,
-        transaction_hash: t.transaction_hash,
-      }));
+      const transactionsToInsert = transactions.map((t: any) => {
+        const movement = normalizeMovement(t.movement || t.type, t.amount);
+        const categorySlug = validateCategory(t.category, movement);
+        const categoryInfo = categoryMap.get(categorySlug);
+        
+        return {
+          user_id: userId,
+          upload_id: uploadId,
+          date: t.date,
+          description: t.description || 'Sin descripción',
+          amount: t.amount,
+          type: movement.toLowerCase(), // Legacy field
+          movement: movement,
+          category: categorySlug, // Legacy field
+          category_id: categoryInfo?.id || null,
+          bank: t.bank || null,
+          transaction_hash: t.transaction_hash,
+          domain: 'CASHFLOW',
+        };
+      });
 
       const { error: insertError } = await supabase
         .from('transactions')
@@ -121,7 +187,6 @@ serve(async (req) => {
         throw new Error(`Failed to insert transactions: ${insertError.message}`);
       }
 
-      // Update upload status
       await supabase
         .from('uploads')
         .update({ 
@@ -151,7 +216,6 @@ serve(async (req) => {
 
     console.log(`Processing file for upload ${uploadId}, content length: ${fileContent.length}, previewOnly: ${!!previewOnly}`);
 
-    // Update upload status to processing
     await supabase
       .from('uploads')
       .update({ status: 'processing' })
@@ -168,7 +232,7 @@ serve(async (req) => {
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: FINANCIAL_ANALYSIS_PROMPT },
-          { role: 'user', content: `Analyze this financial data and extract ALL transactions. Pay attention to internal transfers between accounts:\n\n${fileContent}` }
+          { role: 'user', content: `Analyze this financial data and extract ALL transactions. Classify each with the correct movement type (INCOME/EXPENSE/TRANSFER) and category slug:\n\n${fileContent}` }
         ],
         temperature: 0.1,
       }),
@@ -212,11 +276,10 @@ serve(async (req) => {
       throw new Error('No content in AI response');
     }
 
-    // Parse the AI response - handle markdown code blocks
+    // Parse the AI response
     let parsedTransactions;
     try {
       let jsonString = rawContent.trim();
-      // Remove markdown code blocks if present
       if (jsonString.startsWith('```')) {
         jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
       }
@@ -232,7 +295,7 @@ serve(async (req) => {
 
     console.log(`Parsed ${parsedTransactions.length} transactions from AI`);
 
-    // Get existing transaction hashes for this user to detect duplicates
+    // Get existing transaction hashes for duplicate detection
     const { data: existingTransactions } = await supabase
       .from('transactions')
       .select('transaction_hash')
@@ -245,15 +308,13 @@ serve(async (req) => {
 
     console.log(`Found ${existingHashes.size} existing transaction hashes`);
 
-    // Process transactions and detect duplicates
+    // Process transactions
     const newTransactions: any[] = [];
-    const duplicateCount = { count: 0 };
-    const transferCount = { count: 0 };
-    const investmentCount = { count: 0 };
+    const stats = { duplicates: 0, transfers: 0, investments: 0 };
     const seenHashesInBatch = new Set<string>();
 
     for (const t of parsedTransactions) {
-      // Generate hash from AI-provided hash_source or create one
+      // Generate hash
       let hashSource = t.hash_source;
       if (!hashSource) {
         const normalizedDesc = (t.description || '')
@@ -269,28 +330,22 @@ serve(async (req) => {
       
       const hash = generateHash(hashSource);
 
-      // Check for duplicates (existing in DB or in current batch)
+      // Check duplicates
       if (existingHashes.has(hash) || seenHashesInBatch.has(hash)) {
-        duplicateCount.count++;
-        console.log(`Duplicate detected: ${t.description} - ${t.date}`);
+        stats.duplicates++;
         continue;
       }
 
       seenHashesInBatch.add(hash);
 
-      // Track investment movements
-      if (t.category === 'investment') {
-        investmentCount.count++;
-      }
+      // Normalize movement and validate category
+      const movement = normalizeMovement(t.movement || t.type, t.amount);
+      const categorySlug = validateCategory(t.category, movement);
+      const categoryInfo = categoryMap.get(categorySlug);
 
-      // Normalize type
-      let type = 'expense';
-      if (t.type === 'transfer') {
-        type = 'transfer';
-        transferCount.count++;
-      } else if (t.type === 'income' || t.amount > 0) {
-        type = 'income';
-      }
+      // Track stats
+      if (movement === 'TRANSFER') stats.transfers++;
+      if (categorySlug === 'to_investment' || categorySlug === 'investments_income') stats.investments++;
 
       newTransactions.push({
         user_id: userId,
@@ -298,20 +353,20 @@ serve(async (req) => {
         date: t.date,
         description: t.description || 'Sin descripción',
         amount: t.amount,
-        type,
-        category: t.category || 'other',
+        type: movement.toLowerCase(), // Legacy
+        movement: movement,
+        category: categorySlug, // Legacy
+        category_id: categoryInfo?.id || null,
         bank: t.bank || null,
-        original_text: null,
         transaction_hash: hash,
-        hash_source: hashSource,
+        domain: 'CASHFLOW',
       });
     }
 
-    console.log(`New transactions: ${newTransactions.length}, Duplicates: ${duplicateCount.count}, Transfers: ${transferCount.count}`);
+    console.log(`New: ${newTransactions.length}, Duplicates: ${stats.duplicates}, Transfers: ${stats.transfers}`);
 
-    // PREVIEW MODE: Return transactions without saving
+    // PREVIEW MODE
     if (previewOnly) {
-      // Update upload status to indicate preview ready
       await supabase
         .from('uploads')
         .update({ status: 'preview' })
@@ -324,9 +379,9 @@ serve(async (req) => {
           transactions: newTransactions,
           stats: {
             newTransactions: newTransactions.length,
-            duplicatesIgnored: duplicateCount.count,
-            transfersDetected: transferCount.count,
-            investmentsDetected: investmentCount.count,
+            duplicatesIgnored: stats.duplicates,
+            transfersDetected: stats.transfers,
+            investmentsDetected: stats.investments,
             totalParsed: parsedTransactions.length
           }
         }),
@@ -334,7 +389,7 @@ serve(async (req) => {
       );
     }
 
-    // DIRECT SAVE MODE (legacy): Insert transactions directly
+    // DIRECT SAVE MODE (legacy)
     if (newTransactions.length > 0) {
       const { error: insertError } = await supabase
         .from('transactions')
@@ -346,7 +401,6 @@ serve(async (req) => {
       }
     }
 
-    // Update upload status to completed
     await supabase
       .from('uploads')
       .update({ 
@@ -356,22 +410,15 @@ serve(async (req) => {
       })
       .eq('id', uploadId);
 
-    const message = `Procesadas ${newTransactions.length} transacciones nuevas` +
-      (duplicateCount.count > 0 ? `, ${duplicateCount.count} duplicados ignorados` : '') +
-      (transferCount.count > 0 ? `, ${transferCount.count} transferencias internas detectadas` : '') +
-      (investmentCount.count > 0 ? `, ${investmentCount.count} movimientos de inversión detectados` : '');
-
-    console.log(`Successfully processed upload ${uploadId}: ${message}`);
-
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message,
+        message: `Procesadas ${newTransactions.length} transacciones`,
         stats: {
           newTransactions: newTransactions.length,
-          duplicatesIgnored: duplicateCount.count,
-          transfersDetected: transferCount.count,
-          investmentsDetected: investmentCount.count,
+          duplicatesIgnored: stats.duplicates,
+          transfersDetected: stats.transfers,
+          investmentsDetected: stats.investments,
           totalParsed: parsedTransactions.length
         }
       }),
