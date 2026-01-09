@@ -225,12 +225,6 @@ export function MonthUploadSlot({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isProcessing && (
-                <Badge variant="secondary" className="bg-warning/10 text-warning">
-                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                  Procesando
-                </Badge>
-              )}
               <Badge 
                 variant={isEmpty ? "outline" : "secondary"}
                 className={cn(
