@@ -600,6 +600,7 @@ serve(async (req) => {
           { role: 'user', content: `Analyze this financial data and extract ALL transactions:\n\n${fileContent}` }
         ],
         temperature: 0.1,
+        max_tokens: 16000, // Ensure we get complete responses for large files
       }),
     });
 
@@ -618,6 +619,13 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Payment required. Please add funds to continue.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
       throw new Error(`AI API error: ${aiResponse.status}`);
     }
@@ -629,13 +637,26 @@ serve(async (req) => {
       throw new Error('No content in AI response');
     }
 
-    // 9. Parse AI response
+    // 9. Parse AI response with improved cleaning
     let transactions;
     try {
       let jsonString = rawContent.trim();
-      if (jsonString.startsWith('```')) {
-        jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+      
+      // Remove markdown code blocks more robustly
+      // Handle: ```json, ```JSON, ``` at start/end
+      jsonString = jsonString.replace(/^```(?:json|JSON)?\s*\n?/g, '');
+      jsonString = jsonString.replace(/\n?```\s*$/g, '');
+      jsonString = jsonString.trim();
+      
+      // If still starts with [ or {, parse directly
+      if (!jsonString.startsWith('[') && !jsonString.startsWith('{')) {
+        // Try to find JSON array in the response
+        const arrayMatch = jsonString.match(/\[[\s\S]*\]/);
+        if (arrayMatch) {
+          jsonString = arrayMatch[0];
+        }
       }
+      
       transactions = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('[process-import] Failed to parse AI response:', rawContent.substring(0, 500));
