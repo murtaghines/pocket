@@ -202,43 +202,75 @@ export function useMonthlyFileUpload() {
           }
         );
 
+        // Handle non-2xx responses (Supabase returns FunctionsHttpError with a Response in error.context)
         if (error) {
-          // Parse error - Supabase returns error info in different places depending on the response
-          const errorStr = error.message || String(error);
-          let parsedError: { error?: string; message?: string } = {};
-          
-          // Try to extract JSON from error message (format: "Edge function returned 409: Error, {...}")
-          const jsonMatch = errorStr.match(/\{[^}]+\}/);
-          if (jsonMatch) {
+          let payload: any = null;
+
+          // Preferred: parse JSON from the Response body
+          const ctx = (error as any)?.context;
+          if (ctx && typeof ctx?.clone === "function" && typeof ctx?.json === "function") {
             try {
-              parsedError = JSON.parse(jsonMatch[0]);
+              payload = await ctx.clone().json();
             } catch {
-              // Ignore parse errors
+              // ignore
             }
           }
-          
-          const isDuplicate = parsedError.error === 'duplicate_file' || 
-                              errorStr.includes('duplicate_file') ||
-                              errorStr.includes('ya fue importado');
-          
-          if (isDuplicate) {
-            const displayMessage = parsedError.message || "Este archivo ya fue importado anteriormente";
+
+          // Fallback: try to extract JSON from error string
+          if (!payload) {
+            const errorStr = (error as any)?.message || String(error);
+            const jsonMatch = errorStr.match(/\{[^}]+\}/);
+            if (jsonMatch) {
+              try {
+                payload = JSON.parse(jsonMatch[0]);
+              } catch {
+                // ignore
+              }
+            }
+          }
+
+          const code = payload?.error;
+          const message = payload?.message || "No se pudo procesar el archivo";
+
+          if (code === "duplicate_file") {
             setPendingFilesByMonth((prev) => ({
               ...prev,
               [monthKey]: (prev[monthKey] || []).map((f) =>
                 f.id === uploadFile.id
-                  ? { ...f, status: "error" as const, error: displayMessage }
+                  ? { ...f, status: "error" as const, error: message }
                   : f
               ),
             }));
+
             toast({
               title: "Archivo duplicado",
-              description: displayMessage,
+              description: message,
               variant: "destructive",
             });
-            continue; // Skip to next file instead of throwing
+
+            continue;
           }
-          throw error;
+
+          if (code === "period_closed") {
+            setPendingFilesByMonth((prev) => ({
+              ...prev,
+              [monthKey]: (prev[monthKey] || []).map((f) =>
+                f.id === uploadFile.id
+                  ? { ...f, status: "error" as const, error: message }
+                  : f
+              ),
+            }));
+
+            toast({
+              title: "Período cerrado",
+              description: message,
+              variant: "destructive",
+            });
+
+            continue;
+          }
+
+          throw new Error(message);
         }
 
         const stats = processData?.stats;
