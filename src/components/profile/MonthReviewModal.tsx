@@ -46,7 +46,8 @@ import {
   INCOME_CATEGORIES, 
   EXPENSE_CATEGORIES, 
   TRANSFER_CATEGORIES,
-  getCategoryLabel 
+  getCategoryLabel,
+  normalizeCategory
 } from "@/lib/categoryTranslations";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
@@ -190,12 +191,13 @@ export function MonthReviewModal({
     }
   };
 
-  // Get effective category for a transaction
+  // Get effective category for a transaction (normalized)
   const getEffectiveCategory = (tx: MonthTransaction): string => {
     if (edits[tx.id]?.category) {
       return edits[tx.id].category!;
     }
-    return tx.category || "other_expense";
+    // Normalize the category from DB to handle legacy values
+    return normalizeCategory(tx.category || "other_expense");
   };
 
   // Handle movement change
