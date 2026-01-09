@@ -587,6 +587,12 @@ serve(async (req) => {
     // 8. Call AI to analyze the file
     const prompt = domain === 'INVESTING' ? INVESTING_ANALYSIS_PROMPT : CASHFLOW_ANALYSIS_PROMPT;
     
+    // For very large files, use a more capable model
+    const isLargeFile = fileContent.length > 8000;
+    const modelToUse = isLargeFile ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash';
+    
+    console.log(`[process-import] Using model: ${modelToUse} for file size: ${fileContent.length}`);
+    
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -594,13 +600,13 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: modelToUse,
         messages: [
           { role: 'system', content: prompt },
           { role: 'user', content: `Analyze this financial data and extract ALL transactions:\n\n${fileContent}` }
         ],
         temperature: 0.1,
-        max_tokens: 16000, // Ensure we get complete responses for large files
+        max_tokens: 32000, // Increased for larger responses
       }),
     });
 
