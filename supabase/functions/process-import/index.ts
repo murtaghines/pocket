@@ -669,10 +669,10 @@ serve(async (req) => {
       existingTxs?.filter(t => t.fingerprint).map(t => t.fingerprint) || []
     );
     
-    // Natural key = date|amount|description_normalizada (para detectar duplicados con fingerprints diferentes)
+    // Natural key = date|amount(2 decimals)|description_normalizada (para detectar duplicados con fingerprints diferentes)
     const existingNaturalKeys = new Set(
       existingTxs?.map(t => 
-        `${t.date}|${t.amount}|${(t.description_norm || '').toLowerCase()}`
+        `${t.date}|${parseFloat(t.amount).toFixed(2)}|${(t.description_norm || '').toLowerCase()}`
       ) || []
     );
     
@@ -758,7 +758,7 @@ serve(async (req) => {
       // Check for duplicates via natural key (date|amount|description_norm)
       // This catches duplicates from old imports with different fingerprint algorithms
       const normalizedDesc = normalizeDescription(descriptionRaw);
-      const naturalKey = `${postedDate}|${amountSigned}|${normalizedDesc.toLowerCase()}`;
+      const naturalKey = `${postedDate}|${amountSigned.toFixed(2)}|${normalizedDesc.toLowerCase()}`;
       
       if (existingNaturalKeys.has(naturalKey) || seenNaturalKeys.has(naturalKey)) {
         stats.duplicatesIgnored++;
