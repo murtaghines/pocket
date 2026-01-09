@@ -159,17 +159,26 @@ export function useMonthlyInvestmentUpload() {
           console.error("Storage upload error:", uploadError);
         }
 
-        const { data: uploadRecord, error: insertError } = await supabase
-          .from("uploads")
+        // Generate file hash for imports table
+        const encoder = new TextEncoder();
+        const hashData = encoder.encode(fileContent);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', hashData);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        // Create import record (unified system)
+        const { data: importRecord, error: insertError } = await supabase
+          .from("imports")
           .insert({
             user_id: user.id,
             file_name: uploadFile.name,
-            file_path: filePath,
-            file_type: uploadFile.file.type || "unknown",
+            file_storage_url: filePath,
+            file_mime: uploadFile.file.type || "application/octet-stream",
             file_size: uploadFile.size,
-            status: "pending",
-            target_month: targetMonthStr,
-            domain: "INVESTING" as const,
+            file_hash_sha256: fileHash,
+            status: "UPLOADED",
+            domain: "INVESTING",
+            source_type: "BROKER",
           })
           .select()
           .single();
@@ -181,7 +190,7 @@ export function useMonthlyInvestmentUpload() {
           {
             body: {
               fileContent,
-              uploadId: uploadRecord.id,
+              importId: importRecord.id,
               userId: user.id,
             },
           }
@@ -211,7 +220,7 @@ export function useMonthlyInvestmentUpload() {
         });
 
         queryClient.invalidateQueries({ queryKey: ["investments"] });
-        queryClient.invalidateQueries({ queryKey: ["uploads"] });
+        queryClient.invalidateQueries({ queryKey: ["imports"] });
 
         setTimeout(() => {
           setPendingFilesByMonth((prev) => ({

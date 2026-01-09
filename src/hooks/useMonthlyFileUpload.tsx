@@ -65,7 +65,6 @@ export function useMonthlyFileUpload() {
     if (!user) return;
 
     const targetMonthStr = `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`;
-    let uploadDbId: string | undefined;
 
     // Update status to processing
     setPendingFilesByMonth((prev) => ({
@@ -99,25 +98,7 @@ export function useMonthlyFileUpload() {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-      // Also create in uploads table for backwards compatibility
-      const { data: uploadRecord, error: insertError } = await supabase
-        .from("uploads")
-        .insert({
-          user_id: user.id,
-          file_name: uploadFile.name,
-          file_path: filePath,
-          file_type: uploadFile.file.type || "unknown",
-          file_size: uploadFile.size,
-          status: "pending",
-          target_month: targetMonthStr,
-          domain: "CASHFLOW" as const,
-        })
-        .select('id')
-        .single();
-      
-      uploadDbId = uploadRecord?.id;
-
-      // Call the process-import edge function
+      // Call the process-import edge function (uses imports table directly)
       const { data: processData, error } = await supabase.functions.invoke(
         "process-import",
         {
@@ -165,17 +146,6 @@ export function useMonthlyFileUpload() {
         const message = payload?.message || "No se pudo procesar el archivo";
 
         if (code === "duplicate_file" || code === "period_closed") {
-          // Update uploads table status to error
-          if (uploadDbId) {
-            await supabase
-              .from("uploads")
-              .update({
-                status: "failed",
-                error_message: message,
-              })
-              .eq("id", uploadDbId);
-          }
-
           setPendingFilesByMonth((prev) => ({
             ...prev,
             [monthKey]: (prev[monthKey] || []).map((f) =>
@@ -198,18 +168,6 @@ export function useMonthlyFileUpload() {
       }
 
       const stats = processData?.stats;
-      
-      // Update uploads table status to completed
-      if (uploadDbId) {
-        await supabase
-          .from("uploads")
-          .update({
-            status: "completed",
-            transactions_count: stats?.newTransactions || 0,
-            processed_at: new Date().toISOString(),
-          })
-          .eq("id", uploadDbId);
-      }
       
       // Update to completed
       setPendingFilesByMonth((prev) => ({
@@ -239,7 +197,6 @@ export function useMonthlyFileUpload() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["periods"] });
-      queryClient.invalidateQueries({ queryKey: ["uploads"] });
       
       // Run integrity check
       try {
@@ -269,17 +226,6 @@ export function useMonthlyFileUpload() {
 
     } catch (error: any) {
       console.error("Error processing file:", error);
-      
-      // Update uploads table status to error
-      if (uploadDbId) {
-        await supabase
-          .from("uploads")
-          .update({
-            status: "failed",
-            error_message: error.message || "Error desconocido",
-          })
-          .eq("id", uploadDbId);
-      }
       
       setPendingFilesByMonth((prev) => ({
         ...prev,

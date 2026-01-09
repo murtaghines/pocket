@@ -117,25 +117,28 @@ serve(async (req) => {
   }
 
   try {
-    const { fileContent, uploadId, userId } = await req.json();
+    const { fileContent, importId, uploadId, userId } = await req.json();
+    
+    // Support both importId (new) and uploadId (legacy) for backwards compatibility
+    const recordId = importId || uploadId;
 
-    if (!fileContent || !uploadId || !userId) {
-      console.error('Missing required fields:', { hasContent: !!fileContent, uploadId, userId });
+    if (!fileContent || !recordId || !userId) {
+      console.error('Missing required fields:', { hasContent: !!fileContent, recordId, userId });
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: fileContent, uploadId, userId' }),
+        JSON.stringify({ error: 'Missing required fields: fileContent, importId/uploadId, userId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Processing investment file for upload ${uploadId}, content length: ${fileContent.length}`);
+    console.log(`Processing investment file for import ${recordId}, content length: ${fileContent.length}`);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Update upload status to processing
+    // Update import status to PARSED
     await supabase
-      .from('uploads')
-      .update({ status: 'processing' })
-      .eq('id', uploadId);
+      .from('imports')
+      .update({ status: 'PARSED' })
+      .eq('id', recordId);
 
     // Call Lovable AI to analyze the investment data
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -160,9 +163,9 @@ serve(async (req) => {
       
       if (aiResponse.status === 429) {
         await supabase
-          .from('uploads')
-          .update({ status: 'failed', error_message: 'Rate limit exceeded. Please try again later.' })
-          .eq('id', uploadId);
+          .from('imports')
+          .update({ status: 'FAILED', error_message: 'Rate limit exceeded. Please try again later.' })
+          .eq('id', recordId);
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -171,9 +174,9 @@ serve(async (req) => {
 
       if (aiResponse.status === 402) {
         await supabase
-          .from('uploads')
-          .update({ status: 'failed', error_message: 'AI credits exhausted. Please add credits.' })
-          .eq('id', uploadId);
+          .from('imports')
+          .update({ status: 'FAILED', error_message: 'AI credits exhausted. Please add credits.' })
+          .eq('id', recordId);
         return new Response(
           JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -264,7 +267,7 @@ serve(async (req) => {
 
       newInvestments.push({
         user_id: userId,
-        upload_id: uploadId,
+        upload_id: recordId, // Keep upload_id for investments table (legacy field name)
         date: inv.date,
         description: inv.description || 'Sin descripción',
         amount: Math.abs(inv.amount),
@@ -290,22 +293,21 @@ serve(async (req) => {
       }
     }
 
-    // Update upload status to completed
+    // Update import status to NORMALIZED
     await supabase
-      .from('uploads')
+      .from('imports')
       .update({ 
-        status: 'completed', 
+        status: 'NORMALIZED', 
         transactions_count: newInvestments.length,
-        processed_at: new Date().toISOString()
       })
-      .eq('id', uploadId);
+      .eq('id', recordId);
 
     const message = `Procesadas ${newInvestments.length} inversiones` +
       (depositCount.count > 0 ? ` (${depositCount.count} depósitos` : '') +
       (withdrawalCount.count > 0 ? `, ${withdrawalCount.count} retiros)` : depositCount.count > 0 ? ')' : '') +
       (duplicateCount.count > 0 ? `, ${duplicateCount.count} duplicados ignorados` : '');
 
-    console.log(`Successfully processed investment upload ${uploadId}: ${message}`);
+    console.log(`Successfully processed investment import ${recordId}: ${message}`);
 
     return new Response(
       JSON.stringify({ 
