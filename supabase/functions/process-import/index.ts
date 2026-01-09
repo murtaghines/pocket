@@ -29,14 +29,39 @@ const TX_TYPE_TO_MOVEMENT: Record<string, MovementType> = {
   'FEE': 'EXPENSE',
   'TRANSFER_INTERNAL': 'TRANSFER',
   'SAVINGS_MOVE': 'TRANSFER',
-  'OTHER': 'EXPENSE', // Default to expense for unknown
+  'OTHER': 'EXPENSE',
 };
 
 // ========== VALID VALUES ==========
 const VALID_TX_TYPES = ['INCOME', 'EXPENSE', 'TRANSFER_INTERNAL', 'SAVINGS_MOVE', 'INTEREST', 'FEE', 'REFUND', 'OTHER'];
 const VALID_PAYMENT_CHANNELS = ['CARD', 'TRANSFER', 'BIZUM', 'QR', 'CASH', 'DIRECT_DEBIT', 'OTHER'];
 
-// ========== PROMPTS ==========
+// ========== CHUNKING CONFIG ==========
+const CHUNK_SIZE_THRESHOLD = 6000; // Characters threshold for chunking
+const MAX_CHUNK_SIZE = 4000; // Max characters per chunk
+
+// ========== SIMPLIFIED EXTRACTION PROMPT (for large files) ==========
+const SIMPLE_EXTRACTION_PROMPT = `You are a financial data extraction expert. Extract transactions from this bank statement data.
+
+CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
+
+For each transaction, extract ONLY these essential fields:
+- posted_date: ISO format (YYYY-MM-DD)
+- description_raw: Original description as-is
+- amount_signed: Numeric value (positive for deposits/income, negative for withdrawals/expenses)
+- running_balance: Balance after transaction if shown, otherwise null
+- currency: Currency code if visible (EUR, USD, etc.)
+- bank: Bank name if identifiable
+
+Example output:
+[
+  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA MERCADONA","amount_signed":-87.43,"running_balance":1234.56,"currency":"EUR","bank":"Santander"},
+  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE","amount_signed":2850.00,"running_balance":3084.56,"currency":"EUR","bank":"Santander"}
+]
+
+Extract ALL transactions visible in the data. Do not skip any.`;
+
+// ========== FULL PROMPT (for smaller files) ==========
 const CASHFLOW_ANALYSIS_PROMPT = `You are a financial data extraction expert specialized in bank statements from any country. Your task is to analyze messy, unstructured financial data and extract clean transaction data.
 
 CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
@@ -185,16 +210,15 @@ function normalizeDescription(desc: string): string {
   return (desc || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ')
-    .replace(/ref\.?\s*\d+/gi, '') // Remove reference numbers
-    .replace(/\*{4}\d{4}/g, '') // Remove card masks ****1234
-    .replace(/\d{10,}/g, '') // Remove long numbers (transaction IDs)
+    .replace(/ref\.?\s*\d+/gi, '')
+    .replace(/\*{4}\d{4}/g, '')
+    .replace(/\d{10,}/g, '')
     .trim()
     .substring(0, 200);
 }
 
-// Enhanced fingerprint calculation with priority
 async function calculateFingerprint(
   userId: string,
   accountId: string | null,
@@ -205,13 +229,11 @@ async function calculateFingerprint(
   descriptionRaw: string,
   runningBalance: number | null
 ): Promise<string> {
-  // Priority 1: If source_transaction_id exists, use it (most unique)
   if (sourceTransactionId) {
     const input = `${userId}|${accountId || 'no-account'}|${sourceTransactionId}`;
     return await sha256(input);
   }
   
-  // Priority 2: Composite fingerprint
   const normalizedDesc = normalizeDescription(descriptionRaw);
   const balancePart = runningBalance !== null ? `|${runningBalance.toFixed(2)}` : '';
   const input = `${userId}|${accountId || 'no-account'}|${postedDate}|${amountSigned.toFixed(2)}|${currency}|${normalizedDesc}${balancePart}`;
@@ -225,9 +247,7 @@ function extractMonthKey(dateStr: string): string {
   return `${year}-${month}`;
 }
 
-// Normalize targetMonth to YYYY-MM format (handles both "2025-12" and "2025-12-01")
 function normalizeTargetMonth(targetMonth: string): string {
-  // If it already has day part, extract just year-month
   if (targetMonth.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return targetMonth.substring(0, 7);
   }
@@ -240,7 +260,6 @@ function validatePaymentChannel(channel: string | null): string | null {
   return VALID_PAYMENT_CHANNELS.includes(upper) ? upper : 'OTHER';
 }
 
-// Validate and normalize movement
 function validateMovement(movement: string | null): MovementType {
   if (!movement) return 'EXPENSE';
   const upper = movement.toUpperCase();
@@ -250,10 +269,8 @@ function validateMovement(movement: string | null): MovementType {
   return 'EXPENSE';
 }
 
-// Validate category slug belongs to movement type
 function validateCategorySlug(slug: string | null, movement: MovementType): string {
   if (!slug) {
-    // Return default for movement
     switch (movement) {
       case 'INCOME': return 'other_income';
       case 'EXPENSE': return 'other_expense';
@@ -263,7 +280,6 @@ function validateCategorySlug(slug: string | null, movement: MovementType): stri
   
   const normalizedSlug = slug.toLowerCase().replace(/\s+/g, '_');
   
-  // Check if slug is valid for the movement
   switch (movement) {
     case 'INCOME':
       return INCOME_SLUGS.includes(normalizedSlug) ? normalizedSlug : 'other_income';
@@ -274,7 +290,6 @@ function validateCategorySlug(slug: string | null, movement: MovementType): stri
   }
 }
 
-// Derive legacy type from movement
 function getLegacyType(movement: MovementType): string {
   switch (movement) {
     case 'INCOME': return 'income';
@@ -283,7 +298,6 @@ function getLegacyType(movement: MovementType): string {
   }
 }
 
-// Get legacy tx_type from movement and category
 function getLegacyTxType(movement: MovementType, categorySlug: string): string {
   if (movement === 'TRANSFER') {
     return categorySlug === 'to_investment' ? 'SAVINGS_MOVE' : 'TRANSFER_INTERNAL';
@@ -295,7 +309,6 @@ function getLegacyTxType(movement: MovementType, categorySlug: string): string {
   return 'EXPENSE';
 }
 
-// Detect if transaction is internal transfer based on patterns
 function detectInternalTransfer(
   movement: MovementType,
   descriptionRaw: string,
@@ -303,14 +316,12 @@ function detectInternalTransfer(
   counterpartyRaw: string | null,
   userAccounts: Array<{ name: string; institution: string | null; account_role: string }>
 ): { isTransfer: boolean; categorySlug: string } {
-  // Already marked as transfer
   if (movement === 'TRANSFER') {
     return { isTransfer: true, categorySlug: 'own_transfer' };
   }
   
   const textToCheck = `${descriptionRaw} ${descriptionClean} ${counterpartyRaw || ''}`.toLowerCase();
   
-  // Patterns for internal transfers
   const ownTransferPatterns = [
     /traspaso entre cuentas/i,
     /transferencia a cuenta propia/i,
@@ -326,7 +337,6 @@ function detectInternalTransfer(
     /own account/i,
   ];
   
-  // Patterns for investment transfers
   const investmentPatterns = [
     /instant access savings/i,
     /broker/i,
@@ -351,7 +361,6 @@ function detectInternalTransfer(
     }
   }
   
-  // Check if counterparty matches user's own accounts
   if (counterpartyRaw) {
     const normalizedCounterparty = counterpartyRaw.toLowerCase();
     for (const account of userAccounts) {
@@ -368,7 +377,6 @@ function detectInternalTransfer(
   return { isTransfer: false, categorySlug: '' };
 }
 
-// Apply categorization rules
 async function applyCategoryRules(
   supabase: any,
   userId: string,
@@ -429,7 +437,6 @@ async function applyCategoryRules(
   return null;
 }
 
-// Get category ID from slug
 async function getCategoryIdBySlug(
   supabase: any,
   slug: string,
@@ -444,6 +451,190 @@ async function getCategoryIdBySlug(
   
   if (error || !data) return null;
   return data.id;
+}
+
+// ========== ROBUST JSON PARSER ==========
+function parseJsonFromAIResponse(rawContent: string): { transactions: any[] | null; error: string | null } {
+  let jsonString = rawContent.trim();
+  
+  // Remove markdown code blocks more robustly
+  jsonString = jsonString.replace(/^```(?:json|JSON)?\s*\n?/g, '');
+  jsonString = jsonString.replace(/\n?```\s*$/g, '');
+  jsonString = jsonString.trim();
+  
+  // Try to find JSON array if not starting with [
+  if (!jsonString.startsWith('[') && !jsonString.startsWith('{')) {
+    const arrayMatch = jsonString.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      jsonString = arrayMatch[0];
+    } else {
+      return { transactions: null, error: 'No JSON array found in response' };
+    }
+  }
+  
+  // If it's incomplete (truncated), try to fix it
+  if (jsonString.startsWith('[') && !jsonString.endsWith(']')) {
+    console.log('[process-import] Detected truncated JSON, attempting to fix...');
+    
+    // Count opening braces to find where last complete object ends
+    let depth = 0;
+    let lastValidIndex = -1;
+    
+    for (let i = 0; i < jsonString.length; i++) {
+      const char = jsonString[i];
+      if (char === '[' || char === '{') {
+        depth++;
+      } else if (char === ']' || char === '}') {
+        depth--;
+        if (depth === 1 && char === '}') {
+          // We just closed an object at depth 1 (inside the array)
+          lastValidIndex = i;
+        }
+      }
+    }
+    
+    if (lastValidIndex > 0) {
+      // Check if there's a comma after the last valid object
+      let afterLast = jsonString.substring(lastValidIndex + 1).trim();
+      if (afterLast.startsWith(',')) {
+        // Remove trailing comma and close array
+        jsonString = jsonString.substring(0, lastValidIndex + 1) + ']';
+      } else {
+        // Just close array
+        jsonString = jsonString.substring(0, lastValidIndex + 1) + ']';
+      }
+      console.log('[process-import] Fixed truncated JSON, length now:', jsonString.length);
+    }
+  }
+  
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!Array.isArray(parsed)) {
+      return { transactions: null, error: 'Parsed result is not an array' };
+    }
+    return { transactions: parsed, error: null };
+  } catch (parseError) {
+    const errorMsg = parseError instanceof Error ? parseError.message : 'Unknown parse error';
+    return { transactions: null, error: errorMsg };
+  }
+}
+
+// ========== CHUNKING LOGIC ==========
+function splitIntoChunks(content: string): string[] {
+  const chunks: string[] = [];
+  
+  // First try to split by page markers (--- Page N ---)
+  const pagePattern = /---\s*Page\s*\d+\s*---/gi;
+  const pages = content.split(pagePattern).filter(p => p.trim().length > 0);
+  
+  if (pages.length > 1) {
+    // Combine pages into chunks that don't exceed MAX_CHUNK_SIZE
+    let currentChunk = '';
+    for (const page of pages) {
+      if (currentChunk.length + page.length > MAX_CHUNK_SIZE && currentChunk.length > 0) {
+        chunks.push(currentChunk.trim());
+        currentChunk = page;
+      } else {
+        currentChunk += '\n' + page;
+      }
+    }
+    if (currentChunk.trim().length > 0) {
+      chunks.push(currentChunk.trim());
+    }
+  } else {
+    // Split by character count
+    let remaining = content;
+    while (remaining.length > MAX_CHUNK_SIZE) {
+      // Try to find a good break point (newline)
+      let breakPoint = remaining.lastIndexOf('\n', MAX_CHUNK_SIZE);
+      if (breakPoint < MAX_CHUNK_SIZE / 2) {
+        breakPoint = MAX_CHUNK_SIZE;
+      }
+      chunks.push(remaining.substring(0, breakPoint).trim());
+      remaining = remaining.substring(breakPoint).trim();
+    }
+    if (remaining.length > 0) {
+      chunks.push(remaining);
+    }
+  }
+  
+  console.log(`[process-import] Split content into ${chunks.length} chunks`);
+  return chunks;
+}
+
+// ========== AI CALL WITH RETRY ==========
+async function callAIWithRetry(
+  content: string,
+  prompt: string,
+  isLargeFile: boolean,
+  retryCount = 0
+): Promise<{ transactions: any[] | null; error: string | null }> {
+  const maxRetries = 2;
+  
+  // Use simpler prompt for large files to reduce output size
+  const effectivePrompt = isLargeFile ? SIMPLE_EXTRACTION_PROMPT : prompt;
+  
+  // Model selection: use pro for large files or retries
+  const model = (isLargeFile || retryCount > 0) ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash';
+  
+  console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, contentLength=${content.length}, isLargeFile=${isLargeFile}`);
+  
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: effectivePrompt },
+        { role: 'user', content: `Extract ALL transactions from this financial data:\n\n${content}` }
+      ],
+      temperature: 0.1,
+      max_tokens: 32000,
+    }),
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[process-import] AI API error: ${response.status}`, errorText);
+    
+    if (response.status === 429 || response.status === 402) {
+      return { transactions: null, error: `API error: ${response.status}` };
+    }
+    
+    // Retry on other errors
+    if (retryCount < maxRetries) {
+      console.log(`[process-import] Retrying AI call...`);
+      await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
+      return callAIWithRetry(content, prompt, isLargeFile, retryCount + 1);
+    }
+    
+    return { transactions: null, error: `AI API error after retries: ${response.status}` };
+  }
+  
+  const aiData = await response.json();
+  const rawContent = aiData.choices?.[0]?.message?.content;
+  
+  if (!rawContent) {
+    return { transactions: null, error: 'No content in AI response' };
+  }
+  
+  console.log(`[process-import] AI response length: ${rawContent.length}`);
+  
+  const result = parseJsonFromAIResponse(rawContent);
+  
+  if (result.error && retryCount < maxRetries) {
+    console.log(`[process-import] Parse failed (${result.error}), retrying with pro model...`);
+    console.log(`[process-import] Raw content preview: START>>>>${rawContent.substring(0, 300)}<<<<END`);
+    console.log(`[process-import] Raw content end: START>>>>${rawContent.substring(Math.max(0, rawContent.length - 300))}<<<<END`);
+    
+    await new Promise(r => setTimeout(r, 1000));
+    return callAIWithRetry(content, prompt, true, retryCount + 1); // Force large file mode on retry
+  }
+  
+  return result;
 }
 
 // ========== MAIN HANDLER ==========
@@ -471,7 +662,6 @@ serve(async (req) => {
       confirmOutOfMonth = false
     } = await req.json();
 
-    // Validate required fields
     if (!fileContent || !userId || !domain || !targetMonth) {
       console.error('Missing required fields');
       return new Response(
@@ -480,19 +670,13 @@ serve(async (req) => {
       );
     }
 
-    // Normalize targetMonth to YYYY-MM format (handles both "2025-12" and "2025-12-01")
     const normalizedTargetMonth = normalizeTargetMonth(targetMonth);
 
-    console.log(`[process-import] Starting: domain=${domain}, targetMonth=${normalizedTargetMonth}, fileSize=${fileContent.length}`);
+    console.log(`[process-import] Starting: domain=${domain}, targetMonth=${normalizedTargetMonth}, contentLength=${fileContent.length}`);
 
-    // 1. Calculate file hash for deduplication
     const calculatedFileHash = fileHash || await sha256(fileContent);
     
-    // 2. Check if file already imported
-    // Note: We allow duplicate file uploads - deduplication happens at transaction level via fingerprint
-    // Each upload creates a new import record, but duplicate transactions are skipped
-
-    // 3. Get or create period
+    // Get or create period
     const { data: period, error: periodError } = await supabase
       .from('periods')
       .select('id, status')
@@ -533,7 +717,7 @@ serve(async (req) => {
       periodId = newPeriod.id;
     }
 
-    // 4. Get user's accounts for internal transfer detection
+    // Get user's accounts for internal transfer detection
     const { data: userAccounts } = await supabase
       .from('accounts')
       .select('id, name, institution, account_role')
@@ -541,7 +725,7 @@ serve(async (req) => {
     
     const accountsForDetection = userAccounts || [];
 
-    // 5. Pre-fetch category IDs for all slugs
+    // Pre-fetch category IDs for all slugs
     const { data: allCategories } = await supabase
       .from('categories')
       .select('id, slug')
@@ -554,7 +738,7 @@ serve(async (req) => {
       }
     }
 
-    // 6. Create import record
+    // Create import record
     const { data: importRecord, error: importError } = await supabase
       .from('imports')
       .insert({
@@ -581,108 +765,79 @@ serve(async (req) => {
     const importId = importRecord.id;
     console.log(`[process-import] Created import record: ${importId}`);
 
-    // 7. Update status to PARSED
     await supabase.from('imports').update({ status: 'PARSED' }).eq('id', importId);
 
-    // 8. Call AI to analyze the file
+    // ========== DETERMINE PROCESSING STRATEGY ==========
+    const isLargeFile = fileContent.length > CHUNK_SIZE_THRESHOLD;
     const prompt = domain === 'INVESTING' ? INVESTING_ANALYSIS_PROMPT : CASHFLOW_ANALYSIS_PROMPT;
     
-    // For very large files, use a more capable model
-    const isLargeFile = fileContent.length > 8000;
-    const modelToUse = isLargeFile ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash';
+    let allTransactions: any[] = [];
     
-    console.log(`[process-import] Using model: ${modelToUse} for file size: ${fileContent.length}`);
-    
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: modelToUse,
-        messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: `Analyze this financial data and extract ALL transactions:\n\n${fileContent}` }
-        ],
-        temperature: 0.1,
-        max_tokens: 32000, // Increased for larger responses
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('[process-import] AI API error:', aiResponse.status, errorText);
+    if (isLargeFile) {
+      // CHUNKED PROCESSING for large files
+      console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
       
-      await supabase.from('imports').update({ 
-        status: 'FAILED', 
-        error_message: `AI error: ${aiResponse.status}` 
-      }).eq('id', importId);
-
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      const chunks = splitIntoChunks(fileContent);
       
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Payment required. Please add funds to continue.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      throw new Error(`AI API error: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content;
-    
-    if (!rawContent) {
-      throw new Error('No content in AI response');
-    }
-
-    // 9. Parse AI response with improved cleaning
-    let transactions;
-    try {
-      let jsonString = rawContent.trim();
-      
-      // Remove markdown code blocks more robustly
-      // Handle: ```json, ```JSON, ``` at start/end
-      jsonString = jsonString.replace(/^```(?:json|JSON)?\s*\n?/g, '');
-      jsonString = jsonString.replace(/\n?```\s*$/g, '');
-      jsonString = jsonString.trim();
-      
-      // If still starts with [ or {, parse directly
-      if (!jsonString.startsWith('[') && !jsonString.startsWith('{')) {
-        // Try to find JSON array in the response
-        const arrayMatch = jsonString.match(/\[[\s\S]*\]/);
-        if (arrayMatch) {
-          jsonString = arrayMatch[0];
+      for (let i = 0; i < chunks.length; i++) {
+        console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+        
+        const result = await callAIWithRetry(chunks[i], prompt, true);
+        
+        if (result.error) {
+          console.error(`[process-import] Chunk ${i + 1} failed: ${result.error}`);
+          // Continue with other chunks
+          continue;
+        }
+        
+        if (result.transactions && result.transactions.length > 0) {
+          allTransactions = allTransactions.concat(result.transactions);
+          console.log(`[process-import] Chunk ${i + 1} extracted ${result.transactions.length} transactions (total: ${allTransactions.length})`);
         }
       }
       
-      transactions = JSON.parse(jsonString);
-    } catch (parseError) {
-      console.error('[process-import] Failed to parse AI response:', rawContent.substring(0, 500));
-      await supabase.from('imports').update({ 
-        status: 'FAILED', 
-        error_message: 'Failed to parse AI response' 
-      }).eq('id', importId);
-      throw new Error('Failed to parse AI response as JSON');
+      if (allTransactions.length === 0) {
+        await supabase.from('imports').update({ 
+          status: 'FAILED', 
+          error_message: 'No se pudieron extraer transacciones del archivo. Intente subir en formato CSV.' 
+        }).eq('id', importId);
+        
+        return new Response(
+          JSON.stringify({ 
+            error: 'parse_failed',
+            message: 'No se pudieron extraer transacciones. El archivo puede ser muy complejo. Intente exportar como CSV desde su banco.'
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      // SINGLE CALL for smaller files
+      console.log(`[process-import] Small file (${fileContent.length} chars), using single AI call`);
+      
+      const result = await callAIWithRetry(fileContent, prompt, false);
+      
+      if (result.error) {
+        console.error(`[process-import] AI processing failed: ${result.error}`);
+        await supabase.from('imports').update({ 
+          status: 'FAILED', 
+          error_message: `Error de procesamiento: ${result.error}` 
+        }).eq('id', importId);
+        
+        return new Response(
+          JSON.stringify({ error: 'Failed to parse AI response as JSON' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      allTransactions = result.transactions || [];
     }
 
-    if (!Array.isArray(transactions)) {
-      throw new Error('AI response is not an array');
-    }
+    console.log(`[process-import] Total transactions parsed: ${allTransactions.length}`);
 
-    console.log(`[process-import] Parsed ${transactions.length} transactions from AI`);
-
-    // 10. Check for date mismatches
+    // Check for date mismatches
     const dateWarnings: Array<{ date: string; description: string; expected: string; found: string }> = [];
     
-    for (const t of transactions) {
+    for (const t of allTransactions) {
       const txDate = t.posted_date || t.date;
       if (txDate) {
         const txMonthKey = extractMonthKey(txDate);
@@ -697,7 +852,7 @@ serve(async (req) => {
       }
     }
 
-    // 11. Get existing transactions for TARGET MONTH ONLY to detect duplicates
+    // Get existing transactions for TARGET MONTH ONLY to detect duplicates
     const [targetYear, targetMonthNum] = normalizedTargetMonth.split('-').map(Number);
     const monthStart = `${normalizedTargetMonth}-01`;
     const nextMonth = targetMonthNum === 12 ? 1 : targetMonthNum + 1;
@@ -718,7 +873,6 @@ serve(async (req) => {
       existingTxs?.filter(t => t.fingerprint).map(t => t.fingerprint) || []
     );
     
-    // Natural key = date|amount(2 decimals)|description_normalizada (para detectar duplicados con fingerprints diferentes)
     const existingNaturalKeys = new Set(
       existingTxs?.map(t => 
         `${t.date}|${parseFloat(t.amount).toFixed(2)}|${(t.description_norm || '').toLowerCase()}`
@@ -727,9 +881,9 @@ serve(async (req) => {
     
     console.log(`[process-import] Found ${existingFingerprints.size} existing fingerprints, ${existingNaturalKeys.size} natural keys`);
 
-    // 12. Process and create transactions
+    // Process and create transactions
     const stats = {
-      totalParsed: transactions.length,
+      totalParsed: allTransactions.length,
       newTransactions: 0,
       duplicatesIgnored: 0,
       outsideMonthSkipped: 0,
@@ -743,10 +897,9 @@ serve(async (req) => {
     const seenFingerprints = new Set<string>();
     const seenNaturalKeys = new Set<string>();
 
-    for (let i = 0; i < transactions.length; i++) {
-      const t = transactions[i];
+    for (let i = 0; i < allTransactions.length; i++) {
+      const t = allTransactions[i];
       
-      // Normalize field names
       const postedDate = t.posted_date || t.date;
       const valueDate = t.value_date || null;
       const descriptionRaw = t.description_raw || t.description || '';
@@ -763,7 +916,6 @@ serve(async (req) => {
         continue;
       }
 
-      // Filter out transactions from other months - STRICT: only process target month
       const txMonthKey = extractMonthKey(postedDate);
       if (txMonthKey !== normalizedTargetMonth) {
         console.log(`[process-import] Filtering out transaction from ${txMonthKey} (target: ${normalizedTargetMonth}): ${descriptionClean.substring(0, 40)}`);
@@ -771,7 +923,6 @@ serve(async (req) => {
         continue;
       }
 
-      // Calculate fingerprint
       const fingerprint = await calculateFingerprint(
         userId,
         accountId,
@@ -783,10 +934,8 @@ serve(async (req) => {
         runningBalance
       );
 
-      // Calculate row hash for import_rows
       const rowHash = await sha256(JSON.stringify(t));
 
-      // Save to import_rows (staging)
       try {
         await supabase.from('import_rows').upsert({
           import_id: importId,
@@ -805,15 +954,12 @@ serve(async (req) => {
         console.log(`[process-import] Row already exists, skipping: ${rowHash.substring(0, 8)}`);
       }
 
-      // Check for duplicates via fingerprint
       if (existingFingerprints.has(fingerprint) || seenFingerprints.has(fingerprint)) {
         stats.duplicatesIgnored++;
         console.log(`[process-import] Duplicate by fingerprint: ${descriptionClean.substring(0, 50)}`);
         continue;
       }
 
-      // Check for duplicates via natural key (date|amount|description_norm)
-      // This catches duplicates from old imports with different fingerprint algorithms
       const normalizedDesc = normalizeDescription(descriptionRaw);
       const naturalKey = `${postedDate}|${amountSigned.toFixed(2)}|${normalizedDesc.toLowerCase()}`;
       
@@ -828,11 +974,20 @@ serve(async (req) => {
 
       // === CATEGORIZATION LOGIC ===
       
-      // 1. Get initial movement and category from AI
-      let movement = validateMovement(t.movement);
-      let categorySlug = validateCategorySlug(t.category_slug, movement);
+      // For simplified extraction (large files), derive movement from amount sign
+      let movement: MovementType;
+      let categorySlug: string;
       
-      // 2. Detect internal transfers (may override AI classification)
+      if (t.movement) {
+        movement = validateMovement(t.movement);
+        categorySlug = validateCategorySlug(t.category_slug, movement);
+      } else {
+        // Derive from amount sign
+        movement = amountSigned >= 0 ? 'INCOME' : 'EXPENSE';
+        categorySlug = movement === 'INCOME' ? 'other_income' : 'other_expense';
+      }
+      
+      // Detect internal transfers (may override classification)
       const transferDetection = detectInternalTransfer(
         movement,
         descriptionRaw,
@@ -847,7 +1002,7 @@ serve(async (req) => {
         stats.transfers++;
       }
 
-      // 3. Apply user categorization rules (highest priority after manual)
+      // Apply user categorization rules (highest priority after manual)
       let categoryId: string | null = null;
       let categorizationRuleId: string | null = null;
       let categorySource = 'AI';
@@ -863,7 +1018,6 @@ serve(async (req) => {
       if (ruleMatch) {
         categoryId = ruleMatch.categoryId;
         if (ruleMatch.categorySlug) {
-          // Determine movement from the rule's category
           if (INCOME_SLUGS.includes(ruleMatch.categorySlug)) {
             movement = 'INCOME';
           } else if (EXPENSE_SLUGS.includes(ruleMatch.categorySlug)) {
@@ -877,54 +1031,43 @@ serve(async (req) => {
         categorySource = 'RULE';
         stats.categorizedByRule++;
       } else {
-        // Get category ID from slug
         categoryId = categorySlugToId[categorySlug] || null;
       }
 
-      // 4. Get legacy type and tx_type
       const legacyType = getLegacyType(movement);
       const legacyTxType = getLegacyTxType(movement, categorySlug);
 
-      // Update stats
       if (movement === 'INCOME') stats.income++;
       else if (movement === 'EXPENSE') stats.expenses++;
       else if (movement === 'TRANSFER') stats.transfers++;
 
-      // Prepare transaction record
       const txRecord: any = {
         user_id: userId,
         domain: domain,
         period_id: periodId,
         import_id: importId,
         account_id: accountId,
-        // Dates
         date: postedDate,
         posted_date: postedDate,
         value_date: valueDate,
-        // Amounts
         amount: amountSigned,
         currency: currency,
         running_balance: runningBalance,
-        // Descriptions
         description: descriptionClean || 'Sin descripción',
         description_raw: descriptionRaw,
         description_norm: normalizeDescription(descriptionRaw),
         description_clean: descriptionClean,
-        // Movement and category (new system)
         movement: movement,
         category_id: categoryId,
         categorization_rule_id: categorizationRuleId,
         category_source: categorySource,
-        // Transaction details
         tx_type: legacyTxType,
         payment_channel: validatePaymentChannel(paymentChannel),
         source_transaction_id: sourceTransactionId,
         counterparty_raw: counterpartyRaw,
-        // Legacy fields for backward compatibility
         type: legacyType,
-        category: categorySlug, // Store slug in legacy category field
+        category: categorySlug,
         bank: domain === 'INVESTING' ? t.platform : t.bank,
-        // Deduplication
         fingerprint: fingerprint,
         source_row_hash: rowHash,
       };
@@ -932,13 +1075,11 @@ serve(async (req) => {
       newTransactions.push(txRecord);
     }
 
-    // 13. Batch insert transactions - handle duplicates individually
+    // Batch insert transactions
     if (newTransactions.length > 0) {
       let successCount = 0;
       let duplicateCount = 0;
       
-      // Insert transactions one by one to properly handle duplicates
-      // (Partial unique indexes don't work with upsert onConflict)
       for (const tx of newTransactions) {
         const { error: insertError } = await supabase
           .from('transactions')
@@ -946,11 +1087,9 @@ serve(async (req) => {
         
         if (insertError) {
           if (insertError.code === '23505') {
-            // Duplicate - skip silently
             duplicateCount++;
           } else {
             console.error('[process-import] Error inserting transaction:', insertError);
-            // Continue with other transactions instead of failing completely
           }
         } else {
           successCount++;
@@ -963,7 +1102,6 @@ serve(async (req) => {
       console.log(`[process-import] Inserted ${successCount} transactions, ${duplicateCount} duplicates skipped`);
       
       if (successCount === 0 && duplicateCount === newTransactions.length) {
-        // All transactions were duplicates
         await supabase.from('imports').update({ 
           status: 'NORMALIZED',
           transactions_count: 0,
@@ -972,13 +1110,13 @@ serve(async (req) => {
       }
     }
 
-    // 14. Update import status to NORMALIZED
+    // Update import status
     await supabase.from('imports').update({ 
       status: 'NORMALIZED',
       transactions_count: stats.newTransactions
     }).eq('id', importId);
 
-    // 15. Log to audit
+    // Log to audit
     await supabase.from('audit_log').insert({
       user_id: userId,
       entity_type: 'import',
@@ -992,7 +1130,7 @@ serve(async (req) => {
       }
     });
 
-    // 16. Build response message
+    // Build response message
     let message = `Procesadas ${stats.newTransactions} transacciones nuevas`;
     if (stats.duplicatesIgnored > 0) {
       message += `, ${stats.duplicatesIgnored} duplicados ignorados`;
