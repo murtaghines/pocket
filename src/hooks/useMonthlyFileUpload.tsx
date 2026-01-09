@@ -169,25 +169,6 @@ export function useMonthlyFileUpload() {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-        // Create import record in the new imports table
-        const { data: importRecord, error: importError } = await supabase
-          .from("imports")
-          .insert({
-            user_id: user.id,
-            domain: "CASHFLOW" as const,
-            file_name: uploadFile.name,
-            file_hash_sha256: fileHash,
-            file_mime: uploadFile.file.type || "application/octet-stream",
-            file_size: uploadFile.size,
-            file_storage_url: filePath,
-            source_type: "BANK" as const,
-            status: "UPLOADED" as const,
-          })
-          .select()
-          .single();
-
-        if (importError) throw importError;
-
         // Also create in uploads table for backwards compatibility
         await supabase
           .from("uploads")
@@ -208,9 +189,15 @@ export function useMonthlyFileUpload() {
           {
             body: {
               fileContent,
-              importId: importRecord.id,
               userId: user.id,
-              periodMonthKey: monthKey,
+              domain: "CASHFLOW",
+              targetMonth: targetMonthStr,
+              fileHash,
+              fileName: uploadFile.name,
+              fileSize: uploadFile.size,
+              fileMime: uploadFile.file.type || "application/octet-stream",
+              fileStorageUrl: filePath,
+              sourceType: "BANK",
             },
           }
         );
