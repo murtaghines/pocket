@@ -203,10 +203,58 @@ serve(async (req) => {
       }
     });
 
-    // CONFIRM MODE: Save pre-validated transactions
+    // CONFIRM MODE: Save or update pre-validated transactions
     if (confirmTransactions && transactions && recordId && userId) {
       console.log(`Confirming ${transactions.length} transactions for import ${recordId}`);
       
+      // Check if transactions already exist for this import (update mode)
+      const { data: existingTxs } = await supabase
+        .from('transactions')
+        .select('id, transaction_hash')
+        .eq('import_id', recordId);
+      
+      const existingHashMap = new Map<string, string>();
+      existingTxs?.forEach(tx => {
+        if (tx.transaction_hash) {
+          existingHashMap.set(tx.transaction_hash, tx.id);
+        }
+      });
+      
+      const isUpdateMode = existingTxs && existingTxs.length > 0;
+      console.log(`Mode: ${isUpdateMode ? 'UPDATE' : 'INSERT'}, existing: ${existingTxs?.length || 0}`);
+      
+      if (isUpdateMode) {
+        // UPDATE MODE: Update existing transactions (category changes, etc.)
+        for (const t of transactions) {
+          const existingId = existingHashMap.get(t.transaction_hash);
+          if (existingId) {
+            const movement = normalizeMovement(t.movement || t.type, t.amount);
+            const categorySlug = validateCategory(t.category, movement);
+            const categoryInfo = categoryMap.get(categorySlug);
+            
+            await supabase
+              .from('transactions')
+              .update({
+                movement: movement,
+                type: movement.toLowerCase(),
+                category: categorySlug,
+                category_id: categoryInfo?.id || null,
+              })
+              .eq('id', existingId);
+          }
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: `${transactions.length} transacciones actualizadas`,
+            updated: true,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // INSERT MODE: First time saving
       const transactionsToInsert = transactions.map((t: any) => {
         const movement = normalizeMovement(t.movement || t.type, t.amount);
         const categorySlug = validateCategory(t.category, movement);
@@ -214,13 +262,13 @@ serve(async (req) => {
         
         return {
           user_id: userId,
-          import_id: recordId, // Using import_id for unified system
+          import_id: recordId,
           date: t.date,
           description: t.description || 'Sin descripción',
           amount: t.amount,
-          type: movement.toLowerCase(), // Legacy field
+          type: movement.toLowerCase(),
           movement: movement,
-          category: categorySlug, // Legacy field
+          category: categorySlug,
           category_id: categoryInfo?.id || null,
           bank: t.bank || null,
           transaction_hash: t.transaction_hash,
@@ -237,7 +285,7 @@ serve(async (req) => {
         throw new Error(`Failed to insert transactions: ${insertError.message}`);
       }
 
-      // Update imports table (unified system)
+      // Update imports table
       await supabase
         .from('imports')
         .update({ 
