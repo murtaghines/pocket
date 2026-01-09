@@ -376,6 +376,7 @@ export function useFileUpload(isInvestment: boolean = false) {
 
     setPreviewData({
       ...previewData,
+      hasUnsavedChanges: true, // Mark as having unsaved changes
       transactions: previewData.transactions.map((t) => {
         if (t.tempId !== tempId) return t;
         
@@ -430,11 +431,19 @@ export function useFileUpload(isInvestment: boolean = false) {
       const editedCount = previewData.transactions.filter((t) => t.isEdited).length;
       
       toast({
-        title: "Transacciones importadas",
+        title: "Transacciones guardadas",
         description: `${previewData.transactions.length} transacciones guardadas${editedCount > 0 ? ` (${editedCount} editadas)` : ""}`,
       });
 
-      setPreviewData(null);
+      // Mark as saved but keep preview open for further edits
+      setPreviewData({
+        ...previewData,
+        isSaved: true,
+        hasUnsavedChanges: false,
+        // Reset isEdited on all transactions after save
+        transactions: previewData.transactions.map(t => ({ ...t, isEdited: false })),
+      });
+      
       setFiles([]);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });

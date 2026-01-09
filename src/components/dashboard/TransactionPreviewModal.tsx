@@ -58,6 +58,8 @@ export interface PreviewData {
   };
   uploadId: string;
   fileName: string;
+  isSaved?: boolean; // Track if transactions have been saved at least once
+  hasUnsavedChanges?: boolean; // Track if there are changes since last save
 }
 
 interface TransactionPreviewModalProps {
@@ -82,7 +84,7 @@ export function TransactionPreviewModal({
 
   if (!previewData) return null;
 
-  const { transactions, stats, fileName } = previewData;
+  const { transactions, stats, fileName, isSaved, hasUnsavedChanges } = previewData;
 
   const summary = useMemo(() => {
     const income = transactions
@@ -298,22 +300,27 @@ export function TransactionPreviewModal({
             onClick={() => onOpenChange(false)}
             disabled={isConfirming}
           >
-            Cancelar
+            {isSaved && !hasUnsavedChanges ? (language === 'es' ? 'Cerrar' : 'Close') : (language === 'es' ? 'Cancelar' : 'Cancel')}
           </Button>
           <Button 
             variant="gradient" 
             onClick={onConfirm}
-            disabled={isConfirming || transactions.length === 0}
+            disabled={isConfirming || transactions.length === 0 || (isSaved && !hasUnsavedChanges)}
           >
             {isConfirming ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Importando...
+                {language === 'es' ? 'Guardando...' : 'Saving...'}
+              </>
+            ) : isSaved && !hasUnsavedChanges ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                {language === 'es' ? 'Guardado' : 'Saved'}
               </>
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                Confirmar ({transactions.length})
+                {language === 'es' ? 'Guardar' : 'Save'} ({transactions.length})
               </>
             )}
           </Button>
