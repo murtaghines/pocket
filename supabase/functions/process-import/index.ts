@@ -658,12 +658,22 @@ serve(async (req) => {
       }
     }
 
-    // 11. Get existing transactions to detect duplicates (by fingerprint AND by natural key)
+    // 11. Get existing transactions for TARGET MONTH ONLY to detect duplicates
+    const [targetYear, targetMonthNum] = targetMonth.split('-').map(Number);
+    const monthStart = `${targetMonth}-01`;
+    const nextMonth = targetMonthNum === 12 ? 1 : targetMonthNum + 1;
+    const nextYear = targetMonthNum === 12 ? targetYear + 1 : targetYear;
+    const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+    
     const { data: existingTxs } = await supabase
       .from('transactions')
       .select('fingerprint, date, amount, description_norm')
       .eq('user_id', userId)
-      .eq('domain', domain);
+      .eq('domain', domain)
+      .gte('date', monthStart)
+      .lt('date', monthEnd);
+    
+    console.log(`[process-import] Querying duplicates for month ${targetMonth} (${monthStart} to ${monthEnd})`);
 
     const existingFingerprints = new Set(
       existingTxs?.filter(t => t.fingerprint).map(t => t.fingerprint) || []
@@ -683,11 +693,11 @@ serve(async (req) => {
       totalParsed: transactions.length,
       newTransactions: 0,
       duplicatesIgnored: 0,
+      outsideMonthSkipped: 0,
       transfers: 0,
       income: 0,
       expenses: 0,
-      categorizedByRule: 0,
-      dateWarnings: dateWarnings.length
+      categorizedByRule: 0
     };
 
     const newTransactions: any[] = [];
@@ -711,6 +721,14 @@ serve(async (req) => {
       
       if (!postedDate || amountSigned === undefined) {
         console.log(`[process-import] Skipping invalid transaction at index ${i}`);
+        continue;
+      }
+
+      // Filter out transactions from other months - STRICT: only process target month
+      const txMonthKey = extractMonthKey(postedDate);
+      if (txMonthKey !== targetMonth) {
+        console.log(`[process-import] Filtering out transaction from ${txMonthKey} (target: ${targetMonth}): ${descriptionClean.substring(0, 40)}`);
+        stats.outsideMonthSkipped++;
         continue;
       }
 
