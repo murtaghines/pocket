@@ -2,6 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 export type ImportStatus = 'UPLOADED' | 'PARSED' | 'NORMALIZED' | 'FAILED';
 export type SourceType = 'BANK' | 'BROKER' | 'SAVINGS' | 'CARD' | 'OTHER';
@@ -228,6 +233,146 @@ export function useImports(domain?: AppDomain) {
     }
   });
 
+  // Helper to extract PDF text
+  const extractPdfText = async (arrayBuffer: ArrayBuffer): Promise<string> => {
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const pdf = await loadingTask.promise;
+    const maxPages = Math.min(pdf.numPages, 30);
+    let content = "";
+
+    for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = (textContent.items as any[])
+        .map((item) => (typeof item?.str === "string" ? item.str : ""))
+        .filter(Boolean)
+        .join(" ");
+      content += `\n\n--- Page ${pageNum} ---\n${pageText}`;
+    }
+
+    const trimmed = content.trim();
+    if (trimmed.length < 50) {
+      throw new Error("PDF sin texto seleccionable (probablemente escaneado).");
+    }
+    return trimmed;
+  };
+
+  // Retry a failed import: download file from storage, re-process it
+  const retryImport = useMutation({
+    mutationFn: async (imp: Import) => {
+      if (!user?.id) throw new Error("User not authenticated");
+      if (!imp.file_storage_url) throw new Error("No hay archivo almacenado para reintentar");
+
+      // 1. Delete old import record (and related transactions)
+      const { error: txDelError } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("import_id", imp.id);
+      if (txDelError) console.error("Error deleting old transactions:", txDelError);
+
+      const { error: impDelError } = await supabase
+        .from("imports")
+        .delete()
+        .eq("id", imp.id);
+      if (impDelError) throw new Error("No se pudo eliminar el import anterior");
+
+      // 2. Download file from storage
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from("financial-files")
+        .download(imp.file_storage_url);
+
+      if (downloadError || !fileData) {
+        throw new Error("No se pudo descargar el archivo. Sube el archivo de nuevo.");
+      }
+
+      // 3. Extract content based on file type
+      const extension = imp.file_name.split(".").pop()?.toLowerCase();
+      let fileContent = "";
+
+      if (extension === "csv") {
+        fileContent = await fileData.text();
+      } else if (extension === "xlsx" || extension === "xls") {
+        const arrayBuffer = await fileData.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        workbook.SheetNames.forEach((sheetName) => {
+          const sheet = workbook.Sheets[sheetName];
+          const csv = XLSX.utils.sheet_to_csv(sheet);
+          fileContent += `Sheet: ${sheetName}\n${csv}\n\n`;
+        });
+      } else if (extension === "pdf") {
+        const arrayBuffer = await fileData.arrayBuffer();
+        fileContent = await extractPdfText(arrayBuffer);
+      } else {
+        fileContent = await fileData.text();
+      }
+
+      if (!fileContent.trim()) {
+        throw new Error("Archivo vacío o sin contenido legible");
+      }
+
+      // 4. Generate file hash
+      const encoder = new TextEncoder();
+      const data = encoder.encode(fileContent);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const fileHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      // Get target month from period
+      const targetMonth = imp.target_month || imp.uploaded_at.substring(0, 7);
+
+      // 5. Call process-import edge function
+      const { data: processData, error: processError } = await supabase.functions.invoke(
+        "process-import",
+        {
+          body: {
+            fileContent,
+            userId: user.id,
+            domain: imp.domain,
+            targetMonth: `${targetMonth}-01`,
+            fileHash,
+            fileName: imp.file_name,
+            fileSize: imp.file_size,
+            fileMime: imp.file_mime || "application/octet-stream",
+            fileStorageUrl: imp.file_storage_url,
+            sourceType: imp.source_type,
+          },
+        }
+      );
+
+      if (processError) {
+        let message = "Error al reprocesar el archivo";
+        const ctx = (processError as any)?.context;
+        if (ctx && typeof ctx?.json === "function") {
+          try {
+            const payload = await ctx.json();
+            message = payload?.message || message;
+          } catch {
+            // ignore
+          }
+        }
+        throw new Error(message);
+      }
+
+      return processData;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["imports"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["periods"] });
+
+      const stats = data?.stats;
+      let description = `${stats?.newTransactions || 0} transacciones nuevas`;
+      if (stats?.duplicatesIgnored > 0) {
+        description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
+      }
+      toast.success(`Archivo reprocesado: ${description}`);
+    },
+    onError: (error) => {
+      console.error("Error retrying import:", error);
+      toast.error(error instanceof Error ? error.message : "Error al reintentar");
+    },
+  });
+
   const getImportsByMonth = (monthKey: string): Import[] => {
     return imports.filter(i => {
       // Use target_month from period, normalize both to YYYY-MM
@@ -254,8 +399,10 @@ export function useImports(domain?: AppDomain) {
     error,
     processImport: processImport.mutateAsync,
     deleteImport: deleteImport.mutate,
+    retryImport: retryImport.mutate,
     isProcessing: processImport.isPending,
     isDeleting: deleteImport.isPending,
+    isRetrying: retryImport.isPending,
     getImportsByMonth
   };
 }
