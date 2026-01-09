@@ -263,6 +263,16 @@ export function useMonthlyFileUpload() {
       return;
     }
 
+    // Check network status before attempting upload
+    if (!navigator.onLine) {
+      toast({
+        title: "Sin conexión",
+        description: "No puedes subir archivos sin conexión a internet.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const monthKey = getMonthKey(targetMonth);
     const newFiles: PendingFile[] = files.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),

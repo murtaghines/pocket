@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
@@ -51,6 +52,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <NetworkStatusBanner />
       <Toaster />
       <Sonner />
       <BrowserRouter>
