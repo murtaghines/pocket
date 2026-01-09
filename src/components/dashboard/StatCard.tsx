@@ -66,24 +66,27 @@ export function StatCard({
             {value}
           </p>
           
-          {change !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm">
-              {isPositive && <TrendingUp className="w-4 h-4 text-success" />}
-              {isNegative && <TrendingDown className="w-4 h-4 text-destructive" />}
-              {!isPositive && !isNegative && <Minus className="w-4 h-4 text-muted-foreground" />}
-              <span className={cn(
-                "font-medium",
-                isPositive && "text-success",
-                isNegative && "text-destructive",
-                !isPositive && !isNegative && "text-muted-foreground",
-              )}>
-                {rawPositive && "+"}
-                {change}%
-              </span>
-              {changeLabel && (
-                <span className="text-muted-foreground">{changeLabel}</span>
-              )}
-            </div>
+          {change !== undefined && change !== null && (
+            // Only show comparison if there's actual change data (not 0 with no previous data)
+            (change !== 0 || isPositive || isNegative) ? (
+              <div className="flex items-center gap-1.5 text-sm">
+                {isPositive && <TrendingUp className="w-4 h-4 text-success" />}
+                {isNegative && <TrendingDown className="w-4 h-4 text-destructive" />}
+                {!isPositive && !isNegative && <Minus className="w-4 h-4 text-muted-foreground" />}
+                <span className={cn(
+                  "font-medium",
+                  isPositive && "text-success",
+                  isNegative && "text-destructive",
+                  !isPositive && !isNegative && "text-muted-foreground",
+                )}>
+                  {rawPositive && "+"}
+                  {change}%
+                </span>
+                {changeLabel && (
+                  <span className="text-muted-foreground">{changeLabel}</span>
+                )}
+              </div>
+            ) : null
           )}
         </div>
       </div>

@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { Calendar } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
+import { useTransactions } from "@/hooks/useTransactions";
+import { startOfWeek, endOfWeek, format, isToday, eachDayOfInterval, parseISO } from "date-fns";
 
 interface WeeklyData {
   day: string;
@@ -11,6 +13,7 @@ interface WeeklyData {
 
 export function WeeklyComparisonChart() {
   const { t, formatCurrency, language } = useLocalization();
+  const { transactions } = useTransactions();
 
   // Day abbreviations based on language
   const getDayAbbreviations = () => {
@@ -32,18 +35,40 @@ export function WeeklyComparisonChart() {
 
   const dayAbbrevs = getDayAbbreviations();
 
-  const weeklyData: WeeklyData[] = [
-    { day: dayAbbrevs[0], amount: 45 },
-    { day: dayAbbrevs[1], amount: 120 },
-    { day: dayAbbrevs[2], amount: 35 },
-    { day: dayAbbrevs[3], amount: 89, isToday: true },
-    { day: dayAbbrevs[4], amount: 0 },
-    { day: dayAbbrevs[5], amount: 0 },
-    { day: dayAbbrevs[6], amount: 0 },
-  ];
+  // Calculate weekly data from real transactions
+  const weeklyData: WeeklyData[] = (() => {
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    
+    const daysOfWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
+    
+    // Filter expenses from this week
+    const weekExpenses = transactions.filter(t => {
+      const txDate = parseISO(t.date);
+      const isExpense = t.movement === "EXPENSE" || t.type === "expense";
+      return isExpense && txDate >= weekStart && txDate <= weekEnd;
+    });
+
+    return daysOfWeek.map((day, index) => {
+      const dayStr = format(day, 'yyyy-MM-dd');
+      const dayExpenses = weekExpenses.filter(t => t.date === dayStr);
+      const totalAmount = dayExpenses.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+      return {
+        day: dayAbbrevs[index],
+        amount: Math.round(totalAmount * 100) / 100,
+        isToday: isToday(day),
+      };
+    });
+  })();
 
   const totalSpent = weeklyData.reduce((sum, d) => sum + d.amount, 0);
-  const averageDaily = Math.round(totalSpent / weeklyData.filter(d => d.amount > 0).length || 1);
+  const daysWithExpenses = weeklyData.filter(d => d.amount > 0).length;
+  const averageDaily = daysWithExpenses > 0 ? Math.round(totalSpent / daysWithExpenses) : 0;
+
+  // Check if there's any data
+  const hasData = totalSpent > 0;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -81,7 +106,7 @@ export function WeeklyComparisonChart() {
                 tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
               />
               <YAxis hide />
-              <Tooltip content={<CustomTooltip />} cursor={false} />
+              {hasData && <Tooltip content={<CustomTooltip />} cursor={false} />}
               <Bar 
                 dataKey="amount" 
                 radius={[3, 3, 0, 0]}
@@ -89,7 +114,7 @@ export function WeeklyComparisonChart() {
                 {weeklyData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`}
-                    fill={entry.isToday 
+                    fill={entry.isToday && entry.amount > 0
                       ? 'hsl(155, 60%, 45%)' 
                       : entry.amount > 0 
                         ? 'hsl(var(--muted-foreground) / 0.3)' 
@@ -104,7 +129,9 @@ export function WeeklyComparisonChart() {
 
         <div className="mt-2 pt-2 border-t flex justify-between text-xs">
           <span className="text-muted-foreground">{t('dashboard.daily_average')}</span>
-          <span className="font-medium">{formatCurrency(averageDaily)}{t('dashboard.per_day')}</span>
+          <span className="font-medium">
+            {hasData ? `${formatCurrency(averageDaily)}${t('dashboard.per_day')}` : '-'}
+          </span>
         </div>
       </CardContent>
     </Card>
