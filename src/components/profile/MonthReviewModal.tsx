@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   CheckCircle2, 
   ArrowDownCircle, 
@@ -42,6 +41,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
+import { 
+  movementTranslations, 
+  INCOME_CATEGORIES, 
+  EXPENSE_CATEGORIES, 
+  TRANSFER_CATEGORIES,
+  getCategoryLabel 
+} from "@/lib/categoryTranslations";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
@@ -66,6 +72,12 @@ interface MonthReviewModalProps {
   isLocked?: boolean;
 }
 
+// Local edits state
+interface TransactionEdits {
+  movement?: MovementType;
+  category?: string;
+}
+
 export function MonthReviewModal({
   open,
   onOpenChange,
@@ -73,12 +85,12 @@ export function MonthReviewModal({
   monthLabel,
   isLocked = false,
 }: MonthReviewModalProps) {
-  const { t, formatCurrency, formatDate } = useLocalization();
-  const { getCategoriesForType, categories } = useCategories("CASHFLOW");
+  const { t, formatCurrency, formatDate, language } = useLocalization();
+  const { categories } = useCategories("CASHFLOW");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editedCategories, setEditedCategories] = useState<Record<string, string>>({});
+  const [edits, setEdits] = useState<Record<string, TransactionEdits>>({});
 
   // Fetch transactions for this month
   const { data: transactions = [], isLoading } = useQuery({
@@ -106,16 +118,23 @@ export function MonthReviewModal({
     enabled: open && !!user,
   });
 
-  // Update category mutation
-  const updateCategory = useMutation({
-    mutationFn: async ({ transactionId, categorySlug, categoryId }: { 
+  // Update transaction mutation
+  const updateTransaction = useMutation({
+    mutationFn: async ({ 
+      transactionId, 
+      movement,
+      categorySlug, 
+      categoryId 
+    }: { 
       transactionId: string; 
+      movement: MovementType;
       categorySlug: string;
       categoryId: string | null;
     }) => {
       const { error } = await supabase
         .from("transactions")
         .update({ 
+          movement,
           category: categorySlug,
           category_id: categoryId,
           category_source: "manual"
@@ -129,70 +148,156 @@ export function MonthReviewModal({
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
     onError: (error) => {
-      console.error("Error updating category:", error);
+      console.error("Error updating transaction:", error);
       toast({
         title: t("common.error"),
-        description: "No se pudo actualizar la categoría",
+        description: "No se pudo actualizar la transacción",
         variant: "destructive",
       });
     },
   });
 
-  // Handle category change
-  const handleCategoryChange = (transactionId: string, newCategorySlug: string) => {
-    // Find the category to get its ID
-    const category = categories.find(c => c.slug === newCategorySlug);
+  // Get categories for a movement type
+  const getCategoriesForMovement = (movement: MovementType): string[] => {
+    switch (movement) {
+      case "INCOME":
+        return INCOME_CATEGORIES;
+      case "EXPENSE":
+        return EXPENSE_CATEGORIES;
+      case "TRANSFER":
+        return TRANSFER_CATEGORIES;
+      default:
+        return EXPENSE_CATEGORIES;
+    }
+  };
+
+  // Get effective movement for a transaction (considering edits)
+  const getEffectiveMovement = (tx: MonthTransaction): MovementType => {
+    if (edits[tx.id]?.movement) {
+      return edits[tx.id].movement!;
+    }
+    if (tx.movement) {
+      return tx.movement;
+    }
+    // Infer from legacy type
+    switch (tx.type?.toLowerCase()) {
+      case "income":
+        return "INCOME";
+      case "transfer":
+        return "TRANSFER";
+      default:
+        return "EXPENSE";
+    }
+  };
+
+  // Get effective category for a transaction
+  const getEffectiveCategory = (tx: MonthTransaction): string => {
+    if (edits[tx.id]?.category) {
+      return edits[tx.id].category!;
+    }
+    return tx.category || "other_expense";
+  };
+
+  // Handle movement change
+  const handleMovementChange = (transactionId: string, newMovement: MovementType) => {
+    const tx = transactions.find(t => t.id === transactionId);
+    if (!tx) return;
+
+    // Get default category for the new movement type
+    const categoriesForMovement = getCategoriesForMovement(newMovement);
+    const defaultCategory = categoriesForMovement[0];
     
-    setEditedCategories(prev => ({
+    // Find category ID
+    const category = categories.find(c => c.slug === defaultCategory);
+
+    setEdits(prev => ({
       ...prev,
-      [transactionId]: newCategorySlug,
+      [transactionId]: {
+        ...prev[transactionId],
+        movement: newMovement,
+        category: defaultCategory,
+      },
     }));
 
-    updateCategory.mutate({
+    updateTransaction.mutate({
       transactionId,
+      movement: newMovement,
+      categorySlug: defaultCategory,
+      categoryId: category?.id || null,
+    });
+  };
+
+  // Handle category change
+  const handleCategoryChange = (transactionId: string, newCategorySlug: string) => {
+    const tx = transactions.find(t => t.id === transactionId);
+    if (!tx) return;
+
+    const effectiveMovement = getEffectiveMovement(tx);
+    const category = categories.find(c => c.slug === newCategorySlug);
+
+    setEdits(prev => ({
+      ...prev,
+      [transactionId]: {
+        ...prev[transactionId],
+        category: newCategorySlug,
+      },
+    }));
+
+    updateTransaction.mutate({
+      transactionId,
+      movement: effectiveMovement,
       categorySlug: newCategorySlug,
       categoryId: category?.id || null,
     });
   };
 
-  // Get the type for display and category filtering
-  const getTransactionType = (tx: MonthTransaction): "income" | "expense" | "transfer" => {
-    if (tx.movement === "INCOME") return "income";
-    if (tx.movement === "EXPENSE") return "expense";
-    if (tx.movement === "TRANSFER") return "transfer";
-    return tx.type as "income" | "expense" | "transfer";
+  // Translate movement label
+  const translateMovement = (movement: MovementType): string => {
+    return movementTranslations[movement]?.[language] || movementTranslations[movement]?.['es'] || movement;
+  };
+
+  // Translate category label
+  const translateCategory = (slug: string): string => {
+    return getCategoryLabel(slug, language);
   };
 
   const summary = useMemo(() => {
     const income = transactions
-      .filter((t) => getTransactionType(t) === "income")
+      .filter((t) => getEffectiveMovement(t) === "INCOME")
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     const expenses = transactions
-      .filter((t) => getTransactionType(t) === "expense")
+      .filter((t) => getEffectiveMovement(t) === "EXPENSE")
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     const transfers = transactions
-      .filter((t) => getTransactionType(t) === "transfer").length;
-    const edited = Object.keys(editedCategories).length;
+      .filter((t) => getEffectiveMovement(t) === "TRANSFER").length;
+    const edited = Object.keys(edits).length;
     return { income, expenses, transfers, edited };
-  }, [transactions, editedCategories]);
+  }, [transactions, edits]);
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "income":
+  const getMovementIcon = (movement: MovementType) => {
+    switch (movement) {
+      case "INCOME":
         return <ArrowDownCircle className="w-4 h-4 text-success" />;
-      case "expense":
+      case "EXPENSE":
         return <ArrowUpCircle className="w-4 h-4 text-destructive" />;
-      case "transfer":
+      case "TRANSFER":
         return <ArrowRightLeft className="w-4 h-4 text-warning" />;
       default:
         return null;
     }
   };
 
-  const translateCategory = (slug: string) => {
-    const key = `category.${slug}`;
-    const translated = t(key);
-    return translated !== key ? translated : slug;
+  const getMovementColor = (movement: MovementType): string => {
+    switch (movement) {
+      case "INCOME":
+        return "text-success";
+      case "EXPENSE":
+        return "text-destructive";
+      case "TRANSFER":
+        return "text-warning";
+      default:
+        return "";
+    }
   };
 
   const handleConfirm = () => {
@@ -265,86 +370,115 @@ export function MonthReviewModal({
 
             {/* Transaction Table */}
             <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
-              <Table className="min-w-[600px]">
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px]">{t("transactions.date")}</TableHead>
-                    <TableHead>{t("transactions.description")}</TableHead>
-                    <TableHead className="w-[80px]">{t("transactions.type")}</TableHead>
-                    <TableHead className="w-[180px]">{t("transactions.category")}</TableHead>
-                    <TableHead className="text-right w-[120px]">{t("transactions.amount")}</TableHead>
+                    <TableHead className="w-[90px] hidden sm:table-cell">{t("transactions.date")}</TableHead>
+                    <TableHead className="min-w-[120px]">{t("transactions.description")}</TableHead>
+                    <TableHead className="w-[140px]">Movimiento</TableHead>
+                    <TableHead className="w-[150px]">{t("transactions.category")}</TableHead>
+                    <TableHead className="text-right w-[100px]">{t("transactions.amount")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.map((tx) => {
-                    const txType = getTransactionType(tx);
-                    const availableCategories = getCategoriesForType(txType);
-                    const currentCategory = editedCategories[tx.id] || tx.category;
-                    const isEdited = !!editedCategories[tx.id];
+                    const effectiveMovement = getEffectiveMovement(tx);
+                    const effectiveCategory = getEffectiveCategory(tx);
+                    const availableCategories = getCategoriesForMovement(effectiveMovement);
+                    const isEdited = !!edits[tx.id];
                     
                     return (
                       <TableRow 
                         key={tx.id}
                         className={cn(isEdited && "bg-primary/5")}
                       >
-                        <TableCell className="text-muted-foreground text-sm">
+                        <TableCell className="text-muted-foreground text-xs hidden sm:table-cell">
                           {formatDate(new Date(tx.date))}
                         </TableCell>
-                        <TableCell className="font-medium truncate max-w-[200px]">
-                          {tx.description_norm || tx.description}
-                          {isEdited && (
-                            <Badge variant="outline" className="ml-2 text-xs border-primary/30 text-primary">
-                              {t("preview.edited")}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            {getTypeIcon(txType)}
+                        <TableCell className="font-medium">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="truncate max-w-[180px] text-sm">
+                              {tx.description_norm || tx.description}
+                            </span>
+                            <span className="text-xs text-muted-foreground sm:hidden">
+                              {formatDate(new Date(tx.date))}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           {isLocked ? (
+                            <div className="flex items-center gap-1.5">
+                              {getMovementIcon(effectiveMovement)}
+                              <span className={cn("text-xs font-medium", getMovementColor(effectiveMovement))}>
+                                {translateMovement(effectiveMovement)}
+                              </span>
+                            </div>
+                          ) : (
+                            <Select
+                              value={effectiveMovement}
+                              onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue>
+                                  <div className="flex items-center gap-1.5">
+                                    {getMovementIcon(effectiveMovement)}
+                                    <span className={getMovementColor(effectiveMovement)}>
+                                      {translateMovement(effectiveMovement)}
+                                    </span>
+                                  </div>
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="INCOME">
+                                  <div className="flex items-center gap-2">
+                                    <ArrowDownCircle className="w-4 h-4 text-success" />
+                                    <span className="text-success">{translateMovement("INCOME")}</span>
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="EXPENSE">
+                                  <div className="flex items-center gap-2">
+                                    <ArrowUpCircle className="w-4 h-4 text-destructive" />
+                                    <span className="text-destructive">{translateMovement("EXPENSE")}</span>
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="TRANSFER">
+                                  <div className="flex items-center gap-2">
+                                    <ArrowRightLeft className="w-4 h-4 text-warning" />
+                                    <span className="text-warning">{translateMovement("TRANSFER")}</span>
+                                  </div>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isLocked ? (
                             <Badge variant="outline" className="text-xs">
-                              {translateCategory(currentCategory)}
+                              {translateCategory(effectiveCategory)}
                             </Badge>
                           ) : (
                             <Select
-                              value={currentCategory}
+                              value={effectiveCategory}
                               onValueChange={(value) => handleCategoryChange(tx.id, value)}
                             >
                               <SelectTrigger className="h-8 text-xs">
                                 <SelectValue>
-                                  {translateCategory(currentCategory)}
+                                  {translateCategory(effectiveCategory)}
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
-                                {availableCategories.length > 0 ? (
-                                  availableCategories.map((cat) => (
-                                    <SelectItem key={cat.id} value={cat.slug || cat.name.toLowerCase()}>
-                                      <div className="flex items-center gap-2">
-                                        {cat.color && (
-                                          <span 
-                                            className="w-2 h-2 rounded-full" 
-                                            style={{ backgroundColor: cat.color }}
-                                          />
-                                        )}
-                                        {translateCategory(cat.slug || cat.name.toLowerCase())}
-                                      </div>
-                                    </SelectItem>
-                                  ))
-                                ) : (
-                                  <>
-                                    <SelectItem value="other">{translateCategory("other")}</SelectItem>
-                                  </>
-                                )}
+                                {availableCategories.map((catSlug) => (
+                                  <SelectItem key={catSlug} value={catSlug}>
+                                    {translateCategory(catSlug)}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           )}
                         </TableCell>
                         <TableCell className={cn(
-                          "text-right font-medium",
-                          txType === "income" ? "text-success" : txType === "expense" ? "text-destructive" : "text-warning"
+                          "text-right font-medium text-sm",
+                          getMovementColor(effectiveMovement)
                         )}>
                           {formatCurrency(tx.amount)}
                         </TableCell>
