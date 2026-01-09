@@ -70,13 +70,20 @@ export default function Index() {
     balance: convertToUserCurrency(previousMonth.balance),
   };
 
-  const incomeChange = previousMonth.income > 0 
-    ? Math.round(((currentMonth.income - previousMonth.income) / previousMonth.income) * 100)
-    : 0;
+  // Only calculate change if there's actual previous month data
+  const hasPreviousData = monthlyData.length >= 2;
   
-  const expenseChange = previousMonth.expenses > 0
+  const incomeChange = hasPreviousData && previousMonth.income > 0 
+    ? Math.round(((currentMonth.income - previousMonth.income) / previousMonth.income) * 100)
+    : undefined;
+  
+  const expenseChange = hasPreviousData && previousMonth.expenses > 0
     ? Math.round(((currentMonth.expenses - previousMonth.expenses) / previousMonth.expenses) * 100)
-    : 0;
+    : undefined;
+  
+  const balanceChange = hasPreviousData && convertedPreviousMonth.balance !== 0
+    ? Math.round(((convertedCurrentMonth.balance - convertedPreviousMonth.balance) / Math.abs(convertedPreviousMonth.balance)) * 100)
+    : undefined;
 
   const currentMonthName = new Date().toLocaleDateString(preferences?.language || 'es', { month: 'long' });
 
@@ -166,7 +173,7 @@ export default function Index() {
               <StatCard
                 title={t('dashboard.balance')}
                 value={formatCurrency(convertedCurrentMonth.balance)}
-                change={convertedPreviousMonth.balance !== 0 ? Math.round(((convertedCurrentMonth.balance - convertedPreviousMonth.balance) / Math.abs(convertedPreviousMonth.balance)) * 100) : 0}
+                change={balanceChange}
                 changeLabel={t('dashboard.vs_last_month')}
                 type="balance"
                 icon={<Wallet className="w-5 h-5" />}
