@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, KeyRound } from "lucide-react";
 import fintLogo from "@/assets/fint-logo.png";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 
 const REMEMBER_EMAIL_KEY = "fint_remember_email";
 
@@ -130,6 +131,7 @@ export default function Auth() {
                   required
                   minLength={6}
                 />
+                <PasswordStrengthIndicator password={newPassword} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-new-password">Confirm New Password</Label>
@@ -414,6 +416,7 @@ export default function Auth() {
                     required
                     minLength={6}
                   />
+                  <PasswordStrengthIndicator password={password} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm Password</Label>
