@@ -1,13 +1,14 @@
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, TrendingUp, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { FileText, TrendingUp, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useUploads } from "@/hooks/useUploads";
+import { useImports, Import } from "@/hooks/useImports";
 import { cn } from "@/lib/utils";
 
 export function MonthStatusIndicator() {
-  const { uploads } = useUploads();
+  const { imports: cashflowImports, isLoading: cashflowLoading } = useImports("CASHFLOW");
+  const { imports: investingImports, isLoading: investingLoading } = useImports("INVESTING");
 
   const now = new Date();
   
@@ -23,26 +24,20 @@ export function MonthStatusIndicator() {
     return lastClosedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
   }, [lastClosedMonth]);
 
+  const countImportsForMonth = (imports: Import[], monthKey: string) => {
+    return imports.filter((imp) => {
+      const targetMonth = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
+      // Only count NORMALIZED imports as successful
+      return targetMonth === monthKey && imp.status === 'NORMALIZED';
+    }).length;
+  };
+
   const { bankUploads, investmentUploads } = useMemo(() => {
-    let bank = 0;
-    let investment = 0;
-    
-    uploads.forEach((upload) => {
-      if (upload.target_month) {
-        // Extract YYYY-MM directly from the string to avoid timezone issues
-        const key = upload.target_month.substring(0, 7);
-        if (key === lastClosedMonthKey) {
-          if (upload.file_path?.includes('/investments/')) {
-            investment++;
-          } else {
-            bank++;
-          }
-        }
-      }
-    });
-    
-    return { bankUploads: bank, investmentUploads: investment };
-  }, [uploads, lastClosedMonthKey]);
+    return {
+      bankUploads: countImportsForMonth(cashflowImports, lastClosedMonthKey),
+      investmentUploads: countImportsForMonth(investingImports, lastClosedMonthKey)
+    };
+  }, [cashflowImports, investingImports, lastClosedMonthKey]);
 
   const status = useMemo(() => {
     if (bankUploads > 0 && investmentUploads > 0) return 'complete';
@@ -61,6 +56,16 @@ export function MonthStatusIndicator() {
     partial: <AlertCircle className="w-4 h-4 text-warning" />,
     empty: <AlertCircle className="w-4 h-4 text-muted-foreground" />,
   };
+
+  if (cashflowLoading || investingLoading) {
+    return (
+      <Card className="border-muted">
+        <CardContent className="p-4 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("transition-all", statusColor[status])}>

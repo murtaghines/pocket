@@ -23,6 +23,7 @@ export interface Import {
   status: ImportStatus;
   error_message: string | null;
   transactions_count: number | null;
+  target_month?: string; // YYYY-MM from period
 }
 
 interface ProcessImportParams {
@@ -64,9 +65,15 @@ export function useImports(domain?: AppDomain) {
     queryFn: async () => {
       if (!user?.id) return [];
       
+      // Join with periods to get month_key
       let query = supabase
         .from('imports')
-        .select('*')
+        .select(`
+          *,
+          periods!imports_period_id_fkey (
+            month_key
+          )
+        `)
         .eq('user_id', user.id)
         .order('uploaded_at', { ascending: false });
       
@@ -81,7 +88,12 @@ export function useImports(domain?: AppDomain) {
         throw error;
       }
 
-      return (data || []) as Import[];
+      // Flatten the periods data
+      return (data || []).map((imp: any) => ({
+        ...imp,
+        target_month: imp.periods?.month_key || imp.uploaded_at.substring(0, 7),
+        periods: undefined // Remove nested object
+      })) as Import[];
     },
     enabled: !!user?.id,
   });
@@ -218,17 +230,16 @@ export function useImports(domain?: AppDomain) {
 
   const getImportsByMonth = (monthKey: string): Import[] => {
     return imports.filter(i => {
-      // Extract month from the uploaded_at or check period
-      const importMonth = i.uploaded_at.substring(0, 7);
-      return importMonth === monthKey;
+      // Use target_month from period, normalize both to YYYY-MM
+      const importMonth = (i.target_month || i.uploaded_at.substring(0, 7)).substring(0, 7);
+      return importMonth === monthKey.substring(0, 7);
     });
   };
 
-  // Group imports by target month (derived from period)
+  // Group imports by target month (from period.month_key)
   const importsByMonth = imports.reduce((acc, imp) => {
-    // We need to get month from period - for now use uploaded_at month
-    // This will be improved when periods are linked
-    const monthKey = imp.uploaded_at.substring(0, 7);
+    // Use target_month from period, normalize to YYYY-MM
+    const monthKey = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
     if (!acc[monthKey]) {
       acc[monthKey] = [];
     }

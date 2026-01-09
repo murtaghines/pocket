@@ -57,13 +57,13 @@ export function MonthlyUploadsOrganizer() {
     return slots;
   }, [monthsToShow, locale]);
 
-  // Group imports by target month (from uploaded_at date)
+  // Group imports by target month (from period.month_key)
   const importsByMonth = useMemo(() => {
     const grouped: Record<string, typeof imports> = {};
     
     imports.forEach((imp) => {
-      // Extract YYYY-MM from uploaded_at
-      const key = imp.uploaded_at.substring(0, 7);
+      // Use target_month from period, normalize to YYYY-MM
+      const key = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(imp);
     });
