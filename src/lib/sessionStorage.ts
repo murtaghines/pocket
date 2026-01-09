@@ -28,6 +28,5 @@ export const restoreSessionFromSessionStorage = (): void => {
 export const clearSessionOnUnload = (): void => {
   if (!getRememberPreference()) {
     localStorage.removeItem(AUTH_KEY);
-    localStorage.removeItem(REMEMBER_SESSION_KEY);
   }
 };
