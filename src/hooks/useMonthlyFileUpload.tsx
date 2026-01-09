@@ -203,22 +203,37 @@ export function useMonthlyFileUpload() {
         );
 
         if (error) {
-          // Check if it's a duplicate file error (409)
-          const errorBody = typeof error === 'object' && error !== null ? error : {};
-          const errorMessage = (errorBody as any)?.message || '';
+          // Parse error - Supabase returns error info in different places depending on the response
+          const errorStr = error.message || String(error);
+          let parsedError: { error?: string; message?: string } = {};
           
-          if (errorMessage.includes('ya fue importado') || (errorBody as any)?.error === 'duplicate_file') {
+          // Try to extract JSON from error message (format: "Edge function returned 409: Error, {...}")
+          const jsonMatch = errorStr.match(/\{[^}]+\}/);
+          if (jsonMatch) {
+            try {
+              parsedError = JSON.parse(jsonMatch[0]);
+            } catch {
+              // Ignore parse errors
+            }
+          }
+          
+          const isDuplicate = parsedError.error === 'duplicate_file' || 
+                              errorStr.includes('duplicate_file') ||
+                              errorStr.includes('ya fue importado');
+          
+          if (isDuplicate) {
+            const displayMessage = parsedError.message || "Este archivo ya fue importado anteriormente";
             setPendingFilesByMonth((prev) => ({
               ...prev,
               [monthKey]: (prev[monthKey] || []).map((f) =>
                 f.id === uploadFile.id
-                  ? { ...f, status: "error" as const, error: errorMessage || "Archivo duplicado" }
+                  ? { ...f, status: "error" as const, error: displayMessage }
                   : f
               ),
             }));
             toast({
               title: "Archivo duplicado",
-              description: errorMessage || "Este archivo ya fue importado anteriormente",
+              description: displayMessage,
               variant: "destructive",
             });
             continue; // Skip to next file instead of throwing
