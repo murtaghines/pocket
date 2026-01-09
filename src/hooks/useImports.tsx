@@ -151,14 +151,10 @@ export function useImports(domain?: AppDomain) {
         const code = payload?.error;
         const message = payload?.message || 'Error al procesar el archivo';
 
-        if (code === 'duplicate_file') {
-          throw new Error(message);
-        }
-        if (code === 'period_closed') {
-          throw new Error(message);
-        }
-        
-        throw new Error(message);
+        // Create error with code for special handling
+        const err = new Error(message);
+        (err as any).code = code;
+        throw err;
       }
       
       // Check for error in successful response body
@@ -187,9 +183,22 @@ export function useImports(domain?: AppDomain) {
         toast.success(data.message);
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error processing import:', error);
-      toast.error(error instanceof Error ? error.message : 'Error al procesar el archivo');
+      const code = error?.code || "";
+      const message = error?.message || "Error al procesar el archivo";
+      
+      if (code === "payment_required") {
+        toast.error("Sin créditos de IA", {
+          description: "Recarga créditos en Lovable para continuar procesando archivos.",
+        });
+      } else if (code === "rate_limited") {
+        toast.error("Demasiadas solicitudes", {
+          description: "Espera unos minutos y vuelve a intentar.",
+        });
+      } else {
+        toast.error(message);
+      }
     }
   });
 
@@ -341,16 +350,22 @@ export function useImports(domain?: AppDomain) {
 
       if (processError) {
         let message = "Error al reprocesar el archivo";
+        let errorCode = "";
         const ctx = (processError as any)?.context;
         if (ctx && typeof ctx?.json === "function") {
           try {
             const payload = await ctx.json();
             message = payload?.message || message;
+            errorCode = payload?.error || "";
           } catch {
             // ignore
           }
         }
-        throw new Error(message);
+        
+        // Create error with code for special handling
+        const error = new Error(message);
+        (error as any).code = errorCode;
+        throw error;
       }
 
       return processData;
@@ -367,9 +382,22 @@ export function useImports(domain?: AppDomain) {
       }
       toast.success(`Archivo reprocesado: ${description}`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error retrying import:", error);
-      toast.error(error instanceof Error ? error.message : "Error al reintentar");
+      const code = error?.code || "";
+      const message = error?.message || "Error al reintentar";
+      
+      if (code === "payment_required") {
+        toast.error("Sin créditos de IA", {
+          description: "Recarga créditos en Lovable para continuar procesando archivos.",
+        });
+      } else if (code === "rate_limited") {
+        toast.error("Demasiadas solicitudes", {
+          description: "Espera unos minutos y vuelve a intentar.",
+        });
+      } else {
+        toast.error(message);
+      }
     },
   });
 

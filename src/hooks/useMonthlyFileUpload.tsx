@@ -147,7 +147,8 @@ export function useMonthlyFileUpload() {
         const code = payload?.error;
         const message = payload?.message || "No se pudo procesar el archivo";
 
-        if (code === "duplicate_file" || code === "period_closed") {
+        // Handle specific error codes with appropriate UI
+        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited") {
           setPendingFilesByMonth((prev) => ({
             ...prev,
             [monthKey]: (prev[monthKey] || []).map((f) =>
@@ -157,8 +158,14 @@ export function useMonthlyFileUpload() {
             ),
           }));
 
+          let title = "Error de procesamiento";
+          if (code === "duplicate_file") title = "Archivo duplicado";
+          else if (code === "period_closed") title = "Período cerrado";
+          else if (code === "payment_required") title = "Sin créditos de IA";
+          else if (code === "rate_limited") title = "Demasiadas solicitudes";
+
           toast({
-            title: code === "duplicate_file" ? "Archivo duplicado" : "Período cerrado",
+            title,
             description: message,
             variant: "destructive",
           });
