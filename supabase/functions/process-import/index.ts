@@ -225,6 +225,15 @@ function extractMonthKey(dateStr: string): string {
   return `${year}-${month}`;
 }
 
+// Normalize targetMonth to YYYY-MM format (handles both "2025-12" and "2025-12-01")
+function normalizeTargetMonth(targetMonth: string): string {
+  // If it already has day part, extract just year-month
+  if (targetMonth.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return targetMonth.substring(0, 7);
+  }
+  return targetMonth;
+}
+
 function validatePaymentChannel(channel: string | null): string | null {
   if (!channel) return null;
   const upper = channel.toUpperCase();
@@ -471,7 +480,10 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[process-import] Starting: domain=${domain}, targetMonth=${targetMonth}, fileSize=${fileContent.length}`);
+    // Normalize targetMonth to YYYY-MM format (handles both "2025-12" and "2025-12-01")
+    const normalizedTargetMonth = normalizeTargetMonth(targetMonth);
+
+    console.log(`[process-import] Starting: domain=${domain}, targetMonth=${normalizedTargetMonth}, fileSize=${fileContent.length}`);
 
     // 1. Calculate file hash for deduplication
     const calculatedFileHash = fileHash || await sha256(fileContent);
@@ -485,7 +497,7 @@ serve(async (req) => {
       .from('periods')
       .select('id, status')
       .eq('user_id', userId)
-      .eq('month_key', targetMonth)
+      .eq('month_key', normalizedTargetMonth)
       .eq('domain', domain)
       .maybeSingle();
 
@@ -496,7 +508,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             error: 'period_closed',
-            message: `El período ${targetMonth} está cerrado. Debe reabrirlo para agregar datos.`
+            message: `El período ${normalizedTargetMonth} está cerrado. Debe reabrirlo para agregar datos.`
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -507,7 +519,7 @@ serve(async (req) => {
         .from('periods')
         .insert({
           user_id: userId,
-          month_key: targetMonth,
+          month_key: normalizedTargetMonth,
           domain: domain,
           status: 'OPEN'
         })
@@ -647,11 +659,11 @@ serve(async (req) => {
       const txDate = t.posted_date || t.date;
       if (txDate) {
         const txMonthKey = extractMonthKey(txDate);
-        if (txMonthKey !== targetMonth) {
+        if (txMonthKey !== normalizedTargetMonth) {
           dateWarnings.push({
             date: txDate,
             description: t.description_clean || t.description || '',
-            expected: targetMonth,
+            expected: normalizedTargetMonth,
             found: txMonthKey
           });
         }
@@ -659,8 +671,8 @@ serve(async (req) => {
     }
 
     // 11. Get existing transactions for TARGET MONTH ONLY to detect duplicates
-    const [targetYear, targetMonthNum] = targetMonth.split('-').map(Number);
-    const monthStart = `${targetMonth}-01`;
+    const [targetYear, targetMonthNum] = normalizedTargetMonth.split('-').map(Number);
+    const monthStart = `${normalizedTargetMonth}-01`;
     const nextMonth = targetMonthNum === 12 ? 1 : targetMonthNum + 1;
     const nextYear = targetMonthNum === 12 ? targetYear + 1 : targetYear;
     const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
@@ -673,7 +685,7 @@ serve(async (req) => {
       .gte('date', monthStart)
       .lt('date', monthEnd);
     
-    console.log(`[process-import] Querying duplicates for month ${targetMonth} (${monthStart} to ${monthEnd})`);
+    console.log(`[process-import] Querying duplicates for month ${normalizedTargetMonth} (${monthStart} to ${monthEnd})`);
 
     const existingFingerprints = new Set(
       existingTxs?.filter(t => t.fingerprint).map(t => t.fingerprint) || []
@@ -726,8 +738,8 @@ serve(async (req) => {
 
       // Filter out transactions from other months - STRICT: only process target month
       const txMonthKey = extractMonthKey(postedDate);
-      if (txMonthKey !== targetMonth) {
-        console.log(`[process-import] Filtering out transaction from ${txMonthKey} (target: ${targetMonth}): ${descriptionClean.substring(0, 40)}`);
+      if (txMonthKey !== normalizedTargetMonth) {
+        console.log(`[process-import] Filtering out transaction from ${txMonthKey} (target: ${normalizedTargetMonth}): ${descriptionClean.substring(0, 40)}`);
         stats.outsideMonthSkipped++;
         continue;
       }
@@ -948,7 +960,7 @@ serve(async (req) => {
       diff_json: {
         file_name: fileName,
         domain,
-        target_month: targetMonth,
+        target_month: normalizedTargetMonth,
         stats
       }
     });
