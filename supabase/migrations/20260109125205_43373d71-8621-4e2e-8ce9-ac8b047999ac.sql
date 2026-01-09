@@ -1,0 +1,25 @@
+-- Update legacy category slugs to correct ones in transactions table
+UPDATE public.transactions SET category = 'investments_income' WHERE category = 'investment';
+UPDATE public.transactions SET category = 'other_income' WHERE category = 'income';
+UPDATE public.transactions SET category = 'other_expense' WHERE category = 'other';
+UPDATE public.transactions SET category = 'other_expense' WHERE category = 'expense';
+UPDATE public.transactions SET category = 'salary' WHERE category = 'salary_income';
+UPDATE public.transactions SET category = 'freelance' WHERE category = 'freelance_income';
+UPDATE public.transactions SET category = 'dividends' WHERE category = 'dividend_income';
+UPDATE public.transactions SET category = 'rental_income' WHERE category = 'rental';
+UPDATE public.transactions SET category = 'own_transfer' WHERE category = 'transfer';
+UPDATE public.transactions SET category = 'own_transfer' WHERE category = 'internal_transfer';
+UPDATE public.transactions SET category = 'savings_transfer' WHERE category = 'savings';
+UPDATE public.transactions SET category = 'food' WHERE category = 'groceries';
+UPDATE public.transactions SET category = 'dining' WHERE category = 'restaurants';
+UPDATE public.transactions SET category = 'utilities' WHERE category = 'bills';
+UPDATE public.transactions SET category = 'utilities' WHERE category = 'utility';
+UPDATE public.transactions SET category = 'healthcare' WHERE category = 'health';
+UPDATE public.transactions SET category = 'healthcare' WHERE category = 'medical';
+UPDATE public.transactions SET category = 'entertainment' WHERE category = 'leisure';
+UPDATE public.transactions SET category = 'subscriptions' WHERE category = 'subscription';
+UPDATE public.transactions SET category = 'education' WHERE category = 'learning';
+UPDATE public.transactions SET category = 'personal_care' WHERE category = 'personal';
+UPDATE public.transactions SET category = 'home' WHERE category = 'housing';
+UPDATE public.transactions SET category = 'home' WHERE category = 'home_maintenance';
+UPDATE public.transactions SET category = 'gifts' WHERE category = 'gift';
