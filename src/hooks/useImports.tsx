@@ -104,20 +104,57 @@ export function useImports(domain?: AppDomain) {
         }
       });
 
-      if (error) throw error;
+      // Handle errors from edge function
+      if (error) {
+        let payload: { error?: string; message?: string } | null = null;
+
+        // Try to parse JSON from the Response in error.context (FunctionsHttpError)
+        const ctx = (error as any)?.context;
+        if (ctx && typeof ctx?.json === 'function') {
+          try {
+            payload = await ctx.json();
+          } catch {
+            // ignore
+          }
+        }
+
+        // Fallback: extract JSON from error message string
+        if (!payload) {
+          const errorStr = (error as any)?.message || String(error);
+          const jsonMatch = errorStr.match(/\{[^}]+\}/);
+          if (jsonMatch) {
+            try {
+              payload = JSON.parse(jsonMatch[0]);
+            } catch {
+              // ignore
+            }
+          }
+        }
+
+        const code = payload?.error;
+        const message = payload?.message || 'Error al procesar el archivo';
+
+        if (code === 'duplicate_file') {
+          throw new Error(message);
+        }
+        if (code === 'period_closed') {
+          throw new Error(message);
+        }
+        
+        throw new Error(message);
+      }
       
-      // Check for duplicate file error
+      // Check for error in successful response body
       if (data?.error === 'duplicate_file') {
         throw new Error(data.message || 'Este archivo ya fue importado');
       }
 
-      // Check for period closed error
       if (data?.error === 'period_closed') {
         throw new Error(data.message || 'El período está cerrado');
       }
 
       if (data?.error) {
-        throw new Error(data.error);
+        throw new Error(data.message || data.error);
       }
 
       return data as ProcessImportResult;
