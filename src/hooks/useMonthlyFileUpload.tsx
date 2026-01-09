@@ -202,7 +202,29 @@ export function useMonthlyFileUpload() {
           }
         );
 
-        if (error) throw error;
+        if (error) {
+          // Check if it's a duplicate file error (409)
+          const errorBody = typeof error === 'object' && error !== null ? error : {};
+          const errorMessage = (errorBody as any)?.message || '';
+          
+          if (errorMessage.includes('ya fue importado') || (errorBody as any)?.error === 'duplicate_file') {
+            setPendingFilesByMonth((prev) => ({
+              ...prev,
+              [monthKey]: (prev[monthKey] || []).map((f) =>
+                f.id === uploadFile.id
+                  ? { ...f, status: "error" as const, error: errorMessage || "Archivo duplicado" }
+                  : f
+              ),
+            }));
+            toast({
+              title: "Archivo duplicado",
+              description: errorMessage || "Este archivo ya fue importado anteriormente",
+              variant: "destructive",
+            });
+            continue; // Skip to next file instead of throwing
+          }
+          throw error;
+        }
 
         const stats = processData?.stats;
         
