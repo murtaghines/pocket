@@ -477,24 +477,8 @@ serve(async (req) => {
     const calculatedFileHash = fileHash || await sha256(fileContent);
     
     // 2. Check if file already imported
-    const { data: existingImport } = await supabase
-      .from('imports')
-      .select('id, file_name, uploaded_at')
-      .eq('user_id', userId)
-      .eq('file_hash_sha256', calculatedFileHash)
-      .maybeSingle();
-
-    if (existingImport) {
-      console.log(`[process-import] Duplicate file detected: ${existingImport.file_name}`);
-      return new Response(
-        JSON.stringify({ 
-          error: 'duplicate_file',
-          message: `Este archivo ya fue importado el ${new Date(existingImport.uploaded_at).toLocaleDateString()}`,
-          existingImportId: existingImport.id
-        }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Note: We allow duplicate file uploads - deduplication happens at transaction level via fingerprint
+    // Each upload creates a new import record, but duplicate transactions are skipped
 
     // 3. Get or create period
     const { data: period, error: periodError } = await supabase
