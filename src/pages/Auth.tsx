@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
+import { getRememberPreference, setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,12 +49,21 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Load remembered email on mount
+  // Load remembered email + session preference on mount
   useEffect(() => {
     const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
+    const rememberPref = getRememberPreference();
+
     if (savedEmail) {
       setEmail(savedEmail);
-      setRememberMe(true);
+    }
+
+    // Keep UI + stored preference in sync (prevents "checkbox checked" but session not remembered)
+    const shouldRemember = Boolean(rememberPref || savedEmail);
+    setRememberMe(shouldRemember);
+
+    if (shouldRemember && !rememberPref) {
+      setRememberPreference(true);
     }
   }, []);
 
@@ -322,7 +331,14 @@ export default function Auth() {
                     <Checkbox
                       id="remember-me"
                       checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked === true)}
+                      onCheckedChange={(checked) => {
+                        const next = checked === true;
+                        setRememberMe(next);
+                        setRememberPreference(next);
+                        if (!next) {
+                          localStorage.removeItem(REMEMBER_EMAIL_KEY);
+                        }
+                      }}
                     />
                     <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
                       Remember me
