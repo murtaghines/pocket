@@ -31,7 +31,8 @@ import {
   ArrowUpCircle, 
   ArrowRightLeft, 
   Loader2,
-  FileCheck2
+  FileCheck2,
+  Lock
 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
@@ -62,6 +63,7 @@ interface MonthReviewModalProps {
   onOpenChange: (open: boolean) => void;
   monthKey: string; // YYYY-MM
   monthLabel: string;
+  isLocked?: boolean;
 }
 
 export function MonthReviewModal({
@@ -69,6 +71,7 @@ export function MonthReviewModal({
   onOpenChange,
   monthKey,
   monthLabel,
+  isLocked = false,
 }: MonthReviewModalProps) {
   const { t, formatCurrency, formatDate } = useLocalization();
   const { getCategoriesForType, categories } = useCategories("CASHFLOW");
@@ -227,6 +230,16 @@ export function MonthReviewModal({
           </div>
         ) : (
           <>
+            {/* Locked Banner */}
+            {isLocked && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border">
+                <Lock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Este mes está cerrado. No puedes editar las categorías.
+                </span>
+              </div>
+            )}
+
             {/* Stats Summary */}
             <div className="flex gap-4 flex-wrap text-sm">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
@@ -243,7 +256,7 @@ export function MonthReviewModal({
                   <span className="text-warning font-medium">{summary.transfers}</span>
                 </div>
               )}
-              {summary.edited > 0 && (
+              {summary.edited > 0 && !isLocked && (
                 <Badge variant="secondary" className="bg-primary/10 text-primary">
                   {summary.edited} {t("preview.edited")}
                 </Badge>
@@ -291,37 +304,43 @@ export function MonthReviewModal({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={currentCategory}
-                            onValueChange={(value) => handleCategoryChange(tx.id, value)}
-                          >
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue>
-                                {translateCategory(currentCategory)}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableCategories.length > 0 ? (
-                                availableCategories.map((cat) => (
-                                  <SelectItem key={cat.id} value={cat.slug || cat.name.toLowerCase()}>
-                                    <div className="flex items-center gap-2">
-                                      {cat.color && (
-                                        <span 
-                                          className="w-2 h-2 rounded-full" 
-                                          style={{ backgroundColor: cat.color }}
-                                        />
-                                      )}
-                                      {translateCategory(cat.slug || cat.name.toLowerCase())}
-                                    </div>
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <>
-                                  <SelectItem value="other">{translateCategory("other")}</SelectItem>
-                                </>
-                              )}
-                            </SelectContent>
-                          </Select>
+                          {isLocked ? (
+                            <Badge variant="outline" className="text-xs">
+                              {translateCategory(currentCategory)}
+                            </Badge>
+                          ) : (
+                            <Select
+                              value={currentCategory}
+                              onValueChange={(value) => handleCategoryChange(tx.id, value)}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue>
+                                  {translateCategory(currentCategory)}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableCategories.length > 0 ? (
+                                  availableCategories.map((cat) => (
+                                    <SelectItem key={cat.id} value={cat.slug || cat.name.toLowerCase()}>
+                                      <div className="flex items-center gap-2">
+                                        {cat.color && (
+                                          <span 
+                                            className="w-2 h-2 rounded-full" 
+                                            style={{ backgroundColor: cat.color }}
+                                          />
+                                        )}
+                                        {translateCategory(cat.slug || cat.name.toLowerCase())}
+                                      </div>
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <>
+                                    <SelectItem value="other">{translateCategory("other")}</SelectItem>
+                                  </>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </TableCell>
                         <TableCell className={cn(
                           "text-right font-medium",
@@ -343,16 +362,18 @@ export function MonthReviewModal({
             variant="outline" 
             onClick={() => onOpenChange(false)}
           >
-            {t("common.cancel")}
+            {isLocked ? "Cerrar" : t("common.cancel")}
           </Button>
-          <Button 
-            variant="gradient" 
-            onClick={handleConfirm}
-            disabled={transactions.length === 0}
-          >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Listo ({transactions.length})
-          </Button>
+          {!isLocked && (
+            <Button 
+              variant="gradient" 
+              onClick={handleConfirm}
+              disabled={transactions.length === 0}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Listo ({transactions.length})
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

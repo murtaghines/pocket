@@ -6,6 +6,7 @@ import { useUploads } from "@/hooks/useUploads";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
 import { useLocalization } from "@/hooks/useLocalization";
+import { usePeriods } from "@/hooks/usePeriods";
 
 const DEFAULT_MONTHS_TO_SHOW = 6;
 
@@ -19,6 +20,14 @@ export function MonthlyUploadsOrganizer() {
     isProcessingMonth,
     getPendingCountForMonth 
   } = useMonthlyFileUpload();
+  const { 
+    periods, 
+    closePeriod, 
+    reopenPeriod, 
+    isClosing, 
+    isReopening,
+    getPeriodByMonthKey 
+  } = usePeriods("CASHFLOW");
   const { t, language } = useLocalization();
   
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS_TO_SHOW);
@@ -101,22 +110,30 @@ export function MonthlyUploadsOrganizer() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-3">
-          {monthSlots.map((slot) => (
-            <MonthUploadSlot
-              key={slot.key}
-              monthKey={slot.key}
-              monthLabel={slot.label}
-              monthDate={slot.date}
-              uploads={uploadsByMonth[slot.key] || []}
-              onAddFiles={addFilesForMonth}
-              onProcessFiles={processFilesForMonth}
-              onDeleteUpload={deleteUpload}
-              isProcessing={isProcessingMonth(slot.key)}
-              hasPendingFiles={getPendingCountForMonth(slot.key) > 0}
-              pendingFilesCount={getPendingCountForMonth(slot.key)}
-              isDeleting={isDeleting}
-            />
-          ))}
+          {monthSlots.map((slot) => {
+            const period = getPeriodByMonthKey(slot.key, "CASHFLOW");
+            return (
+              <MonthUploadSlot
+                key={slot.key}
+                monthKey={slot.key}
+                monthLabel={slot.label}
+                monthDate={slot.date}
+                uploads={uploadsByMonth[slot.key] || []}
+                onAddFiles={addFilesForMonth}
+                onProcessFiles={processFilesForMonth}
+                onDeleteUpload={deleteUpload}
+                isProcessing={isProcessingMonth(slot.key)}
+                hasPendingFiles={getPendingCountForMonth(slot.key) > 0}
+                pendingFilesCount={getPendingCountForMonth(slot.key)}
+                isDeleting={isDeleting}
+                period={period}
+                onClosePeriod={closePeriod}
+                onReopenPeriod={reopenPeriod}
+                isClosingPeriod={isClosing}
+                isReopeningPeriod={isReopening}
+              />
+            );
+          })}
         </div>
 
         <Button 
