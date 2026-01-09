@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Calendar, FileText, TrendingUp, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useUploads } from "@/hooks/useUploads";
+import { useImports, Import } from "@/hooks/useImports";
 
 const BANNER_SHOW_UNTIL_DAY = 7; // Show banner from day 1 to day 7 of each month
 
 export function MonthClosingBanner() {
-  const { uploads } = useUploads();
+  const { imports: cashflowImports } = useImports("CASHFLOW");
+  const { imports: investingImports } = useImports("INVESTING");
   const [isDismissed, setIsDismissed] = useState(false);
 
   const now = new Date();
@@ -28,27 +29,21 @@ export function MonthClosingBanner() {
     return lastClosedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
   }, [lastClosedMonth]);
 
+  const countImportsForMonth = (imports: Import[], monthKey: string) => {
+    return imports.filter((imp) => {
+      const targetMonth = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
+      // Only count NORMALIZED imports as successful
+      return targetMonth === monthKey && imp.status === 'NORMALIZED';
+    }).length;
+  };
+
   // Count uploads for last closed month
   const { bankUploads, investmentUploads } = useMemo(() => {
-    let bank = 0;
-    let investment = 0;
-    
-    uploads.forEach((upload) => {
-      if (upload.target_month) {
-        // Extract YYYY-MM directly from the string to avoid timezone issues
-        const key = upload.target_month.substring(0, 7);
-        if (key === lastClosedMonthKey) {
-          if (upload.file_path?.includes('/investments/')) {
-            investment++;
-          } else {
-            bank++;
-          }
-        }
-      }
-    });
-    
-    return { bankUploads: bank, investmentUploads: investment };
-  }, [uploads, lastClosedMonthKey]);
+    return {
+      bankUploads: countImportsForMonth(cashflowImports, lastClosedMonthKey),
+      investmentUploads: countImportsForMonth(investingImports, lastClosedMonthKey)
+    };
+  }, [cashflowImports, investingImports, lastClosedMonthKey]);
 
   // Check local storage for dismissal
   useEffect(() => {
