@@ -43,7 +43,7 @@ interface MonthUploadSlotProps {
   monthDate: Date;
   uploads: UploadType[];
   onAddFiles: (files: File[], targetMonth: Date) => void;
-  onProcessFiles: (targetMonth: Date) => void;
+  onProcessFiles: (targetMonth: Date) => Promise<void>;
   onDeleteUpload: (uploadId: string) => void;
   isProcessing: boolean;
   hasPendingFiles: boolean;
