@@ -20,6 +20,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, KeyRound } from "lucide-react";
 import fintLogo from "@/assets/fint-logo.png";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
+import { PasswordInput } from "@/components/ui/password-input";
+import { EmailInput } from "@/components/ui/email-input";
 
 const REMEMBER_EMAIL_KEY = "fint_remember_email";
 
@@ -37,6 +39,7 @@ export default function Auth() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [emailValid, setEmailValid] = useState(false);
   
   // New password reset states
   const [newPassword, setNewPassword] = useState("");
@@ -122,9 +125,8 @@ export default function Auth() {
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
-                <Input
+                <PasswordInput
                   id="new-password"
-                  type="password"
                   placeholder="••••••••"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -135,9 +137,8 @@ export default function Auth() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-new-password">Confirm New Password</Label>
-                <Input
+                <PasswordInput
                   id="confirm-new-password"
-                  type="password"
                   placeholder="••••••••"
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
@@ -297,20 +298,19 @@ export default function Auth() {
               <form onSubmit={handleSignIn} className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="email-login">Email</Label>
-                  <Input
+                  <EmailInput
                     id="email-login"
-                    type="email"
                     placeholder="you@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onValidChange={setEmailValid}
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-login">Password</Label>
-                  <Input
+                  <PasswordInput
                     id="password-login"
-                    type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -361,7 +361,7 @@ export default function Auth() {
                     </DialogContent>
                   </Dialog>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading || !emailValid}>
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Sign In
                 </Button>
@@ -396,20 +396,19 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email-register">Email</Label>
-                  <Input
+                  <EmailInput
                     id="email-register"
-                    type="email"
                     placeholder="you@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onValidChange={setEmailValid}
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-register">Password</Label>
-                  <Input
+                  <PasswordInput
                     id="password-register"
-                    type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -420,9 +419,8 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <Input
+                  <PasswordInput
                     id="confirm-password"
-                    type="password"
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -430,7 +428,7 @@ export default function Auth() {
                     minLength={6}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading || !emailValid}>
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Create Account
                 </Button>
