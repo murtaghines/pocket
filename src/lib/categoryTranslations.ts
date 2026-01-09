@@ -43,6 +43,38 @@ export const categoryTranslations: Record<string, Record<string, string>> = {
     it: 'Altre entrate',
     de: 'Sonstige Einnahmen',
   },
+  investments_income: {
+    es: 'Inversiones',
+    en: 'Investment Income',
+    pt: 'Rendimentos',
+    fr: 'Revenus d\'investissement',
+    it: 'Rendimenti',
+    de: 'Kapitalerträge',
+  },
+  gifts_received: {
+    es: 'Regalos recibidos',
+    en: 'Gifts Received',
+    pt: 'Presentes recebidos',
+    fr: 'Cadeaux reçus',
+    it: 'Regali ricevuti',
+    de: 'Erhaltene Geschenke',
+  },
+  freelance: {
+    es: 'Freelance',
+    en: 'Freelance',
+    pt: 'Freelance',
+    fr: 'Freelance',
+    it: 'Freelance',
+    de: 'Freelance',
+  },
+  rental_income: {
+    es: 'Alquileres',
+    en: 'Rental Income',
+    pt: 'Aluguel',
+    fr: 'Loyers perçus',
+    it: 'Affitti',
+    de: 'Mieteinnahmen',
+  },
 
   // EXPENSE categories
   housing: {
@@ -133,6 +165,62 @@ export const categoryTranslations: Record<string, Record<string, string>> = {
     it: 'Altro',
     de: 'Sonstiges',
   },
+  pets: {
+    es: 'Mascotas',
+    en: 'Pets',
+    pt: 'Animais',
+    fr: 'Animaux',
+    it: 'Animali',
+    de: 'Haustiere',
+  },
+  gifts_given: {
+    es: 'Regalos dados',
+    en: 'Gifts Given',
+    pt: 'Presentes dados',
+    fr: 'Cadeaux offerts',
+    it: 'Regali fatti',
+    de: 'Geschenke',
+  },
+  personal_services: {
+    es: 'Servicios personales',
+    en: 'Personal Services',
+    pt: 'Serviços pessoais',
+    fr: 'Services personnels',
+    it: 'Servizi personali',
+    de: 'Persönliche Dienste',
+  },
+  taxes: {
+    es: 'Impuestos',
+    en: 'Taxes',
+    pt: 'Impostos',
+    fr: 'Impôts',
+    it: 'Tasse',
+    de: 'Steuern',
+  },
+  family: {
+    es: 'Familia',
+    en: 'Family',
+    pt: 'Família',
+    fr: 'Famille',
+    it: 'Famiglia',
+    de: 'Familie',
+  },
+  donations: {
+    es: 'Donaciones',
+    en: 'Donations',
+    pt: 'Doações',
+    fr: 'Dons',
+    it: 'Donazioni',
+    de: 'Spenden',
+  },
+  insurance: {
+    es: 'Seguros',
+    en: 'Insurance',
+    pt: 'Seguros',
+    fr: 'Assurances',
+    it: 'Assicurazioni',
+    de: 'Versicherungen',
+  },
 
   // TRANSFER categories
   own_transfer: {
@@ -199,6 +287,17 @@ export const categoryIcons: Record<string, string> = {
   subscriptions: 'repeat',
   travel: 'plane',
   other_expense: 'more-horizontal',
+  pets: 'paw-print',
+  gifts_given: 'gift',
+  personal_services: 'scissors',
+  taxes: 'landmark',
+  family: 'users',
+  donations: 'heart-handshake',
+  insurance: 'shield-check',
+  investments_income: 'trending-up',
+  gifts_received: 'gift',
+  freelance: 'laptop',
+  rental_income: 'home',
   own_transfer: 'arrow-left-right',
   to_investment: 'trending-up',
 };
@@ -223,6 +322,17 @@ export const categoryEmojis: Record<string, string> = {
   subscriptions: '📺',
   travel: '✈️',
   other_expense: '📦',
+  pets: '🐾',
+  gifts_given: '🎁',
+  personal_services: '💇',
+  taxes: '🏛️',
+  family: '👨‍👩‍👧',
+  donations: '❤️',
+  insurance: '🛡️',
+  investments_income: '📈',
+  gifts_received: '🎁',
+  freelance: '💻',
+  rental_income: '🏘️',
   // Transfer
   own_transfer: '↔️',
   to_investment: '📈',
@@ -239,10 +349,10 @@ export function getMovementLabel(movement: string, language: string = 'en'): str
 }
 
 // Categories by movement type (for onboarding)
-export const INCOME_CATEGORIES = ['salary', 'refunds', 'sales', 'transfers_in', 'other_income'];
-export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'other_expense'];
+export const INCOME_CATEGORIES = ['salary', 'refunds', 'sales', 'transfers_in', 'other_income', 'investments_income', 'gifts_received', 'freelance', 'rental_income'];
+export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'other_expense', 'pets', 'gifts_given', 'personal_services', 'taxes', 'family', 'donations', 'insurance'];
 export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment'];
 
 // Default selected categories for new users
-export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'other_income'];
-export const DEFAULT_EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'subscriptions', 'other_expense'];
+export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'other_income'];
+export const DEFAULT_EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'subscriptions', 'taxes', 'other_expense'];
