@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -229,11 +230,16 @@ export default function Auth() {
         variant: "destructive",
       });
     } else {
+      // Save session preference
+      setRememberPreference(rememberMe);
+      
       // Save or clear remembered email
       if (rememberMe) {
         localStorage.setItem(REMEMBER_EMAIL_KEY, email);
       } else {
         localStorage.removeItem(REMEMBER_EMAIL_KEY);
+        // Move session to sessionStorage so it expires when browser closes
+        transferSessionToSessionStorage();
       }
       navigate("/");
     }
