@@ -13,7 +13,10 @@ import {
   AlertCircle,
   X,
   Trash2,
-  FileCheck2
+  FileCheck2,
+  Lock,
+  Unlock,
+  Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { MonthReviewModal } from "./MonthReviewModal";
+import { Period } from "@/hooks/usePeriods";
 
 const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.pdf'];
 const ACCEPTED_TYPES = [
@@ -51,6 +55,11 @@ interface MonthUploadSlotProps {
   hasPendingFiles: boolean;
   pendingFilesCount: number;
   isDeleting: boolean;
+  period?: Period;
+  onClosePeriod?: (periodId: string) => void;
+  onReopenPeriod?: (periodId: string) => void;
+  isClosingPeriod?: boolean;
+  isReopeningPeriod?: boolean;
 }
 
 export function MonthUploadSlot({
@@ -65,10 +74,19 @@ export function MonthUploadSlot({
   hasPendingFiles,
   pendingFilesCount,
   isDeleting,
+  period,
+  onClosePeriod,
+  onReopenPeriod,
+  isClosingPeriod,
+  isReopeningPeriod,
 }: MonthUploadSlotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [showReopenDialog, setShowReopenDialog] = useState(false);
   const { toast } = useToast();
+
+  const isClosed = period?.status === 'CLOSED';
 
   const totalFiles = uploads.length + pendingFilesCount;
   const totalTransactions = uploads.reduce((sum, u) => sum + (u.transactions_count || 0), 0);
@@ -177,8 +195,14 @@ export function MonthUploadSlot({
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {hasPendingFiles && (
+          <div className="flex items-center gap-2">
+              {isClosed && (
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  <Lock className="w-3 h-3 mr-1" />
+                  Cerrado
+                </Badge>
+              )}
+              {hasPendingFiles && !isClosed && (
                 <Badge variant="secondary" className="bg-warning/10 text-warning">
                   {pendingFilesCount} pendiente{pendingFilesCount > 1 ? 's' : ''}
                 </Badge>
@@ -295,8 +319,8 @@ export function MonthUploadSlot({
               </Button>
             )}
 
-            {/* Add more files button */}
-            {!isEmpty && !hasPendingFiles && (
+            {/* Add more files button - when OPEN */}
+            {!isEmpty && !hasPendingFiles && !isClosed && (
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input
@@ -319,11 +343,113 @@ export function MonthUploadSlot({
                   <FileCheck2 className="w-4 h-4 mr-2" />
                   Listo
                 </Button>
+                {/* Lock button */}
+                {period && onClosePeriod && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCloseDialog(true)}
+                    disabled={isClosingPeriod}
+                  >
+                    {isClosingPeriod ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Unlock className="w-4 h-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* When CLOSED - only view and unlock */}
+            {!isEmpty && isClosed && (
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setShowReviewModal(true)}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Ver transacciones
+                </Button>
+                {period && onReopenPeriod && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowReopenDialog(true)}
+                    disabled={isReopeningPeriod}
+                  >
+                    {isReopeningPeriod ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Lock className="w-4 h-4" />
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
         </CollapsibleContent>
       </Card>
+
+      {/* Close Period Dialog */}
+      <AlertDialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              ¿Cerrar el mes?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Las transacciones de {monthLabel} quedarán bloqueadas y no podrás editar las categorías. Podrás reabrir el mes si lo necesitas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (period && onClosePeriod) {
+                  onClosePeriod(period.id);
+                }
+                setShowCloseDialog(false);
+              }}
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Cerrar mes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reopen Period Dialog */}
+      <AlertDialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Unlock className="w-5 h-5" />
+              ¿Reabrir el mes?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esto te permitirá subir más archivos y editar las categorías de las transacciones de {monthLabel}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (period && onReopenPeriod) {
+                  onReopenPeriod(period.id);
+                }
+                setShowReopenDialog(false);
+              }}
+            >
+              <Unlock className="w-4 h-4 mr-2" />
+              Reabrir mes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Review Modal */}
       <MonthReviewModal
@@ -331,6 +457,7 @@ export function MonthUploadSlot({
         onOpenChange={setShowReviewModal}
         monthKey={monthKey}
         monthLabel={monthLabel}
+        isLocked={isClosed}
       />
     </Collapsible>
   );
