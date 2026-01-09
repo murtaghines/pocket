@@ -264,8 +264,8 @@ export function MonthReviewModal({
             </div>
 
             {/* Transaction Table */}
-            <ScrollArea className="flex-1 min-h-0 border rounded-lg">
-              <Table>
+            <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
+              <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[100px]">{t("transactions.date")}</TableHead>
@@ -353,7 +353,7 @@ export function MonthReviewModal({
                   })}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </div>
           </>
         )}
 
