@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
-import type { PreviewTransaction, PreviewData } from "@/components/dashboard/TransactionPreviewModal";
+import type { PreviewTransaction, PreviewData, MovementType } from "@/components/dashboard/TransactionPreviewModal";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -54,6 +54,20 @@ interface UploadedFile {
     transfersDetected: number;
     totalParsed: number;
   };
+}
+
+// Helper to normalize movement from API response
+function normalizeMovement(movement: string | undefined, type: string | undefined, amount: number): MovementType {
+  if (movement) {
+    const upper = movement.toUpperCase();
+    if (upper === "INCOME" || upper === "EXPENSE" || upper === "TRANSFER") {
+      return upper as MovementType;
+    }
+  }
+  // Fallback to legacy type field
+  if (type === "transfer") return "TRANSFER";
+  if (type === "income" || amount > 0) return "INCOME";
+  return "EXPENSE";
 }
 
 export function useFileUpload(isInvestment: boolean = false) {
@@ -104,7 +118,6 @@ export function useFileUpload(isInvestment: boolean = false) {
       return await extractPdfText(file);
     }
 
-    // For other files, return the raw text if possible
     try {
       return await file.text();
     } catch {
@@ -125,13 +138,11 @@ export function useFileUpload(isInvestment: boolean = false) {
     const pendingFiles = files.filter((f) => f.status === "pending");
     if (pendingFiles.length === 0) return;
 
-    // For investments, use the old flow (no preview)
     if (isInvestment) {
       await processFilesDirectly(pendingFiles);
       return;
     }
 
-    // For cashflow, use preview flow
     for (const uploadFile of pendingFiles) {
       setFiles((prev) =>
         prev.map((f) =>
@@ -140,14 +151,12 @@ export function useFileUpload(isInvestment: boolean = false) {
       );
 
       try {
-        // Extract file content
         const fileContent = await extractFileContent(uploadFile.file);
         
         if (!fileContent.trim()) {
           throw new Error("El archivo está vacío");
         }
 
-        // Upload original file to storage
         const filePath = `${user.id}/${Date.now()}_${uploadFile.name}`;
         const { error: uploadError } = await supabase.storage
           .from("financial-files")
@@ -157,7 +166,6 @@ export function useFileUpload(isInvestment: boolean = false) {
           console.error("Storage upload error:", uploadError);
         }
 
-        // Create upload record
         const targetMonthStr = new Date().toISOString().slice(0, 7) + '-01';
         const { data: uploadRecord, error: insertError } = await supabase
           .from("uploads")
@@ -175,7 +183,6 @@ export function useFileUpload(isInvestment: boolean = false) {
 
         if (insertError) throw insertError;
 
-        // Call edge function with previewOnly mode
         const { data, error } = await supabase.functions.invoke(
           "process-financial-file",
           {
@@ -183,27 +190,32 @@ export function useFileUpload(isInvestment: boolean = false) {
               fileContent,
               uploadId: uploadRecord.id,
               userId: user.id,
-              previewOnly: true, // NEW: Don't save to DB yet
+              previewOnly: true,
             },
           }
         );
 
         if (error) throw error;
 
-        // Transform response to PreviewData format
+        // Transform response to PreviewData format with movement type
         const transactions: PreviewTransaction[] = (data.transactions || []).map(
-          (t: any, index: number) => ({
-            tempId: `${uploadRecord.id}-${index}`,
-            date: t.date,
-            description: t.description,
-            amount: t.amount,
-            type: t.type as "income" | "expense" | "transfer",
-            category: t.category,
-            bank: t.bank,
-            hash_source: t.hash_source || "",
-            transaction_hash: t.transaction_hash,
-            isEdited: false,
-          })
+          (t: any, index: number) => {
+            const movement = normalizeMovement(t.movement, t.type, t.amount);
+            return {
+              tempId: `${uploadRecord.id}-${index}`,
+              date: t.date,
+              description: t.description,
+              amount: t.amount,
+              type: movement.toLowerCase() as "income" | "expense" | "transfer", // Legacy
+              movement: movement,
+              category: t.category,
+              category_id: t.category_id,
+              bank: t.bank,
+              hash_source: t.hash_source || "",
+              transaction_hash: t.transaction_hash,
+              isEdited: false,
+            };
+          }
         );
 
         setPreviewData({
@@ -244,7 +256,6 @@ export function useFileUpload(isInvestment: boolean = false) {
     }
   };
 
-  // Direct processing for investments (no preview)
   const processFilesDirectly = async (pendingFiles: UploadedFile[]) => {
     for (const uploadFile of pendingFiles) {
       setFiles((prev) =>
@@ -347,40 +358,53 @@ export function useFileUpload(isInvestment: boolean = false) {
     }
   };
 
-  // Update a transaction's category in preview
-  const updatePreviewCategory = (tempId: string, newCategory: string) => {
+  // Update a transaction's movement and/or category in preview
+  const updatePreviewTransaction = (tempId: string, updates: { movement?: MovementType; category?: string }) => {
     if (!previewData) return;
 
     setPreviewData({
       ...previewData,
-      transactions: previewData.transactions.map((t) =>
-        t.tempId === tempId
-          ? { ...t, category: newCategory, isEdited: true }
-          : t
-      ),
+      transactions: previewData.transactions.map((t) => {
+        if (t.tempId !== tempId) return t;
+        
+        const newMovement = updates.movement || t.movement;
+        const newCategory = updates.category || t.category;
+        
+        return { 
+          ...t, 
+          movement: newMovement,
+          type: newMovement.toLowerCase() as "income" | "expense" | "transfer", // Keep legacy in sync
+          category: newCategory,
+          isEdited: true 
+        };
+      }),
     });
   };
 
-  // Confirm and save all preview transactions
+  // Legacy function for backwards compatibility
+  const updatePreviewCategory = (tempId: string, newCategory: string) => {
+    updatePreviewTransaction(tempId, { category: newCategory });
+  };
+
   const confirmPreviewTransactions = async () => {
     if (!previewData || !user) return;
 
     setIsConfirming(true);
 
     try {
-      // Save transactions to DB
       const { error } = await supabase.functions.invoke(
         "process-financial-file",
         {
           body: {
             uploadId: previewData.uploadId,
             userId: user.id,
-            confirmTransactions: true, // NEW: Actually save to DB
+            confirmTransactions: true,
             transactions: previewData.transactions.map((t) => ({
               date: t.date,
               description: t.description,
               amount: t.amount,
-              type: t.type,
+              movement: t.movement, // Send movement type
+              type: t.type, // Legacy
               category: t.category,
               bank: t.bank,
               transaction_hash: t.transaction_hash,
@@ -398,13 +422,11 @@ export function useFileUpload(isInvestment: boolean = false) {
         description: `${previewData.transactions.length} transacciones guardadas${editedCount > 0 ? ` (${editedCount} editadas)` : ""}`,
       });
 
-      // Clear preview and refresh data
       setPreviewData(null);
       setFiles([]);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["uploads"] });
 
-      // Run integrity check
       try {
         const { data: integrityData } = await supabase.functions.invoke(
           "check-data-integrity",
@@ -436,7 +458,6 @@ export function useFileUpload(isInvestment: boolean = false) {
 
   const cancelPreview = () => {
     setPreviewData(null);
-    // Optionally delete the upload record
   };
 
   const clearCompleted = () => {
@@ -454,7 +475,8 @@ export function useFileUpload(isInvestment: boolean = false) {
     isProcessing: files.some((f) => f.status === "processing"),
     // Preview-related
     previewData,
-    updatePreviewCategory,
+    updatePreviewCategory, // Legacy
+    updatePreviewTransaction, // New
     confirmPreviewTransactions,
     cancelPreview,
     isConfirming,

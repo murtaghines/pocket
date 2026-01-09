@@ -28,15 +28,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle2, AlertTriangle, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Loader2 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
+import { getCategoryLabel, getMovementLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
+
+export type MovementType = "INCOME" | "EXPENSE" | "TRANSFER";
 
 export interface PreviewTransaction {
   tempId: string;
   date: string;
   description: string;
   amount: number;
-  type: "income" | "expense" | "transfer";
+  type: "income" | "expense" | "transfer"; // Legacy
+  movement: MovementType;
   category: string;
+  category_id?: string | null;
   bank: string | null;
   hash_source: string;
   transaction_hash: string;
@@ -49,6 +54,7 @@ export interface PreviewData {
     totalParsed: number;
     duplicatesIgnored: number;
     transfersDetected: number;
+    investmentsDetected?: number;
   };
   uploadId: string;
   fileName: string;
@@ -59,7 +65,7 @@ interface TransactionPreviewModalProps {
   onOpenChange: (open: boolean) => void;
   previewData: PreviewData | null;
   onConfirm: () => Promise<void>;
-  onUpdateCategory: (tempId: string, newCategory: string) => void;
+  onUpdateTransaction: (tempId: string, updates: { movement?: MovementType; category?: string }) => void;
   isConfirming: boolean;
 }
 
@@ -68,57 +74,90 @@ export function TransactionPreviewModal({
   onOpenChange,
   previewData,
   onConfirm,
-  onUpdateCategory,
+  onUpdateTransaction,
   isConfirming,
 }: TransactionPreviewModalProps) {
-  const { t, formatCurrency, formatDate } = useLocalization();
-  const { getCategoriesForType, categories } = useCategories("CASHFLOW");
+  const { formatCurrency, formatDate, language } = useLocalization();
+  const { incomeCategories, expenseCategories, transferCategories } = useCategories("CASHFLOW");
 
   if (!previewData) return null;
 
   const { transactions, stats, fileName } = previewData;
 
   const summary = useMemo(() => {
-    const income = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
-    const expenses = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const income = transactions
+      .filter((t) => t.movement === "INCOME")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const expenses = transactions
+      .filter((t) => t.movement === "EXPENSE")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const transfers = transactions
+      .filter((t) => t.movement === "TRANSFER")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     const edited = transactions.filter((t) => t.isEdited).length;
-    return { income, expenses, edited };
+    return { income, expenses, transfers, edited };
   }, [transactions]);
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "income":
+  const getMovementIcon = (movement: MovementType) => {
+    switch (movement) {
+      case "INCOME":
         return <ArrowDownCircle className="w-4 h-4 text-success" />;
-      case "expense":
+      case "EXPENSE":
         return <ArrowUpCircle className="w-4 h-4 text-destructive" />;
-      case "transfer":
+      case "TRANSFER":
         return <ArrowRightLeft className="w-4 h-4 text-warning" />;
+    }
+  };
+
+  const getCategoriesForMovement = (movement: MovementType) => {
+    switch (movement) {
+      case "INCOME":
+        return incomeCategories;
+      case "EXPENSE":
+        return expenseCategories;
+      case "TRANSFER":
+        return transferCategories;
       default:
-        return null;
+        return [];
     }
   };
 
   const translateCategory = (slug: string) => {
-    const key = `category.${slug}`;
-    const translated = t(key);
-    return translated !== key ? translated : slug;
+    return getCategoryLabel(slug, language);
+  };
+
+  const translateMovement = (movement: MovementType) => {
+    return getMovementLabel(movement, language);
+  };
+
+  const handleMovementChange = (tempId: string, newMovement: MovementType) => {
+    // When movement changes, reset category to default for that movement
+    const defaultCategory = newMovement === "INCOME" ? "other_income" 
+      : newMovement === "EXPENSE" ? "other_expense" 
+      : "own_transfer";
+    
+    onUpdateTransaction(tempId, { movement: newMovement, category: defaultCategory });
+  };
+
+  const handleCategoryChange = (tempId: string, newCategory: string) => {
+    onUpdateTransaction(tempId, { category: newCategory });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-success" />
-            {t("preview.title")}
+            Vista previa de importación
           </DialogTitle>
           <DialogDescription>
-            {fileName} - {transactions.length} {t("preview.transactions_ready")}
+            {fileName} - {transactions.length} transacciones listas para importar
           </DialogDescription>
         </DialogHeader>
 
         {/* Stats Summary */}
-        <div className="flex gap-4 flex-wrap text-sm">
+        <div className="flex gap-3 flex-wrap text-sm">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
             <ArrowDownCircle className="w-4 h-4 text-success" />
             <span className="text-success font-medium">{formatCurrency(summary.income)}</span>
@@ -127,17 +166,23 @@ export function TransactionPreviewModal({
             <ArrowUpCircle className="w-4 h-4 text-destructive" />
             <span className="text-destructive font-medium">{formatCurrency(summary.expenses)}</span>
           </div>
+          {summary.transfers > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
+              <ArrowRightLeft className="w-4 h-4 text-warning" />
+              <span className="text-warning font-medium">{formatCurrency(summary.transfers)}</span>
+            </div>
+          )}
           {stats.duplicatesIgnored > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
               <AlertTriangle className="w-4 h-4 text-muted-foreground" />
               <span className="text-muted-foreground">
-                {stats.duplicatesIgnored} {t("preview.duplicates_ignored")}
+                {stats.duplicatesIgnored} duplicados ignorados
               </span>
             </div>
           )}
           {summary.edited > 0 && (
             <Badge variant="secondary">
-              {summary.edited} {t("preview.edited")}
+              {summary.edited} editadas
             </Badge>
           )}
         </div>
@@ -147,16 +192,16 @@ export function TransactionPreviewModal({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">{t("transactions.date")}</TableHead>
-                <TableHead>{t("transactions.description")}</TableHead>
-                <TableHead className="w-[80px]">{t("transactions.type")}</TableHead>
-                <TableHead className="w-[180px]">{t("transactions.category")}</TableHead>
-                <TableHead className="text-right w-[120px]">{t("transactions.amount")}</TableHead>
+                <TableHead className="w-[90px]">Fecha</TableHead>
+                <TableHead className="min-w-[180px]">Descripción</TableHead>
+                <TableHead className="w-[130px]">Movimiento</TableHead>
+                <TableHead className="w-[180px]">Categoría</TableHead>
+                <TableHead className="text-right w-[110px]">Importe</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {transactions.map((tx) => {
-                const availableCategories = getCategoriesForType(tx.type);
+                const availableCategories = getCategoriesForMovement(tx.movement);
                 
                 return (
                   <TableRow 
@@ -166,59 +211,77 @@ export function TransactionPreviewModal({
                     <TableCell className="text-muted-foreground text-sm">
                       {formatDate(new Date(tx.date))}
                     </TableCell>
-                    <TableCell className="font-medium truncate max-w-[200px]">
-                      {tx.description}
-                      {tx.isEdited && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          {t("preview.edited")}
-                        </Badge>
-                      )}
-                    </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        {getTypeIcon(tx.type)}
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium truncate max-w-[200px]">
+                          {tx.description}
+                        </span>
+                        {tx.isEdited && (
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            editada
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <Select
-                        value={tx.category}
-                        onValueChange={(value) => onUpdateCategory(tx.tempId, value)}
+                        value={tx.movement}
+                        onValueChange={(value) => handleMovementChange(tx.tempId, value as MovementType)}
                       >
-                        <SelectTrigger className="h-8 text-xs">
+                        <SelectTrigger className="h-8 text-xs w-full">
+                          <div className="flex items-center gap-1.5">
+                            {getMovementIcon(tx.movement)}
+                            <SelectValue>
+                              {translateMovement(tx.movement)}
+                            </SelectValue>
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="INCOME">
+                            <div className="flex items-center gap-2">
+                              <ArrowDownCircle className="w-4 h-4 text-success" />
+                              {translateMovement("INCOME")}
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="EXPENSE">
+                            <div className="flex items-center gap-2">
+                              <ArrowUpCircle className="w-4 h-4 text-destructive" />
+                              {translateMovement("EXPENSE")}
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="TRANSFER">
+                            <div className="flex items-center gap-2">
+                              <ArrowRightLeft className="w-4 h-4 text-warning" />
+                              {translateMovement("TRANSFER")}
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={tx.category}
+                        onValueChange={(value) => handleCategoryChange(tx.tempId, value)}
+                      >
+                        <SelectTrigger className="h-8 text-xs w-full">
                           <SelectValue>
                             {translateCategory(tx.category)}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {availableCategories.length > 0 ? (
-                            availableCategories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.slug || cat.name.toLowerCase()}>
-                                {translateCategory(cat.slug || cat.name.toLowerCase())}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            // Fallback to common categories if DB categories not available
-                            <>
-                              <SelectItem value="food">{translateCategory("food")}</SelectItem>
-                              <SelectItem value="transport">{translateCategory("transport")}</SelectItem>
-                              <SelectItem value="housing">{translateCategory("housing")}</SelectItem>
-                              <SelectItem value="subscriptions">{translateCategory("subscriptions")}</SelectItem>
-                              <SelectItem value="leisure">{translateCategory("leisure")}</SelectItem>
-                              <SelectItem value="health">{translateCategory("health")}</SelectItem>
-                              <SelectItem value="education">{translateCategory("education")}</SelectItem>
-                              <SelectItem value="travel">{translateCategory("travel")}</SelectItem>
-                              <SelectItem value="income">{translateCategory("income")}</SelectItem>
-                              <SelectItem value="transfer">{translateCategory("transfer")}</SelectItem>
-                              <SelectItem value="investment">{translateCategory("investment")}</SelectItem>
-                              <SelectItem value="other">{translateCategory("other")}</SelectItem>
-                            </>
-                          )}
+                          {availableCategories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.slug || ""}>
+                              {translateCategory(cat.slug || "")}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
                     <TableCell className={cn(
-                      "text-right font-medium",
-                      tx.type === "income" ? "text-success" : tx.type === "expense" ? "text-destructive" : "text-warning"
+                      "text-right font-medium tabular-nums",
+                      tx.movement === "INCOME" ? "text-success" : 
+                      tx.movement === "EXPENSE" ? "text-destructive" : 
+                      "text-warning"
                     )}>
                       {formatCurrency(tx.amount)}
                     </TableCell>
@@ -235,7 +298,7 @@ export function TransactionPreviewModal({
             onClick={() => onOpenChange(false)}
             disabled={isConfirming}
           >
-            {t("common.cancel")}
+            Cancelar
           </Button>
           <Button 
             variant="gradient" 
@@ -245,12 +308,12 @@ export function TransactionPreviewModal({
             {isConfirming ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {t("preview.importing")}
+                Importando...
               </>
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                {t("preview.confirm")} ({transactions.length})
+                Confirmar ({transactions.length})
               </>
             )}
           </Button>

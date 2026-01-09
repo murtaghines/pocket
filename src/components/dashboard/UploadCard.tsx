@@ -28,7 +28,7 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
     isProcessing, 
     hasPending,
     previewData,
-    updatePreviewCategory,
+    updatePreviewTransaction,
     confirmPreviewTransactions,
     cancelPreview,
     isConfirming,
@@ -134,7 +134,7 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
           onOpenChange={(open) => !open && cancelPreview()}
           previewData={previewData}
           onConfirm={confirmPreviewTransactions}
-          onUpdateCategory={updatePreviewCategory}
+          onUpdateTransaction={updatePreviewTransaction}
           isConfirming={isConfirming}
         />
       </>
@@ -227,7 +227,7 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
         onOpenChange={(open) => !open && cancelPreview()}
         previewData={previewData}
         onConfirm={confirmPreviewTransactions}
-        onUpdateCategory={updatePreviewCategory}
+        onUpdateTransaction={updatePreviewTransaction}
         isConfirming={isConfirming}
       />
     </>
