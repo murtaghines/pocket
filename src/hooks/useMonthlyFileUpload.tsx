@@ -88,7 +88,9 @@ export function useMonthlyFileUpload() {
         .upload(filePath, uploadFile.file);
 
       if (uploadError) {
-        console.error("Storage upload error:", uploadError);
+        throw new Error(
+          "No se pudo subir el archivo (conexión interrumpida). Intenta de nuevo."
+        );
       }
 
       // Generate file hash for deduplication
