@@ -195,16 +195,11 @@ export function MonthUploadSlot({
                 )}
               </div>
             </div>
-          <div className="flex items-center gap-2">
-              {isClosed && (
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  <Lock className="w-3 h-3 mr-1" />
-                  Cerrado
-                </Badge>
-              )}
-              {hasPendingFiles && !isClosed && (
+            <div className="flex items-center gap-2">
+              {isProcessing && (
                 <Badge variant="secondary" className="bg-warning/10 text-warning">
-                  {pendingFilesCount} pendiente{pendingFilesCount > 1 ? 's' : ''}
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  Procesando
                 </Badge>
               )}
               <Badge 
@@ -215,6 +210,31 @@ export function MonthUploadSlot({
               >
                 {uploads.length} archivo{uploads.length !== 1 ? 's' : ''}
               </Badge>
+              {/* Lock/Unlock button in top right */}
+              {period && !isEmpty && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isClosed) {
+                      setShowReopenDialog(true);
+                    } else {
+                      setShowCloseDialog(true);
+                    }
+                  }}
+                  disabled={isClosingPeriod || isReopeningPeriod}
+                >
+                  {isClosingPeriod || isReopeningPeriod ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isClosed ? (
+                    <Lock className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Unlock className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </CollapsibleTrigger>
@@ -297,30 +317,9 @@ export function MonthUploadSlot({
               </div>
             )}
 
-            {/* Process button when there are pending files */}
-            {hasPendingFiles && (
-              <Button 
-                onClick={() => onProcessFiles(monthDate)}
-                disabled={isProcessing}
-                className="w-full"
-                variant="gradient"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Procesar {pendingFilesCount} archivo{pendingFilesCount > 1 ? 's' : ''} con IA
-                  </>
-                )}
-              </Button>
-            )}
 
             {/* Add more files button - when OPEN */}
-            {!isEmpty && !hasPendingFiles && !isClosed && (
+            {!isEmpty && !isClosed && (
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input
@@ -329,8 +328,9 @@ export function MonthUploadSlot({
                     multiple
                     onChange={handleFileInput}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={isProcessing}
                   />
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button variant="outline" size="sm" className="w-full" disabled={isProcessing}>
                     <Upload className="w-4 h-4 mr-2" />
                     Agregar más archivos
                   </Button>
@@ -339,55 +339,25 @@ export function MonthUploadSlot({
                   variant="gradient" 
                   size="sm"
                   onClick={() => setShowReviewModal(true)}
+                  disabled={isProcessing}
                 >
                   <FileCheck2 className="w-4 h-4 mr-2" />
                   Listo
                 </Button>
-                {/* Lock button */}
-                {period && onClosePeriod && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowCloseDialog(true)}
-                    disabled={isClosingPeriod}
-                  >
-                    {isClosingPeriod ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Unlock className="w-4 h-4" />
-                    )}
-                  </Button>
-                )}
               </div>
             )}
 
-            {/* When CLOSED - only view and unlock */}
+            {/* When CLOSED - only view */}
             {!isEmpty && isClosed && (
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setShowReviewModal(true)}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Ver transacciones
-                </Button>
-                {period && onReopenPeriod && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowReopenDialog(true)}
-                    disabled={isReopeningPeriod}
-                  >
-                    {isReopeningPeriod ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Lock className="w-4 h-4" />
-                    )}
-                  </Button>
-                )}
-              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="w-full"
+                onClick={() => setShowReviewModal(true)}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Ver transacciones
+              </Button>
             )}
           </CardContent>
         </CollapsibleContent>
