@@ -341,8 +341,8 @@ export function MonthUploadSlot({
                   onClick={() => setShowReviewModal(true)}
                   disabled={isProcessing}
                 >
-                  <FileCheck2 className="w-4 h-4 mr-2" />
-                  Listo
+                  <Eye className="w-4 h-4 mr-2" />
+                  Revisar
                 </Button>
               </div>
             )}
