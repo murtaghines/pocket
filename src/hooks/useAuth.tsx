@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { restoreSessionFromSessionStorage, clearSessionOnUnload, getRememberPreference } from "@/lib/sessionStorage";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -8,6 +9,9 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Restore session from sessionStorage if user didn't check "remember me"
+    restoreSessionFromSessionStorage();
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -24,7 +28,18 @@ export function useAuth() {
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Clear session on browser close if "remember me" was not checked
+    const handleUnload = () => {
+      if (!getRememberPreference()) {
+        clearSessionOnUnload();
+      }
+    };
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("beforeunload", handleUnload);
+    };
   }, []);
 
   const signOut = async () => {
