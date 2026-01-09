@@ -266,140 +266,28 @@ export function useImports(domain?: AppDomain) {
     return trimmed;
   };
 
-  // Retry a failed import: download file from storage, re-process it
-  const retryImport = useMutation({
-    mutationFn: async (imp: Import) => {
-      if (!user?.id) throw new Error("User not authenticated");
-      if (!imp.file_storage_url) throw new Error("No hay archivo almacenado para reintentar");
-
-      // 1. Delete old import record (and related transactions)
-      const { error: txDelError } = await supabase
+  // Auto-delete failed imports
+  const autoDeleteFailedImport = async (importId: string) => {
+    try {
+      // Delete related transactions first
+      await supabase
         .from("transactions")
         .delete()
-        .eq("import_id", imp.id);
-      if (txDelError) console.error("Error deleting old transactions:", txDelError);
+        .eq("import_id", importId);
 
-      const { error: impDelError } = await supabase
+      // Delete the import record
+      await supabase
         .from("imports")
         .delete()
-        .eq("id", imp.id);
-      if (impDelError) throw new Error("No se pudo eliminar el import anterior");
+        .eq("id", importId);
 
-      // 2. Download file from storage
-      const { data: fileData, error: downloadError } = await supabase.storage
-        .from("financial-files")
-        .download(imp.file_storage_url);
-
-      if (downloadError || !fileData) {
-        throw new Error("No se pudo descargar el archivo. Sube el archivo de nuevo.");
-      }
-
-      // 3. Extract content based on file type
-      const extension = imp.file_name.split(".").pop()?.toLowerCase();
-      let fileContent = "";
-
-      if (extension === "csv") {
-        fileContent = await fileData.text();
-      } else if (extension === "xlsx" || extension === "xls") {
-        const arrayBuffer = await fileData.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        workbook.SheetNames.forEach((sheetName) => {
-          const sheet = workbook.Sheets[sheetName];
-          const csv = XLSX.utils.sheet_to_csv(sheet);
-          fileContent += `Sheet: ${sheetName}\n${csv}\n\n`;
-        });
-      } else if (extension === "pdf") {
-        const arrayBuffer = await fileData.arrayBuffer();
-        fileContent = await extractPdfText(arrayBuffer);
-      } else {
-        fileContent = await fileData.text();
-      }
-
-      if (!fileContent.trim()) {
-        throw new Error("Archivo vacío o sin contenido legible");
-      }
-
-      // 4. Generate file hash
-      const encoder = new TextEncoder();
-      const data = encoder.encode(fileContent);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const fileHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-
-      // Get target month from period
-      const targetMonth = imp.target_month || imp.uploaded_at.substring(0, 7);
-
-      // 5. Call process-import edge function
-      const { data: processData, error: processError } = await supabase.functions.invoke(
-        "process-import",
-        {
-          body: {
-            fileContent,
-            userId: user.id,
-            domain: imp.domain,
-            targetMonth: `${targetMonth}-01`,
-            fileHash,
-            fileName: imp.file_name,
-            fileSize: imp.file_size,
-            fileMime: imp.file_mime || "application/octet-stream",
-            fileStorageUrl: imp.file_storage_url,
-            sourceType: imp.source_type,
-          },
-        }
-      );
-
-      if (processError) {
-        let message = "Error al reprocesar el archivo";
-        let errorCode = "";
-        const ctx = (processError as any)?.context;
-        if (ctx && typeof ctx?.json === "function") {
-          try {
-            const payload = await ctx.json();
-            message = payload?.message || message;
-            errorCode = payload?.error || "";
-          } catch {
-            // ignore
-          }
-        }
-        
-        // Create error with code for special handling
-        const error = new Error(message);
-        (error as any).code = errorCode;
-        throw error;
-      }
-
-      return processData;
-    },
-    onSuccess: (data) => {
+      // Invalidate queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["periods"] });
-
-      const stats = data?.stats;
-      let description = `${stats?.newTransactions || 0} transacciones nuevas`;
-      if (stats?.duplicatesIgnored > 0) {
-        description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
-      }
-      toast.success(`Archivo reprocesado: ${description}`);
-    },
-    onError: (error: any) => {
-      console.error("Error retrying import:", error);
-      const code = error?.code || "";
-      const message = error?.message || "Error al reintentar";
-      
-      if (code === "payment_required") {
-        toast.error("Sin créditos de IA", {
-          description: "Recarga créditos en Lovable para continuar procesando archivos.",
-        });
-      } else if (code === "rate_limited") {
-        toast.error("Demasiadas solicitudes", {
-          description: "Espera unos minutos y vuelve a intentar.",
-        });
-      } else {
-        toast.error(message);
-      }
-    },
-  });
+    } catch (error) {
+      console.error("Error auto-deleting failed import:", error);
+    }
+  };
 
   const getImportsByMonth = (monthKey: string): Import[] => {
     return imports.filter(i => {
@@ -427,10 +315,9 @@ export function useImports(domain?: AppDomain) {
     error,
     processImport: processImport.mutateAsync,
     deleteImport: deleteImport.mutate,
-    retryImport: retryImport.mutate,
+    autoDeleteFailedImport,
     isProcessing: processImport.isPending,
     isDeleting: deleteImport.isPending,
-    isRetrying: retryImport.isPending,
     getImportsByMonth
   };
 }

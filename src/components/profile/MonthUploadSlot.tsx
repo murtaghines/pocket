@@ -19,8 +19,7 @@ import {
   Lock,
   Unlock,
   Eye,
-  Info,
-  RotateCcw
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -55,12 +54,10 @@ interface MonthUploadSlotProps {
   onAddFiles: (files: File[], targetMonth: Date) => void;
   onProcessFiles: (targetMonth: Date) => Promise<void>;
   onDeleteImport: (importId: string) => void;
-  onRetryImport: (imp: Import) => void;
   isProcessing: boolean;
   hasPendingFiles: boolean;
   pendingFilesCount: number;
   isDeleting: boolean;
-  isRetrying: boolean;
   period?: Period;
   onClosePeriod?: (periodId: string) => void;
   onReopenPeriod?: (periodId: string) => void;
@@ -76,12 +73,10 @@ export function MonthUploadSlot({
   onAddFiles,
   onProcessFiles,
   onDeleteImport,
-  onRetryImport,
   isProcessing,
   hasPendingFiles,
   pendingFilesCount,
   isDeleting,
-  isRetrying,
   period,
   onClosePeriod,
   onReopenPeriod,
@@ -349,31 +344,13 @@ export function MonthUploadSlot({
                         </HoverCard>
                       )}
 
-                      {/* Retry button for failed imports with stored file */}
-                      {status === "FAILED" && imp.file_storage_url && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-primary hover:text-primary"
-                          disabled={isRetrying}
-                          onClick={() => onRetryImport(imp)}
-                          title="Reintentar"
-                        >
-                          {isRetrying ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          )}
-                        </Button>
-                      )}
-
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            disabled={isDeleting || isRetrying}
+                            disabled={isDeleting}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>

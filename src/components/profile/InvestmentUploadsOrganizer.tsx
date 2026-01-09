@@ -11,7 +11,7 @@ const DEFAULT_MONTHS_TO_SHOW = 6;
 
 export function InvestmentUploadsOrganizer() {
   // Use imports instead of uploads (unified system)
-  const { imports, isLoading, deleteImport, retryImport, isDeleting, isRetrying } = useImports("INVESTING");
+  const { imports, isLoading, deleteImport, isDeleting } = useImports("INVESTING");
   const { 
     pendingFilesByMonth, 
     addFilesForMonth, 
@@ -108,12 +108,10 @@ export function InvestmentUploadsOrganizer() {
                 onAddFiles={addFilesForMonth}
                 onProcessFiles={processFilesForMonth}
                 onDeleteImport={deleteImport}
-                onRetryImport={retryImport}
                 isProcessing={isProcessingMonth(monthKeyForPending)}
                 hasPendingFiles={getPendingCountForMonth(monthKeyForPending) > 0}
                 pendingFilesCount={getPendingCountForMonth(monthKeyForPending)}
                 isDeleting={isDeleting}
-                isRetrying={isRetrying}
               />
             );
           })}
