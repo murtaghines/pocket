@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Upload as UploadType } from "@/hooks/useUploads";
+import { Import } from "@/hooks/useImports";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,10 +48,10 @@ interface MonthUploadSlotProps {
   monthKey: string;
   monthLabel: string;
   monthDate: Date;
-  uploads: UploadType[];
+  imports: Import[];
   onAddFiles: (files: File[], targetMonth: Date) => void;
   onProcessFiles: (targetMonth: Date) => Promise<void>;
-  onDeleteUpload: (uploadId: string) => void;
+  onDeleteImport: (importId: string) => void;
   isProcessing: boolean;
   hasPendingFiles: boolean;
   pendingFilesCount: number;
@@ -67,10 +67,10 @@ export function MonthUploadSlot({
   monthKey,
   monthLabel,
   monthDate,
-  uploads,
+  imports,
   onAddFiles,
   onProcessFiles,
-  onDeleteUpload,
+  onDeleteImport,
   isProcessing,
   hasPendingFiles,
   pendingFilesCount,
@@ -90,8 +90,8 @@ export function MonthUploadSlot({
 
   const isClosed = period?.status === 'CLOSED';
 
-  const totalFiles = uploads.length + pendingFilesCount;
-  const totalTransactions = uploads.reduce((sum, u) => sum + (u.transactions_count || 0), 0);
+  const totalFiles = imports.length + pendingFilesCount;
+  const totalTransactions = imports.reduce((sum, imp) => sum + (imp.transactions_count || 0), 0);
 
   // Animate progress bar during processing
   useEffect(() => {
@@ -171,22 +171,23 @@ export function MonthUploadSlot({
     });
   };
 
+  // Map import status to UI status
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-success';
-      case 'processing': return 'text-warning';
-      case 'error':
-      case 'failed': return 'text-destructive';
+      case 'NORMALIZED': return 'text-success';
+      case 'PARSED': 
+      case 'UPLOADED': return 'text-warning';
+      case 'FAILED': return 'text-destructive';
       default: return 'text-muted-foreground';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed': return <CheckCircle2 className="w-4 h-4 text-success" />;
-      case 'processing': return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
-      case 'error':
-      case 'failed': return <AlertCircle className="w-4 h-4 text-destructive" />;
+      case 'NORMALIZED': return <CheckCircle2 className="w-4 h-4 text-success" />;
+      case 'PARSED':
+      case 'UPLOADED': return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
+      case 'FAILED': return <AlertCircle className="w-4 h-4 text-destructive" />;
       default: return <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />;
     }
   };
@@ -236,7 +237,7 @@ export function MonthUploadSlot({
                   isEmpty && "text-muted-foreground border-dashed"
                 )}
               >
-                {uploads.length} archivo{uploads.length !== 1 ? 's' : ''}
+                {imports.length} archivo{imports.length !== 1 ? 's' : ''}
               </Badge>
               {/* Lock/Unlock button in top right */}
               {period && !isEmpty && (
@@ -283,23 +284,23 @@ export function MonthUploadSlot({
                 </p>
               </div>
             )}
-            {/* Existing uploads */}
-            {uploads.length > 0 && (
+            {/* Existing imports */}
+            {imports.length > 0 && (
               <div className="space-y-2">
-                {uploads.map((upload) => (
+                {imports.map((imp) => (
                   <div 
-                    key={upload.id}
+                    key={imp.id}
                     className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg text-sm"
                   >
-                    {getStatusIcon(upload.status)}
+                    {getStatusIcon(imp.status)}
                     <div className="flex-1 min-w-0">
-                      <p className="truncate text-xs font-medium">{upload.file_name}</p>
+                      <p className="truncate text-xs font-medium">{imp.file_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {upload.status === 'completed' && upload.transactions_count 
-                          ? `${upload.transactions_count} transacciones`
-                          : (upload.status === 'error' || upload.status === 'failed') && upload.error_message
-                          ? upload.error_message
-                          : `${formatDate(upload.created_at)} • ${formatFileSize(upload.file_size)}`
+                        {imp.status === 'NORMALIZED' && imp.transactions_count 
+                          ? `${imp.transactions_count} transacciones`
+                          : imp.status === 'FAILED' && imp.error_message
+                          ? imp.error_message
+                          : `${formatDate(imp.uploaded_at)} • ${formatFileSize(imp.file_size)}`
                         }
                       </p>
                     </div>
@@ -318,13 +319,13 @@ export function MonthUploadSlot({
                         <AlertDialogHeader>
                           <AlertDialogTitle>¿Eliminar archivo?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Se eliminarán todas las transacciones asociadas a "{upload.file_name}". Esta acción no se puede deshacer.
+                            Se eliminarán todas las transacciones asociadas a "{imp.file_name}". Esta acción no se puede deshacer.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => onDeleteUpload(upload.id)}
+                            onClick={() => onDeleteImport(imp.id)}
                             className="bg-destructive hover:bg-destructive/90"
                           >
                             Eliminar

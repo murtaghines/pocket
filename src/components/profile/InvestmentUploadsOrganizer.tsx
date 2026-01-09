@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, TrendingUp } from "lucide-react";
-import { useUploads } from "@/hooks/useUploads";
+import { useImports } from "@/hooks/useImports";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -10,8 +10,8 @@ import { useLocalization } from "@/hooks/useLocalization";
 const DEFAULT_MONTHS_TO_SHOW = 6;
 
 export function InvestmentUploadsOrganizer() {
-  // Only fetch INVESTING uploads
-  const { uploads, isLoading, deleteUpload, isDeleting } = useUploads("INVESTING");
+  // Use imports instead of uploads (unified system)
+  const { imports, isLoading, deleteImport, isDeleting } = useImports("INVESTING");
   const { 
     pendingFilesByMonth, 
     addFilesForMonth, 
@@ -46,20 +46,18 @@ export function InvestmentUploadsOrganizer() {
     return slots;
   }, [monthsToShow, locale]);
 
-  const uploadsByMonth = useMemo(() => {
-    const grouped: Record<string, typeof uploads> = {};
+  const importsByMonth = useMemo(() => {
+    const grouped: Record<string, typeof imports> = {};
     
-    uploads.forEach((upload) => {
-      if (upload.target_month) {
-        // Extract YYYY-MM directly from the string to avoid timezone issues
-        const key = `${upload.target_month.substring(0, 7)}-inv`;
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(upload);
-      }
+    imports.forEach((imp) => {
+      // Extract YYYY-MM from uploaded_at
+      const key = `${imp.uploaded_at.substring(0, 7)}-inv`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(imp);
     });
     
     return grouped;
-  }, [uploads]);
+  }, [imports]);
 
   const handleLoadMore = () => {
     setMonthsToShow((prev) => prev + 3);
@@ -106,10 +104,10 @@ export function InvestmentUploadsOrganizer() {
                 monthKey={slot.key}
                 monthLabel={slot.label}
                 monthDate={slot.date}
-                uploads={uploadsByMonth[slot.key] || []}
+                imports={importsByMonth[slot.key] || []}
                 onAddFiles={addFilesForMonth}
                 onProcessFiles={processFilesForMonth}
-                onDeleteUpload={deleteUpload}
+                onDeleteImport={deleteImport}
                 isProcessing={isProcessingMonth(monthKeyForPending)}
                 hasPendingFiles={getPendingCountForMonth(monthKeyForPending) > 0}
                 pendingFilesCount={getPendingCountForMonth(monthKeyForPending)}
