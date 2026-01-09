@@ -92,8 +92,55 @@ serve(async (req) => {
   }
 
   try {
-    const { fileContent, uploadId, userId } = await req.json();
+    const { fileContent, uploadId, userId, previewOnly, confirmTransactions, transactions } = await req.json();
 
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // CONFIRM MODE: Save pre-validated transactions
+    if (confirmTransactions && transactions && uploadId && userId) {
+      console.log(`Confirming ${transactions.length} transactions for upload ${uploadId}`);
+      
+      const transactionsToInsert = transactions.map((t: any) => ({
+        user_id: userId,
+        upload_id: uploadId,
+        date: t.date,
+        description: t.description || 'Sin descripción',
+        amount: t.amount,
+        type: t.type,
+        category: t.category || 'other',
+        bank: t.bank || null,
+        transaction_hash: t.transaction_hash,
+      }));
+
+      const { error: insertError } = await supabase
+        .from('transactions')
+        .insert(transactionsToInsert);
+
+      if (insertError) {
+        console.error('Error inserting transactions:', insertError);
+        throw new Error(`Failed to insert transactions: ${insertError.message}`);
+      }
+
+      // Update upload status
+      await supabase
+        .from('uploads')
+        .update({ 
+          status: 'completed', 
+          transactions_count: transactions.length,
+          processed_at: new Date().toISOString()
+        })
+        .eq('id', uploadId);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `${transactions.length} transacciones guardadas`,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // PROCESS MODE: Analyze file content
     if (!fileContent || !uploadId || !userId) {
       console.error('Missing required fields:', { hasContent: !!fileContent, uploadId, userId });
       return new Response(
@@ -102,9 +149,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing file for upload ${uploadId}, content length: ${fileContent.length}`);
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    console.log(`Processing file for upload ${uploadId}, content length: ${fileContent.length}, previewOnly: ${!!previewOnly}`);
 
     // Update upload status to processing
     await supabase
@@ -168,24 +213,24 @@ serve(async (req) => {
     }
 
     // Parse the AI response - handle markdown code blocks
-    let transactions;
+    let parsedTransactions;
     try {
       let jsonString = rawContent.trim();
       // Remove markdown code blocks if present
       if (jsonString.startsWith('```')) {
         jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
       }
-      transactions = JSON.parse(jsonString);
+      parsedTransactions = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('Failed to parse AI response:', rawContent.substring(0, 500));
       throw new Error('Failed to parse AI response as JSON');
     }
 
-    if (!Array.isArray(transactions)) {
+    if (!Array.isArray(parsedTransactions)) {
       throw new Error('AI response is not an array');
     }
 
-    console.log(`Parsed ${transactions.length} transactions from AI`);
+    console.log(`Parsed ${parsedTransactions.length} transactions from AI`);
 
     // Get existing transaction hashes for this user to detect duplicates
     const { data: existingTransactions } = await supabase
@@ -207,7 +252,7 @@ serve(async (req) => {
     const investmentCount = { count: 0 };
     const seenHashesInBatch = new Set<string>();
 
-    for (const t of transactions) {
+    for (const t of parsedTransactions) {
       // Generate hash from AI-provided hash_source or create one
       let hashSource = t.hash_source;
       if (!hashSource) {
@@ -258,12 +303,38 @@ serve(async (req) => {
         bank: t.bank || null,
         original_text: null,
         transaction_hash: hash,
+        hash_source: hashSource,
       });
     }
 
-    console.log(`New transactions to insert: ${newTransactions.length}, Duplicates: ${duplicateCount.count}, Transfers: ${transferCount.count}, Investments: ${investmentCount.count}`);
+    console.log(`New transactions: ${newTransactions.length}, Duplicates: ${duplicateCount.count}, Transfers: ${transferCount.count}`);
 
-    // Insert only new transactions
+    // PREVIEW MODE: Return transactions without saving
+    if (previewOnly) {
+      // Update upload status to indicate preview ready
+      await supabase
+        .from('uploads')
+        .update({ status: 'preview' })
+        .eq('id', uploadId);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          previewMode: true,
+          transactions: newTransactions,
+          stats: {
+            newTransactions: newTransactions.length,
+            duplicatesIgnored: duplicateCount.count,
+            transfersDetected: transferCount.count,
+            investmentsDetected: investmentCount.count,
+            totalParsed: parsedTransactions.length
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // DIRECT SAVE MODE (legacy): Insert transactions directly
     if (newTransactions.length > 0) {
       const { error: insertError } = await supabase
         .from('transactions')
@@ -301,7 +372,7 @@ serve(async (req) => {
           duplicatesIgnored: duplicateCount.count,
           transfersDetected: transferCount.count,
           investmentsDetected: investmentCount.count,
-          totalParsed: transactions.length
+          totalParsed: parsedTransactions.length
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
