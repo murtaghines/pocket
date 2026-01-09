@@ -220,9 +220,6 @@ export function useFileUpload(isInvestment: boolean = false) {
             };
           }
         );
-            };
-          }
-        );
 
         setPreviewData({
           transactions,
