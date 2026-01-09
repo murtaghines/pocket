@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+import type { PreviewTransaction, PreviewData } from "@/components/dashboard/TransactionPreviewModal";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -57,6 +58,8 @@ interface UploadedFile {
 
 export function useFileUpload(isInvestment: boolean = false) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -122,6 +125,13 @@ export function useFileUpload(isInvestment: boolean = false) {
     const pendingFiles = files.filter((f) => f.status === "pending");
     if (pendingFiles.length === 0) return;
 
+    // For investments, use the old flow (no preview)
+    if (isInvestment) {
+      await processFilesDirectly(pendingFiles);
+      return;
+    }
+
+    // For cashflow, use preview flow
     for (const uploadFile of pendingFiles) {
       setFiles((prev) =>
         prev.map((f) =>
@@ -145,10 +155,9 @@ export function useFileUpload(isInvestment: boolean = false) {
 
         if (uploadError) {
           console.error("Storage upload error:", uploadError);
-          // Continue even if storage fails - we can still process the content
         }
 
-        // Create upload record - use created_at month as target_month for legacy uploads
+        // Create upload record
         const targetMonthStr = new Date().toISOString().slice(0, 7) + '-01';
         const { data: uploadRecord, error: insertError } = await supabase
           .from("uploads")
@@ -166,86 +175,52 @@ export function useFileUpload(isInvestment: boolean = false) {
 
         if (insertError) throw insertError;
 
-        // Call appropriate edge function based on type
-        const functionName = isInvestment ? "process-investment-file" : "process-financial-file";
+        // Call edge function with previewOnly mode
         const { data, error } = await supabase.functions.invoke(
-          functionName,
+          "process-financial-file",
           {
             body: {
               fileContent,
               uploadId: uploadRecord.id,
               userId: user.id,
+              previewOnly: true, // NEW: Don't save to DB yet
             },
           }
         );
 
         if (error) throw error;
 
-        const stats = data.stats;
-        
+        // Transform response to PreviewData format
+        const transactions: PreviewTransaction[] = (data.transactions || []).map(
+          (t: any, index: number) => ({
+            tempId: `${uploadRecord.id}-${index}`,
+            date: t.date,
+            description: t.description,
+            amount: t.amount,
+            type: t.type as "income" | "expense" | "transfer",
+            category: t.category,
+            bank: t.bank,
+            hash_source: t.hash_source || "",
+            transaction_hash: t.transaction_hash,
+            isEdited: false,
+          })
+        );
+
+        setPreviewData({
+          transactions,
+          stats: data.stats,
+          uploadId: uploadRecord.id,
+          fileName: uploadFile.name,
+        });
+
         setFiles((prev) =>
           prev.map((f) =>
             f.id === uploadFile.id
-              ? {
-                  ...f,
-                  status: "completed" as const,
-                  transactionsCount: stats?.newTransactions || 0,
-                  stats,
-                }
+              ? { ...f, status: "completed" as const }
               : f
           )
         );
 
-        // Build detailed message
-        let description: string;
-        if (isInvestment) {
-          const newCount = stats?.newInvestments || 0;
-          description = `${newCount} inversiones procesadas`;
-          if (stats?.deposits > 0) description += ` (${stats.deposits} depósitos`;
-          if (stats?.withdrawals > 0) description += `, ${stats.withdrawals} retiros)`;
-          else if (stats?.deposits > 0) description += ')';
-          if (stats?.duplicatesIgnored > 0) description += `, ${stats.duplicatesIgnored} duplicados`;
-        } else {
-          description = `${stats?.newTransactions || 0} transacciones nuevas`;
-          if (stats?.duplicatesIgnored > 0) {
-            description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
-          }
-          if (stats?.transfersDetected > 0) {
-            description += `, ${stats.transfersDetected} transferencias internas`;
-          }
-        }
-
-        toast({
-          title: "Archivo procesado",
-          description: `${uploadFile.name}: ${description}`,
-        });
-
-        // Refresh data
-        if (isInvestment) {
-          queryClient.invalidateQueries({ queryKey: ["investments"] });
-          queryClient.invalidateQueries({ queryKey: ["investment_accounts"] });
-        } else {
-          queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        }
-        queryClient.invalidateQueries({ queryKey: ["uploads"] });
-        
-        // Run integrity check after processing
-        try {
-          const { data: integrityData } = await supabase.functions.invoke(
-            "check-data-integrity",
-            { body: { userId: user.id } }
-          );
-          
-          if (integrityData?.stats?.duplicatesRemoved > 0 || integrityData?.stats?.transfersLinked > 0) {
-            toast({
-              title: "Integridad verificada",
-              description: `${integrityData.stats.duplicatesRemoved} duplicados globales eliminados, ${integrityData.stats.transfersLinked} transferencias vinculadas`,
-            });
-            queryClient.invalidateQueries({ queryKey: ["transactions"] });
-          }
-        } catch (integrityError) {
-          console.error("Integrity check error:", integrityError);
-        }
       } catch (error: any) {
         console.error("Error processing file:", error);
         setFiles((prev) =>
@@ -269,6 +244,201 @@ export function useFileUpload(isInvestment: boolean = false) {
     }
   };
 
+  // Direct processing for investments (no preview)
+  const processFilesDirectly = async (pendingFiles: UploadedFile[]) => {
+    for (const uploadFile of pendingFiles) {
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id ? { ...f, status: "processing" as const } : f
+        )
+      );
+
+      try {
+        const fileContent = await extractFileContent(uploadFile.file);
+        
+        if (!fileContent.trim()) {
+          throw new Error("El archivo está vacío");
+        }
+
+        const filePath = `${user!.id}/${Date.now()}_${uploadFile.name}`;
+        await supabase.storage.from("financial-files").upload(filePath, uploadFile.file);
+
+        const targetMonthStr = new Date().toISOString().slice(0, 7) + '-01';
+        const { data: uploadRecord, error: insertError } = await supabase
+          .from("uploads")
+          .insert({
+            user_id: user!.id,
+            file_name: uploadFile.name,
+            file_path: filePath,
+            file_type: uploadFile.file.type || "unknown",
+            file_size: uploadFile.size,
+            status: "pending",
+            target_month: targetMonthStr,
+            domain: "INVESTING",
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+
+        const { data, error } = await supabase.functions.invoke(
+          "process-investment-file",
+          {
+            body: {
+              fileContent,
+              uploadId: uploadRecord.id,
+              userId: user!.id,
+            },
+          }
+        );
+
+        if (error) throw error;
+
+        const stats = data.stats;
+        
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id
+              ? {
+                  ...f,
+                  status: "completed" as const,
+                  transactionsCount: stats?.newInvestments || 0,
+                  stats,
+                }
+              : f
+          )
+        );
+
+        let description = `${stats?.newInvestments || 0} inversiones procesadas`;
+        if (stats?.deposits > 0) description += ` (${stats.deposits} depósitos`;
+        if (stats?.withdrawals > 0) description += `, ${stats.withdrawals} retiros)`;
+        else if (stats?.deposits > 0) description += ')';
+        if (stats?.duplicatesIgnored > 0) description += `, ${stats.duplicatesIgnored} duplicados`;
+
+        toast({
+          title: "Archivo procesado",
+          description: `${uploadFile.name}: ${description}`,
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["investments"] });
+        queryClient.invalidateQueries({ queryKey: ["investment_accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["uploads"] });
+
+      } catch (error: any) {
+        console.error("Error processing file:", error);
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id
+              ? {
+                  ...f,
+                  status: "error" as const,
+                  error: error.message || "Error desconocido",
+                }
+              : f
+          )
+        );
+
+        toast({
+          title: "Error al procesar",
+          description: error.message || "No se pudo procesar el archivo",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // Update a transaction's category in preview
+  const updatePreviewCategory = (tempId: string, newCategory: string) => {
+    if (!previewData) return;
+
+    setPreviewData({
+      ...previewData,
+      transactions: previewData.transactions.map((t) =>
+        t.tempId === tempId
+          ? { ...t, category: newCategory, isEdited: true }
+          : t
+      ),
+    });
+  };
+
+  // Confirm and save all preview transactions
+  const confirmPreviewTransactions = async () => {
+    if (!previewData || !user) return;
+
+    setIsConfirming(true);
+
+    try {
+      // Save transactions to DB
+      const { error } = await supabase.functions.invoke(
+        "process-financial-file",
+        {
+          body: {
+            uploadId: previewData.uploadId,
+            userId: user.id,
+            confirmTransactions: true, // NEW: Actually save to DB
+            transactions: previewData.transactions.map((t) => ({
+              date: t.date,
+              description: t.description,
+              amount: t.amount,
+              type: t.type,
+              category: t.category,
+              bank: t.bank,
+              transaction_hash: t.transaction_hash,
+            })),
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      const editedCount = previewData.transactions.filter((t) => t.isEdited).length;
+      
+      toast({
+        title: "Transacciones importadas",
+        description: `${previewData.transactions.length} transacciones guardadas${editedCount > 0 ? ` (${editedCount} editadas)` : ""}`,
+      });
+
+      // Clear preview and refresh data
+      setPreviewData(null);
+      setFiles([]);
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["uploads"] });
+
+      // Run integrity check
+      try {
+        const { data: integrityData } = await supabase.functions.invoke(
+          "check-data-integrity",
+          { body: { userId: user.id } }
+        );
+        
+        if (integrityData?.stats?.duplicatesRemoved > 0 || integrityData?.stats?.transfersLinked > 0) {
+          toast({
+            title: "Integridad verificada",
+            description: `${integrityData.stats.duplicatesRemoved} duplicados globales eliminados, ${integrityData.stats.transfersLinked} transferencias vinculadas`,
+          });
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        }
+      } catch (integrityError) {
+        console.error("Integrity check error:", integrityError);
+      }
+
+    } catch (error: any) {
+      console.error("Error confirming transactions:", error);
+      toast({
+        title: "Error al guardar",
+        description: error.message || "No se pudieron guardar las transacciones",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
+  const cancelPreview = () => {
+    setPreviewData(null);
+    // Optionally delete the upload record
+  };
+
   const clearCompleted = () => {
     setFiles((prev) => prev.filter((f) => f.status !== "completed"));
   };
@@ -282,5 +452,11 @@ export function useFileUpload(isInvestment: boolean = false) {
     hasFiles: files.length > 0,
     hasPending: files.some((f) => f.status === "pending"),
     isProcessing: files.some((f) => f.status === "processing"),
+    // Preview-related
+    previewData,
+    updatePreviewCategory,
+    confirmPreviewTransactions,
+    cancelPreview,
+    isConfirming,
   };
 }

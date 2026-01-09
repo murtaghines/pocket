@@ -177,6 +177,14 @@ export const translations: Translations = {
     'month.october': 'Octubre',
     'month.november': 'Noviembre',
     'month.december': 'Diciembre',
+    
+    // Preview
+    'preview.title': 'Revisar transacciones',
+    'preview.transactions_ready': 'transacciones listas para importar',
+    'preview.confirm': 'Confirmar e importar',
+    'preview.importing': 'Importando...',
+    'preview.duplicates_ignored': 'duplicados ignorados',
+    'preview.edited': 'Editado',
   },
   en: {
     // Navigation
@@ -353,6 +361,14 @@ export const translations: Translations = {
     'month.october': 'October',
     'month.november': 'November',
     'month.december': 'December',
+    
+    // Preview
+    'preview.title': 'Review transactions',
+    'preview.transactions_ready': 'transactions ready to import',
+    'preview.confirm': 'Confirm & import',
+    'preview.importing': 'Importing...',
+    'preview.duplicates_ignored': 'duplicates ignored',
+    'preview.edited': 'Edited',
   },
   pt: {
     // Navigation
