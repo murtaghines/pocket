@@ -12,7 +12,7 @@ const DEFAULT_MONTHS_TO_SHOW = 6;
 
 export function MonthlyUploadsOrganizer() {
   // Use imports instead of uploads (unified system)
-  const { imports, isLoading, deleteImport, retryImport, isDeleting, isRetrying } = useImports("CASHFLOW");
+  const { imports, isLoading, deleteImport, isDeleting } = useImports("CASHFLOW");
   const { 
     pendingFilesByMonth, 
     addFilesForMonth, 
@@ -120,12 +120,10 @@ export function MonthlyUploadsOrganizer() {
                 onAddFiles={addFilesForMonth}
                 onProcessFiles={processFilesForMonth}
                 onDeleteImport={deleteImport}
-                onRetryImport={retryImport}
                 isProcessing={isProcessingMonth(slot.key)}
                 hasPendingFiles={getPendingCountForMonth(slot.key) > 0}
                 pendingFilesCount={getPendingCountForMonth(slot.key)}
                 isDeleting={isDeleting}
-                isRetrying={isRetrying}
                 period={period}
                 onClosePeriod={closePeriod}
                 onReopenPeriod={reopenPeriod}

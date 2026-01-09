@@ -798,12 +798,9 @@ serve(async (req) => {
       
       // Check if any chunk failed due to 402/429 before declaring parse failure
       if (allTransactions.length === 0) {
-        // If we have no transactions, check if it was due to API limits
-        // The error would have been logged but we continue - this is a fallback
-        await supabase.from('imports').update({ 
-          status: 'FAILED', 
-          error_message: 'No se pudieron extraer transacciones del archivo. Intente subir en formato CSV.' 
-        }).eq('id', importId);
+        // If we have no transactions, delete the import and return error
+        console.log(`[process-import] No transactions extracted, deleting import ${importId}`);
+        await supabase.from('imports').delete().eq('id', importId);
         
         return new Response(
           JSON.stringify({ 
@@ -826,12 +823,11 @@ serve(async (req) => {
         const is402 = result.error.includes('402');
         const is429 = result.error.includes('429');
         
+        // Delete the import record on any error (no FAILED state)
+        console.log(`[process-import] AI error, deleting import ${importId}`);
+        await supabase.from('imports').delete().eq('id', importId);
+        
         if (is402) {
-          await supabase.from('imports').update({ 
-            status: 'FAILED', 
-            error_message: 'Sin créditos de IA. Recarga créditos en Lovable para continuar.' 
-          }).eq('id', importId);
-          
           return new Response(
             JSON.stringify({ 
               error: 'payment_required',
@@ -842,11 +838,6 @@ serve(async (req) => {
         }
         
         if (is429) {
-          await supabase.from('imports').update({ 
-            status: 'FAILED', 
-            error_message: 'Demasiadas solicitudes. Espera unos minutos y reintenta.' 
-          }).eq('id', importId);
-          
           return new Response(
             JSON.stringify({ 
               error: 'rate_limited',
@@ -857,11 +848,6 @@ serve(async (req) => {
         }
         
         // Generic AI error
-        await supabase.from('imports').update({ 
-          status: 'FAILED', 
-          error_message: `Error de procesamiento: ${result.error}` 
-        }).eq('id', importId);
-        
         return new Response(
           JSON.stringify({ 
             error: 'ai_processing_failed',
