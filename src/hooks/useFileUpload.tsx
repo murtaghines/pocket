@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 import type { PreviewTransaction, PreviewData, MovementType } from "@/components/dashboard/TransactionPreviewModal";
+import { normalizeCategory } from "@/lib/categoryTranslations";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -201,6 +202,8 @@ export function useFileUpload(isInvestment: boolean = false) {
         const transactions: PreviewTransaction[] = (data.transactions || []).map(
           (t: any, index: number) => {
             const movement = normalizeMovement(t.movement, t.type, t.amount);
+            // Normalize category to handle legacy values
+            const category = normalizeCategory(t.category || "other_expense");
             return {
               tempId: `${uploadRecord.id}-${index}`,
               date: t.date,
@@ -208,7 +211,7 @@ export function useFileUpload(isInvestment: boolean = false) {
               amount: t.amount,
               type: movement.toLowerCase() as "income" | "expense" | "transfer", // Legacy
               movement: movement,
-              category: t.category,
+              category: category,
               category_id: t.category_id,
               bank: t.bank,
               hash_source: t.hash_source || "",

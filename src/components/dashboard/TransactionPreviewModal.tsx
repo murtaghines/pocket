@@ -28,7 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle2, AlertTriangle, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Loader2 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
-import { getCategoryLabel, getMovementLabel } from "@/lib/categoryTranslations";
+import { getCategoryLabel, getMovementLabel, normalizeCategory } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
 
 export type MovementType = "INCOME" | "EXPENSE" | "TRANSFER";

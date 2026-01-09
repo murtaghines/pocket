@@ -338,9 +338,56 @@ export const categoryEmojis: Record<string, string> = {
   to_investment: '📈',
 };
 
+// Legacy slug mapping - maps old/incorrect slugs to correct ones
+const legacySlugMap: Record<string, string> = {
+  'investment': 'investments_income',
+  'income': 'other_income',
+  'other': 'other_expense',
+  'food': 'groceries',
+  'leisure': 'entertainment',
+  'transfer': 'own_transfer',
+  'bills': 'housing',
+  'utilities': 'housing',
+  'gas': 'transport',
+  'fuel': 'transport',
+  'uber': 'transport',
+  'taxi': 'transport',
+  'gym': 'health',
+  'pharmacy': 'health',
+  'doctor': 'health',
+  'netflix': 'subscriptions',
+  'spotify': 'subscriptions',
+  'amazon': 'shopping',
+  'supermarket': 'groceries',
+  'mercadona': 'groceries',
+  'carrefour': 'groceries',
+  'lidl': 'groceries',
+  'restaurant': 'restaurants',
+  'cafe': 'restaurants',
+  'bar': 'restaurants',
+  'hotel': 'travel',
+  'flight': 'travel',
+  'airbnb': 'travel',
+  'rent': 'housing',
+  'mortgage': 'housing',
+  'electricity': 'housing',
+  'water': 'housing',
+  'internet': 'housing',
+  'phone': 'subscriptions',
+  'savings': 'to_investment',
+};
+
+// Normalize a category slug (handle legacy values)
+export function normalizeCategory(slug: string): string {
+  if (!slug) return 'other_expense';
+  const lower = slug.toLowerCase().trim();
+  return legacySlugMap[lower] || lower;
+}
+
 // Helper to get translated category name
 export function getCategoryLabel(slug: string, language: string = 'en'): string {
-  return categoryTranslations[slug]?.[language] || categoryTranslations[slug]?.['en'] || slug;
+  const normalized = normalizeCategory(slug);
+  return categoryTranslations[normalized]?.[language] || categoryTranslations[normalized]?.['en'] || slug;
 }
 
 // Helper to get translated movement name
