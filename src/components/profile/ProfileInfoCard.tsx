@@ -8,6 +8,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useLocalization } from "@/hooks/useLocalization";
 import { User, Mail, Calendar, LogOut, Pencil, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DeleteAccountDialog } from "./DeleteAccountDialog";
 
 export function ProfileInfoCard() {
   const { user, signOut } = useAuth();
@@ -137,15 +138,16 @@ export function ProfileInfoCard() {
             )}
           </>
         )}
-        <div className="pt-4 border-t">
+        <div className="pt-4 border-t space-y-3">
           <Button 
             variant="outline" 
             onClick={signOut}
-            className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="w-full gap-2 text-muted-foreground hover:text-foreground"
           >
             <LogOut className="w-4 h-4" />
             Log Out
           </Button>
+          <DeleteAccountDialog />
         </div>
       </CardContent>
     </Card>
