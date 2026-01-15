@@ -3,6 +3,7 @@ import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrga
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
+import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 import { FileText, TrendingUp } from "lucide-react";
 
 export default function Profile() {
@@ -22,7 +23,7 @@ export default function Profile() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: User Info + Preferences */}
+          {/* Left Column: User Info + Preferences + Categories */}
           <div className="space-y-6">
             <ProfileInfoCard />
 
@@ -30,12 +31,17 @@ export default function Profile() {
             <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
               <PreferencesForm />
             </div>
+
+            {/* Categories */}
+            <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+              <CategoriesEditor />
+            </div>
           </div>
 
           {/* Right Column: Uploads */}
           <div className="lg:col-span-2 space-y-8">
             {/* Bank Statements Section */}
-            <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+            <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="w-4 h-4 text-primary" />
                 <h3 className="text-base font-medium">Bank Statements</h3>
@@ -44,7 +50,7 @@ export default function Profile() {
             </div>
 
             {/* Investments Section */}
-            <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+            <div className="animate-slide-up" style={{ animationDelay: '250ms' }}>
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-4 h-4 text-primary" />
                 <h3 className="text-base font-medium">Investments & Savings</h3>
