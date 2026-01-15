@@ -40,6 +40,218 @@ const VALID_PAYMENT_CHANNELS = ['CARD', 'TRANSFER', 'BIZUM', 'QR', 'CASH', 'DIRE
 const CHUNK_SIZE_THRESHOLD = 6000; // Characters threshold for chunking
 const MAX_CHUNK_SIZE = 4000; // Max characters per chunk
 
+// ========== LOCAL PATTERN CATEGORIZER ==========
+// Known patterns for local categorization (saves AI calls)
+type LocalPattern = {
+  categorySlug: string;
+  movement: MovementType;
+};
+
+const LOCAL_PATTERNS: Record<string, LocalPattern> = {
+  // Groceries / Supermercados
+  'mercadona': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'lidl': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'carrefour': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'dia %': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'dia s.a': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'aldi': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'alcampo': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'hipercor': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'el corte ingles alimentacion': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'consum': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'eroski': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'ahorramas': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'bonarea': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'simply': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  'makro': { categorySlug: 'groceries', movement: 'EXPENSE' },
+  
+  // Subscriptions / Suscripciones
+  'netflix': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'spotify': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'hbo': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'max.com': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'disney': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'amazon prime': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'prime video': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'apple.com': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'apple music': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'icloud': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'youtube premium': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'dazn': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'movistar+': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'twitch': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'chatgpt': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'openai': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'notion': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'canva': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'dropbox': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'google storage': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'google one': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  'microsoft 365': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
+  
+  // Transport / Transporte
+  'uber': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'cabify': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'bolt': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'renfe': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'emt madrid': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'metro madrid': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'metro bilbao': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'tmb barcelona': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'parking': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'estacionamiento': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'telepea': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'viatoll': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'peaje': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'blablacar': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'lime': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'tier': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'bird': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'repsol': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'cepsa': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'bp': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'gasolinera': { categorySlug: 'transport', movement: 'EXPENSE' },
+  'shell': { categorySlug: 'transport', movement: 'EXPENSE' },
+  
+  // Restaurants & Delivery
+  'glovo': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  'just eat': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  'uber eats': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  'deliveroo': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  'mcdonalds': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  'burger king': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  'telepizza': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  'dominos': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  'starbucks': { categorySlug: 'restaurants', movement: 'EXPENSE' },
+  
+  // Housing / Vivienda y servicios
+  'endesa': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'naturgy': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'iberdrola': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'repsol gas': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'vodafone': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'movistar': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'orange': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'masmovil': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'yoigo': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'o2': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'pepephone': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'lowi': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'digi': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'alquiler': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'rent': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'hipoteca': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'comunidad de propietarios': { categorySlug: 'housing', movement: 'EXPENSE' },
+  'seguro hogar': { categorySlug: 'housing', movement: 'EXPENSE' },
+  
+  // Shopping
+  'amazon': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'aliexpress': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'zara': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'h&m': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'primark': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'ikea': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'decathlon': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'el corte ingles': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'mediamarkt': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'pccomponentes': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'fnac': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'leroy merlin': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  'brico': { categorySlug: 'shopping', movement: 'EXPENSE' },
+  
+  // Health / Salud
+  'farmacia': { categorySlug: 'health', movement: 'EXPENSE' },
+  'pharmacy': { categorySlug: 'health', movement: 'EXPENSE' },
+  'quironsalud': { categorySlug: 'health', movement: 'EXPENSE' },
+  'sanitas': { categorySlug: 'health', movement: 'EXPENSE' },
+  'adeslas': { categorySlug: 'health', movement: 'EXPENSE' },
+  'mapfre salud': { categorySlug: 'health', movement: 'EXPENSE' },
+  'dkv': { categorySlug: 'health', movement: 'EXPENSE' },
+  'asisa': { categorySlug: 'health', movement: 'EXPENSE' },
+  'seguro medico': { categorySlug: 'health', movement: 'EXPENSE' },
+  'dentista': { categorySlug: 'health', movement: 'EXPENSE' },
+  'optica': { categorySlug: 'health', movement: 'EXPENSE' },
+  'gimnasio': { categorySlug: 'health', movement: 'EXPENSE' },
+  'basic fit': { categorySlug: 'health', movement: 'EXPENSE' },
+  'mcfit': { categorySlug: 'health', movement: 'EXPENSE' },
+  'gym': { categorySlug: 'health', movement: 'EXPENSE' },
+  
+  // Entertainment
+  'cine': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'cinesa': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'yelmo': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'ocine': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'teatro': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'concierto': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'ticketmaster': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'entradas': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'steam': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'playstation': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'xbox': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  'nintendo': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  
+  // Education
+  'udemy': { categorySlug: 'education', movement: 'EXPENSE' },
+  'coursera': { categorySlug: 'education', movement: 'EXPENSE' },
+  'platzi': { categorySlug: 'education', movement: 'EXPENSE' },
+  'domestika': { categorySlug: 'education', movement: 'EXPENSE' },
+  'masterclass': { categorySlug: 'education', movement: 'EXPENSE' },
+  'duolingo': { categorySlug: 'education', movement: 'EXPENSE' },
+  'babbel': { categorySlug: 'education', movement: 'EXPENSE' },
+  'academia': { categorySlug: 'education', movement: 'EXPENSE' },
+  'universidad': { categorySlug: 'education', movement: 'EXPENSE' },
+  'colegio': { categorySlug: 'education', movement: 'EXPENSE' },
+  
+  // Travel
+  'ryanair': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'vueling': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'iberia': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'easyjet': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'air europa': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'booking': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'airbnb': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'hotel': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'hostel': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'expedia': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'skyscanner': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'ouigo': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'iryo': { categorySlug: 'travel', movement: 'EXPENSE' },
+  'avlo': { categorySlug: 'travel', movement: 'EXPENSE' },
+  
+  // Income patterns (Salary/Payroll)
+  'nomina': { categorySlug: 'salary', movement: 'INCOME' },
+  'nómina': { categorySlug: 'salary', movement: 'INCOME' },
+  'salary': { categorySlug: 'salary', movement: 'INCOME' },
+  'payroll': { categorySlug: 'salary', movement: 'INCOME' },
+  'sueldo': { categorySlug: 'salary', movement: 'INCOME' },
+  'paga extra': { categorySlug: 'salary', movement: 'INCOME' },
+  
+  // Refunds
+  'devolucion': { categorySlug: 'refunds', movement: 'INCOME' },
+  'devolución': { categorySlug: 'refunds', movement: 'INCOME' },
+  'refund': { categorySlug: 'refunds', movement: 'INCOME' },
+  'reembolso': { categorySlug: 'refunds', movement: 'INCOME' },
+  'chargeback': { categorySlug: 'refunds', movement: 'INCOME' },
+};
+
+// Function to match local patterns
+function matchLocalPattern(description: string): LocalPattern | null {
+  const normalizedDesc = description.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  
+  for (const [pattern, result] of Object.entries(LOCAL_PATTERNS)) {
+    const normalizedPattern = pattern.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    
+    if (normalizedDesc.includes(normalizedPattern)) {
+      return result;
+    }
+  }
+  return null;
+}
+
 // ========== SIMPLIFIED EXTRACTION PROMPT (for large files) ==========
 const SIMPLE_EXTRACTION_PROMPT = `You are a financial data extraction expert. Extract transactions from this bank statement data.
 
@@ -676,6 +888,28 @@ serve(async (req) => {
 
     const calculatedFileHash = fileHash || await sha256(fileContent);
     
+    // ========== DUPLICATE FILE DETECTION (BEFORE creating import) ==========
+    const { data: existingImport, error: dupCheckError } = await supabase
+      .from('imports')
+      .select('id, status, file_name, uploaded_at, transactions_count')
+      .eq('user_id', userId)
+      .eq('file_hash_sha256', calculatedFileHash)
+      .eq('status', 'NORMALIZED')
+      .maybeSingle();
+    
+    if (existingImport) {
+      console.log(`[process-import] Duplicate file detected! Hash: ${calculatedFileHash.substring(0, 16)}... Original import: ${existingImport.id}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'duplicate_file',
+          message: `Este archivo ya fue procesado anteriormente (${existingImport.file_name}, ${existingImport.transactions_count || 0} transacciones). No se permite procesar archivos duplicados.`,
+          existingImportId: existingImport.id,
+          existingUploadedAt: existingImport.uploaded_at
+        }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // Get or create period
     const { data: period, error: periodError } = await supabase
       .from('periods')
@@ -918,7 +1152,9 @@ serve(async (req) => {
       transfers: 0,
       income: 0,
       expenses: 0,
-      categorizedByRule: 0
+      categorizedByRule: 0,
+      categorizedByLocalPattern: 0,
+      categorizedByAI: 0
     };
 
     const newTransactions: any[] = [];
@@ -1000,11 +1236,12 @@ serve(async (req) => {
       seenFingerprints.add(fingerprint);
       seenNaturalKeys.add(naturalKey);
 
-      // === CATEGORIZATION LOGIC ===
+      // === CATEGORIZATION LOGIC (Priority: User Rules > Local Patterns > AI) ===
       
-      // For simplified extraction (large files), derive movement from amount sign
+      // Start with AI/derived categorization as baseline
       let movement: MovementType;
       let categorySlug: string;
+      let categorizedBy: string = 'ai'; // Default: AI categorized
       
       if (t.movement) {
         movement = validateMovement(t.movement);
@@ -1030,11 +1267,27 @@ serve(async (req) => {
         stats.transfers++;
       }
 
-      // Apply user categorization rules (highest priority after manual)
+      // Priority 2: Local pattern matching (before user rules for efficiency, but lower priority)
       let categoryId: string | null = null;
       let categorizationRuleId: string | null = null;
       let categorySource = 'AI';
       
+      // Try local pattern matching first (for large files or any uncategorized)
+      const localPatternMatch = matchLocalPattern(descriptionRaw) || matchLocalPattern(descriptionClean);
+      
+      if (localPatternMatch) {
+        movement = localPatternMatch.movement;
+        categorySlug = localPatternMatch.categorySlug;
+        categoryId = categorySlugToId[categorySlug] || null;
+        categorySource = 'LOCAL_PATTERN';
+        categorizedBy = 'local_pattern';
+        stats.categorizedByLocalPattern++;
+        console.log(`[process-import] Local pattern match: "${descriptionClean.substring(0, 30)}" → ${categorySlug}`);
+      } else {
+        stats.categorizedByAI++;
+      }
+      
+      // Priority 1: User categorization rules (HIGHEST priority - overrides local patterns)
       const ruleMatch = await applyCategoryRules(
         supabase,
         userId,
@@ -1057,8 +1310,18 @@ serve(async (req) => {
         }
         categorizationRuleId = ruleMatch.ruleId;
         categorySource = 'RULE';
+        categorizedBy = 'user_rule';
+        
+        // Adjust stats: if local pattern was counted, subtract it
+        if (localPatternMatch) {
+          stats.categorizedByLocalPattern--;
+          stats.categorizedByAI--; // It wasn't AI either
+        } else {
+          stats.categorizedByAI--;
+        }
         stats.categorizedByRule++;
-      } else {
+      } else if (!localPatternMatch) {
+        // No rule and no local pattern - category comes from AI
         categoryId = categorySlugToId[categorySlug] || null;
       }
 
@@ -1089,6 +1352,7 @@ serve(async (req) => {
         category_id: categoryId,
         categorization_rule_id: categorizationRuleId,
         category_source: categorySource,
+        categorized_by: categorizedBy,
         tx_type: legacyTxType,
         payment_channel: validatePaymentChannel(paymentChannel),
         source_transaction_id: sourceTransactionId,
@@ -1167,10 +1431,18 @@ serve(async (req) => {
       message += `, ${stats.transfers} transferencias`;
     }
     if (stats.categorizedByRule > 0) {
-      message += `, ${stats.categorizedByRule} categorizadas por reglas`;
+      message += `, ${stats.categorizedByRule} por reglas`;
     }
-
-    console.log(`[process-import] Success: ${message}`);
+    if (stats.categorizedByLocalPattern > 0) {
+      message += `, ${stats.categorizedByLocalPattern} por patrones locales`;
+    }
+    
+    // Log AI savings info
+    const totalCategorized = stats.categorizedByRule + stats.categorizedByLocalPattern;
+    const aiSavingsPercent = stats.newTransactions > 0 
+      ? Math.round((totalCategorized / stats.newTransactions) * 100) 
+      : 0;
+    console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, local=${stats.categorizedByLocalPattern}, AI=${stats.categorizedByAI}, savings=${aiSavingsPercent}%`);
 
     return new Response(
       JSON.stringify({ 

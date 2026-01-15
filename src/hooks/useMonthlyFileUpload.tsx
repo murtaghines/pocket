@@ -193,6 +193,9 @@ export function useMonthlyFileUpload() {
       if (stats?.duplicatesIgnored > 0) {
         description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
       }
+      if (stats?.categorizedByLocalPattern > 0) {
+        description += `, ${stats.categorizedByLocalPattern} categorizadas localmente`;
+      }
       if (stats?.transfersDetected > 0) {
         description += `, ${stats.transfersDetected} transferencias internas`;
       }

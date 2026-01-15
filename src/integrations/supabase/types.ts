@@ -456,6 +456,7 @@ export type Database = {
           auth_date: string | null
           bank: string | null
           categorization_rule_id: string | null
+          categorized_by: string | null
           category: string
           category_id: string | null
           category_source: string | null
@@ -497,6 +498,7 @@ export type Database = {
           auth_date?: string | null
           bank?: string | null
           categorization_rule_id?: string | null
+          categorized_by?: string | null
           category: string
           category_id?: string | null
           category_source?: string | null
@@ -538,6 +540,7 @@ export type Database = {
           auth_date?: string | null
           bank?: string | null
           categorization_rule_id?: string | null
+          categorized_by?: string | null
           category?: string
           category_id?: string | null
           category_source?: string | null
