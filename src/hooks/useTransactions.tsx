@@ -89,8 +89,8 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           movement: t.movement,
           category: t.category as Category,
           categorySlug: t.category,
-          account: "Cuenta Principal",
-          bank: t.bank || "Desconocido",
+          account: "Main Account",
+          bank: t.bank || "Unknown",
         };
       });
     },
@@ -143,7 +143,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       }
     });
 
-    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     
     return Object.entries(monthlyTotals)
       .sort(([a], [b]) => a.localeCompare(b))
@@ -172,7 +172,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     });
     
     return Object.entries(categoryTotals).map(([category, value]) => ({
-      name: getCategoryLabel(category, 'es'),
+      name: getCategoryLabel(category),
       value: Math.round(value * 100) / 100,
       category: category as Category,
       color: categoryColors[category as Category] || "hsl(220, 10%, 55%)",

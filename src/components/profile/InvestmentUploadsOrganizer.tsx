@@ -5,7 +5,6 @@ import { ChevronDown, TrendingUp } from "lucide-react";
 import { useImports } from "@/hooks/useImports";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
-import { useLocalization } from "@/hooks/useLocalization";
 
 const DEFAULT_MONTHS_TO_SHOW = 6;
 
@@ -19,12 +18,8 @@ export function InvestmentUploadsOrganizer() {
     isProcessingMonth,
     getPendingCountForMonth 
   } = useMonthlyInvestmentUpload();
-  const { t, language } = useLocalization();
   
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS_TO_SHOW);
-
-  const locale = language === 'es' ? 'es-ES' :
-                 language === 'pt' ? 'pt-BR' : 'en-US';
 
   const getLastClosedMonth = (): Date => {
     const now = new Date();
@@ -39,12 +34,12 @@ export function InvestmentUploadsOrganizer() {
     for (let i = 0; i < monthsToShow; i++) {
       const monthDate = new Date(lastClosed.getFullYear(), lastClosed.getMonth() - i, 1);
       const key = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}-inv`;
-      const label = monthDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+      const label = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       slots.push({ key, label, date: monthDate });
     }
     
     return slots;
-  }, [monthsToShow, locale]);
+  }, [monthsToShow]);
 
   const importsByMonth = useMemo(() => {
     const grouped: Record<string, typeof imports> = {};
@@ -69,7 +64,7 @@ export function InvestmentUploadsOrganizer() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            {t('profile.investments_by_month')}
+            Investments by Month
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -88,10 +83,10 @@ export function InvestmentUploadsOrganizer() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
-          {t('profile.investments_by_month')}
+          Investments by Month
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          {t('profile.investment_platform_files')}
+          Upload your investment platform statements
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -123,7 +118,7 @@ export function InvestmentUploadsOrganizer() {
           onClick={handleLoadMore}
         >
           <ChevronDown className="w-4 h-4 mr-2" />
-          {t('common.load_more')}
+          Load More
         </Button>
       </CardContent>
     </Card>

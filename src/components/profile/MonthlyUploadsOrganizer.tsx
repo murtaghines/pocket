@@ -5,7 +5,6 @@ import { ChevronDown, FolderOpen } from "lucide-react";
 import { useImports } from "@/hooks/useImports";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
-import { useLocalization } from "@/hooks/useLocalization";
 import { usePeriods } from "@/hooks/usePeriods";
 
 const DEFAULT_MONTHS_TO_SHOW = 6;
@@ -28,12 +27,8 @@ export function MonthlyUploadsOrganizer() {
     isReopening,
     getPeriodByMonthKey 
   } = usePeriods("CASHFLOW");
-  const { t, language } = useLocalization();
   
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS_TO_SHOW);
-
-  const locale = language === 'es' ? 'es-ES' :
-                 language === 'pt' ? 'pt-BR' : 'en-US';
 
   // Calculate the last closed month (if today is Jan 1, last closed is December)
   const getLastClosedMonth = (): Date => {
@@ -50,12 +45,12 @@ export function MonthlyUploadsOrganizer() {
     for (let i = 0; i < monthsToShow; i++) {
       const monthDate = new Date(lastClosed.getFullYear(), lastClosed.getMonth() - i, 1);
       const key = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
-      const label = monthDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+      const label = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       slots.push({ key, label, date: monthDate });
     }
     
     return slots;
-  }, [monthsToShow, locale]);
+  }, [monthsToShow]);
 
   // Group imports by target month (from period.month_key)
   const importsByMonth = useMemo(() => {
@@ -81,7 +76,7 @@ export function MonthlyUploadsOrganizer() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FolderOpen className="w-5 h-5" />
-            {t('profile.files_by_month')}
+            Files by Month
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -100,10 +95,10 @@ export function MonthlyUploadsOrganizer() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FolderOpen className="w-5 h-5" />
-          {t('profile.files_by_month')}
+          Files by Month
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          {t('profile.organize_bank_statements')}
+          Organize your bank statements by month
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -140,7 +135,7 @@ export function MonthlyUploadsOrganizer() {
           onClick={handleLoadMore}
         >
           <ChevronDown className="w-4 h-4 mr-2" />
-          {t('common.load_more')}
+          Load More
         </Button>
       </CardContent>
     </Card>
