@@ -22,39 +22,37 @@ export const SUPPORTED_CURRENCIES: Currency[] = [
   { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$' },
 ];
 
-export const SUPPORTED_LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'pt', name: 'Português', flag: '🇧🇷' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-];
-
-// Map language to locale for number/date formatting
-export function getLocaleForLanguage(language: string): string {
+// Get locale for number/date formatting based on user's region
+export function getLocaleForRegion(country?: string): string {
+  // Default to US English for formatting
+  if (!country) return 'en-US';
+  
   const localeMap: Record<string, string> = {
-    'es': 'es-ES',
-    'en': 'en-US',
-    'pt': 'pt-BR',
-    'fr': 'fr-FR',
-    'it': 'it-IT',
-    'de': 'de-DE',
+    'ES': 'es-ES',
+    'US': 'en-US',
+    'GB': 'en-GB',
+    'BR': 'pt-BR',
+    'FR': 'fr-FR',
+    'IT': 'it-IT',
+    'DE': 'de-DE',
+    'AR': 'es-AR',
+    'MX': 'es-MX',
+    'CO': 'es-CO',
+    'CL': 'es-CL',
+    'PE': 'es-PE',
+    'UY': 'es-UY',
+    'JP': 'ja-JP',
+    'CA': 'en-CA',
+    'AU': 'en-AU',
+    'NZ': 'en-NZ',
+    'CH': 'de-CH',
   };
-  return localeMap[language] || 'en-US';
+  return localeMap[country] || 'en-US';
 }
 
-// Map language to date-fns format pattern
-export function getDateFormatForLanguage(language: string): string {
-  const formatMap: Record<string, string> = {
-    'es': 'dd/MM/yyyy',
-    'en': 'MM/dd/yyyy',
-    'pt': 'dd/MM/yyyy',
-    'fr': 'dd/MM/yyyy',
-    'it': 'dd/MM/yyyy',
-    'de': 'dd.MM.yyyy',
-  };
-  return formatMap[language] || 'dd/MM/yyyy';
+// Date format pattern (always use standard format)
+export function getDateFormat(): string {
+  return 'MM/dd/yyyy';
 }
 
 export function getCurrencyByCode(code: string): Currency | undefined {

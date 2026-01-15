@@ -3,21 +3,14 @@ import { TrendingDown } from "lucide-react";
 import { Transaction, categoryColors, Category } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 
 interface TopExpensesCardProps {
   transactions: Transaction[];
 }
 
 export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
-  const { t, formatCurrency, language } = useLocalization();
-
-  // Category labels using translations
-  const getCategoryLabel = (category: Category): string => {
-    // Try translation key first, fallback to category name
-    const translationKey = `category.${category}`;
-    const translated = t(translationKey);
-    return translated !== translationKey ? translated : category;
-  };
+  const { formatCurrency } = useLocalization();
 
   // Exclude investment movements from top expenses (they're neutral movements)
   const topExpenses = transactions
@@ -27,8 +20,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    const locale = language === 'en' ? 'en-US' : language === 'pt' ? 'pt-BR' : language === 'fr' ? 'fr-FR' : language === 'it' ? 'it-IT' : language === 'de' ? 'de-DE' : 'es-ES';
-    return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   };
 
   return (
@@ -36,7 +28,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <TrendingDown className="w-4 h-4" />
-          {t('dashboard.top_expenses')}
+          Top Expenses
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -56,7 +48,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{expense.description}</p>
               <p className="text-xs text-muted-foreground">
-                {formatDate(expense.date)} • {getCategoryLabel(expense.category as Category)}
+                {formatDate(expense.date)} • {getCategoryLabel(expense.category)}
               </p>
             </div>
             <span className="text-sm font-semibold text-destructive flex-shrink-0">

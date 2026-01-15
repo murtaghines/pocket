@@ -15,7 +15,7 @@ interface MonthlyChartProps {
 }
 
 export function MonthlyChart({ data }: MonthlyChartProps) {
-  const { t, formatCurrency } = useLocalization();
+  const { formatCurrency } = useLocalization();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -43,13 +43,13 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '300ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">{t('dashboard.monthly_evolution')}</CardTitle>
+        <CardTitle className="text-lg">Monthly Evolution</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="area" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="area">{t('chart.area')}</TabsTrigger>
-            <TabsTrigger value="bar">{t('chart.bar')}</TabsTrigger>
+            <TabsTrigger value="area">Area</TabsTrigger>
+            <TabsTrigger value="bar">Bar</TabsTrigger>
           </TabsList>
           
           <TabsContent value="area">
@@ -80,13 +80,11 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                     tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend 
-                    wrapperStyle={{ paddingTop: '20px' }}
-                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Area 
                     type="monotone" 
                     dataKey="income" 
-                    name={t('dashboard.income')}
+                    name="Income"
                     stroke="hsl(160, 84%, 45%)" 
                     strokeWidth={2}
                     fill="url(#incomeGradient)"
@@ -94,7 +92,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Area 
                     type="monotone" 
                     dataKey="expenses" 
-                    name={t('dashboard.expenses')}
+                    name="Expenses"
                     stroke="hsl(0, 72%, 51%)" 
                     strokeWidth={2}
                     fill="url(#expenseGradient)"
@@ -125,13 +123,13 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar 
                     dataKey="income" 
-                    name={t('dashboard.income')}
+                    name="Income"
                     fill="hsl(160, 84%, 45%)" 
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar 
                     dataKey="expenses" 
-                    name={t('dashboard.expenses')}
+                    name="Expenses"
                     fill="hsl(0, 72%, 51%)" 
                     radius={[4, 4, 0, 0]}
                   />

@@ -5,82 +5,54 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useLocalization } from '@/hooks/useLocalization';
-import { SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES, getLocaleForLanguage } from '@/lib/currencies';
+import { SUPPORTED_CURRENCIES } from '@/lib/currencies';
 import { toast } from 'sonner';
 import { Globe, DollarSign, Loader2 } from 'lucide-react';
 
 export function PreferencesForm() {
   const { preferences, updatePreferences, isUpdating } = useUserPreferences();
-  const { formatCurrency, t } = useLocalization();
+  const { formatCurrency } = useLocalization();
   
   const [currency, setCurrency] = useState(preferences.base_currency);
-  const [language, setLanguage] = useState(preferences.language);
 
   // Update local state when preferences change
   useEffect(() => {
     setCurrency(preferences.base_currency);
-    setLanguage(preferences.language);
-  }, [preferences.base_currency, preferences.language]);
+  }, [preferences.base_currency]);
 
   const handleSave = () => {
     updatePreferences({
       base_currency: currency,
-      language: language,
-      locale: getLocaleForLanguage(language),
     }, {
       onSuccess: () => {
-        toast.success(t('profile.preferences_saved'));
+        toast.success('Preferences saved');
       },
       onError: (error) => {
-        toast.error(`${t('common.error')}: ${error.message}`);
+        toast.error(`Error: ${error.message}`);
       },
     });
   };
 
   // Preview values
   const previewAmount = 1234.56;
-  const previewLocale = getLocaleForLanguage(language);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="h-5 w-5" />
-          {t('profile.regional_settings')}
+          Regional Settings
         </CardTitle>
         <CardDescription>
-          {t('profile.regional_description')}
+          Configure your currency preferences
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Language */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            {t('profile.language')}
-          </Label>
-          <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  <span className="flex items-center gap-2">
-                    <span>{lang.flag}</span>
-                    <span>{lang.name}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Base Currency */}
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
-            {t('profile.currency')}
+            Base Currency
           </Label>
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger>
@@ -99,10 +71,10 @@ export function PreferencesForm() {
         {/* Preview */}
         <div className="rounded-lg bg-muted p-4 space-y-2">
           <p className="text-sm font-medium text-muted-foreground">
-            {t('profile.preview')}
+            Preview:
           </p>
           <div className="text-lg font-medium">
-            {new Intl.NumberFormat(previewLocale, {
+            {new Intl.NumberFormat('en-US', {
               style: 'currency',
               currency: currency,
             }).format(previewAmount)}
@@ -113,10 +85,10 @@ export function PreferencesForm() {
           {isUpdating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {t('profile.saving')}
+              Saving...
             </>
           ) : (
-            t('profile.save_preferences')
+            'Save Preferences'
           )}
         </Button>
       </CardContent>

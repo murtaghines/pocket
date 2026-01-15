@@ -5,14 +5,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
-import { useLocalization } from "@/hooks/useLocalization";
 import fintLogo from "@/assets/fint-logo.png";
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
   const { signOut } = useAuth();
   const location = useLocation();
-  const { t } = useLocalization();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -44,7 +42,7 @@ export function Header() {
                 )}
               >
                 <LayoutDashboard className="w-4 h-4" />
-                {t('nav.dashboard')}
+                Dashboard
               </Button>
             </Link>
             <Link to="/investments">
@@ -57,7 +55,7 @@ export function Header() {
                 )}
               >
                 <PiggyBank className="w-4 h-4" />
-                {t('nav.investments')}
+                Investments
               </Button>
             </Link>
           </nav>

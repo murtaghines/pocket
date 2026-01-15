@@ -9,7 +9,7 @@ interface MonthComparisonCardProps {
 }
 
 export function MonthComparisonCard({ currentMonth, previousMonth }: MonthComparisonCardProps) {
-  const { t, formatCurrency } = useLocalization();
+  const { formatCurrency } = useLocalization();
 
   const incomeChange = previousMonth.income > 0 
     ? ((currentMonth.income - previousMonth.income) / previousMonth.income) * 100 
@@ -31,7 +31,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <ArrowRight className="w-4 h-4" />
-          {t('dashboard.vs_previous_month')}
+          vs Previous Month
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -40,7 +40,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
             <div className="p-1.5 rounded-md bg-success/10">
               <TrendingUp className="w-3.5 h-3.5 text-success" />
             </div>
-            <span className="text-sm">{t('dashboard.income')}</span>
+            <span className="text-sm">Income</span>
           </div>
           <span className={`text-sm font-semibold ${incomeChange >= 0 ? 'text-success' : 'text-destructive'}`}>
             {formatChange(incomeChange)}
@@ -52,7 +52,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
             <div className="p-1.5 rounded-md bg-destructive/10">
               <TrendingDown className="w-3.5 h-3.5 text-destructive" />
             </div>
-            <span className="text-sm">{t('dashboard.expenses')}</span>
+            <span className="text-sm">Expenses</span>
           </div>
           <span className={`text-sm font-semibold ${expenseChange <= 0 ? 'text-success' : 'text-destructive'}`}>
             {formatChange(expenseChange)}
@@ -65,7 +65,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
               <div className="p-1.5 rounded-md bg-primary/10">
                 <Minus className="w-3.5 h-3.5 text-primary" />
               </div>
-              <span className="text-sm">{t('dashboard.balance')}</span>
+              <span className="text-sm">Balance</span>
             </div>
             <span className={`text-sm font-semibold ${balanceChange >= 0 ? 'text-success' : 'text-destructive'}`}>
               {balanceChange >= 0 ? '+' : ''}{formatCurrency(balanceChange)}

@@ -25,7 +25,7 @@ export default function Investments() {
     monthlyHistory,
   } = useInvestments();
 
-  const { formatCurrency, formatMonth, t } = useLocalization();
+  const { formatCurrency, formatMonth } = useLocalization();
 
   const currentMonthName = formatMonth(new Date());
 
@@ -43,10 +43,10 @@ export default function Investments() {
         {/* Page Title */}
         <div className="mb-8 animate-fade-in">
           <h2 className="font-display text-3xl font-bold tracking-tight">
-            {t('investments.title')}
+            Investments
           </h2>
           <p className="text-muted-foreground mt-1">
-            {t('investments.subtitle')} • {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)}
+            Track your investment portfolio • {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)}
           </p>
         </div>
 
@@ -61,15 +61,15 @@ export default function Investments() {
         {!isLoading && !hasData && (
           <div className="text-center py-12 mb-8">
             <PiggyBank className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">{t('investments.no_data')}</h3>
+            <h3 className="text-xl font-semibold mb-2">No investment data</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              {t('investments.upload_prompt')}
+              Upload your investment statements or add accounts manually
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/profile">
                 <Button variant="gradient" size="lg">
                   <Upload className="w-4 h-4 mr-2" />
-                  {t('dashboard.go_to_profile')}
+                  Go to Profile to upload
                 </Button>
               </Link>
             </div>
@@ -84,7 +84,7 @@ export default function Investments() {
               <Card className="animate-fade-in">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('investments.this_month')}
+                    This Month
                   </CardTitle>
                   <TrendingUp className="w-5 h-5 text-primary" />
                 </CardHeader>
@@ -98,7 +98,7 @@ export default function Investments() {
               <Card className="animate-fade-in" style={{ animationDelay: '100ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('investments.total_invested')}
+                    Total Invested
                   </CardTitle>
                   <PiggyBank className="w-5 h-5 text-blue-500" />
                 </CardHeader>
@@ -112,7 +112,7 @@ export default function Investments() {
               <Card className="animate-fade-in" style={{ animationDelay: '200ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('investments.current_value')}
+                    Current Value
                   </CardTitle>
                   <Wallet className="w-5 h-5 text-green-500" />
                 </CardHeader>
@@ -131,7 +131,7 @@ export default function Investments() {
               <Card className="animate-fade-in" style={{ animationDelay: '300ms' }}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('investments.platforms')}
+                    Platforms
                   </CardTitle>
                   <Building2 className="w-5 h-5 text-purple-500" />
                 </CardHeader>
@@ -140,7 +140,7 @@ export default function Investments() {
                     {Object.keys(byPlatform).length}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {accounts.length} {t('investments.active_accounts')}
+                    {accounts.length} active accounts
                   </p>
                 </CardContent>
               </Card>
@@ -178,7 +178,7 @@ export default function Investments() {
       <footer className="border-t mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            Fint • {t('dashboard.personal_finance')}
+            Fint • Personal finance control
           </p>
         </div>
       </footer>

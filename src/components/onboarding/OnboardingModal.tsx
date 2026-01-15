@@ -5,9 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { StepCountry } from './StepCountry';
 import { StepCurrency } from './StepCurrency';
 import { StepCategories } from './StepCategories';
-import { StepLanguage } from './StepLanguage';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useLocalization } from '@/hooks/useLocalization';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
 import {
@@ -26,16 +24,15 @@ export interface OnboardingData {
   categories: string[]; // Legacy: combined categories for backward compat
   incomeCategories: string[];
   expenseCategories: string[];
-  language: string;
+  language: string; // Keep for backward compat, always 'en'
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const { updatePreferences } = useUserPreferences();
-  const { t } = useLocalization();
   const { toast } = useToast();
 
   const [data, setData] = useState<OnboardingData>({
@@ -63,97 +60,6 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     }
   };
 
-  const getLocaleFromLanguage = (lang: string) => {
-    const localeMap: Record<string, string> = {
-      en: 'en-US',
-      es: 'es-ES',
-      pt: 'pt-BR',
-      fr: 'fr-FR',
-      it: 'it-IT',
-      de: 'de-DE',
-    };
-    return localeMap[lang] || 'en-US';
-  };
-
-  // Get translation based on current onboarding language selection
-  const getOnboardingText = (key: string) => {
-    const texts: Record<string, Record<string, string>> = {
-      welcome: {
-        en: 'Welcome to Fint! 👋',
-        es: '¡Bienvenido a Fint! 👋',
-        pt: 'Bem-vindo ao Fint! 👋',
-        fr: 'Bienvenue sur Fint! 👋',
-        it: 'Benvenuto su Fint! 👋',
-        de: 'Willkommen bei Fint! 👋',
-      },
-      your_region: {
-        en: 'Your Region',
-        es: 'Tu Región',
-        pt: 'Sua Região',
-        fr: 'Votre Région',
-        it: 'La Tua Regione',
-        de: 'Ihre Region',
-      },
-      base_currency: {
-        en: 'Base Currency',
-        es: 'Moneda Base',
-        pt: 'Moeda Base',
-        fr: 'Devise de Base',
-        it: 'Valuta Base',
-        de: 'Basiswährung',
-      },
-      categories: {
-        en: 'Categories',
-        es: 'Categorías',
-        pt: 'Categorias',
-        fr: 'Catégories',
-        it: 'Categorie',
-        de: 'Kategorien',
-      },
-      step: {
-        en: 'Step',
-        es: 'Paso',
-        pt: 'Passo',
-        fr: 'Étape',
-        it: 'Passo',
-        de: 'Schritt',
-      },
-      of: {
-        en: 'of',
-        es: 'de',
-        pt: 'de',
-        fr: 'sur',
-        it: 'di',
-        de: 'von',
-      },
-      back: {
-        en: 'Back',
-        es: 'Atrás',
-        pt: 'Voltar',
-        fr: 'Retour',
-        it: 'Indietro',
-        de: 'Zurück',
-      },
-      next: {
-        en: 'Next',
-        es: 'Siguiente',
-        pt: 'Próximo',
-        fr: 'Suivant',
-        it: 'Avanti',
-        de: 'Weiter',
-      },
-      get_started: {
-        en: 'Get Started',
-        es: 'Comenzar',
-        pt: 'Começar',
-        fr: 'Commencer',
-        it: 'Inizia',
-        de: 'Loslegen',
-      },
-    };
-    return texts[key]?.[data.language] || texts[key]?.['en'] || key;
-  };
-
   const handleComplete = async () => {
     setSaving(true);
     try {
@@ -164,21 +70,21 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         country: data.country,
         base_currency: data.currency,
         selected_categories: allCategories,
-        language: data.language,
-        locale: getLocaleFromLanguage(data.language),
+        language: 'en',
+        locale: 'en-US',
         onboarding_completed: true,
       } as any);
 
       toast({
-        title: getOnboardingText('get_started'),
-        description: t('onboarding.preferences_saved'),
+        title: 'Get Started',
+        description: 'Preferences saved successfully',
       });
       onComplete();
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast({
-        title: t('common.error'),
-        description: t('onboarding.error_saving'),
+        title: 'Error',
+        description: 'Failed to save preferences. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -189,12 +95,10 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return !!data.language;
-      case 2:
         return !!data.country;
-      case 3:
+      case 2:
         return !!data.currency;
-      case 4:
+      case 3:
         // Must have at least one income and one expense category
         return data.incomeCategories.length > 0 && data.expenseCategories.length > 0;
       default:
@@ -205,12 +109,10 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <StepLanguage data={data} updateData={updateData} />;
-      case 2:
         return <StepCountry data={data} updateData={updateData} />;
-      case 3:
+      case 2:
         return <StepCurrency data={data} updateData={updateData} />;
-      case 4:
+      case 3:
         return <StepCategories data={data} updateData={updateData} />;
       default:
         return null;
@@ -220,13 +122,11 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const getStepTitle = () => {
     switch (step) {
       case 1:
-        return getOnboardingText('welcome');
+        return 'Welcome to Fint! 👋';
       case 2:
-        return getOnboardingText('your_region');
+        return 'Base Currency';
       case 3:
-        return getOnboardingText('base_currency');
-      case 4:
-        return getOnboardingText('categories');
+        return 'Categories';
       default:
         return '';
     }
@@ -242,7 +142,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         <div className="mt-4">
           <Progress value={(step / TOTAL_STEPS) * 100} className="h-2" />
           <p className="text-sm text-muted-foreground mt-2">
-            {getOnboardingText('step')} {step} {getOnboardingText('of')} {TOTAL_STEPS}
+            Step {step} of {TOTAL_STEPS}
           </p>
         </div>
 
@@ -251,12 +151,12 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         <div className="flex justify-between pt-4 border-t">
           <Button variant="outline" onClick={handleBack} disabled={step === 1 || saving}>
             <ChevronLeft className="w-4 h-4 mr-2" />
-            {getOnboardingText('back')}
+            Back
           </Button>
 
           {step < TOTAL_STEPS ? (
             <Button onClick={handleNext} disabled={!canProceed()}>
-              {getOnboardingText('next')}
+              Next
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
@@ -266,7 +166,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
               ) : (
                 <Check className="w-4 h-4 mr-2" />
               )}
-              {getOnboardingText('get_started')}
+              Get Started
             </Button>
           )}
         </div>
