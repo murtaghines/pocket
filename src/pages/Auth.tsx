@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -17,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, TrendingUp, PieChart, Wallet, Globe, ArrowRight, Shield, Sparkles } from "lucide-react";
+import { Loader2, KeyRound, TrendingUp, PieChart, Wallet, Globe, ArrowRight, Shield, Sparkles, X } from "lucide-react";
 import fintLogo from "@/assets/fint-logo.png";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -48,10 +47,13 @@ const features = [
   }
 ];
 
+type AuthMode = "none" | "login" | "register";
+
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const isResetMode = searchParams.get("reset") === "true";
   
+  const [authMode, setAuthMode] = useState<AuthMode>("none");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -245,6 +247,7 @@ export default function Auth() {
         title: "Account created!",
         description: "You can now sign in.",
       });
+      setAuthMode("login");
     }
     setLoading(false);
   };
@@ -306,83 +309,113 @@ export default function Auth() {
     setResetLoading(false);
   };
 
+  const closeAuthModal = () => {
+    setAuthMode("none");
+    setPassword("");
+    setConfirmPassword("");
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-background via-background to-primary/5 relative">
       {/* Decorative elements */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
       
-      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row">
-        {/* Hero Section */}
-        <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-12 xl:px-20">
-          <div className="max-w-xl mx-auto lg:mx-0 animate-fade-in">
-            {/* Logo */}
-            <div className="flex items-center gap-3 mb-8">
-              <img src={fintLogo} alt="Fint" className="w-12 h-12 lg:w-14 lg:h-14" />
-              <span className="font-display text-2xl lg:text-3xl font-bold">Fint</span>
-            </div>
-            
-            {/* Headline */}
-            <h1 className="font-display text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-6">
-              Take Control of{" "}
-              <span className="text-primary">Your Finances</span>
-            </h1>
-            
-            {/* Subheadline */}
-            <p className="text-lg lg:text-xl text-muted-foreground mb-10 leading-relaxed">
-              Your personal finance companion for tracking expenses, visualizing spending patterns, and managing investments—all in one place.
-            </p>
-            
-            {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              {features.map((feature, index) => (
-                <div 
-                  key={feature.title}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:bg-card/80 transition-colors animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                    <feature.icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-sm">{feature.title}</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
-                  </div>
+      {/* Header with auth buttons */}
+      <header className="relative z-20 flex items-center justify-between px-6 py-4 lg:px-12">
+        <div className="flex items-center gap-3">
+          <img src={fintLogo} alt="Fint" className="w-10 h-10 lg:w-12 lg:h-12" />
+          <span className="font-display text-xl lg:text-2xl font-bold">Fint</span>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            onClick={() => setAuthMode("login")}
+            className="text-muted-foreground hover:text-foreground hover:bg-primary/10"
+          >
+            Log In
+          </Button>
+          <Button
+            onClick={() => setAuthMode("register")}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            Register
+          </Button>
+        </div>
+      </header>
+      
+      {/* Main content */}
+      <main className="relative z-10 h-[calc(100vh-80px)] flex flex-col items-center justify-center px-6 lg:px-12">
+        <div className="max-w-2xl mx-auto text-center animate-fade-in">
+          {/* Headline */}
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+            Take Control of{" "}
+            <span className="text-primary">Your Finances</span>
+          </h1>
+          
+          {/* Subheadline */}
+          <p className="text-lg lg:text-xl text-muted-foreground mb-10 leading-relaxed max-w-xl mx-auto">
+            Your personal finance companion for tracking expenses, visualizing spending patterns, and managing investments—all in one place.
+          </p>
+          
+          {/* Features grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {features.map((feature, index) => (
+              <div 
+                key={feature.title}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:bg-card/80 transition-colors animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="p-3 rounded-lg bg-primary/10 text-primary">
+                  <feature.icon className="w-6 h-6" />
                 </div>
-              ))}
+                <h3 className="font-medium text-sm">{feature.title}</h3>
+              </div>
+            ))}
+          </div>
+          
+          {/* Trust indicators */}
+          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-primary" />
+              <span>Secure & Private</span>
             </div>
-            
-            {/* Trust indicators */}
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary" />
-                <span>Secure & Private</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span>Free to Use</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span>Free to Use</span>
             </div>
           </div>
         </div>
-        
-        {/* Auth Section */}
-        <div className="flex-1 flex items-center justify-center px-6 py-12 lg:px-12 xl:px-20 lg:bg-card/30 lg:backdrop-blur-sm">
-          <Card className="w-full max-w-md glass-card border-border/50 shadow-xl animate-scale-in">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-2xl">Welcome</CardTitle>
-              <CardDescription>
-                Sign in or create an account to get started
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="login">Sign In</TabsTrigger>
-                  <TabsTrigger value="register">Sign Up</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="login">
+      </main>
+      
+      {/* Auth Modal Overlay */}
+      {authMode !== "none" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-fade-in"
+            onClick={closeAuthModal}
+          />
+          
+          {/* Modal */}
+          <Card className="relative z-10 w-full max-w-md glass-card border-border/50 shadow-xl animate-scale-in">
+            <button
+              onClick={closeAuthModal}
+              className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+            
+            {authMode === "login" ? (
+              <>
+                <CardHeader className="text-center pb-2">
+                  <CardTitle className="text-2xl">Welcome Back</CardTitle>
+                  <CardDescription>
+                    Sign in to your account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email-login">Email</Label>
@@ -466,10 +499,28 @@ export default function Auth() {
                         </>
                       )}
                     </Button>
+                    <p className="text-center text-sm text-muted-foreground">
+                      Don't have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode("register")}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Sign up
+                      </button>
+                    </p>
                   </form>
-                </TabsContent>
-                
-                <TabsContent value="register">
+                </CardContent>
+              </>
+            ) : (
+              <>
+                <CardHeader className="text-center pb-2">
+                  <CardTitle className="text-2xl">Create Account</CardTitle>
+                  <CardDescription>
+                    Get started with Fint
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
@@ -539,13 +590,23 @@ export default function Auth() {
                         </>
                       )}
                     </Button>
+                    <p className="text-center text-sm text-muted-foreground">
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode("login")}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Sign in
+                      </button>
+                    </p>
                   </form>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
+                </CardContent>
+              </>
+            )}
           </Card>
         </div>
-      </div>
+      )}
     </div>
   );
 }
