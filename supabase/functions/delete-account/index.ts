@@ -6,11 +6,13 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Get the authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -19,17 +21,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body for the confirmation code
-    const body = await req.json().catch(() => ({}));
-    const { code } = body;
-
-    if (!code || typeof code !== "string" || code.length !== 6) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid confirmation code" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // Create a client with the user's token to get the user ID
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -38,6 +30,7 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
+    // Get the authenticated user
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     if (userError || !user) {
       return new Response(
@@ -47,37 +40,13 @@ Deno.serve(async (req) => {
     }
 
     const userId = user.id;
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verify the confirmation code
-    const { data: confirmation, error: confirmError } = await adminClient
-      .from("deletion_confirmations")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("code", code)
-      .single();
-
-    if (confirmError || !confirmation) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid or expired confirmation code" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Check if code has expired
-    if (new Date(confirmation.expires_at) < new Date()) {
-      await adminClient.from("deletion_confirmations").delete().eq("id", confirmation.id);
-      return new Response(
-        JSON.stringify({ success: false, error: "Confirmation code has expired" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     console.log(`Deleting account for user: ${userId}`);
+
+    // Create admin client with service role key
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Delete user data from all tables in the correct order (respecting foreign keys)
     const tablesToDelete = [
-      "deletion_confirmations",
       "investments",
       "transactions",
       "import_rows",

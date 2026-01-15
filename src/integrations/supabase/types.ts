@@ -165,30 +165,6 @@ export type Database = {
           },
         ]
       }
-      deletion_confirmations: {
-        Row: {
-          code: string
-          created_at: string
-          expires_at: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          expires_at: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       exchange_rates: {
         Row: {
           base_currency: string
