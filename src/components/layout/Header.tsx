@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
-import fintLogo from "@/assets/fint-logo.png";
+import fintLogo from "@/assets/fint-logo-new.png";
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
@@ -24,9 +24,9 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-3">
-            <img src={fintLogo} alt="Fint" className="w-10 h-10" />
+            <img src={fintLogo} alt="fint" className="w-10 h-10" />
             <h1 className="font-display text-xl font-bold tracking-tight">
-              Fint
+              fint
             </h1>
           </Link>
 
