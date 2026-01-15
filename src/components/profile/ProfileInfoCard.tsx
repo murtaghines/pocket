@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 export function ProfileInfoCard() {
   const { user, signOut } = useAuth();
   const { profile, updateProfile, isUpdating } = useProfile();
-  const { formatDate, t } = useLocalization();
+  const { formatDate } = useLocalization();
   const { toast } = useToast();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -36,14 +36,14 @@ export function ProfileInfoCard() {
         onSuccess: () => {
           setIsEditing(false);
           toast({
-            title: "Perfil actualizado",
-            description: "Tu información ha sido guardada correctamente.",
+            title: "Profile updated",
+            description: "Your information has been saved successfully.",
           });
         },
         onError: () => {
           toast({
             title: "Error",
-            description: "No se pudo actualizar el perfil.",
+            description: "Could not update profile.",
             variant: "destructive",
           });
         },
@@ -60,7 +60,7 @@ export function ProfileInfoCard() {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <User className="w-5 h-5" />
-          Información de Usuario
+          User Information
         </CardTitle>
         {!isEditing && (
           <Button variant="ghost" size="icon" onClick={handleEdit}>
@@ -73,32 +73,32 @@ export function ProfileInfoCard() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="edit-first-name">Nombre</Label>
+                <Label htmlFor="edit-first-name">First Name</Label>
                 <Input
                   id="edit-first-name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Tu nombre"
+                  placeholder="Your first name"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-last-name">Apellido</Label>
+                <Label htmlFor="edit-last-name">Last Name</Label>
                 <Input
                   id="edit-last-name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Tu apellido"
+                  placeholder="Your last name"
                 />
               </div>
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={handleSave} disabled={isUpdating}>
                 <Check className="w-4 h-4 mr-1" />
-                Guardar
+                Save
               </Button>
               <Button size="sm" variant="outline" onClick={handleCancel}>
                 <X className="w-4 h-4 mr-1" />
-                Cancelar
+                Cancel
               </Button>
             </div>
           </div>
@@ -110,7 +110,7 @@ export function ProfileInfoCard() {
                   <User className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Nombre</p>
+                  <p className="text-sm text-muted-foreground">Name</p>
                   <p className="font-medium">{displayName}</p>
                 </div>
               </div>
@@ -130,7 +130,7 @@ export function ProfileInfoCard() {
                   <Calendar className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Miembro desde</p>
+                  <p className="text-sm text-muted-foreground">Member since</p>
                   <p className="font-medium">{formatDate(user.created_at)}</p>
                 </div>
               </div>
@@ -144,7 +144,7 @@ export function ProfileInfoCard() {
             className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <LogOut className="w-4 h-4" />
-            {t('nav.logout')}
+            Log Out
           </Button>
         </div>
       </CardContent>

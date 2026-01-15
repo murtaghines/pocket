@@ -12,28 +12,11 @@ interface WeeklyData {
 }
 
 export function WeeklyComparisonChart() {
-  const { t, formatCurrency, language } = useLocalization();
+  const { formatCurrency } = useLocalization();
   const { transactions } = useTransactions();
 
-  // Day abbreviations based on language
-  const getDayAbbreviations = () => {
-    switch (language) {
-      case 'en':
-        return ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-      case 'pt':
-        return ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
-      case 'fr':
-        return ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-      case 'it':
-        return ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
-      case 'de':
-        return ['M', 'D', 'M', 'D', 'F', 'S', 'S'];
-      default:
-        return ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-    }
-  };
-
-  const dayAbbrevs = getDayAbbreviations();
+  // Day abbreviations in English
+  const dayAbbrevs = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   // Calculate weekly data from real transactions
   const weeklyData: WeeklyData[] = (() => {
@@ -87,13 +70,13 @@ export function WeeklyComparisonChart() {
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          {t('dashboard.this_week')}
+          This Week
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-4">
         <div className="flex items-baseline gap-2 mb-3">
           <span className="text-xl font-bold">{formatCurrency(totalSpent)}</span>
-          <span className="text-xs text-muted-foreground">{t('dashboard.spent')}</span>
+          <span className="text-xs text-muted-foreground">spent</span>
         </div>
         
         <div className="h-[80px]">
@@ -128,9 +111,9 @@ export function WeeklyComparisonChart() {
         </div>
 
         <div className="mt-2 pt-2 border-t flex justify-between text-xs">
-          <span className="text-muted-foreground">{t('dashboard.daily_average')}</span>
+          <span className="text-muted-foreground">Daily average</span>
           <span className="font-medium">
-            {hasData ? `${formatCurrency(averageDaily)}${t('dashboard.per_day')}` : '-'}
+            {hasData ? `${formatCurrency(averageDaily)}/day` : '-'}
           </span>
         </div>
       </CardContent>

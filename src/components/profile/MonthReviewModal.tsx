@@ -42,11 +42,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 import { 
-  movementTranslations, 
   INCOME_CATEGORIES, 
   EXPENSE_CATEGORIES, 
   TRANSFER_CATEGORIES,
   getCategoryLabel,
+  getMovementLabel,
   normalizeCategory
 } from "@/lib/categoryTranslations";
 
@@ -86,7 +86,7 @@ export function MonthReviewModal({
   monthLabel,
   isLocked = false,
 }: MonthReviewModalProps) {
-  const { t, formatCurrency, formatDate, language } = useLocalization();
+  const { formatCurrency, formatDate } = useLocalization();
   const { categories } = useCategories("CASHFLOW");
   const { user } = useAuth();
   const { toast } = useToast();
@@ -151,8 +151,8 @@ export function MonthReviewModal({
     onError: (error) => {
       console.error("Error updating transaction:", error);
       toast({
-        title: t("common.error"),
-        description: "No se pudo actualizar la transacción",
+        title: "Error",
+        description: "Could not update the transaction",
         variant: "destructive",
       });
     },
@@ -255,12 +255,12 @@ export function MonthReviewModal({
 
   // Translate movement label
   const translateMovement = (movement: MovementType): string => {
-    return movementTranslations[movement]?.[language] || movementTranslations[movement]?.['es'] || movement;
+    return getMovementLabel(movement);
   };
 
   // Translate category label
   const translateCategory = (slug: string): string => {
-    return getCategoryLabel(slug, language);
+    return getCategoryLabel(slug);
   };
 
   const summary = useMemo(() => {
@@ -304,8 +304,8 @@ export function MonthReviewModal({
 
   const handleConfirm = () => {
     toast({
-      title: "✓ Mes revisado",
-      description: `${transactions.length} transacciones confirmadas para ${monthLabel}`,
+      title: "✓ Month reviewed",
+      description: `${transactions.length} transactions confirmed for ${monthLabel}`,
     });
     onOpenChange(false);
   };
@@ -316,10 +316,10 @@ export function MonthReviewModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileCheck2 className="w-5 h-5 text-primary" />
-            {t("preview.title")} - {monthLabel}
+            Review - {monthLabel}
           </DialogTitle>
           <DialogDescription>
-            {transactions.length} transacciones en este mes
+            {transactions.length} transactions in this month
           </DialogDescription>
         </DialogHeader>
 
@@ -330,9 +330,9 @@ export function MonthReviewModal({
         ) : transactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <FileCheck2 className="w-12 h-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">No hay transacciones para este mes</p>
+            <p className="text-muted-foreground">No transactions for this month</p>
             <p className="text-sm text-muted-foreground/70 mt-1">
-              Sube archivos y procésalos primero
+              Upload and process files first
             </p>
           </div>
         ) : (
@@ -342,7 +342,7 @@ export function MonthReviewModal({
               <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border">
                 <Lock className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  Este mes está cerrado. No puedes editar las categorías.
+                  This month is closed. You cannot edit categories.
                 </span>
               </div>
             )}
@@ -365,7 +365,7 @@ export function MonthReviewModal({
               )}
               {summary.edited > 0 && !isLocked && (
                 <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  {summary.edited} {t("preview.edited")}
+                  {summary.edited} edited
                 </Badge>
               )}
             </div>
@@ -375,11 +375,11 @@ export function MonthReviewModal({
               <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[90px] hidden sm:table-cell">{t("transactions.date")}</TableHead>
-                    <TableHead className="min-w-[120px]">{t("transactions.description")}</TableHead>
-                    <TableHead className="w-[140px]">Movimiento</TableHead>
-                    <TableHead className="w-[150px]">{t("transactions.category")}</TableHead>
-                    <TableHead className="text-right w-[100px]">{t("transactions.amount")}</TableHead>
+                    <TableHead className="w-[90px] hidden sm:table-cell">Date</TableHead>
+                    <TableHead className="min-w-[120px]">Description</TableHead>
+                    <TableHead className="w-[140px]">Movement</TableHead>
+                    <TableHead className="w-[150px]">Category</TableHead>
+                    <TableHead className="text-right w-[100px]">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -479,7 +479,7 @@ export function MonthReviewModal({
                           )}
                         </TableCell>
                         <TableCell className={cn(
-                          "text-right font-medium text-sm",
+                          "text-right font-medium tabular-nums text-sm",
                           getMovementColor(effectiveMovement)
                         )}>
                           {formatCurrency(tx.amount)}
@@ -494,22 +494,13 @@ export function MonthReviewModal({
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-          >
-            {isLocked ? "Cerrar" : t("common.cancel")}
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
           </Button>
-          {!isLocked && (
-            <Button 
-              variant="gradient" 
-              onClick={handleConfirm}
-              disabled={transactions.length === 0}
-            >
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Listo ({transactions.length})
-            </Button>
-          )}
+          <Button onClick={handleConfirm} disabled={transactions.length === 0}>
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Confirm
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

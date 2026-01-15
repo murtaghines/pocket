@@ -9,7 +9,7 @@ interface YearlyBalanceChartProps {
 }
 
 export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
-  const { t, formatCurrency } = useLocalization();
+  const { formatCurrency } = useLocalization();
 
   const totalBalance = data.reduce((sum, d) => sum + d.balance, 0);
   const averageBalance = Math.round(totalBalance / data.length);
@@ -33,11 +33,11 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Scale className="w-4 h-4" />
-            {t('dashboard.yearly_balance')}
+            Yearly Balance
           </CardTitle>
           <div className="text-right">
             <p className="text-lg font-bold text-success">{formatCurrency(totalBalance)}</p>
-            <p className="text-xs text-muted-foreground">{t('dashboard.total_savings')}</p>
+            <p className="text-xs text-muted-foreground">Total Savings</p>
           </div>
         </div>
       </CardHeader>
@@ -58,7 +58,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
                 stroke="hsl(var(--muted-foreground) / 0.5)" 
                 strokeDasharray="3 3"
                 label={{ 
-                  value: `${t('dashboard.average')}: ${formatCurrency(averageBalance)}`,
+                  value: `Avg: ${formatCurrency(averageBalance)}`,
                   position: 'insideTopRight',
                   fontSize: 10,
                   fill: 'hsl(var(--muted-foreground))'

@@ -28,7 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle2, AlertTriangle, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Loader2 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
-import { getCategoryLabel, getMovementLabel, normalizeCategory } from "@/lib/categoryTranslations";
+import { getCategoryLabel, getMovementLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
 
 export type MovementType = "INCOME" | "EXPENSE" | "TRANSFER";
@@ -79,7 +79,7 @@ export function TransactionPreviewModal({
   onUpdateTransaction,
   isConfirming,
 }: TransactionPreviewModalProps) {
-  const { formatCurrency, formatDate, language } = useLocalization();
+  const { formatCurrency, formatDate } = useLocalization();
   const { incomeCategories, expenseCategories, transferCategories } = useCategories("CASHFLOW");
 
   if (!previewData) return null;
@@ -125,11 +125,11 @@ export function TransactionPreviewModal({
   };
 
   const translateCategory = (slug: string) => {
-    return getCategoryLabel(slug, language);
+    return getCategoryLabel(slug);
   };
 
   const translateMovement = (movement: MovementType) => {
-    return getMovementLabel(movement, language);
+    return getMovementLabel(movement);
   };
 
   const handleMovementChange = (tempId: string, newMovement: MovementType) => {
@@ -151,10 +151,10 @@ export function TransactionPreviewModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-success" />
-            Vista previa de importación
+            Import Preview
           </DialogTitle>
           <DialogDescription>
-            {fileName} - {transactions.length} transacciones listas para importar
+            {fileName} - {transactions.length} transactions ready to import
           </DialogDescription>
         </DialogHeader>
 
@@ -178,13 +178,13 @@ export function TransactionPreviewModal({
             <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
               <AlertTriangle className="w-4 h-4 text-muted-foreground" />
               <span className="text-muted-foreground">
-                {stats.duplicatesIgnored} duplicados ignorados
+                {stats.duplicatesIgnored} duplicates ignored
               </span>
             </div>
           )}
           {summary.edited > 0 && (
             <Badge variant="secondary">
-              {summary.edited} editadas
+              {summary.edited} edited
             </Badge>
           )}
         </div>
@@ -194,11 +194,11 @@ export function TransactionPreviewModal({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[90px]">Fecha</TableHead>
-                <TableHead className="min-w-[180px]">Descripción</TableHead>
-                <TableHead className="w-[130px]">Movimiento</TableHead>
-                <TableHead className="w-[180px]">Categoría</TableHead>
-                <TableHead className="text-right w-[110px]">Importe</TableHead>
+                <TableHead className="w-[90px]">Date</TableHead>
+                <TableHead className="min-w-[180px]">Description</TableHead>
+                <TableHead className="w-[130px]">Movement</TableHead>
+                <TableHead className="w-[180px]">Category</TableHead>
+                <TableHead className="text-right w-[110px]">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -220,7 +220,7 @@ export function TransactionPreviewModal({
                         </span>
                         {tx.isEdited && (
                           <Badge variant="outline" className="text-xs shrink-0">
-                            editada
+                            edited
                           </Badge>
                         )}
                       </div>
@@ -300,7 +300,7 @@ export function TransactionPreviewModal({
             onClick={() => onOpenChange(false)}
             disabled={isConfirming}
           >
-            {isSaved && !hasUnsavedChanges ? (language === 'es' ? 'Cerrar' : 'Close') : (language === 'es' ? 'Cancelar' : 'Cancel')}
+            {isSaved && !hasUnsavedChanges ? 'Close' : 'Cancel'}
           </Button>
           <Button 
             variant="gradient" 
@@ -310,17 +310,17 @@ export function TransactionPreviewModal({
             {isConfirming ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {language === 'es' ? 'Guardando...' : 'Saving...'}
+                Saving...
               </>
             ) : isSaved && !hasUnsavedChanges ? (
               <>
                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                {language === 'es' ? 'Guardado' : 'Saved'}
+                Saved
               </>
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                {language === 'es' ? 'Guardar' : 'Save'} ({transactions.length})
+                Save ({transactions.length})
               </>
             )}
           </Button>
