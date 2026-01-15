@@ -149,7 +149,7 @@ export function useImports(domain?: AppDomain) {
         }
 
         const code = payload?.error;
-        const message = payload?.message || 'Error al procesar el archivo';
+        const message = payload?.message || 'Error processing file';
 
         // Create error with code for special handling
         const err = new Error(message);
@@ -159,11 +159,11 @@ export function useImports(domain?: AppDomain) {
       
       // Check for error in successful response body
       if (data?.error === 'duplicate_file') {
-        throw new Error(data.message || 'Este archivo ya fue importado');
+        throw new Error(data.message || 'This file has already been imported');
       }
 
       if (data?.error === 'period_closed') {
-        throw new Error(data.message || 'El período está cerrado');
+        throw new Error(data.message || 'The period is closed');
       }
 
       if (data?.error) {
@@ -178,7 +178,7 @@ export function useImports(domain?: AppDomain) {
       queryClient.invalidateQueries({ queryKey: ['periods'] });
       
       if (data.dateWarnings && data.dateWarnings.length > 0) {
-        toast.warning(`${data.message}. ${data.dateWarnings.length} transacciones con fechas fuera del mes.`);
+        toast.warning(`${data.message}. ${data.dateWarnings.length} transactions with dates outside the month.`);
       } else {
         toast.success(data.message);
       }
@@ -186,15 +186,15 @@ export function useImports(domain?: AppDomain) {
     onError: (error: any) => {
       console.error('Error processing import:', error);
       const code = error?.code || "";
-      const message = error?.message || "Error al procesar el archivo";
+      const message = error?.message || "Error processing file";
       
       if (code === "payment_required") {
-        toast.error("Sin créditos de IA", {
-          description: "Recarga créditos en Lovable para continuar procesando archivos.",
+        toast.error("No AI credits", {
+          description: "Top up credits in Lovable to continue processing files.",
         });
       } else if (code === "rate_limited") {
-        toast.error("Demasiadas solicitudes", {
-          description: "Espera unos minutos y vuelve a intentar.",
+        toast.error("Too many requests", {
+          description: "Wait a few minutes and try again.",
         });
       } else {
         toast.error(message);
@@ -234,11 +234,11 @@ export function useImports(domain?: AppDomain) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      toast.success('Archivo eliminado correctamente');
+      toast.success('File deleted successfully');
     },
     onError: (error) => {
       console.error('Error deleting import:', error);
-      toast.error('Error al eliminar el archivo');
+      toast.error('Error deleting file');
     }
   });
 
@@ -261,7 +261,7 @@ export function useImports(domain?: AppDomain) {
 
     const trimmed = content.trim();
     if (trimmed.length < 50) {
-      throw new Error("PDF sin texto seleccionable (probablemente escaneado).");
+      throw new Error("PDF has no selectable text (probably scanned).");
     }
     return trimmed;
   };

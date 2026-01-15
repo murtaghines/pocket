@@ -28,13 +28,13 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
   const [currentValue, setCurrentValue] = useState("");
 
   const formatCurrency = (amount: number) =>
-    amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!platform || !accountName || !currentValue) {
-      toast.error("Completa todos los campos");
+      toast.error("Please fill in all fields");
       return;
     }
 
@@ -44,22 +44,22 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
         account_name: accountName.trim(),
         current_value: parseFloat(currentValue),
       });
-      toast.success("Cuenta guardada correctamente");
+      toast.success("Account saved successfully");
       setOpen(false);
       setPlatform("");
       setAccountName("");
       setCurrentValue("");
     } catch (error) {
-      toast.error("Error al guardar la cuenta");
+      toast.error("Error saving account");
     }
   };
 
   const handleDelete = async (accountId: string) => {
     try {
       await deleteAccount.mutateAsync(accountId);
-      toast.success("Cuenta eliminada");
+      toast.success("Account deleted");
     } catch (error) {
-      toast.error("Error al eliminar la cuenta");
+      toast.error("Error deleting account");
     }
   };
 
@@ -68,40 +68,40 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Building2 className="w-5 h-5" />
-          Cuentas de Inversión
+          Investment Accounts
         </CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline">
               <Plus className="w-4 h-4 mr-2" />
-              Añadir
+              Add
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Añadir o Actualizar Cuenta</DialogTitle>
+              <DialogTitle>Add or Update Account</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="platform">Plataforma</Label>
+                <Label htmlFor="platform">Platform</Label>
                 <Input
                   id="platform"
-                  placeholder="Ej: Revolut, Cocos, MyInvestor"
+                  placeholder="E.g.: Revolut, Fidelity, Vanguard"
                   value={platform}
                   onChange={(e) => setPlatform(e.target.value)}
                 />
               </div>
               <div>
-                <Label htmlFor="accountName">Nombre de la Cuenta</Label>
+                <Label htmlFor="accountName">Account Name</Label>
                 <Input
                   id="accountName"
-                  placeholder="Ej: Instant Access Savings, ETF Portfolio"
+                  placeholder="E.g.: Instant Access Savings, ETF Portfolio"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
                 />
               </div>
               <div>
-                <Label htmlFor="currentValue">Valor Actual (€)</Label>
+                <Label htmlFor="currentValue">Current Value ($)</Label>
                 <Input
                   id="currentValue"
                   type="number"
@@ -112,7 +112,7 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
                 />
               </div>
               <Button type="submit" className="w-full" disabled={upsertAccount.isPending}>
-                {upsertAccount.isPending ? "Guardando..." : "Guardar Cuenta"}
+                {upsertAccount.isPending ? "Saving..." : "Save Account"}
               </Button>
             </form>
           </DialogContent>
@@ -121,7 +121,7 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
       <CardContent>
         {accounts.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No hay cuentas registradas. Añade una para trackear el valor actual.
+            No accounts registered. Add one to track current value.
           </p>
         ) : (
           <div className="space-y-3">
@@ -140,7 +140,7 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
                       {formatCurrency(account.current_value)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(account.last_updated).toLocaleDateString('es-ES')}
+                      {new Date(account.last_updated).toLocaleDateString('en-US')}
                     </p>
                   </div>
                   <Button

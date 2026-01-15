@@ -72,11 +72,11 @@ export function usePeriods(domain?: AppDomain) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['periods'] });
-      toast.success('Período cerrado correctamente');
+      toast.success('Period closed successfully');
     },
     onError: (error) => {
       console.error('Error closing period:', error);
-      toast.error('Error al cerrar el período');
+      toast.error('Error closing period');
     }
   });
 
@@ -105,11 +105,11 @@ export function usePeriods(domain?: AppDomain) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['periods'] });
-      toast.success('Período reabierto correctamente');
+      toast.success('Period reopened successfully');
     },
     onError: (error) => {
       console.error('Error reopening period:', error);
-      toast.error('Error al reabrir el período');
+      toast.error('Error reopening period');
     }
   });
 

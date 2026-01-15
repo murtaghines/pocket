@@ -290,7 +290,7 @@ export function MonthUploadSlot({
 
                   const status = isStaleProcessing ? "FAILED" : imp.status;
                   const errorMessage = isStaleProcessing
-                    ? "Procesamiento interrumpido (conexión o cierre de la pestaña). Vuelve a subir el archivo."
+                    ? "Processing interrupted (connection or tab closed). Please re-upload the file."
                     : imp.error_message;
 
                   return (
