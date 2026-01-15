@@ -137,8 +137,8 @@ export function MonthUploadSlot({
 
     if (droppedFiles.length === 0) {
       toast({
-        title: "Formato no soportado",
-        description: "Por favor, sube archivos Excel (.xlsx, .xls), CSV o PDF.",
+        title: "Unsupported format",
+        description: "Please upload Excel (.xlsx, .xls), CSV or PDF files.",
         variant: "destructive",
       });
       return;
@@ -167,7 +167,7 @@ export function MonthUploadSlot({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       day: '2-digit',
       month: 'short',
     });
@@ -221,7 +221,7 @@ export function MonthUploadSlot({
                 <h3 className="font-medium capitalize">{monthLabel}</h3>
                 {totalTransactions > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    {totalTransactions} transacciones
+                    {totalTransactions} transactions
                   </p>
                 )}
               </div>
@@ -233,7 +233,7 @@ export function MonthUploadSlot({
                   isEmpty && "text-muted-foreground border-dashed"
                 )}
               >
-                {imports.length} archivo{imports.length !== 1 ? 's' : ''}
+                {imports.length} file{imports.length !== 1 ? 's' : ''}
               </Badge>
               {/* Lock/Unlock button in top right */}
               {period && !isEmpty && (
@@ -271,12 +271,12 @@ export function MonthUploadSlot({
               <div className="space-y-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                  <span className="text-sm font-medium text-primary">Procesando archivos...</span>
+                  <span className="text-sm font-medium text-primary">Processing files...</span>
                   <span className="text-xs text-muted-foreground ml-auto">{Math.round(progress)}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  Extrayendo transacciones y categorizando automáticamente
+                  Extracting transactions and categorizing automatically
                 </p>
               </div>
             )}
@@ -302,8 +302,8 @@ export function MonthUploadSlot({
                       <div className="flex-1 min-w-0">
                         <p className="truncate text-xs font-medium">{imp.file_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {status === "NORMALIZED" && imp.transactions_count
-                            ? `${imp.transactions_count} transacciones`
+                        {status === "NORMALIZED" && imp.transactions_count
+                            ? `${imp.transactions_count} transactions`
                             : status === "FAILED" && errorMessage
                               ? (
                                   <span className="text-destructive truncate">
@@ -329,14 +329,14 @@ export function MonthUploadSlot({
                           <HoverCardContent className="w-80" align="end">
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4 text-destructive" />
-                                <h4 className="text-sm font-semibold">Error de procesamiento</h4>
+                              <AlertCircle className="w-4 h-4 text-destructive" />
+                                <h4 className="text-sm font-semibold">Processing error</h4>
                               </div>
                               <p className="text-xs text-muted-foreground">{errorMessage}</p>
                               <div className="pt-2 border-t">
                                 <p className="text-xs text-muted-foreground">
-                                  <strong>Sugerencia:</strong> Si es un PDF escaneado,
-                                  intenta convertirlo a CSV o Excel antes de subirlo.
+                                  <strong>Tip:</strong> If it's a scanned PDF,
+                                  try converting it to CSV or Excel before uploading.
                                 </p>
                               </div>
                             </div>
@@ -357,19 +357,19 @@ export function MonthUploadSlot({
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>¿Eliminar archivo?</AlertDialogTitle>
+                            <AlertDialogTitle>Delete file?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Se eliminarán todas las transacciones asociadas a "{imp.file_name}".
-                              Esta acción no se puede deshacer.
+                              All transactions associated with "{imp.file_name}" will be deleted.
+                              This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => onDeleteImport(imp.id)}
                               className="bg-destructive hover:bg-destructive/90"
                             >
-                              Eliminar
+                              Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -394,7 +394,7 @@ export function MonthUploadSlot({
                 />
                 <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  Arrastra archivos o haz clic para subir
+                  Drag files or click to upload
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Excel, CSV o PDF
@@ -417,7 +417,7 @@ export function MonthUploadSlot({
                   />
                   <Button variant="outline" size="sm" className="w-full" disabled={isProcessing}>
                     <Upload className="w-4 h-4 mr-2" />
-                    Agregar más archivos
+                    Add more files
                   </Button>
                 </div>
                 <Button 
@@ -427,7 +427,7 @@ export function MonthUploadSlot({
                   disabled={isProcessing}
                 >
                   <Eye className="w-4 h-4 mr-2" />
-                  Revisar
+                  Review
                 </Button>
               </div>
             )}
@@ -441,7 +441,7 @@ export function MonthUploadSlot({
                 onClick={() => setShowReviewModal(true)}
               >
                 <Eye className="w-4 h-4 mr-2" />
-                Ver transacciones
+                View transactions
               </Button>
             )}
           </CardContent>
@@ -454,14 +454,14 @@ export function MonthUploadSlot({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
-              ¿Cerrar el mes?
+              Close month?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Las transacciones de {monthLabel} quedarán bloqueadas y no podrás editar las categorías. Podrás reabrir el mes si lo necesitas.
+              Transactions for {monthLabel} will be locked and you won't be able to edit categories. You can reopen the month if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (period && onClosePeriod) {
@@ -471,7 +471,7 @@ export function MonthUploadSlot({
               }}
             >
               <Lock className="w-4 h-4 mr-2" />
-              Cerrar mes
+              Close month
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -483,14 +483,14 @@ export function MonthUploadSlot({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Unlock className="w-5 h-5" />
-              ¿Reabrir el mes?
+              Reopen month?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Esto te permitirá subir más archivos y editar las categorías de las transacciones de {monthLabel}.
+              This will allow you to upload more files and edit transaction categories for {monthLabel}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (period && onReopenPeriod) {
@@ -500,7 +500,7 @@ export function MonthUploadSlot({
               }}
             >
               <Unlock className="w-4 h-4 mr-2" />
-              Reabrir mes
+              Reopen month
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

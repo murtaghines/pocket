@@ -21,7 +21,7 @@ export function MonthStatusIndicator() {
   }, [lastClosedMonth]);
 
   const lastClosedMonthLabel = useMemo(() => {
-    return lastClosedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return lastClosedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }, [lastClosedMonth]);
 
   const countImportsForMonth = (imports: Import[], monthKey: string) => {
@@ -79,7 +79,7 @@ export function MonthStatusIndicator() {
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <FileText className="w-3.5 h-3.5" />
-              <span>Extractos</span>
+              <span>Statements</span>
             </div>
             <Badge variant={bankUploads > 0 ? "secondary" : "outline"} className="text-xs">
               {bankUploads}
@@ -88,7 +88,7 @@ export function MonthStatusIndicator() {
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>Inversiones</span>
+              <span>Investments</span>
             </div>
             <Badge variant={investmentUploads > 0 ? "secondary" : "outline"} className="text-xs">
               {investmentUploads}
@@ -100,7 +100,7 @@ export function MonthStatusIndicator() {
           to="/profile" 
           className="flex items-center justify-center gap-1 text-xs text-primary hover:underline"
         >
-          Ver archivos
+          View files
           <ArrowRight className="w-3 h-3" />
         </Link>
       </CardContent>

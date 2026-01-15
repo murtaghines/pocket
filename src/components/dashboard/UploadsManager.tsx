@@ -29,7 +29,7 @@ function formatFileSize(bytes: number | null): string {
 }
 
 function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("es-ES", {
+  return new Date(dateString).toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -50,10 +50,10 @@ function UploadItem({ upload, onDelete, isDeleting }: {
   };
 
   const statusLabels: Record<string, string> = {
-    pending: "Pendiente",
-    processing: "Procesando",
-    completed: "Completado",
-    failed: "Error",
+    pending: "Pending",
+    processing: "Processing",
+    completed: "Completed",
+    failed: "Failed",
   };
 
   return (
@@ -69,7 +69,7 @@ function UploadItem({ upload, onDelete, isDeleting }: {
             {upload.transactions_count !== null && upload.transactions_count > 0 && (
               <>
                 <span>•</span>
-                <span>{upload.transactions_count} transacciones</span>
+                <span>{upload.transactions_count} transactions</span>
               </>
             )}
           </div>
@@ -98,22 +98,22 @@ function UploadItem({ upload, onDelete, isDeleting }: {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>¿Eliminar archivo?</AlertDialogTitle>
+              <AlertDialogTitle>Delete file?</AlertDialogTitle>
               <AlertDialogDescription>
-                Se eliminará "{upload.file_name}" y todas sus transacciones asociadas
-                ({upload.transactions_count || 0}). Esta acción no se puede deshacer.
+                "{upload.file_name}" and all its associated transactions
+                ({upload.transactions_count || 0}) will be deleted. This action cannot be undone.
                 <br /><br />
-                <strong>Nota:</strong> Después de eliminar, se verificará la integridad de todos tus datos
-                para detectar duplicados y transferencias entre cuentas.
+                <strong>Note:</strong> After deletion, data integrity will be verified
+                to detect duplicates and transfers between accounts.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => onDelete(upload.id)}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Eliminar
+                Delete
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -151,7 +151,7 @@ function MonthGroup({
         )}
         <span className="font-medium capitalize">{label}</span>
         <Badge variant="outline" className="ml-auto">
-          {uploads.length} archivo{uploads.length !== 1 ? "s" : ""}
+          {uploads.length} file{uploads.length !== 1 ? "s" : ""}
         </Badge>
       </button>
 
@@ -191,14 +191,14 @@ export function UploadsManager() {
       if (error) throw error;
 
       const stats = data.stats;
-      let message = "Verificación completada.";
+      let message = "Verification completed.";
       
       if (stats.duplicatesRemoved > 0 || stats.transfersLinked > 0) {
-        message = `${stats.duplicatesRemoved} duplicados eliminados, ${stats.transfersLinked} transferencias vinculadas.`;
+        message = `${stats.duplicatesRemoved} duplicates removed, ${stats.transfersLinked} transfers linked.`;
       }
 
       toast({
-        title: "Integridad verificada",
+        title: "Integrity verified",
         description: message,
       });
 
@@ -206,7 +206,7 @@ export function UploadsManager() {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "No se pudo verificar la integridad",
+        description: error.message || "Could not verify integrity",
         variant: "destructive",
       });
     } finally {
@@ -221,9 +221,9 @@ export function UploadsManager() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg font-semibold">Archivos Subidos</CardTitle>
+            <CardTitle className="text-lg font-semibold">Uploaded Files</CardTitle>
             <CardDescription>
-              Gestiona los archivos que has subido y sus transacciones
+              Manage your uploaded files and their transactions
             </CardDescription>
           </div>
           <Button
@@ -237,7 +237,7 @@ export function UploadsManager() {
             ) : (
               <RefreshCw className="w-4 h-4 mr-2" />
             )}
-            Verificar integridad
+            Verify integrity
           </Button>
         </div>
       </CardHeader>
@@ -249,7 +249,7 @@ export function UploadsManager() {
         ) : uploads.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No has subido ningún archivo todavía</p>
+            <p>You haven't uploaded any files yet</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-4">
