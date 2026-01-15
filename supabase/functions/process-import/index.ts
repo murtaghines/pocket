@@ -17,7 +17,7 @@ type MovementType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 
 // ========== CATEGORY SLUGS BY MOVEMENT ==========
 const INCOME_SLUGS = ['salary', 'refunds', 'sales', 'transfers_in', 'other_income'];
-const EXPENSE_SLUGS = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'other_expense'];
+const EXPENSE_SLUGS = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense'];
 const TRANSFER_SLUGS = ['own_transfer', 'to_investment'];
 
 // ========== TX_TYPE to MOVEMENT MAPPING ==========
@@ -151,7 +151,6 @@ const LOCAL_PATTERNS: Record<string, LocalPattern> = {
   'h&m': { categorySlug: 'shopping', movement: 'EXPENSE' },
   'primark': { categorySlug: 'shopping', movement: 'EXPENSE' },
   'ikea': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'decathlon': { categorySlug: 'shopping', movement: 'EXPENSE' },
   'el corte ingles': { categorySlug: 'shopping', movement: 'EXPENSE' },
   'mediamarkt': { categorySlug: 'shopping', movement: 'EXPENSE' },
   'pccomponentes': { categorySlug: 'shopping', movement: 'EXPENSE' },
@@ -171,10 +170,6 @@ const LOCAL_PATTERNS: Record<string, LocalPattern> = {
   'seguro medico': { categorySlug: 'health', movement: 'EXPENSE' },
   'dentista': { categorySlug: 'health', movement: 'EXPENSE' },
   'optica': { categorySlug: 'health', movement: 'EXPENSE' },
-  'gimnasio': { categorySlug: 'health', movement: 'EXPENSE' },
-  'basic fit': { categorySlug: 'health', movement: 'EXPENSE' },
-  'mcfit': { categorySlug: 'health', movement: 'EXPENSE' },
-  'gym': { categorySlug: 'health', movement: 'EXPENSE' },
   
   // Entertainment
   'cine': { categorySlug: 'entertainment', movement: 'EXPENSE' },
@@ -189,6 +184,28 @@ const LOCAL_PATTERNS: Record<string, LocalPattern> = {
   'playstation': { categorySlug: 'entertainment', movement: 'EXPENSE' },
   'xbox': { categorySlug: 'entertainment', movement: 'EXPENSE' },
   'nintendo': { categorySlug: 'entertainment', movement: 'EXPENSE' },
+  
+  // Sports / Deportes
+  'decathlon': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'sprinter': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'sport zone': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'forum sport': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'intersport': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'footlocker': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'jd sports': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'basic fit': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'mcfit': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'anytime fitness': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'gimnasio': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'gym': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'crossfit': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'padel': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'tenis': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'futbol': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'natacion': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'piscina': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'yoga': { categorySlug: 'sports', movement: 'EXPENSE' },
+  'pilates': { categorySlug: 'sports', movement: 'EXPENSE' },
   
   // Education
   'udemy': { categorySlug: 'education', movement: 'EXPENSE' },
