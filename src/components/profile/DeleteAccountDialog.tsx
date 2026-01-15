@@ -26,7 +26,7 @@ export function DeleteAccountDialog() {
   const { signOut } = useAuth();
 
   const handleDelete = async () => {
-    if (confirmText !== "DELETE") return;
+    if (confirmText !== "Confirm") return;
 
     setIsDeleting(true);
     try {
@@ -87,13 +87,13 @@ export function DeleteAccountDialog() {
 
         <div className="py-4">
           <Label htmlFor="confirm-delete" className="text-sm font-medium">
-            Type <span className="font-mono font-bold text-destructive">DELETE</span> to confirm
+            Type <span className="font-mono font-bold text-destructive">Confirm</span> to confirm
           </Label>
           <Input
             id="confirm-delete"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="DELETE"
+            placeholder="Confirm"
             className="mt-2"
             disabled={isDeleting}
           />
@@ -104,7 +104,7 @@ export function DeleteAccountDialog() {
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={confirmText !== "DELETE" || isDeleting}
+            disabled={confirmText !== "Confirm" || isDeleting}
           >
             {isDeleting ? (
               <>
