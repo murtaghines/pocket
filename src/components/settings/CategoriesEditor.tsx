@@ -103,6 +103,26 @@ export function CategoriesEditor() {
     });
   };
 
+  const selectAllIncome = () => {
+    setIncomeCategories([...INCOME_CATEGORIES]);
+    setHasChanges(true);
+  };
+
+  const deselectAllIncome = () => {
+    setIncomeCategories(['other_income']);
+    setHasChanges(true);
+  };
+
+  const selectAllExpense = () => {
+    setExpenseCategories([...EXPENSE_CATEGORIES]);
+    setHasChanges(true);
+  };
+
+  const deselectAllExpense = () => {
+    setExpenseCategories(['other_expense']);
+    setHasChanges(true);
+  };
+
   const renderCategoryGrid = (
     categories: string[],
     selectedCategories: string[],
@@ -168,7 +188,15 @@ export function CategoriesEditor() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="income" className="mt-3">
+          <TabsContent value="income" className="mt-3 space-y-2">
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={selectAllIncome} className="text-xs h-7 px-2">
+                Select All
+              </Button>
+              <Button variant="ghost" size="sm" onClick={deselectAllIncome} className="text-xs h-7 px-2">
+                Deselect All
+              </Button>
+            </div>
             {renderCategoryGrid(
               INCOME_CATEGORIES,
               incomeCategories,
@@ -177,7 +205,15 @@ export function CategoriesEditor() {
             )}
           </TabsContent>
 
-          <TabsContent value="expense" className="mt-3">
+          <TabsContent value="expense" className="mt-3 space-y-2">
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={selectAllExpense} className="text-xs h-7 px-2">
+                Select All
+              </Button>
+              <Button variant="ghost" size="sm" onClick={deselectAllExpense} className="text-xs h-7 px-2">
+                Deselect All
+              </Button>
+            </div>
             {renderCategoryGrid(
               EXPENSE_CATEGORIES,
               expenseCategories,
