@@ -919,7 +919,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: 'duplicate_file',
-          message: `Este archivo ya fue procesado anteriormente (${existingImport.file_name}, ${existingImport.transactions_count || 0} transacciones). No se permite procesar archivos duplicados.`,
+          message: `This file was already processed (${existingImport.file_name}, ${existingImport.transactions_count || 0} transactions). Duplicate files are not allowed.`,
           existingImportId: existingImport.id,
           existingUploadedAt: existingImport.uploaded_at
         }),
@@ -943,7 +943,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             error: 'period_closed',
-            message: `El período ${normalizedTargetMonth} está cerrado. Debe reabrirlo para agregar datos.`
+            message: `The period ${normalizedTargetMonth} is closed. You must reopen it to add data.`
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -1056,7 +1056,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             error: 'parse_failed',
-            message: 'No se pudieron extraer transacciones. El archivo puede ser muy complejo. Intente exportar como CSV desde su banco.'
+            message: 'Could not extract transactions. The file may be too complex. Try exporting as CSV from your bank.'
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -1082,7 +1082,7 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ 
               error: 'payment_required',
-              message: 'Sin créditos de IA. Recarga créditos en Lovable para continuar.'
+              message: 'No AI credits. Please add credits in Lovable to continue.'
             }),
             { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
@@ -1092,7 +1092,7 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ 
               error: 'rate_limited',
-              message: 'Demasiadas solicitudes. Espera unos minutos y reintenta.'
+              message: 'Too many requests. Please wait a few minutes and try again.'
             }),
             { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
@@ -1414,7 +1414,7 @@ serve(async (req) => {
         await supabase.from('imports').update({ 
           status: 'NORMALIZED',
           transactions_count: 0,
-          error_message: 'Todas las transacciones ya existían'
+          error_message: 'All transactions already existed'
         }).eq('id', importId);
       }
     }
@@ -1440,18 +1440,18 @@ serve(async (req) => {
     });
 
     // Build response message
-    let message = `Procesadas ${stats.newTransactions} transacciones nuevas`;
+    let message = `Processed ${stats.newTransactions} new transactions`;
     if (stats.duplicatesIgnored > 0) {
-      message += `, ${stats.duplicatesIgnored} duplicados ignorados`;
+      message += `, ${stats.duplicatesIgnored} duplicates ignored`;
     }
     if (stats.transfers > 0) {
-      message += `, ${stats.transfers} transferencias`;
+      message += `, ${stats.transfers} transfers`;
     }
     if (stats.categorizedByRule > 0) {
-      message += `, ${stats.categorizedByRule} por reglas`;
+      message += `, ${stats.categorizedByRule} by rules`;
     }
     if (stats.categorizedByLocalPattern > 0) {
-      message += `, ${stats.categorizedByLocalPattern} por patrones locales`;
+      message += `, ${stats.categorizedByLocalPattern} by local patterns`;
     }
     
     // Log AI savings info

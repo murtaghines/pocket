@@ -191,7 +191,7 @@ serve(async (req) => {
       if (!err1 && !err2) transfersLinked++;
     }
 
-    const message = `Integridad verificada: ${duplicatesRemoved} duplicados eliminados, ${transfersLinked} pares de transferencias vinculados, ${hashesUpdated} hashes actualizados`;
+    const message = `Integrity verified: ${duplicatesRemoved} duplicates removed, ${transfersLinked} transfer pairs linked, ${hashesUpdated} hashes updated`;
     console.log(message);
 
     return new Response(
