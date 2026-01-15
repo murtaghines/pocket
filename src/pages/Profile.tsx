@@ -3,12 +3,9 @@ import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrga
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
-import { useLocalization } from "@/hooks/useLocalization";
 import { FileText, TrendingUp } from "lucide-react";
 
 export default function Profile() {
-  const { t } = useLocalization();
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -17,10 +14,10 @@ export default function Profile() {
         {/* Page Title */}
         <div className="mb-8 animate-fade-in">
           <h2 className="font-display text-3xl font-bold tracking-tight">
-            {t('profile.title')}
+            Profile
           </h2>
           <p className="text-muted-foreground mt-1">
-            {t('profile.subtitle')}
+            Your account info and uploaded files
           </p>
         </div>
 
@@ -41,7 +38,7 @@ export default function Profile() {
             <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium">{t('profile.bank_statements')}</h3>
+                <h3 className="text-base font-medium">Bank Statements</h3>
               </div>
               <MonthlyUploadsOrganizer />
             </div>
@@ -50,7 +47,7 @@ export default function Profile() {
             <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium">{t('profile.investments_savings')}</h3>
+                <h3 className="text-base font-medium">Investments & Savings</h3>
               </div>
               <InvestmentUploadsOrganizer />
             </div>
@@ -62,7 +59,7 @@ export default function Profile() {
       <footer className="border-t mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            Fint • {t('dashboard.personal_finance')}
+            Fint • Personal finance control
           </p>
         </div>
       </footer>

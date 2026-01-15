@@ -16,11 +16,6 @@ export interface UserPreferences {
   updated_at: string;
 }
 
-function detectBrowserLanguage(): string {
-  // Always default to English regardless of browser settings
-  return 'en';
-}
-
 function detectDefaultCurrency(): string {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
   
@@ -44,7 +39,6 @@ export function useUserPreferences() {
   const queryClient = useQueryClient();
   
   const [browserDefaults] = useState(() => ({
-    language: detectBrowserLanguage(),
     currency: detectDefaultCurrency(),
   }));
 
@@ -70,8 +64,8 @@ export function useUserPreferences() {
           const newPrefs = {
             user_id: user.id,
             base_currency: browserDefaults.currency,
-            locale: browserDefaults.language === 'en' ? 'en-US' : browserDefaults.language === 'pt' ? 'pt-BR' : 'es-ES',
-            language: browserDefaults.language,
+            locale: 'en-US',
+            language: 'en',
           };
           
           const { data: created, error: createError } = await supabase
@@ -120,8 +114,8 @@ export function useUserPreferences() {
         const newPrefs = {
           user_id: user.id,
           base_currency: updates.base_currency || browserDefaults.currency,
-          locale: updates.locale || 'en-US',
-          language: updates.language || 'en',
+          locale: 'en-US',
+          language: 'en',
           country: updates.country,
           selected_categories: updates.selected_categories,
           onboarding_completed: updates.onboarding_completed,
@@ -150,8 +144,8 @@ export function useUserPreferences() {
     id: '',
     user_id: user?.id || '',
     base_currency: browserDefaults.currency,
-    locale: browserDefaults.language === 'en' ? 'en-US' : browserDefaults.language === 'pt' ? 'pt-BR' : 'es-ES',
-    language: browserDefaults.language,
+    locale: 'en-US',
+    language: 'en',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

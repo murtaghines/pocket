@@ -1,7 +1,6 @@
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { SUPPORTED_CURRENCIES, getCurrencyByCode } from '@/lib/currencies';
-import { useLocalization } from '@/hooks/useLocalization';
 import {
   Select,
   SelectContent,
@@ -13,7 +12,6 @@ import { Loader2 } from 'lucide-react';
 
 export function CurrencySelector() {
   const { preferences, updatePreferences, isUpdating } = useUserPreferences();
-  const { t } = useLocalization();
   const { getRate } = useExchangeRates('EUR');
   
   const currentCurrency = preferences?.base_currency || 'EUR';

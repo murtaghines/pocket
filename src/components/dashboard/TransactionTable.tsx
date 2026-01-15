@@ -8,6 +8,7 @@ import { Transaction, Category } from "@/lib/mockData";
 import { Search, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -26,7 +27,6 @@ const categoryBadgeColors: Partial<Record<Category, string>> = {
   income: 'bg-success/20 text-success border-success/30',
   transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
   investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
-  // New slugs
   salary: 'bg-success/20 text-success border-success/30',
   refunds: 'bg-success/20 text-success border-success/30',
   sales: 'bg-success/20 text-success border-success/30',
@@ -41,7 +41,6 @@ const categoryBadgeColors: Partial<Record<Category, string>> = {
 
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
 
-// Categories available for each movement type
 const categoriesByMovement: Record<MovementType, Category[]> = {
   income: ['income'],
   expense: ['housing', 'health', 'transport', 'subscriptions', 'food', 'other', 'leisure', 'travel'],
@@ -63,36 +62,23 @@ const getMovementType = (transaction: Transaction): MovementType => {
   return 'expense';
 };
 
+const movementLabels: Record<MovementType, string> = {
+  income: 'Income',
+  expense: 'Expense',
+  transfer: 'Transfer',
+  investment: 'Investment',
+};
+
 export function TransactionTable({ transactions }: TransactionTableProps) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [movementFilter, setMovementFilter] = useState<string>("all");
-  const { t, formatCurrency, formatDate, language } = useLocalization();
+  const { formatCurrency } = useLocalization();
 
-  // Category labels using translations
-  const getCategoryLabel = (category: Category): string => {
-    const translationKey = `category.${category}`;
-    const translated = t(translationKey);
-    return translated !== translationKey ? translated : category;
-  };
-
-  // Movement labels using translations
-  const getMovementLabel = (movement: MovementType): string => {
-    const movementMap: Record<MovementType, string> = {
-      income: t('transactions.income'),
-      expense: t('transactions.expense'),
-      transfer: t('transactions.transfer'),
-      investment: t('transactions.investment'),
-    };
-    return movementMap[movement] || movement;
-  };
-
-  // Get available categories based on selected movement filter
   const availableCategories = movementFilter === "all" 
     ? Object.keys(categoryBadgeColors) as Category[]
     : categoriesByMovement[movementFilter as MovementType] || [];
 
-  // Reset category filter when movement filter changes and category is no longer available
   const handleMovementChange = (value: string) => {
     setMovementFilter(value);
     if (value !== "all") {
@@ -113,46 +99,46 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   const formatTransactionDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(language === 'en' ? 'en-US' : language === 'pt' ? 'pt-BR' : language === 'fr' ? 'fr-FR' : language === 'it' ? 'it-IT' : language === 'de' ? 'de-DE' : 'es-ES', { day: '2-digit', month: 'short' });
+    return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
   };
 
   const formatMonth = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(language === 'en' ? 'en-US' : language === 'pt' ? 'pt-BR' : language === 'fr' ? 'fr-FR' : language === 'it' ? 'it-IT' : language === 'de' ? 'de-DE' : 'es-ES', { month: 'short', year: '2-digit' });
+    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
   };
 
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">{t('transactions.title')}</CardTitle>
+        <CardTitle className="text-lg">Transactions</CardTitle>
         <div className="flex flex-col sm:flex-row gap-3 mt-4">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">{t('transactions.movements')}</span>
+            <span className="text-xs font-medium text-muted-foreground">Movements</span>
             <Select value={movementFilter} onValueChange={handleMovementChange}>
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder={t('transactions.all')} />
+                <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('transactions.all')}</SelectItem>
-                <SelectItem value="income">{t('transactions.income')}</SelectItem>
-                <SelectItem value="expense">{t('transactions.expense')}</SelectItem>
-                <SelectItem value="transfer">{t('transactions.transfer')}</SelectItem>
-                <SelectItem value="investment">{t('transactions.investment')}</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="income">Income</SelectItem>
+                <SelectItem value="expense">Expense</SelectItem>
+                <SelectItem value="transfer">Transfer</SelectItem>
+                <SelectItem value="investment">Investment</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">{t('transactions.categories')}</span>
+            <span className="text-xs font-medium text-muted-foreground">Categories</span>
             <Select 
               value={categoryFilter} 
               onValueChange={setCategoryFilter}
               disabled={movementFilter === 'transfer' || availableCategories.length === 0}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder={t('transactions.all_f')} />
+                <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('transactions.all_f')}</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {availableCategories.map(cat => (
                   <SelectItem key={cat} value={cat}>
                     {getCategoryLabel(cat)}
@@ -164,7 +150,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder={t('transactions.search')}
+              placeholder="Search transactions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 mt-5"
@@ -177,20 +163,20 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-[80px]">{t('transactions.month')}</TableHead>
-                <TableHead className="w-[90px]">{t('transactions.date')}</TableHead>
-                <TableHead>{t('transactions.description')}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('transactions.movement')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('transactions.category')}</TableHead>
-                <TableHead className="hidden sm:table-cell">{t('transactions.account')}</TableHead>
-                <TableHead className="text-right">{t('transactions.amount')}</TableHead>
+                <TableHead className="w-[80px]">Month</TableHead>
+                <TableHead className="w-[90px]">Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="hidden lg:table-cell">Movement</TableHead>
+                <TableHead className="hidden md:table-cell">Category</TableHead>
+                <TableHead className="hidden sm:table-cell">Account</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTransactions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    {t('transactions.no_results')}
+                    No transactions found
                   </TableCell>
                 </TableRow>
               ) : (
@@ -232,12 +218,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       <TableCell className="hidden lg:table-cell">
                         <Badge 
                           variant="outline" 
-                          className={cn(
-                            "font-normal",
-                            movementBadgeColors[movementType]
-                          )}
+                          className={cn("font-normal", movementBadgeColors[movementType])}
                         >
-                          {getMovementLabel(movementType)}
+                          {movementLabels[movementType]}
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
@@ -246,10 +229,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         ) : (
                           <Badge 
                             variant="outline" 
-                            className={cn(
-                              "font-normal",
-                              categoryBadgeColors[transaction.category]
-                            )}
+                            className={cn("font-normal", categoryBadgeColors[transaction.category])}
                           >
                             {getCategoryLabel(transaction.category)}
                           </Badge>
@@ -279,7 +259,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           </Table>
         </div>
         <p className="text-sm text-muted-foreground mt-4">
-          {t('transactions.showing')} {filteredTransactions.length} {t('transactions.of')} {transactions.length} {t('transactions.title').toLowerCase()}
+          Showing {filteredTransactions.length} of {transactions.length} transactions
         </p>
       </CardContent>
     </Card>

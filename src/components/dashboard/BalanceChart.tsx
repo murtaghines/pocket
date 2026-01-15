@@ -12,7 +12,7 @@ interface BalanceChartProps {
 }
 
 export function BalanceChart({ data }: BalanceChartProps) {
-  const { t, formatCurrency } = useLocalization();
+  const { formatCurrency } = useLocalization();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -32,7 +32,7 @@ export function BalanceChart({ data }: BalanceChartProps) {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '350ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">{t('dashboard.monthly_balance')}</CardTitle>
+        <CardTitle className="text-lg">Monthly Balance</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">

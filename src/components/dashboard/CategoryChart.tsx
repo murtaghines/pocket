@@ -13,7 +13,7 @@ interface CategoryChartProps {
 }
 
 export function CategoryChart({ data }: CategoryChartProps) {
-  const { t, formatCurrency } = useLocalization();
+  const { formatCurrency } = useLocalization();
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -60,7 +60,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">{t('dashboard.expenses_by_category')}</CardTitle>
+        <CardTitle className="text-lg">Expenses by Category</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[320px]">

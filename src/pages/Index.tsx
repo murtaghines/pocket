@@ -29,7 +29,7 @@ export default function Index() {
     isLoading 
   } = useTransactions();
   
-  const { formatCurrency, formatMonth, t } = useLocalization();
+  const { formatCurrency, formatMonth } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates('EUR');
   
@@ -85,7 +85,7 @@ export default function Index() {
     ? Math.round(((convertedCurrentMonth.balance - convertedPreviousMonth.balance) / Math.abs(convertedPreviousMonth.balance)) * 100)
     : undefined;
 
-  const currentMonthName = new Date().toLocaleDateString(preferences?.language || 'es', { month: 'long' });
+  const currentMonthName = new Date().toLocaleDateString('en-US', { month: 'long' });
 
   // Convert monthly data for charts
   const convertedMonthlyData = monthlyData.map(m => ({
@@ -124,10 +124,10 @@ export default function Index() {
         {/* Page Title */}
         <div className="mb-8 animate-fade-in">
           <h2 className="font-display text-3xl font-bold tracking-tight">
-            {t('dashboard.title')}
+            Dashboard
           </h2>
           <p className="text-muted-foreground mt-1">
-            {t('dashboard.subtitle')} • {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)}
+            Overview of your personal finances • {currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1)}
           </p>
         </div>
 
@@ -152,29 +152,29 @@ export default function Index() {
             {/* Section 1: KPIs + Investment Summary + Month Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <StatCard
-                title={t('dashboard.income')}
+                title="Income"
                 value={formatCurrency(convertedCurrentMonth.income)}
                 change={incomeChange}
-                changeLabel={t('dashboard.vs_last_month')}
+                changeLabel="vs last month"
                 type="income"
                 icon={<TrendingUp className="w-5 h-5" />}
                 delay={0}
               />
               <StatCard
-                title={t('dashboard.expenses')}
+                title="Expenses"
                 value={formatCurrency(convertedCurrentMonth.expenses)}
                 change={expenseChange}
-                changeLabel={t('dashboard.vs_last_month')}
+                changeLabel="vs last month"
                 type="expense"
                 icon={<TrendingDown className="w-5 h-5" />}
                 delay={100}
                 invertChangeColor={true}
               />
               <StatCard
-                title={t('dashboard.balance')}
+                title="Balance"
                 value={formatCurrency(convertedCurrentMonth.balance)}
                 change={balanceChange}
-                changeLabel={t('dashboard.vs_last_month')}
+                changeLabel="vs last month"
                 type="balance"
                 icon={<Wallet className="w-5 h-5" />}
                 delay={200}
@@ -183,7 +183,7 @@ export default function Index() {
               <MonthStatusIndicator />
             </div>
 
-            {/* Section 2: Evolución Mensual + Comparación Mes Anterior */}
+            {/* Section 2: Monthly Evolution + Month Comparison */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
               <div className="lg:col-span-3">
                 <MonthlyChart data={convertedMonthlyData} />
@@ -191,14 +191,14 @@ export default function Index() {
               <MonthComparisonCard currentMonth={convertedCurrentMonth} previousMonth={convertedPreviousMonth} />
             </div>
 
-            {/* Section 3: Análisis de Gastos */}
+            {/* Section 3: Expense Analysis */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               <CategoryChart data={convertedCategoryData} />
               <TopExpensesCard transactions={transactions} />
               <WeeklyComparisonChart />
             </div>
 
-            {/* Section 4: Balance y Ahorro */}
+            {/* Section 4: Balance and Savings */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
               <div className="lg:col-span-3">
                 <BalanceChart data={convertedMonthlyData} />
@@ -206,7 +206,7 @@ export default function Index() {
               <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
             </div>
 
-            {/* Section 5: Balance Anual */}
+            {/* Section 5: Yearly Balance */}
             <div className="mb-8">
               <YearlyBalanceChart data={convertedMonthlyData} />
             </div>
@@ -221,7 +221,7 @@ export default function Index() {
       <footer className="border-t mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            Fint • {t('dashboard.personal_finance')}
+            Fint • Personal finance control
           </p>
         </div>
       </footer>
