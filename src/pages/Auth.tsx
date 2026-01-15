@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, KeyRound, TrendingUp, PieChart, Wallet, Globe, ArrowRight, Shield, Sparkles, X } from "lucide-react";
-import fintLogo from "@/assets/fint-logo.png";
+import fintLogo from "@/assets/fint-logo-new.png";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
@@ -142,8 +142,8 @@ export default function Auth() {
         <Card className="w-full max-w-md glass-card animate-scale-in">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <img src={fintLogo} alt="Fint" className="w-10 h-10" />
-              <span className="font-display text-xl font-bold">Fint</span>
+              <img src={fintLogo} alt="fint" className="w-10 h-10" />
+              <span className="font-display text-xl font-bold">fint</span>
             </div>
             <div className="flex justify-center mb-2">
               <div className="p-3 bg-primary/10 rounded-full">
@@ -324,8 +324,8 @@ export default function Auth() {
       {/* Header with auth buttons */}
       <header className="relative z-20 flex items-center justify-between px-6 py-4 lg:px-12">
         <div className="flex items-center gap-3">
-          <img src={fintLogo} alt="Fint" className="w-10 h-10 lg:w-12 lg:h-12" />
-          <span className="font-display text-xl lg:text-2xl font-bold">Fint</span>
+          <img src={fintLogo} alt="fint" className="w-10 h-10 lg:w-12 lg:h-12" />
+          <span className="font-display text-xl lg:text-2xl font-bold">fint</span>
         </div>
         
         <div className="flex items-center gap-3">
@@ -517,7 +517,7 @@ export default function Auth() {
                 <CardHeader className="text-center pb-2">
                   <CardTitle className="text-2xl">Create Account</CardTitle>
                   <CardDescription>
-                    Get started with Fint
+                    Get started with fint
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
