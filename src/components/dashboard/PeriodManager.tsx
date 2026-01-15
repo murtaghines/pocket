@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePeriods } from "@/hooks/usePeriods";
-import { useLocalization } from "@/hooks/useLocalization";
 import { 
   CalendarCheck, 
   Lock, 
@@ -34,7 +33,6 @@ import {
 
 export function PeriodManager() {
   const { periods, isLoading, closePeriod, reopenPeriod, isClosing, isReopening } = usePeriods();
-  const { formatMonth } = useLocalization();
   const [isOpen, setIsOpen] = useState(false);
 
   // Filter only CASHFLOW periods
@@ -51,18 +49,18 @@ export function PeriodManager() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "CLOSED":
-        return <Badge variant="secondary" className="bg-muted text-muted-foreground">Cerrado</Badge>;
+        return <Badge variant="secondary" className="bg-muted text-muted-foreground">Closed</Badge>;
       case "READY_TO_CLOSE":
-        return <Badge variant="secondary" className="bg-warning/10 text-warning">Listo para cerrar</Badge>;
+        return <Badge variant="secondary" className="bg-warning/10 text-warning">Ready to close</Badge>;
       default:
-        return <Badge variant="secondary" className="bg-success/10 text-success">Abierto</Badge>;
+        return <Badge variant="secondary" className="bg-success/10 text-success">Open</Badge>;
     }
   };
 
   const formatPeriodMonth = (monthKey: string) => {
     const [year, month] = monthKey.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
   if (isLoading) {
@@ -71,7 +69,7 @@ export function PeriodManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarCheck className="w-5 h-5" />
-            Períodos Contables
+            Accounting Periods
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -91,14 +89,14 @@ export function PeriodManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarCheck className="w-5 h-5" />
-            Períodos Contables
+            Accounting Periods
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6 text-muted-foreground">
             <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No hay períodos aún</p>
-            <p className="text-xs mt-1">Los períodos se crean automáticamente al importar datos</p>
+            <p className="text-sm">No periods yet</p>
+            <p className="text-xs mt-1">Periods are created automatically when importing data</p>
           </div>
         </CardContent>
       </Card>
@@ -113,7 +111,7 @@ export function PeriodManager() {
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CalendarCheck className="w-5 h-5" />
-                Períodos Contables
+                Accounting Periods
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{cashflowPeriods.length}</Badge>
@@ -153,7 +151,7 @@ export function PeriodManager() {
                       <p className="font-medium capitalize">{formatPeriodMonth(period.month_key)}</p>
                       {period.closed_at && (
                         <p className="text-xs text-muted-foreground">
-                          Cerrado el {new Date(period.closed_at).toLocaleDateString('es-ES')}
+                          Closed on {new Date(period.closed_at).toLocaleDateString('en-US')}
                         </p>
                       )}
                     </div>
@@ -171,22 +169,22 @@ export function PeriodManager() {
                             disabled={isClosing}
                           >
                             <Lock className="w-3 h-3 mr-1" />
-                            Cerrar
+                            Close
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>¿Cerrar período?</AlertDialogTitle>
+                            <AlertDialogTitle>Close period?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Al cerrar el período de {formatPeriodMonth(period.month_key)}, 
-                              las transacciones de ese mes quedarán bloqueadas. 
-                              Podrás reabrirlo si necesitas hacer cambios.
+                              When you close the period for {formatPeriodMonth(period.month_key)}, 
+                              transactions for that month will be locked. 
+                              You can reopen it if you need to make changes.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={() => closePeriod(period.id)}>
-                              Cerrar período
+                              Close period
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -200,21 +198,21 @@ export function PeriodManager() {
                             disabled={isReopening}
                           >
                             <Unlock className="w-3 h-3 mr-1" />
-                            Reabrir
+                            Reopen
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>¿Reabrir período?</AlertDialogTitle>
+                            <AlertDialogTitle>Reopen period?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Al reabrir el período de {formatPeriodMonth(period.month_key)}, 
-                              podrás volver a editar las transacciones de ese mes.
+                              When you reopen the period for {formatPeriodMonth(period.month_key)}, 
+                              you will be able to edit transactions for that month again.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={() => reopenPeriod(period.id)}>
-                              Reabrir período
+                              Reopen period
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>

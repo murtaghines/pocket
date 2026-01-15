@@ -18,20 +18,20 @@ interface InvestmentsTableProps {
 }
 
 const ASSET_LABELS: Record<string, string> = {
-  'stocks': 'Acciones',
+  'stocks': 'Stocks',
   'etf': 'ETFs',
-  'bonds': 'Bonos',
-  'commodities': 'Materias Primas',
-  'crypto': 'Cripto',
-  'savings': 'Ahorro',
+  'bonds': 'Bonds',
+  'commodities': 'Commodities',
+  'crypto': 'Crypto',
+  'savings': 'Savings',
 };
 
 export function InvestmentsTable({ investments }: InvestmentsTableProps) {
   const formatCurrency = (amount: number) =>
-    Math.abs(amount).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    Math.abs(amount).toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
 
   const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString('es-ES', { 
+    new Date(date).toLocaleDateString('en-US', { 
       day: 'numeric', 
       month: 'short', 
       year: 'numeric' 
@@ -43,18 +43,18 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Historial de Movimientos</CardTitle>
+        <CardTitle>Transaction History</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Fecha</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Plataforma</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead className="text-right">Monto</TableHead>
+                <TableHead className="w-[100px]">Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Platform</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -95,7 +95,7 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
         </div>
         {investments.length > 50 && (
           <p className="text-sm text-muted-foreground text-center mt-4">
-            Mostrando los últimos 50 movimientos de {investments.length} totales
+            Showing the last 50 of {investments.length} total transactions
           </p>
         )}
       </CardContent>

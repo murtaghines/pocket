@@ -34,7 +34,7 @@ async function extractPdfText(file: File): Promise<string> {
   const trimmed = content.trim();
   if (trimmed.length < 50) {
     throw new Error(
-      "Este PDF no tiene texto seleccionable (probablemente escaneado). Prueba con un PDF con texto o un Excel/CSV."
+      "This PDF has no selectable text (likely scanned). Try a PDF with text or an Excel/CSV file."
     );
   }
 
@@ -130,7 +130,7 @@ export function useFileUpload(isInvestment: boolean = false) {
     if (!user) {
       toast({
         title: "Error",
-        description: "Debes iniciar sesión para subir archivos.",
+        description: "You must be signed in to upload files.",
         variant: "destructive",
       });
       return;
@@ -165,7 +165,7 @@ export function useFileUpload(isInvestment: boolean = false) {
         const fileContent = await extractFileContent(uploadFile.file);
         
         if (!fileContent.trim()) {
-          throw new Error("El archivo está vacío");
+          throw new Error("The file is empty");
         }
         
         const encoder = new TextEncoder();
@@ -253,15 +253,15 @@ export function useFileUpload(isInvestment: boolean = false) {
               ? {
                   ...f,
                   status: "error" as const,
-                  error: error.message || "Error desconocido",
+                  error: error.message || "Unknown error",
                 }
               : f
           )
         );
 
         toast({
-          title: "Error al procesar",
-          description: error.message || "No se pudo procesar el archivo",
+          title: "Processing error",
+          description: error.message || "Could not process the file",
           variant: "destructive",
         });
       }
@@ -280,7 +280,7 @@ export function useFileUpload(isInvestment: boolean = false) {
         const fileContent = await extractFileContent(uploadFile.file);
         
         if (!fileContent.trim()) {
-          throw new Error("El archivo está vacío");
+          throw new Error("The file is empty");
         }
 
         const filePath = `${user!.id}/${Date.now()}_${uploadFile.name}`;
@@ -340,14 +340,14 @@ export function useFileUpload(isInvestment: boolean = false) {
           )
         );
 
-        let description = `${stats?.newInvestments || 0} inversiones procesadas`;
-        if (stats?.deposits > 0) description += ` (${stats.deposits} depósitos`;
-        if (stats?.withdrawals > 0) description += `, ${stats.withdrawals} retiros)`;
+        let description = `${stats?.newInvestments || 0} investments processed`;
+        if (stats?.deposits > 0) description += ` (${stats.deposits} deposits`;
+        if (stats?.withdrawals > 0) description += `, ${stats.withdrawals} withdrawals)`;
         else if (stats?.deposits > 0) description += ')';
-        if (stats?.duplicatesIgnored > 0) description += `, ${stats.duplicatesIgnored} duplicados`;
+        if (stats?.duplicatesIgnored > 0) description += `, ${stats.duplicatesIgnored} duplicates`;
 
         toast({
-          title: "Archivo procesado",
+          title: "File processed",
           description: `${uploadFile.name}: ${description}`,
         });
 
@@ -363,15 +363,15 @@ export function useFileUpload(isInvestment: boolean = false) {
               ? {
                   ...f,
                   status: "error" as const,
-                  error: error.message || "Error desconocido",
+                  error: error.message || "Unknown error",
                 }
               : f
           )
         );
 
         toast({
-          title: "Error al procesar",
-          description: error.message || "No se pudo procesar el archivo",
+          title: "Processing error",
+          description: error.message || "Could not process the file",
           variant: "destructive",
         });
       }
@@ -439,8 +439,8 @@ export function useFileUpload(isInvestment: boolean = false) {
       const editedCount = previewData.transactions.filter((t) => t.isEdited).length;
       
       toast({
-        title: "Transacciones guardadas",
-        description: `${previewData.transactions.length} transacciones guardadas${editedCount > 0 ? ` (${editedCount} editadas)` : ""}`,
+        title: "Transactions saved",
+        description: `${previewData.transactions.length} transactions saved${editedCount > 0 ? ` (${editedCount} edited)` : ""}`,
       });
 
       // Mark as saved but keep preview open for further edits
@@ -464,8 +464,8 @@ export function useFileUpload(isInvestment: boolean = false) {
         
         if (integrityData?.stats?.duplicatesRemoved > 0 || integrityData?.stats?.transfersLinked > 0) {
           toast({
-            title: "Integridad verificada",
-            description: `${integrityData.stats.duplicatesRemoved} duplicados globales eliminados, ${integrityData.stats.transfersLinked} transferencias vinculadas`,
+            title: "Integrity verified",
+            description: `${integrityData.stats.duplicatesRemoved} global duplicates removed, ${integrityData.stats.transfersLinked} transfers linked`,
           });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
         }
@@ -476,8 +476,8 @@ export function useFileUpload(isInvestment: boolean = false) {
     } catch (error: any) {
       console.error("Error confirming transactions:", error);
       toast({
-        title: "Error al guardar",
-        description: error.message || "No se pudieron guardar las transacciones",
+        title: "Error saving",
+        description: error.message || "Could not save the transactions",
         variant: "destructive",
       });
     } finally {
@@ -498,16 +498,14 @@ export function useFileUpload(isInvestment: boolean = false) {
     addFiles,
     removeFile,
     processFiles,
-    clearCompleted,
-    hasFiles: files.length > 0,
-    hasPending: files.some((f) => f.status === "pending"),
     isProcessing: files.some((f) => f.status === "processing"),
-    // Preview-related
+    hasPending: files.some((f) => f.status === "pending"),
     previewData,
-    updatePreviewCategory, // Legacy
-    updatePreviewTransaction, // New
+    updatePreviewCategory,
+    updatePreviewTransaction,
     confirmPreviewTransactions,
     cancelPreview,
     isConfirming,
+    clearCompleted,
   };
 }

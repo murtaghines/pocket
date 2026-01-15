@@ -32,7 +32,7 @@ async function extractPdfText(file: File): Promise<string> {
   const trimmed = content.trim();
   if (trimmed.length < 50) {
     throw new Error(
-      "Este PDF no tiene texto seleccionable (probablemente escaneado). Prueba con un PDF con texto o un Excel/CSV."
+      "This PDF has no selectable text (likely scanned). Try a PDF with text or an Excel/CSV file."
     );
   }
 
@@ -78,7 +78,7 @@ export function useMonthlyFileUpload() {
       const fileContent = await extractFileContent(uploadFile.file);
       
       if (!fileContent.trim()) {
-        throw new Error("El archivo está vacío");
+        throw new Error("The file is empty");
       }
 
       // Upload original file to storage
@@ -89,7 +89,7 @@ export function useMonthlyFileUpload() {
 
       if (uploadError) {
         throw new Error(
-          "No se pudo subir el archivo (conexión interrumpida). Intenta de nuevo."
+          "Could not upload the file (connection interrupted). Please try again."
         );
       }
 
@@ -145,7 +145,7 @@ export function useMonthlyFileUpload() {
         }
 
         const code = payload?.error;
-        const message = payload?.message || "No se pudo procesar el archivo";
+        const message = payload?.message || "Could not process the file";
 
         // Handle specific error codes with appropriate UI
         if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited") {
@@ -158,11 +158,11 @@ export function useMonthlyFileUpload() {
             ),
           }));
 
-          let title = "Error de procesamiento";
-          if (code === "duplicate_file") title = "Archivo duplicado";
-          else if (code === "period_closed") title = "Período cerrado";
-          else if (code === "payment_required") title = "Sin créditos de IA";
-          else if (code === "rate_limited") title = "Demasiadas solicitudes";
+          let title = "Processing error";
+          if (code === "duplicate_file") title = "Duplicate file";
+          else if (code === "period_closed") title = "Period closed";
+          else if (code === "payment_required") title = "No AI credits";
+          else if (code === "rate_limited") title = "Too many requests";
 
           toast({
             title,
@@ -189,19 +189,19 @@ export function useMonthlyFileUpload() {
       }));
 
       // Build message
-      let description = `${stats?.newTransactions || 0} transacciones nuevas`;
+      let description = `${stats?.newTransactions || 0} new transactions`;
       if (stats?.duplicatesIgnored > 0) {
-        description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
+        description += `, ${stats.duplicatesIgnored} duplicates ignored`;
       }
       if (stats?.categorizedByLocalPattern > 0) {
-        description += `, ${stats.categorizedByLocalPattern} categorizadas localmente`;
+        description += `, ${stats.categorizedByLocalPattern} categorized locally`;
       }
       if (stats?.transfersDetected > 0) {
-        description += `, ${stats.transfersDetected} transferencias internas`;
+        description += `, ${stats.transfersDetected} internal transfers`;
       }
 
       toast({
-        title: "Archivo procesado",
+        title: "File processed",
         description: `${uploadFile.name}: ${description}`,
       });
 
@@ -219,8 +219,8 @@ export function useMonthlyFileUpload() {
         
         if (integrityData?.stats?.duplicatesRemoved > 0 || integrityData?.stats?.transfersLinked > 0) {
           toast({
-            title: "Integridad verificada",
-            description: `${integrityData.stats.duplicatesRemoved} duplicados eliminados, ${integrityData.stats.transfersLinked} transferencias vinculadas`,
+            title: "Integrity verified",
+            description: `${integrityData.stats.duplicatesRemoved} duplicates removed, ${integrityData.stats.transfersLinked} transfers linked`,
           });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
         }
@@ -243,14 +243,14 @@ export function useMonthlyFileUpload() {
         ...prev,
         [monthKey]: (prev[monthKey] || []).map((f) =>
           f.id === uploadFile.id
-            ? { ...f, status: "error" as const, error: error.message || "Error desconocido" }
+            ? { ...f, status: "error" as const, error: error.message || "Unknown error" }
             : f
         ),
       }));
 
       toast({
-        title: "Error al procesar",
-        description: error.message || "No se pudo procesar el archivo",
+        title: "Processing error",
+        description: error.message || "Could not process the file",
         variant: "destructive",
       });
     }
@@ -260,7 +260,7 @@ export function useMonthlyFileUpload() {
     if (!user) {
       toast({
         title: "Error",
-        description: "Debes iniciar sesión para subir archivos.",
+        description: "You must be signed in to upload files.",
         variant: "destructive",
       });
       return;
@@ -269,8 +269,8 @@ export function useMonthlyFileUpload() {
     // Check network status before attempting upload
     if (!navigator.onLine) {
       toast({
-        title: "Sin conexión",
-        description: "No puedes subir archivos sin conexión a internet.",
+        title: "No connection",
+        description: "You cannot upload files without an internet connection.",
         variant: "destructive",
       });
       return;

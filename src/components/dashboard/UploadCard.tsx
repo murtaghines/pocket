@@ -53,8 +53,8 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
 
     if (droppedFiles.length === 0) {
       toast({
-        title: "Formato no soportado",
-        description: "Por favor, sube archivos Excel (.xlsx, .xls), CSV o PDF.",
+        title: "Unsupported format",
+        description: "Please upload Excel (.xlsx, .xls), CSV or PDF files.",
         variant: "destructive",
       });
       return;
@@ -81,8 +81,8 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
   };
 
   const Icon = isInvestment ? PiggyBank : Upload;
-  const title = isInvestment ? "Subir Extractos de Inversión" : "Subir Extractos";
-  const subtitle = "Excel, CSV o PDF";
+  const title = isInvestment ? "Upload Investment Statements" : "Upload Statements";
+  const subtitle = "Excel, CSV or PDF";
 
   if (files.length === 0) {
     return (
@@ -146,7 +146,7 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
       <Card className="animate-slide-up" style={{ animationDelay: '300ms' }}>
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">{files.length} archivo(s)</p>
+            <p className="text-sm font-medium">{files.length} file(s)</p>
             <Button 
               size="sm"
               variant="gradient"
@@ -158,7 +158,7 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
               ) : (
                 <Upload className="w-4 h-4" />
               )}
-              {isProcessing ? "Procesando..." : "Procesar con IA"}
+              {isProcessing ? "Processing..." : "Process with AI"}
             </Button>
           </div>
           
@@ -182,7 +182,7 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
                   <p className="truncate text-xs font-medium">{file.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {file.status === 'completed' && file.transactionsCount 
-                      ? `${file.transactionsCount} ${isInvestment ? 'movimientos' : 'transacciones'}`
+                      ? `${file.transactionsCount} ${isInvestment ? 'movements' : 'transactions'}`
                       : file.status === 'error' && file.error
                       ? file.error
                       : formatFileSize(file.size)
@@ -215,7 +215,7 @@ export function UploadCard({ isInvestment = false }: UploadCardProps) {
             />
             <Button variant="outline" size="sm" className="w-full">
               <Upload className="w-4 h-4 mr-2" />
-              Agregar más archivos
+              Add more files
             </Button>
           </div>
         </CardContent>

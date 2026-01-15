@@ -10,29 +10,10 @@ export interface EmailInputProps
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const errorMessages = {
-  es: "Formato de email inválido",
-  en: "Invalid email format",
-  pt: "Formato de email inválido",
-};
-
 const EmailInput = forwardRef<HTMLInputElement, EmailInputProps>(
   ({ className, value, onChange, onValidChange, ...props }, ref) => {
     const [touched, setTouched] = useState(false);
     const [internalValue, setInternalValue] = useState(value || "");
-
-    const language = useMemo(() => {
-      try {
-        const prefs = localStorage.getItem("user_preferences");
-        if (prefs) {
-          const parsed = JSON.parse(prefs);
-          return parsed.language || "en";
-        }
-      } catch {
-        // ignore
-      }
-      return "en";
-    }, []);
 
     const currentValue = value !== undefined ? value : internalValue;
     const isValid = emailRegex.test(String(currentValue));
@@ -81,7 +62,7 @@ const EmailInput = forwardRef<HTMLInputElement, EmailInputProps>(
         </div>
         {showValidation && !isValid && (
           <p className="text-xs text-destructive">
-            {errorMessages[language as keyof typeof errorMessages] || errorMessages.en}
+            Invalid email format
           </p>
         )}
       </div>
