@@ -32,7 +32,7 @@ async function extractPdfText(file: File): Promise<string> {
   const trimmed = content.trim();
   if (trimmed.length < 50) {
     throw new Error(
-      "Este PDF no tiene texto seleccionable (probablemente escaneado). Prueba con un PDF con texto o un Excel/CSV."
+      "This PDF has no selectable text (probably scanned). Try a PDF with text or an Excel/CSV file."
     );
   }
 
@@ -120,7 +120,7 @@ export function useMonthlyInvestmentUpload() {
     if (!user) {
       toast({
         title: "Error",
-        description: "Debes iniciar sesión para subir archivos.",
+        description: "You must be logged in to upload files.",
         variant: "destructive",
       });
       return;
@@ -147,7 +147,7 @@ export function useMonthlyInvestmentUpload() {
         const fileContent = await extractFileContent(uploadFile.file);
         
         if (!fileContent.trim()) {
-          throw new Error("El archivo está vacío");
+          throw new Error("The file is empty");
         }
 
         const filePath = `${user.id}/investments/${Date.now()}_${uploadFile.name}`;
@@ -209,13 +209,13 @@ export function useMonthlyInvestmentUpload() {
           ),
         }));
 
-        let description = `${stats?.newInvestments || 0} movimientos procesados`;
+        let description = `${stats?.newInvestments || 0} movements processed`;
         if (stats?.duplicatesIgnored > 0) {
-          description += `, ${stats.duplicatesIgnored} duplicados ignorados`;
+          description += `, ${stats.duplicatesIgnored} duplicates ignored`;
         }
 
         toast({
-          title: "Archivo procesado",
+          title: "File processed",
           description: `${uploadFile.name}: ${description}`,
         });
 
@@ -235,14 +235,14 @@ export function useMonthlyInvestmentUpload() {
           ...prev,
           [monthKey]: (prev[monthKey] || []).map((f) =>
             f.id === uploadFile.id
-              ? { ...f, status: "error" as const, error: error.message || "Error desconocido" }
+              ? { ...f, status: "error" as const, error: error.message || "Unknown error" }
               : f
           ),
         }));
 
         toast({
-          title: "Error al procesar",
-          description: error.message || "No se pudo procesar el archivo",
+          title: "Processing error",
+          description: error.message || "Could not process the file",
           variant: "destructive",
         });
       }

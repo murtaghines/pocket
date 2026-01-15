@@ -72,14 +72,14 @@ export function useAccounts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      toast.success('Cuenta creada correctamente');
+      toast.success('Account created successfully');
     },
     onError: (error) => {
       console.error('Error creating account:', error);
       if (error.message.includes('unique')) {
-        toast.error('Ya existe una cuenta con ese nombre');
+        toast.error('An account with that name already exists');
       } else {
-        toast.error('Error al crear la cuenta');
+        toast.error('Error creating account');
       }
     }
   });
@@ -95,11 +95,11 @@ export function useAccounts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      toast.success('Cuenta actualizada correctamente');
+      toast.success('Account updated successfully');
     },
     onError: (error) => {
       console.error('Error updating account:', error);
-      toast.error('Error al actualizar la cuenta');
+      toast.error('Error updating account');
     }
   });
 
@@ -114,11 +114,11 @@ export function useAccounts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      toast.success('Cuenta eliminada correctamente');
+      toast.success('Account deleted successfully');
     },
     onError: (error) => {
       console.error('Error deleting account:', error);
-      toast.error('Error al eliminar la cuenta');
+      toast.error('Error deleting account');
     }
   });
 

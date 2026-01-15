@@ -48,8 +48,8 @@ export function UploadSection() {
 
     if (droppedFiles.length === 0) {
       toast({
-        title: "Formato no soportado",
-        description: "Por favor, sube archivos PDF únicamente.",
+        title: "Unsupported format",
+        description: "Please upload PDF files only.",
         variant: "destructive",
       });
       return;
@@ -69,8 +69,8 @@ export function UploadSection() {
 
     if (pdfFiles.length !== selectedFiles.length) {
       toast({
-        title: "Algunos archivos ignorados",
-        description: "Solo se procesarán los archivos PDF.",
+        title: "Some files ignored",
+        description: "Only PDF files will be processed.",
         variant: "destructive",
       });
     }
@@ -92,8 +92,8 @@ export function UploadSection() {
   const simulateProcessing = () => {
     if (files.some(f => !f.bank)) {
       toast({
-        title: "Banco requerido",
-        description: "Asigna un banco a todos los archivos antes de procesar.",
+        title: "Bank required",
+        description: "Assign a bank to all files before processing.",
         variant: "destructive",
       });
       return;
@@ -105,8 +105,8 @@ export function UploadSection() {
     setTimeout(() => {
       setFiles(prev => prev.map(f => ({ ...f, status: 'completed' as const })));
       toast({
-        title: "Procesamiento completado",
-        description: `Se han procesado ${files.length} archivo(s) correctamente.`,
+        title: "Processing complete",
+        description: `${files.length} file(s) processed successfully.`,
       });
     }, 2000);
   };
@@ -120,9 +120,9 @@ export function UploadSection() {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '100ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">Subir Extractos</CardTitle>
+        <CardTitle className="text-lg">Upload Statements</CardTitle>
         <CardDescription>
-          Arrastra tus extractos bancarios en PDF o haz clic para seleccionar
+          Drag your bank statements in PDF or click to select
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -157,10 +157,10 @@ export function UploadSection() {
             </div>
             <div>
               <p className="font-medium text-foreground">
-                {isDragging ? "Suelta los archivos aquí" : "Arrastra tus PDFs aquí"}
+                {isDragging ? "Drop files here" : "Drag your PDFs here"}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                o haz clic para seleccionar
+                or click to select
               </p>
             </div>
           </div>
@@ -169,7 +169,7 @@ export function UploadSection() {
         {files.length > 0 && (
           <div className="space-y-3">
             <p className="text-sm font-medium text-muted-foreground">
-              {files.length} archivo(s) seleccionado(s)
+              {files.length} file(s) selected
             </p>
             
             {files.map((file) => (
@@ -208,7 +208,7 @@ export function UploadSection() {
                   disabled={file.status !== 'pending'}
                 >
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Banco" />
+                    <SelectValue placeholder="Bank" />
                   </SelectTrigger>
                   <SelectContent>
                     {banks.map(bank => (
@@ -240,12 +240,12 @@ export function UploadSection() {
               {files.some(f => f.status === 'processing') ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Procesando...
+                  Processing...
                 </>
               ) : (
                 <>
                   <Upload className="w-4 h-4" />
-                  Procesar {files.length} archivo(s)
+                  Process {files.length} file(s)
                 </>
               )}
             </Button>

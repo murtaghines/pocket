@@ -26,7 +26,7 @@ export function MonthClosingBanner() {
   }, [lastClosedMonth]);
 
   const lastClosedMonthLabel = useMemo(() => {
-    return lastClosedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return lastClosedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }, [lastClosedMonth]);
 
   const countImportsForMonth = (imports: Import[], monthKey: string) => {
@@ -79,33 +79,33 @@ export function MonthClosingBanner() {
             <div className="flex-1 space-y-3">
               <div>
                 <h3 className="font-semibold text-lg capitalize">
-                  ¡{lastClosedMonthLabel} está listo para cerrar!
+                  {lastClosedMonthLabel} is ready to close!
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Sube tus extractos bancarios e inversiones para completar el análisis del mes.
+                  Upload your bank statements and investments to complete the month's analysis.
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">Extractos bancarios:</span>
+                  <span className="text-sm">Bank statements:</span>
                   <Badge variant={bankUploads > 0 ? "default" : "outline"} className={bankUploads === 0 ? "text-warning border-warning" : ""}>
-                    {bankUploads} archivo{bankUploads !== 1 ? 's' : ''}
+                    {bankUploads} file{bankUploads !== 1 ? 's' : ''}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">Inversiones:</span>
+                  <span className="text-sm">Investments:</span>
                   <Badge variant={investmentUploads > 0 ? "default" : "outline"} className={investmentUploads === 0 ? "text-warning border-warning" : ""}>
-                    {investmentUploads} archivo{investmentUploads !== 1 ? 's' : ''}
+                    {investmentUploads} file{investmentUploads !== 1 ? 's' : ''}
                   </Badge>
                 </div>
               </div>
 
               <Link to="/profile">
                 <Button variant="gradient" size="sm" className="mt-2">
-                  Ir a subir archivos
+                  Go to upload files
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
