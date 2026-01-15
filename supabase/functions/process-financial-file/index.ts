@@ -247,7 +247,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: true, 
-            message: `${transactions.length} transacciones actualizadas`,
+            message: `${transactions.length} transactions updated`,
             updated: true,
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -264,7 +264,7 @@ serve(async (req) => {
           user_id: userId,
           import_id: recordId,
           date: t.date,
-          description: t.description || 'Sin descripción',
+          description: t.description || 'No description',
           amount: t.amount,
           type: movement.toLowerCase(),
           movement: movement,
@@ -297,7 +297,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: `${transactions.length} transacciones guardadas`,
+          message: `${transactions.length} transactions saved`,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -472,7 +472,7 @@ serve(async (req) => {
         user_id: userId,
         import_id: recordId, // Using import_id for unified system
         date: t.date,
-        description: t.description || 'Sin descripción',
+        description: t.description || 'No description',
         amount: t.amount,
         type: movement.toLowerCase(), // Legacy
         movement: movement,
@@ -534,7 +534,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Procesadas ${newTransactions.length} transacciones`,
+        message: `Processed ${newTransactions.length} transactions`,
         stats: {
           newTransactions: newTransactions.length,
           duplicatesIgnored: stats.duplicates,

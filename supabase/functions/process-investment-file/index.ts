@@ -269,7 +269,7 @@ serve(async (req) => {
         user_id: userId,
         upload_id: recordId, // Keep upload_id for investments table (legacy field name)
         date: inv.date,
-        description: inv.description || 'Sin descripción',
+        description: inv.description || 'No description',
         amount: Math.abs(inv.amount),
         type,
         platform: normalizePlatform(inv.platform || 'Unknown'),
@@ -302,10 +302,10 @@ serve(async (req) => {
       })
       .eq('id', recordId);
 
-    const message = `Procesadas ${newInvestments.length} inversiones` +
-      (depositCount.count > 0 ? ` (${depositCount.count} depósitos` : '') +
-      (withdrawalCount.count > 0 ? `, ${withdrawalCount.count} retiros)` : depositCount.count > 0 ? ')' : '') +
-      (duplicateCount.count > 0 ? `, ${duplicateCount.count} duplicados ignorados` : '');
+    const message = `Processed ${newInvestments.length} investments` +
+      (depositCount.count > 0 ? ` (${depositCount.count} deposits` : '') +
+      (withdrawalCount.count > 0 ? `, ${withdrawalCount.count} withdrawals)` : depositCount.count > 0 ? ')' : '') +
+      (duplicateCount.count > 0 ? `, ${duplicateCount.count} duplicates ignored` : '');
 
     console.log(`Successfully processed investment import ${recordId}: ${message}`);
 
