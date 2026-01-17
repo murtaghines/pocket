@@ -16,8 +16,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, DollarSign, ArrowRight } from "lucide-react";
+import { Loader2, KeyRound } from "lucide-react";
 import fintLogo from "@/assets/fint-logo-new.png";
+import authBackground from "@/assets/auth-background.png";
+import coinImage from "@/assets/coin.png";
+import creditCard1 from "@/assets/credit-card-1.png";
+import creditCard2 from "@/assets/credit-card-2.png";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
@@ -279,9 +283,12 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[hsl(var(--primary))] relative overflow-hidden flex items-center justify-center p-4 lg:p-8">
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))] via-[hsl(var(--primary))] to-[hsl(var(--primary))]/90" />
+    <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center p-4 lg:p-8">
+      {/* Background image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${authBackground})` }}
+      />
       
       {/* Logo - top left */}
       <div className="absolute top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-2">
@@ -290,64 +297,32 @@ export default function Auth() {
       </div>
       
       {/* Floating coin - top right */}
-      <div className="absolute top-4 right-8 lg:top-8 lg:right-16 w-14 h-14 lg:w-20 lg:h-20 rounded-full border-[3px] border-[hsl(var(--primary-foreground))]/30 flex items-center justify-center z-10">
-        <DollarSign className="w-7 h-7 lg:w-10 lg:h-10 text-[hsl(var(--primary-foreground))]/40" />
-      </div>
+      <img 
+        src={coinImage} 
+        alt="" 
+        className="absolute top-4 right-4 lg:top-8 lg:right-12 w-16 h-16 lg:w-24 lg:h-24 object-contain z-10"
+      />
       
       {/* Floating coin - bottom left */}
-      <div className="absolute bottom-[20%] left-[8%] w-20 h-20 lg:w-28 lg:h-28 rounded-full border-[4px] border-[hsl(var(--primary-foreground))]/20 flex items-center justify-center z-10">
-        <DollarSign className="w-10 h-10 lg:w-14 lg:h-14 text-[hsl(var(--primary-foreground))]/30" />
-      </div>
+      <img 
+        src={coinImage} 
+        alt="" 
+        className="absolute bottom-[15%] left-[5%] w-24 h-24 lg:w-36 lg:h-36 object-contain z-10"
+      />
       
-      {/* Credit Card - Top Left (3D perspective) */}
-      <div 
-        className="absolute top-[10%] left-[5%] lg:left-[8%] w-44 h-28 lg:w-64 lg:h-40 z-10"
-        style={{ 
-          transform: 'perspective(800px) rotateY(20deg) rotateX(-5deg)',
-        }}
-      >
-        <div className="w-full h-full bg-[hsl(var(--primary))]/60 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-4 lg:p-5">
-          {/* Chip and Mastercard circles */}
-          <div className="flex items-start gap-1">
-            {/* Chip */}
-            <div className="grid grid-cols-2 gap-0.5">
-              <div className="w-3 h-3 lg:w-4 lg:h-4 bg-yellow-400 rounded-sm" />
-              <div className="w-3 h-3 lg:w-4 lg:h-4 bg-yellow-500 rounded-sm" />
-              <div className="w-3 h-3 lg:w-4 lg:h-4 bg-yellow-500 rounded-sm" />
-              <div className="w-3 h-3 lg:w-4 lg:h-4 bg-yellow-400 rounded-sm" />
-            </div>
-            {/* Mastercard circles */}
-            <div className="flex items-center ml-auto">
-              <div className="w-6 h-6 lg:w-8 lg:h-8 bg-orange-500 rounded-full" />
-              <div className="w-6 h-6 lg:w-8 lg:h-8 bg-yellow-400 rounded-full -ml-3" />
-            </div>
-          </div>
-          {/* Card number */}
-          <div className="mt-auto pt-8 lg:pt-12">
-            <p className="text-white/70 text-xs lg:text-sm tracking-[0.15em] font-mono">1098 3254 3210</p>
-          </div>
-        </div>
-      </div>
+      {/* Credit Card 1 - Top Left */}
+      <img 
+        src={creditCard1} 
+        alt="" 
+        className="absolute top-[8%] left-[2%] lg:left-[5%] w-40 lg:w-60 object-contain z-10"
+      />
       
-      {/* Credit Card - Bottom Center (3D perspective) */}
-      <div 
-        className="absolute bottom-[5%] left-[20%] lg:left-[25%] w-52 h-32 lg:w-72 lg:h-44 z-10"
-        style={{ 
-          transform: 'perspective(800px) rotateY(-15deg) rotateX(10deg)',
-        }}
-      >
-        <div className="w-full h-full bg-[hsl(var(--primary))]/50 backdrop-blur-sm rounded-2xl border border-white/15 shadow-2xl p-4 lg:p-5">
-          {/* Mastercard circles at top right */}
-          <div className="flex items-center justify-end">
-            <div className="w-5 h-5 lg:w-7 lg:h-7 bg-orange-500 rounded-full" />
-            <div className="w-5 h-5 lg:w-7 lg:h-7 bg-yellow-400 rounded-full -ml-2" />
-          </div>
-          {/* Card number at bottom */}
-          <div className="mt-auto pt-12 lg:pt-20">
-            <p className="text-white/60 text-sm lg:text-base tracking-[0.15em] font-mono">1098 7654</p>
-          </div>
-        </div>
-      </div>
+      {/* Credit Card 2 - Bottom Center */}
+      <img 
+        src={creditCard2} 
+        alt="" 
+        className="absolute bottom-[3%] left-[15%] lg:left-[20%] w-48 lg:w-72 object-contain z-10"
+      />
       
       {/* Tagline */}
       <div className="absolute top-1/2 left-6 lg:left-[10%] -translate-y-1/2 z-10 hidden sm:block">
@@ -541,13 +516,10 @@ export default function Auth() {
                   className="w-full h-12 text-base font-medium rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 group" 
                   disabled={loading || !emailValid}
                 >
-                  {loading ? (
+                {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <>
-                      Sign In
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </>
+                    "Sign In"
                   )}
                 </Button>
                 
