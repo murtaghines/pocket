@@ -38,7 +38,8 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -196,9 +197,6 @@ export default function Auth() {
     setLoading(true);
 
     const redirectUrl = `${window.location.origin}/`;
-    const nameParts = fullName.trim().split(" ");
-    const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ") || "";
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -206,8 +204,8 @@ export default function Auth() {
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          first_name: firstName,
-          last_name: lastName,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
         }
       }
     });
@@ -283,11 +281,11 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center p-4 lg:p-8">
+    <div className="min-h-screen min-h-[100dvh] w-full relative overflow-hidden flex items-center justify-center p-4 lg:p-8">
       {/* Background image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${authBackground})` }}
+        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${authBackground})`, minHeight: '100dvh' }}
       />
       
       {/* Logo - top left */}
@@ -341,17 +339,31 @@ export default function Auth() {
             </CardHeader>
             <CardContent className="px-8 pb-8">
               <form onSubmit={handleSignUp} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">Full Name</Label>
-                  <Input
-                    id="full-name"
-                    type="text"
-                    placeholder="Daniel Gallego"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first-name" className="text-sm font-medium text-gray-700">First Name</Label>
+                    <Input
+                      id="first-name"
+                      type="text"
+                      placeholder="Daniel"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last-name" className="text-sm font-medium text-gray-700">Last Name</Label>
+                    <Input
+                      id="last-name"
+                      type="text"
+                      placeholder="Gallego"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                    />
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
@@ -367,31 +379,30 @@ export default function Auth() {
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="password-register" className="text-sm font-medium text-gray-700">Password</Label>
-                    <PasswordInput
-                      id="password-register"
-                      placeholder="••••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">Confirm Password</Label>
-                    <PasswordInput
-                      id="confirm-password"
-                      placeholder="••••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password-register" className="text-sm font-medium text-gray-700">Password</Label>
+                  <PasswordInput
+                    id="password-register"
+                    placeholder="••••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">Confirm Password</Label>
+                  <PasswordInput
+                    id="confirm-password"
+                    placeholder="••••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                  />
                 </div>
                 <PasswordStrengthIndicator password={password} />
                 
