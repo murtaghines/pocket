@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, TrendingUp, PieChart, Wallet, Globe, ArrowRight, Shield, Sparkles, X } from "lucide-react";
+import { Loader2, KeyRound, CreditCard, DollarSign, ArrowRight } from "lucide-react";
 import fintLogo from "@/assets/fint-logo-new.png";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -24,36 +24,30 @@ import { EmailInput } from "@/components/ui/email-input";
 
 const REMEMBER_EMAIL_KEY = "fint_remember_email";
 
-const features = [
-  {
-    icon: TrendingUp,
-    title: "Track Expenses",
-    description: "Upload bank statements and automatically categorize transactions"
-  },
-  {
-    icon: PieChart,
-    title: "Visual Reports",
-    description: "Interactive charts and insights about your spending patterns"
-  },
-  {
-    icon: Wallet,
-    title: "Manage Investments",
-    description: "Monitor your portfolio and track investment performance"
-  },
-  {
-    icon: Globe,
-    title: "Multi-Currency",
-    description: "Handle different currencies with automatic conversion"
-  }
-];
+type AuthMode = "login" | "register";
 
-type AuthMode = "none" | "login" | "register";
+// Floating card component for decoration
+const FloatingCard = ({ className, rotate = 0, style, children }: { className?: string; rotate?: number; style?: React.CSSProperties; children?: React.ReactNode }) => (
+  <div 
+    className={`absolute bg-gradient-to-br from-primary/80 to-primary rounded-xl shadow-2xl ${className}`}
+    style={{ transform: `rotate(${rotate}deg)`, ...style }}
+  >
+    {children}
+  </div>
+);
+
+// Floating coin component
+const FloatingCoin = ({ className }: { className?: string }) => (
+  <div className={`absolute w-12 h-12 lg:w-16 lg:h-16 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center ${className}`}>
+    <DollarSign className="w-6 h-6 lg:w-8 lg:h-8 text-primary/50" />
+  </div>
+);
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const isResetMode = searchParams.get("reset") === "true";
   
-  const [authMode, setAuthMode] = useState<AuthMode>("none");
+  const [authMode, setAuthMode] = useState<AuthMode>("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -83,7 +77,7 @@ export default function Auth() {
       setEmail(savedEmail);
     }
 
-    // Keep UI + stored preference in sync (prevents "checkbox checked" but session not remembered)
+    // Keep UI + stored preference in sync
     const shouldRemember = Boolean(rememberPref || savedEmail);
     setRememberMe(shouldRemember);
 
@@ -138,8 +132,8 @@ export default function Auth() {
   // If reset mode, show password update form
   if (isResetMode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md glass-card animate-scale-in">
+      <div className="min-h-screen bg-primary flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-card shadow-2xl animate-scale-in">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <img src={fintLogo} alt="fint" className="w-10 h-10" />
@@ -309,116 +303,184 @@ export default function Auth() {
     setResetLoading(false);
   };
 
-  const closeAuthModal = () => {
-    setAuthMode("none");
-    setPassword("");
-    setConfirmPassword("");
-  };
-
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-background via-background to-primary/5 relative">
-      {/* Decorative elements */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-      
-      {/* Header with auth buttons */}
-      <header className="relative z-20 flex items-center justify-between px-6 py-4 lg:px-12">
-        <div className="flex items-center gap-3">
-          <img src={fintLogo} alt="fint" className="w-10 h-10 lg:w-12 lg:h-12" />
-          <span className="font-display text-xl lg:text-2xl font-bold">fint</span>
+    <div className="min-h-screen flex">
+      {/* Left side - Decorative */}
+      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 bg-primary relative overflow-hidden">
+        {/* Logo */}
+        <div className="absolute top-8 left-8 z-20 flex items-center gap-3">
+          <img src={fintLogo} alt="fint" className="w-12 h-12" />
+          <span className="font-display text-2xl font-bold text-primary-foreground">fint</span>
         </div>
         
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            onClick={() => setAuthMode("login")}
-            className="text-muted-foreground hover:text-foreground hover:bg-primary/10"
-          >
-            Log In
-          </Button>
-          <Button
-            onClick={() => setAuthMode("register")}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            Register
-          </Button>
-        </div>
-      </header>
-      
-      {/* Main content */}
-      <main className="relative z-10 h-[calc(100vh-80px)] flex flex-col items-center justify-center px-6 lg:px-12">
-        <div className="max-w-2xl mx-auto text-center animate-fade-in">
-          {/* Headline */}
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-            Take Control of{" "}
-            <span className="text-primary">Your Finances</span>
-          </h1>
-          
-          {/* Subheadline */}
-          <p className="text-lg lg:text-xl text-muted-foreground mb-10 leading-relaxed max-w-xl mx-auto">
-            Your personal finance companion for tracking expenses, visualizing spending patterns, and managing investments—all in one place.
-          </p>
-          
-          {/* Features grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            {features.map((feature, index) => (
-              <div 
-                key={feature.title}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:bg-card/80 transition-colors animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="p-3 rounded-lg bg-primary/10 text-primary">
-                  <feature.icon className="w-6 h-6" />
-                </div>
-                <h3 className="font-medium text-sm">{feature.title}</h3>
+        {/* Floating decorative elements */}
+        {/* Main credit card - top left */}
+        <FloatingCard className="w-48 h-28 xl:w-64 xl:h-36 top-[15%] left-[10%] animate-fade-in" rotate={-15}>
+          <div className="p-4 h-full flex flex-col justify-between text-primary-foreground">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-6 bg-yellow-400 rounded-sm" />
+              <div className="w-6 h-6 bg-orange-500/80 rounded-full -ml-3" />
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs tracking-[0.2em] opacity-80">1098 3254 3210</div>
+            </div>
+          </div>
+        </FloatingCard>
+
+        {/* Secondary credit card - bottom */}
+        <FloatingCard className="w-52 h-32 xl:w-72 xl:h-40 bottom-[10%] left-[15%] xl:left-[20%] animate-fade-in" rotate={5} style={{ animationDelay: '0.2s' }}>
+          <div className="p-4 h-full flex flex-col justify-between text-primary-foreground">
+            <CreditCard className="w-8 h-8 opacity-60" />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-4 bg-yellow-400 rounded-sm" />
+                <div className="w-5 h-5 bg-orange-500/80 rounded-full -ml-2" />
               </div>
-            ))}
-          </div>
-          
-          {/* Trust indicators */}
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-primary" />
-              <span>Secure & Private</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>Free to Use</span>
+              <div className="text-xs tracking-[0.2em] opacity-80">1098 7654</div>
             </div>
           </div>
+        </FloatingCard>
+
+        {/* Floating coins */}
+        <FloatingCoin className="top-[8%] right-[15%] animate-fade-in" />
+        <FloatingCoin className="bottom-[25%] left-[5%] animate-fade-in" />
+        
+        {/* Tagline */}
+        <div className="absolute top-1/2 left-8 xl:left-12 transform -translate-y-1/2 z-10">
+          <h2 className="text-3xl xl:text-4xl font-display font-light text-primary-foreground/70 leading-snug">
+            Take control of<br />
+            <span className="font-medium text-primary-foreground">your finances</span>
+          </h2>
         </div>
-      </main>
+        
+        {/* Gradient overlays for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary to-primary/80 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-primary/50 to-transparent pointer-events-none" />
+      </div>
       
-      {/* Auth Modal Overlay */}
-      {authMode !== "none" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-fade-in"
-            onClick={closeAuthModal}
-          />
+      {/* Right side - Form */}
+      <div className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-6 lg:p-12 bg-background">
+        <div className="w-full max-w-md animate-fade-in">
+          {/* Mobile logo - only shown on small screens */}
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+            <img src={fintLogo} alt="fint" className="w-10 h-10" />
+            <span className="font-display text-xl font-bold">fint</span>
+          </div>
           
-          {/* Modal */}
-          <Card className="relative z-10 w-full max-w-md glass-card border-border/50 shadow-xl animate-scale-in">
-            <button
-              onClick={closeAuthModal}
-              className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted transition-colors"
-            >
-              <X className="w-5 h-5 text-muted-foreground" />
-            </button>
-            
-            {authMode === "login" ? (
+          <Card className="border-0 shadow-none bg-transparent">
+            {authMode === "register" ? (
               <>
-                <CardHeader className="text-center pb-2">
-                  <CardTitle className="text-2xl">Welcome Back</CardTitle>
-                  <CardDescription>
-                    Sign in to your account
-                  </CardDescription>
+                <CardHeader className="px-0 pb-6">
+                  <CardTitle className="text-3xl font-display font-bold">Sign up</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSignIn} className="space-y-4">
+                <CardContent className="px-0">
+                  <form onSubmit={handleSignUp} className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="email-login">Email</Label>
+                      <Label htmlFor="full-name" className="text-sm font-medium text-foreground">Full Name</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          id="first-name"
+                          type="text"
+                          placeholder="First"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          required
+                          className="bg-muted/50 border-0 h-12 rounded-lg focus:ring-2 focus:ring-primary/20"
+                        />
+                        <Input
+                          id="last-name"
+                          type="text"
+                          placeholder="Last"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          required
+                          className="bg-muted/50 border-0 h-12 rounded-lg focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email-register" className="text-sm font-medium text-foreground">Email Address</Label>
+                      <EmailInput
+                        id="email-register"
+                        placeholder="you@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onValidChange={setEmailValid}
+                        required
+                        className="bg-muted/50 border-0 h-12 rounded-lg focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="password-register" className="text-sm font-medium text-foreground">Password</Label>
+                        <PasswordInput
+                          id="password-register"
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          minLength={6}
+                          className="bg-muted/50 border-0 h-12 rounded-lg focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password" className="text-sm font-medium text-foreground">Confirm Password</Label>
+                        <PasswordInput
+                          id="confirm-password"
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          minLength={6}
+                          className="bg-muted/50 border-0 h-12 rounded-lg focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+                    </div>
+                    <PasswordStrengthIndicator password={password} />
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 text-base font-medium rounded-lg mt-6" 
+                      disabled={loading || !emailValid}
+                    >
+                      {loading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        "Create Account"
+                      )}
+                    </Button>
+                    
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-border" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-background text-muted-foreground">Or</span>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full h-12 text-base font-medium rounded-lg"
+                      onClick={() => setAuthMode("login")}
+                    >
+                      Log in
+                    </Button>
+                  </form>
+                </CardContent>
+              </>
+            ) : (
+              <>
+                <CardHeader className="px-0 pb-6">
+                  <CardTitle className="text-3xl font-display font-bold">Log in</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0">
+                  <form onSubmit={handleSignIn} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="email-login" className="text-sm font-medium text-foreground">Email Address</Label>
                       <EmailInput
                         id="email-login"
                         placeholder="you@email.com"
@@ -426,18 +488,22 @@ export default function Auth() {
                         onChange={(e) => setEmail(e.target.value)}
                         onValidChange={setEmailValid}
                         required
+                        className="bg-muted/50 border-0 h-12 rounded-lg focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
+                    
                     <div className="space-y-2">
-                      <Label htmlFor="password-login">Password</Label>
+                      <Label htmlFor="password-login" className="text-sm font-medium text-foreground">Password</Label>
                       <PasswordInput
                         id="password-login"
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        className="bg-muted/50 border-0 h-12 rounded-lg focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
+                    
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -452,13 +518,13 @@ export default function Auth() {
                             }
                           }}
                         />
-                        <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
+                        <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer text-muted-foreground">
                           Remember me
                         </Label>
                       </div>
                       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                         <DialogTrigger asChild>
-                          <Button variant="link" className="px-0 h-auto text-sm">
+                          <Button variant="link" className="px-0 h-auto text-sm text-primary">
                             Forgot password?
                           </Button>
                         </DialogTrigger>
@@ -489,9 +555,14 @@ export default function Auth() {
                         </DialogContent>
                       </Dialog>
                     </div>
-                    <Button type="submit" className="w-full group" disabled={loading || !emailValid}>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 text-base font-medium rounded-lg group" 
+                      disabled={loading || !emailValid}
+                    >
                       {loading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <Loader2 className="w-5 h-5 animate-spin" />
                       ) : (
                         <>
                           Sign In
@@ -499,114 +570,31 @@ export default function Auth() {
                         </>
                       )}
                     </Button>
-                    <p className="text-center text-sm text-muted-foreground">
-                      Don't have an account?{" "}
-                      <button
-                        type="button"
-                        onClick={() => setAuthMode("register")}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        Sign up
-                      </button>
-                    </p>
-                  </form>
-                </CardContent>
-              </>
-            ) : (
-              <>
-                <CardHeader className="text-center pb-2">
-                  <CardTitle className="text-2xl">Create Account</CardTitle>
-                  <CardDescription>
-                    Get started with fint
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="first-name">First Name</Label>
-                        <Input
-                          id="first-name"
-                          type="text"
-                          placeholder="John"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          required
-                        />
+                    
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-border" />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="last-name">Last Name</Label>
-                        <Input
-                          id="last-name"
-                          type="text"
-                          placeholder="Doe"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          required
-                        />
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-background text-muted-foreground">Or</span>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email-register">Email</Label>
-                      <EmailInput
-                        id="email-register"
-                        placeholder="you@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onValidChange={setEmailValid}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password-register">Password</Label>
-                      <PasswordInput
-                        id="password-register"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={6}
-                      />
-                      <PasswordStrengthIndicator password={password} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirm Password</Label>
-                      <PasswordInput
-                        id="confirm-password"
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        minLength={6}
-                      />
-                    </div>
-                    <Button type="submit" className="w-full group" disabled={loading || !emailValid}>
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <>
-                          Create Account
-                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
+                    
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full h-12 text-base font-medium rounded-lg"
+                      onClick={() => setAuthMode("register")}
+                    >
+                      Create Account
                     </Button>
-                    <p className="text-center text-sm text-muted-foreground">
-                      Already have an account?{" "}
-                      <button
-                        type="button"
-                        onClick={() => setAuthMode("login")}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        Sign in
-                      </button>
-                    </p>
                   </form>
                 </CardContent>
               </>
             )}
           </Card>
         </div>
-      )}
+      </div>
     </div>
   );
 }
