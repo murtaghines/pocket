@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import * as XLSX from "xlsx";
+import { parseExcelFile } from "@/lib/excelParser";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 import type { PreviewTransaction, PreviewData, MovementType } from "@/components/dashboard/TransactionPreviewModal";
@@ -102,17 +102,7 @@ export function useFileUpload(isInvestment: boolean = false) {
     }
     
     if (extension === "xlsx" || extension === "xls") {
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-      
-      let content = "";
-      workbook.SheetNames.forEach((sheetName) => {
-        const sheet = workbook.Sheets[sheetName];
-        const csv = XLSX.utils.sheet_to_csv(sheet);
-        content += `Sheet: ${sheetName}\n${csv}\n\n`;
-      });
-      
-      return content;
+      return await parseExcelFile(file);
     }
     
     if (extension === "pdf") {
