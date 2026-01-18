@@ -63,6 +63,9 @@
     "selectIncomeCategories": "Selecciona las categorías de ingresos que quieres usar.",
     "selectExpenseCategories": "Selecciona las categorías de gastos que quieres usar.",
     "selected": "{{count}} seleccionadas",
-    "almostDone": "¡Casi listo! Haz clic en \"Comenzar\" para empezar."
+    "almostDone": "¡Casi listo! Haz clic en \"Comenzar\" para empezar.",
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "alwaysIncluded": "siempre incluido"
   }
 }

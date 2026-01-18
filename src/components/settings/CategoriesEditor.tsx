@@ -7,16 +7,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { toast } from 'sonner';
 import { Tags, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
-  categoryEmojis,
-  getCategoryLabel,
   DEFAULT_INCOME_CATEGORIES,
   DEFAULT_EXPENSE_CATEGORIES,
 } from '@/lib/categoryTranslations';
 
 export function CategoriesEditor() {
+  const { t } = useTranslation('settings');
+  const { getCategoryLabel, getCategoryEmoji } = useCategoryTranslations();
   const { preferences, updatePreferences, isUpdating } = useUserPreferences();
   
   // Parse selected categories from preferences
@@ -94,7 +96,7 @@ export function CategoriesEditor() {
       selected_categories: allCategories,
     }, {
       onSuccess: () => {
-        toast.success('Categories saved');
+        toast.success(t('categories.categoriesSaved'));
         setHasChanges(false);
       },
       onError: (error) => {
@@ -155,7 +157,7 @@ export function CategoriesEditor() {
               htmlFor={`edit-${slug}`}
               className={`flex items-center gap-1.5 text-xs ${isDisabled ? '' : 'cursor-pointer'}`}
             >
-              <span>{categoryEmojis[slug] || '📌'}</span>
+              <span>{getCategoryEmoji(slug)}</span>
               <span className="truncate">{getCategoryLabel(slug)}</span>
             </Label>
           </div>
@@ -169,10 +171,10 @@ export function CategoriesEditor() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Tags className="h-5 w-5" />
-          Categories
+          {t('categories.title')}
         </CardTitle>
         <CardDescription>
-          Manage your income and expense categories
+          {t('categories.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -180,21 +182,21 @@ export function CategoriesEditor() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="income" className="flex items-center gap-1.5 text-xs">
               <TrendingUp className="w-3.5 h-3.5" />
-              Income ({incomeCategories.length})
+              {t('categories.income')} ({incomeCategories.length})
             </TabsTrigger>
             <TabsTrigger value="expense" className="flex items-center gap-1.5 text-xs">
               <TrendingDown className="w-3.5 h-3.5" />
-              Expenses ({expenseCategories.length})
+              {t('categories.expenses')} ({expenseCategories.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="income" className="mt-3 space-y-2">
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" size="sm" onClick={selectAllIncome} className="text-xs h-7 px-2">
-                Select All
+                {t('categories.selectAll')}
               </Button>
               <Button variant="ghost" size="sm" onClick={deselectAllIncome} className="text-xs h-7 px-2">
-                Deselect All
+                {t('categories.deselectAll')}
               </Button>
             </div>
             {renderCategoryGrid(
@@ -208,10 +210,10 @@ export function CategoriesEditor() {
           <TabsContent value="expense" className="mt-3 space-y-2">
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" size="sm" onClick={selectAllExpense} className="text-xs h-7 px-2">
-                Select All
+                {t('categories.selectAll')}
               </Button>
               <Button variant="ghost" size="sm" onClick={deselectAllExpense} className="text-xs h-7 px-2">
-                Deselect All
+                {t('categories.deselectAll')}
               </Button>
             </div>
             {renderCategoryGrid(
@@ -232,12 +234,12 @@ export function CategoriesEditor() {
           {isUpdating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              {t('regional.saving')}
             </>
           ) : hasChanges ? (
-            'Save Categories'
+            t('categories.saveCategories')
           ) : (
-            'No Changes'
+            t('categories.noChanges')
           )}
         </Button>
       </CardContent>
