@@ -6,7 +6,8 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { useTranslation } from "react-i18next";
-import fintLogo from "@/assets/fint-logo-new.png";
+import fintIcon from "@/assets/fint-icon.png";
+import fintTextBlue from "@/assets/fint-text-blue.png";
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
@@ -26,10 +27,8 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-3">
-            <img src={fintLogo} alt="fint" className="w-10 h-10" />
-            <h1 className="font-display text-xl font-bold tracking-tight">
-              fint
-            </h1>
+            <img src={fintIcon} alt="fint" className="w-10 h-10" />
+            <img src={fintTextBlue} alt="fint" className="h-6 w-auto" />
           </Link>
 
           {/* Navigation */}

@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, KeyRound } from "lucide-react";
-import fintLogo from "@/assets/fint-logo-new.png";
+import fintIcon from "@/assets/fint-icon.png";
+import fintTextWhite from "@/assets/fint-text-white.png";
 import authBackground from "@/assets/auth-background.png";
 import coinImage from "@/assets/coin.png";
 import creditCard1 from "@/assets/credit-card-1.png";
@@ -117,9 +118,9 @@ export default function Auth() {
       <div className="min-h-screen bg-primary flex items-center justify-center p-4">
         <Card className="w-full max-w-md bg-white shadow-2xl rounded-2xl">
           <CardHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <img src={fintLogo} alt="fint" className="w-10 h-10" />
-              <span className="font-display text-xl font-bold">fint</span>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img src={fintIcon} alt="fint" className="w-10 h-10" />
+              <span className="font-display text-xl font-bold text-primary">fint</span>
             </div>
             <div className="flex justify-center mb-2">
               <div className="p-3 bg-primary/10 rounded-full">
@@ -309,9 +310,10 @@ export default function Auth() {
         }}
       />
       
-      {/* Logo text - top left (logo icon removed since it's in the background) */}
-      <div className="fixed top-6 left-6 lg:top-8 lg:left-10 z-20">
-        <span className="font-display text-xl lg:text-2xl font-bold text-white">fint</span>
+      {/* Logo with icon and text - top left */}
+      <div className="fixed top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-3">
+        <img src={fintIcon} alt="fint" className="w-8 h-8 lg:w-10 lg:h-10" />
+        <img src={fintTextWhite} alt="fint" className="h-6 lg:h-8 w-auto" />
       </div>
       
       {/* Floating coin - top right */}
