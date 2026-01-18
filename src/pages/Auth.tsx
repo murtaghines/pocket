@@ -306,9 +306,8 @@ export default function Auth() {
         }}
       />
       
-      {/* Logo - top left */}
-      <div className="fixed top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-2">
-        <img src={fintLogo} alt="fint" className="w-8 h-8 lg:w-10 lg:h-10" />
+      {/* Logo text - top left (logo icon removed since it's in the background) */}
+      <div className="fixed top-6 left-6 lg:top-8 lg:left-10 z-20">
         <span className="font-display text-xl lg:text-2xl font-bold text-white">fint</span>
       </div>
       
@@ -397,30 +396,31 @@ export default function Auth() {
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="password-register" className="text-sm font-medium text-gray-700">Password</Label>
-                  <PasswordInput
-                    id="password-register"
-                    placeholder="••••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">Confirm Password</Label>
-                  <PasswordInput
-                    id="confirm-password"
-                    placeholder="••••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password-register" className="text-sm font-medium text-gray-700">Password</Label>
+                    <PasswordInput
+                      id="password-register"
+                      placeholder="••••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">Confirm Password</Label>
+                    <PasswordInput
+                      id="confirm-password"
+                      placeholder="••••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                    />
+                  </div>
                 </div>
                 <PasswordStrengthIndicator password={password} />
                 
