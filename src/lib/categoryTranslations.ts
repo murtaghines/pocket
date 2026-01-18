@@ -6,13 +6,11 @@ export const categoryLabels: Record<string, string> = {
   // INCOME categories
   salary: 'Salary',
   refunds: 'Refunds',
-  sales: 'Sales',
-  transfers_in: 'Transfers In',
+  transfers: 'Transfers',
   other_income: 'Other Income',
-  investments_income: 'Investment Income',
-  gifts_received: 'Gifts Received',
+  investment: 'Investment',
   freelance: 'Freelance',
-  rental_income: 'Rental Income',
+  rents: 'Rents',
 
   // EXPENSE categories
   housing: 'Housing',
@@ -28,12 +26,6 @@ export const categoryLabels: Record<string, string> = {
   sports: 'Sports',
   other_expense: 'Other',
   pets: 'Pets',
-  gifts_given: 'Gifts Given',
-  personal_services: 'Personal Services',
-  taxes: 'Taxes',
-  family: 'Family',
-  donations: 'Donations',
-  insurance: 'Insurance',
 
   // TRANSFER categories
   own_transfer: 'Own Account',
@@ -51,8 +43,7 @@ export const movementLabels: Record<string, string> = {
 export const categoryIcons: Record<string, string> = {
   salary: 'briefcase',
   refunds: 'rotate-ccw',
-  sales: 'shopping-bag',
-  transfers_in: 'arrow-down-left',
+  transfers: 'arrow-down-left',
   other_income: 'plus-circle',
   housing: 'home',
   groceries: 'shopping-cart',
@@ -67,16 +58,9 @@ export const categoryIcons: Record<string, string> = {
   sports: 'dumbbell',
   other_expense: 'more-horizontal',
   pets: 'paw-print',
-  gifts_given: 'gift',
-  personal_services: 'scissors',
-  taxes: 'landmark',
-  family: 'users',
-  donations: 'heart-handshake',
-  insurance: 'shield-check',
-  investments_income: 'trending-up',
-  gifts_received: 'gift',
+  investment: 'trending-up',
   freelance: 'laptop',
-  rental_income: 'home',
+  rents: 'home',
   own_transfer: 'arrow-left-right',
   to_investment: 'trending-up',
 };
@@ -86,9 +70,11 @@ export const categoryEmojis: Record<string, string> = {
   // Income
   salary: '💼',
   refunds: '↩️',
-  sales: '🛒',
-  transfers_in: '📥',
+  transfers: '📥',
   other_income: '➕',
+  investment: '📈',
+  freelance: '💻',
+  rents: '🏘️',
   // Expense
   housing: '🏠',
   groceries: '🛒',
@@ -103,16 +89,6 @@ export const categoryEmojis: Record<string, string> = {
   sports: '🏃',
   other_expense: '📦',
   pets: '🐾',
-  gifts_given: '🎁',
-  personal_services: '💇',
-  taxes: '🏛️',
-  family: '👨‍👩‍👧',
-  donations: '❤️',
-  insurance: '🛡️',
-  investments_income: '📈',
-  gifts_received: '🎁',
-  freelance: '💻',
-  rental_income: '🏘️',
   // Transfer
   own_transfer: '↔️',
   to_investment: '📈',
@@ -120,7 +96,17 @@ export const categoryEmojis: Record<string, string> = {
 
 // Legacy slug mapping - maps old/incorrect slugs to correct ones
 const legacySlugMap: Record<string, string> = {
-  'investment': 'investments_income',
+  'investments_income': 'investment',
+  'rental_income': 'rents',
+  'transfers_in': 'transfers',
+  'gifts_received': 'other_income',
+  'sales': 'other_income',
+  'gifts_given': 'other_expense',
+  'insurance': 'other_expense',
+  'family': 'other_expense',
+  'donations': 'other_expense',
+  'personal_services': 'other_expense',
+  'taxes': 'other_expense',
   'income': 'other_income',
   'other': 'other_expense',
   'food': 'groceries',
@@ -176,10 +162,10 @@ export function getMovementLabel(movement: string): string {
 }
 
 // Categories by movement type (for onboarding)
-export const INCOME_CATEGORIES = ['salary', 'refunds', 'sales', 'transfers_in', 'other_income', 'investments_income', 'gifts_received', 'freelance', 'rental_income'];
-export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets', 'gifts_given', 'personal_services', 'taxes', 'family', 'donations', 'insurance'];
+export const INCOME_CATEGORIES = ['salary', 'refunds', 'transfers', 'other_income', 'investment', 'freelance', 'rents'];
+export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
 export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment'];
 
 // Default selected categories for new users
 export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'other_income'];
-export const DEFAULT_EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'subscriptions', 'sports', 'taxes', 'other_expense'];
+export const DEFAULT_EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'subscriptions', 'sports', 'other_expense'];
