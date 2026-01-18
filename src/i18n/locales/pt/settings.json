@@ -12,13 +12,21 @@
   },
   "categories": {
     "title": "Categorias",
-    "description": "Gerencie suas categorias de transações",
+    "description": "Gerencie suas categorias de receitas e despesas",
     "addCategory": "Adicionar Categoria",
     "editCategory": "Editar Categoria",
     "deleteCategory": "Excluir Categoria",
     "categoryName": "Nome da Categoria",
     "categoryColor": "Cor",
-    "categoryIcon": "Ícone"
+    "categoryIcon": "Ícone",
+    "income": "Receitas",
+    "expenses": "Despesas",
+    "selectAll": "Selecionar Tudo",
+    "deselectAll": "Desmarcar Tudo",
+    "alwaysIncluded": "sempre incluído",
+    "saveCategories": "Salvar Categorias",
+    "noChanges": "Sem Alterações",
+    "categoriesSaved": "Categorias salvas"
   },
   "notifications": {
     "title": "Notificações",
@@ -34,5 +42,27 @@
     "changePassword": "Alterar Senha",
     "twoFactor": "Autenticação de Dois Fatores",
     "sessions": "Sessões Ativas"
+  },
+  "onboarding": {
+    "title": "Bem-vindo ao fint!",
+    "stepCountry": "País",
+    "stepCurrency": "Moeda",
+    "stepCategories": "Categorias",
+    "continue": "Continuar",
+    "back": "Voltar",
+    "getStarted": "Começar",
+    "selectCountry": "Vamos começar selecionando seu país. Isso nos ajuda a definir os padrões corretos para você.",
+    "yourCountry": "Seu País",
+    "selectYourCountry": "Selecione seu país",
+    "basedOnCountry": "Com base no seu país, sugeriremos {{currency}} como sua moeda.",
+    "selectBaseCurrency": "Selecione sua moeda base — a moeda principal que você usará para enviar transações e comparar valores.",
+    "howItWorks": "Como funciona:",
+    "currencyTip1": "Todas as comparações de câmbio usarão {{currency}} como referência",
+    "currencyTip2": "Você pode ver seu painel em qualquer moeda depois",
+    "currencyTip3": "Extratos bancários podem ser enviados em qualquer moeda",
+    "selectIncomeCategories": "Selecione as categorias de receita que deseja usar.",
+    "selectExpenseCategories": "Selecione as categorias de despesa que deseja usar.",
+    "selected": "{{count}} selecionadas",
+    "almostDone": "Quase pronto! Clique em \"Começar\" para iniciar."
   }
 }

@@ -11,27 +11,66 @@
   "uploads": {
     "title": "Envios Mensais",
     "investmentUploads": "Envios de Investimentos",
+    "investmentsByMonth": "Investimentos por Mês",
+    "uploadStatements": "Envie os extratos das suas plataformas de investimento",
     "noUploads": "Nenhum envio ainda",
     "uploadFile": "Enviar arquivo",
     "fileUploaded": "Arquivo enviado",
     "processing": "Processando",
     "processed": "Processado",
     "failed": "Falhou",
-    "transactionsCount": "{{count}} transações"
+    "pending": "Pendente",
+    "transactionsCount": "{{count}} transações",
+    "dragOrClick": "Arraste arquivos ou clique para enviar",
+    "addMoreFiles": "Adicionar mais arquivos",
+    "review": "Revisar",
+    "viewTransactions": "Ver transações",
+    "loadMore": "Carregar Mais"
   },
   "account": {
     "title": "Conta",
     "deleteAccount": "Excluir Conta",
+    "deleteAccountTitle": "Excluir Conta Permanentemente",
     "deleteWarning": "Esta ação não pode ser desfeita. Todos os seus dados serão excluídos permanentemente.",
+    "deleteDescription": "Isso excluirá permanentemente sua conta e todos os seus dados incluindo:",
+    "deleteItems": {
+      "transactions": "Todas as transações e registros financeiros",
+      "files": "Todos os arquivos e documentos enviados",
+      "investments": "Registros de investimentos e contas",
+      "preferences": "Preferências e configurações",
+      "profile": "Suas informações de perfil"
+    },
     "confirmDelete": "Tem certeza de que deseja excluir sua conta?",
-    "typeToConfirm": "Digite EXCLUIR para confirmar"
+    "typeToConfirm": "Digite Confirmar para confirmar",
+    "deleting": "Excluindo...",
+    "deleteMyAccount": "Excluir Minha Conta",
+    "accountDeleted": "Conta excluída",
+    "accountDeletedDescription": "Sua conta e todos os dados foram excluídos permanentemente."
   },
   "review": {
     "title": "Revisão do Mês",
+    "reviewTitle": "Revisão - {{month}}",
     "income": "Receitas",
     "expenses": "Despesas",
     "balance": "Saldo",
     "byCategory": "Por Categoria",
-    "closeMonth": "Fechar Mês"
+    "closeMonth": "Fechar Mês",
+    "transactionsInMonth": "{{count}} transações neste mês",
+    "noTransactions": "Sem transações para este mês",
+    "uploadFirst": "Envie e processe arquivos primeiro",
+    "monthLocked": "Este mês está fechado. Você não pode editar categorias.",
+    "monthReviewed": "Mês revisado",
+    "transactionsConfirmed": "{{count}} transações confirmadas para {{month}}"
+  },
+  "monthSlot": {
+    "deleteFile": "Excluir arquivo?",
+    "deleteDescription": "Todas as transações associadas a \"{{fileName}}\" serão excluídas. Esta ação não pode ser desfeita.",
+    "processingError": "Erro de processamento",
+    "tip": "Dica",
+    "tipText": "Se for um PDF escaneado, tente convertê-lo para CSV ou Excel antes de enviar.",
+    "closeMonth": "Fechar mês?",
+    "closeDescription": "As transações de {{month}} serão bloqueadas e você não poderá editar as categorias. Você pode reabrir o mês se precisar.",
+    "reopenMonth": "Reabrir mês?",
+    "reopenDescription": "Você poderá editar as transações de {{month}} novamente."
   }
 }
