@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -21,15 +22,16 @@ interface OnboardingModalProps {
 export interface OnboardingData {
   country: string;
   currency: string;
-  categories: string[]; // Legacy: combined categories for backward compat
+  categories: string[];
   incomeCategories: string[];
   expenseCategories: string[];
-  language: string; // Keep for backward compat, always 'en'
+  language: string;
 }
 
 const TOTAL_STEPS = 3;
 
 export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
+  const { t } = useTranslation('common');
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const { updatePreferences } = useUserPreferences();
@@ -38,7 +40,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const [data, setData] = useState<OnboardingData>({
     country: '',
     currency: 'EUR',
-    categories: [], // Legacy
+    categories: [],
     incomeCategories: DEFAULT_INCOME_CATEGORIES,
     expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
     language: 'en',
@@ -63,7 +65,6 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const handleComplete = async () => {
     setSaving(true);
     try {
-      // Combine income and expense categories for storage
       const allCategories = [...data.incomeCategories, ...data.expenseCategories];
 
       await updatePreferences({
@@ -76,15 +77,15 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       } as any);
 
       toast({
-        title: 'Get Started',
-        description: 'Preferences saved successfully',
+        title: t('success'),
+        description: t('saved', { defaultValue: 'Preferences saved successfully' }),
       });
       onComplete();
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to save preferences. Please try again.',
+        title: t('error'),
+        description: t('saveFailed', { defaultValue: 'Failed to save preferences. Please try again.' }),
         variant: 'destructive',
       });
     } finally {
@@ -99,7 +100,6 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 2:
         return !!data.currency;
       case 3:
-        // Must have at least one income and one expense category
         return data.incomeCategories.length > 0 && data.expenseCategories.length > 0;
       default:
         return true;
@@ -142,7 +142,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         <div className="mt-4">
           <Progress value={(step / TOTAL_STEPS) * 100} className="h-2" />
           <p className="text-sm text-muted-foreground mt-2">
-            Step {step} of {TOTAL_STEPS}
+            {step} / {TOTAL_STEPS}
           </p>
         </div>
 
@@ -151,12 +151,12 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         <div className="flex justify-between pt-4 border-t">
           <Button variant="outline" onClick={handleBack} disabled={step === 1 || saving}>
             <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
+            {t('back')}
           </Button>
 
           {step < TOTAL_STEPS ? (
             <Button onClick={handleNext} disabled={!canProceed()}>
-              Next
+              {t('next')}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
@@ -166,7 +166,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
               ) : (
                 <Check className="w-4 h-4 mr-2" />
               )}
-              Get Started
+              {t('confirm')}
             </Button>
           )}
         </div>

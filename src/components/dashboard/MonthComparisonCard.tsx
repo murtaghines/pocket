@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, ArrowRight, Minus } from "lucide-react";
 import { MonthlyData } from "@/lib/mockData";
@@ -9,6 +10,7 @@ interface MonthComparisonCardProps {
 }
 
 export function MonthComparisonCard({ currentMonth, previousMonth }: MonthComparisonCardProps) {
+  const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
 
   const incomeChange = previousMonth.income > 0 
@@ -31,7 +33,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <ArrowRight className="w-4 h-4" />
-          vs Previous Month
+          {t('comparison.previousMonth')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -40,7 +42,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
             <div className="p-1.5 rounded-md bg-success/10">
               <TrendingUp className="w-3.5 h-3.5 text-success" />
             </div>
-            <span className="text-sm">Income</span>
+            <span className="text-sm">{t('stats.income')}</span>
           </div>
           <span className={`text-sm font-semibold ${incomeChange >= 0 ? 'text-success' : 'text-destructive'}`}>
             {formatChange(incomeChange)}
@@ -52,7 +54,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
             <div className="p-1.5 rounded-md bg-destructive/10">
               <TrendingDown className="w-3.5 h-3.5 text-destructive" />
             </div>
-            <span className="text-sm">Expenses</span>
+            <span className="text-sm">{t('stats.expenses')}</span>
           </div>
           <span className={`text-sm font-semibold ${expenseChange <= 0 ? 'text-success' : 'text-destructive'}`}>
             {formatChange(expenseChange)}
@@ -65,7 +67,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
               <div className="p-1.5 rounded-md bg-primary/10">
                 <Minus className="w-3.5 h-3.5 text-primary" />
               </div>
-              <span className="text-sm">Balance</span>
+              <span className="text-sm">{t('stats.balance')}</span>
             </div>
             <span className={`text-sm font-semibold ${balanceChange >= 0 ? 'text-success' : 'text-destructive'}`}>
               {balanceChange >= 0 ? '+' : ''}{formatCurrency(balanceChange)}

@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface Investment {
   id: string;
@@ -17,44 +19,36 @@ interface InvestmentsTableProps {
   investments: Investment[];
 }
 
-const ASSET_LABELS: Record<string, string> = {
-  'stocks': 'Stocks',
-  'etf': 'ETFs',
-  'bonds': 'Bonds',
-  'commodities': 'Commodities',
-  'crypto': 'Crypto',
-  'savings': 'Savings',
-};
-
 export function InvestmentsTable({ investments }: InvestmentsTableProps) {
-  const formatCurrency = (amount: number) =>
-    Math.abs(amount).toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
+  const { t } = useTranslation('investments');
+  const { formatCurrency, formatDate } = useLocalization();
 
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString('en-US', { 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
-    });
+  const ASSET_LABELS: Record<string, string> = {
+    'stocks': t('byAssetType.types.stocks'),
+    'etf': 'ETFs',
+    'bonds': t('byAssetType.types.bonds'),
+    'commodities': t('byAssetType.types.commodities'),
+    'crypto': t('byAssetType.types.crypto'),
+    'savings': t('byAssetType.types.cash'),
+  };
 
-  // Show last 50 transactions
   const displayedInvestments = investments.slice(0, 50);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Transaction History</CardTitle>
+        <CardTitle>{t('history.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Platform</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="w-[100px]">{t('history.date')}</TableHead>
+                <TableHead>{t('history.description')}</TableHead>
+                <TableHead>{t('history.platform')}</TableHead>
+                <TableHead>{t('history.type')}</TableHead>
+                <TableHead className="text-right">{t('history.amount')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -84,7 +78,7 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
                         <ArrowDownCircle className="w-4 h-4 text-red-500" />
                       )}
                       <span className={inv.type === 'deposit' ? 'text-green-600' : 'text-red-600'}>
-                        {inv.type === 'deposit' ? '+' : '-'}{formatCurrency(inv.amount)}
+                        {inv.type === 'deposit' ? '+' : '-'}{formatCurrency(Math.abs(inv.amount))}
                       </span>
                     </div>
                   </TableCell>
@@ -95,7 +89,7 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
         </div>
         {investments.length > 50 && (
           <p className="text-sm text-muted-foreground text-center mt-4">
-            Showing the last 50 of {investments.length} total transactions
+            {investments.length - 50}+
           </p>
         )}
       </CardContent>

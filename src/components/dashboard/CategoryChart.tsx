@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -13,6 +14,7 @@ interface CategoryChartProps {
 }
 
 export function CategoryChart({ data }: CategoryChartProps) {
+  const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
@@ -60,7 +62,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">Expenses by Category</CardTitle>
+        <CardTitle className="text-lg">{t('charts.categoryBreakdown')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[320px]">

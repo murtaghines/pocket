@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -62,18 +63,20 @@ const getMovementType = (transaction: Transaction): MovementType => {
   return 'expense';
 };
 
-const movementLabels: Record<MovementType, string> = {
-  income: 'Income',
-  expense: 'Expense',
-  transfer: 'Transfer',
-  investment: 'Investment',
-};
-
 export function TransactionTable({ transactions }: TransactionTableProps) {
+  const { t } = useTranslation('dashboard');
+  const { t: tc } = useTranslation('common');
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [movementFilter, setMovementFilter] = useState<string>("all");
   const { formatCurrency } = useLocalization();
+
+  const movementLabels: Record<MovementType, string> = {
+    income: t('stats.income'),
+    expense: t('stats.expenses'),
+    transfer: t('transactions.transfer', { defaultValue: 'Transfer' }),
+    investment: t('investments.title'),
+  };
 
   const availableCategories = movementFilter === "all" 
     ? Object.keys(categoryBadgeColors) as Category[]
@@ -110,35 +113,35 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">Transactions</CardTitle>
+        <CardTitle className="text-lg">{t('transactions.title')}</CardTitle>
         <div className="flex flex-col sm:flex-row gap-3 mt-4">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">Movements</span>
+            <span className="text-xs font-medium text-muted-foreground">{t('transactions.movement', { defaultValue: 'Movements' })}</span>
             <Select value={movementFilter} onValueChange={handleMovementChange}>
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="All" />
+                <SelectValue placeholder={tc('viewAll')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="income">Income</SelectItem>
-                <SelectItem value="expense">Expense</SelectItem>
-                <SelectItem value="transfer">Transfer</SelectItem>
-                <SelectItem value="investment">Investment</SelectItem>
+                <SelectItem value="all">{tc('viewAll')}</SelectItem>
+                <SelectItem value="income">{t('stats.income')}</SelectItem>
+                <SelectItem value="expense">{t('stats.expenses')}</SelectItem>
+                <SelectItem value="transfer">{t('transactions.transfer', { defaultValue: 'Transfer' })}</SelectItem>
+                <SelectItem value="investment">{t('investments.title')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">Categories</span>
+            <span className="text-xs font-medium text-muted-foreground">{t('transactions.category')}</span>
             <Select 
               value={categoryFilter} 
               onValueChange={setCategoryFilter}
               disabled={movementFilter === 'transfer' || availableCategories.length === 0}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="All" />
+                <SelectValue placeholder={tc('viewAll')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">{tc('viewAll')}</SelectItem>
                 {availableCategories.map(cat => (
                   <SelectItem key={cat} value={cat}>
                     {getCategoryLabel(cat)}
@@ -150,7 +153,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search transactions..."
+              placeholder={tc('search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 mt-5"
@@ -163,20 +166,20 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-[80px]">Month</TableHead>
-                <TableHead className="w-[90px]">Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="hidden lg:table-cell">Movement</TableHead>
-                <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead className="hidden sm:table-cell">Account</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="w-[80px]">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
+                <TableHead className="w-[90px]">{t('transactions.date')}</TableHead>
+                <TableHead>{t('transactions.description')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('transactions.category')}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t('transactions.bank', { defaultValue: 'Account' })}</TableHead>
+                <TableHead className="text-right">{t('transactions.amount')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTransactions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No transactions found
+                    {t('transactions.noTransactions')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -259,7 +262,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           </Table>
         </div>
         <p className="text-sm text-muted-foreground mt-4">
-          Showing {filteredTransactions.length} of {transactions.length} transactions
+          {filteredTransactions.length} / {transactions.length}
         </p>
       </CardContent>
     </Card>
