@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { useTranslation } from "react-i18next";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface AssetData {
   deposits: number;
@@ -21,20 +23,26 @@ const ASSET_COLORS: Record<string, string> = {
   'Unclassified': '#6B7280',
 };
 
-const ASSET_LABELS: Record<string, string> = {
-  'stocks': 'Stocks',
-  'etf': 'ETFs',
-  'bonds': 'Bonds',
-  'commodities': 'Commodities',
-  'crypto': 'Crypto',
-  'savings': 'Savings',
-  'Unclassified': 'Unclassified',
-};
-
 export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
+  const { t } = useTranslation('investments');
+  const { formatCurrency } = useLocalization();
+
+  const getAssetLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'stocks': t('byAssetType.types.stocks'),
+      'etf': t('byAssetType.types.etf'),
+      'bonds': t('byAssetType.types.bonds'),
+      'commodities': t('byAssetType.types.commodities'),
+      'crypto': t('byAssetType.types.crypto'),
+      'savings': t('byAssetType.types.savings'),
+      'Unclassified': t('byAssetType.types.unclassified'),
+    };
+    return labels[type] || type;
+  };
+
   const chartData = Object.entries(data)
     .map(([type, values]) => ({
-      name: ASSET_LABELS[type] || type,
+      name: getAssetLabel(type),
       type,
       value: values.net,
       deposits: values.deposits,
@@ -44,17 +52,14 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
     .filter(d => d.value > 0)
     .sort((a, b) => b.value - a.value);
 
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
-
   if (chartData.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>By Asset Type</CardTitle>
+          <CardTitle>{t('byAssetType.title')}</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[200px]">
-          <p className="text-muted-foreground">No data</p>
+          <p className="text-muted-foreground">{t('byAssetType.noData')}</p>
         </CardContent>
       </Card>
     );
@@ -63,7 +68,7 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>By Asset Type</CardTitle>
+        <CardTitle>{t('byAssetType.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={250}>
@@ -71,7 +76,7 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
             <XAxis type="number" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
             <YAxis type="category" dataKey="name" width={100} />
             <Tooltip
-              formatter={(value: number) => [formatCurrency(value), 'Invested']}
+              formatter={(value: number) => [formatCurrency(value), t('byAssetType.invested')]}
             />
             <Bar dataKey="value" radius={[0, 4, 4, 0]}>
               {chartData.map((entry, index) => (

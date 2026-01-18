@@ -2,6 +2,7 @@ import { OnboardingData } from './OnboardingModal';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface StepCountryProps {
   data: OnboardingData;
@@ -30,6 +31,8 @@ const COUNTRIES = [
 ];
 
 export function StepCountry({ data, updateData }: StepCountryProps) {
+  const { t } = useTranslation('settings');
+  
   const handleCountryChange = (countryCode: string) => {
     const country = COUNTRIES.find(c => c.code === countryCode);
     updateData({ 
@@ -42,14 +45,14 @@ export function StepCountry({ data, updateData }: StepCountryProps) {
     <div className="space-y-6">
       <div className="flex items-center gap-3 text-muted-foreground">
         <Globe className="w-5 h-5" />
-        <p>Let's start by selecting your country. This helps us set the right defaults for you.</p>
+        <p>{t('onboarding.countryDescription')}</p>
       </div>
 
       <div className="space-y-3">
-        <Label htmlFor="country">Your Country</Label>
+        <Label htmlFor="country">{t('onboarding.yourCountry')}</Label>
         <Select value={data.country} onValueChange={handleCountryChange}>
           <SelectTrigger id="country" className="w-full">
-            <SelectValue placeholder="Select your country" />
+            <SelectValue placeholder={t('onboarding.selectCountry')} />
           </SelectTrigger>
           <SelectContent>
             {COUNTRIES.map((country) => (
@@ -63,7 +66,7 @@ export function StepCountry({ data, updateData }: StepCountryProps) {
 
       {data.country && (
         <p className="text-sm text-muted-foreground">
-          Based on your country, we'll suggest {COUNTRIES.find(c => c.code === data.country)?.currency} as your currency.
+          {t('onboarding.currencySuggestion', { currency: COUNTRIES.find(c => c.code === data.country)?.currency })}
         </p>
       )}
     </div>

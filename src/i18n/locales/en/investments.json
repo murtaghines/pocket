@@ -9,12 +9,24 @@
   "accounts": {
     "title": "Investment Accounts",
     "addAccount": "Add Account",
+    "add": "Add",
+    "addOrUpdate": "Add or Update Account",
     "editAccount": "Edit Account",
     "deleteAccount": "Delete Account",
     "platform": "Platform",
+    "platformPlaceholder": "E.g.: Revolut, Fidelity, Vanguard",
     "accountName": "Account Name",
+    "accountNamePlaceholder": "E.g.: Instant Access Savings, ETF Portfolio",
     "currentValue": "Current Value",
-    "lastUpdated": "Last Updated"
+    "lastUpdated": "Last Updated",
+    "noAccounts": "No accounts registered. Add one to track current value.",
+    "save": "Save Account",
+    "saving": "Saving...",
+    "saved": "Account saved successfully",
+    "accountDeleted": "Account deleted",
+    "fillAllFields": "Please fill in all fields",
+    "errorSaving": "Error saving account",
+    "errorDeleting": "Error deleting account"
   },
   "history": {
     "title": "Investment History",
@@ -23,7 +35,12 @@
     "type": "Type",
     "amount": "Amount",
     "platform": "Platform",
-    "description": "Description"
+    "description": "Description",
+    "month": "Month",
+    "totalAccumulated": "Total Accumulated",
+    "deposits": "Deposits",
+    "withdrawals": "Withdrawals",
+    "net": "Net"
   },
   "byPlatform": {
     "title": "By Platform",
@@ -32,14 +49,18 @@
   "byAssetType": {
     "title": "By Asset Type",
     "noData": "No data by asset type",
+    "invested": "Invested",
     "types": {
       "stocks": "Stocks",
+      "etf": "ETFs",
       "bonds": "Bonds",
       "crypto": "Crypto",
       "realEstate": "Real Estate",
       "commodities": "Commodities",
+      "savings": "Savings",
       "cash": "Cash",
-      "other": "Other"
+      "other": "Other",
+      "unclassified": "Unclassified"
     }
   },
   "transactions": {

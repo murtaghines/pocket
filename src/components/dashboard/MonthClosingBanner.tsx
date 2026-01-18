@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { X, Calendar, FileText, TrendingUp, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useImports, Import } from "@/hooks/useImports";
+import { useTranslation } from "react-i18next";
 
 const BANNER_SHOW_UNTIL_DAY = 7; // Show banner from day 1 to day 7 of each month
 
 export function MonthClosingBanner() {
+  const { t, i18n } = useTranslation('dashboard');
   const { imports: cashflowImports } = useImports("CASHFLOW");
   const { imports: investingImports } = useImports("INVESTING");
   const [isDismissed, setIsDismissed] = useState(false);
@@ -26,8 +28,8 @@ export function MonthClosingBanner() {
   }, [lastClosedMonth]);
 
   const lastClosedMonthLabel = useMemo(() => {
-    return lastClosedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  }, [lastClosedMonth]);
+    return lastClosedMonth.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' });
+  }, [lastClosedMonth, i18n.language]);
 
   const countImportsForMonth = (imports: Import[], monthKey: string) => {
     return imports.filter((imp) => {
@@ -79,33 +81,33 @@ export function MonthClosingBanner() {
             <div className="flex-1 space-y-3">
               <div>
                 <h3 className="font-semibold text-lg capitalize">
-                  {lastClosedMonthLabel} is ready to close!
+                  {t('monthClosing.readyToClose', { month: lastClosedMonthLabel })}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Upload your bank statements and investments to complete the month's analysis.
+                  {t('monthClosing.uploadPrompt')}
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">Bank statements:</span>
+                  <span className="text-sm">{t('monthClosing.bankStatements')}:</span>
                   <Badge variant={bankUploads > 0 ? "default" : "outline"} className={bankUploads === 0 ? "text-warning border-warning" : ""}>
-                    {bankUploads} file{bankUploads !== 1 ? 's' : ''}
+                    {t('monthClosing.filesCount', { count: bankUploads })}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">Investments:</span>
+                  <span className="text-sm">{t('monthClosing.investments')}:</span>
                   <Badge variant={investmentUploads > 0 ? "default" : "outline"} className={investmentUploads === 0 ? "text-warning border-warning" : ""}>
-                    {investmentUploads} file{investmentUploads !== 1 ? 's' : ''}
+                    {t('monthClosing.filesCount', { count: investmentUploads })}
                   </Badge>
                 </div>
               </div>
 
               <Link to="/profile">
                 <Button variant="gradient" size="sm" className="mt-2">
-                  Go to upload files
+                  {t('monthClosing.goToUpload')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
