@@ -310,9 +310,8 @@ export default function Auth() {
         }}
       />
       
-      {/* Logo with icon and text - top left */}
-      <div className="fixed top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-3">
-        <img src={fintIcon} alt="fint" className="w-8 h-8 lg:w-10 lg:h-10" />
+      {/* Logo text - top left */}
+      <div className="fixed top-6 left-6 lg:top-8 lg:left-10 z-20">
         <img src={fintTextWhite} alt="fint" className="h-6 lg:h-8 w-auto" />
       </div>
       
