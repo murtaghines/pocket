@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -12,6 +13,7 @@ interface BalanceChartProps {
 }
 
 export function BalanceChart({ data }: BalanceChartProps) {
+  const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -32,7 +34,7 @@ export function BalanceChart({ data }: BalanceChartProps) {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '350ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">Monthly Balance</CardTitle>
+        <CardTitle className="text-lg">{t('stats.balance')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">

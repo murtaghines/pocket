@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { PiggyBank } from "lucide-react";
 
@@ -8,6 +9,7 @@ interface SavingsRateCardProps {
 }
 
 export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCardProps) {
+  const { t } = useTranslation('dashboard');
   const savingsRate = income > 0 ? Math.round(((income - expenses) / income) * 100) : 0;
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (savingsRate / 100) * circumference;
@@ -25,9 +27,9 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
   };
 
   const getRatingLabel = () => {
-    if (savingsRate >= 30) return 'Excellent';
-    if (savingsRate >= 15) return 'Good';
-    return 'Needs improvement';
+    if (savingsRate >= 30) return t('stats.excellent', { defaultValue: 'Excellent' });
+    if (savingsRate >= 15) return t('stats.good', { defaultValue: 'Good' });
+    return t('stats.needsImprovement', { defaultValue: 'Needs improvement' });
   };
 
   return (
@@ -72,7 +74,7 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
         <div className="mt-3 text-center">
           <p className="text-sm font-medium flex items-center gap-1.5">
             <PiggyBank className="w-4 h-4 text-muted-foreground" />
-            Savings Rate
+            {t('stats.savingsRate')}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
             {getRatingLabel()}

@@ -1,12 +1,17 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, TrendingUp, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useImports, Import } from "@/hooks/useImports";
 import { cn } from "@/lib/utils";
+import { useLocalization } from "@/hooks/useLocalization";
 
 export function MonthStatusIndicator() {
+  const { t } = useTranslation('dashboard');
+  const { t: tc } = useTranslation('common');
+  const { formatMonth } = useLocalization();
   const { imports: cashflowImports, isLoading: cashflowLoading } = useImports("CASHFLOW");
   const { imports: investingImports, isLoading: investingLoading } = useImports("INVESTING");
 
@@ -21,13 +26,12 @@ export function MonthStatusIndicator() {
   }, [lastClosedMonth]);
 
   const lastClosedMonthLabel = useMemo(() => {
-    return lastClosedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  }, [lastClosedMonth]);
+    return formatMonth(lastClosedMonth);
+  }, [lastClosedMonth, formatMonth]);
 
   const countImportsForMonth = (imports: Import[], monthKey: string) => {
     return imports.filter((imp) => {
       const targetMonth = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
-      // Only count NORMALIZED imports as successful
       return targetMonth === monthKey && imp.status === 'NORMALIZED';
     }).length;
   };
@@ -79,7 +83,7 @@ export function MonthStatusIndicator() {
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <FileText className="w-3.5 h-3.5" />
-              <span>Statements</span>
+              <span>{t('upload.title')}</span>
             </div>
             <Badge variant={bankUploads > 0 ? "secondary" : "outline"} className="text-xs">
               {bankUploads}
@@ -88,7 +92,7 @@ export function MonthStatusIndicator() {
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>Investments</span>
+              <span>{t('investments.title')}</span>
             </div>
             <Badge variant={investmentUploads > 0 ? "secondary" : "outline"} className="text-xs">
               {investmentUploads}
@@ -100,7 +104,7 @@ export function MonthStatusIndicator() {
           to="/profile" 
           className="flex items-center justify-center gap-1 text-xs text-primary hover:underline"
         >
-          View files
+          {tc('viewAll')}
           <ArrowRight className="w-3 h-3" />
         </Link>
       </CardContent>

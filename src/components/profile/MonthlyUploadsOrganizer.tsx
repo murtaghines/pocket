@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, FolderOpen } from "lucide-react";
@@ -6,11 +7,14 @@ import { useImports } from "@/hooks/useImports";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
 import { usePeriods } from "@/hooks/usePeriods";
+import { useLocalization } from "@/hooks/useLocalization";
 
 const DEFAULT_MONTHS_TO_SHOW = 6;
 
 export function MonthlyUploadsOrganizer() {
-  // Use imports instead of uploads (unified system)
+  const { t } = useTranslation('profile');
+  const { t: tc } = useTranslation('common');
+  const { formatMonth } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting } = useImports("CASHFLOW");
   const { 
     pendingFilesByMonth, 
@@ -30,14 +34,12 @@ export function MonthlyUploadsOrganizer() {
   
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS_TO_SHOW);
 
-  // Calculate the last closed month (if today is Jan 1, last closed is December)
   const getLastClosedMonth = (): Date => {
     const now = new Date();
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     return lastMonth;
   };
 
-  // Generate month slots from the last closed month going back
   const monthSlots = useMemo(() => {
     const slots: { key: string; label: string; date: Date }[] = [];
     const lastClosed = getLastClosedMonth();
@@ -45,19 +47,17 @@ export function MonthlyUploadsOrganizer() {
     for (let i = 0; i < monthsToShow; i++) {
       const monthDate = new Date(lastClosed.getFullYear(), lastClosed.getMonth() - i, 1);
       const key = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
-      const label = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const label = formatMonth(monthDate);
       slots.push({ key, label, date: monthDate });
     }
     
     return slots;
-  }, [monthsToShow]);
+  }, [monthsToShow, formatMonth]);
 
-  // Group imports by target month (from period.month_key)
   const importsByMonth = useMemo(() => {
     const grouped: Record<string, typeof imports> = {};
     
     imports.forEach((imp) => {
-      // Use target_month from period, normalize to YYYY-MM
       const key = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(imp);
@@ -76,7 +76,7 @@ export function MonthlyUploadsOrganizer() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FolderOpen className="w-5 h-5" />
-            Files by Month
+            {t('uploads.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -95,11 +95,8 @@ export function MonthlyUploadsOrganizer() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FolderOpen className="w-5 h-5" />
-          Files by Month
+          {t('uploads.title')}
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Organize your bank statements by month
-        </p>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-3">
@@ -135,7 +132,7 @@ export function MonthlyUploadsOrganizer() {
           onClick={handleLoadMore}
         >
           <ChevronDown className="w-4 h-4 mr-2" />
-          Load More
+          {tc('viewAll')}
         </Button>
       </CardContent>
     </Card>

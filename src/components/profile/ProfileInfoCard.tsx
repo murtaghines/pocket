@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 
 export function ProfileInfoCard() {
+  const { t } = useTranslation('profile');
+  const { t: tc } = useTranslation('common');
   const { user, signOut } = useAuth();
   const { profile, updateProfile, isUpdating } = useProfile();
   const { formatDate } = useLocalization();
@@ -37,14 +40,14 @@ export function ProfileInfoCard() {
         onSuccess: () => {
           setIsEditing(false);
           toast({
-            title: "Profile updated",
-            description: "Your information has been saved successfully.",
+            title: tc('success'),
+            description: t('personalInfo.updateSuccess'),
           });
         },
         onError: () => {
           toast({
-            title: "Error",
-            description: "Could not update profile.",
+            title: tc('error'),
+            description: t('personalInfo.updateError', { defaultValue: 'Could not update profile.' }),
             variant: "destructive",
           });
         },
@@ -61,7 +64,7 @@ export function ProfileInfoCard() {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <User className="w-5 h-5" />
-          User Information
+          {t('personalInfo.title')}
         </CardTitle>
         {!isEditing && (
           <Button variant="ghost" size="icon" onClick={handleEdit}>
@@ -74,32 +77,30 @@ export function ProfileInfoCard() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="edit-first-name">First Name</Label>
+                <Label htmlFor="edit-first-name">{t('personalInfo.firstName')}</Label>
                 <Input
                   id="edit-first-name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Your first name"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-last-name">Last Name</Label>
+                <Label htmlFor="edit-last-name">{t('personalInfo.lastName')}</Label>
                 <Input
                   id="edit-last-name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Your last name"
                 />
               </div>
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={handleSave} disabled={isUpdating}>
                 <Check className="w-4 h-4 mr-1" />
-                Save
+                {tc('save')}
               </Button>
               <Button size="sm" variant="outline" onClick={handleCancel}>
                 <X className="w-4 h-4 mr-1" />
-                Cancel
+                {tc('cancel')}
               </Button>
             </div>
           </div>
@@ -111,7 +112,7 @@ export function ProfileInfoCard() {
                   <User className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="text-sm text-muted-foreground">{t('personalInfo.name', { defaultValue: 'Name' })}</p>
                   <p className="font-medium">{displayName}</p>
                 </div>
               </div>
@@ -121,7 +122,7 @@ export function ProfileInfoCard() {
                 <Mail className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="text-sm text-muted-foreground">{t('personalInfo.email')}</p>
                 <p className="font-medium">{user?.email}</p>
               </div>
             </div>
@@ -131,7 +132,7 @@ export function ProfileInfoCard() {
                   <Calendar className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Member since</p>
+                  <p className="text-sm text-muted-foreground">{t('personalInfo.memberSince', { defaultValue: 'Member since' })}</p>
                   <p className="font-medium">{formatDate(user.created_at)}</p>
                 </div>
               </div>
@@ -145,7 +146,7 @@ export function ProfileInfoCard() {
             className="w-full gap-2 text-muted-foreground hover:text-foreground"
           >
             <LogOut className="w-4 h-4" />
-            Log Out
+            {tc('navigation.logout')}
           </Button>
           <DeleteAccountDialog />
         </div>

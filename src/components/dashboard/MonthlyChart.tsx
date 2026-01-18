@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +16,7 @@ interface MonthlyChartProps {
 }
 
 export function MonthlyChart({ data }: MonthlyChartProps) {
+  const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -43,7 +45,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '300ms' }}>
       <CardHeader>
-        <CardTitle className="text-lg">Monthly Evolution</CardTitle>
+        <CardTitle className="text-lg">{t('charts.monthlyBalance')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="area" className="w-full">
@@ -84,7 +86,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Area 
                     type="monotone" 
                     dataKey="income" 
-                    name="Income"
+                    name={t('stats.income')}
                     stroke="hsl(160, 84%, 45%)" 
                     strokeWidth={2}
                     fill="url(#incomeGradient)"
@@ -92,7 +94,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Area 
                     type="monotone" 
                     dataKey="expenses" 
-                    name="Expenses"
+                    name={t('stats.expenses')}
                     stroke="hsl(0, 72%, 51%)" 
                     strokeWidth={2}
                     fill="url(#expenseGradient)"
@@ -123,13 +125,13 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar 
                     dataKey="income" 
-                    name="Income"
+                    name={t('stats.income')}
                     fill="hsl(160, 84%, 45%)" 
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar 
                     dataKey="expenses" 
-                    name="Expenses"
+                    name={t('stats.expenses')}
                     fill="hsl(0, 72%, 51%)" 
                     radius={[4, 4, 0, 0]}
                   />
