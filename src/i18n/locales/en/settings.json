@@ -12,13 +12,21 @@
   },
   "categories": {
     "title": "Categories",
-    "description": "Manage your transaction categories",
+    "description": "Manage your income and expense categories",
     "addCategory": "Add Category",
     "editCategory": "Edit Category",
     "deleteCategory": "Delete Category",
     "categoryName": "Category Name",
     "categoryColor": "Color",
-    "categoryIcon": "Icon"
+    "categoryIcon": "Icon",
+    "income": "Income",
+    "expenses": "Expenses",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "alwaysIncluded": "always included",
+    "saveCategories": "Save Categories",
+    "noChanges": "No Changes",
+    "categoriesSaved": "Categories saved"
   },
   "notifications": {
     "title": "Notifications",
@@ -34,5 +42,27 @@
     "changePassword": "Change Password",
     "twoFactor": "Two-Factor Authentication",
     "sessions": "Active Sessions"
+  },
+  "onboarding": {
+    "title": "Welcome to fint!",
+    "stepCountry": "Country",
+    "stepCurrency": "Currency",
+    "stepCategories": "Categories",
+    "continue": "Continue",
+    "back": "Back",
+    "getStarted": "Get Started",
+    "selectCountry": "Let's start by selecting your country. This helps us set the right defaults for you.",
+    "yourCountry": "Your Country",
+    "selectYourCountry": "Select your country",
+    "basedOnCountry": "Based on your country, we'll suggest {{currency}} as your currency.",
+    "selectBaseCurrency": "Select your base currency — the primary currency you'll use to upload transactions and compare values.",
+    "howItWorks": "How it works:",
+    "currencyTip1": "All exchange rate comparisons will use {{currency}} as reference",
+    "currencyTip2": "You can view your dashboard in any currency later",
+    "currencyTip3": "Bank statements can be uploaded in any currency",
+    "selectIncomeCategories": "Select the income categories you want to use.",
+    "selectExpenseCategories": "Select the expense categories you want to use.",
+    "selected": "{{count}} selected",
+    "almostDone": "Almost done! Click \"Get Started\" to begin."
   }
 }

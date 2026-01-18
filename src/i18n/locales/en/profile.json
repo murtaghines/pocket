@@ -11,27 +11,66 @@
   "uploads": {
     "title": "Monthly Uploads",
     "investmentUploads": "Investment Uploads",
+    "investmentsByMonth": "Investments by Month",
+    "uploadStatements": "Upload your investment platform statements",
     "noUploads": "No uploads yet",
     "uploadFile": "Upload file",
     "fileUploaded": "File uploaded",
     "processing": "Processing",
     "processed": "Processed",
     "failed": "Failed",
-    "transactionsCount": "{{count}} transactions"
+    "pending": "Pending",
+    "transactionsCount": "{{count}} transactions",
+    "dragOrClick": "Drag files or click to upload",
+    "addMoreFiles": "Add more files",
+    "review": "Review",
+    "viewTransactions": "View transactions",
+    "loadMore": "Load More"
   },
   "account": {
     "title": "Account",
     "deleteAccount": "Delete Account",
+    "deleteAccountTitle": "Delete Account Permanently",
     "deleteWarning": "This action cannot be undone. All your data will be permanently deleted.",
+    "deleteDescription": "This will permanently delete your account and remove all your data including:",
+    "deleteItems": {
+      "transactions": "All transactions and financial records",
+      "files": "All uploaded files and documents",
+      "investments": "Investment records and accounts",
+      "preferences": "Preferences and settings",
+      "profile": "Your profile information"
+    },
     "confirmDelete": "Are you sure you want to delete your account?",
-    "typeToConfirm": "Type DELETE to confirm"
+    "typeToConfirm": "Type Confirm to confirm",
+    "deleting": "Deleting...",
+    "deleteMyAccount": "Delete My Account",
+    "accountDeleted": "Account deleted",
+    "accountDeletedDescription": "Your account and all data have been permanently deleted."
   },
   "review": {
     "title": "Month Review",
+    "reviewTitle": "Review - {{month}}",
     "income": "Income",
     "expenses": "Expenses",
     "balance": "Balance",
     "byCategory": "By Category",
-    "closeMonth": "Close Month"
+    "closeMonth": "Close Month",
+    "transactionsInMonth": "{{count}} transactions in this month",
+    "noTransactions": "No transactions for this month",
+    "uploadFirst": "Upload and process files first",
+    "monthLocked": "This month is closed. You cannot edit categories.",
+    "monthReviewed": "Month reviewed",
+    "transactionsConfirmed": "{{count}} transactions confirmed for {{month}}"
+  },
+  "monthSlot": {
+    "deleteFile": "Delete file?",
+    "deleteDescription": "All transactions associated with \"{{fileName}}\" will be deleted. This action cannot be undone.",
+    "processingError": "Processing error",
+    "tip": "Tip",
+    "tipText": "If it's a scanned PDF, try converting it to CSV or Excel before uploading.",
+    "closeMonth": "Close month?",
+    "closeDescription": "Transactions for {{month}} will be locked and you won't be able to edit categories. You can reopen the month if needed.",
+    "reopenMonth": "Reopen month?",
+    "reopenDescription": "You will be able to edit transactions for {{month}} again."
   }
 }
