@@ -12,6 +12,7 @@
   "confirm": "Confirm",
   "back": "Back",
   "next": "Next",
+  "previous": "Previous",
   "search": "Search",
   "filter": "Filter",
   "export": "Export",
@@ -48,9 +49,10 @@
     "lastYear": "Last year"
   },
   "network": {
-    "offline": "You are offline. Some features may not be available.",
-    "reconnecting": "Reconnecting...",
-    "online": "Back online"
+    "offline": "You are offline",
+    "offlineDescription": "Some features may not work. Check your internet connection.",
+    "online": "Back online",
+    "onlineDescription": "Your connection has been restored."
   },
   "validation": {
     "required": "This field is required",

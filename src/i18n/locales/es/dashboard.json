@@ -10,30 +10,36 @@
     "expenses": "Gastos",
     "balance": "Balance",
     "savingsRate": "Tasa de Ahorro",
-    "vsLastMonth": "vs mes pasado",
+    "vsLastMonth": "vs mes anterior",
     "thisMonth": "este mes"
   },
   "charts": {
     "monthlyBalance": "Balance Mensual",
     "categoryBreakdown": "Desglose por Categoría",
     "expensesByBank": "Gastos por Banco",
-    "weeklyComparison": "Comparación Semanal",
-    "yearlyBalance": "Balance Anual"
+    "weeklyComparison": "Esta Semana",
+    "yearlyBalance": "Balance Anual",
+    "spent": "gastado",
+    "dailyAverage": "Promedio diario",
+    "total": "Total",
+    "totalSavings": "Ahorro Total"
   },
   "transactions": {
     "title": "Transacciones",
     "recent": "Transacciones Recientes",
     "all": "Todas las Transacciones",
-    "noTransactions": "Aún no hay transacciones",
+    "noTransactions": "Sin transacciones aún",
     "date": "Fecha",
     "description": "Descripción",
     "category": "Categoría",
+    "movement": "Movimiento",
     "amount": "Monto",
-    "bank": "Banco"
+    "bank": "Banco",
+    "edited": "editado"
   },
   "topExpenses": {
-    "title": "Principales Gastos",
-    "noExpenses": "No hay gastos registrados"
+    "title": "Gastos Principales",
+    "noExpenses": "Sin gastos registrados"
   },
   "investments": {
     "title": "Inversiones",
@@ -43,19 +49,28 @@
     "viewInvestments": "Ver inversiones"
   },
   "period": {
+    "title": "Períodos Contables",
     "selectMonth": "Seleccionar mes",
     "currentMonth": "Mes actual",
     "previousMonth": "Mes anterior",
     "closePeriod": "Cerrar período",
-    "periodClosed": "Período cerrado"
+    "reopenPeriod": "Reabrir período",
+    "periodClosed": "Período cerrado",
+    "periodOpen": "Abierto",
+    "readyToClose": "Listo para cerrar",
+    "closed": "Cerrado",
+    "noPeriods": "Sin períodos aún"
   },
   "upload": {
     "title": "Subir Extracto",
-    "dropzone": "Arrastra tu archivo aquí o haz clic para subir",
+    "titleInvestment": "Subir Extractos de Inversión",
     "supportedFormats": "Excel, CSV o PDF",
     "processing": "Procesando...",
+    "processWithAI": "Procesar con IA",
     "success": "Archivo procesado correctamente",
-    "error": "Error al procesar archivo"
+    "error": "Error al procesar archivo",
+    "unsupportedFormat": "Formato no soportado",
+    "addMoreFiles": "Agregar más archivos"
   },
   "comparison": {
     "income": "Ingresos",
@@ -63,5 +78,26 @@
     "previousMonth": "Mes anterior",
     "currentMonth": "Mes actual",
     "change": "Cambio"
+  },
+  "preview": {
+    "title": "Vista Previa de Importación",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "saved": "Guardado",
+    "cancel": "Cancelar"
+  },
+  "uploadsManager": {
+    "title": "Archivos Subidos",
+    "description": "Gestiona tus archivos subidos y sus transacciones",
+    "verifyIntegrity": "Verificar integridad",
+    "noUploads": "Aún no has subido ningún archivo",
+    "deleteFile": "¿Eliminar archivo?"
+  },
+  "monthClosing": {
+    "title": "¡{{month}} está listo para cerrar!",
+    "description": "Sube tus extractos bancarios e inversiones para completar el análisis del mes.",
+    "bankStatements": "Extractos bancarios",
+    "investments": "Inversiones",
+    "goToUpload": "Ir a subir archivos"
   }
 }

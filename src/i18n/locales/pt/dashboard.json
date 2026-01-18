@@ -10,58 +10,94 @@
     "expenses": "Despesas",
     "balance": "Saldo",
     "savingsRate": "Taxa de Poupança",
-    "vsLastMonth": "vs mês passado",
+    "vsLastMonth": "vs mês anterior",
     "thisMonth": "este mês"
   },
   "charts": {
     "monthlyBalance": "Saldo Mensal",
     "categoryBreakdown": "Divisão por Categoria",
     "expensesByBank": "Despesas por Banco",
-    "weeklyComparison": "Comparação Semanal",
-    "yearlyBalance": "Saldo Anual"
+    "weeklyComparison": "Esta Semana",
+    "yearlyBalance": "Saldo Anual",
+    "spent": "gasto",
+    "dailyAverage": "Média diária",
+    "total": "Total",
+    "totalSavings": "Poupança Total"
   },
   "transactions": {
     "title": "Transações",
     "recent": "Transações Recentes",
     "all": "Todas as Transações",
-    "noTransactions": "Nenhuma transação ainda",
+    "noTransactions": "Sem transações ainda",
     "date": "Data",
     "description": "Descrição",
     "category": "Categoria",
+    "movement": "Movimento",
     "amount": "Valor",
-    "bank": "Banco"
+    "bank": "Banco",
+    "edited": "editado"
   },
   "topExpenses": {
     "title": "Principais Despesas",
-    "noExpenses": "Nenhuma despesa registrada"
+    "noExpenses": "Sem despesas registradas"
   },
   "investments": {
     "title": "Investimentos",
     "totalValue": "Valor total",
     "investedThisMonth": "investido este mês",
-    "noInvestments": "Nenhum investimento registrado",
+    "noInvestments": "Sem investimentos registrados",
     "viewInvestments": "Ver investimentos"
   },
   "period": {
+    "title": "Períodos Contábeis",
     "selectMonth": "Selecionar mês",
     "currentMonth": "Mês atual",
     "previousMonth": "Mês anterior",
     "closePeriod": "Fechar período",
-    "periodClosed": "Período fechado"
+    "reopenPeriod": "Reabrir período",
+    "periodClosed": "Período fechado",
+    "periodOpen": "Aberto",
+    "readyToClose": "Pronto para fechar",
+    "closed": "Fechado",
+    "noPeriods": "Sem períodos ainda"
   },
   "upload": {
     "title": "Enviar Extrato",
-    "dropzone": "Arraste seu arquivo aqui ou clique para enviar",
+    "titleInvestment": "Enviar Extratos de Investimento",
     "supportedFormats": "Excel, CSV ou PDF",
     "processing": "Processando...",
+    "processWithAI": "Processar com IA",
     "success": "Arquivo processado com sucesso",
-    "error": "Erro ao processar arquivo"
+    "error": "Erro ao processar arquivo",
+    "unsupportedFormat": "Formato não suportado",
+    "addMoreFiles": "Adicionar mais arquivos"
   },
   "comparison": {
     "income": "Receitas",
     "expenses": "Despesas",
     "previousMonth": "Mês anterior",
     "currentMonth": "Mês atual",
-    "change": "Mudança"
+    "change": "Variação"
+  },
+  "preview": {
+    "title": "Pré-visualização de Importação",
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "saved": "Salvo",
+    "cancel": "Cancelar"
+  },
+  "uploadsManager": {
+    "title": "Arquivos Enviados",
+    "description": "Gerencie seus arquivos enviados e suas transações",
+    "verifyIntegrity": "Verificar integridade",
+    "noUploads": "Você ainda não enviou nenhum arquivo",
+    "deleteFile": "Excluir arquivo?"
+  },
+  "monthClosing": {
+    "title": "{{month}} está pronto para fechar!",
+    "description": "Envie seus extratos bancários e investimentos para completar a análise do mês.",
+    "bankStatements": "Extratos bancários",
+    "investments": "Investimentos",
+    "goToUpload": "Ir para enviar arquivos"
   }
 }

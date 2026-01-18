@@ -17,8 +17,13 @@
     "monthlyBalance": "Monthly Balance",
     "categoryBreakdown": "Category Breakdown",
     "expensesByBank": "Expenses by Bank",
-    "weeklyComparison": "Weekly Comparison",
-    "yearlyBalance": "Yearly Balance"
+    "weeklyComparison": "This Week",
+    "yearlyBalance": "Yearly Balance",
+    "spent": "spent",
+    "dailyAverage": "Daily average",
+    "total": "Total",
+    "totalSavings": "Total Savings",
+    "average": "Avg"
   },
   "transactions": {
     "title": "Transactions",
@@ -28,8 +33,10 @@
     "date": "Date",
     "description": "Description",
     "category": "Category",
+    "movement": "Movement",
     "amount": "Amount",
-    "bank": "Bank"
+    "bank": "Bank",
+    "edited": "edited"
   },
   "topExpenses": {
     "title": "Top Expenses",
@@ -43,19 +50,48 @@
     "viewInvestments": "View investments"
   },
   "period": {
+    "title": "Accounting Periods",
     "selectMonth": "Select month",
     "currentMonth": "Current month",
     "previousMonth": "Previous month",
     "closePeriod": "Close period",
-    "periodClosed": "Period closed"
+    "reopenPeriod": "Reopen period",
+    "periodClosed": "Period closed",
+    "periodOpen": "Open",
+    "readyToClose": "Ready to close",
+    "closed": "Closed",
+    "closedOn": "Closed on",
+    "noPeriods": "No periods yet",
+    "periodsCreatedAuto": "Periods are created automatically when importing data",
+    "closeConfirmTitle": "Close period?",
+    "closeConfirmDescription": "When you close the period for {{month}}, transactions for that month will be locked. You can reopen it if you need to make changes.",
+    "reopenConfirmTitle": "Reopen period?",
+    "reopenConfirmDescription": "When you reopen the period for {{month}}, you will be able to edit transactions for that month again."
   },
   "upload": {
     "title": "Upload Statement",
+    "titleInvestment": "Upload Investment Statements",
     "dropzone": "Drop your file here or click to upload",
+    "dragHere": "Drag your PDFs here",
+    "dropFiles": "Drop files here",
+    "clickToSelect": "or click to select",
     "supportedFormats": "Excel, CSV or PDF",
     "processing": "Processing...",
+    "processingFiles": "Processing files...",
+    "extractingTransactions": "Extracting transactions and categorizing automatically",
+    "processWithAI": "Process with AI",
     "success": "File processed successfully",
-    "error": "Error processing file"
+    "error": "Error processing file",
+    "unsupportedFormat": "Unsupported format",
+    "uploadPDFOnly": "Please upload PDF files only.",
+    "uploadExcelCSVPDF": "Please upload Excel (.xlsx, .xls), CSV or PDF files.",
+    "filesSelected": "{{count}} file(s) selected",
+    "addMoreFiles": "Add more files",
+    "movements": "movements",
+    "bankRequired": "Bank required",
+    "assignBankFirst": "Assign a bank to all files before processing.",
+    "processingComplete": "Processing complete",
+    "filesProcessed": "{{count}} file(s) processed successfully."
   },
   "comparison": {
     "income": "Income",
@@ -63,5 +99,36 @@
     "previousMonth": "Previous month",
     "currentMonth": "Current month",
     "change": "Change"
+  },
+  "preview": {
+    "title": "Import Preview",
+    "description": "{{fileName}} - {{count}} transactions ready to import",
+    "duplicatesIgnored": "{{count}} duplicates ignored",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "uploadsManager": {
+    "title": "Uploaded Files",
+    "description": "Manage your uploaded files and their transactions",
+    "verifyIntegrity": "Verify integrity",
+    "noUploads": "You haven't uploaded any files yet",
+    "deleteFile": "Delete file?",
+    "deleteDescription": "\"{{fileName}}\" and all its associated transactions ({{count}}) will be deleted. This action cannot be undone.",
+    "deleteNote": "After deletion, data integrity will be verified to detect duplicates and transfers between accounts.",
+    "integrityVerified": "Integrity verified",
+    "verificationCompleted": "Verification completed.",
+    "duplicatesRemoved": "{{duplicates}} duplicates removed, {{transfers}} transfers linked."
+  },
+  "monthClosing": {
+    "title": "{{month}} is ready to close!",
+    "description": "Upload your bank statements and investments to complete the month's analysis.",
+    "bankStatements": "Bank statements",
+    "investments": "Investments",
+    "goToUpload": "Go to upload files",
+    "file": "file",
+    "files": "files"
   }
 }
