@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { useTranslation } from "react-i18next";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface PlatformData {
   deposits: number;
@@ -14,6 +16,9 @@ interface InvestmentsByPlatformProps {
 const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#84CC16'];
 
 export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
+  const { t } = useTranslation('investments');
+  const { formatCurrency } = useLocalization();
+  
   const chartData = Object.entries(data)
     .map(([name, values], index) => ({
       name,
@@ -25,17 +30,14 @@ export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
     .filter(d => d.value > 0)
     .sort((a, b) => b.value - a.value);
 
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
-
   if (chartData.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>By Platform</CardTitle>
+          <CardTitle>{t('byPlatform.title')}</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[200px]">
-          <p className="text-muted-foreground">No data</p>
+          <p className="text-muted-foreground">{t('byPlatform.noData')}</p>
         </CardContent>
       </Card>
     );
@@ -44,7 +46,7 @@ export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>By Platform</CardTitle>
+        <CardTitle>{t('byPlatform.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={250}>

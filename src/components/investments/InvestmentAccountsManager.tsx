@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useInvestments } from "@/hooks/useInvestments";
 import { Plus, Trash2, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface Account {
   id: string;
@@ -21,20 +23,19 @@ interface InvestmentAccountsManagerProps {
 }
 
 export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManagerProps) {
+  const { t, i18n } = useTranslation('investments');
+  const { formatCurrency } = useLocalization();
   const { upsertAccount, deleteAccount } = useInvestments();
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState("");
   const [accountName, setAccountName] = useState("");
   const [currentValue, setCurrentValue] = useState("");
 
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!platform || !accountName || !currentValue) {
-      toast.error("Please fill in all fields");
+      toast.error(t('accounts.fillAllFields'));
       return;
     }
 
@@ -44,22 +45,22 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
         account_name: accountName.trim(),
         current_value: parseFloat(currentValue),
       });
-      toast.success("Account saved successfully");
+      toast.success(t('accounts.saved'));
       setOpen(false);
       setPlatform("");
       setAccountName("");
       setCurrentValue("");
     } catch (error) {
-      toast.error("Error saving account");
+      toast.error(t('accounts.errorSaving'));
     }
   };
 
   const handleDelete = async (accountId: string) => {
     try {
       await deleteAccount.mutateAsync(accountId);
-      toast.success("Account deleted");
+      toast.success(t('accounts.accountDeleted'));
     } catch (error) {
-      toast.error("Error deleting account");
+      toast.error(t('accounts.errorDeleting'));
     }
   };
 
@@ -68,40 +69,40 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Building2 className="w-5 h-5" />
-          Investment Accounts
+          {t('accounts.title')}
         </CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline">
               <Plus className="w-4 h-4 mr-2" />
-              Add
+              {t('accounts.add')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add or Update Account</DialogTitle>
+              <DialogTitle>{t('accounts.addOrUpdate')}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="platform">Platform</Label>
+                <Label htmlFor="platform">{t('accounts.platform')}</Label>
                 <Input
                   id="platform"
-                  placeholder="E.g.: Revolut, Fidelity, Vanguard"
+                  placeholder={t('accounts.platformPlaceholder')}
                   value={platform}
                   onChange={(e) => setPlatform(e.target.value)}
                 />
               </div>
               <div>
-                <Label htmlFor="accountName">Account Name</Label>
+                <Label htmlFor="accountName">{t('accounts.accountName')}</Label>
                 <Input
                   id="accountName"
-                  placeholder="E.g.: Instant Access Savings, ETF Portfolio"
+                  placeholder={t('accounts.accountNamePlaceholder')}
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
                 />
               </div>
               <div>
-                <Label htmlFor="currentValue">Current Value ($)</Label>
+                <Label htmlFor="currentValue">{t('accounts.currentValue')}</Label>
                 <Input
                   id="currentValue"
                   type="number"
@@ -112,7 +113,7 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
                 />
               </div>
               <Button type="submit" className="w-full" disabled={upsertAccount.isPending}>
-                {upsertAccount.isPending ? "Saving..." : "Save Account"}
+                {upsertAccount.isPending ? t('accounts.saving') : t('accounts.save')}
               </Button>
             </form>
           </DialogContent>
@@ -121,7 +122,7 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
       <CardContent>
         {accounts.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No accounts registered. Add one to track current value.
+            {t('accounts.noAccounts')}
           </p>
         ) : (
           <div className="space-y-3">
@@ -140,7 +141,7 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
                       {formatCurrency(account.current_value)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(account.last_updated).toLocaleDateString('en-US')}
+                      {new Date(account.last_updated).toLocaleDateString(i18n.language)}
                     </p>
                   </div>
                   <Button

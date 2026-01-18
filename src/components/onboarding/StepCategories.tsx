@@ -9,6 +9,7 @@ import {
   categoryEmojis,
   getCategoryLabel,
 } from '@/lib/categoryTranslations';
+import { useTranslation } from 'react-i18next';
 
 interface StepCategoriesProps {
   data: OnboardingData;
@@ -16,6 +17,8 @@ interface StepCategoriesProps {
 }
 
 export function StepCategories({ data, updateData }: StepCategoriesProps) {
+  const { t } = useTranslation('settings');
+  
   // Split categories into income and expense
   const incomeCategories = data.incomeCategories || [];
   const expenseCategories = data.expenseCategories || [];
@@ -80,7 +83,7 @@ export function StepCategories({ data, updateData }: StepCategoriesProps) {
                 {getCategoryLabel(slug)}
                 {isDisabled && (
                   <span className="text-xs text-muted-foreground ml-1">
-                    (always included)
+                    ({t('onboarding.alwaysIncluded')})
                   </span>
                 )}
               </span>
@@ -97,17 +100,17 @@ export function StepCategories({ data, updateData }: StepCategoriesProps) {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="income" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            Income
+            {t('onboarding.income')}
           </TabsTrigger>
           <TabsTrigger value="expense" className="flex items-center gap-2">
             <TrendingDown className="w-4 h-4" />
-            Expenses
+            {t('onboarding.expenses')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="income" className="mt-4 space-y-4">
           <p className="text-sm text-muted-foreground">
-            Select the income categories you want to use.
+            {t('onboarding.selectIncomeCategories')}
           </p>
           {renderCategoryGrid(
             INCOME_CATEGORIES,
@@ -116,13 +119,13 @@ export function StepCategories({ data, updateData }: StepCategoriesProps) {
             'other_income'
           )}
           <p className="text-sm text-muted-foreground">
-            {incomeCategories.length} selected
+            {t('onboarding.selected', { count: incomeCategories.length })}
           </p>
         </TabsContent>
 
         <TabsContent value="expense" className="mt-4 space-y-4">
           <p className="text-sm text-muted-foreground">
-            Select the expense categories you want to use.
+            {t('onboarding.selectExpenseCategories')}
           </p>
           {renderCategoryGrid(
             EXPENSE_CATEGORIES,
@@ -131,14 +134,14 @@ export function StepCategories({ data, updateData }: StepCategoriesProps) {
             'other_expense'
           )}
           <p className="text-sm text-muted-foreground">
-            {expenseCategories.length} selected
+            {t('onboarding.selected', { count: expenseCategories.length })}
           </p>
         </TabsContent>
       </Tabs>
 
       <div className="p-4 rounded-lg bg-muted/50">
         <p className="text-sm text-muted-foreground">
-          🎉 Almost done! Click "Get Started" to begin.
+          🎉 {t('onboarding.almostDone')}
         </p>
       </div>
     </div>

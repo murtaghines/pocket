@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { useTranslation } from "react-i18next";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface MonthlyData {
   month: string;
@@ -13,13 +15,13 @@ interface InvestmentsHistoryProps {
 }
 
 export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
+  const { t, i18n } = useTranslation('investments');
+  const { formatCurrency } = useLocalization();
 
   const formatMonth = (month: string) => {
     const [year, m] = month.split('-');
     const date = new Date(parseInt(year), parseInt(m) - 1);
-    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    return date.toLocaleDateString(i18n.language, { month: 'short', year: '2-digit' });
   };
 
   // Calculate cumulative invested
@@ -36,7 +38,7 @@ export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Investment History</CardTitle>
+        <CardTitle>{t('history.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -61,11 +63,11 @@ export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
             <Tooltip
               formatter={(value: number, name: string) => [
                 formatCurrency(value),
-                name === 'cumulative' ? 'Total Accumulated' :
-                name === 'deposits' ? 'Deposits' :
-                name === 'withdrawals' ? 'Withdrawals' : 'Net'
+                name === 'cumulative' ? t('history.totalAccumulated') :
+                name === 'deposits' ? t('history.deposits') :
+                name === 'withdrawals' ? t('history.withdrawals') : t('history.net')
               ]}
-              labelFormatter={(label) => `Month: ${label}`}
+              labelFormatter={(label) => `${t('history.month')}: ${label}`}
             />
             <Area
               type="monotone"
