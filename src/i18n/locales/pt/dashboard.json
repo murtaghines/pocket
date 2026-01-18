@@ -1,0 +1,67 @@
+{
+  "title": "Painel",
+  "welcome": {
+    "title": "Bem-vindo ao fint!",
+    "message": "Comece enviando seu primeiro extrato bancário para ver suas finanças.",
+    "uploadButton": "Enviar arquivo"
+  },
+  "stats": {
+    "income": "Receitas",
+    "expenses": "Despesas",
+    "balance": "Saldo",
+    "savingsRate": "Taxa de Poupança",
+    "vsLastMonth": "vs mês passado",
+    "thisMonth": "este mês"
+  },
+  "charts": {
+    "monthlyBalance": "Saldo Mensal",
+    "categoryBreakdown": "Divisão por Categoria",
+    "expensesByBank": "Despesas por Banco",
+    "weeklyComparison": "Comparação Semanal",
+    "yearlyBalance": "Saldo Anual"
+  },
+  "transactions": {
+    "title": "Transações",
+    "recent": "Transações Recentes",
+    "all": "Todas as Transações",
+    "noTransactions": "Nenhuma transação ainda",
+    "date": "Data",
+    "description": "Descrição",
+    "category": "Categoria",
+    "amount": "Valor",
+    "bank": "Banco"
+  },
+  "topExpenses": {
+    "title": "Principais Despesas",
+    "noExpenses": "Nenhuma despesa registrada"
+  },
+  "investments": {
+    "title": "Investimentos",
+    "totalValue": "Valor total",
+    "investedThisMonth": "investido este mês",
+    "noInvestments": "Nenhum investimento registrado",
+    "viewInvestments": "Ver investimentos"
+  },
+  "period": {
+    "selectMonth": "Selecionar mês",
+    "currentMonth": "Mês atual",
+    "previousMonth": "Mês anterior",
+    "closePeriod": "Fechar período",
+    "periodClosed": "Período fechado"
+  },
+  "upload": {
+    "title": "Enviar Extrato",
+    "dropzone": "Arraste seu arquivo aqui ou clique para enviar",
+    "supportedFormats": "Excel, CSV ou PDF",
+    "processing": "Processando...",
+    "success": "Arquivo processado com sucesso",
+    "error": "Erro ao processar arquivo"
+  },
+  "comparison": {
+    "income": "Receitas",
+    "expenses": "Despesas",
+    "previousMonth": "Mês anterior",
+    "currentMonth": "Mês atual",
+    "change": "Mudança"
+  }
+}

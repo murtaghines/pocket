@@ -1,0 +1,67 @@
+{
+  "title": "Dashboard",
+  "welcome": {
+    "title": "Welcome to fint!",
+    "message": "Start by uploading your first bank statement to see your finances.",
+    "uploadButton": "Upload file"
+  },
+  "stats": {
+    "income": "Income",
+    "expenses": "Expenses",
+    "balance": "Balance",
+    "savingsRate": "Savings Rate",
+    "vsLastMonth": "vs last month",
+    "thisMonth": "this month"
+  },
+  "charts": {
+    "monthlyBalance": "Monthly Balance",
+    "categoryBreakdown": "Category Breakdown",
+    "expensesByBank": "Expenses by Bank",
+    "weeklyComparison": "Weekly Comparison",
+    "yearlyBalance": "Yearly Balance"
+  },
+  "transactions": {
+    "title": "Transactions",
+    "recent": "Recent Transactions",
+    "all": "All Transactions",
+    "noTransactions": "No transactions yet",
+    "date": "Date",
+    "description": "Description",
+    "category": "Category",
+    "amount": "Amount",
+    "bank": "Bank"
+  },
+  "topExpenses": {
+    "title": "Top Expenses",
+    "noExpenses": "No expenses recorded"
+  },
+  "investments": {
+    "title": "Investments",
+    "totalValue": "Total value",
+    "investedThisMonth": "invested this month",
+    "noInvestments": "No investments recorded",
+    "viewInvestments": "View investments"
+  },
+  "period": {
+    "selectMonth": "Select month",
+    "currentMonth": "Current month",
+    "previousMonth": "Previous month",
+    "closePeriod": "Close period",
+    "periodClosed": "Period closed"
+  },
+  "upload": {
+    "title": "Upload Statement",
+    "dropzone": "Drop your file here or click to upload",
+    "supportedFormats": "Excel, CSV or PDF",
+    "processing": "Processing...",
+    "success": "File processed successfully",
+    "error": "Error processing file"
+  },
+  "comparison": {
+    "income": "Income",
+    "expenses": "Expenses",
+    "previousMonth": "Previous month",
+    "currentMonth": "Current month",
+    "change": "Change"
+  }
+}

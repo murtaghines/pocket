@@ -1,0 +1,37 @@
+{
+  "title": "Profile",
+  "personalInfo": {
+    "title": "Personal Information",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "updateSuccess": "Profile updated successfully"
+  },
+  "uploads": {
+    "title": "Monthly Uploads",
+    "investmentUploads": "Investment Uploads",
+    "noUploads": "No uploads yet",
+    "uploadFile": "Upload file",
+    "fileUploaded": "File uploaded",
+    "processing": "Processing",
+    "processed": "Processed",
+    "failed": "Failed",
+    "transactionsCount": "{{count}} transactions"
+  },
+  "account": {
+    "title": "Account",
+    "deleteAccount": "Delete Account",
+    "deleteWarning": "This action cannot be undone. All your data will be permanently deleted.",
+    "confirmDelete": "Are you sure you want to delete your account?",
+    "typeToConfirm": "Type DELETE to confirm"
+  },
+  "review": {
+    "title": "Month Review",
+    "income": "Income",
+    "expenses": "Expenses",
+    "balance": "Balance",
+    "byCategory": "By Category",
+    "closeMonth": "Close Month"
+  }
+}

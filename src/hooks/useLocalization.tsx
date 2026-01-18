@@ -1,15 +1,23 @@
 import { useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUserPreferences } from './useUserPreferences';
 import { getLocaleForRegion } from '@/lib/currencies';
 import { format, parseISO } from 'date-fns';
-import { enUS, type Locale } from 'date-fns/locale';
+import { enUS, es, ptBR, type Locale } from 'date-fns/locale';
+
+const dateFnsLocales: Record<string, Locale> = {
+  en: enUS,
+  es: es,
+  pt: ptBR,
+};
 
 export function useLocalization() {
+  const { i18n } = useTranslation();
   const { preferences, isLoading, updatePreferences, isUpdating } = useUserPreferences();
 
   const baseCurrency = preferences.base_currency;
   const locale = getLocaleForRegion(preferences.country);
-  const dateFnsLocale: Locale = enUS;
+  const dateFnsLocale: Locale = dateFnsLocales[i18n.language] || enUS;
 
   // Format currency according to user preferences
   const formatCurrency = useCallback((amount: number, currency?: string) => {

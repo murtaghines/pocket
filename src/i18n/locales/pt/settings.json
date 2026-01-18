@@ -1,0 +1,38 @@
+{
+  "title": "Configurações",
+  "regional": {
+    "title": "Configurações Regionais",
+    "description": "Configure suas preferências de moeda e idioma",
+    "baseCurrency": "Moeda Base",
+    "language": "Idioma",
+    "preview": "Prévia",
+    "savePreferences": "Salvar Preferências",
+    "saving": "Salvando...",
+    "saved": "Preferências salvas"
+  },
+  "categories": {
+    "title": "Categorias",
+    "description": "Gerencie suas categorias de transações",
+    "addCategory": "Adicionar Categoria",
+    "editCategory": "Editar Categoria",
+    "deleteCategory": "Excluir Categoria",
+    "categoryName": "Nome da Categoria",
+    "categoryColor": "Cor",
+    "categoryIcon": "Ícone"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "description": "Gerencie suas preferências de notificação",
+    "emailNotifications": "Notificações por E-mail",
+    "pushNotifications": "Notificações Push",
+    "monthlyReport": "Relatório Mensal",
+    "budgetAlerts": "Alertas de Orçamento"
+  },
+  "security": {
+    "title": "Segurança",
+    "description": "Gerencie suas configurações de segurança",
+    "changePassword": "Alterar Senha",
+    "twoFactor": "Autenticação de Dois Fatores",
+    "sessions": "Sessões Ativas"
+  }
+}

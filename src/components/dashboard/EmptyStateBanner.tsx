@@ -2,6 +2,7 @@ import { Upload, FileSpreadsheet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface EmptyStateBannerProps {
   hasData: boolean;
@@ -9,6 +10,7 @@ interface EmptyStateBannerProps {
 
 export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation('dashboard');
 
   if (hasData) {
     return null;
@@ -22,9 +24,9 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
             <FileSpreadsheet className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h3 className="font-semibold text-lg">Welcome to fint!</h3>
+            <h3 className="font-semibold text-lg">{t('welcome.title')}</h3>
             <p className="text-muted-foreground text-sm">
-              Start by uploading your first bank statement to see your finances.
+              {t('welcome.message')}
             </p>
           </div>
         </div>
@@ -33,7 +35,7 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
           className="gap-2 whitespace-nowrap"
         >
           <Upload className="w-4 h-4" />
-          Upload file
+          {t('welcome.uploadButton')}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </CardContent>

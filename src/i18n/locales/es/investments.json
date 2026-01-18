@@ -1,0 +1,57 @@
+{
+  "title": "Inversiones",
+  "summary": {
+    "totalValue": "Valor Total",
+    "totalInvested": "Total Invertido",
+    "totalGain": "Ganancia Total",
+    "returnRate": "Tasa de Retorno"
+  },
+  "accounts": {
+    "title": "Cuentas de Inversión",
+    "addAccount": "Agregar Cuenta",
+    "editAccount": "Editar Cuenta",
+    "deleteAccount": "Eliminar Cuenta",
+    "platform": "Plataforma",
+    "accountName": "Nombre de Cuenta",
+    "currentValue": "Valor Actual",
+    "lastUpdated": "Última Actualización"
+  },
+  "history": {
+    "title": "Historial de Inversiones",
+    "noHistory": "Sin historial de inversiones",
+    "date": "Fecha",
+    "type": "Tipo",
+    "amount": "Monto",
+    "platform": "Plataforma",
+    "description": "Descripción"
+  },
+  "byPlatform": {
+    "title": "Por Plataforma",
+    "noData": "Sin datos por plataforma"
+  },
+  "byAssetType": {
+    "title": "Por Tipo de Activo",
+    "noData": "Sin datos por tipo de activo",
+    "types": {
+      "stocks": "Acciones",
+      "bonds": "Bonos",
+      "crypto": "Cripto",
+      "realEstate": "Bienes Raíces",
+      "commodities": "Commodities",
+      "cash": "Efectivo",
+      "other": "Otro"
+    }
+  },
+  "transactions": {
+    "buy": "Compra",
+    "sell": "Venta",
+    "dividend": "Dividendo",
+    "deposit": "Depósito",
+    "withdrawal": "Retiro",
+    "transfer": "Transferencia"
+  },
+  "upload": {
+    "title": "Subir Extracto de Inversiones",
+    "description": "Sube el extracto de tu cuenta de inversiones para rastrear tu portafolio"
+  }
+}

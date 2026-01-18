@@ -1,0 +1,57 @@
+{
+  "title": "Investments",
+  "summary": {
+    "totalValue": "Total Value",
+    "totalInvested": "Total Invested",
+    "totalGain": "Total Gain",
+    "returnRate": "Return Rate"
+  },
+  "accounts": {
+    "title": "Investment Accounts",
+    "addAccount": "Add Account",
+    "editAccount": "Edit Account",
+    "deleteAccount": "Delete Account",
+    "platform": "Platform",
+    "accountName": "Account Name",
+    "currentValue": "Current Value",
+    "lastUpdated": "Last Updated"
+  },
+  "history": {
+    "title": "Investment History",
+    "noHistory": "No investment history",
+    "date": "Date",
+    "type": "Type",
+    "amount": "Amount",
+    "platform": "Platform",
+    "description": "Description"
+  },
+  "byPlatform": {
+    "title": "By Platform",
+    "noData": "No data by platform"
+  },
+  "byAssetType": {
+    "title": "By Asset Type",
+    "noData": "No data by asset type",
+    "types": {
+      "stocks": "Stocks",
+      "bonds": "Bonds",
+      "crypto": "Crypto",
+      "realEstate": "Real Estate",
+      "commodities": "Commodities",
+      "cash": "Cash",
+      "other": "Other"
+    }
+  },
+  "transactions": {
+    "buy": "Buy",
+    "sell": "Sell",
+    "dividend": "Dividend",
+    "deposit": "Deposit",
+    "withdrawal": "Withdrawal",
+    "transfer": "Transfer"
+  },
+  "upload": {
+    "title": "Upload Investment Statement",
+    "description": "Upload your investment account statement to track your portfolio"
+  }
+}

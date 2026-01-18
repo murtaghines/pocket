@@ -4,6 +4,7 @@ import { Transaction, categoryColors, Category } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { useTranslation } from "react-i18next";
 
 interface TopExpensesCardProps {
   transactions: Transaction[];
@@ -11,8 +12,8 @@ interface TopExpensesCardProps {
 
 export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
   const { formatCurrency } = useLocalization();
+  const { t } = useTranslation('dashboard');
 
-  // Exclude investment movements from top expenses (they're neutral movements)
   const topExpenses = transactions
     .filter(t => t.type === 'expense' && t.category !== 'investment')
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
@@ -28,19 +29,14 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <TrendingDown className="w-4 h-4" />
-          Top Expenses
+          {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {topExpenses.map((expense, index) => (
-          <div 
-            key={expense.id}
-            className="flex items-center gap-3"
-          >
+          <div key={expense.id} className="flex items-center gap-3">
             <div 
-              className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0",
-              )}
+              className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0")}
               style={{ backgroundColor: categoryColors[expense.category as Category] }}
             >
               {index + 1}
