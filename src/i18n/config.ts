@@ -62,6 +62,18 @@ const resources = {
   },
 };
 
+// Map countries to their primary language
+export const COUNTRY_LANGUAGE_MAP: Record<string, SupportedLanguage> = {
+  // Spanish-speaking countries
+  ES: 'es', AR: 'es', MX: 'es', CO: 'es', CL: 'es', PE: 'es', VE: 'es', 
+  EC: 'es', GT: 'es', CU: 'es', BO: 'es', DO: 'es', HN: 'es', PY: 'es',
+  SV: 'es', NI: 'es', CR: 'es', PA: 'es', UY: 'es', PR: 'es',
+  // Portuguese-speaking countries
+  BR: 'pt', PT: 'pt', AO: 'pt', MZ: 'pt',
+  // English-speaking countries (and default)
+  US: 'en', GB: 'en', CA: 'en', AU: 'en', NZ: 'en', IE: 'en',
+};
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -77,6 +89,13 @@ i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
       lookupLocalStorage: 'i18nextLng',
+      convertDetectedLanguage: (lng: string) => {
+        // Extract base language (e.g., 'es-MX' -> 'es')
+        const baseLang = lng.split('-')[0];
+        // Check if it's a supported language
+        const supported = SUPPORTED_LANGUAGES.find(l => l.code === baseLang);
+        return supported ? baseLang : 'en';
+      },
     },
   });
 
