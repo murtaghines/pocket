@@ -8,20 +8,20 @@ interface PasswordStrengthIndicatorProps {
 }
 
 const requirements = [
-  { key: "minLength", test: (pw: string) => pw.length >= 6, label: { es: "Al menos 6 caracteres", en: "At least 6 characters", pt: "Pelo menos 6 caracteres" } },
-  { key: "lowercase", test: (pw: string) => /[a-z]/.test(pw), label: { es: "Una letra minúscula", en: "One lowercase letter", pt: "Uma letra minúscula" } },
-  { key: "uppercase", test: (pw: string) => /[A-Z]/.test(pw), label: { es: "Una letra mayúscula", en: "One uppercase letter", pt: "Uma letra maiúscula" } },
-  { key: "number", test: (pw: string) => /[0-9]/.test(pw), label: { es: "Un número", en: "One number", pt: "Um número" } },
-  { key: "special", test: (pw: string) => /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/'`;~]/.test(pw), label: { es: "Un carácter especial", en: "One special character", pt: "Um caractere especial" } },
+  { key: "minLength", test: (pw: string) => pw.length >= 6, label: "At least 6 characters" },
+  { key: "lowercase", test: (pw: string) => /[a-z]/.test(pw), label: "One lowercase letter" },
+  { key: "uppercase", test: (pw: string) => /[A-Z]/.test(pw), label: "One uppercase letter" },
+  { key: "number", test: (pw: string) => /[0-9]/.test(pw), label: "One number" },
+  { key: "special", test: (pw: string) => /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/'`;~]/.test(pw), label: "One special character" },
 ];
 
-const strengthLabels = {
-  0: { es: "", en: "", pt: "" },
-  1: { es: "Muy débil", en: "Very weak", pt: "Muito fraca" },
-  2: { es: "Débil", en: "Weak", pt: "Fraca" },
-  3: { es: "Regular", en: "Fair", pt: "Regular" },
-  4: { es: "Fuerte", en: "Strong", pt: "Forte" },
-  5: { es: "Muy fuerte", en: "Very strong", pt: "Muito forte" },
+const strengthLabels: Record<number, string> = {
+  0: "",
+  1: "Very weak",
+  2: "Weak",
+  3: "Fair",
+  4: "Strong",
+  5: "Very strong",
 };
 
 const strengthColors = {
@@ -34,20 +34,6 @@ const strengthColors = {
 };
 
 export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicatorProps) {
-  // Get language from localStorage or default to 'en'
-  const language = useMemo(() => {
-    try {
-      const prefs = localStorage.getItem("user_preferences");
-      if (prefs) {
-        const parsed = JSON.parse(prefs);
-        return parsed.language || "en";
-      }
-    } catch {
-      // ignore
-    }
-    return "en";
-  }, []);
-
   const { score, results } = useMemo(() => {
     const results = requirements.map((req) => ({
       ...req,
@@ -58,7 +44,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
   }, [password]);
 
   const progressValue = (score / 5) * 100;
-  const strengthLabel = strengthLabels[score as keyof typeof strengthLabels][language as "es" | "en" | "pt"] || strengthLabels[score as keyof typeof strengthLabels].en;
+  const strengthLabel = strengthLabels[score as keyof typeof strengthLabels];
   const progressColor = strengthColors[score as keyof typeof strengthColors];
 
   if (!password) {
@@ -97,7 +83,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
             <span className={cn(
               req.passed ? "text-foreground" : "text-muted-foreground"
             )}>
-              {req.label[language as "es" | "en" | "pt"] || req.label.en}
+              {req.label}
             </span>
           </li>
         ))}

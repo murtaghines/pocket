@@ -397,7 +397,7 @@ export function MonthUploadSlot({
                   Drag files or click to upload
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Excel, CSV o PDF
+                  Excel, CSV or PDF
                 </p>
               </div>
             )}

@@ -8,7 +8,7 @@ export function InvestmentSummaryCard() {
   const { totalInvestedThisMonth, totalCurrentValue, hasData } = useInvestments();
 
   const formatCurrency = (amount: number) =>
-    amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
 
   return (
     <Card className="animate-fade-in" style={{ animationDelay: '300ms' }}>

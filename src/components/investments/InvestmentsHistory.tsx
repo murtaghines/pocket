@@ -14,12 +14,12 @@ interface InvestmentsHistoryProps {
 
 export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
   const formatCurrency = (amount: number) =>
-    amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
 
   const formatMonth = (month: string) => {
     const [year, m] = month.split('-');
     const date = new Date(parseInt(year), parseInt(m) - 1);
-    return date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
   };
 
   // Calculate cumulative invested
@@ -36,7 +36,7 @@ export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Evolución de Inversiones</CardTitle>
+        <CardTitle>Investment History</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -61,11 +61,11 @@ export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
             <Tooltip
               formatter={(value: number, name: string) => [
                 formatCurrency(value),
-                name === 'cumulative' ? 'Total Acumulado' :
-                name === 'deposits' ? 'Depósitos' :
-                name === 'withdrawals' ? 'Retiros' : 'Neto'
+                name === 'cumulative' ? 'Total Accumulated' :
+                name === 'deposits' ? 'Deposits' :
+                name === 'withdrawals' ? 'Withdrawals' : 'Net'
               ]}
-              labelFormatter={(label) => `Mes: ${label}`}
+              labelFormatter={(label) => `Month: ${label}`}
             />
             <Area
               type="monotone"
