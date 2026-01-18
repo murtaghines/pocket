@@ -1,0 +1,35 @@
+{
+  "income": {
+    "salary": "Salary",
+    "refunds": "Refunds",
+    "transfers": "Transfers",
+    "other_income": "Other Income",
+    "investment": "Investment",
+    "freelance": "Freelance",
+    "rents": "Rents"
+  },
+  "expense": {
+    "housing": "Housing",
+    "groceries": "Groceries",
+    "restaurants": "Restaurants",
+    "transport": "Transport",
+    "health": "Health",
+    "entertainment": "Entertainment",
+    "shopping": "Shopping",
+    "education": "Education",
+    "subscriptions": "Subscriptions",
+    "travel": "Travel",
+    "sports": "Sports",
+    "other_expense": "Other",
+    "pets": "Pets"
+  },
+  "transfer": {
+    "own_transfer": "Own Account",
+    "to_investment": "To Investment"
+  },
+  "movement": {
+    "INCOME": "Income",
+    "EXPENSE": "Expense",
+    "TRANSFER": "Transfer"
+  }
+}

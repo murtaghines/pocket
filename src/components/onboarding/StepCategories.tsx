@@ -3,12 +3,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import {
-  INCOME_CATEGORIES,
-  EXPENSE_CATEGORIES,
-  categoryEmojis,
-  getCategoryLabel,
-} from '@/lib/categoryTranslations';
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/lib/categoryTranslations';
+import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { useTranslation } from 'react-i18next';
 
 interface StepCategoriesProps {
@@ -18,7 +14,7 @@ interface StepCategoriesProps {
 
 export function StepCategories({ data, updateData }: StepCategoriesProps) {
   const { t } = useTranslation('settings');
-  
+  const { getCategoryLabel, getCategoryEmoji } = useCategoryTranslations();
   // Split categories into income and expense
   const incomeCategories = data.incomeCategories || [];
   const expenseCategories = data.expenseCategories || [];
@@ -78,7 +74,7 @@ export function StepCategories({ data, updateData }: StepCategoriesProps) {
               htmlFor={slug}
               className={`flex items-center gap-2 ${isDisabled ? '' : 'cursor-pointer'}`}
             >
-              <span>{categoryEmojis[slug] || '📌'}</span>
+              <span>{getCategoryEmoji(slug)}</span>
               <span className="text-sm">
                 {getCategoryLabel(slug)}
                 {isDisabled && (

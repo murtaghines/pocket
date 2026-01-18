@@ -63,6 +63,9 @@
     "selectIncomeCategories": "Selecione as categorias de receita que deseja usar.",
     "selectExpenseCategories": "Selecione as categorias de despesa que deseja usar.",
     "selected": "{{count}} selecionadas",
-    "almostDone": "Quase pronto! Clique em \"Começar\" para iniciar."
+    "almostDone": "Quase pronto! Clique em \"Começar\" para iniciar.",
+    "income": "Receitas",
+    "expenses": "Despesas",
+    "alwaysIncluded": "sempre incluído"
   }
 }
