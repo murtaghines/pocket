@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { useInvestments } from "@/hooks/useInvestments";
 import { PiggyBank, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export function InvestmentSummaryCard() {
   const { totalInvestedThisMonth, totalCurrentValue, hasData } = useInvestments();
+  const { t } = useTranslation('dashboard');
 
   const formatCurrency = (amount: number) =>
     amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
@@ -14,7 +16,7 @@ export function InvestmentSummaryCard() {
     <Card className="animate-fade-in" style={{ animationDelay: '300ms' }}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
-          Investments
+          {t('investments.title')}
         </CardTitle>
         <PiggyBank className="w-5 h-5 text-purple-500" />
       </CardHeader>
@@ -25,22 +27,22 @@ export function InvestmentSummaryCard() {
               {formatCurrency(totalInvestedThisMonth)}
             </div>
             <p className="text-sm text-muted-foreground">
-              invested this month
+              {t('investments.investedThisMonth')}
             </p>
             {totalCurrentValue > 0 && (
               <p className="text-sm text-green-600 mt-1">
-                Total value: {formatCurrency(totalCurrentValue)}
+                {t('investments.totalValue')}: {formatCurrency(totalCurrentValue)}
               </p>
             )}
           </>
         ) : (
           <p className="text-sm text-muted-foreground">
-            No investments recorded
+            {t('investments.noInvestments')}
           </p>
         )}
         <Link to="/investments">
           <Button variant="ghost" size="sm" className="mt-2 w-full">
-            View investments
+            {t('investments.viewInvestments')}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </Link>

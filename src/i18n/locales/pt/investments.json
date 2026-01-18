@@ -1,0 +1,57 @@
+{
+  "title": "Investimentos",
+  "summary": {
+    "totalValue": "Valor Total",
+    "totalInvested": "Total Investido",
+    "totalGain": "Ganho Total",
+    "returnRate": "Taxa de Retorno"
+  },
+  "accounts": {
+    "title": "Contas de Investimento",
+    "addAccount": "Adicionar Conta",
+    "editAccount": "Editar Conta",
+    "deleteAccount": "Excluir Conta",
+    "platform": "Plataforma",
+    "accountName": "Nome da Conta",
+    "currentValue": "Valor Atual",
+    "lastUpdated": "Última Atualização"
+  },
+  "history": {
+    "title": "Histórico de Investimentos",
+    "noHistory": "Sem histórico de investimentos",
+    "date": "Data",
+    "type": "Tipo",
+    "amount": "Valor",
+    "platform": "Plataforma",
+    "description": "Descrição"
+  },
+  "byPlatform": {
+    "title": "Por Plataforma",
+    "noData": "Sem dados por plataforma"
+  },
+  "byAssetType": {
+    "title": "Por Tipo de Ativo",
+    "noData": "Sem dados por tipo de ativo",
+    "types": {
+      "stocks": "Ações",
+      "bonds": "Títulos",
+      "crypto": "Cripto",
+      "realEstate": "Imóveis",
+      "commodities": "Commodities",
+      "cash": "Dinheiro",
+      "other": "Outro"
+    }
+  },
+  "transactions": {
+    "buy": "Compra",
+    "sell": "Venda",
+    "dividend": "Dividendo",
+    "deposit": "Depósito",
+    "withdrawal": "Saque",
+    "transfer": "Transferência"
+  },
+  "upload": {
+    "title": "Enviar Extrato de Investimentos",
+    "description": "Envie o extrato da sua conta de investimentos para acompanhar seu portfólio"
+  }
+}

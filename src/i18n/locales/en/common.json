@@ -1,0 +1,61 @@
+{
+  "appName": "fint",
+  "loading": "Loading...",
+  "error": "Error",
+  "success": "Success",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "add": "Add",
+  "close": "Close",
+  "confirm": "Confirm",
+  "back": "Back",
+  "next": "Next",
+  "search": "Search",
+  "filter": "Filter",
+  "export": "Export",
+  "import": "Import",
+  "upload": "Upload",
+  "download": "Download",
+  "noData": "No data available",
+  "viewAll": "View all",
+  "learnMore": "Learn more",
+  "optional": "Optional",
+  "required": "Required",
+  "navigation": {
+    "dashboard": "Dashboard",
+    "investments": "Investments",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "processing": "Processing"
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "thisYear": "This year",
+    "lastMonth": "Last month",
+    "lastYear": "Last year"
+  },
+  "network": {
+    "offline": "You are offline. Some features may not be available.",
+    "reconnecting": "Reconnecting...",
+    "online": "Back online"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "minLength": "Must be at least {{count}} characters",
+    "maxLength": "Must be at most {{count}} characters"
+  }
+}

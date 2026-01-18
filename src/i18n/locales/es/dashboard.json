@@ -1,0 +1,67 @@
+{
+  "title": "Panel",
+  "welcome": {
+    "title": "¡Bienvenido a fint!",
+    "message": "Comienza subiendo tu primer extracto bancario para ver tus finanzas.",
+    "uploadButton": "Subir archivo"
+  },
+  "stats": {
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "balance": "Balance",
+    "savingsRate": "Tasa de Ahorro",
+    "vsLastMonth": "vs mes pasado",
+    "thisMonth": "este mes"
+  },
+  "charts": {
+    "monthlyBalance": "Balance Mensual",
+    "categoryBreakdown": "Desglose por Categoría",
+    "expensesByBank": "Gastos por Banco",
+    "weeklyComparison": "Comparación Semanal",
+    "yearlyBalance": "Balance Anual"
+  },
+  "transactions": {
+    "title": "Transacciones",
+    "recent": "Transacciones Recientes",
+    "all": "Todas las Transacciones",
+    "noTransactions": "Aún no hay transacciones",
+    "date": "Fecha",
+    "description": "Descripción",
+    "category": "Categoría",
+    "amount": "Monto",
+    "bank": "Banco"
+  },
+  "topExpenses": {
+    "title": "Principales Gastos",
+    "noExpenses": "No hay gastos registrados"
+  },
+  "investments": {
+    "title": "Inversiones",
+    "totalValue": "Valor total",
+    "investedThisMonth": "invertido este mes",
+    "noInvestments": "Sin inversiones registradas",
+    "viewInvestments": "Ver inversiones"
+  },
+  "period": {
+    "selectMonth": "Seleccionar mes",
+    "currentMonth": "Mes actual",
+    "previousMonth": "Mes anterior",
+    "closePeriod": "Cerrar período",
+    "periodClosed": "Período cerrado"
+  },
+  "upload": {
+    "title": "Subir Extracto",
+    "dropzone": "Arrastra tu archivo aquí o haz clic para subir",
+    "supportedFormats": "Excel, CSV o PDF",
+    "processing": "Procesando...",
+    "success": "Archivo procesado correctamente",
+    "error": "Error al procesar archivo"
+  },
+  "comparison": {
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "previousMonth": "Mes anterior",
+    "currentMonth": "Mes actual",
+    "change": "Cambio"
+  }
+}

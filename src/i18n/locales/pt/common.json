@@ -1,0 +1,61 @@
+{
+  "appName": "fint",
+  "loading": "Carregando...",
+  "error": "Erro",
+  "success": "Sucesso",
+  "save": "Salvar",
+  "cancel": "Cancelar",
+  "delete": "Excluir",
+  "edit": "Editar",
+  "add": "Adicionar",
+  "close": "Fechar",
+  "confirm": "Confirmar",
+  "back": "Voltar",
+  "next": "Próximo",
+  "search": "Buscar",
+  "filter": "Filtrar",
+  "export": "Exportar",
+  "import": "Importar",
+  "upload": "Enviar",
+  "download": "Baixar",
+  "noData": "Nenhum dado disponível",
+  "viewAll": "Ver tudo",
+  "learnMore": "Saiba mais",
+  "optional": "Opcional",
+  "required": "Obrigatório",
+  "navigation": {
+    "dashboard": "Painel",
+    "investments": "Investimentos",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "logout": "Sair"
+  },
+  "status": {
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "pending": "Pendente",
+    "completed": "Concluído",
+    "failed": "Falhou",
+    "processing": "Processando"
+  },
+  "time": {
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "thisWeek": "Esta semana",
+    "thisMonth": "Este mês",
+    "thisYear": "Este ano",
+    "lastMonth": "Mês passado",
+    "lastYear": "Ano passado"
+  },
+  "network": {
+    "offline": "Você está offline. Alguns recursos podem não estar disponíveis.",
+    "reconnecting": "Reconectando...",
+    "online": "De volta online"
+  },
+  "validation": {
+    "required": "Este campo é obrigatório",
+    "invalidEmail": "Endereço de e-mail inválido",
+    "minLength": "Deve ter pelo menos {{count}} caracteres",
+    "maxLength": "Deve ter no máximo {{count}} caracteres"
+  }
+}

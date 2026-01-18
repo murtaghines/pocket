@@ -1,31 +1,43 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useLocalization } from '@/hooks/useLocalization';
+import { useLanguage } from '@/hooks/useLanguage';
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies';
 import { toast } from 'sonner';
-import { Globe, DollarSign, Loader2 } from 'lucide-react';
+import { Globe, DollarSign, Languages, Loader2 } from 'lucide-react';
 
 export function PreferencesForm() {
+  const { t } = useTranslation('settings');
   const { preferences, updatePreferences, isUpdating } = useUserPreferences();
-  const { formatCurrency } = useLocalization();
+  const { currentLanguage, changeLanguage, supportedLanguages } = useLanguage();
   
   const [currency, setCurrency] = useState(preferences.base_currency);
+  const [language, setLanguage] = useState<string>(currentLanguage);
 
   // Update local state when preferences change
   useEffect(() => {
     setCurrency(preferences.base_currency);
   }, [preferences.base_currency]);
 
+  useEffect(() => {
+    setLanguage(currentLanguage);
+  }, [currentLanguage]);
+
   const handleSave = () => {
+    // Update language if changed
+    if (language !== currentLanguage) {
+      changeLanguage(language as 'en' | 'es' | 'pt');
+    }
+
     updatePreferences({
       base_currency: currency,
     }, {
       onSuccess: () => {
-        toast.success('Preferences saved');
+        toast.success(t('regional.saved'));
       },
       onError: (error) => {
         toast.error(`Error: ${error.message}`);
@@ -41,18 +53,38 @@ export function PreferencesForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="h-5 w-5" />
-          Regional Settings
+          {t('regional.title')}
         </CardTitle>
         <CardDescription>
-          Configure your currency preferences
+          {t('regional.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Language */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Languages className="h-4 w-4" />
+            {t('regional.language')}
+          </Label>
+          <Select value={language} onValueChange={setLanguage}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {supportedLanguages.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.nativeName} ({lang.name})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Base Currency */}
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
-            Base Currency
+            {t('regional.baseCurrency')}
           </Label>
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger>
@@ -71,7 +103,7 @@ export function PreferencesForm() {
         {/* Preview */}
         <div className="rounded-lg bg-muted p-4 space-y-2">
           <p className="text-sm font-medium text-muted-foreground">
-            Preview:
+            {t('regional.preview')}:
           </p>
           <div className="text-lg font-medium">
             {new Intl.NumberFormat('en-US', {
@@ -85,10 +117,10 @@ export function PreferencesForm() {
           {isUpdating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              {t('regional.saving')}
             </>
           ) : (
-            'Save Preferences'
+            t('regional.savePreferences')
           )}
         </Button>
       </CardContent>

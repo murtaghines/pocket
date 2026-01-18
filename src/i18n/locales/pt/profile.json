@@ -1,0 +1,37 @@
+{
+  "title": "Perfil",
+  "personalInfo": {
+    "title": "Informações Pessoais",
+    "firstName": "Nome",
+    "lastName": "Sobrenome",
+    "email": "E-mail",
+    "phone": "Telefone",
+    "updateSuccess": "Perfil atualizado com sucesso"
+  },
+  "uploads": {
+    "title": "Envios Mensais",
+    "investmentUploads": "Envios de Investimentos",
+    "noUploads": "Nenhum envio ainda",
+    "uploadFile": "Enviar arquivo",
+    "fileUploaded": "Arquivo enviado",
+    "processing": "Processando",
+    "processed": "Processado",
+    "failed": "Falhou",
+    "transactionsCount": "{{count}} transações"
+  },
+  "account": {
+    "title": "Conta",
+    "deleteAccount": "Excluir Conta",
+    "deleteWarning": "Esta ação não pode ser desfeita. Todos os seus dados serão excluídos permanentemente.",
+    "confirmDelete": "Tem certeza de que deseja excluir sua conta?",
+    "typeToConfirm": "Digite EXCLUIR para confirmar"
+  },
+  "review": {
+    "title": "Revisão do Mês",
+    "income": "Receitas",
+    "expenses": "Despesas",
+    "balance": "Saldo",
+    "byCategory": "Por Categoria",
+    "closeMonth": "Fechar Mês"
+  }
+}
