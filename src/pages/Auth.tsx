@@ -281,15 +281,33 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] w-full relative overflow-hidden flex items-center justify-center p-4 lg:p-8">
-      {/* Background image */}
+    <div 
+      className="w-full relative overflow-x-hidden flex items-center justify-center p-4 lg:p-8"
+      style={{ 
+        minHeight: 'max(100vh, 100dvh)',
+        backgroundColor: 'hsl(229, 100%, 66%)'
+      }}
+    >
+      {/* Background image - covers everything including Safari bars */}
       <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${authBackground})`, minHeight: '100dvh' }}
+        className="fixed inset-0 w-full bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: `url(${authBackground})`,
+          height: 'max(100vh, 100dvh)'
+        }}
+      />
+      
+      {/* Extra background color to prevent white gaps */}
+      <div 
+        className="fixed inset-0 w-full -z-10"
+        style={{ 
+          backgroundColor: 'hsl(229, 100%, 66%)',
+          height: '200vh'
+        }}
       />
       
       {/* Logo - top left */}
-      <div className="absolute top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-2">
+      <div className="fixed top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-2">
         <img src={fintLogo} alt="fint" className="w-8 h-8 lg:w-10 lg:h-10" />
         <span className="font-display text-xl lg:text-2xl font-bold text-white">fint</span>
       </div>
@@ -298,46 +316,46 @@ export default function Auth() {
       <img 
         src={coinImage} 
         alt="" 
-        className="absolute top-4 right-4 lg:top-8 lg:right-12 w-16 h-16 lg:w-24 lg:h-24 object-contain z-10"
+        className="fixed top-6 right-6 lg:top-10 lg:right-16 w-20 h-20 lg:w-32 lg:h-32 object-contain z-10"
       />
       
       {/* Floating coin - bottom left */}
       <img 
         src={coinImage} 
         alt="" 
-        className="absolute bottom-[15%] left-[5%] w-24 h-24 lg:w-36 lg:h-36 object-contain z-10"
+        className="fixed bottom-[12%] left-[3%] w-28 h-28 lg:w-44 lg:h-44 object-contain z-10"
       />
       
       {/* Credit Card 1 - Top Left */}
       <img 
         src={creditCard1} 
         alt="" 
-        className="absolute top-[8%] left-[2%] lg:left-[5%] w-40 lg:w-60 object-contain z-10"
+        className="fixed top-[6%] left-[1%] lg:left-[3%] w-52 lg:w-80 object-contain z-10"
       />
       
       {/* Credit Card 2 - Bottom Center */}
       <img 
         src={creditCard2} 
         alt="" 
-        className="absolute bottom-[3%] left-[15%] lg:left-[20%] w-48 lg:w-72 object-contain z-10"
+        className="fixed bottom-[2%] left-[10%] lg:left-[15%] w-60 lg:w-96 object-contain z-10"
       />
       
       {/* Tagline */}
-      <div className="absolute top-1/2 left-6 lg:left-[10%] -translate-y-1/2 z-10 hidden sm:block">
-        <p className="text-white/60 text-xl lg:text-2xl xl:text-3xl font-light leading-relaxed">
+      <div className="fixed top-1/2 left-6 lg:left-[8%] -translate-y-1/2 z-10 hidden sm:block">
+        <p className="text-white/60 text-2xl lg:text-3xl xl:text-4xl font-light leading-relaxed">
           Take control of<br />
-          <span className="text-white/80">your finances</span>
+          <span className="text-white/90 font-medium">your finances</span>
         </p>
       </div>
       
-      {/* Form Card - positioned to the right */}
-      <Card className="relative z-20 w-full max-w-md lg:max-w-lg bg-white rounded-3xl shadow-2xl ml-auto lg:mr-[5%] xl:mr-[8%]">
+      {/* Form Card - FIXED HEIGHT for both login and signup */}
+      <Card className="relative z-20 w-full max-w-md lg:max-w-lg bg-white rounded-3xl shadow-2xl ml-auto lg:mr-[5%] xl:mr-[8%] min-h-[580px] h-[580px] flex flex-col overflow-hidden">
         {authMode === "register" ? (
           <>
-            <CardHeader className="pb-2 pt-8 px-8">
+            <CardHeader className="pb-2 pt-8 px-8 flex-shrink-0">
               <CardTitle className="text-2xl lg:text-3xl font-bold text-gray-900">Sign up</CardTitle>
             </CardHeader>
-            <CardContent className="px-8 pb-8">
+            <CardContent className="px-8 pb-8 flex-1 overflow-y-auto">
               <form onSubmit={handleSignUp} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -440,10 +458,10 @@ export default function Auth() {
           </>
         ) : (
           <>
-            <CardHeader className="pb-2 pt-8 px-8">
+            <CardHeader className="pb-2 pt-8 px-8 flex-shrink-0">
               <CardTitle className="text-2xl lg:text-3xl font-bold text-gray-900">Log in</CardTitle>
             </CardHeader>
-            <CardContent className="px-8 pb-8">
+            <CardContent className="px-8 pb-8 flex-1 flex flex-col justify-center">
               <form onSubmit={handleSignIn} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="email-login" className="text-sm font-medium text-gray-700">Email Address</Label>
