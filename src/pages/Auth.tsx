@@ -38,8 +38,7 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -198,14 +197,18 @@ export default function Auth() {
 
     const redirectUrl = `${window.location.origin}/`;
 
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
+          first_name: firstName,
+          last_name: lastName,
         }
       }
     });
@@ -358,31 +361,17 @@ export default function Auth() {
             </CardHeader>
             <CardContent className="px-8 pb-8 flex-1 overflow-y-auto">
               <form onSubmit={handleSignUp} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first-name" className="text-sm font-medium text-gray-700">First Name</Label>
-                    <Input
-                      id="first-name"
-                      type="text"
-                      placeholder="Daniel"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      required
-                      className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last-name" className="text-sm font-medium text-gray-700">Last Name</Label>
-                    <Input
-                      id="last-name"
-                      type="text"
-                      placeholder="Gallego"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      required
-                      className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">Full Name</Label>
+                  <Input
+                    id="full-name"
+                    type="text"
+                    placeholder="Daniel Gallego"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                  />
                 </div>
                 
                 <div className="space-y-2">
