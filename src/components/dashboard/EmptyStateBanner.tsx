@@ -22,9 +22,9 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
             <FileSpreadsheet className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h3 className="font-semibold text-lg">¡Bienvenido a fint!</h3>
+            <h3 className="font-semibold text-lg">Welcome to fint!</h3>
             <p className="text-muted-foreground text-sm">
-              Comienza subiendo tu primer archivo de movimientos bancarios para ver tus finanzas.
+              Start by uploading your first bank statement to see your finances.
             </p>
           </div>
         </div>
@@ -33,7 +33,7 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
           className="gap-2 whitespace-nowrap"
         >
           <Upload className="w-4 h-4" />
-          Cargar archivo
+          Upload file
           <ArrowRight className="w-4 h-4" />
         </Button>
       </CardContent>

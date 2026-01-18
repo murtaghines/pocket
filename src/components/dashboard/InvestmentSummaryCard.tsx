@@ -14,7 +14,7 @@ export function InvestmentSummaryCard() {
     <Card className="animate-fade-in" style={{ animationDelay: '300ms' }}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
-          Inversiones
+          Investments
         </CardTitle>
         <PiggyBank className="w-5 h-5 text-purple-500" />
       </CardHeader>
@@ -25,22 +25,22 @@ export function InvestmentSummaryCard() {
               {formatCurrency(totalInvestedThisMonth)}
             </div>
             <p className="text-sm text-muted-foreground">
-              invertido este mes
+              invested this month
             </p>
             {totalCurrentValue > 0 && (
               <p className="text-sm text-green-600 mt-1">
-                Valor total: {formatCurrency(totalCurrentValue)}
+                Total value: {formatCurrency(totalCurrentValue)}
               </p>
             )}
           </>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Sin inversiones registradas
+            No investments recorded
           </p>
         )}
         <Link to="/investments">
           <Button variant="ghost" size="sm" className="mt-2 w-full">
-            Ver inversiones
+            View investments
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </Link>
