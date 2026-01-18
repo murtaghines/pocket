@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { getRememberPreference, setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ type AuthMode = "login" | "register";
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const isResetMode = searchParams.get("reset") === "true";
+  const { t } = useTranslation('auth');
   
   const [authMode, setAuthMode] = useState<AuthMode>("register");
   const [email, setEmail] = useState("");
@@ -75,8 +77,8 @@ export default function Auth() {
     
     if (newPassword !== confirmNewPassword) {
       toast({
-        title: "Error",
-        description: "Passwords do not match",
+        title: t('errors.title'),
+        description: t('errors.passwordMismatch'),
         variant: "destructive",
       });
       return;
@@ -84,8 +86,8 @@ export default function Auth() {
 
     if (newPassword.length < 6) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: t('errors.title'),
+        description: t('errors.passwordTooShort'),
         variant: "destructive",
       });
       return;
@@ -99,14 +101,14 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Error",
+        title: t('errors.title'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Password updated",
-        description: "Your password has been successfully updated.",
+        title: t('success.passwordUpdated'),
+        description: t('success.passwordUpdatedDescription'),
       });
       navigate("/");
     }
@@ -127,15 +129,15 @@ export default function Auth() {
                 <KeyRound className="w-6 h-6 text-primary" />
               </div>
             </div>
-            <CardTitle>Set New Password</CardTitle>
+            <CardTitle>{t('setNewPassword')}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
+                <Label htmlFor="new-password">{t('newPassword')}</Label>
                 <PasswordInput
                   id="new-password"
-                  placeholder="••••••••"
+                  placeholder={t('placeholders.password')}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
@@ -144,10 +146,10 @@ export default function Auth() {
                 <PasswordStrengthIndicator password={newPassword} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                <Label htmlFor="confirm-new-password">{t('confirmNewPassword')}</Label>
                 <PasswordInput
                   id="confirm-new-password"
-                  placeholder="••••••••"
+                  placeholder={t('placeholders.password')}
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                   required
@@ -156,7 +158,7 @@ export default function Auth() {
               </div>
               <Button type="submit" className="w-full" disabled={updateLoading}>
                 {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Update Password
+                {t('updatePassword')}
               </Button>
               <Button
                 type="button"
@@ -164,7 +166,7 @@ export default function Auth() {
                 className="w-full"
                 onClick={() => navigate("/auth")}
               >
-                Back to Sign In
+                {t('backToSignIn')}
               </Button>
             </form>
           </CardContent>
@@ -178,8 +180,8 @@ export default function Auth() {
     
     if (password !== confirmPassword) {
       toast({
-        title: "Error",
-        description: "Passwords do not match",
+        title: t('errors.title'),
+        description: t('errors.passwordMismatch'),
         variant: "destructive",
       });
       return;
@@ -187,8 +189,8 @@ export default function Auth() {
 
     if (password.length < 6) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: t('errors.title'),
+        description: t('errors.passwordTooShort'),
         variant: "destructive",
       });
       return;
@@ -216,14 +218,14 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Error creating account",
+        title: t('errors.creatingAccount'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Account created!",
-        description: "You can now sign in.",
+        title: t('success.accountCreated'),
+        description: t('success.canSignIn'),
       });
       setAuthMode("login");
     }
@@ -241,7 +243,7 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Sign in error",
+        title: t('errors.signingIn'),
         description: error.message,
         variant: "destructive",
       });
@@ -269,14 +271,14 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Error",
+        title: t('errors.title'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Check your email",
-        description: "We sent you a password reset link.",
+        title: t('success.checkEmail'),
+        description: t('success.resetLinkSent'),
       });
       setResetDialogOpen(false);
       setResetEmail("");
@@ -348,8 +350,8 @@ export default function Auth() {
       {/* Tagline */}
       <div className="fixed top-1/2 left-6 lg:left-[8%] -translate-y-1/2 z-10 hidden sm:block">
         <p className="text-white/60 text-2xl lg:text-3xl xl:text-4xl font-light leading-relaxed">
-          Take control of<br />
-          <span className="text-white/90 font-medium">your finances</span>
+          {t('tagline')}<br />
+          <span className="text-white/90 font-medium">{t('taglineHighlight')}</span>
         </p>
       </div>
       
@@ -358,16 +360,16 @@ export default function Auth() {
         {authMode === "register" ? (
           <>
             <CardHeader className="pb-2 pt-8 px-8 flex-shrink-0">
-              <CardTitle className="text-2xl lg:text-3xl font-bold text-gray-900">Sign up</CardTitle>
+              <CardTitle className="text-2xl lg:text-3xl font-bold text-gray-900">{t('signup')}</CardTitle>
             </CardHeader>
             <CardContent className="px-8 pb-8 flex-1 overflow-y-auto">
               <form onSubmit={handleSignUp} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">Full Name</Label>
+                  <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">{t('fullName')}</Label>
                   <Input
                     id="full-name"
                     type="text"
-                    placeholder="Daniel Gallego"
+                    placeholder={t('placeholders.fullName')}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
@@ -376,10 +378,10 @@ export default function Auth() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email-register" className="text-sm font-medium text-gray-700">Email Address</Label>
+                  <Label htmlFor="email-register" className="text-sm font-medium text-gray-700">{t('email')}</Label>
                   <EmailInput
                     id="email-register"
-                    placeholder="hello@reallygreatsite.com"
+                    placeholder={t('placeholders.email')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onValidChange={setEmailValid}
@@ -390,10 +392,10 @@ export default function Auth() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="password-register" className="text-sm font-medium text-gray-700">Password</Label>
+                    <Label htmlFor="password-register" className="text-sm font-medium text-gray-700">{t('password')}</Label>
                     <PasswordInput
                       id="password-register"
-                      placeholder="••••••••••"
+                      placeholder={t('placeholders.password')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -402,10 +404,10 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">Confirm Password</Label>
+                    <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">{t('confirmPassword')}</Label>
                     <PasswordInput
                       id="confirm-password"
-                      placeholder="••••••••••"
+                      placeholder={t('placeholders.password')}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
@@ -424,7 +426,7 @@ export default function Auth() {
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    "Create Account"
+                    t('createAccount')
                   )}
                 </Button>
                 
@@ -433,7 +435,7 @@ export default function Auth() {
                     <div className="w-full border-t border-gray-200" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-400">Or</span>
+                    <span className="px-4 bg-white text-gray-400">{t('orContinueWith')}</span>
                   </div>
                 </div>
                 
@@ -443,7 +445,7 @@ export default function Auth() {
                   className="w-full h-12 text-base font-medium rounded-lg border-gray-200 text-gray-700 hover:bg-gray-50"
                   onClick={() => setAuthMode("login")}
                 >
-                  Log in
+                  {t('login')}
                 </Button>
               </form>
             </CardContent>
@@ -451,15 +453,15 @@ export default function Auth() {
         ) : (
           <>
             <CardHeader className="pb-2 pt-8 px-8 flex-shrink-0">
-              <CardTitle className="text-2xl lg:text-3xl font-bold text-gray-900">Log in</CardTitle>
+              <CardTitle className="text-2xl lg:text-3xl font-bold text-gray-900">{t('login')}</CardTitle>
             </CardHeader>
             <CardContent className="px-8 pb-8 flex-1 flex flex-col justify-center">
               <form onSubmit={handleSignIn} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="email-login" className="text-sm font-medium text-gray-700">Email Address</Label>
+                  <Label htmlFor="email-login" className="text-sm font-medium text-gray-700">{t('email')}</Label>
                   <EmailInput
                     id="email-login"
-                    placeholder="hello@reallygreatsite.com"
+                    placeholder={t('placeholders.email')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onValidChange={setEmailValid}
@@ -469,10 +471,10 @@ export default function Auth() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password-login" className="text-sm font-medium text-gray-700">Password</Label>
+                  <Label htmlFor="password-login" className="text-sm font-medium text-gray-700">{t('password')}</Label>
                   <PasswordInput
                     id="password-login"
-                    placeholder="••••••••••"
+                    placeholder={t('placeholders.password')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -495,29 +497,29 @@ export default function Auth() {
                       }}
                     />
                     <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer text-gray-500">
-                      Remember me
+                      {t('rememberMe')}
                     </Label>
                   </div>
                   <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="link" className="px-0 h-auto text-sm text-[hsl(var(--primary))]">
-                        Forgot password?
+                        {t('forgotPassword')}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogTitle>{t('resetPassword')}</DialogTitle>
                         <DialogDescription>
-                          Enter your email address and we'll send you a link to reset your password.
+                          {t('resetPasswordDescription')}
                         </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handlePasswordReset} className="space-y-4 mt-4">
                         <div className="space-y-2">
-                          <Label htmlFor="reset-email">Email</Label>
+                          <Label htmlFor="reset-email">{t('email')}</Label>
                           <Input
                             id="reset-email"
                             type="email"
-                            placeholder="you@email.com"
+                            placeholder={t('placeholders.resetEmail')}
                             value={resetEmail}
                             onChange={(e) => setResetEmail(e.target.value)}
                             required
@@ -525,7 +527,7 @@ export default function Auth() {
                         </div>
                         <Button type="submit" className="w-full" disabled={resetLoading}>
                           {resetLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                          Send Reset Link
+                          {t('sendResetLink')}
                         </Button>
                       </form>
                     </DialogContent>
@@ -540,7 +542,7 @@ export default function Auth() {
                 {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    "Sign In"
+                    t('signIn')
                   )}
                 </Button>
                 
@@ -549,7 +551,7 @@ export default function Auth() {
                     <div className="w-full border-t border-gray-200" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-400">Or</span>
+                    <span className="px-4 bg-white text-gray-400">{t('orContinueWith')}</span>
                   </div>
                 </div>
                 
@@ -559,7 +561,7 @@ export default function Auth() {
                   className="w-full h-12 text-base font-medium rounded-lg border-gray-200 text-gray-700 hover:bg-gray-50"
                   onClick={() => setAuthMode("register")}
                 >
-                  Create Account
+                  {t('createAccount')}
                 </Button>
               </form>
             </CardContent>
