@@ -12,13 +12,21 @@
   },
   "categories": {
     "title": "Categorías",
-    "description": "Administra tus categorías de transacciones",
+    "description": "Administra tus categorías de ingresos y gastos",
     "addCategory": "Agregar Categoría",
     "editCategory": "Editar Categoría",
     "deleteCategory": "Eliminar Categoría",
     "categoryName": "Nombre de Categoría",
     "categoryColor": "Color",
-    "categoryIcon": "Icono"
+    "categoryIcon": "Icono",
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "selectAll": "Seleccionar Todo",
+    "deselectAll": "Deseleccionar Todo",
+    "alwaysIncluded": "siempre incluido",
+    "saveCategories": "Guardar Categorías",
+    "noChanges": "Sin Cambios",
+    "categoriesSaved": "Categorías guardadas"
   },
   "notifications": {
     "title": "Notificaciones",
@@ -34,5 +42,27 @@
     "changePassword": "Cambiar Contraseña",
     "twoFactor": "Autenticación de Dos Factores",
     "sessions": "Sesiones Activas"
+  },
+  "onboarding": {
+    "title": "¡Bienvenido a fint!",
+    "stepCountry": "País",
+    "stepCurrency": "Moneda",
+    "stepCategories": "Categorías",
+    "continue": "Continuar",
+    "back": "Volver",
+    "getStarted": "Comenzar",
+    "selectCountry": "Empecemos seleccionando tu país. Esto nos ayuda a configurar los valores predeterminados correctos para ti.",
+    "yourCountry": "Tu País",
+    "selectYourCountry": "Selecciona tu país",
+    "basedOnCountry": "Según tu país, sugeriremos {{currency}} como tu moneda.",
+    "selectBaseCurrency": "Selecciona tu moneda base — la moneda principal que usarás para subir transacciones y comparar valores.",
+    "howItWorks": "Cómo funciona:",
+    "currencyTip1": "Todas las comparaciones de tipo de cambio usarán {{currency}} como referencia",
+    "currencyTip2": "Puedes ver tu panel en cualquier moneda después",
+    "currencyTip3": "Los extractos bancarios pueden subirse en cualquier moneda",
+    "selectIncomeCategories": "Selecciona las categorías de ingresos que quieres usar.",
+    "selectExpenseCategories": "Selecciona las categorías de gastos que quieres usar.",
+    "selected": "{{count}} seleccionadas",
+    "almostDone": "¡Casi listo! Haz clic en \"Comenzar\" para empezar."
   }
 }

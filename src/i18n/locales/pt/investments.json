@@ -14,7 +14,21 @@
     "platform": "Plataforma",
     "accountName": "Nome da Conta",
     "currentValue": "Valor Atual",
-    "lastUpdated": "Última Atualização"
+    "lastUpdated": "Última Atualização",
+    "addNew": "Adicionar Nova Conta",
+    "addDescription": "Configure uma nova conta de investimento para acompanhar",
+    "accountNameLabel": "Nome da Conta",
+    "accountNamePlaceholder": "ex. Meu Portfólio de Ações",
+    "platformLabel": "Plataforma",
+    "platformPlaceholder": "ex. XP, Rico, Clear",
+    "initialValueLabel": "Valor Inicial",
+    "noAccounts": "Nenhuma conta de investimento configurada",
+    "noAccountsDescription": "Adicione sua primeira conta de investimento para começar a acompanhar seu portfólio",
+    "addFirst": "Adicionar Primeira Conta",
+    "adding": "Adicionando...",
+    "accountAdded": "Conta de investimento adicionada",
+    "accountDeleted": "Conta de investimento excluída",
+    "confirmDelete": "Excluir esta conta de investimento?"
   },
   "history": {
     "title": "Histórico de Investimentos",
@@ -23,7 +37,9 @@
     "type": "Tipo",
     "amount": "Valor",
     "platform": "Plataforma",
-    "description": "Descrição"
+    "description": "Descrição",
+    "totalAccumulated": "Total Acumulado",
+    "deposits": "Depósitos"
   },
   "byPlatform": {
     "title": "Por Plataforma",
@@ -34,11 +50,13 @@
     "noData": "Sem dados por tipo de ativo",
     "types": {
       "stocks": "Ações",
+      "etfs": "ETFs",
       "bonds": "Títulos",
       "crypto": "Cripto",
       "realEstate": "Imóveis",
       "commodities": "Commodities",
       "cash": "Dinheiro",
+      "mutualFunds": "Fundos de Investimento",
       "other": "Outro"
     }
   },

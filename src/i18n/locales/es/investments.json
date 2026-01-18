@@ -14,7 +14,21 @@
     "platform": "Plataforma",
     "accountName": "Nombre de Cuenta",
     "currentValue": "Valor Actual",
-    "lastUpdated": "Última Actualización"
+    "lastUpdated": "Última Actualización",
+    "addNew": "Agregar Nueva Cuenta",
+    "addDescription": "Configura una nueva cuenta de inversión para rastrear",
+    "accountNameLabel": "Nombre de la Cuenta",
+    "accountNamePlaceholder": "ej. Mi Portafolio de Acciones",
+    "platformLabel": "Plataforma",
+    "platformPlaceholder": "ej. Fidelity, Vanguard",
+    "initialValueLabel": "Valor Inicial",
+    "noAccounts": "No hay cuentas de inversión configuradas",
+    "noAccountsDescription": "Agrega tu primera cuenta de inversión para comenzar a rastrear tu portafolio",
+    "addFirst": "Agregar Primera Cuenta",
+    "adding": "Agregando...",
+    "accountAdded": "Cuenta de inversión agregada",
+    "accountDeleted": "Cuenta de inversión eliminada",
+    "confirmDelete": "¿Eliminar esta cuenta de inversión?"
   },
   "history": {
     "title": "Historial de Inversiones",
@@ -23,7 +37,9 @@
     "type": "Tipo",
     "amount": "Monto",
     "platform": "Plataforma",
-    "description": "Descripción"
+    "description": "Descripción",
+    "totalAccumulated": "Total Acumulado",
+    "deposits": "Depósitos"
   },
   "byPlatform": {
     "title": "Por Plataforma",
@@ -34,11 +50,13 @@
     "noData": "Sin datos por tipo de activo",
     "types": {
       "stocks": "Acciones",
+      "etfs": "ETFs",
       "bonds": "Bonos",
       "crypto": "Cripto",
       "realEstate": "Bienes Raíces",
       "commodities": "Commodities",
       "cash": "Efectivo",
+      "mutualFunds": "Fondos Mutuos",
       "other": "Otro"
     }
   },

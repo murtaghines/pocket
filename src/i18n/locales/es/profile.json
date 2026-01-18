@@ -11,27 +11,66 @@
   "uploads": {
     "title": "Cargas Mensuales",
     "investmentUploads": "Cargas de Inversiones",
+    "investmentsByMonth": "Inversiones por Mes",
+    "uploadStatements": "Sube los extractos de tus plataformas de inversión",
     "noUploads": "Aún no hay cargas",
     "uploadFile": "Subir archivo",
     "fileUploaded": "Archivo subido",
     "processing": "Procesando",
     "processed": "Procesado",
     "failed": "Fallido",
-    "transactionsCount": "{{count}} transacciones"
+    "pending": "Pendiente",
+    "transactionsCount": "{{count}} transacciones",
+    "dragOrClick": "Arrastra archivos o haz clic para subir",
+    "addMoreFiles": "Agregar más archivos",
+    "review": "Revisar",
+    "viewTransactions": "Ver transacciones",
+    "loadMore": "Cargar Más"
   },
   "account": {
     "title": "Cuenta",
     "deleteAccount": "Eliminar Cuenta",
+    "deleteAccountTitle": "Eliminar Cuenta Permanentemente",
     "deleteWarning": "Esta acción no se puede deshacer. Todos tus datos serán eliminados permanentemente.",
+    "deleteDescription": "Esto eliminará permanentemente tu cuenta y todos tus datos incluyendo:",
+    "deleteItems": {
+      "transactions": "Todas las transacciones y registros financieros",
+      "files": "Todos los archivos y documentos subidos",
+      "investments": "Registros de inversiones y cuentas",
+      "preferences": "Preferencias y configuraciones",
+      "profile": "Tu información de perfil"
+    },
     "confirmDelete": "¿Estás seguro de que quieres eliminar tu cuenta?",
-    "typeToConfirm": "Escribe ELIMINAR para confirmar"
+    "typeToConfirm": "Escribe Confirmar para confirmar",
+    "deleting": "Eliminando...",
+    "deleteMyAccount": "Eliminar Mi Cuenta",
+    "accountDeleted": "Cuenta eliminada",
+    "accountDeletedDescription": "Tu cuenta y todos los datos han sido eliminados permanentemente."
   },
   "review": {
     "title": "Revisión del Mes",
+    "reviewTitle": "Revisión - {{month}}",
     "income": "Ingresos",
     "expenses": "Gastos",
     "balance": "Balance",
     "byCategory": "Por Categoría",
-    "closeMonth": "Cerrar Mes"
+    "closeMonth": "Cerrar Mes",
+    "transactionsInMonth": "{{count}} transacciones en este mes",
+    "noTransactions": "Sin transacciones para este mes",
+    "uploadFirst": "Sube y procesa archivos primero",
+    "monthLocked": "Este mes está cerrado. No puedes editar categorías.",
+    "monthReviewed": "Mes revisado",
+    "transactionsConfirmed": "{{count}} transacciones confirmadas para {{month}}"
+  },
+  "monthSlot": {
+    "deleteFile": "¿Eliminar archivo?",
+    "deleteDescription": "Todas las transacciones asociadas con \"{{fileName}}\" serán eliminadas. Esta acción no se puede deshacer.",
+    "processingError": "Error de procesamiento",
+    "tip": "Consejo",
+    "tipText": "Si es un PDF escaneado, intenta convertirlo a CSV o Excel antes de subirlo.",
+    "closeMonth": "¿Cerrar mes?",
+    "closeDescription": "Las transacciones de {{month}} quedarán bloqueadas y no podrás editar las categorías. Puedes reabrir el mes si lo necesitas.",
+    "reopenMonth": "¿Reabrir mes?",
+    "reopenDescription": "Podrás editar las transacciones de {{month}} de nuevo."
   }
 }
