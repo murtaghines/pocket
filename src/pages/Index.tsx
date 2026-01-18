@@ -13,6 +13,7 @@ import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { MonthClosingBanner } from "@/components/dashboard/MonthClosingBanner";
 import { MonthStatusIndicator } from "@/components/dashboard/MonthStatusIndicator";
+import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -141,6 +142,9 @@ export default function Index() {
         {/* Dashboard Content - Always show, even with empty data */}
         {!isLoading && !prefsLoading && (
           <>
+            {/* Empty State Banner - shows only when no transactions */}
+            <EmptyStateBanner hasData={transactions.length > 0} />
+
             {/* Month Closing Banner */}
             <MonthClosingBanner />
 
