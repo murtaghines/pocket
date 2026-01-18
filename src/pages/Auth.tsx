@@ -315,28 +315,30 @@ export default function Auth() {
       <img 
         src={coinImage} 
         alt="" 
-        className="fixed top-6 right-6 lg:top-10 lg:right-16 w-20 h-20 lg:w-32 lg:h-32 object-contain z-10"
+        className="fixed top-6 right-6 lg:top-10 lg:right-16 w-20 h-20 lg:w-32 lg:h-32 object-contain z-10 animate-float-fast"
       />
       
       {/* Floating coin - bottom left */}
       <img 
         src={coinImage} 
         alt="" 
-        className="fixed bottom-[12%] left-[3%] w-28 h-28 lg:w-44 lg:h-44 object-contain z-10"
+        className="fixed bottom-[12%] left-[3%] w-28 h-28 lg:w-44 lg:h-44 object-contain z-10 animate-float-medium"
+        style={{ animationDelay: '1s' }}
       />
       
       {/* Credit Card 1 - Top Left */}
       <img 
         src={creditCard1} 
         alt="" 
-        className="fixed top-[6%] left-[1%] lg:left-[3%] w-52 lg:w-80 object-contain z-10"
+        className="fixed top-[6%] left-[1%] lg:left-[3%] w-52 lg:w-80 object-contain z-10 animate-float-slow"
       />
       
       {/* Credit Card 2 - Bottom Center */}
       <img 
         src={creditCard2} 
         alt="" 
-        className="fixed bottom-[2%] left-[10%] lg:left-[15%] w-60 lg:w-96 object-contain z-10"
+        className="fixed bottom-[2%] left-[10%] lg:left-[15%] w-60 lg:w-96 object-contain z-10 animate-float-slow"
+        style={{ animationDelay: '2s' }}
       />
       
       {/* Tagline */}
