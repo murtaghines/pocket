@@ -18,17 +18,17 @@ const ASSET_COLORS: Record<string, string> = {
   'commodities': '#F59E0B',
   'crypto': '#EF4444',
   'savings': '#06B6D4',
-  'Sin clasificar': '#6B7280',
+  'Unclassified': '#6B7280',
 };
 
 const ASSET_LABELS: Record<string, string> = {
-  'stocks': 'Acciones',
+  'stocks': 'Stocks',
   'etf': 'ETFs',
-  'bonds': 'Bonos',
-  'commodities': 'Materias Primas',
-  'crypto': 'Cripto',
-  'savings': 'Ahorro',
-  'Sin clasificar': 'Sin clasificar',
+  'bonds': 'Bonds',
+  'commodities': 'Commodities',
+  'crypto': 'Crypto',
+  'savings': 'Savings',
+  'Unclassified': 'Unclassified',
 };
 
 export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
@@ -45,16 +45,16 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
     .sort((a, b) => b.value - a.value);
 
   const formatCurrency = (amount: number) =>
-    amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
 
   if (chartData.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Por Tipo de Activo</CardTitle>
+          <CardTitle>By Asset Type</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[200px]">
-          <p className="text-muted-foreground">Sin datos</p>
+          <p className="text-muted-foreground">No data</p>
         </CardContent>
       </Card>
     );
@@ -63,7 +63,7 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Por Tipo de Activo</CardTitle>
+        <CardTitle>By Asset Type</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={250}>
@@ -71,7 +71,7 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
             <XAxis type="number" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
             <YAxis type="category" dataKey="name" width={100} />
             <Tooltip
-              formatter={(value: number) => [formatCurrency(value), 'Invertido']}
+              formatter={(value: number) => [formatCurrency(value), 'Invested']}
             />
             <Bar dataKey="value" radius={[0, 4, 4, 0]}>
               {chartData.map((entry, index) => (

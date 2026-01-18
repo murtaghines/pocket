@@ -29,7 +29,7 @@ export function BankDistributionChart({ data }: BankDistributionChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   const formatCurrency = (value: number) =>
-    value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    value.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -52,7 +52,7 @@ export function BankDistributionChart({ data }: BankDistributionChartProps) {
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <CreditCard className="w-4 h-4" />
-          Gastos por Banco
+          Expenses by Bank
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-4">

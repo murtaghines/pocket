@@ -20,12 +20,12 @@ export function NetworkStatusBanner() {
       {isOnline ? (
         <>
           <Wifi className="w-4 h-4" />
-          <span>Conexión restaurada</span>
+          <span>Connection restored</span>
         </>
       ) : (
         <>
           <WifiOff className="w-4 h-4" />
-          <span>Sin conexión a internet. Las subidas no funcionarán.</span>
+          <span>No internet connection. Uploads won't work.</span>
         </>
       )}
     </div>

@@ -26,16 +26,16 @@ export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
     .sort((a, b) => b.value - a.value);
 
   const formatCurrency = (amount: number) =>
-    amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
 
   if (chartData.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Por Plataforma</CardTitle>
+          <CardTitle>By Platform</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[200px]">
-          <p className="text-muted-foreground">Sin datos</p>
+          <p className="text-muted-foreground">No data</p>
         </CardContent>
       </Card>
     );
@@ -44,7 +44,7 @@ export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Por Plataforma</CardTitle>
+        <CardTitle>By Platform</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={250}>
