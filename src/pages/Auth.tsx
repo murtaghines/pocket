@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getRememberPreference, setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
@@ -53,6 +53,20 @@ export default function Auth() {
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Parallax mouse tracking
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to 1
+    const y = (e.clientY / window.innerHeight - 0.5) * 2; // -1 to 1
+    setMousePosition({ x, y });
+  }, []);
+  
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [handleMouseMove]);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
@@ -315,30 +329,42 @@ export default function Auth() {
       <img 
         src={coinImage} 
         alt="" 
-        className="fixed top-6 right-6 lg:top-10 lg:right-16 w-20 h-20 lg:w-32 lg:h-32 object-contain z-10 animate-float-fast"
+        className="fixed top-6 right-6 lg:top-10 lg:right-16 w-20 h-20 lg:w-32 lg:h-32 object-contain z-10 animate-float-fast transition-transform duration-300 ease-out"
+        style={{ 
+          transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * -15}px)` 
+        }}
       />
       
       {/* Floating coin - bottom left */}
       <img 
         src={coinImage} 
         alt="" 
-        className="fixed bottom-[12%] left-[3%] w-28 h-28 lg:w-44 lg:h-44 object-contain z-10 animate-float-medium"
-        style={{ animationDelay: '1s' }}
+        className="fixed bottom-[12%] left-[3%] w-28 h-28 lg:w-44 lg:h-44 object-contain z-10 animate-float-medium transition-transform duration-300 ease-out"
+        style={{ 
+          animationDelay: '1s',
+          transform: `translate(${mousePosition.x * -20}px, ${mousePosition.y * -20}px)` 
+        }}
       />
       
       {/* Credit Card 1 - Top Left */}
       <img 
         src={creditCard1} 
         alt="" 
-        className="fixed top-[6%] left-[1%] lg:left-[3%] w-52 lg:w-80 object-contain z-10 animate-float-slow"
+        className="fixed top-[6%] left-[1%] lg:left-[3%] w-52 lg:w-80 object-contain z-10 animate-float-slow transition-transform duration-500 ease-out"
+        style={{ 
+          transform: `translate(${mousePosition.x * -25}px, ${mousePosition.y * -25}px) rotate(${mousePosition.x * 2}deg)` 
+        }}
       />
       
       {/* Credit Card 2 - Bottom Center */}
       <img 
         src={creditCard2} 
         alt="" 
-        className="fixed bottom-[2%] left-[10%] lg:left-[15%] w-60 lg:w-96 object-contain z-10 animate-float-slow"
-        style={{ animationDelay: '2s' }}
+        className="fixed bottom-[2%] left-[10%] lg:left-[15%] w-60 lg:w-96 object-contain z-10 animate-float-slow transition-transform duration-500 ease-out"
+        style={{ 
+          animationDelay: '2s',
+          transform: `translate(${mousePosition.x * -30}px, ${mousePosition.y * -30}px) rotate(${mousePosition.x * -2}deg)` 
+        }}
       />
       
       {/* Tagline */}
