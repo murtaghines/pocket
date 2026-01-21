@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 
 import { Calendar } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useTranslation } from "react-i18next";
 import { startOfWeek, endOfWeek, format, isToday, eachDayOfInterval, parseISO } from "date-fns";
 
 interface WeeklyData {
@@ -14,6 +15,7 @@ interface WeeklyData {
 export function WeeklyComparisonChart() {
   const { formatCurrency } = useLocalization();
   const { transactions } = useTransactions();
+  const { t } = useTranslation('dashboard');
 
   // Day abbreviations in English
   const dayAbbrevs = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -81,7 +83,7 @@ export function WeeklyComparisonChart() {
           </div>
           
           <div className="h-[80px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">No data yet</p>
+            <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
           </div>
 
           <div className="mt-2 pt-2 border-t flex justify-between text-xs">

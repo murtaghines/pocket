@@ -25,6 +25,26 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   };
 
+  const hasData = topExpenses.length > 0;
+
+  if (!hasData) {
+    return (
+      <Card className="animate-slide-up" style={{ animationDelay: '500ms' }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingDown className="w-4 h-4" />
+            {t('topExpenses.title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[200px] flex items-center justify-center">
+            <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '500ms' }}>
       <CardHeader className="pb-2">
