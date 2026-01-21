@@ -45,17 +45,20 @@
   },
   "onboarding": {
     "title": "¡Bienvenido a fint!",
+    "stepLanguage": "Idioma",
     "stepCountry": "País",
     "stepCurrency": "Moneda",
     "stepCategories": "Categorías",
     "continue": "Continuar",
     "back": "Volver",
     "getStarted": "Comenzar",
-    "selectCountry": "Empecemos seleccionando tu país. Esto nos ayuda a configurar los valores predeterminados correctos para ti.",
+    "languageDescription": "Elige tu idioma preferido para la aplicación.",
+    "countryDescription": "Empecemos seleccionando tu país. Esto nos ayuda a configurar los valores predeterminados correctos para ti.",
     "yourCountry": "Tu País",
-    "selectYourCountry": "Selecciona tu país",
+    "selectCountry": "Selecciona tu país",
     "basedOnCountry": "Según tu país, sugeriremos {{currency}} como tu moneda.",
     "selectBaseCurrency": "Selecciona tu moneda base — la moneda principal que usarás para subir transacciones y comparar valores.",
+    "currencySuggestion": "Según tu país, sugerimos {{currency}}",
     "howItWorks": "Cómo funciona:",
     "currencyTip1": "Todas las comparaciones de tipo de cambio usarán {{currency}} como referencia",
     "currencyTip2": "Puedes ver tu panel en cualquier moneda después",
@@ -67,5 +70,6 @@
     "income": "Ingresos",
     "expenses": "Gastos",
     "alwaysIncluded": "siempre incluido"
-  }
+  },
+  "language": "Idioma"
 }

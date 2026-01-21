@@ -29,6 +29,9 @@ export function LanguageSyncDialog() {
 
   useEffect(() => {
     if (!user || prefsLoading) return;
+    
+    // Only show dialog if user has completed onboarding (not a new user)
+    if (!preferences?.onboarding_completed) return;
 
     // Get browser language
     const browserLang = navigator.language?.split('-')[0] || 'en';
@@ -44,11 +47,10 @@ export function LanguageSyncDialog() {
     // Only show dialog if:
     // 1. Languages differ
     // 2. User hasn't dismissed this specific combination
-    // 3. Saved language exists and is different from browser
+    // 3. User has completed onboarding (has explicit saved preference)
     if (
       supportedBrowserLang !== savedLang && 
-      dismissedKey !== currentDismissKey &&
-      preferences?.language // Only if there's an explicit saved preference
+      dismissedKey !== currentDismissKey
     ) {
       setBrowserLanguage(supportedBrowserLang as SupportedLanguage);
       setSavedLanguage(savedLang);

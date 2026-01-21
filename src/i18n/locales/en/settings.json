@@ -45,17 +45,20 @@
   },
   "onboarding": {
     "title": "Welcome to fint!",
+    "stepLanguage": "Language",
     "stepCountry": "Country",
     "stepCurrency": "Currency",
     "stepCategories": "Categories",
     "continue": "Continue",
     "back": "Back",
     "getStarted": "Get Started",
-    "selectCountry": "Let's start by selecting your country. This helps us set the right defaults for you.",
+    "languageDescription": "Choose your preferred language for the app.",
+    "countryDescription": "Let's start by selecting your country. This helps us set the right defaults for you.",
     "yourCountry": "Your Country",
-    "selectYourCountry": "Select your country",
+    "selectCountry": "Select your country",
     "basedOnCountry": "Based on your country, we'll suggest {{currency}} as your currency.",
     "selectBaseCurrency": "Select your base currency — the primary currency you'll use to upload transactions and compare values.",
+    "currencySuggestion": "Based on your country, we suggest {{currency}}",
     "howItWorks": "How it works:",
     "currencyTip1": "All exchange rate comparisons will use {{currency}} as reference",
     "currencyTip2": "You can view your dashboard in any currency later",
@@ -67,5 +70,6 @@
     "income": "Income",
     "expenses": "Expenses",
     "alwaysIncluded": "always included"
-  }
+  },
+  "language": "Language"
 }

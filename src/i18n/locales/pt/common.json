@@ -64,5 +64,11 @@
     "invalidEmail": "Endereço de e-mail inválido",
     "minLength": "Deve ter pelo menos {{count}} caracteres",
     "maxLength": "Deve ter no máximo {{count}} caracteres"
+  },
+  "onboarding": {
+    "welcome": "Bem-vindo ao Fint! 👋",
+    "yourCountry": "Seu País",
+    "baseCurrency": "Moeda Base",
+    "categories": "Categorias"
   }
 }

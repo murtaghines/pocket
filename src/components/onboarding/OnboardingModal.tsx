@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { StepLanguage } from './StepLanguage';
 import { StepCountry } from './StepCountry';
 import { StepCurrency } from './StepCurrency';
 import { StepCategories } from './StepCategories';
@@ -13,6 +14,7 @@ import {
   DEFAULT_INCOME_CATEGORIES,
   DEFAULT_EXPENSE_CATEGORIES,
 } from '@/lib/categoryTranslations';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
 
 interface OnboardingModalProps {
   open: boolean;
@@ -28,7 +30,15 @@ export interface OnboardingData {
   language: string;
 }
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
+
+// Detect browser language
+function detectBrowserLanguage(): SupportedLanguage {
+  const browserLang = navigator.language || 'en';
+  const baseLang = browserLang.split('-')[0];
+  const supported = SUPPORTED_LANGUAGES.find(l => l.code === baseLang);
+  return (supported?.code || 'en') as SupportedLanguage;
+}
 
 export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const { t } = useTranslation('common');
@@ -37,14 +47,15 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const { updatePreferences } = useUserPreferences();
   const { toast } = useToast();
 
-  const [data, setData] = useState<OnboardingData>({
+  // Initialize with browser language
+  const [data, setData] = useState<OnboardingData>(() => ({
     country: '',
     currency: 'EUR',
     categories: [],
     incomeCategories: DEFAULT_INCOME_CATEGORIES,
     expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
-    language: 'en',
-  });
+    language: detectBrowserLanguage(),
+  }));
 
   const updateData = (updates: Partial<OnboardingData>) => {
     setData((prev) => ({ ...prev, ...updates }));
@@ -66,15 +77,25 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     setSaving(true);
     try {
       const allCategories = [...data.incomeCategories, ...data.expenseCategories];
+      
+      // Map language to locale
+      const localeMap: Record<string, string> = {
+        en: 'en-US',
+        es: 'es-ES',
+        pt: 'pt-BR',
+      };
 
       await updatePreferences({
         country: data.country,
         base_currency: data.currency,
         selected_categories: allCategories,
-        language: 'en',
-        locale: 'en-US',
+        language: data.language,
+        locale: localeMap[data.language] || 'en-US',
         onboarding_completed: true,
       } as any);
+      
+      // Persist language to localStorage for i18next
+      localStorage.setItem('i18nextLng', data.language);
 
       toast({
         title: t('success'),
@@ -96,10 +117,12 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return !!data.country;
+        return !!data.language;
       case 2:
-        return !!data.currency;
+        return !!data.country;
       case 3:
+        return !!data.currency;
+      case 4:
         return data.incomeCategories.length > 0 && data.expenseCategories.length > 0;
       default:
         return true;
@@ -109,10 +132,12 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <StepCountry data={data} updateData={updateData} />;
+        return <StepLanguage data={data} updateData={updateData} />;
       case 2:
-        return <StepCurrency data={data} updateData={updateData} />;
+        return <StepCountry data={data} updateData={updateData} />;
       case 3:
+        return <StepCurrency data={data} updateData={updateData} />;
+      case 4:
         return <StepCategories data={data} updateData={updateData} />;
       default:
         return null;
@@ -122,11 +147,13 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const getStepTitle = () => {
     switch (step) {
       case 1:
-        return 'Welcome to Fint! 👋';
+        return t('onboarding.welcome', 'Welcome to Fint! 👋');
       case 2:
-        return 'Base Currency';
+        return t('onboarding.yourCountry', 'Your Country');
       case 3:
-        return 'Categories';
+        return t('onboarding.baseCurrency', 'Base Currency');
+      case 4:
+        return t('onboarding.categories', 'Categories');
       default:
         return '';
     }
