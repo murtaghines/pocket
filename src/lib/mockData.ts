@@ -73,8 +73,7 @@ export const categoryLabels: Partial<Record<Category, string>> = {
   // New slugs
   salary: 'Salary',
   refunds: 'Refunds',
-  sales: 'Sales',
-  transfers_in: 'Transfers In',
+  transfers: 'Transfers',
   other_income: 'Other Income',
   groceries: 'Groceries',
   restaurants: 'Restaurants',
