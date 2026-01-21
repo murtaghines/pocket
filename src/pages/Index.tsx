@@ -9,7 +9,7 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
-import { MonthComparisonCard } from "@/components/dashboard/MonthComparisonCard";
+
 import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { MonthClosingBanner } from "@/components/dashboard/MonthClosingBanner";
@@ -173,11 +173,8 @@ export default function Index() {
               <MonthStatusIndicator />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-              <div className="lg:col-span-3">
-                <MonthlyChart data={convertedMonthlyData} />
-              </div>
-              <MonthComparisonCard currentMonth={convertedCurrentMonth} previousMonth={convertedPreviousMonth} />
+            <div className="mb-8">
+              <MonthlyChart data={convertedMonthlyData} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
