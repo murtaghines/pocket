@@ -1,4 +1,11 @@
 {
+  "languageSync": {
+    "title": "Preferência de idioma",
+    "description": "O idioma do seu navegador é diferente do salvo na sua conta. Qual você prefere usar?",
+    "useBrowser": "Usar idioma do navegador",
+    "useSaved": "Usar preferência salva",
+    "decideLater": "Decidir depois"
+  },
   "appName": "fint",
   "loading": "Carregando...",
   "error": "Erro",
