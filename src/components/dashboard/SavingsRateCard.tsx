@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PiggyBank } from "lucide-react";
 
 interface SavingsRateCardProps {
@@ -39,8 +40,8 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
   if (!hasData) {
     return (
       <Card className="animate-slide-up" style={{ animationDelay: `${delay}ms` }}>
-        <CardContent className="p-6 h-full flex items-center justify-center min-h-[200px]">
-          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
+        <CardContent className="p-6">
+          <EmptyState height="min-h-[176px]" />
         </CardContent>
       </Card>
     );

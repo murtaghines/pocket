@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
 
 interface CategoryData {
@@ -67,8 +68,8 @@ export function CategoryChart({ data }: CategoryChartProps) {
       <CardHeader>
         <CardTitle className="text-lg">{t('charts.categoryBreakdown')}</CardTitle>
       </CardHeader>
-      <CardContent className="h-[320px] flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
+      <CardContent>
+        <EmptyState height="h-[320px]" />
       </CardContent>
     </Card>
     );
