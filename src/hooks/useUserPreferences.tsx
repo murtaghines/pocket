@@ -34,12 +34,23 @@ function detectDefaultCurrency(): string {
   return 'EUR';
 }
 
+function detectBrowserLanguage(): string {
+  const browserLang = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'en';
+  const baseLang = browserLang.split('-')[0];
+  // Only return if it's a supported language
+  if (['en', 'es', 'pt'].includes(baseLang)) {
+    return baseLang;
+  }
+  return 'en';
+}
+
 export function useUserPreferences() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
   const [browserDefaults] = useState(() => ({
     currency: detectDefaultCurrency(),
+    language: detectBrowserLanguage(),
   }));
 
   const { data: preferences, isLoading } = useQuery({
@@ -59,13 +70,13 @@ export function useUserPreferences() {
           return null;
         }
         
-        // If no preferences exist, create with detected defaults
+        // If no preferences exist, create with detected defaults from browser
         if (!data) {
           const newPrefs = {
             user_id: user.id,
             base_currency: browserDefaults.currency,
-            locale: 'en-US',
-            language: 'en',
+            locale: browserDefaults.language === 'es' ? 'es-ES' : browserDefaults.language === 'pt' ? 'pt-BR' : 'en-US',
+            language: browserDefaults.language,
           };
           
           const { data: created, error: createError } = await supabase
@@ -114,8 +125,8 @@ export function useUserPreferences() {
         const newPrefs = {
           user_id: user.id,
           base_currency: updates.base_currency || browserDefaults.currency,
-          locale: 'en-US',
-          language: 'en',
+          locale: browserDefaults.language === 'es' ? 'es-ES' : browserDefaults.language === 'pt' ? 'pt-BR' : 'en-US',
+          language: updates.language || browserDefaults.language,
           country: updates.country,
           selected_categories: updates.selected_categories,
           onboarding_completed: updates.onboarding_completed,
@@ -144,8 +155,8 @@ export function useUserPreferences() {
     id: '',
     user_id: user?.id || '',
     base_currency: browserDefaults.currency,
-    locale: 'en-US',
-    language: 'en',
+    locale: browserDefaults.language === 'es' ? 'es-ES' : browserDefaults.language === 'pt' ? 'pt-BR' : 'en-US',
+    language: browserDefaults.language,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
