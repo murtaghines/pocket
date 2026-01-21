@@ -16,6 +16,8 @@ export function BalanceChart({ data }: BalanceChartProps) {
   const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
 
+  const hasData = data.length > 0 && data.some(d => d.balance !== 0);
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
@@ -30,6 +32,19 @@ export function BalanceChart({ data }: BalanceChartProps) {
     }
     return null;
   };
+
+  if (!hasData) {
+    return (
+      <Card className="animate-slide-up" style={{ animationDelay: '350ms' }}>
+        <CardHeader>
+          <CardTitle className="text-lg">{t('stats.balance')}</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[200px] flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '350ms' }}>

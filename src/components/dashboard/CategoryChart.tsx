@@ -64,15 +64,13 @@ export function CategoryChart({ data }: CategoryChartProps) {
   if (!hasData) {
     return (
       <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-        <CardHeader>
-          <CardTitle className="text-lg">{t('charts.categoryBreakdown')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[320px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <CardHeader>
+        <CardTitle className="text-lg">{t('charts.categoryBreakdown')}</CardTitle>
+      </CardHeader>
+      <CardContent className="h-[320px] flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+      </CardContent>
+    </Card>
     );
   }
 

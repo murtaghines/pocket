@@ -19,6 +19,8 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
 
+  const hasData = data.length > 0 && data.some(d => d.income !== 0 || d.expenses !== 0);
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -41,6 +43,19 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
     }
     return null;
   };
+
+  if (!hasData) {
+    return (
+      <Card className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+        <CardHeader>
+          <CardTitle className="text-lg">{t('charts.monthlyBalance')}</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[300px] flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '300ms' }}>
