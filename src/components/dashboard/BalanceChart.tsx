@@ -40,7 +40,7 @@ export function BalanceChart({ data }: BalanceChartProps) {
           <CardTitle className="text-lg">{t('stats.balance')}</CardTitle>
         </CardHeader>
         <CardContent className="h-[200px] flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
         </CardContent>
       </Card>
     );

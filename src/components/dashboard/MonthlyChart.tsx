@@ -51,7 +51,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
           <CardTitle className="text-lg">{t('charts.monthlyBalance')}</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px] flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
         </CardContent>
       </Card>
     );

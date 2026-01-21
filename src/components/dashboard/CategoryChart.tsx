@@ -68,7 +68,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
         <CardTitle className="text-lg">{t('charts.categoryBreakdown')}</CardTitle>
       </CardHeader>
       <CardContent className="h-[320px] flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+        <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
       </CardContent>
     </Card>
     );
