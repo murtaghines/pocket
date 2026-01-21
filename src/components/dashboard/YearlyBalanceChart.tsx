@@ -40,7 +40,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="h-[180px] flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
         </CardContent>
       </Card>
     );

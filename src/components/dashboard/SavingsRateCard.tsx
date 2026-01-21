@@ -40,7 +40,7 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
     return (
       <Card className="animate-slide-up" style={{ animationDelay: `${delay}ms` }}>
         <CardContent className="p-6 h-full flex items-center justify-center min-h-[200px]">
-          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
         </CardContent>
       </Card>
     );
