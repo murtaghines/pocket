@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { CreditCard } from "lucide-react";
+import { CreditCard, Building2 } from "lucide-react";
 
 interface BankData {
   name: string;
@@ -93,9 +93,14 @@ export function BankDistributionChart({ data }: BankDistributionChartProps) {
               return (
                 <div key={item.name} className="flex items-center gap-2">
                   <div 
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: color }}
-                  />
+                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ 
+                      backgroundColor: `${color}20`,
+                      color: color
+                    }}
+                  >
+                    <Building2 size={10} strokeWidth={2.5} />
+                  </div>
                   <span className="text-xs flex-1 truncate">{item.name}</span>
                   <span className="text-xs text-muted-foreground">{percentage}%</span>
                 </div>
