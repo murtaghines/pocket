@@ -15,18 +15,21 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
   const strokeDashoffset = circumference - (savingsRate / 100) * circumference;
   
   const getColor = () => {
+    if (savingsRate === 0) return 'text-muted-foreground';
     if (savingsRate >= 30) return 'text-success';
     if (savingsRate >= 15) return 'text-warning';
     return 'text-destructive';
   };
 
   const getStrokeColor = () => {
+    if (savingsRate === 0) return 'hsl(var(--muted-foreground))';
     if (savingsRate >= 30) return 'hsl(var(--success))';
     if (savingsRate >= 15) return 'hsl(var(--warning))';
     return 'hsl(var(--destructive))';
   };
 
   const getRatingLabel = () => {
+    if (savingsRate === 0) return '-';
     if (savingsRate >= 30) return t('stats.excellent', { defaultValue: 'Excellent' });
     if (savingsRate >= 15) return t('stats.good', { defaultValue: 'Good' });
     return t('stats.needsImprovement', { defaultValue: 'Needs improvement' });

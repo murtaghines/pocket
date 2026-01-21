@@ -65,6 +65,34 @@ export function WeeklyComparisonChart() {
     return null;
   };
 
+  // Empty state - show blank card like others
+  if (!hasData) {
+    return (
+      <Card className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            This Week
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pb-4">
+          <div className="flex items-baseline gap-2 mb-3">
+            <span className="text-xl font-bold text-muted-foreground">-</span>
+          </div>
+          
+          <div className="h-[80px] flex items-center justify-center">
+            <p className="text-sm text-muted-foreground">No data yet</p>
+          </div>
+
+          <div className="mt-2 pt-2 border-t flex justify-between text-xs">
+            <span className="text-muted-foreground">Daily average</span>
+            <span className="font-medium text-muted-foreground">-</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
       <CardHeader className="pb-2">
@@ -89,7 +117,7 @@ export function WeeklyComparisonChart() {
                 tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
               />
               <YAxis hide />
-              {hasData && <Tooltip content={<CustomTooltip />} cursor={false} />}
+              <Tooltip content={<CustomTooltip />} cursor={false} />
               <Bar 
                 dataKey="amount" 
                 radius={[3, 3, 0, 0]}
@@ -112,9 +140,7 @@ export function WeeklyComparisonChart() {
 
         <div className="mt-2 pt-2 border-t flex justify-between text-xs">
           <span className="text-muted-foreground">Daily average</span>
-          <span className="font-medium">
-            {hasData ? `${formatCurrency(averageDaily)}/day` : '-'}
-          </span>
+          <span className="font-medium">{formatCurrency(averageDaily)}/day</span>
         </div>
       </CardContent>
     </Card>
