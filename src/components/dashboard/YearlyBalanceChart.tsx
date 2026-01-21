@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, Refere
 import { Scale } from "lucide-react";
 import { MonthlyData } from "@/lib/mockData";
 import { useLocalization } from "@/hooks/useLocalization";
+import { useTranslation } from "react-i18next";
 
 interface YearlyBalanceChartProps {
   data: MonthlyData[];
@@ -10,10 +11,12 @@ interface YearlyBalanceChartProps {
 
 export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
   const { formatCurrency } = useLocalization();
+  const { t } = useTranslation('dashboard');
 
+  const hasData = data.length > 0 && data.some(d => d.balance !== 0);
   const totalBalance = data.reduce((sum, d) => sum + d.balance, 0);
-  const averageBalance = Math.round(totalBalance / data.length);
-  const maxBalance = Math.max(...data.map(d => d.balance));
+  const averageBalance = data.length > 0 ? Math.round(totalBalance / data.length) : 0;
+  const maxBalance = data.length > 0 ? Math.max(...data.map(d => d.balance)) : 0;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -26,6 +29,22 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
     }
     return null;
   };
+
+  if (!hasData) {
+    return (
+      <Card className="animate-slide-up" style={{ animationDelay: '700ms' }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Scale className="w-4 h-4" />
+            Yearly Balance
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="h-[180px] flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="animate-slide-up" style={{ animationDelay: '700ms' }}>

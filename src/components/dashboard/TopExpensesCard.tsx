@@ -36,10 +36,8 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
             {t('topExpenses.title')}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-[200px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
-          </div>
+        <CardContent className="h-[200px] flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
         </CardContent>
       </Card>
     );

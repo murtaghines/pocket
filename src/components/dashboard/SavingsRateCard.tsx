@@ -10,6 +10,7 @@ interface SavingsRateCardProps {
 
 export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCardProps) {
   const { t } = useTranslation('dashboard');
+  const hasData = income > 0 || expenses > 0;
   const savingsRate = income > 0 ? Math.round(((income - expenses) / income) * 100) : 0;
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (savingsRate / 100) * circumference;
@@ -34,6 +35,16 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
     if (savingsRate >= 15) return t('stats.good', { defaultValue: 'Good' });
     return t('stats.needsImprovement', { defaultValue: 'Needs improvement' });
   };
+
+  if (!hasData) {
+    return (
+      <Card className="animate-slide-up" style={{ animationDelay: `${delay}ms` }}>
+        <CardContent className="p-6 h-full flex items-center justify-center min-h-[200px]">
+          <p className="text-sm text-muted-foreground">{t('common.noDataYet', { defaultValue: 'No data yet' })}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card 
