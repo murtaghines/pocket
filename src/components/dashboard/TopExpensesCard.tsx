@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingDown } from "lucide-react";
-import { Transaction, categoryColors, Category } from "@/lib/mockData";
-import { cn } from "@/lib/utils";
+import { Transaction } from "@/lib/mockData";
 import { useLocalization } from "@/hooks/useLocalization";
-import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { useTranslation } from "react-i18next";
+import { CategoryIcon } from "@/components/ui/category-icon";
 
 interface TopExpensesCardProps {
   transactions: Transaction[];
@@ -13,6 +13,7 @@ interface TopExpensesCardProps {
 export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
   const { formatCurrency } = useLocalization();
   const { t } = useTranslation('dashboard');
+  const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
   const topExpenses = transactions
     .filter(t => t.type === 'expense' && t.category !== 'investment')
@@ -33,25 +34,29 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {topExpenses.map((expense, index) => (
-          <div key={expense.id} className="flex items-center gap-3">
-            <div 
-              className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0")}
-              style={{ backgroundColor: categoryColors[expense.category as Category] }}
-            >
-              {index + 1}
+        {topExpenses.map((expense) => {
+          const categorySlug = expense.categorySlug || expense.category;
+          return (
+            <div key={expense.id} className="flex items-center gap-3">
+              <CategoryIcon
+                iconName={getCategoryIcon(categorySlug)}
+                colorVar={getCategoryColor(categorySlug)}
+                size="md"
+                showBackground
+                className="flex-shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{expense.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDate(expense.date)} • {getCategoryLabel(categorySlug)}
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-destructive flex-shrink-0">
+                -{formatCurrency(Math.abs(expense.amount))}
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{expense.description}</p>
-              <p className="text-xs text-muted-foreground">
-                {formatDate(expense.date)} • {getCategoryLabel(expense.category)}
-              </p>
-            </div>
-            <span className="text-sm font-semibold text-destructive flex-shrink-0">
-              -{formatCurrency(Math.abs(expense.amount))}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );
