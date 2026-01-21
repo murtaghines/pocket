@@ -2,9 +2,51 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { Transaction, MonthlyData, Category } from "@/lib/mockData";
-import { categoryColors } from "@/lib/mockData";
-import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
 import type { Database } from "@/integrations/supabase/types";
+
+// Helper function to get HSL color from CSS variable name
+function getCategoryHslColor(categorySlug: string): string {
+  const varName = categoryColorVars[categorySlug];
+  if (!varName) return "hsl(220, 10%, 55%)";
+  
+  // Try to get the CSS variable value from the document
+  if (typeof window !== 'undefined') {
+    const root = document.documentElement;
+    const hslValue = getComputedStyle(root).getPropertyValue(`--${varName}`).trim();
+    if (hslValue) {
+      return `hsl(${hslValue})`;
+    }
+  }
+  
+  // Fallback colors if CSS variable is not available
+  const fallbackColors: Record<string, string> = {
+    'category-salary': 'hsl(142, 76%, 36%)',
+    'category-refunds': 'hsl(199, 89%, 48%)',
+    'category-transfers': 'hsl(220, 14%, 50%)',
+    'category-other-income': 'hsl(160, 60%, 45%)',
+    'category-investment': 'hsl(262, 83%, 58%)',
+    'category-freelance': 'hsl(280, 65%, 60%)',
+    'category-rents': 'hsl(45, 93%, 47%)',
+    'category-housing': 'hsl(25, 95%, 53%)',
+    'category-groceries': 'hsl(142, 71%, 45%)',
+    'category-restaurants': 'hsl(12, 76%, 61%)',
+    'category-transport': 'hsl(217, 91%, 60%)',
+    'category-health': 'hsl(340, 82%, 52%)',
+    'category-entertainment': 'hsl(280, 87%, 65%)',
+    'category-shopping': 'hsl(326, 78%, 60%)',
+    'category-education': 'hsl(199, 89%, 48%)',
+    'category-subscriptions': 'hsl(262, 83%, 58%)',
+    'category-travel': 'hsl(45, 93%, 47%)',
+    'category-sports': 'hsl(174, 72%, 40%)',
+    'category-other-expense': 'hsl(220, 9%, 46%)',
+    'category-pets': 'hsl(32, 95%, 44%)',
+    'category-own-transfer': 'hsl(220, 14%, 50%)',
+    'category-to-investment': 'hsl(262, 83%, 58%)',
+  };
+  
+  return fallbackColors[varName] || "hsl(220, 10%, 55%)";
+}
 
 type AppDomain = Database["public"]["Enums"]["app_domain"];
 type MovementType = Database["public"]["Enums"]["movement_type"];
@@ -175,7 +217,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       name: getCategoryLabel(category),
       value: Math.round(value * 100) / 100,
       category: category as Category,
-      color: categoryColors[category as Category] || "hsl(220, 10%, 55%)",
+      color: getCategoryHslColor(category),
     }));
   })();
 
