@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Tags, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
+import { CategoryIcon } from '@/components/ui/category-icon';
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
@@ -18,7 +19,7 @@ import {
 
 export function CategoriesEditor() {
   const { t } = useTranslation('settings');
-  const { getCategoryLabel, getCategoryEmoji } = useCategoryTranslations();
+  const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const { preferences, updatePreferences, isUpdating } = useUserPreferences();
   
   // Parse selected categories from preferences
@@ -157,7 +158,11 @@ export function CategoriesEditor() {
               htmlFor={`edit-${slug}`}
               className={`flex items-center gap-1.5 text-xs ${isDisabled ? '' : 'cursor-pointer'}`}
             >
-              <span>{getCategoryEmoji(slug)}</span>
+              <CategoryIcon 
+                iconName={getCategoryIcon(slug)} 
+                colorVar={getCategoryColor(slug)} 
+                size="sm"
+              />
               <span className="truncate">{getCategoryLabel(slug)}</span>
             </Label>
           </div>

@@ -9,57 +9,34 @@ import { Transaction, Category } from "@/lib/mockData";
 import { Search, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
-import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
+import { CategoryIcon } from "@/components/ui/category-icon";
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from "@/lib/categoryTranslations";
 
 interface TransactionTableProps {
   transactions: Transaction[];
 }
 
-const categoryBadgeColors: Partial<Record<Category, string>> = {
-  food: 'bg-category-food/20 text-category-food border-category-food/30',
-  transport: 'bg-category-transport/20 text-category-transport border-category-transport/30',
-  housing: 'bg-category-housing/20 text-category-housing border-category-housing/30',
-  subscriptions: 'bg-category-subscriptions/20 text-category-subscriptions border-category-subscriptions/30',
-  leisure: 'bg-category-leisure/20 text-category-leisure border-category-leisure/30',
-  health: 'bg-category-health/20 text-category-health border-category-health/30',
-  education: 'bg-category-education/20 text-category-education border-category-education/30',
-  travel: 'bg-category-travel/20 text-category-travel border-category-travel/30',
-  other: 'bg-category-other/20 text-category-other border-category-other/30',
-  income: 'bg-success/20 text-success border-success/30',
-  transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
-  investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
-  salary: 'bg-success/20 text-success border-success/30',
-  refunds: 'bg-success/20 text-success border-success/30',
-  sales: 'bg-success/20 text-success border-success/30',
-  transfers_in: 'bg-success/20 text-success border-success/30',
-  other_income: 'bg-success/20 text-success border-success/30',
-  groceries: 'bg-category-food/20 text-category-food border-category-food/30',
-  restaurants: 'bg-category-leisure/20 text-category-leisure border-category-leisure/30',
-  shopping: 'bg-category-subscriptions/20 text-category-subscriptions border-category-subscriptions/30',
-  own_transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
-  to_investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
-};
-
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
-
-const categoriesByMovement: Record<MovementType, Category[]> = {
-  income: ['income'],
-  expense: ['housing', 'health', 'transport', 'subscriptions', 'food', 'other', 'leisure', 'travel'],
-  transfer: [],
-  investment: ['investment'],
-};
 
 const movementBadgeColors: Record<MovementType, string> = {
   income: 'bg-success/20 text-success border-success/30',
   expense: 'bg-destructive/20 text-destructive border-destructive/30',
   transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
-  investment: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+  investment: 'bg-category-investment/20 text-category-investment border-category-investment/30',
+};
+
+const categoriesByMovement: Record<MovementType, string[]> = {
+  income: INCOME_CATEGORIES,
+  expense: EXPENSE_CATEGORIES,
+  transfer: TRANSFER_CATEGORIES,
+  investment: ['investment', 'to_investment'],
 };
 
 const getMovementType = (transaction: Transaction): MovementType => {
-  if (transaction.type === 'income') return 'income';
-  if (transaction.category === 'investment') return 'investment';
-  if (transaction.type === 'transfer' || transaction.category === 'transfer') return 'transfer';
+  if (transaction.movement === 'INCOME' || transaction.type === 'income') return 'income';
+  if (transaction.movement === 'TRANSFER' || transaction.type === 'transfer') return 'transfer';
+  if (transaction.category === 'investment' || transaction.category === 'to_investment') return 'investment';
   return 'expense';
 };
 
@@ -70,6 +47,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [movementFilter, setMovementFilter] = useState<string>("all");
   const { formatCurrency } = useLocalization();
+  const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
   const movementLabels: Record<MovementType, string> = {
     income: t('stats.income'),
@@ -78,15 +56,17 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     investment: t('investments.title'),
   };
 
+  const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES, ...TRANSFER_CATEGORIES];
+  
   const availableCategories = movementFilter === "all" 
-    ? Object.keys(categoryBadgeColors) as Category[]
+    ? allCategories
     : categoriesByMovement[movementFilter as MovementType] || [];
 
   const handleMovementChange = (value: string) => {
     setMovementFilter(value);
     if (value !== "all") {
       const newCategories = categoriesByMovement[value as MovementType] || [];
-      if (!newCategories.includes(categoryFilter as Category)) {
+      if (!newCategories.includes(categoryFilter)) {
         setCategoryFilter("all");
       }
     }
@@ -144,7 +124,15 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <SelectItem value="all">{tc('viewAll')}</SelectItem>
                 {availableCategories.map(cat => (
                   <SelectItem key={cat} value={cat}>
-                    {getCategoryLabel(cat)}
+                    <div className="flex items-center gap-2">
+                      <CategoryIcon 
+                        iconName={getCategoryIcon(cat)} 
+                        colorVar={getCategoryColor(cat)} 
+                        size="sm"
+                        showBackground={false}
+                      />
+                      {getCategoryLabel(cat)}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -201,14 +189,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           <div className={cn(
                             "p-1.5 rounded-full flex-shrink-0",
                             movementType === 'income' ? "bg-success/20"
-                              : movementType === 'investment' ? "bg-blue-500/20"
+                              : movementType === 'investment' ? "bg-category-investment/20"
                               : movementType === 'transfer' ? "bg-muted"
                               : "bg-destructive/20"
                           )}>
                             {movementType === 'income' ? (
                               <ArrowDownRight className="w-3 h-3 text-success" />
                             ) : movementType === 'investment' ? (
-                              <Minus className="w-3 h-3 text-blue-500" />
+                              <Minus className="w-3 h-3 text-category-investment" />
                             ) : movementType === 'transfer' ? (
                               <Minus className="w-3 h-3 text-muted-foreground" />
                             ) : (
@@ -230,12 +218,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         {movementType === 'transfer' ? (
                           <span className="text-muted-foreground text-sm">—</span>
                         ) : (
-                          <Badge 
-                            variant="outline" 
-                            className={cn("font-normal", categoryBadgeColors[transaction.category])}
-                          >
-                            {getCategoryLabel(transaction.category)}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <CategoryIcon 
+                              iconName={getCategoryIcon(transaction.category)} 
+                              colorVar={getCategoryColor(transaction.category)} 
+                              size="sm"
+                            />
+                            <span className="text-sm">{getCategoryLabel(transaction.category)}</span>
+                          </div>
                         )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-muted-foreground">
@@ -247,7 +237,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       <TableCell className={cn(
                         "text-right font-semibold tabular-nums",
                         movementType === 'income' ? "text-success"
-                          : movementType === 'investment' ? "text-blue-500"
+                          : movementType === 'investment' ? "text-category-investment"
                           : movementType === 'transfer' ? "text-muted-foreground"
                           : "text-destructive"
                       )}>

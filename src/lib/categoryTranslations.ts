@@ -65,33 +65,33 @@ export const categoryIcons: Record<string, string> = {
   to_investment: 'trending-up',
 };
 
-// Category emojis for onboarding UI
-export const categoryEmojis: Record<string, string> = {
+// Category colors (CSS variable names)
+export const categoryColors: Record<string, string> = {
   // Income
-  salary: '💼',
-  refunds: '↩️',
-  transfers: '📥',
-  other_income: '➕',
-  investment: '📈',
-  freelance: '💻',
-  rents: '🏘️',
+  salary: 'category-salary',
+  refunds: 'category-refunds',
+  transfers: 'category-transfers',
+  other_income: 'category-other-income',
+  investment: 'category-investment',
+  freelance: 'category-freelance',
+  rents: 'category-rents',
   // Expense
-  housing: '🏠',
-  groceries: '🛒',
-  restaurants: '🍽️',
-  transport: '🚗',
-  health: '🏥',
-  entertainment: '🎮',
-  shopping: '🛍️',
-  education: '📚',
-  subscriptions: '📺',
-  travel: '✈️',
-  sports: '🏃',
-  other_expense: '📦',
-  pets: '🐾',
+  housing: 'category-housing',
+  groceries: 'category-groceries',
+  restaurants: 'category-restaurants',
+  transport: 'category-transport',
+  health: 'category-health',
+  entertainment: 'category-entertainment',
+  shopping: 'category-shopping',
+  education: 'category-education',
+  subscriptions: 'category-subscriptions',
+  travel: 'category-travel',
+  sports: 'category-sports',
+  other_expense: 'category-other-expense',
+  pets: 'category-pets',
   // Transfer
-  own_transfer: '↔️',
-  to_investment: '📈',
+  own_transfer: 'category-own-transfer',
+  to_investment: 'category-to-investment',
 };
 
 // Legacy slug mapping - maps old/incorrect slugs to correct ones

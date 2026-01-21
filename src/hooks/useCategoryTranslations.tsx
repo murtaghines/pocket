@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { normalizeCategory, categoryEmojis, categoryIcons, INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from '@/lib/categoryTranslations';
+import { normalizeCategory, categoryColors, categoryIcons, INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from '@/lib/categoryTranslations';
 
 export function useCategoryTranslations() {
   const { t } = useTranslation('categories');
@@ -41,13 +41,13 @@ export function useCategoryTranslations() {
     return t(`movement.${movement}`, movement);
   };
 
-  // Get category emoji
-  const getCategoryEmoji = (slug: string): string => {
+  // Get category color CSS variable name
+  const getCategoryColor = (slug: string): string => {
     const normalized = normalizeCategory(slug);
-    return categoryEmojis[normalized] || '📦';
+    return categoryColors[normalized] || 'category-other-expense';
   };
 
-  // Get category icon name
+  // Get category icon name (Lucide icon name)
   const getCategoryIcon = (slug: string): string => {
     const normalized = normalizeCategory(slug);
     return categoryIcons[normalized] || 'circle';
@@ -56,7 +56,7 @@ export function useCategoryTranslations() {
   return {
     getCategoryLabel,
     getMovementLabel,
-    getCategoryEmoji,
+    getCategoryColor,
     getCategoryIcon,
     normalizeCategory,
   };

@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/lib/categoryTranslations';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { useTranslation } from 'react-i18next';
+import { CategoryIcon } from '@/components/ui/category-icon';
 
 interface StepCategoriesProps {
   data: OnboardingData;
@@ -14,7 +15,7 @@ interface StepCategoriesProps {
 
 export function StepCategories({ data, updateData }: StepCategoriesProps) {
   const { t } = useTranslation('settings');
-  const { getCategoryLabel, getCategoryEmoji } = useCategoryTranslations();
+  const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   // Split categories into income and expense
   const incomeCategories = data.incomeCategories || [];
   const expenseCategories = data.expenseCategories || [];
@@ -74,7 +75,11 @@ export function StepCategories({ data, updateData }: StepCategoriesProps) {
               htmlFor={slug}
               className={`flex items-center gap-2 ${isDisabled ? '' : 'cursor-pointer'}`}
             >
-              <span>{getCategoryEmoji(slug)}</span>
+              <CategoryIcon 
+                iconName={getCategoryIcon(slug)} 
+                colorVar={getCategoryColor(slug)} 
+                size="sm"
+              />
               <span className="text-sm">
                 {getCategoryLabel(slug)}
                 {isDisabled && (
