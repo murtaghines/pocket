@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocalization } from "@/hooks/useLocalization";
 
@@ -50,8 +51,8 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
         <CardHeader>
           <CardTitle className="text-lg">{t('charts.monthlyBalance')}</CardTitle>
         </CardHeader>
-        <CardContent className="h-[300px] flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
+        <CardContent>
+          <EmptyState height="h-[300px]" />
         </CardContent>
       </Card>
     );

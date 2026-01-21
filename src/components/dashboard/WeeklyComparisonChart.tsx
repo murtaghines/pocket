@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { Calendar } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -77,8 +78,8 @@ export function WeeklyComparisonChart() {
             This Week
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-[140px] flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
+        <CardContent>
+          <EmptyState height="h-[140px]" />
         </CardContent>
       </Card>
     );

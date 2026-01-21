@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, ReferenceLine } from "recharts";
 import { Scale } from "lucide-react";
 import { MonthlyData } from "@/lib/mockData";
@@ -39,8 +40,8 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
             Yearly Balance
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-[180px] flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
+        <CardContent>
+          <EmptyState height="h-[180px]" />
         </CardContent>
       </Card>
     );

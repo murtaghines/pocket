@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { TrendingDown } from "lucide-react";
 import { Transaction } from "@/lib/mockData";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -36,8 +37,8 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
             {t('topExpenses.title')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-[200px] flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">{t('common:noDataYet')}</p>
+        <CardContent>
+          <EmptyState height="h-[200px]" />
         </CardContent>
       </Card>
     );
