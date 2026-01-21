@@ -15,15 +15,22 @@ export type Category =
   | 'income'
   | 'transfer'
   | 'investment'
-  // New category slugs from DB
+  // Income categories
   | 'salary'
   | 'refunds'
-  | 'sales'
-  | 'transfers_in'
+  | 'transfers'
   | 'other_income'
+  | 'freelance'
+  | 'rents'
+  // Expense categories
   | 'groceries'
   | 'restaurants'
+  | 'entertainment'
   | 'shopping'
+  | 'sports'
+  | 'other_expense'
+  | 'pets'
+  // Transfer categories
   | 'own_transfer'
   | 'to_investment';
 
@@ -77,29 +84,36 @@ export const categoryLabels: Partial<Record<Category, string>> = {
 };
 
 export const categoryColors: Partial<Record<Category, string>> = {
-  food: 'hsl(45, 100%, 55%)',
-  transport: 'hsl(220, 80%, 50%)',
-  housing: 'hsl(30, 100%, 50%)',
-  subscriptions: 'hsl(300, 50%, 55%)',
-  leisure: 'hsl(200, 75%, 65%)',
-  health: 'hsl(0, 75%, 55%)',
-  education: 'hsl(35, 100%, 55%)',
-  travel: 'hsl(175, 55%, 50%)',
-  other: 'hsl(220, 10%, 55%)',
-  income: 'hsl(155, 60%, 45%)',
-  transfer: 'hsl(220, 10%, 55%)',
-  investment: 'hsl(210, 80%, 55%)',
-  // New slugs
-  salary: 'hsl(155, 60%, 45%)',
-  refunds: 'hsl(155, 50%, 50%)',
-  sales: 'hsl(155, 40%, 55%)',
-  transfers_in: 'hsl(155, 30%, 60%)',
-  other_income: 'hsl(155, 25%, 55%)',
-  groceries: 'hsl(45, 100%, 55%)',
-  restaurants: 'hsl(15, 90%, 55%)',
-  shopping: 'hsl(280, 60%, 55%)',
-  own_transfer: 'hsl(220, 10%, 55%)',
-  to_investment: 'hsl(210, 80%, 55%)',
+  // Income categories
+  salary: 'hsl(142, 76%, 36%)',
+  refunds: 'hsl(199, 89%, 48%)',
+  other_income: 'hsl(160, 60%, 45%)',
+  investment: 'hsl(262, 83%, 58%)',
+  freelance: 'hsl(280, 65%, 60%)',
+  rents: 'hsl(45, 93%, 47%)',
+  // Expense categories
+  housing: 'hsl(25, 95%, 53%)',
+  groceries: 'hsl(142, 71%, 45%)',
+  restaurants: 'hsl(12, 76%, 61%)',
+  transport: 'hsl(217, 91%, 60%)',
+  health: 'hsl(340, 82%, 52%)',
+  entertainment: 'hsl(280, 87%, 65%)',
+  shopping: 'hsl(326, 78%, 60%)',
+  education: 'hsl(199, 89%, 48%)',
+  subscriptions: 'hsl(262, 83%, 58%)',
+  travel: 'hsl(45, 93%, 47%)',
+  sports: 'hsl(174, 72%, 40%)',
+  other_expense: 'hsl(220, 9%, 46%)',
+  pets: 'hsl(32, 95%, 44%)',
+  // Transfer categories
+  own_transfer: 'hsl(220, 14%, 50%)',
+  to_investment: 'hsl(262, 83%, 58%)',
+  // Legacy mappings for backward compatibility
+  food: 'hsl(142, 71%, 45%)',
+  leisure: 'hsl(280, 87%, 65%)',
+  other: 'hsl(220, 9%, 46%)',
+  income: 'hsl(142, 76%, 36%)',
+  transfer: 'hsl(220, 14%, 50%)',
 };
 
 export const banks = [
