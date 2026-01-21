@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
+import { LanguageSyncDialog } from "@/components/layout/LanguageSyncDialog";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
@@ -53,6 +54,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <NetworkStatusBanner />
+      <LanguageSyncDialog />
       <Toaster />
       <Sonner />
       <BrowserRouter>
