@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,7 +7,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
-import { LanguageSyncDialog } from "@/components/layout/LanguageSyncDialog";
+import { LanguagePreferenceSync } from "@/components/layout/LanguagePreferenceSync";
+import { SUPPORTED_LANGUAGES } from "@/i18n/config";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
@@ -34,6 +37,22 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const { i18n } = useTranslation();
+
+  // For unauthenticated pages (login / sign up), always follow the browser language.
+  useEffect(() => {
+    if (loading || user) return;
+
+    const browserLang = navigator.language?.split("-")[0] || "en";
+    const supportedBrowserLang =
+      SUPPORTED_LANGUAGES.find((l) => l.code === browserLang)?.code || "en";
+
+    const currentLang = i18n.language?.split("-")[0] || "en";
+    if (currentLang !== supportedBrowserLang) {
+      i18n.changeLanguage(supportedBrowserLang);
+    }
+    localStorage.setItem("i18nextLng", supportedBrowserLang);
+  }, [i18n, loading, user]);
 
   if (loading) {
     return (
@@ -54,7 +73,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <NetworkStatusBanner />
-      <LanguageSyncDialog />
+      <LanguagePreferenceSync />
       <Toaster />
       <Sonner />
       <BrowserRouter>
