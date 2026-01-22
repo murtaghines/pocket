@@ -139,7 +139,7 @@ export function ProfileInfoCard() {
             )}
           </>
         )}
-        <div className="pt-4 border-t space-y-3">
+        <div className="pt-4 border-t">
           <Button 
             variant="outline" 
             onClick={signOut}
@@ -148,7 +148,6 @@ export function ProfileInfoCard() {
             <LogOut className="w-4 h-4" />
             {tc('navigation.logout')}
           </Button>
-          <DeleteAccountDialog />
         </div>
       </CardContent>
     </Card>

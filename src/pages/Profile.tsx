@@ -5,6 +5,7 @@ import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploa
 import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
+import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import { FileText, TrendingUp } from "lucide-react";
 
 export default function Profile() {
@@ -56,7 +57,10 @@ export default function Profile() {
       </main>
 
       <footer className="border-t mt-12">
-        <div className="container px-4 md:px-6 py-6">
+        <div className="container px-4 md:px-6 py-8 space-y-8">
+          <div className="max-w-xs mx-auto">
+            <DeleteAccountDialog />
+          </div>
           <p className="text-sm text-muted-foreground text-center">
             fint
           </p>

@@ -43,7 +43,15 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Clear local state immediately, even if API call fails (e.g., session expired)
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore errors - session may already be gone
+    }
+    // Force clear state in case signOut didn't trigger onAuthStateChange
+    setUser(null);
+    setSession(null);
   };
 
   return { user, session, loading, signOut };
