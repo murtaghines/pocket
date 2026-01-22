@@ -1,14 +1,15 @@
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, TrendingUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useImports } from "@/hooks/useImports";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
-
 const DEFAULT_MONTHS_TO_SHOW = 6;
 
 export function InvestmentUploadsOrganizer() {
+  const { t } = useTranslation('profile');
   // Use imports instead of uploads (unified system)
   const { imports, isLoading, deleteImport, isDeleting } = useImports("INVESTING");
   const { 
@@ -61,11 +62,10 @@ export function InvestmentUploadsOrganizer() {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Investments by Month
-          </CardTitle>
+        <CardHeader className="pb-4">
+          <p className="text-sm text-muted-foreground">
+            {t('uploads.uploadStatements')}
+          </p>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -80,13 +80,9 @@ export function InvestmentUploadsOrganizer() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
-          Investments by Month
-        </CardTitle>
+      <CardHeader className="pb-4">
         <p className="text-sm text-muted-foreground">
-          Upload your investment platform statements
+          {t('uploads.uploadStatements')}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
