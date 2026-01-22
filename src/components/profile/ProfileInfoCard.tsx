@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +10,11 @@ import { useProfile } from "@/hooks/useProfile";
 import { useLocalization } from "@/hooks/useLocalization";
 import { User, Mail, Calendar, LogOut, Pencil, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { DeleteAccountDialog } from "./DeleteAccountDialog";
 
 export function ProfileInfoCard() {
   const { t } = useTranslation('profile');
   const { t: tc } = useTranslation('common');
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile, updateProfile, isUpdating } = useProfile();
   const { formatDate } = useLocalization();
@@ -22,6 +23,11 @@ export function ProfileInfoCard() {
   const [isEditing, setIsEditing] = useState(false);
   const [firstName, setFirstName] = useState(profile?.first_name || "");
   const [lastName, setLastName] = useState(profile?.last_name || "");
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/auth", { replace: true });
+  };
 
   const handleEdit = () => {
     setFirstName(profile?.first_name || "");
@@ -142,7 +148,7 @@ export function ProfileInfoCard() {
         <div className="pt-4 border-t">
           <Button 
             variant="outline" 
-            onClick={signOut}
+            onClick={handleLogout}
             className="w-full gap-2 text-muted-foreground hover:text-foreground"
           >
             <LogOut className="w-4 h-4" />
