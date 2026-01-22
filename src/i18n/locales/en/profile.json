@@ -2,6 +2,7 @@
   "title": "Profile",
   "personalInfo": {
     "title": "Personal Information",
+    "description": "Manage your personal information and account",
     "firstName": "First Name",
     "lastName": "Last Name",
     "email": "Email",

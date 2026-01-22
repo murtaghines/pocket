@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { toast } from 'sonner';
-import { Tags, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { CategoryIcon } from '@/components/ui/category-icon';
@@ -173,14 +173,10 @@ export function CategoriesEditor() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Tags className="h-5 w-5" />
-          {t('categories.title')}
-        </CardTitle>
-        <CardDescription>
+      <CardHeader className="pb-4">
+        <p className="text-sm text-muted-foreground">
           {t('categories.description')}
-        </CardDescription>
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <Tabs defaultValue="income" className="w-full">
