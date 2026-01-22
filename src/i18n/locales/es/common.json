@@ -36,7 +36,8 @@
     "investments": "Inversiones",
     "profile": "Perfil",
     "settings": "Configuración",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "logoutSuccess": "Sesión cerrada correctamente"
   },
   "status": {
     "active": "Activo",

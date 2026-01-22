@@ -26,6 +26,9 @@ export function ProfileInfoCard() {
 
   const handleLogout = async () => {
     await signOut();
+    toast({
+      title: tc('navigation.logoutSuccess', { defaultValue: 'Logged out successfully' }),
+    });
     navigate("/auth", { replace: true });
   };
 
