@@ -75,7 +75,7 @@ export function MonthlyUploadsOrganizer() {
       <Card>
         <CardHeader className="pb-4">
           <p className="text-sm text-muted-foreground">
-            {t('uploads.uploadStatements')}
+            {t('uploads.uploadBankStatements')}
           </p>
         </CardHeader>
         <CardContent>
@@ -93,7 +93,7 @@ export function MonthlyUploadsOrganizer() {
     <Card>
       <CardHeader className="pb-4">
         <p className="text-sm text-muted-foreground">
-          {t('uploads.uploadStatements')}
+          {t('uploads.uploadBankStatements')}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
