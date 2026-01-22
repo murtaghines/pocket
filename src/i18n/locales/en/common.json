@@ -37,7 +37,8 @@
     "investments": "Investments",
     "profile": "Profile",
     "settings": "Settings",
-    "logout": "Log out"
+    "logout": "Log out",
+    "logoutSuccess": "Logged out successfully"
   },
   "status": {
     "active": "Active",
