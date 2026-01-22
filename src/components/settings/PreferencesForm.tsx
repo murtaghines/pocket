@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,7 +8,7 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useLanguage } from '@/hooks/useLanguage';
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies';
 import { toast } from 'sonner';
-import { Globe, DollarSign, Languages, Loader2 } from 'lucide-react';
+import { DollarSign, Languages, Loader2 } from 'lucide-react';
 
 export function PreferencesForm() {
   const { t } = useTranslation('settings');
@@ -50,14 +50,10 @@ export function PreferencesForm() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Globe className="h-5 w-5" />
-          {t('regional.title')}
-        </CardTitle>
-        <CardDescription>
+      <CardHeader className="pb-4">
+        <p className="text-sm text-muted-foreground">
           {t('regional.description')}
-        </CardDescription>
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Language */}

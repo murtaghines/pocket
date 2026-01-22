@@ -6,11 +6,12 @@ import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { FileText, TrendingUp } from "lucide-react";
+import { FileText, TrendingUp, User, Globe, Tags } from "lucide-react";
 
 export default function Profile() {
   const { t } = useTranslation('profile');
   const { t: tc } = useTranslation('common');
+  const { t: ts } = useTranslation('settings');
 
   return (
     <div className="min-h-screen bg-background">
@@ -25,13 +26,27 @@ export default function Profile() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="space-y-6">
-            <ProfileInfoCard />
+            <div className="animate-slide-up">
+              <div className="flex items-center gap-2 mb-4">
+                <User className="w-4 h-4 text-primary" />
+                <h3 className="text-base font-medium">{t('personalInfo.title')}</h3>
+              </div>
+              <ProfileInfoCard />
+            </div>
 
             <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <Globe className="w-4 h-4 text-primary" />
+                <h3 className="text-base font-medium">{ts('regional.title')}</h3>
+              </div>
               <PreferencesForm />
             </div>
 
             <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <Tags className="w-4 h-4 text-primary" />
+                <h3 className="text-base font-medium">{ts('categories.title')}</h3>
+              </div>
               <CategoriesEditor />
             </div>
           </div>
