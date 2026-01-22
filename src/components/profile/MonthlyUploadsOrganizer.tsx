@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, FolderOpen } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useImports } from "@/hooks/useImports";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
@@ -73,11 +73,10 @@ export function MonthlyUploadsOrganizer() {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FolderOpen className="w-5 h-5" />
-            {t('uploads.title')}
-          </CardTitle>
+        <CardHeader className="pb-4">
+          <p className="text-sm text-muted-foreground">
+            {t('uploads.uploadStatements')}
+          </p>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -92,11 +91,10 @@ export function MonthlyUploadsOrganizer() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FolderOpen className="w-5 h-5" />
-          {t('uploads.title')}
-        </CardTitle>
+      <CardHeader className="pb-4">
+        <p className="text-sm text-muted-foreground">
+          {t('uploads.uploadStatements')}
+        </p>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-3">
