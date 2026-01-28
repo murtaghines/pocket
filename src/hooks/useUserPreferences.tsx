@@ -58,7 +58,16 @@ export function useUserPreferences() {
     // Include session token in queryKey to refetch when session changes
     queryKey: ['user_preferences', user?.id, !!session?.access_token],
     queryFn: async (): Promise<UserPreferences | null> => {
-      if (!user || !session?.access_token) return null;
+      if (!user) return null;
+      
+      // Double-check the session directly from Supabase client
+      // This ensures we have the latest auth state
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession?.access_token) {
+        console.warn('No valid session found when fetching preferences');
+        return null;
+      }
       
       try {
         const { data, error } = await supabase
@@ -111,6 +120,13 @@ export function useUserPreferences() {
   const updatePreferences = useMutation({
     mutationFn: async (updates: Partial<UserPreferences>): Promise<UserPreferences> => {
       if (!user) throw new Error('User not authenticated');
+      
+      // Double-check the session directly from Supabase client
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession?.access_token) {
+        throw new Error('No valid session. Please log in again.');
+      }
       
       // Try to update first (most common case)
       const { data: updated, error: updateError } = await supabase
