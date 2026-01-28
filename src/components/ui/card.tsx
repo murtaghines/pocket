@@ -15,6 +15,7 @@ const cardVariants = cva(
         income: "bg-gradient-to-br from-success/10 to-success/5 border-success/20 shadow-sm",
         expense: "bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20 shadow-sm",
         neutral: "bg-gradient-to-br from-muted/80 to-muted/60 border-muted-foreground/20 shadow-sm",
+        settings: "bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-sm hover:shadow-md",
       },
     },
     defaultVariants: {
