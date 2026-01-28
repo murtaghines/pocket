@@ -35,29 +35,36 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
     const languageChanged = language !== currentLanguage;
     const currencyChanged = currency !== preferences.base_currency;
 
-    // Language applies locally first; server sync is best-effort.
+    // Apply language locally first (instant feedback)
     if (languageChanged) {
       changeLanguage(language as 'en' | 'es' | 'pt');
     }
 
-    // Avoid firing a DB write (and potential error toast) when nothing relevant changed.
-    if (!currencyChanged) {
-      if (languageChanged) toast.success(t('regional.saved'));
+    // Build updates object - include both language AND currency changes
+    const updates: Record<string, string> = {};
+    if (currencyChanged) updates.base_currency = currency;
+    if (languageChanged) updates.language = language;
+
+    // If nothing changed, just return
+    if (Object.keys(updates).length === 0) {
       return;
     }
 
-    updatePreferences(
-      { base_currency: currency },
-      {
-        onSuccess: () => {
+    // Save all changes to database for persistence across sessions
+    updatePreferences(updates, {
+      onSuccess: () => {
+        toast.success(t('regional.saved'));
+      },
+      onError: (error) => {
+        console.error('Failed to save preferences:', error);
+        // Language still works locally even if DB sync fails
+        if (languageChanged && !currencyChanged) {
           toast.success(t('regional.saved'));
-        },
-        onError: (error) => {
-          console.error('Failed to save currency preference:', error);
+        } else {
           toast.error(t('regional.errorSaving', 'Error saving preferences'));
-        },
-      }
-    );
+        }
+      },
+    });
   };
 
   // Preview values
