@@ -140,7 +140,7 @@ export default function Index() {
               {currentMonth.month || currentMonthName}
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
               <StatCard
                 title={t('stats.income')}
                 value={formatCurrency(convertedCurrentMonth.income)}
@@ -173,24 +173,24 @@ export default function Index() {
               <MonthStatusIndicator />
             </div>
 
-            <div className="mb-8">
+            <div className="mb-6">
               <MonthlyChart data={convertedMonthlyData} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
               <CategoryChart data={convertedCategoryData} />
               <TopExpensesCard transactions={transactions} />
               <WeeklyComparisonChart />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
               <div className="lg:col-span-3">
                 <BalanceChart data={convertedMonthlyData} />
               </div>
               <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
             </div>
 
-            <div className="mb-8">
+            <div className="mb-6">
               <YearlyBalanceChart data={convertedMonthlyData} />
             </div>
 
