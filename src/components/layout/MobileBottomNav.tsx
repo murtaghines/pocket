@@ -1,4 +1,4 @@
-import { LayoutDashboard, PiggyBank, User } from "lucide-react";
+import { LayoutDashboard, PiggyBank } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -19,11 +19,6 @@ export function MobileBottomNav() {
       path: '/investments',
       icon: PiggyBank,
       label: t('navigation.investments'),
-    },
-    {
-      path: '/profile',
-      icon: User,
-      label: t('navigation.profile'),
     },
   ];
 

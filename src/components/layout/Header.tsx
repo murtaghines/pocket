@@ -57,8 +57,7 @@ export function Header() {
         {/* Right side - Currency & Profile */}
         <div className="flex items-center gap-2">
           <CurrencySelector />
-          {/* Profile - Desktop only (mobile uses bottom nav) */}
-          <Link to="/profile" className="hidden md:block">
+          <Link to="/profile">
             <Button 
               variant={isActive('/profile') ? 'secondary' : 'ghost'} 
               size="icon"
