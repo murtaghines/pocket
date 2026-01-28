@@ -8,7 +8,8 @@
     "preview": "Preview",
     "savePreferences": "Save Preferences",
     "saving": "Saving...",
-    "saved": "Preferences saved"
+    "saved": "Preferences saved",
+    "errorSaving": "Error saving preferences"
   },
   "categories": {
     "title": "Categories",

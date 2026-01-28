@@ -45,7 +45,8 @@ function detectBrowserLanguage(): string {
 }
 
 export function useUserPreferences() {
-  const { user } = useAuth();
+  // Use session instead of just user to ensure auth token is ready
+  const { user, session } = useAuth();
   const queryClient = useQueryClient();
   
   const [browserDefaults] = useState(() => ({
@@ -54,9 +55,10 @@ export function useUserPreferences() {
   }));
 
   const { data: preferences, isLoading } = useQuery({
-    queryKey: ['user_preferences', user?.id],
+    // Include session token in queryKey to refetch when session changes
+    queryKey: ['user_preferences', user?.id, !!session?.access_token],
     queryFn: async (): Promise<UserPreferences | null> => {
-      if (!user) return null;
+      if (!user || !session?.access_token) return null;
       
       try {
         const { data, error } = await supabase
@@ -99,8 +101,11 @@ export function useUserPreferences() {
         return null;
       }
     },
-    enabled: !!user,
+    // Only enable when we have both user AND a valid session token
+    enabled: !!user && !!session?.access_token,
     retry: 1,
+    // Prevent stale data from causing issues
+    staleTime: 1000,
   });
 
   const updatePreferences = useMutation({

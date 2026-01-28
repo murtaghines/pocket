@@ -32,11 +32,12 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
   }, [currentLanguage]);
 
   const handleSave = () => {
-    // Update language if changed
+    // Update language if changed (this applies locally first, then syncs)
     if (language !== currentLanguage) {
       changeLanguage(language as 'en' | 'es' | 'pt');
     }
 
+    // Update currency (this shows toast on success/error)
     updatePreferences({
       base_currency: currency,
     }, {
@@ -44,7 +45,10 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
         toast.success(t('regional.saved'));
       },
       onError: (error) => {
-        toast.error(`Error: ${error.message}`);
+        // Only show error for currency update, not language
+        // (language changes locally even if server sync fails)
+        console.error('Failed to save currency preference:', error);
+        toast.error(t('regional.errorSaving', 'Error saving preferences'));
       },
     });
   };
