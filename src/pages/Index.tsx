@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
@@ -105,8 +106,9 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
+      <MobileBottomNav />
       
       {onboardingChecked && (
         <OnboardingModal 

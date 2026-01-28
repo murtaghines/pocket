@@ -24,7 +24,7 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Center Navigation - Desktop */}
+        {/* Center Navigation - Desktop only */}
         <nav className="hidden md:flex items-center gap-1">
           <Link to="/">
             <Button 
@@ -54,24 +54,11 @@ export function Header() {
           </Link>
         </nav>
 
-        {/* Center Navigation - Mobile */}
-        <div className="flex md:hidden items-center gap-1">
-          <Link to="/">
-            <Button variant={isActive('/') ? 'secondary' : 'ghost'} size="icon">
-              <LayoutDashboard className="w-5 h-5" />
-            </Button>
-          </Link>
-          <Link to="/investments">
-            <Button variant={isActive('/investments') ? 'secondary' : 'ghost'} size="icon">
-              <PiggyBank className="w-5 h-5" />
-            </Button>
-          </Link>
-        </div>
-
         {/* Right side - Currency & Profile */}
         <div className="flex items-center gap-2">
           <CurrencySelector />
-          <Link to="/profile">
+          {/* Profile - Desktop only (mobile uses bottom nav) */}
+          <Link to="/profile" className="hidden md:block">
             <Button 
               variant={isActive('/profile') ? 'secondary' : 'ghost'} 
               size="icon"

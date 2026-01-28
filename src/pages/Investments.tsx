@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useInvestments } from "@/hooks/useInvestments";
@@ -38,8 +39,9 @@ export default function Investments() {
     : '0';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
+      <MobileBottomNav />
 
       <main className="container px-4 md:px-6 py-8">
         <div className="mb-8 animate-fade-in">
