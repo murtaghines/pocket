@@ -90,7 +90,7 @@ export default function Profile() {
           </TabsContent>
 
           <TabsContent value="data" className="animate-fade-in">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="animate-slide-up">
                 <div className="flex items-center gap-2 mb-4">
                   <FileText className="w-4 h-4 text-primary" />
