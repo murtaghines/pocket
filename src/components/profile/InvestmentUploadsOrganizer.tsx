@@ -117,14 +117,6 @@ export function InvestmentUploadsOrganizer() {
         </div>
 
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            className="flex-1"
-            onClick={handleLoadMore}
-          >
-            <ChevronDown className="w-4 h-4 mr-2" />
-            {t('uploads.loadMore')}
-          </Button>
           {canShowLess && (
             <Button 
               variant="outline" 
@@ -135,6 +127,14 @@ export function InvestmentUploadsOrganizer() {
               {t('uploads.showLess')}
             </Button>
           )}
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            onClick={handleLoadMore}
+          >
+            <ChevronDown className="w-4 h-4 mr-2" />
+            {t('uploads.loadMore')}
+          </Button>
         </div>
       </CardContent>
     </Card>
