@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
@@ -19,9 +19,17 @@ export default function Profile() {
   const { t: tc } = useTranslation('common');
   const { t: ts } = useTranslation('settings');
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { signOut } = useAuth();
   const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Sync tab with URL params
+  const currentTab = searchParams.get('tab') || 'data';
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -43,14 +51,15 @@ export default function Profile() {
       <MobileBottomNav />
       
       <main className="container px-4 md:px-6 py-8">
-        <Tabs defaultValue="data" className="w-full">
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
           {/* Header with title and tabs on the same row */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 animate-fade-in">
             <h2 className="font-display text-3xl font-bold tracking-tight">
               {t('title')}
             </h2>
             
-            <TabsList className="grid grid-cols-2 w-full sm:w-auto sm:inline-flex bg-muted p-1.5 rounded-xl shadow-sm">
+            {/* Hide tabs on mobile - controlled by bottom nav */}
+            <TabsList className="hidden md:inline-flex bg-muted p-1.5 rounded-xl shadow-sm">
               <TabsTrigger 
                 value="data" 
                 className="gap-2 px-5 py-2.5 rounded-lg font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
