@@ -14,7 +14,13 @@ export const transferSessionToSessionStorage = (): void => {
   const sessionData = localStorage.getItem(AUTH_KEY);
   if (sessionData) {
     sessionStorage.setItem(AUTH_KEY, sessionData);
-    localStorage.removeItem(AUTH_KEY);
+    // IMPORTANT:
+    // Do NOT remove the token from localStorage here.
+    // The auth client reads the session from localStorage; removing it
+    // causes subsequent authenticated requests (like saving preferences)
+    // to be sent as anon.
+    // We still rely on clearSessionOnUnload() to remove it when the user
+    // did not choose "remember me".
   }
 };
 

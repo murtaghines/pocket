@@ -55,19 +55,14 @@ export function useUserPreferences() {
   }));
 
   const { data: preferences, isLoading } = useQuery({
-    // Include session token in queryKey to refetch when session changes
-    queryKey: ['user_preferences', user?.id, !!session?.access_token],
+    // Keyed by user id; query will run when `enabled` flips to true.
+    queryKey: ['user_preferences', user?.id],
     queryFn: async (): Promise<UserPreferences | null> => {
       if (!user) return null;
-      
-      // Double-check the session directly from Supabase client
-      // This ensures we have the latest auth state
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession?.access_token) {
-        console.warn('No valid session found when fetching preferences');
-        return null;
-      }
+
+      // IMPORTANT: Avoid re-reading session from storage here.
+      // We already gate via `enabled` using the in-memory session.
+      if (!session?.access_token) return null;
       
       try {
         const { data, error } = await supabase
@@ -120,13 +115,10 @@ export function useUserPreferences() {
   const updatePreferences = useMutation({
     mutationFn: async (updates: Partial<UserPreferences>): Promise<UserPreferences> => {
       if (!user) throw new Error('User not authenticated');
-      
-      // Double-check the session directly from Supabase client
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession?.access_token) {
-        throw new Error('No valid session. Please log in again.');
-      }
+
+      // IMPORTANT: Don't depend on storage-backed getSession() here.
+      // If the user is authenticated in-app, the client will attach the token.
+      if (!session?.access_token) throw new Error('No valid session. Please log in again.');
       
       // Try to update first (most common case)
       const { data: updated, error: updateError } = await supabase
