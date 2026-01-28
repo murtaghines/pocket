@@ -2,15 +2,18 @@ import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useImports } from "@/hooks/useImports";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
-const DEFAULT_MONTHS_TO_SHOW = 6;
+import { useLocalization } from "@/hooks/useLocalization";
+
+const DEFAULT_MONTHS_TO_SHOW = 3;
+const MONTHS_INCREMENT = 3;
 
 export function InvestmentUploadsOrganizer() {
   const { t } = useTranslation('profile');
-  // Use imports instead of uploads (unified system)
+  const { formatMonth } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting } = useImports("INVESTING");
   const { 
     pendingFilesByMonth, 
@@ -35,18 +38,17 @@ export function InvestmentUploadsOrganizer() {
     for (let i = 0; i < monthsToShow; i++) {
       const monthDate = new Date(lastClosed.getFullYear(), lastClosed.getMonth() - i, 1);
       const key = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}-inv`;
-      const label = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const label = formatMonth(monthDate);
       slots.push({ key, label, date: monthDate });
     }
     
     return slots;
-  }, [monthsToShow]);
+  }, [monthsToShow, formatMonth]);
 
   const importsByMonth = useMemo(() => {
     const grouped: Record<string, typeof imports> = {};
     
     imports.forEach((imp) => {
-      // Extract YYYY-MM from uploaded_at
       const key = `${imp.uploaded_at.substring(0, 7)}-inv`;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(imp);
@@ -56,8 +58,14 @@ export function InvestmentUploadsOrganizer() {
   }, [imports]);
 
   const handleLoadMore = () => {
-    setMonthsToShow((prev) => prev + 3);
+    setMonthsToShow((prev) => prev + MONTHS_INCREMENT);
   };
+
+  const handleShowLess = () => {
+    setMonthsToShow((prev) => Math.max(DEFAULT_MONTHS_TO_SHOW, prev - MONTHS_INCREMENT));
+  };
+
+  const canShowLess = monthsToShow > DEFAULT_MONTHS_TO_SHOW;
 
   if (isLoading) {
     return (
@@ -108,14 +116,26 @@ export function InvestmentUploadsOrganizer() {
           })}
         </div>
 
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={handleLoadMore}
-        >
-          <ChevronDown className="w-4 h-4 mr-2" />
-          Load More
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            onClick={handleLoadMore}
+          >
+            <ChevronDown className="w-4 h-4 mr-2" />
+            {t('uploads.loadMore')}
+          </Button>
+          {canShowLess && (
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={handleShowLess}
+            >
+              <ChevronUp className="w-4 h-4 mr-2" />
+              {t('uploads.showLess')}
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

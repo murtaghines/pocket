@@ -31,7 +31,8 @@
     "addMoreFiles": "Agregar más archivos",
     "review": "Revisar",
     "viewTransactions": "Ver transacciones",
-    "loadMore": "Cargar Más"
+    "loadMore": "Cargar Más",
+    "showLess": "Ver Menos"
   },
   "account": {
     "title": "Cuenta",

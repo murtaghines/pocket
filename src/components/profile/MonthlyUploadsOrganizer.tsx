@@ -2,18 +2,18 @@ import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useImports } from "@/hooks/useImports";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { MonthUploadSlot } from "./MonthUploadSlot";
 import { usePeriods } from "@/hooks/usePeriods";
 import { useLocalization } from "@/hooks/useLocalization";
 
-const DEFAULT_MONTHS_TO_SHOW = 6;
+const DEFAULT_MONTHS_TO_SHOW = 3;
+const MONTHS_INCREMENT = 3;
 
 export function MonthlyUploadsOrganizer() {
   const { t } = useTranslation('profile');
-  const { t: tc } = useTranslation('common');
   const { formatMonth } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting } = useImports("CASHFLOW");
   const { 
@@ -67,8 +67,14 @@ export function MonthlyUploadsOrganizer() {
   }, [imports]);
 
   const handleLoadMore = () => {
-    setMonthsToShow((prev) => prev + 3);
+    setMonthsToShow((prev) => prev + MONTHS_INCREMENT);
   };
+
+  const handleShowLess = () => {
+    setMonthsToShow((prev) => Math.max(DEFAULT_MONTHS_TO_SHOW, prev - MONTHS_INCREMENT));
+  };
+
+  const canShowLess = monthsToShow > DEFAULT_MONTHS_TO_SHOW;
 
   if (isLoading) {
     return (
@@ -124,14 +130,26 @@ export function MonthlyUploadsOrganizer() {
           })}
         </div>
 
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={handleLoadMore}
-        >
-          <ChevronDown className="w-4 h-4 mr-2" />
-          {tc('viewAll')}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            onClick={handleLoadMore}
+          >
+            <ChevronDown className="w-4 h-4 mr-2" />
+            {t('uploads.loadMore')}
+          </Button>
+          {canShowLess && (
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={handleShowLess}
+            >
+              <ChevronUp className="w-4 h-4 mr-2" />
+              {t('uploads.showLess')}
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
