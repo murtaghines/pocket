@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun, LogOut, PiggyBank, LayoutDashboard, User } from "lucide-react";
+import { Moon, Sun, LogOut, PiggyBank, LayoutDashboard, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -82,9 +82,6 @@ export function Header() {
           
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </Button>
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="w-5 h-5" />
           </Button>
           <Link to="/profile">
             <Button 
