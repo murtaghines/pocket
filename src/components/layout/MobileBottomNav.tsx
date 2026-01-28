@@ -28,7 +28,7 @@ export function MobileBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-gradient-to-r from-violet-600 to-purple-700">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-primary">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -64,7 +64,7 @@ export function MobileBottomNav() {
         })}
       </div>
       {/* Safe area padding for devices with home indicator */}
-      <div className="h-[env(safe-area-inset-bottom,0)] bg-gradient-to-r from-violet-600 to-purple-700" />
+      <div className="h-[env(safe-area-inset-bottom,0)] bg-primary" />
     </nav>
   );
 }
