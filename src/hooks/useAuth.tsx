@@ -1,7 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { restoreSessionFromSessionStorage, clearSessionOnUnload, getRememberPreference } from "@/lib/sessionStorage";
+import {
+  restoreSessionFromSessionStorage,
+  clearSessionOnUnload,
+  getRememberPreference,
+  clearAuthStorage,
+} from "@/lib/sessionStorage";
 
 type AuthContextValue = {
   user: User | null;
@@ -54,10 +59,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     // Clear local state immediately, even if API call fails (e.g., session expired)
     try {
-      // Local scope avoids backend 403s when the session is already gone, and still clears tokens.
-      await supabase.auth.signOut({ scope: "local" });
+      // Try a full sign out first (revokes refresh token when possible).
+      await supabase.auth.signOut();
     } catch {
-      // Ignore errors - session may already be gone
+      try {
+        // Fallback: local scope avoids backend 403s when the session is already gone.
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        // Ignore errors - session may already be gone
+      }
+    } finally {
+      // Ensure no session can be restored from either storage.
+      clearAuthStorage();
     }
     setUser(null);
     setSession(null);

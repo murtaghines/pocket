@@ -30,3 +30,9 @@ export const clearSessionOnUnload = (): void => {
     localStorage.removeItem(AUTH_KEY);
   }
 };
+
+// Used on explicit logout to ensure no storage-backed session can be restored.
+export const clearAuthStorage = (): void => {
+  localStorage.removeItem(AUTH_KEY);
+  sessionStorage.removeItem(AUTH_KEY);
+};
