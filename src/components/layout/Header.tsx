@@ -1,4 +1,4 @@
-import { PiggyBank, LayoutDashboard, User } from "lucide-react";
+import { PiggyBank, LayoutDashboard, User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "react-router-dom";
@@ -13,6 +13,7 @@ export function Header() {
   const { t } = useTranslation('common');
 
   const isActive = (path: string) => location.pathname === path;
+  const isProfilePage = location.pathname === '/profile';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl">
@@ -54,10 +55,25 @@ export function Header() {
           </Link>
         </nav>
 
-        {/* Right side - Currency & Profile */}
+        {/* Right side - Currency & Profile/Back */}
         <div className="flex items-center gap-2">
           <CurrencySelector />
-          <Link to="/profile">
+          
+          {/* On Profile page (mobile): show back arrow. Otherwise: show profile icon */}
+          {isProfilePage ? (
+            <Link to="/" className="md:hidden">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-primary"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            </Link>
+          ) : null}
+          
+          {/* Profile icon - always on desktop, only on non-profile pages on mobile */}
+          <Link to="/profile" className={cn(isProfilePage && "hidden md:block")}>
             <Button 
               variant={isActive('/profile') ? 'secondary' : 'ghost'} 
               size="icon"
