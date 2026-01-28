@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
@@ -34,11 +35,12 @@ export default function Profile() {
 
   return (
     <div 
-      className={`min-h-screen bg-background transition-opacity duration-300 ${
+      className={`min-h-screen bg-background pb-20 md:pb-0 transition-opacity duration-300 ${
         isLoggingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
       <Header />
+      <MobileBottomNav />
       
       <main className="container px-4 md:px-6 py-8">
         <Tabs defaultValue="data" className="w-full">
