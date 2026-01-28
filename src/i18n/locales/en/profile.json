@@ -31,7 +31,8 @@
     "addMoreFiles": "Add more files",
     "review": "Review",
     "viewTransactions": "View transactions",
-    "loadMore": "Load More"
+    "loadMore": "Load More",
+    "showLess": "Show Less"
   },
   "account": {
     "title": "Account",
