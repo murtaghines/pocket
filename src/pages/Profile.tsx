@@ -8,7 +8,8 @@ import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { FileText, TrendingUp, User, Globe, Tags } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, TrendingUp, User, Globe, Tags, Settings, Upload } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +24,6 @@ export default function Profile() {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    // Wait for fade-out animation
     await new Promise(resolve => setTimeout(resolve, 300));
     await signOut();
     toast({
@@ -47,51 +47,66 @@ export default function Profile() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="space-y-6">
-            <div className="animate-slide-up">
-              <div className="flex items-center gap-2 mb-4">
-                <User className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium">{t('personalInfo.title')}</h3>
-              </div>
-              <ProfileInfoCard onLogout={handleLogout} />
-            </div>
+        <Tabs defaultValue="settings" className="w-full">
+          <TabsList className="mb-8">
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="w-4 h-4" />
+              {t('tabs.settings')}
+            </TabsTrigger>
+            <TabsTrigger value="data" className="gap-2">
+              <Upload className="w-4 h-4" />
+              {t('tabs.data')}
+            </TabsTrigger>
+          </TabsList>
 
-            <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <Globe className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium">{ts('regional.title')}</h3>
+          <TabsContent value="settings" className="animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="animate-slide-up">
+                <div className="flex items-center gap-2 mb-4">
+                  <User className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-medium">{t('personalInfo.title')}</h3>
+                </div>
+                <ProfileInfoCard onLogout={handleLogout} />
               </div>
-              <PreferencesForm />
-            </div>
 
-            <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <Tags className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium">{ts('categories.title')}</h3>
+              <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Globe className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-medium">{ts('regional.title')}</h3>
+                </div>
+                <PreferencesForm />
               </div>
-              <CategoriesEditor />
-            </div>
-          </div>
 
-          <div className="lg:col-span-2 space-y-8">
-            <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium">{t('uploads.title')}</h3>
+              <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Tags className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-medium">{ts('categories.title')}</h3>
+                </div>
+                <CategoriesEditor />
               </div>
-              <MonthlyUploadsOrganizer />
             </div>
+          </TabsContent>
 
-            <div className="animate-slide-up" style={{ animationDelay: '250ms' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium">{t('uploads.investmentUploads')}</h3>
+          <TabsContent value="data" className="animate-fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="animate-slide-up">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-medium">{t('uploads.title')}</h3>
+                </div>
+                <MonthlyUploadsOrganizer />
               </div>
-              <InvestmentUploadsOrganizer />
+
+              <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-medium">{t('uploads.investmentUploads')}</h3>
+                </div>
+                <InvestmentUploadsOrganizer />
+              </div>
             </div>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       <footer className="border-t mt-12">
