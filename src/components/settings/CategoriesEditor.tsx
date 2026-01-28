@@ -172,7 +172,7 @@ export function CategoriesEditor() {
   );
 
   return (
-    <Card variant="settings">
+    <Card>
       <CardHeader className="pb-4">
         <p className="text-sm text-muted-foreground">
           {t('categories.description')}

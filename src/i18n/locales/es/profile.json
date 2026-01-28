@@ -1,5 +1,9 @@
 {
   "title": "Perfil",
+  "tabs": {
+    "settings": "Configuración",
+    "data": "Mis Datos"
+  },
   "personalInfo": {
     "title": "Información Personal",
     "description": "Administra tu información personal y cuenta",
