@@ -12,9 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ProfileInfoCardProps {
   onLogout?: () => void;
+  className?: string;
 }
 
-export function ProfileInfoCard({ onLogout }: ProfileInfoCardProps) {
+export function ProfileInfoCard({ onLogout, className }: ProfileInfoCardProps) {
   const { t } = useTranslation('profile');
   const { t: tc } = useTranslation('common');
   const { user } = useAuth();
@@ -63,7 +64,7 @@ export function ProfileInfoCard({ onLogout }: ProfileInfoCardProps) {
     : null;
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader className="pb-4 flex flex-row items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {t('personalInfo.description')}

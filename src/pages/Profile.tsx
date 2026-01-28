@@ -59,31 +59,33 @@ export default function Profile() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="settings" className="animate-fade-in">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="animate-slide-up">
+          <TabsContent value="settings" className="animate-fade-in space-y-6">
+            {/* Personal Info & Regional Settings - same row, equal height */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="animate-slide-up flex flex-col">
                 <div className="flex items-center gap-2 mb-4">
                   <User className="w-4 h-4 text-primary" />
                   <h3 className="text-base font-medium">{t('personalInfo.title')}</h3>
                 </div>
-                <ProfileInfoCard onLogout={handleLogout} />
+                <ProfileInfoCard onLogout={handleLogout} className="flex-1" />
               </div>
 
-              <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+              <div className="animate-slide-up flex flex-col" style={{ animationDelay: '100ms' }}>
                 <div className="flex items-center gap-2 mb-4">
                   <Globe className="w-4 h-4 text-primary" />
                   <h3 className="text-base font-medium">{ts('regional.title')}</h3>
                 </div>
-                <PreferencesForm />
+                <PreferencesForm className="flex-1" />
               </div>
+            </div>
 
-              <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Tags className="w-4 h-4 text-primary" />
-                  <h3 className="text-base font-medium">{ts('categories.title')}</h3>
-                </div>
-                <CategoriesEditor />
+            {/* Categories - full width */}
+            <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <Tags className="w-4 h-4 text-primary" />
+                <h3 className="text-base font-medium">{ts('categories.title')}</h3>
               </div>
+              <CategoriesEditor />
             </div>
           </TabsContent>
 

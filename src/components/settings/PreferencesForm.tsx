@@ -10,7 +10,11 @@ import { SUPPORTED_CURRENCIES } from '@/lib/currencies';
 import { toast } from 'sonner';
 import { DollarSign, Languages, Loader2 } from 'lucide-react';
 
-export function PreferencesForm() {
+interface PreferencesFormProps {
+  className?: string;
+}
+
+export function PreferencesForm({ className }: PreferencesFormProps) {
   const { t } = useTranslation('settings');
   const { preferences, updatePreferences, isUpdating } = useUserPreferences();
   const { currentLanguage, changeLanguage, supportedLanguages } = useLanguage();
@@ -49,7 +53,7 @@ export function PreferencesForm() {
   const previewAmount = 1234.56;
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader className="pb-4">
         <p className="text-sm text-muted-foreground">
           {t('regional.description')}
