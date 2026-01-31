@@ -14,26 +14,27 @@ export function Header() {
 
   const isActive = (path: string) => location.pathname === path;
   const isProfilePage = location.pathname === '/profile';
+  const isDashboard = location.pathname === '/dashboard';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
         <div className="flex items-center">
-          <Link to="/" className="flex items-center">
+          <Link to="/dashboard" className="flex items-center">
             <img src={fintTextWhite} alt="fint" className="h-6 w-auto" />
           </Link>
         </div>
 
         {/* Center Navigation - Desktop only */}
         <nav className="hidden md:flex items-center gap-1">
-          <Link to="/">
+          <Link to="/dashboard">
             <Button 
-              variant={isActive('/') ? 'secondary' : 'ghost'} 
+              variant={isDashboard ? 'secondary' : 'ghost'} 
               size="sm"
               className={cn(
                 "gap-2",
-                isActive('/') && "bg-primary/20 text-primary"
+                isDashboard && "bg-primary/20 text-primary"
               )}
             >
               <LayoutDashboard className="w-4 h-4" />
@@ -61,7 +62,7 @@ export function Header() {
           
           {/* On Profile page (mobile): show back arrow. Otherwise: show profile icon */}
           {isProfilePage ? (
-            <Link to="/" className="md:hidden">
+            <Link to="/dashboard" className="md:hidden">
               <Button 
                 variant="ghost" 
                 size="icon"

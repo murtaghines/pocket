@@ -33,7 +33,7 @@ export function MobileBottomNav() {
   // Default navigation items
   const defaultNavItems = [
     {
-      path: '/',
+      path: '/dashboard',
       icon: LayoutDashboard,
       label: t('navigation.dashboard'),
     },
