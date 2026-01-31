@@ -23,7 +23,7 @@ import {
   DEFAULT_EXPENSE_CATEGORIES,
 } from "@/lib/categoryTranslations";
 
-const REMEMBER_EMAIL_KEY = "fint_remember_email";
+const REMEMBER_EMAIL_KEY = "wallet_remember_email";
 
 type AuthMode = "login" | "register";
 type RegisterStep = 1 | 2 | 3 | 4 | 5;
@@ -446,7 +446,7 @@ export default function Auth() {
               {tc('onboarding.letsGetStarted', "Let's get started")}
             </h1>
             <p className="text-lg text-white/80 max-w-md mx-auto">
-              {tc('onboarding.setupDescription', 'Set up your fint account in just a few steps')}
+              {tc('onboarding.setupDescription', 'Set up your wallet account in just a few steps')}
             </p>
           </div>
 

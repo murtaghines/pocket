@@ -5,7 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { useTranslation } from "react-i18next";
-import fintTextWhite from "@/assets/fint-text-white.png";
+import walletTextWhite from "@/assets/wallet-text-white.png";
 
 export function Header() {
   const { signOut } = useAuth();
@@ -22,7 +22,7 @@ export function Header() {
         {/* Logo */}
         <div className="flex items-center">
           <Link to="/dashboard" className="flex items-center">
-            <img src={fintTextWhite} alt="fint" className="h-6 w-auto" />
+            <img src={walletTextWhite} alt="wallet" className="h-6 w-auto" />
           </Link>
         </div>
 
