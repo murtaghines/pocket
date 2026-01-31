@@ -6,13 +6,10 @@ import { getRememberPreference, setRememberPreference, transferSessionToSessionS
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ChevronLeft, ChevronRight, Check, KeyRound } from "lucide-react";
+import { Loader2, KeyRound } from "lucide-react";
 import fintTextWhite from "@/assets/fint-text-white.png";
-import authBackground from "@/assets/auth-background.png";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
@@ -148,59 +145,78 @@ export default function Auth() {
   // Password Reset Mode
   if (isResetMode) {
     return (
-      <div className="min-h-screen bg-primary flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white shadow-2xl rounded-2xl">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <span className="font-display text-xl font-bold text-primary">fint</span>
-            </div>
-            <div className="flex justify-center mb-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, hsl(229 100% 55%) 0%, hsl(229 100% 40%) 100%)' }}>
+        {/* Logo */}
+        <div className="fixed top-8 left-8 z-20">
+          <img src={fintTextWhite} alt="fint" className="h-7 w-auto" />
+        </div>
+
+        <div className="w-full max-w-[520px]">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              {t('setNewPassword')}
+            </h1>
+            <p className="text-lg text-white/80">
+              {t('enterNewPassword', 'Enter your new password below')}
+            </p>
+          </div>
+
+          {/* Card - Autonoma style */}
+          <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-10">
+            <div className="flex justify-center mb-6">
               <div className="p-3 bg-primary/10 rounded-full">
                 <KeyRound className="w-6 h-6 text-primary" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">{t('setNewPassword')}</h2>
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
+
+            <form onSubmit={handleUpdatePassword} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="new-password" className="text-gray-700">{t('newPassword')}</Label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('newPassword')}</label>
                 <PasswordInput
-                  id="new-password"
                   placeholder={t('placeholders.password')}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700"
+                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
                 />
                 <PasswordStrengthIndicator password={newPassword} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-new-password" className="text-gray-700">{t('confirmNewPassword')}</Label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('confirmNewPassword')}</label>
                 <PasswordInput
-                  id="confirm-new-password"
                   placeholder={t('placeholders.password')}
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700"
+                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
                 />
               </div>
-              <Button type="submit" className="w-full h-12 rounded-lg" disabled={updateLoading}>
-                {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {t('updatePassword')}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => navigate("/auth")}
-              >
-                {t('backToSignIn')}
-              </Button>
+              
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  disabled={updateLoading}
+                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl"
+                >
+                  {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {t('updatePassword')}
+                </Button>
+              </div>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+
+          <p className="text-center mt-8 text-white/80">
+            <button 
+              onClick={() => navigate("/auth")}
+              className="text-white font-medium underline underline-offset-4 hover:no-underline"
+            >
+              {t('backToSignIn')}
+            </button>
+          </p>
+        </div>
       </div>
     );
   }
@@ -335,35 +351,18 @@ export default function Auth() {
     }
   };
 
-  const getStepTitle = () => {
+  const getStepQuestion = () => {
     switch (registerStep) {
       case 1:
-        return tc('onboarding.welcome', 'Welcome to fint! 👋');
-      case 2:
-        return tc('onboarding.yourCountry', 'Your Country');
-      case 3:
-        return tc('onboarding.baseCurrency', 'Base Currency');
-      case 4:
-        return tc('onboarding.categories', 'Categories');
-      case 5:
-        return t('createYourAccount', 'Create your account');
-      default:
-        return '';
-    }
-  };
-
-  const getStepSubtitle = () => {
-    switch (registerStep) {
-      case 1:
-        return tc('onboarding.selectLanguage', 'Select your preferred language');
+        return tc('onboarding.selectLanguage', 'What language do you prefer?');
       case 2:
         return tc('onboarding.selectCountry', 'Where are you located?');
       case 3:
-        return tc('onboarding.selectCurrency', 'Choose your main currency');
+        return tc('onboarding.selectCurrency', 'What\'s your main currency?');
       case 4:
-        return tc('onboarding.selectCategories', 'Select the categories you use');
+        return tc('onboarding.selectCategories', 'Which categories do you use?');
       case 5:
-        return t('almostThere', 'Almost there! Enter your details');
+        return t('createYourAccount', 'Create your account');
       default:
         return '';
     }
@@ -381,230 +380,225 @@ export default function Auth() {
         return <StepCategories data={onboardingData} updateData={updateOnboardingData} />;
       case 5:
         return (
-          <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">{t('fullName')}</Label>
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('fullName')}</label>
               <Input
-                id="full-name"
                 type="text"
                 placeholder={t('placeholders.fullName')}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="email-register" className="text-sm font-medium text-gray-700">{t('email')}</Label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('email')}</label>
               <EmailInput
-                id="email-register"
                 placeholder={t('placeholders.email')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onValidChange={setEmailValid}
                 required
-                className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="password-register" className="text-sm font-medium text-gray-700">{t('password')}</Label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('password')}</label>
                 <PasswordInput
-                  id="password-register"
                   placeholder={t('placeholders.password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">{t('confirmPassword')}</Label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('confirmPassword')}</label>
                 <PasswordInput
-                  id="confirm-password"
                   placeholder={t('placeholders.password')}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
                 />
               </div>
             </div>
             <PasswordStrengthIndicator password={password} />
-          </form>
+          </div>
         );
       default:
         return null;
     }
   };
 
-  // REGISTER MODE - Multi-step
+  // REGISTER MODE - Multi-step (Autonoma style)
   if (authMode === "register") {
     const totalSteps = 5;
-    const progress = (registerStep / totalSteps) * 100;
 
     return (
       <div 
-        className="min-h-screen w-full relative flex flex-col items-center justify-center p-4"
-        style={{ backgroundColor: 'hsl(229, 100%, 66%)' }}
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{ background: 'linear-gradient(135deg, hsl(229 100% 55%) 0%, hsl(229 100% 40%) 100%)' }}
       >
-        {/* Background image */}
-        <div 
-          className="fixed inset-0 w-full bg-cover bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: `url(${authBackground})`,
-            height: '100%'
-          }}
-        />
-        
-        {/* Logo - top left */}
-        <div className="fixed top-6 left-6 z-20">
-          <img src={fintTextWhite} alt="fint" className="h-6 w-auto" />
+        {/* Logo - fixed top left */}
+        <div className="fixed top-8 left-8 z-20">
+          <img src={fintTextWhite} alt="fint" className="h-7 w-auto" />
         </div>
 
-        {/* Header text */}
-        <div className="relative z-10 text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
-            {getStepTitle()}
-          </h1>
-          <p className="text-lg text-white/70">
-            {getStepSubtitle()}
-          </p>
-        </div>
+        <div className="w-full max-w-[520px]">
+          {/* Header text - outside card */}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              {tc('onboarding.letsGetStarted', "Let's get started")}
+            </h1>
+            <p className="text-lg text-white/80">
+              {tc('onboarding.setupDescription', 'Set up your fint account in just a few steps')}
+            </p>
+          </div>
 
-        {/* Card */}
-        <Card className="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <CardContent className="p-8">
-            {/* Progress bar */}
-            <div className="mb-6">
-              <Progress value={progress} className="h-1.5" />
-              <p className="text-sm text-gray-400 mt-2">
-                {registerStep} of {totalSteps}
-              </p>
+          {/* Card - Autonoma style: white, rounded-2xl, big shadow */}
+          <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-10">
+            {/* Progress bar - segmented style like Autonoma */}
+            <div className="flex gap-2 mb-8">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <div 
+                  key={i}
+                  className={`h-1.5 flex-1 rounded-full transition-colors ${
+                    i < registerStep 
+                      ? 'bg-primary' 
+                      : 'bg-gray-200'
+                  }`}
+                />
+              ))}
             </div>
 
+            {/* Step indicator */}
+            <p className="text-sm text-gray-400 mb-2">
+              {registerStep} of {totalSteps}
+            </p>
+
+            {/* Question/Title - large and bold */}
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              {getStepQuestion()}
+            </h2>
+
             {/* Step content */}
-            <div className="min-h-[280px]">
+            <div className="min-h-[200px]">
               {renderRegisterStep()}
             </div>
 
-            {/* Navigation buttons */}
-            <div className="flex justify-between pt-6 border-t mt-6">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  if (registerStep === 1) {
-                    setAuthMode("login");
-                  } else {
-                    setRegisterStep((prev) => (prev - 1) as RegisterStep);
-                  }
-                }}
-                disabled={loading}
-                className="text-gray-700"
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                {tc('back')}
-              </Button>
+            {/* Navigation - right aligned Next button */}
+            <div className="flex justify-between items-center pt-8">
+              {registerStep > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setRegisterStep((prev) => (prev - 1) as RegisterStep)}
+                  className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+                >
+                  ← {tc('back')}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAuthMode("login")}
+                  className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+                >
+                  ← {tc('back')}
+                </button>
+              )}
 
               {registerStep < 5 ? (
                 <Button 
+                  type="button"
                   onClick={() => setRegisterStep((prev) => (prev + 1) as RegisterStep)}
                   disabled={!canProceedStep()}
+                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {tc('next')}
-                  <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
                 <Button 
+                  type="button"
                   onClick={handleSignUp}
                   disabled={!canProceedStep() || loading}
+                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Check className="w-4 h-4 mr-2" />
+                    t('createAccount')
                   )}
-                  {t('createAccount')}
                 </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Login link */}
-        <p className="relative z-10 mt-6 text-white/70">
-          {t('alreadyHaveAccount', 'Already have an account?')}{' '}
-          <button 
-            onClick={() => setAuthMode("login")}
-            className="text-white font-medium underline hover:no-underline"
-          >
-            {t('login')}
-          </button>
-        </p>
+          {/* Login link */}
+          <p className="text-center mt-8 text-white/80">
+            {t('alreadyHaveAccount', 'Already have an account?')}{' '}
+            <button 
+              onClick={() => setAuthMode("login")}
+              className="text-white font-medium underline underline-offset-4 hover:no-underline"
+            >
+              {t('login')}
+            </button>
+          </p>
+        </div>
       </div>
     );
   }
 
-  // LOGIN MODE
+  // LOGIN MODE (Autonoma style)
   return (
     <div 
-      className="min-h-screen w-full relative flex flex-col items-center justify-center p-4"
-      style={{ backgroundColor: 'hsl(229, 100%, 66%)' }}
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: 'linear-gradient(135deg, hsl(229 100% 55%) 0%, hsl(229 100% 40%) 100%)' }}
     >
-      {/* Background image */}
-      <div 
-        className="fixed inset-0 w-full bg-cover bg-center bg-no-repeat"
-        style={{ 
-          backgroundImage: `url(${authBackground})`,
-          height: '100%'
-        }}
-      />
-      
-      {/* Logo - top left */}
-      <div className="fixed top-6 left-6 z-20">
-        <img src={fintTextWhite} alt="fint" className="h-6 w-auto" />
+      {/* Logo - fixed top left */}
+      <div className="fixed top-8 left-8 z-20">
+        <img src={fintTextWhite} alt="fint" className="h-7 w-auto" />
       </div>
 
-      {/* Header text */}
-      <div className="relative z-10 text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
-          {t('welcomeBack', 'Welcome back')}
-        </h1>
-        <p className="text-lg text-white/70">
-          {t('signInToContinue', 'Sign in to continue to fint')}
-        </p>
-      </div>
+      <div className="w-full max-w-[520px]">
+        {/* Header text */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            {t('welcomeBack', 'Welcome back')}
+          </h1>
+          <p className="text-lg text-white/80">
+            {t('signInToContinue', 'Sign in to continue to fint')}
+          </p>
+        </div>
 
-      {/* Card */}
-      <Card className="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-2xl">
-        <CardContent className="p-8">
-          <form onSubmit={handleSignIn} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email-login" className="text-sm font-medium text-gray-700">{t('email')}</Label>
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-10">
+          <form onSubmit={handleSignIn} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('email')}</label>
               <EmailInput
-                id="email-login"
                 placeholder={t('placeholders.email')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onValidChange={setEmailValid}
                 required
-                className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="password-login" className="text-sm font-medium text-gray-700">{t('password')}</Label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('password')}</label>
               <PasswordInput
-                id="password-login"
                 placeholder={t('placeholders.password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-gray-100 border-0 h-12 rounded-lg text-gray-700 placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
 
@@ -614,6 +608,7 @@ export default function Auth() {
                   id="remember" 
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  className="border-gray-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
                   {t('rememberMe')}
@@ -622,7 +617,6 @@ export default function Auth() {
               <button
                 type="button"
                 onClick={() => {
-                  // For now, just show a toast - implement dialog if needed
                   toast({
                     title: t('forgotPassword'),
                     description: t('contactSupport', 'Please contact support to reset your password.'),
@@ -634,31 +628,33 @@ export default function Auth() {
               </button>
             </div>
             
-            <Button 
-              type="submit" 
-              className="w-full h-12 text-base font-medium rounded-lg" 
-              disabled={loading || !emailValid}
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                t('login')
-              )}
-            </Button>
+            <div className="flex justify-end pt-4">
+              <Button 
+                type="submit" 
+                disabled={loading || !emailValid}
+                className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  t('login')
+                )}
+              </Button>
+            </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Register link */}
-      <p className="relative z-10 mt-6 text-white/70">
-        {t('noAccount', "Don't have an account?")}{' '}
-        <button 
-          onClick={() => setAuthMode("register")}
-          className="text-white font-medium underline hover:no-underline"
-        >
-          {t('signup')}
-        </button>
-      </p>
+        {/* Register link */}
+        <p className="text-center mt-8 text-white/80">
+          {t('noAccount', "Don't have an account?")}{' '}
+          <button 
+            onClick={() => setAuthMode("register")}
+            className="text-white font-medium underline underline-offset-4 hover:no-underline"
+          >
+            {t('signup')}
+          </button>
+        </p>
+      </div>
     </div>
   );
 }
