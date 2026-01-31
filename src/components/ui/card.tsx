@@ -4,18 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  "rounded-xl border text-card-foreground transition-all duration-300",
+  "rounded-xl border border-border/50 text-card-foreground transition-all duration-300",
   {
     variants: {
       variant: {
-        default: "bg-card shadow-sm hover:shadow-md",
-        glass: "bg-card/80 backdrop-blur-xl border-border/50 hover:shadow-lg",
-        gradient: "bg-gradient-to-br from-card to-card/80 shadow-md hover:shadow-lg",
-        stat: "bg-card shadow-sm hover:shadow-md hover:scale-[1.02] cursor-default",
-        income: "bg-gradient-to-br from-success/10 to-success/5 border-success/20 shadow-sm",
-        expense: "bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20 shadow-sm",
-        neutral: "bg-gradient-to-br from-muted/80 to-muted/60 border-muted-foreground/20 shadow-sm",
-        settings: "bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-sm hover:shadow-md",
+        default: "bg-card shadow-sm hover:shadow-md hover:border-border",
+        glass: "bg-card/60 backdrop-blur-xl border-border/30 hover:shadow-lg hover:border-border/50",
+        gradient: "bg-gradient-to-br from-card to-accent shadow-md hover:shadow-lg",
+        stat: "bg-card shadow-sm hover:shadow-md hover:scale-[1.02] hover:border-border cursor-default",
+        income: "bg-success/10 border-success/20 shadow-sm hover:border-success/40",
+        expense: "bg-destructive/10 border-destructive/20 shadow-sm hover:border-destructive/40",
+        neutral: "bg-muted/50 border-muted-foreground/20 shadow-sm",
+        settings: "bg-primary/5 border-primary/20 shadow-sm hover:shadow-md hover:border-primary/40",
       },
     },
     defaultVariants: {
