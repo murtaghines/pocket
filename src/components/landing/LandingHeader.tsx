@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import fintTextWhite from "@/assets/fint-text-white.png";
+import walletTextWhite from "@/assets/wallet-text-white.png";
 
 export function LandingHeader() {
   return (
@@ -9,7 +9,7 @@ export function LandingHeader() {
         <nav className="flex items-center justify-between bg-card/90 backdrop-blur-xl border border-border/50 rounded-full px-6 py-3">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img src={fintTextWhite} alt="fint" className="h-6 w-auto" />
+            <img src={walletTextWhite} alt="wallet" className="h-6 w-auto" />
           </Link>
 
           {/* Center Navigation - Desktop */}
