@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import fintTextWhite from "@/assets/fint-text-white.png";
+import walletTextWhite from "@/assets/wallet-text-white.png";
 
 export function LandingFooter() {
   return (
@@ -8,7 +8,7 @@ export function LandingFooter() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img src={fintTextWhite} alt="fint" className="h-5 w-auto opacity-60" />
+            <img src={walletTextWhite} alt="wallet" className="h-5 w-auto opacity-60" />
           </Link>
 
           {/* Links */}
@@ -26,7 +26,7 @@ export function LandingFooter() {
 
           {/* Copyright */}
           <p className="text-sm text-muted-foreground">
-            © 2024 fint. Todos los derechos reservados.
+            © 2024 wallet. Todos los derechos reservados.
           </p>
         </div>
       </div>
