@@ -31,7 +31,7 @@ export function HeroSection() {
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            fint te ayuda a organizar tus gastos, inversiones y ahorros en un solo lugar. 
+            wallet te ayuda a organizar tus gastos, inversiones y ahorros en un solo lugar. 
             Sube tus extractos bancarios y obtén insights instantáneos.
           </p>
 
@@ -61,7 +61,7 @@ export function HeroSection() {
                   </div>
                   <div className="flex-1 flex justify-center">
                     <div className="bg-background/50 rounded-lg px-4 py-1 text-xs text-muted-foreground">
-                      app.fint.com
+                      app.wallet.com
                     </div>
                   </div>
                 </div>
