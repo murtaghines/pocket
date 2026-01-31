@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, KeyRound } from "lucide-react";
-import fintTextWhite from "@/assets/fint-text-white.png";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
@@ -17,6 +16,7 @@ import { StepLanguage } from "@/components/onboarding/StepLanguage";
 import { StepCountry } from "@/components/onboarding/StepCountry";
 import { StepCurrency } from "@/components/onboarding/StepCurrency";
 import { StepCategories } from "@/components/onboarding/StepCategories";
+import { LandingHeader } from "@/components/landing/LandingHeader";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
 import {
   DEFAULT_INCOME_CATEGORIES,
@@ -26,7 +26,7 @@ import {
 const REMEMBER_EMAIL_KEY = "fint_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4 | 5; // 1-4 onboarding, 5 create account
+type RegisterStep = 1 | 2 | 3 | 4 | 5;
 
 interface OnboardingData {
   country: string;
@@ -61,7 +61,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [emailValid, setEmailValid] = useState(false);
   
-  // Onboarding data
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(() => ({
     country: '',
     currency: 'EUR',
@@ -71,7 +70,6 @@ export default function Auth() {
     language: detectBrowserLanguage(),
   }));
   
-  // Password reset states
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -145,25 +143,22 @@ export default function Auth() {
   // Password Reset Mode
   if (isResetMode) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, hsl(229 100% 55%) 0%, hsl(229 100% 40%) 100%)' }}>
-        {/* Logo */}
-        <div className="fixed top-8 left-8 z-20">
-          <img src={fintTextWhite} alt="fint" className="h-7 w-auto" />
-        </div>
-
-        <div className="w-full max-w-[520px]">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+      <div className="min-h-screen bg-primary">
+        <LandingHeader />
+        
+        <div className="pt-32 pb-20 px-4 flex flex-col items-center">
+          {/* Header text */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
               {t('setNewPassword')}
             </h1>
-            <p className="text-lg text-white/80">
+            <p className="text-lg text-white/80 max-w-md mx-auto">
               {t('enterNewPassword', 'Enter your new password below')}
             </p>
           </div>
 
-          {/* Card - Autonoma style */}
-          <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-10">
+          {/* Card */}
+          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
             <div className="flex justify-center mb-6">
               <div className="p-3 bg-primary/10 rounded-full">
                 <KeyRound className="w-6 h-6 text-primary" />
@@ -276,7 +271,6 @@ export default function Auth() {
         variant: "destructive",
       });
     } else {
-      // Save preferences if user was created
       if (data.user) {
         try {
           await supabase.from('user_preferences').upsert({
@@ -437,34 +431,28 @@ export default function Auth() {
     }
   };
 
-  // REGISTER MODE - Multi-step (Autonoma style)
+  // REGISTER MODE - Multi-step with Landing Header
   if (authMode === "register") {
     const totalSteps = 5;
 
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center p-4"
-        style={{ background: 'linear-gradient(135deg, hsl(229 100% 55%) 0%, hsl(229 100% 40%) 100%)' }}
-      >
-        {/* Logo - fixed top left */}
-        <div className="fixed top-8 left-8 z-20">
-          <img src={fintTextWhite} alt="fint" className="h-7 w-auto" />
-        </div>
-
-        <div className="w-full max-w-[520px]">
-          {/* Header text - outside card */}
-          <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+      <div className="min-h-screen bg-primary">
+        <LandingHeader />
+        
+        <div className="pt-32 pb-20 px-4 flex flex-col items-center">
+          {/* Header text */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
               {tc('onboarding.letsGetStarted', "Let's get started")}
             </h1>
-            <p className="text-lg text-white/80">
+            <p className="text-lg text-white/80 max-w-md mx-auto">
               {tc('onboarding.setupDescription', 'Set up your fint account in just a few steps')}
             </p>
           </div>
 
-          {/* Card - Autonoma style: white, rounded-2xl, big shadow */}
-          <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-10">
-            {/* Progress bar - segmented style like Autonoma */}
+          {/* Card - Autonoma style */}
+          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
+            {/* Progress bar - segmented */}
             <div className="flex gap-2 mb-8">
               {Array.from({ length: totalSteps }).map((_, i) => (
                 <div 
@@ -483,8 +471,8 @@ export default function Auth() {
               {registerStep} of {totalSteps}
             </p>
 
-            {/* Question/Title - large and bold */}
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            {/* Question/Title */}
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6 font-display">
               {getStepQuestion()}
             </h2>
 
@@ -493,7 +481,7 @@ export default function Auth() {
               {renderRegisterStep()}
             </div>
 
-            {/* Navigation - right aligned Next button */}
+            {/* Navigation */}
             <div className="flex justify-between items-center pt-8">
               {registerStep > 1 ? (
                 <button
@@ -554,30 +542,24 @@ export default function Auth() {
     );
   }
 
-  // LOGIN MODE (Autonoma style)
+  // LOGIN MODE with Landing Header
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(135deg, hsl(229 100% 55%) 0%, hsl(229 100% 40%) 100%)' }}
-    >
-      {/* Logo - fixed top left */}
-      <div className="fixed top-8 left-8 z-20">
-        <img src={fintTextWhite} alt="fint" className="h-7 w-auto" />
-      </div>
-
-      <div className="w-full max-w-[520px]">
+    <div className="min-h-screen bg-primary">
+      <LandingHeader />
+      
+      <div className="pt-32 pb-20 px-4 flex flex-col items-center">
         {/* Header text */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
             {t('welcomeBack', 'Welcome back')}
           </h1>
-          <p className="text-lg text-white/80">
+          <p className="text-lg text-white/80 max-w-md mx-auto">
             {t('signInToContinue', 'Sign in to continue to fint')}
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-10">
+        <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
           <form onSubmit={handleSignIn} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{t('email')}</label>
