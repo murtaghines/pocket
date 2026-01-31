@@ -99,7 +99,7 @@ export default function Investments() {
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {t('summary.totalInvested')}
                   </CardTitle>
-                  <PiggyBank className="w-5 h-5 text-blue-500" />
+                  <PiggyBank className="w-5 h-5 text-primary" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
@@ -113,14 +113,14 @@ export default function Investments() {
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {t('summary.totalValue')}
                   </CardTitle>
-                  <Wallet className="w-5 h-5 text-green-500" />
+                  <Wallet className="w-5 h-5 text-success" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-2xl font-bold text-success">
                     {formatCurrency(totalCurrentValue)}
                   </div>
                   {netInvestedAllTime > 0 && (
-                    <p className={`text-sm ${profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`text-sm ${profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss)} ({profitLossPercent}%)
                     </p>
                   )}
@@ -132,7 +132,7 @@ export default function Investments() {
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {t('byPlatform.title')}
                   </CardTitle>
-                  <Building2 className="w-5 h-5 text-purple-500" />
+                  <Building2 className="w-5 h-5 text-primary" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
