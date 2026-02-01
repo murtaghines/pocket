@@ -136,8 +136,10 @@
     "files": "files"
   },
   "notifications": {
+    "title": "Notifications",
     "uploadReminder": "Upload {{month}} statements",
     "uploadDescription": "Complete your financial data for last month to keep your analysis up to date.",
-    "new": "New"
+    "new": "New",
+    "empty": "No notifications"
   }
 }
