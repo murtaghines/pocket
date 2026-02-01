@@ -12,7 +12,7 @@ import { PasswordStrengthIndicator } from "@/components/ui/password-strength-ind
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
 import { LandingHeader } from "@/components/landing/LandingHeader";
-import { CTASection } from "@/components/landing/CTASection";
+
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
 import { StepCountry } from "@/components/onboarding/StepCountry";
@@ -482,9 +482,6 @@ export default function Auth() {
             </button>
           </p>
         </div>
-
-        {/* CTA Section - visible when scrolling down */}
-        <CTASection />
       </div>
     );
   }
@@ -585,8 +582,6 @@ export default function Auth() {
         </p>
       </div>
 
-      {/* CTA Section */}
-      <CTASection />
     </div>
   );
 }
