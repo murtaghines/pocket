@@ -1,214 +1,155 @@
 
-# Plan: Dashboard Modern Redesign - Inspired by Reference UI
+# Plan de Mejoras para el Dashboard
 
-## Overview
-Transform the current dashboard to match the modern, card-based "bento grid" aesthetic from the reference image. The design will use the wallet brand colors (white background, black text, primary blue `#1b17ff` for accents) while maintaining all existing functionality.
+## Resumen de Cambios
 
----
+Se implementarán tres mejoras principales en el dashboard:
 
-## Design Analysis from Reference Image
-
-Key visual characteristics to adopt:
-- **Bento grid layout**: Mixed-size cards in a flexible grid pattern
-- **Rounded corners**: More pronounced (xl to 2xl radius)
-- **Soft shadows**: Subtle, almost flat cards with very light borders
-- **Clean typography**: Large bold numbers, small muted labels
-- **Accent circles/rings**: Decorative circular progress indicators
-- **Minimal icons**: Small, subtle icons as visual accents
-- **Breathing room**: More whitespace within cards
-- **Pill buttons/badges**: Rounded pill-shaped interactive elements
-- **Activity bars**: Mini bar charts inline with data
+1. **Título del mes dinámico** - Mostrar el mes del último registro subido, no el mes actual
+2. **Reorganización de KPIs** - Income, Expenses y Balance ocuparán todo el ancho horizontal
+3. **Reubicación del selector de moneda** - Moverlo al lado izquierdo del header, junto a la navegación
 
 ---
 
-## Files to Modify
+## 1. Título del Mes Dinámico
 
-### 1. `src/index.css` - Enhanced Dashboard Theme
-Update `.dashboard-theme` with softer styling:
-- Increase border radius variables
-- Add new shadow utilities for cards
-- Softer border colors
-- Add decorative gradient utilities
+### Problema Actual
+El dashboard muestra "February 2026" (el mes actual), pero el usuario quiere ver el mes del último registro de datos subido.
 
-### 2. `src/pages/Index.tsx` - New Bento Grid Layout
-Complete restructure of the dashboard layout:
-- Add a welcome/date section at top
-- Reorganize cards into a bento-style grid
-- Add visual hierarchy with varied card sizes
-- Group related metrics together
+### Solución
+- Obtener el mes más reciente de los datos cargados (del array `monthlyData`)
+- Si hay datos, mostrar el mes del último registro
+- Cuando se sube un nuevo mes, el título se actualiza automáticamente
 
-### 3. `src/components/dashboard/StatCard.tsx` - Modern Stat Card
-Redesign to match reference:
-- Larger, bolder value typography
-- Icon in colored pill/circle badge
-- Cleaner layout with more padding
-- Optional mini chart/trend visualization
-- Remove heavy colored backgrounds, use subtle accents
-
-### 4. `src/components/dashboard/CategoryChart.tsx` - Enhanced Pie Chart
-- Larger donut chart with center value
-- Cleaner legend below
-- Add total value in center of ring
-- Softer colors for categories
-
-### 5. `src/components/dashboard/MonthlyChart.tsx` - Refined Chart
-- Cleaner bar/area styling
-- Blue accent color for primary data
-- Simplified axis styling
-- Larger card with more breathing room
-
-### 6. `src/components/dashboard/SavingsRateCard.tsx` - Ring Progress Card
-- Keep the circular progress (matches reference "36% Growth rate")
-- Update colors to use blue accent
-- Clean center typography
-- Add subtle animation
-
-### 7. `src/components/dashboard/TopExpensesCard.tsx` - Activity List
-- Cleaner list styling
-- Rounded category badges
-- Mini amount badges on right
-- More compact rows
-
-### 8. `src/components/dashboard/WeeklyComparisonChart.tsx` - Mini Bar Chart
-- Cleaner mini bars
-- Blue accent for today
-- Simplified layout
-
-### 9. `src/components/dashboard/BalanceChart.tsx` - Line Trend Chart
-- Single-color line (blue)
-- Subtle gradient fill
-- Cleaner axis
-
-### 10. `src/components/dashboard/InvestmentSummaryCard.tsx` - Investment Quick View
-- Pill-style "View" button
-- Cleaner typography
-- Blue accent for values
-
-### 11. `src/components/dashboard/MonthStatusIndicator.tsx` - Month Status Card
-- Cleaner badge styling
-- Blue accent theme
-- Progress indicator
-
-### 12. `src/components/dashboard/TransactionTable.tsx` - Modern Table
-- Softer row styling
-- Rounded pill badges for categories
-- Cleaner typography
-- Search with rounded input
-
-### 13. `src/components/dashboard/EmptyStateBanner.tsx` - Welcome Card
-- Softer styling
-- Blue gradient accent
-- Pill-style CTA button
-
-### 14. `src/components/dashboard/MonthClosingBanner.tsx` - Notification Card
-- Rounded, soft styling
-- Blue theme instead of gradients
-- Pill badges for status
-
-### 15. `src/components/dashboard/YearlyBalanceChart.tsx` - Annual Overview
-- Blue bars for positive months
-- Cleaner legend
-- Match reference "Annual profits" card style
-
-### 16. `src/components/ui/card.tsx` - Card Variants Update
-Add new card variants:
-- `modern`: Very rounded, subtle shadow, almost no border
-- Update existing variants for lighter aesthetic
+**Ejemplo:** Si hoy es 3 de febrero pero lo último subido es diciembre → mostrar "December 2025"
 
 ---
 
-## New Layout Structure
+## 2. Reorganización de KPIs (Income, Expenses, Balance)
 
-```text
-+--------------------------------------------------+
-| Header                                            |
-+--------------------------------------------------+
-| Welcome / Date Section + Quick Actions            |
-+--------------------------------------------------+
-| [Income]  [Expenses]  [Balance]  [Invest] [Month] |
-|                                                   |
-+--------------------------------------------------+
-|                                                   |
-|  [Monthly Income/Expense Chart - Large Card]      |
-|                                                   |
-+--------------------------------------------------+
-|  [Category Pie] | [Top Expenses] | [Weekly Chart] |
-+--------------------------------------------------+
-|  [Balance Line Chart - 3/4]    | [Savings Ring]  |
-+--------------------------------------------------+
-|  [Yearly Balance Chart]                           |
-+--------------------------------------------------+
-|  [Transaction Table - Full Width]                 |
-+--------------------------------------------------+
+### Problema Actual
+Los KPIs están en una grilla de 4-5 columnas incluyendo Investments, lo que los hace más pequeños.
+
+### Solución
+- **Income, Expenses, Balance**: Ocuparán todo el ancho en una fila de 3 columnas iguales
+- **Investments**: Mover a una sección separada, posiblemente:
+  - Como un banner debajo de los KPIs principales
+  - Integrado en la fila de gráficos existente
+  - Como tarjeta lateral junto al gráfico de Savings Rate
+
+### Propuesta de Diseño
+```
++------------------+------------------+------------------+
+|     INCOME       |    EXPENSES      |     BALANCE      |
+|    (1/3 ancho)   |   (1/3 ancho)    |   (1/3 ancho)    |
++------------------+------------------+------------------+
+
++----------------------------------------+---------------+
+|         Monthly Balance Chart          |  Investments  |
+|             (2/3 ancho)                | (sidebar card)|
++----------------------------------------+---------------+
 ```
 
 ---
 
-## Color Palette Mapping
+## 3. Reubicación del Selector de Moneda
 
-| Reference Color | Wallet Equivalent |
-|-----------------|-------------------|
-| Coral/Orange accent | Primary Blue (`#1b17ff`) |
-| Coral buttons | Blue buttons |
-| Pink/coral backgrounds | Blue tints (`bg-primary/5`, `bg-primary/10`) |
-| Dark text | Near black (`#171717`) |
-| Muted text | Gray (`#737373`) |
-| Card backgrounds | Pure white |
-| Borders | Very light gray or none |
+### Problema Actual
+El selector de moneda está a la derecha del header, junto a las notificaciones y el avatar.
 
----
+### Solución
+- Mover el CurrencySelector al lado izquierdo del header
+- Quedará visualmente asociado a la navegación sin estar dentro del sidebar
+- El lado derecho solo tendrá: Notificaciones + Avatar
 
-## Key Visual Changes
-
-### Cards
-- Border radius: `rounded-2xl` (16px) for large cards, `rounded-xl` (12px) for smaller
-- Border: `border border-gray-100` or no border
-- Shadow: `shadow-sm` or custom subtle shadow
-- Background: Pure white
-
-### Typography
-- Values: `text-3xl md:text-4xl font-bold` for main numbers
-- Labels: `text-sm text-muted-foreground`
-- Headers: `text-lg font-semibold`
-
-### Buttons
-- Pill shaped: `rounded-full`
-- Primary: Blue background with white text
-- Ghost: Transparent with blue text
-
-### Charts
-- Use blue as primary data color
-- Green for income, red for expenses (keep semantic)
-- Blue for balance/neutral metrics
+### Estructura del Header Resultante
+```
++-----------------------------------------------------------+
+|                          HEADER                            |
++-----------------------------------------------------------+
+| [€ EUR] (izquierda)              [🔔] [Avatar] (derecha)  |
++-----------------------------------------------------------+
+```
 
 ---
 
-## Implementation Steps
+## Detalles Técnicos
 
-1. Update CSS variables and add new utilities
-2. Create new card styling in card.tsx
-3. Redesign StatCard with modern layout
-4. Update CategoryChart donut styling
-5. Redesign MonthlyChart with cleaner bars
-6. Update SavingsRateCard ring to blue theme
-7. Modernize TopExpensesCard list
-8. Clean up WeeklyComparisonChart
-9. Simplify BalanceChart with blue line
-10. Update InvestmentSummaryCard styling
-11. Modernize MonthStatusIndicator
-12. Clean up YearlyBalanceChart
-13. Update banners (Empty, MonthClosing)
-14. Modernize TransactionTable
-15. Restructure Index.tsx layout with welcome section
+### Archivos a Modificar
+
+| Archivo | Cambios |
+|---------|---------|
+| `src/pages/Index.tsx` | Lógica del título dinámico basado en el último mes con datos |
+| `src/pages/Index.tsx` | Reorganización del grid de KPIs (3 columnas) |
+| `src/pages/Index.tsx` | Mover InvestmentSummaryCard a nueva ubicación |
+| `src/components/layout/DashboardLayout.tsx` | Mover CurrencySelector a la izquierda del header |
+
+### Cambios en Index.tsx
+
+**Título del mes:**
+```tsx
+// Obtener el mes del último registro de datos
+const latestMonthLabel = monthlyData.length > 0 
+  ? monthlyData[monthlyData.length - 1].month 
+  : null;
+
+// Renderizar
+<h3 className="text-lg font-semibold mb-4 capitalize text-muted-foreground">
+  {latestMonthLabel || t('period.noPeriods')}
+</h3>
+```
+
+**Grid de KPIs:**
+```tsx
+// Antes: grid-cols-2 md:grid-cols-4 lg:grid-cols-5
+// Después: grid-cols-1 md:grid-cols-3
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <StatCard title="Income" ... />
+  <StatCard title="Expenses" ... />
+  <StatCard title="Balance" ... />
+</div>
+```
+
+**Investments - Nueva ubicación:**
+```tsx
+// Integrar en la fila de gráficos
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+  <div className="lg:col-span-2">
+    <MonthlyChart data={...} />
+  </div>
+  <div className="space-y-4">
+    <InvestmentSummaryCard />
+    <SavingsRateCard ... />
+  </div>
+</div>
+```
+
+### Cambios en DashboardLayout.tsx
+
+```tsx
+<header className="...">
+  <div className="flex h-16 items-center justify-between px-4 md:px-6">
+    {/* Izquierda: Currency Selector */}
+    <div className="flex items-center">
+      <div className="md:hidden w-12" /> {/* Espacio para hamburguesa en móvil */}
+      <CurrencySelector variant="light" />
+    </div>
+    
+    {/* Derecha: Notificaciones + Avatar */}
+    <div className="flex items-center gap-2 md:gap-3">
+      <NotificationBell variant="light" />
+      <Link to="/profile">...</Link>
+    </div>
+  </div>
+</header>
+```
 
 ---
 
-## Technical Notes
+## Resultado Final
 
-- No changes to data hooks or business logic
-- Keep all translations working
-- Maintain responsive design (mobile-first)
-- Keep animation delays for staggered load effect
-- Preserve empty state handling
-- Keep semantic colors for income (green) / expense (red)
-- Use blue for primary accents, buttons, and neutral metrics
+1. ✅ El título mostrará el mes del último dato subido (ej: "December 2025")
+2. ✅ Income, Expenses y Balance ocuparán todo el ancho horizontal en 3 columnas iguales
+3. ✅ Investments estará junto al gráfico Monthly Balance y Savings Rate
+4. ✅ El selector de moneda estará a la izquierda del header, separado de las notificaciones
