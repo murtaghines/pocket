@@ -51,12 +51,27 @@ function detectBrowserLanguage(): SupportedLanguage {
 }
 
 export default function Auth() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isResetMode = searchParams.get("reset") === "true";
-  const initialMode = searchParams.get("mode") === "login" ? "login" : "register";
+  const modeFromUrl = searchParams.get("mode") === "login" ? "login" : "register";
   const { t } = useTranslation('auth');
   
-  const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
+  const [authMode, setAuthModeState] = useState<AuthMode>(modeFromUrl);
+  
+  // Sync URL with authMode
+  const setAuthMode = (mode: AuthMode) => {
+    setAuthModeState(mode);
+    if (mode === "login") {
+      setSearchParams({ mode: "login" });
+    } else {
+      setSearchParams({});
+    }
+  };
+  
+  // Sync state when URL changes (e.g., browser back/forward or header link click)
+  useEffect(() => {
+    setAuthModeState(modeFromUrl);
+  }, [modeFromUrl]);
   const [registerStep, setRegisterStep] = useState<RegisterStep>(1);
   
   // Form data

@@ -1,8 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import walletTextWhite from "@/assets/wallet-text-white.png";
 
 export function LandingHeader() {
+  const location = useLocation();
+  const isAuthPage = location.pathname === "/auth";
+  const isLoginMode = isAuthPage && location.search.includes("mode=login");
+  const isRegisterMode = isAuthPage && !isLoginMode;
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
       <div className="max-w-7xl mx-auto">
@@ -28,12 +33,19 @@ export function LandingHeader() {
           {/* Right side - Auth buttons */}
           <div className="flex items-center gap-3">
             <Link to="/auth?mode=login">
-              <Button variant="ghost" size="sm" className="text-sm">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={`text-sm ${isLoginMode ? 'bg-white/10 text-white' : ''}`}
+              >
                 Sign in
               </Button>
             </Link>
             <Link to="/auth">
-              <Button size="sm" className="text-sm rounded-full px-5">
+              <Button 
+                size="sm" 
+                className={`text-sm rounded-full px-5 ${isRegisterMode ? 'ring-2 ring-white ring-offset-2 ring-offset-accent' : ''}`}
+              >
                 Get started
               </Button>
             </Link>
