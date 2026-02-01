@@ -10,6 +10,7 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
+import { DateDisplay } from "@/components/dashboard/DateDisplay";
 
 import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
@@ -21,7 +22,8 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
-import { TrendingUp, TrendingDown, Wallet, Loader2, CalendarDays } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
+import { TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
 
 export default function Index() {
   const { t } = useTranslation('dashboard');
@@ -37,6 +39,7 @@ export default function Index() {
   const { formatCurrency, formatMonth } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates('EUR');
+  const { profile } = useProfile();
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
@@ -105,13 +108,15 @@ export default function Index() {
     balance: convertToUserCurrency(summary.balance),
   };
 
-  // Get current date for welcome section
-  const today = new Date();
-  const formattedDate = today.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t('welcome.morning', 'Good morning');
+    if (hour < 18) return t('welcome.afternoon', 'Good afternoon');
+    return t('welcome.evening', 'Good evening');
+  };
+
+  const firstName = profile?.first_name || '';
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0 dashboard-theme">
@@ -126,15 +131,19 @@ export default function Index() {
       )}
       
       <main className="container px-4 md:px-6 py-6">
-        {/* Welcome Section */}
-        <div className="mb-6 animate-fade-in">
-          <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-            <CalendarDays className="w-4 h-4" />
-            <span>{formattedDate}</span>
+        {/* Welcome Section - Matching reference design */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8 animate-fade-in">
+          <DateDisplay />
+          
+          {/* Greeting on the right */}
+          <div className="hidden md:block text-right">
+            <h2 className="text-2xl md:text-3xl font-bold">
+              {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
+            </h2>
+            <p className="text-muted-foreground">
+              {t('welcome.subtitle', 'Here\'s your financial overview')}
+            </p>
           </div>
-          <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
-            {t('title')}
-          </h2>
         </div>
 
         {(isLoading || prefsLoading) && (
@@ -153,8 +162,9 @@ export default function Index() {
               {currentMonth.month || currentMonthName}
             </h3>
 
-            {/* Stat Cards - Bento Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            {/* Bento Grid Layout */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+              {/* Main stat cards */}
               <StatCard
                 title={t('stats.income')}
                 value={formatCurrency(convertedCurrentMonth.income)}
@@ -183,28 +193,38 @@ export default function Index() {
                 icon={<Wallet className="w-5 h-5" />}
                 delay={200}
               />
+              
+              {/* Investment and Month Status */}
               <InvestmentSummaryCard />
               <MonthStatusIndicator />
             </div>
 
-            {/* Monthly Chart - Full Width */}
-            <div className="mb-6">
-              <MonthlyChart data={convertedMonthlyData} />
+            {/* Charts Row - 2 column bento */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+              {/* Monthly Chart takes 2 cols */}
+              <div className="lg:col-span-2">
+                <MonthlyChart data={convertedMonthlyData} />
+              </div>
+              
+              {/* Savings rate */}
+              <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
             </div>
 
-            {/* Charts Row */}
+            {/* Middle Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <CategoryChart data={convertedCategoryData} />
               <TopExpensesCard transactions={transactions} />
               <WeeklyComparisonChart />
             </div>
 
-            {/* Balance and Savings Row */}
+            {/* Balance Chart Row */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
               <div className="lg:col-span-3">
                 <BalanceChart data={convertedMonthlyData} />
               </div>
-              <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+              <div className="hidden lg:block">
+                {/* Yearly summary or additional card */}
+              </div>
             </div>
 
             {/* Yearly Chart */}

@@ -4,24 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  "rounded-2xl border text-card-foreground transition-all duration-300",
+  "text-card-foreground transition-all duration-200",
   {
     variants: {
       variant: {
-        default: "bg-card border-border/40 shadow-[var(--shadow-card)] hover:shadow-lg",
-        glass: "bg-card/80 backdrop-blur-xl border-border/20 shadow-[var(--shadow-card)]",
-        gradient: "bg-gradient-to-br from-card to-accent/50 shadow-[var(--shadow-card)]",
-        stat: "bg-card border-border/30 shadow-[var(--shadow-card)] hover:shadow-lg",
-        income: "bg-success/5 border-success/20 shadow-[var(--shadow-card)]",
-        expense: "bg-destructive/5 border-destructive/20 shadow-[var(--shadow-card)]",
-        neutral: "bg-card border-border/30 shadow-[var(--shadow-card)]",
-        settings: "bg-primary/5 border-primary/20 shadow-[var(--shadow-card)]",
-        modern: "bg-card border-0 shadow-[var(--shadow-lg)] rounded-3xl",
-        bento: "bg-card border-border/20 shadow-[var(--shadow-card)] rounded-3xl hover:shadow-lg hover:border-primary/20",
+        default: "bg-card border border-border/30 rounded-2xl shadow-[var(--shadow-card)]",
+        glass: "bg-card/80 backdrop-blur-xl border border-border/20 rounded-2xl shadow-[var(--shadow-card)]",
+        gradient: "bg-gradient-to-br from-card to-accent/50 rounded-2xl shadow-[var(--shadow-card)]",
+        stat: "bg-card border border-border/20 rounded-2xl shadow-[var(--shadow-card)]",
+        income: "bg-success/5 border border-success/20 rounded-2xl shadow-[var(--shadow-card)]",
+        expense: "bg-destructive/5 border border-destructive/20 rounded-2xl shadow-[var(--shadow-card)]",
+        neutral: "bg-card border border-border/20 rounded-2xl shadow-[var(--shadow-card)]",
+        settings: "bg-primary/5 border border-primary/20 rounded-2xl shadow-[var(--shadow-card)]",
+        modern: "bg-card border-0 rounded-[1.5rem] shadow-[var(--shadow-bento)]",
+        bento: "bg-card border border-border/30 rounded-[1.5rem] shadow-[var(--shadow-bento)] hover:border-border/50",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "bento",
     },
   }
 );

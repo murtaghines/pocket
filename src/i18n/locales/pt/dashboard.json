@@ -3,7 +3,11 @@
   "welcome": {
     "title": "Bem-vindo ao wallet!",
     "message": "Comece enviando seu primeiro extrato bancário para ver suas finanças.",
-    "uploadButton": "Enviar arquivo"
+    "uploadButton": "Enviar arquivo",
+    "morning": "Bom dia",
+    "afternoon": "Boa tarde",
+    "evening": "Boa noite",
+    "subtitle": "Aqui está seu resumo financeiro"
   },
   "stats": {
     "income": "Receitas",
