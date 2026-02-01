@@ -15,13 +15,13 @@ export function LandingHeader() {
           {/* Center Navigation - Desktop */}
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Características
+              Features
             </a>
             <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Cómo funciona
+              How it works
             </a>
             <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Testimonios
+              Testimonials
             </a>
           </div>
 
@@ -29,12 +29,12 @@ export function LandingHeader() {
           <div className="flex items-center gap-3">
             <Link to="/auth?mode=login">
               <Button variant="ghost" size="sm" className="text-sm">
-                Iniciar sesión
+                Sign in
               </Button>
             </Link>
             <Link to="/auth">
               <Button size="sm" className="text-sm rounded-full px-5">
-                Comenzar
+                Get started
               </Button>
             </Link>
           </div>

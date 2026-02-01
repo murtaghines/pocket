@@ -11,25 +11,25 @@ export function CTASection() {
       <div className="container px-4 md:px-6 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Comienza a controlar
+            Start taking control
             <br />
-            tus finanzas hoy
+            of your finances today
           </h2>
           
           <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-            Regístrate gratis y descubre cómo wallet puede ayudarte a tomar mejores decisiones financieras.
+            Sign up for free and discover how wallet can help you make better financial decisions.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth">
               <Button size="lg" className="rounded-full px-8 py-6 text-lg font-medium shadow-glow w-full sm:w-auto">
-                Crear cuenta gratis
+                Create free account
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
             <Link to="/auth?mode=login">
               <Button variant="outline" size="lg" className="rounded-full px-8 py-6 text-lg font-medium w-full sm:w-auto">
-                Ya tengo cuenta
+                I already have an account
               </Button>
             </Link>
           </div>

@@ -2,27 +2,27 @@ import { Star } from "lucide-react";
 
 const testimonials = [
   {
-    quote: "Finalmente puedo ver todos mis gastos organizados. Antes usaba Excel y perdía horas cada mes.",
-    name: "María García",
-    role: "Emprendedora",
+    quote: "Finally I can see all my expenses organized. I used to use Excel and wasted hours every month.",
+    name: "Maria Garcia",
+    role: "Entrepreneur",
     avatar: "M",
   },
   {
-    quote: "La categorización automática es increíble. Detecta hasta los gastos más pequeños correctamente.",
-    name: "Carlos Rodríguez",
+    quote: "The automatic categorization is incredible. It detects even the smallest expenses correctly.",
+    name: "Carlos Rodriguez",
     role: "Freelancer",
     avatar: "C",
   },
   {
-    quote: "Poder ver mis inversiones junto con mis gastos me da una visión completa de mis finanzas.",
-    name: "Ana Martínez",
-    role: "Inversora particular",
+    quote: "Being able to see my investments alongside my expenses gives me a complete view of my finances.",
+    name: "Ana Martinez",
+    role: "Individual Investor",
     avatar: "A",
   },
   {
-    quote: "El soporte multi-moneda es perfecto para mí que trabajo con clientes internacionales.",
-    name: "Pablo López",
-    role: "Consultor",
+    quote: "Multi-currency support is perfect for me since I work with international clients.",
+    name: "Pablo Lopez",
+    role: "Consultant",
     avatar: "P",
   },
 ];
@@ -34,9 +34,9 @@ export function TestimonialsSection() {
         {/* Section header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold">
-            Nuestros usuarios
+            Our users
             <br />
-            <span className="text-muted-foreground">cuentan su experiencia</span>
+            <span className="text-muted-foreground">share their experience</span>
           </h2>
         </div>
 

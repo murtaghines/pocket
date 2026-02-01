@@ -14,19 +14,19 @@ export function LandingFooter() {
           {/* Links */}
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-foreground transition-colors">
-              Privacidad
+              Privacy
             </a>
             <a href="#" className="hover:text-foreground transition-colors">
-              Términos
+              Terms
             </a>
             <a href="#" className="hover:text-foreground transition-colors">
-              Contacto
+              Contact
             </a>
           </div>
 
           {/* Copyright */}
           <p className="text-sm text-muted-foreground">
-            © 2024 wallet. Todos los derechos reservados.
+            © 2024 wallet. All rights reserved.
           </p>
         </div>
       </div>
