@@ -6,7 +6,7 @@
     "useSaved": "Usar preferencia guardada",
     "decideLater": "Decidir después"
   },
-  "appName": "fint",
+  "appName": "wallet",
   "loading": "Cargando...",
   "error": "Error",
   "success": "Éxito",
@@ -68,7 +68,7 @@
     "maxLength": "Debe tener como máximo {{count}} caracteres"
   },
   "onboarding": {
-    "welcome": "¡Bienvenido a Fint! 👋",
+    "welcome": "Welcome to wallet! 👋",
     "yourCountry": "Tu País",
     "baseCurrency": "Moneda Base",
     "categories": "Categorías"

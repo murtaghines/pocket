@@ -5,24 +5,24 @@ import { ArrowRight } from "lucide-react";
 const steps = [
   {
     number: "1",
-    title: "Sube tus extractos",
-    description: "Carga los extractos de tu banco en formato Excel o PDF. Soportamos la mayoría de bancos.",
+    title: "Upload your statements",
+    description: "Upload your bank statements in Excel or PDF format. We support most banks.",
     icon: Upload,
-    link: { text: "Formatos soportados", href: "#" },
+    link: { text: "Supported formats", href: "#" },
   },
   {
     number: "2",
-    title: "Análisis automático",
-    description: "Nuestro sistema categoriza automáticamente tus transacciones y genera insights personalizados.",
+    title: "Automatic analysis",
+    description: "Our system automatically categorizes your transactions and generates personalized insights.",
     icon: PieChart,
-    link: { text: "Ver ejemplo", href: "#" },
+    link: { text: "See example", href: "#" },
   },
   {
     number: "3",
-    title: "Toma mejores decisiones",
-    description: "Visualiza tus gastos, identifica patrones y optimiza tus finanzas con datos claros.",
+    title: "Make better decisions",
+    description: "Visualize your expenses, identify patterns, and optimize your finances with clear data.",
     icon: TrendingUp,
-    link: { text: "Empezar ahora", href: "/auth" },
+    link: { text: "Get started", href: "/auth" },
   },
 ];
 
@@ -39,13 +39,13 @@ export function HowItWorksSection() {
           </div>
           
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            De datos desordenados a
+            From messy data to
             <br />
-            <span className="text-muted-foreground">claridad financiera total</span>
+            <span className="text-muted-foreground">total financial clarity</span>
           </h2>
           
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Define tu camino y comienza a mejorar tus finanzas en minutos.
+            Define your path and start improving your finances in minutes.
           </p>
         </div>
 

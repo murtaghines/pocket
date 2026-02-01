@@ -2,41 +2,41 @@ import { FileSpreadsheet, Shield, Zap, PiggyBank, BarChart3, Globe } from "lucid
 
 const features = [
   {
-    label: "AUTOMATIZADO",
+    label: "AUTOMATED",
     icon: FileSpreadsheet,
-    title: "Importación inteligente",
-    titleSecondLine: "de extractos",
-    description: "Sube tus archivos Excel o PDF y nuestro sistema extrae y categoriza automáticamente todas tus transacciones.",
+    title: "Smart import",
+    titleSecondLine: "of statements",
+    description: "Upload your Excel or PDF files and our system automatically extracts and categorizes all your transactions.",
     color: "from-green-500/20 to-green-500/5",
     iconBg: "bg-green-500/10",
     iconColor: "text-green-500",
   },
   {
-    label: "SEGURO",
+    label: "SECURE",
     icon: Shield,
-    title: "Privacidad",
-    titleSecondLine: "garantizada",
-    description: "Tus datos financieros están encriptados y protegidos. Nunca compartimos tu información con terceros.",
+    title: "Privacy",
+    titleSecondLine: "guaranteed",
+    description: "Your financial data is encrypted and protected. We never share your information with third parties.",
     color: "from-red-500/20 to-red-500/5",
     iconBg: "bg-red-500/10",
     iconColor: "text-red-500",
   },
   {
-    label: "INTELIGENTE",
+    label: "INTELLIGENT",
     icon: Zap,
-    title: "Categorización",
-    titleSecondLine: "automática",
-    description: "La IA aprende de tus patrones y categoriza automáticamente tus gastos con precisión.",
+    title: "Automatic",
+    titleSecondLine: "categorization",
+    description: "AI learns from your patterns and automatically categorizes your expenses with precision.",
     color: "from-primary/20 to-primary/5",
     iconBg: "bg-primary/10",
     iconColor: "text-primary",
   },
   {
-    label: "INVERSIONES",
+    label: "INVESTMENTS",
     icon: PiggyBank,
-    title: "Tracking de",
-    titleSecondLine: "inversiones",
-    description: "Conecta tus cuentas de inversión y visualiza todo tu patrimonio en un solo dashboard.",
+    title: "Investment",
+    titleSecondLine: "tracking",
+    description: "Connect your investment accounts and visualize your entire portfolio in a single dashboard.",
     color: "from-yellow-500/20 to-yellow-500/5",
     iconBg: "bg-yellow-500/10",
     iconColor: "text-yellow-500",
@@ -44,19 +44,19 @@ const features = [
   {
     label: "ANALYTICS",
     icon: BarChart3,
-    title: "Reportes",
-    titleSecondLine: "detallados",
-    description: "Gráficos interactivos y reportes mensuales que te ayudan a entender tus hábitos financieros.",
+    title: "Detailed",
+    titleSecondLine: "reports",
+    description: "Interactive charts and monthly reports that help you understand your financial habits.",
     color: "from-purple-500/20 to-purple-500/5",
     iconBg: "bg-purple-500/10",
     iconColor: "text-purple-500",
   },
   {
-    label: "MULTI-MONEDA",
+    label: "MULTI-CURRENCY",
     icon: Globe,
-    title: "Soporte",
-    titleSecondLine: "internacional",
-    description: "Trabaja con múltiples monedas y bancos de diferentes países. Conversión automática de divisas.",
+    title: "International",
+    titleSecondLine: "support",
+    description: "Work with multiple currencies and banks from different countries. Automatic currency conversion.",
     color: "from-cyan-500/20 to-cyan-500/5",
     iconBg: "bg-cyan-500/10",
     iconColor: "text-cyan-500",
@@ -70,12 +70,12 @@ export function FeaturesSection() {
         {/* Section header */}
         <div className="text-center mb-16">
           <span className="text-sm text-muted-foreground tracking-wider uppercase mb-4 block">
-            Características
+            Features
           </span>
           <h2 className="text-3xl md:text-5xl font-bold">
-            Todo lo que necesitas para
+            Everything you need to
             <br />
-            <span className="text-muted-foreground">gestionar tu dinero</span>
+            <span className="text-muted-foreground">manage your money</span>
           </h2>
         </div>
 
