@@ -62,10 +62,10 @@ export function StatCard({
       className="animate-slide-up overflow-hidden"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="p-5">
-        {/* Icon badge */}
+      <div className="p-4 md:p-5">
+        {/* Icon badge - smaller and more subtle */}
         <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center mb-4",
+          "w-9 h-9 rounded-xl flex items-center justify-center mb-3",
           getIconBgColor()
         )}>
           <div className={getIconColor()}>
@@ -74,23 +74,23 @@ export function StatCard({
         </div>
         
         {/* Label */}
-        <p className="text-sm font-medium text-muted-foreground mb-1">
+        <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
           {title}
         </p>
         
-        {/* Value */}
+        {/* Value - larger and bolder */}
         <p className={cn(
-          "text-2xl md:text-3xl font-bold tracking-tight font-display",
+          "text-xl md:text-2xl font-bold tracking-tight font-display",
           getValueColor()
         )}>
           {value}
         </p>
         
-        {/* Change indicator */}
+        {/* Change indicator - more compact */}
         {change !== undefined && change !== null && (change !== 0 || isPositive || isNegative) && (
-          <div className="flex items-center gap-1.5 mt-3">
+          <div className="flex items-center gap-1.5 mt-2">
             <div className={cn(
-              "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+              "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium",
               isPositive && "bg-success/10 text-success",
               isNegative && "bg-destructive/10 text-destructive",
               !isPositive && !isNegative && "bg-muted text-muted-foreground"
@@ -100,9 +100,6 @@ export function StatCard({
               {!isPositive && !isNegative && <Minus className="w-3 h-3" />}
               <span>{rawPositive && "+"}{change}%</span>
             </div>
-            {changeLabel && (
-              <span className="text-xs text-muted-foreground">{changeLabel}</span>
-            )}
           </div>
         )}
       </div>
