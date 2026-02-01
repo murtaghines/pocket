@@ -9,7 +9,7 @@ interface StepNameProps {
 export function StepName({ name, onNameChange }: StepNameProps) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 text-muted-foreground">
+      <div className="flex items-center gap-3 text-gray-500">
         <User className="w-5 h-5" />
         <p>Let us know how to address you.</p>
       </div>
@@ -21,7 +21,7 @@ export function StepName({ name, onNameChange }: StepNameProps) {
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
           autoFocus
-          className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+          className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
         />
       </div>
     </div>

@@ -27,17 +27,17 @@ const COUNTRIES = [
 export function StepCountry({ country, onCountryChange }: StepCountryProps) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 text-muted-foreground">
+      <div className="flex items-center gap-3 text-gray-500">
         <MapPin className="w-5 h-5" />
         <p>This helps us customize your experience.</p>
       </div>
 
       <div className="space-y-3">
-        <Label htmlFor="country">Country</Label>
+        <Label htmlFor="country" className="text-gray-700">Country</Label>
         <Select value={country} onValueChange={onCountryChange}>
           <SelectTrigger 
             id="country" 
-            className="w-full h-14 px-4 text-base bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-colors"
+            className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 transition-colors"
           >
             <SelectValue placeholder="Select your country" />
           </SelectTrigger>

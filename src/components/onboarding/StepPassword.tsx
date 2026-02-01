@@ -17,7 +17,7 @@ export function StepPassword({
 }: StepPasswordProps) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 text-muted-foreground">
+      <div className="flex items-center gap-3 text-gray-500">
         <Lock className="w-5 h-5" />
         <p>Create a secure password to protect your account.</p>
       </div>
@@ -32,7 +32,7 @@ export function StepPassword({
             required
             minLength={6}
             autoFocus
-            className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+            className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
           />
           <PasswordStrengthIndicator password={password} />
         </div>
@@ -45,7 +45,7 @@ export function StepPassword({
             onChange={(e) => onConfirmPasswordChange(e.target.value)}
             required
             minLength={6}
-            className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+            className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
           />
           {password && confirmPassword && password !== confirmPassword && (
             <p className="text-sm text-destructive">Passwords don't match</p>
