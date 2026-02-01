@@ -95,7 +95,7 @@
 
   /* Dashboard light theme - Modern bento aesthetic */
   .dashboard-theme {
-    --background: 0 0% 100%;
+    --background: 220 14% 97%;
     --foreground: 0 0% 9%;
 
     --card: 0 0% 100%;
@@ -125,7 +125,7 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
+    --border: 220 13% 86%;
     --input: 220 13% 91%;
     --ring: 242 100% 55%;
 
