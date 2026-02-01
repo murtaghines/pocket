@@ -75,8 +75,8 @@ export function MonthStatusIndicator() {
     <Card variant="bento" className={cn("transition-all", statusStyles[status])} style={{ animationDelay: '400ms' }}>
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-            {statusIcon[status]}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20">
+            {status === 'complete' ? <CheckCircle2 className="w-5 h-5 text-white" /> : status === 'partial' ? <AlertCircle className="w-5 h-5 text-white" /> : <FileText className="w-5 h-5 text-white" />}
           </div>
           <Badge 
             variant="outline" 

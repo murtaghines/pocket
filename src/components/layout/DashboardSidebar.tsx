@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import walletTextWhite from "@/assets/wallet-text-white.png";
 import walletTextBlack from "@/assets/wallet-text-black.png";
 
 interface NavItem {
@@ -46,26 +47,26 @@ export function DashboardSidebar() {
   
   return (
     <>
-      {/* Hamburger button and logo - visible on desktop */}
+      {/* Hamburger button and logo - visible on desktop (dark header) */}
       <div className="hidden md:flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsOpen(!isOpen)}
-          className="rounded-full hover:bg-muted"
+          className="rounded-full text-white hover:bg-white/10"
         >
           <Menu className="w-5 h-5" />
         </Button>
         
-        {/* Logo using existing asset */}
+        {/* Logo using white variant for dark header */}
         <Link to="/dashboard" className="flex items-center">
-          <img src={walletTextBlack} alt="wallet" className="h-6 w-auto" />
+          <img src={walletTextWhite} alt="wallet" className="h-6 w-auto" />
         </Link>
       </div>
       
       {/* Mobile logo only (no hamburger on mobile - they use bottom nav) */}
       <Link to="/dashboard" className="md:hidden flex items-center">
-        <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
+        <img src={walletTextWhite} alt="wallet" className="h-5 w-auto" />
       </Link>
       
       {/* Sidebar overlay */}

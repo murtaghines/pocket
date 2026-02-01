@@ -69,8 +69,8 @@ export function WeeklyComparisonChart() {
       <Card variant="bento" className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Calendar className="w-4 h-4 text-primary" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20">
+              <Calendar className="w-4 h-4 text-white" />
             </div>
             This Week
           </CardTitle>
@@ -86,8 +86,8 @@ export function WeeklyComparisonChart() {
     <Card variant="bento" className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-primary" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20">
+            <Calendar className="w-4 h-4 text-white" />
           </div>
           This Week
         </CardTitle>

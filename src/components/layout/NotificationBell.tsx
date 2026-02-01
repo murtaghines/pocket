@@ -13,7 +13,11 @@ import { cn } from "@/lib/utils";
 
 const BANNER_SHOW_UNTIL_DAY = 10;
 
-export function NotificationBell() {
+interface NotificationBellProps {
+  variant?: 'light' | 'dark';
+}
+
+export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
   const { t, i18n } = useTranslation('dashboard');
   const { imports: cashflowImports } = useImports("CASHFLOW");
   const { imports: investingImports } = useImports("INVESTING");
@@ -64,17 +68,25 @@ export function NotificationBell() {
   const isComplete = bankUploads > 0;
   const hasNotification = !isDismissed && currentDay <= BANNER_SHOW_UNTIL_DAY && !isComplete;
 
+  const isDark = variant === 'dark';
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button 
           variant="ghost" 
           size="icon"
-          className="relative rounded-full hover:bg-muted"
+          className={cn(
+            "relative rounded-full",
+            isDark ? "text-white hover:bg-white/10" : "hover:bg-muted text-muted-foreground"
+          )}
         >
-          <Bell className="w-5 h-5 text-muted-foreground" />
+          <Bell className="w-5 h-5" />
           {hasNotification && (
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background" />
+            <span className={cn(
+              "absolute top-1 right-1 w-2.5 h-2.5 bg-primary rounded-full border-2",
+              isDark ? "border-[#171717]" : "border-background"
+            )} />
           )}
         </Button>
       </PopoverTrigger>
