@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { TrendingDown } from "lucide-react";
+import { Receipt } from "lucide-react";
 import { Transaction } from "@/lib/mockData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
@@ -30,33 +30,43 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
 
   if (!hasData) {
     return (
-      <Card className="animate-slide-up" style={{ animationDelay: '500ms' }}>
+      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <TrendingDown className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center">
+              <Receipt className="w-4 h-4 text-destructive" />
+            </div>
             {t('topExpenses.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <EmptyState height="h-[200px]" />
+          <EmptyState height="h-[220px]" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="animate-slide-up" style={{ animationDelay: '500ms' }}>
+    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <TrendingDown className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center">
+            <Receipt className="w-4 h-4 text-destructive" />
+          </div>
           {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {topExpenses.map((expense) => {
+        {topExpenses.map((expense, index) => {
           const categorySlug = expense.categorySlug || expense.category;
           return (
-            <div key={expense.id} className="flex items-center gap-3">
+            <div 
+              key={expense.id} 
+              className="flex items-center gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/80 text-sm font-medium text-muted-foreground">
+                {index + 1}
+              </div>
               <CategoryIcon
                 iconName={getCategoryIcon(categorySlug)}
                 colorVar={getCategoryColor(categorySlug)}

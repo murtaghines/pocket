@@ -49,10 +49,10 @@ export function MonthStatusIndicator() {
     return 'empty';
   }, [bankUploads, investmentUploads]);
 
-  const statusColor = {
-    complete: 'border-success/30 bg-success/5',
-    partial: 'border-warning/30 bg-warning/5',
-    empty: 'border-muted',
+  const statusStyles = {
+    complete: 'border-success/30',
+    partial: 'border-warning/30',
+    empty: 'border-border/30',
   };
 
   const statusIcon = {
@@ -63,8 +63,8 @@ export function MonthStatusIndicator() {
 
   if (cashflowLoading || investingLoading) {
     return (
-      <Card className="border-muted">
-        <CardContent className="p-4 flex items-center justify-center">
+      <Card variant="bento" className="animate-fade-in" style={{ animationDelay: '400ms' }}>
+        <CardContent className="p-5 flex items-center justify-center h-full">
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </CardContent>
       </Card>
@@ -72,37 +72,59 @@ export function MonthStatusIndicator() {
   }
 
   return (
-    <Card className={cn("transition-all", statusColor[status])}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-medium capitalize text-sm">{lastClosedMonthLabel}</h4>
-          {statusIcon[status]}
+    <Card variant="bento" className={cn("transition-all", statusStyles[status])} style={{ animationDelay: '400ms' }}>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+            {statusIcon[status]}
+          </div>
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "text-xs rounded-full",
+              status === 'complete' && "bg-success/10 text-success border-success/30",
+              status === 'partial' && "bg-warning/10 text-warning border-warning/30",
+              status === 'empty' && "bg-muted text-muted-foreground"
+            )}
+          >
+            {status === 'complete' ? 'Complete' : status === 'partial' ? 'Partial' : 'Empty'}
+          </Badge>
         </div>
+
+        <p className="text-sm font-medium text-muted-foreground mb-1">
+          {lastClosedMonthLabel}
+        </p>
         
-        <div className="space-y-2 mb-3">
+        <div className="space-y-2 mt-3">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <FileText className="w-3.5 h-3.5" />
               <span>{t('upload.title')}</span>
             </div>
-            <Badge variant={bankUploads > 0 ? "secondary" : "outline"} className="text-xs">
+            <span className={cn(
+              "text-xs font-medium px-2 py-0.5 rounded-full",
+              bankUploads > 0 ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+            )}>
               {bankUploads}
-            </Badge>
+            </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>{t('investments.title')}</span>
             </div>
-            <Badge variant={investmentUploads > 0 ? "secondary" : "outline"} className="text-xs">
+            <span className={cn(
+              "text-xs font-medium px-2 py-0.5 rounded-full",
+              investmentUploads > 0 ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+            )}>
               {investmentUploads}
-            </Badge>
+            </span>
           </div>
         </div>
 
         <Link 
           to="/profile" 
-          className="flex items-center justify-center gap-1 text-xs text-primary hover:underline"
+          className="flex items-center justify-center gap-1 text-xs text-primary hover:underline mt-4 pt-3 border-t border-border/50"
         >
           {tc('viewAll')}
           <ArrowRight className="w-3 h-3" />

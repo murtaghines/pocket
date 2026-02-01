@@ -17,11 +17,11 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
   }
 
   return (
-    <Card className="mb-8 border-dashed border-2 border-primary/30 bg-primary/5 animate-fade-in">
-      <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
+    <Card variant="bento" className="mb-8 border-dashed border-2 border-primary/20 bg-primary/5 animate-fade-in">
+      <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6 px-6">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-full bg-primary/10">
-            <FileSpreadsheet className="w-8 h-8 text-primary" />
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <FileSpreadsheet className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">{t('welcome.title')}</h3>
@@ -32,7 +32,7 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
         </div>
         <Button 
           onClick={() => navigate('/profile')}
-          className="gap-2 whitespace-nowrap"
+          className="gap-2 whitespace-nowrap rounded-full px-6"
         >
           <Upload className="w-4 h-4" />
           {t('welcome.uploadButton')}

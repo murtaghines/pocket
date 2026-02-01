@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Transaction, Category } from "@/lib/mockData";
-import { Search, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { Search, ArrowUpRight, ArrowDownRight, Minus, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
@@ -20,10 +20,10 @@ interface TransactionTableProps {
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
 
 const movementBadgeColors: Record<MovementType, string> = {
-  income: 'bg-success/20 text-success border-success/30',
-  expense: 'bg-destructive/20 text-destructive border-destructive/30',
-  transfer: 'bg-muted text-muted-foreground border-muted-foreground/30',
-  investment: 'bg-category-investment/20 text-category-investment border-category-investment/30',
+  income: 'bg-success/10 text-success border-0',
+  expense: 'bg-destructive/10 text-destructive border-0',
+  transfer: 'bg-muted text-muted-foreground border-0',
+  investment: 'bg-purple-100 text-purple-600 border-0',
 };
 
 const categoriesByMovement: Record<MovementType, string[]> = {
@@ -91,17 +91,22 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   };
 
   return (
-    <Card className="animate-slide-up" style={{ animationDelay: '400ms' }}>
-      <CardHeader>
-        <CardTitle className="text-lg">{t('transactions.title')}</CardTitle>
+    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <List className="w-4 h-4 text-primary" />
+          </div>
+          {t('transactions.title')}
+        </CardTitle>
         <div className="flex flex-col sm:flex-row gap-3 mt-4">
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-muted-foreground">{t('transactions.movement', { defaultValue: 'Movements' })}</span>
             <Select value={movementFilter} onValueChange={handleMovementChange}>
-              <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectTrigger className="w-full sm:w-[160px] rounded-xl">
                 <SelectValue placeholder={tc('viewAll')} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="all">{tc('viewAll')}</SelectItem>
                 <SelectItem value="income">{t('stats.income')}</SelectItem>
                 <SelectItem value="expense">{t('stats.expenses')}</SelectItem>
@@ -117,10 +122,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               onValueChange={setCategoryFilter}
               disabled={movementFilter === 'transfer' || availableCategories.length === 0}
             >
-              <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectTrigger className="w-full sm:w-[160px] rounded-xl">
                 <SelectValue placeholder={tc('viewAll')} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="all">{tc('viewAll')}</SelectItem>
                 {availableCategories.map(cat => (
                   <SelectItem key={cat} value={cat}>
@@ -144,16 +149,16 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               placeholder={tc('search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 mt-5"
+              className="pl-9 mt-5 rounded-xl"
             />
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-lg border overflow-hidden">
+        <div className="rounded-2xl border border-border/50 overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="w-[80px]">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
                 <TableHead className="w-[90px]">{t('transactions.date')}</TableHead>
                 <TableHead>{t('transactions.description')}</TableHead>
@@ -176,7 +181,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   return (
                     <TableRow 
                       key={transaction.id}
-                      className="hover:bg-muted/50 transition-colors"
+                      className="hover:bg-muted/30 transition-colors"
                     >
                       <TableCell className="text-xs text-muted-foreground uppercase">
                         {formatMonth(transaction.date)}
@@ -187,16 +192,16 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className={cn(
-                            "p-1.5 rounded-full flex-shrink-0",
-                            movementType === 'income' ? "bg-success/20"
-                              : movementType === 'investment' ? "bg-category-investment/20"
+                            "p-1.5 rounded-lg flex-shrink-0",
+                            movementType === 'income' ? "bg-success/10"
+                              : movementType === 'investment' ? "bg-purple-100"
                               : movementType === 'transfer' ? "bg-muted"
-                              : "bg-destructive/20"
+                              : "bg-destructive/10"
                           )}>
                             {movementType === 'income' ? (
                               <ArrowDownRight className="w-3 h-3 text-success" />
                             ) : movementType === 'investment' ? (
-                              <Minus className="w-3 h-3 text-category-investment" />
+                              <Minus className="w-3 h-3 text-purple-600" />
                             ) : movementType === 'transfer' ? (
                               <Minus className="w-3 h-3 text-muted-foreground" />
                             ) : (
@@ -208,8 +213,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <Badge 
-                          variant="outline" 
-                          className={cn("font-normal", movementBadgeColors[movementType])}
+                          className={cn("font-normal rounded-full", movementBadgeColors[movementType])}
                         >
                           {movementLabels[movementType]}
                         </Badge>
@@ -237,7 +241,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       <TableCell className={cn(
                         "text-right font-semibold tabular-nums",
                         movementType === 'income' ? "text-success"
-                          : movementType === 'investment' ? "text-category-investment"
+                          : movementType === 'investment' ? "text-purple-600"
                           : movementType === 'transfer' ? "text-muted-foreground"
                           : "text-destructive"
                       )}>

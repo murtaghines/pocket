@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
+import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { Calendar } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useTransactions } from "@/hooks/useTransactions";
@@ -18,18 +18,15 @@ export function WeeklyComparisonChart() {
   const { transactions } = useTransactions();
   const { t } = useTranslation('dashboard');
 
-  // Day abbreviations in English
   const dayAbbrevs = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-  // Calculate weekly data from real transactions
   const weeklyData: WeeklyData[] = (() => {
     const today = new Date();
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
     
     const daysOfWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
     
-    // Filter expenses from this week
     const weekExpenses = transactions.filter(t => {
       const txDate = parseISO(t.date);
       const isExpense = t.movement === "EXPENSE" || t.type === "expense";
@@ -53,74 +50,75 @@ export function WeeklyComparisonChart() {
   const daysWithExpenses = weeklyData.filter(d => d.amount > 0).length;
   const averageDaily = daysWithExpenses > 0 ? Math.round(totalSpent / daysWithExpenses) : 0;
 
-  // Check if there's any data
   const hasData = totalSpent > 0;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-popover/95 backdrop-blur-sm border rounded-lg p-2 shadow-lg">
-          <p className="text-xs font-medium">{label}</p>
-          <p className="text-sm font-semibold">{formatCurrency(payload[0].value)}</p>
+        <div className="bg-card border border-border/50 rounded-xl p-3 shadow-lg">
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="text-sm font-bold text-foreground">{formatCurrency(payload[0].value)}</p>
         </div>
       );
     }
     return null;
   };
 
-  // Empty state - show blank card like others
   if (!hasData) {
     return (
-      <Card className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
+      <Card variant="bento" className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-primary" />
+            </div>
             This Week
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <EmptyState height="h-[140px]" />
+          <EmptyState height="h-[160px]" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
+    <Card variant="bento" className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Calendar className="w-4 h-4 text-primary" />
+          </div>
           This Week
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-4">
-        <div className="flex items-baseline gap-2 mb-3">
-          <span className="text-xl font-bold">{formatCurrency(totalSpent)}</span>
-          <span className="text-xs text-muted-foreground">spent</span>
+        <div className="flex items-baseline gap-2 mb-4">
+          <span className="text-2xl font-bold">{formatCurrency(totalSpent)}</span>
+          <span className="text-sm text-muted-foreground">spent</span>
         </div>
         
         <div className="h-[80px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeklyData} barCategoryGap="20%">
+            <BarChart data={weeklyData} barCategoryGap="25%">
               <XAxis 
                 dataKey="day" 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
               />
-              <YAxis hide />
               <Tooltip content={<CustomTooltip />} cursor={false} />
               <Bar 
                 dataKey="amount" 
-                radius={[3, 3, 0, 0]}
+                radius={[4, 4, 0, 0]}
               >
                 {weeklyData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`}
                     fill={entry.isToday && entry.amount > 0
-                      ? 'hsl(155, 60%, 45%)' 
+                      ? 'hsl(242, 100%, 55%)' 
                       : entry.amount > 0 
-                        ? 'hsl(var(--muted-foreground) / 0.3)' 
+                        ? 'hsl(var(--muted-foreground) / 0.25)' 
                         : 'hsl(var(--muted))'
                     }
                   />
@@ -130,7 +128,7 @@ export function WeeklyComparisonChart() {
           </ResponsiveContainer>
         </div>
 
-        <div className="mt-2 pt-2 border-t flex justify-between text-xs">
+        <div className="mt-3 pt-3 border-t border-border/50 flex justify-between text-sm">
           <span className="text-muted-foreground">Daily average</span>
           <span className="font-medium">{formatCurrency(averageDaily)}/day</span>
         </div>

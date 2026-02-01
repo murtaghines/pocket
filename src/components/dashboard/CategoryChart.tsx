@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
+import { PieChartIcon } from "lucide-react";
 
 interface CategoryData {
   name: string;
@@ -21,91 +22,116 @@ export function CategoryChart({ data }: CategoryChartProps) {
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
+      const percentage = ((payload[0].value / total) * 100).toFixed(1);
       return (
-        <div className="bg-card border border-border rounded-lg shadow-lg p-3">
-          <p className="font-medium text-foreground">{payload[0].name}</p>
-          <p className="text-sm text-muted-foreground">
+        <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3">
+          <p className="font-medium text-foreground text-sm">{payload[0].name}</p>
+          <p className="text-lg font-bold text-foreground">
             {formatCurrency(payload[0].value)}
           </p>
+          <p className="text-xs text-muted-foreground">{percentage}%</p>
         </div>
       );
     }
     return null;
   };
 
-  interface LegendEntry {
-    color: string;
-    value: string;
-    payload?: { value: number };
-  }
-
-  const CustomLegend = ({ payload, total }: { payload?: LegendEntry[]; total: number }) => {
-    return (
-      <div className="grid grid-cols-2 gap-2 mt-4">
-        {payload?.map((entry: LegendEntry, index: number) => {
-          const value = entry.payload?.value || 0;
-          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-          return (
-            <div key={index} className="flex items-center gap-2 text-sm">
-              <div 
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-muted-foreground truncate">{entry.value}</span>
-              <span className="text-xs text-muted-foreground/70 ml-auto">{percentage}%</span>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   const hasData = data.length > 0 && total > 0;
+
+  // Take top 5 categories for legend
+  const topCategories = [...data].sort((a, b) => b.value - a.value).slice(0, 5);
 
   if (!hasData) {
     return (
-      <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-      <CardHeader>
-        <CardTitle className="text-lg">{t('charts.categoryBreakdown')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <EmptyState height="h-[320px]" />
-      </CardContent>
-    </Card>
+      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+              <PieChartIcon className="w-4 h-4 text-primary" />
+            </div>
+            {t('charts.categoryBreakdown')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EmptyState height="h-[280px]" />
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <Card className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-      <CardHeader>
-        <CardTitle className="text-lg">{t('charts.categoryBreakdown')}</CardTitle>
+    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <PieChartIcon className="w-4 h-4 text-primary" />
+          </div>
+          {t('charts.categoryBreakdown')}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[320px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="40%"
-                innerRadius={50}
-                outerRadius={85}
-                paddingAngle={2}
-                dataKey="value"
-                strokeWidth={0}
-              >
-                {data.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.color}
-                    className="transition-all duration-200 hover:opacity-80"
-                  />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend content={<CustomLegend total={total} />} />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="flex flex-col items-center">
+          {/* Donut chart with center value */}
+          <div className="relative h-[180px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  dataKey="value"
+                  strokeWidth={0}
+                >
+                  {data.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.color}
+                      className="transition-all duration-200 hover:opacity-80"
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Center total */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-xl font-bold text-foreground">
+                {formatCurrency(total)}
+              </span>
+            </div>
+          </div>
+
+          {/* Compact legend */}
+          <div className="w-full mt-4 space-y-2">
+            {topCategories.map((entry, index) => {
+              const percentage = ((entry.value / total) * 100).toFixed(0);
+              return (
+                <div key={index} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="text-muted-foreground truncate max-w-[120px]">
+                      {entry.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-foreground">
+                      {formatCurrency(entry.value)}
+                    </span>
+                    <span className="text-xs text-muted-foreground w-8 text-right">
+                      {percentage}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>

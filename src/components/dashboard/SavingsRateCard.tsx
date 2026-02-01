@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PiggyBank } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 interface SavingsRateCardProps {
   income: number;
@@ -13,25 +13,25 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
   const { t } = useTranslation('dashboard');
   const hasData = income > 0 || expenses > 0;
   const savingsRate = income > 0 ? Math.round(((income - expenses) / income) * 100) : 0;
-  const circumference = 2 * Math.PI * 45;
-  const strokeDashoffset = circumference - (savingsRate / 100) * circumference;
+  const circumference = 2 * Math.PI * 42;
+  const strokeDashoffset = circumference - (Math.max(0, savingsRate) / 100) * circumference;
   
-  const getColor = () => {
-    if (savingsRate === 0) return 'text-muted-foreground';
-    if (savingsRate >= 30) return 'text-success';
-    if (savingsRate >= 15) return 'text-warning';
-    return 'text-destructive';
-  };
-
   const getStrokeColor = () => {
-    if (savingsRate === 0) return 'hsl(var(--muted-foreground))';
+    if (savingsRate <= 0) return 'hsl(var(--muted-foreground))';
     if (savingsRate >= 30) return 'hsl(var(--success))';
     if (savingsRate >= 15) return 'hsl(var(--warning))';
-    return 'hsl(var(--destructive))';
+    return 'hsl(var(--primary))';
+  };
+
+  const getTextColor = () => {
+    if (savingsRate <= 0) return 'text-muted-foreground';
+    if (savingsRate >= 30) return 'text-success';
+    if (savingsRate >= 15) return 'text-warning';
+    return 'text-primary';
   };
 
   const getRatingLabel = () => {
-    if (savingsRate === 0) return '-';
+    if (savingsRate <= 0) return '-';
     if (savingsRate >= 30) return t('stats.excellent', { defaultValue: 'Excellent' });
     if (savingsRate >= 15) return t('stats.good', { defaultValue: 'Good' });
     return t('stats.needsImprovement', { defaultValue: 'Needs improvement' });
@@ -39,9 +39,17 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
 
   if (!hasData) {
     return (
-      <Card className="animate-slide-up" style={{ animationDelay: `${delay}ms` }}>
-        <CardContent className="p-6">
-          <EmptyState height="min-h-[176px]" />
+      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: `${delay}ms` }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </div>
+            {t('stats.savingsRate')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center">
+          <EmptyState height="min-h-[160px]" />
         </CardContent>
       </Card>
     );
@@ -49,55 +57,63 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
 
   return (
     <Card 
+      variant="bento"
       className="animate-slide-up"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <CardContent className="p-6 flex flex-col items-center justify-center h-full">
-        <div className="relative w-28 h-28">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-primary" />
+          </div>
+          {t('stats.savingsRate')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center justify-center pt-2">
+        {/* Ring progress */}
+        <div className="relative w-32 h-32">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+            {/* Background ring */}
             <circle
               cx="50"
               cy="50"
-              r="45"
+              r="42"
               fill="none"
               stroke="hsl(var(--muted))"
-              strokeWidth="8"
+              strokeWidth="6"
             />
+            {/* Progress ring */}
             <circle
               cx="50"
               cy="50"
-              r="45"
+              r="42"
               fill="none"
               stroke={getStrokeColor()}
-              strokeWidth="8"
+              strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
+              strokeDashoffset={circumference}
               className="transition-all duration-1000 ease-out"
-              style={{ 
-                animation: 'draw-circle 1.5s ease-out forwards',
-                strokeDashoffset: circumference,
+              style={{
+                animation: 'draw-ring 1.5s ease-out forwards',
               }}
             />
           </svg>
+          {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={`text-2xl font-bold ${getColor()}`}>
+            <span className={`text-3xl font-bold ${getTextColor()}`}>
               {savingsRate}%
             </span>
           </div>
         </div>
-        <div className="mt-3 text-center">
-          <p className="text-sm font-medium flex items-center gap-1.5">
-            <PiggyBank className="w-4 h-4 text-muted-foreground" />
-            {t('stats.savingsRate')}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {getRatingLabel()}
-          </p>
-        </div>
+        
+        {/* Rating label */}
+        <p className="text-sm text-muted-foreground mt-3 text-center">
+          {getRatingLabel()}
+        </p>
       </CardContent>
       <style>{`
-        @keyframes draw-circle {
+        @keyframes draw-ring {
           to {
             stroke-dashoffset: ${strokeDashoffset};
           }

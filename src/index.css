@@ -93,9 +93,9 @@
     --sidebar-ring: 242 100% 55%;
   }
 
-  /* Dashboard light theme */
+  /* Dashboard light theme - Modern bento aesthetic */
   .dashboard-theme {
-    --background: 0 0% 100%;
+    --background: 0 0% 98%;
     --foreground: 0 0% 9%;
 
     --card: 0 0% 100%;
@@ -110,29 +110,33 @@
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 9%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 242 100% 97%;
+    --accent-foreground: 242 100% 55%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 160 84% 45%;
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 242 100% 55%;
 
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    --shadow-glow: 0 0 20px hsl(242 100% 55% / 0.1);
+    --radius: 1rem;
+
+    /* Modern shadows for bento cards */
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+    --shadow-glow: 0 0 20px hsl(242 100% 55% / 0.08);
+    --shadow-card: 0 2px 8px -2px rgb(0 0 0 / 0.06), 0 4px 16px -4px rgb(0 0 0 / 0.04);
   }
 
   /* Keep dark class for compatibility but same values */
