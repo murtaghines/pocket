@@ -8,7 +8,8 @@ import { DashboardSidebar } from "./DashboardSidebar";
 import { NotificationBell } from "./NotificationBell";
 import { useTranslation } from "react-i18next";
 import { useProfile } from "@/hooks/useProfile";
-import walletTextWhite from "@/assets/wallet-text-white.png";
+import walletIconBlue from "@/assets/wallet-icon-blue.png";
+import walletTextBlack from "@/assets/wallet-text-black.png";
 
 export function Header() {
   const { signOut, user } = useAuth();
@@ -32,7 +33,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#171717] border-b border-white/10">
+    <header className="sticky top-0 z-50 w-full bg-background border-b border-border">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Left side - Sidebar trigger & Logo (desktop) / Logo only (mobile) */}
         <div className="flex items-center gap-3">
@@ -41,18 +42,19 @@ export function Header() {
           
           {/* Mobile logo - show when no sidebar OR on mobile */}
           {!(isDashboard || isInvestments) && (
-            <Link to="/dashboard" className="flex items-center">
-              <img src={walletTextWhite} alt="wallet" className="h-6 w-auto" />
+            <Link to="/dashboard" className="flex items-center gap-1">
+              <img src={walletIconBlue} alt="wallet icon" className="h-6 w-auto" />
+              <img src={walletTextBlack} alt="wallet" className="h-4 w-auto" />
             </Link>
           )}
         </div>
 
         {/* Right side - Notifications, Currency & Profile */}
         <div className="flex items-center gap-2 md:gap-3">
-          <CurrencySelector variant="dark" />
+          <CurrencySelector variant="light" />
           
           {/* Notification Bell */}
-          <NotificationBell variant="dark" />
+          <NotificationBell variant="light" />
           
           {/* On Profile page (mobile): show back arrow */}
           {isProfilePage && (
@@ -60,7 +62,7 @@ export function Header() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="text-white hover:bg-white/10 rounded-full"
+                className="text-foreground hover:bg-muted rounded-full"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
@@ -73,7 +75,7 @@ export function Header() {
               "w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium transition-all",
               isActive('/profile') 
                 ? "bg-primary text-primary-foreground" 
-                : "bg-white/20 text-white hover:bg-white/30"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}>
               {getInitials()}
             </div>
