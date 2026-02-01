@@ -1,157 +1,131 @@
 
-# Plan: Rediseño Dark Theme al estilo Autonoma
 
-## Resumen
-Transformar la aplicación fint a un look oscuro y moderno inspirado en getautonoma.com, reemplazando los azules de Autonoma por el violeta de la marca fint (`hsl(229, 100%, 66%)`).
+# Plan: Dashboard Light Theme Redesign
 
-## Inspiración Visual (Autonoma)
-- Fondo oscuro casi negro (#0A0A0A / #111111)
-- Cards con bordes sutiles y fondos ligeramente más claros
-- Header con fondo semi-transparente con blur
-- Tipografía blanca y grises claros
-- Acentos de color usados estratégicamente (botones CTA, highlights)
-- Estilo minimalista y profesional
+## Overview
+Transform the dashboard (`/dashboard` route) from a dark theme to a clean, professional light theme with a white background. The design will use black for primary text, blue (`#1b17ff`) for accents/buttons, and subtle grays for secondary elements. The landing page and authentication pages will remain untouched.
 
-## Cambios a Realizar
+---
 
-### 1. Variables CSS (src/index.css)
+## Strategy: CSS Custom Properties with Dashboard-Specific Class
 
-**Modo Light - Convertir a Dark por defecto:**
-```
-:root {
-  --background: 0 0% 4%;           /* Negro profundo #0A0A0A */
-  --foreground: 0 0% 98%;          /* Blanco casi puro */
+The best approach is to create a `.dashboard-theme` class that overrides the CSS variables specifically for the dashboard pages. This keeps the landing page dark theme intact while giving the dashboard a completely different look.
+
+---
+
+## Files to Modify
+
+### 1. `src/index.css` - Add Light Theme Variables
+Add a new `.dashboard-theme` class with light mode color variables:
+
+```css
+.dashboard-theme {
+  --background: 0 0% 100%;        /* Pure white */
+  --foreground: 0 0% 9%;          /* Near black */
   
-  --card: 0 0% 7%;                 /* Cards oscuras #121212 */
-  --card-foreground: 0 0% 98%;
+  --card: 0 0% 100%;              /* White cards */
+  --card-foreground: 0 0% 9%;
   
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 98%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 9%;
   
-  --primary: 229 100% 66%;         /* Violeta fint (mantener) */
+  --primary: 242 100% 55%;        /* Keep primary blue */
   --primary-foreground: 0 0% 100%;
   
-  --secondary: 0 0% 12%;           /* Gris oscuro */
-  --secondary-foreground: 0 0% 98%;
+  --secondary: 0 0% 96%;          /* Light gray */
+  --secondary-foreground: 0 0% 9%;
   
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 60%;    /* Gris medio para texto secundario */
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;   /* Medium gray */
   
-  --accent: 0 0% 15%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 9%;
   
-  --border: 0 0% 15%;              /* Bordes sutiles */
-  --input: 0 0% 15%;
-  --ring: 229 100% 66%;            /* Violeta para focus */
+  --border: 0 0% 90%;             /* Light borders */
+  --input: 0 0% 90%;
+  --ring: 242 100% 55%;
+  
+  /* Updated shadows for light theme */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
 ```
 
-**Actualizar gradientes y sombras para modo dark:**
-- Gradients con transparencias
-- Sombras suaves con negro
-- Glow effects con el violeta
+### 2. `src/pages/Index.tsx` - Apply Dashboard Theme
+Wrap the dashboard page in the `dashboard-theme` class:
 
-### 2. Header (src/components/layout/Header.tsx)
-
-- Fondo semi-transparente oscuro con backdrop-blur
-- Logo blanco (usar fint-text-white.png)
-- Navegación con hover states sutiles
-- Bordes más sutiles
-
-### 3. Cards (src/components/ui/card.tsx)
-
-- Variantes actualizadas para tema dark
-- Bordes sutiles (#1a1a1a aproximadamente)
-- Hover states con elevación sutil
-- Glassmorphism opcional para algunas cards
-
-### 4. Página de Auth (src/pages/Auth.tsx)
-
-- Mantener el diseño actual con fondo violeta
-- Card blanca contrastando (ya está bien)
-- Solo ajustes menores si es necesario
-
-### 5. Dashboard y otras páginas
-
-- Aplicar nuevo tema dark automáticamente via CSS variables
-- StatCards con gradientes sutiles
-- Charts con colores adaptados al tema oscuro
-- Textos y labels con contraste correcto
-
-### 6. Componentes adicionales
-
-**Botones:**
-- Primary: Violeta sólido
-- Secondary: Fondo oscuro con borde sutil
-- Ghost: Sin fondo, hover con fondo sutil
-
-**Inputs:**
-- Fondo oscuro (#121212)
-- Bordes sutiles
-- Focus ring violeta
-
-**Tables:**
-- Filas alternadas con tonos oscuros
-- Headers ligeramente más oscuros
-
-### 7. Footer
-
-- Borde superior sutil
-- Texto gris medio
-
-## Archivos a Modificar
-
-| Archivo | Cambios |
-|---------|---------|
-| `src/index.css` | Variables CSS para tema dark, gradientes, sombras |
-| `src/components/layout/Header.tsx` | Logo blanco, fondo semi-transparente |
-| `src/components/ui/card.tsx` | Variantes dark-optimized |
-| `src/components/ui/button.tsx` | Ajustes de colores para contraste |
-| `src/pages/Index.tsx` | Ajustes de colores específicos si es necesario |
-| `src/pages/Investments.tsx` | Ajustes de colores específicos |
-| `src/pages/Profile.tsx` | Ajustes de colores específicos |
-
-## Sección Técnica
-
-### Paleta de Colores Exacta
-
-```text
-┌─────────────────────────────────────────────────────┐
-│  FONDOS                                             │
-├─────────────────────────────────────────────────────┤
-│  Background:     hsl(0 0% 4%)      →  #0A0A0A       │
-│  Card:           hsl(0 0% 7%)      →  #121212       │
-│  Elevated:       hsl(0 0% 10%)     →  #1A1A1A       │
-│  Surface:        hsl(0 0% 12%)     →  #1F1F1F       │
-├─────────────────────────────────────────────────────┤
-│  TEXTOS                                             │
-├─────────────────────────────────────────────────────┤
-│  Primary:        hsl(0 0% 98%)     →  #FAFAFA       │
-│  Secondary:      hsl(0 0% 70%)     →  #B3B3B3       │
-│  Muted:          hsl(0 0% 50%)     →  #808080       │
-├─────────────────────────────────────────────────────┤
-│  ACENTO (Violeta fint)                              │
-├─────────────────────────────────────────────────────┤
-│  Primary:        hsl(229 100% 66%) →  #5271FF       │
-│  Primary Light:  hsl(229 100% 75%) →  #7A93FF       │
-│  Primary Dark:   hsl(229 100% 55%) →  #3B56E0       │
-├─────────────────────────────────────────────────────┤
-│  BORDES                                             │
-├─────────────────────────────────────────────────────┤
-│  Default:        hsl(0 0% 15%)     →  #262626       │
-│  Subtle:         hsl(0 0% 12%)     →  #1F1F1F       │
-└─────────────────────────────────────────────────────┘
+```tsx
+<div className="min-h-screen bg-background pb-20 md:pb-0 dashboard-theme">
 ```
 
-### Consideraciones de Implementación
+### 3. `src/components/layout/Header.tsx` - Light Theme Header
+- Change background from dark blur to white/light blur
+- Use dark (black) logo instead of white logo
+- Update text colors to black/gray
+- Keep blue accent for active navigation items
 
-1. **Eliminación del modo claro**: Hacer el tema dark el default y único
-2. **Contrast ratios**: Asegurar WCAG AA compliance (4.5:1 para texto normal)
-3. **Gradientes**: Usar transparencias del violeta para efectos sutiles
-4. **Transiciones**: Mantener las animaciones existentes
+Key changes:
+- Import `wallet-text-black.png` instead of white
+- Update header background: `bg-white/95 backdrop-blur-xl border-b border-gray-200`
+- Button text: dark colors, active state uses blue
 
-### Impacto en Componentes
+### 4. `src/components/layout/MobileBottomNav.tsx` - Light Theme Mobile Nav
+- Change from blue background to white
+- Use dark icons and text
+- Active state: blue text instead of white on blue
 
-- Los colores de categorías se mantendrán (ya tienen buen contraste)
-- Los charts de Recharts usarán los nuevos colores via CSS variables
-- Las notificaciones/toasts usarán el nuevo tema
+### 5. `src/components/layout/CurrencySelector.tsx` - Light Theme Selector
+- Ensure dropdown works with light theme colors
+- Dark text, light backgrounds
+
+---
+
+## Color Palette for Dashboard
+
+| Element | Color |
+|---------|-------|
+| Background | White (`#FFFFFF`) |
+| Primary Text | Near Black (`#171717`) |
+| Secondary Text | Medium Gray (`#737373`) |
+| Borders | Light Gray (`#E5E5E5`) |
+| Cards | White with subtle shadow |
+| Primary/Accent | Blue (`#1b17ff`) |
+| Income | Green (keep current `hsl(160, 84%, 45%)`) |
+| Expense | Red (keep current `hsl(0, 72%, 51%)`) |
+
+---
+
+## Components That Will Automatically Adapt
+
+Because these components use semantic CSS variables (`text-foreground`, `bg-card`, `border-border`, etc.), they will automatically inherit the light theme:
+
+- `StatCard` - Will show white cards with shadows
+- `CategoryChart` - Tooltips will have light backgrounds
+- `MonthlyChart` - Already uses HSL values for income/expense colors
+- `TransactionTable` - Will have light table styling
+- `EmptyStateBanner` - Blue accents will remain
+- `MonthClosingBanner` - Blue gradient accents will adapt
+- All other chart components
+
+---
+
+## Visual Result
+
+The dashboard will transform to:
+- Clean white background (differentiating from dark landing)
+- Black text for headings and content
+- Blue buttons and interactive elements
+- Light gray borders and card shadows
+- Income (green) and Expense (red) colors remain vibrant
+- Professional, minimal appearance similar to modern fintech apps
+
+---
+
+## Technical Notes
+
+1. **No changes to Landing/Auth pages** - They will continue using the root `:root` dark theme
+2. **CSS Cascade** - `.dashboard-theme` class overrides variables only within its scope
+3. **Logo Asset** - Already exists: `wallet-text-black.png` in `src/assets/`
+4. **Mobile Nav** - Will need explicit styling updates since it uses `bg-primary`
+
