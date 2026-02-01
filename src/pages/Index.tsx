@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Header } from "@/components/layout/Header";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
@@ -119,10 +118,7 @@ export default function Index() {
   const firstName = profile?.first_name || '';
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0 dashboard-theme">
-      <Header />
-      <MobileBottomNav />
-      
+    <DashboardLayout>
       {onboardingChecked && (
         <OnboardingModal 
           open={showOnboarding} 
@@ -181,7 +177,6 @@ export default function Index() {
                 type="expense"
                 icon={<TrendingDown className="w-5 h-5" />}
                 delay={100}
-                invertChangeColor={true}
               />
               <StatCard
                 title={t('stats.balance')}
@@ -243,6 +238,6 @@ export default function Index() {
           </p>
         </div>
       </footer>
-    </div>
+    </DashboardLayout>
   );
 }
