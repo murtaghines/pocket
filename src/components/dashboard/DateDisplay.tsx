@@ -4,7 +4,7 @@ import { ArrowRight, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function DateDisplay() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation('dashboard');
   const today = new Date();
   
   const dayNumber = today.getDate();
@@ -13,8 +13,8 @@ export function DateDisplay() {
   
   return (
     <div className="flex items-center gap-4 animate-fade-in">
-      {/* Large day number in circle */}
-      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-muted flex items-center justify-center">
+      {/* Large day number in circle - darker gray for visibility */}
+      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-200 flex items-center justify-center">
         <span className="text-2xl md:text-3xl font-bold text-foreground">
           {dayNumber}
         </span>
@@ -39,7 +39,7 @@ export function DateDisplay() {
           variant="default" 
           className="rounded-full gap-2 px-5"
         >
-          Ver perfil
+          {t('welcome.viewProfile', 'View profile')}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </Link>

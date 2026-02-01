@@ -9,8 +9,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export function CurrencySelector() {
+interface CurrencySelectorProps {
+  variant?: 'light' | 'dark';
+}
+
+export function CurrencySelector({ variant = 'light' }: CurrencySelectorProps) {
   const { preferences, updatePreferences, isUpdating } = useUserPreferences();
   const { getRate } = useExchangeRates('EUR');
   
@@ -27,17 +32,27 @@ export function CurrencySelector() {
   const rate = getRate('EUR', currentCurrency);
   const formattedRate = rate >= 100 ? Math.round(rate).toLocaleString() : rate.toFixed(2);
 
+  const isDark = variant === 'dark';
+
   return (
     <div className="flex items-center gap-2">
       {/* Exchange rate indicator */}
       {currentCurrency !== 'EUR' && (
-        <span className="text-xs text-muted-foreground hidden sm:inline whitespace-nowrap">
+        <span className={cn(
+          "text-xs hidden sm:inline whitespace-nowrap",
+          isDark ? "text-white/60" : "text-muted-foreground"
+        )}>
           1 EUR = {formattedRate} {currentCurrency}
         </span>
       )}
       
       <Select value={currentCurrency} onValueChange={handleCurrencyChange}>
-        <SelectTrigger className="w-[80px] h-9 gap-1 bg-background border-muted">
+        <SelectTrigger className={cn(
+          "w-[80px] h-9 gap-1",
+          isDark 
+            ? "bg-white/10 border-white/20 text-white hover:bg-white/20" 
+            : "bg-background border-muted"
+        )}>
           {isUpdating ? (
             <Loader2 className="w-3 h-3 animate-spin" />
           ) : (

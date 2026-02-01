@@ -135,9 +135,9 @@ export default function Index() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-fade-in">
           <DateDisplay />
           
-          {/* Greeting on the right - with proper text sizing */}
+          {/* Greeting on the right - with proper text sizing and BLACK color */}
           <div className="hidden md:block text-right flex-shrink-0">
-            <h2 className="text-xl lg:text-2xl font-bold whitespace-nowrap">
+            <h2 className="text-xl lg:text-2xl font-bold whitespace-nowrap text-foreground">
               {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
             </h2>
             <p className="text-sm text-muted-foreground">

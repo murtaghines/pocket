@@ -1,4 +1,4 @@
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "react-router-dom";
@@ -8,7 +8,7 @@ import { DashboardSidebar } from "./DashboardSidebar";
 import { NotificationBell } from "./NotificationBell";
 import { useTranslation } from "react-i18next";
 import { useProfile } from "@/hooks/useProfile";
-import walletTextBlack from "@/assets/wallet-text-black.png";
+import walletTextWhite from "@/assets/wallet-text-white.png";
 
 export function Header() {
   const { signOut, user } = useAuth();
@@ -32,7 +32,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 w-full bg-[#171717] border-b border-white/10">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Left side - Sidebar trigger & Logo (desktop) / Logo only (mobile) */}
         <div className="flex items-center gap-3">
@@ -42,26 +42,17 @@ export function Header() {
           {/* Mobile logo - show when no sidebar OR on mobile */}
           {!(isDashboard || isInvestments) && (
             <Link to="/dashboard" className="flex items-center">
-              <img src={walletTextBlack} alt="wallet" className="h-6 w-auto" />
+              <img src={walletTextWhite} alt="wallet" className="h-6 w-auto" />
             </Link>
           )}
         </div>
 
-        {/* Right side - Search, Notifications, Currency & Profile */}
+        {/* Right side - Notifications, Currency & Profile */}
         <div className="flex items-center gap-2 md:gap-3">
-          {/* Search button - desktop only */}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="hidden md:flex rounded-full hover:bg-muted"
-          >
-            <Search className="w-5 h-5 text-muted-foreground" />
-          </Button>
+          <CurrencySelector variant="dark" />
           
           {/* Notification Bell */}
-          <NotificationBell />
-          
-          <CurrencySelector />
+          <NotificationBell variant="dark" />
           
           {/* On Profile page (mobile): show back arrow */}
           {isProfilePage && (
@@ -69,7 +60,7 @@ export function Header() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="text-foreground hover:bg-accent rounded-full"
+                className="text-white hover:bg-white/10 rounded-full"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
@@ -82,7 +73,7 @@ export function Header() {
               "w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium transition-all",
               isActive('/profile') 
                 ? "bg-primary text-primary-foreground" 
-                : "bg-muted text-foreground hover:bg-muted/80"
+                : "bg-white/20 text-white hover:bg-white/30"
             )}>
               {getInitials()}
             </div>

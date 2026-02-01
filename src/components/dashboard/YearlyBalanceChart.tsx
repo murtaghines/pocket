@@ -36,8 +36,8 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
       <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '700ms' }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-success/10 flex items-center justify-center">
-              <Scale className="w-4 h-4 text-success" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20">
+              <Scale className="w-4 h-4 text-white" />
             </div>
             Yearly Balance
           </CardTitle>
@@ -54,8 +54,8 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-success/10 flex items-center justify-center">
-              <Scale className="w-4 h-4 text-success" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20">
+              <Scale className="w-4 h-4 text-white" />
             </div>
             Yearly Balance
           </CardTitle>

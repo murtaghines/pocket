@@ -4,6 +4,7 @@
     "title": "Welcome to wallet!",
     "message": "Start by uploading your first bank statement to see your finances.",
     "uploadButton": "Upload file",
+    "viewProfile": "View profile",
     "morning": "Good morning",
     "afternoon": "Good afternoon",
     "evening": "Good evening",

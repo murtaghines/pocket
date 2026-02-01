@@ -17,11 +17,12 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
   }
 
   return (
-    <Card variant="bento" className="mb-8 border-dashed border-2 border-primary/20 bg-primary/5 animate-fade-in">
+    <Card variant="bento" className="mb-8 border-2 border-primary/20 bg-primary/5 animate-fade-in">
       <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6 px-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <FileSpreadsheet className="w-6 h-6 text-primary" />
+          {/* Blue gradient icon background */}
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25">
+            <FileSpreadsheet className="w-6 h-6 text-white" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">{t('welcome.title')}</h3>

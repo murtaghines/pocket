@@ -29,29 +29,32 @@ export function StatCard({
   const isPositive = invertChangeColor ? rawNegative : rawPositive;
   const isNegative = invertChangeColor ? rawPositive : rawNegative;
 
+  // Balance card gets special blue background treatment
+  const isBalanceCard = type === 'balance';
+
   const getIconBgColor = () => {
+    if (isBalanceCard) return 'bg-white/20';
     switch (type) {
       case 'income': return 'bg-success/10';
       case 'expense': return 'bg-destructive/10';
-      case 'balance': return 'bg-primary/10';
-      default: return 'bg-muted';
+      default: return 'bg-primary/10';
     }
   };
 
   const getIconColor = () => {
+    if (isBalanceCard) return 'text-white';
     switch (type) {
       case 'income': return 'text-success';
       case 'expense': return 'text-destructive';
-      case 'balance': return 'text-primary';
-      default: return 'text-muted-foreground';
+      default: return 'text-primary';
     }
   };
 
   const getValueColor = () => {
+    if (isBalanceCard) return 'text-white';
     switch (type) {
       case 'income': return 'text-success';
       case 'expense': return 'text-destructive';
-      case 'balance': return 'text-foreground';
       default: return 'text-foreground';
     }
   };
@@ -59,11 +62,14 @@ export function StatCard({
   return (
     <Card 
       variant="bento"
-      className="animate-slide-up overflow-hidden"
+      className={cn(
+        "animate-slide-up overflow-hidden",
+        isBalanceCard && "bg-primary border-primary"
+      )}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="p-4 md:p-5">
-        {/* Icon badge - smaller and more subtle */}
+        {/* Icon badge */}
         <div className={cn(
           "w-9 h-9 rounded-xl flex items-center justify-center mb-3",
           getIconBgColor()
@@ -74,7 +80,10 @@ export function StatCard({
         </div>
         
         {/* Label */}
-        <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">
+        <p className={cn(
+          "text-xs font-medium mb-1 uppercase tracking-wide",
+          isBalanceCard ? "text-white/70" : "text-muted-foreground"
+        )}>
           {title}
         </p>
         
@@ -91,9 +100,12 @@ export function StatCard({
           <div className="flex items-center gap-1.5 mt-2">
             <div className={cn(
               "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium",
-              isPositive && "bg-success/10 text-success",
-              isNegative && "bg-destructive/10 text-destructive",
-              !isPositive && !isNegative && "bg-muted text-muted-foreground"
+              isBalanceCard && isPositive && "bg-white/20 text-white",
+              isBalanceCard && isNegative && "bg-white/20 text-white",
+              isBalanceCard && !isPositive && !isNegative && "bg-white/20 text-white/70",
+              !isBalanceCard && isPositive && "bg-success/10 text-success",
+              !isBalanceCard && isNegative && "bg-destructive/10 text-destructive",
+              !isBalanceCard && !isPositive && !isNegative && "bg-muted text-muted-foreground"
             )}>
               {isPositive && <TrendingUp className="w-3 h-3" />}
               {isNegative && <TrendingDown className="w-3 h-3" />}
