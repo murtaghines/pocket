@@ -36,8 +36,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       
       {/* Main content area - with margin for sidebar */}
       <div className="lg:ml-64 md:ml-20 min-h-screen pb-20 md:pb-0">
-        {/* Top header bar with actions */}
-        <header className="sticky top-0 z-30 w-full bg-background border-b border-border">
+        {/* Top header bar with actions - edge-to-edge, no rounded corners */}
+        <header className="sticky top-0 z-30 w-full bg-card border-b border-border">
           <div className="flex h-16 items-center justify-between px-4 md:px-6">
             {/* Left side: Mobile hamburger space + Currency Selector */}
             <div className="flex items-center">
