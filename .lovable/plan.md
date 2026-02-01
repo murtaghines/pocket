@@ -1,157 +1,54 @@
 
-# Plan: Rediseño Dark Theme al estilo Autonoma
+# Cambiar tipografía a `inherit`
 
 ## Resumen
-Transformar la aplicación fint a un look oscuro y moderno inspirado en getautonoma.com, reemplazando los azules de Autonoma por el violeta de la marca fint (`hsl(229, 100%, 66%)`).
+Remover las fuentes personalizadas (Inter y Space Grotesk) y usar `inherit` para que toda la aplicación use la tipografía del sistema o del navegador.
 
-## Inspiración Visual (Autonoma)
-- Fondo oscuro casi negro (#0A0A0A / #111111)
-- Cards con bordes sutiles y fondos ligeramente más claros
-- Header con fondo semi-transparente con blur
-- Tipografía blanca y grises claros
-- Acentos de color usados estratégicamente (botones CTA, highlights)
-- Estilo minimalista y profesional
+## Cambios necesarios
 
-## Cambios a Realizar
+### 1. `src/index.css`
+- **Eliminar** la línea de importación de Google Fonts (línea 5)
+- **Cambiar** `font-family: 'Inter', sans-serif;` a `font-family: inherit;` en el body
+- **Eliminar** la regla de font-family para headings (h1-h6)
 
-### 1. Variables CSS (src/index.css)
+### 2. `tailwind.config.ts`
+- **Eliminar o modificar** la configuración de `fontFamily` para que use `inherit` en lugar de las fuentes personalizadas
 
-**Modo Light - Convertir a Dark por defecto:**
-```
-:root {
-  --background: 0 0% 4%;           /* Negro profundo #0A0A0A */
-  --foreground: 0 0% 98%;          /* Blanco casi puro */
+## Detalles técnicos
+
+### Archivo: `src/index.css`
+```css
+/* ELIMINAR esta línea */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* MODIFICAR el bloque base */
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: inherit;
+  }
   
-  --card: 0 0% 7%;                 /* Cards oscuras #121212 */
-  --card-foreground: 0 0% 98%;
-  
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 98%;
-  
-  --primary: 229 100% 66%;         /* Violeta fint (mantener) */
-  --primary-foreground: 0 0% 100%;
-  
-  --secondary: 0 0% 12%;           /* Gris oscuro */
-  --secondary-foreground: 0 0% 98%;
-  
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 60%;    /* Gris medio para texto secundario */
-  
-  --accent: 0 0% 15%;
-  --accent-foreground: 0 0% 98%;
-  
-  --border: 0 0% 15%;              /* Bordes sutiles */
-  --input: 0 0% 15%;
-  --ring: 229 100% 66%;            /* Violeta para focus */
+  /* ELIMINAR estas líneas de headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
 }
 ```
 
-**Actualizar gradientes y sombras para modo dark:**
-- Gradients con transparencias
-- Sombras suaves con negro
-- Glow effects con el violeta
-
-### 2. Header (src/components/layout/Header.tsx)
-
-- Fondo semi-transparente oscuro con backdrop-blur
-- Logo blanco (usar fint-text-white.png)
-- Navegación con hover states sutiles
-- Bordes más sutiles
-
-### 3. Cards (src/components/ui/card.tsx)
-
-- Variantes actualizadas para tema dark
-- Bordes sutiles (#1a1a1a aproximadamente)
-- Hover states con elevación sutil
-- Glassmorphism opcional para algunas cards
-
-### 4. Página de Auth (src/pages/Auth.tsx)
-
-- Mantener el diseño actual con fondo violeta
-- Card blanca contrastando (ya está bien)
-- Solo ajustes menores si es necesario
-
-### 5. Dashboard y otras páginas
-
-- Aplicar nuevo tema dark automáticamente via CSS variables
-- StatCards con gradientes sutiles
-- Charts con colores adaptados al tema oscuro
-- Textos y labels con contraste correcto
-
-### 6. Componentes adicionales
-
-**Botones:**
-- Primary: Violeta sólido
-- Secondary: Fondo oscuro con borde sutil
-- Ghost: Sin fondo, hover con fondo sutil
-
-**Inputs:**
-- Fondo oscuro (#121212)
-- Bordes sutiles
-- Focus ring violeta
-
-**Tables:**
-- Filas alternadas con tonos oscuros
-- Headers ligeramente más oscuros
-
-### 7. Footer
-
-- Borde superior sutil
-- Texto gris medio
-
-## Archivos a Modificar
-
-| Archivo | Cambios |
-|---------|---------|
-| `src/index.css` | Variables CSS para tema dark, gradientes, sombras |
-| `src/components/layout/Header.tsx` | Logo blanco, fondo semi-transparente |
-| `src/components/ui/card.tsx` | Variantes dark-optimized |
-| `src/components/ui/button.tsx` | Ajustes de colores para contraste |
-| `src/pages/Index.tsx` | Ajustes de colores específicos si es necesario |
-| `src/pages/Investments.tsx` | Ajustes de colores específicos |
-| `src/pages/Profile.tsx` | Ajustes de colores específicos |
-
-## Sección Técnica
-
-### Paleta de Colores Exacta
-
-```text
-┌─────────────────────────────────────────────────────┐
-│  FONDOS                                             │
-├─────────────────────────────────────────────────────┤
-│  Background:     hsl(0 0% 4%)      →  #0A0A0A       │
-│  Card:           hsl(0 0% 7%)      →  #121212       │
-│  Elevated:       hsl(0 0% 10%)     →  #1A1A1A       │
-│  Surface:        hsl(0 0% 12%)     →  #1F1F1F       │
-├─────────────────────────────────────────────────────┤
-│  TEXTOS                                             │
-├─────────────────────────────────────────────────────┤
-│  Primary:        hsl(0 0% 98%)     →  #FAFAFA       │
-│  Secondary:      hsl(0 0% 70%)     →  #B3B3B3       │
-│  Muted:          hsl(0 0% 50%)     →  #808080       │
-├─────────────────────────────────────────────────────┤
-│  ACENTO (Violeta fint)                              │
-├─────────────────────────────────────────────────────┤
-│  Primary:        hsl(229 100% 66%) →  #5271FF       │
-│  Primary Light:  hsl(229 100% 75%) →  #7A93FF       │
-│  Primary Dark:   hsl(229 100% 55%) →  #3B56E0       │
-├─────────────────────────────────────────────────────┤
-│  BORDES                                             │
-├─────────────────────────────────────────────────────┤
-│  Default:        hsl(0 0% 15%)     →  #262626       │
-│  Subtle:         hsl(0 0% 12%)     →  #1F1F1F       │
-└─────────────────────────────────────────────────────┘
+### Archivo: `tailwind.config.ts`
+```typescript
+// MODIFICAR fontFamily para usar inherit
+fontFamily: {
+  sans: ['inherit'],
+  display: ['inherit'],
+},
 ```
 
-### Consideraciones de Implementación
+## Beneficios
+- La app usará la fuente predeterminada del sistema/navegador
+- Menor tiempo de carga al no descargar fuentes externas
+- Mejor rendimiento inicial (no hay FOIT/FOUT)
 
-1. **Eliminación del modo claro**: Hacer el tema dark el default y único
-2. **Contrast ratios**: Asegurar WCAG AA compliance (4.5:1 para texto normal)
-3. **Gradientes**: Usar transparencias del violeta para efectos sutiles
-4. **Transiciones**: Mantener las animaciones existentes
-
-### Impacto en Componentes
-
-- Los colores de categorías se mantendrán (ya tienen buen contraste)
-- Los charts de Recharts usarán los nuevos colores via CSS variables
-- Las notificaciones/toasts usarán el nuevo tema
+## Consideraciones
+- El aspecto visual cambiará ya que las fuentes del sistema varían entre dispositivos (San Francisco en Mac/iOS, Segoe UI en Windows, Roboto en Android)
+- Si en el futuro quieres una apariencia más consistente, podrías usar una system font stack en lugar de solo `inherit`
