@@ -35,13 +35,12 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full bg-background border-b border-border">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
-        {/* Left side - Sidebar trigger & Logo (desktop) / Logo only (mobile) */}
-        <div className="flex items-center gap-3">
-          {/* Dashboard sidebar with hamburger - only on dashboard/investments */}
-          {(isDashboard || isInvestments) && <DashboardSidebar />}
-          
-          {/* Mobile logo - show when no sidebar OR on mobile */}
-          {!(isDashboard || isInvestments) && (
+        {/* Left side - Navigation (responsive) */}
+        <div className="flex items-center">
+          {/* Dashboard sidebar/navigation - on dashboard/investments/profile */}
+          {(isDashboard || isInvestments || isProfilePage) ? (
+            <DashboardSidebar />
+          ) : (
             <Link to="/dashboard" className="flex items-center gap-1.5">
               <img src={walletIconBlue} alt="wallet icon" className="h-7 w-auto" />
               <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />

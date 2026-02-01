@@ -47,8 +47,64 @@ export function DashboardSidebar() {
   
   return (
     <>
-      {/* Hamburger button and logo - visible on desktop */}
-      <div className="hidden md:flex items-center gap-3">
+      {/* Desktop: Logo + inline navigation with text */}
+      <div className="hidden lg:flex items-center gap-6">
+        {/* Logo */}
+        <Link to="/dashboard" className="flex items-center gap-1.5">
+          <img src={walletIconBlue} alt="wallet icon" className="h-7 w-auto" />
+          <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
+        </Link>
+        
+        {/* Inline navigation with text */}
+        <nav className="flex items-center gap-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                isActive(item.path) 
+                  ? "bg-primary text-primary-foreground" 
+                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+      
+      {/* Tablet: Logo + inline navigation with icons only */}
+      <div className="hidden md:flex lg:hidden items-center gap-4">
+        {/* Logo */}
+        <Link to="/dashboard" className="flex items-center gap-1.5">
+          <img src={walletIconBlue} alt="wallet icon" className="h-6 w-auto" />
+          <img src={walletTextBlack} alt="wallet" className="h-4 w-auto" />
+        </Link>
+        
+        {/* Inline navigation with icons only */}
+        <nav className="flex items-center gap-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex items-center justify-center w-10 h-10 rounded-lg transition-all",
+                isActive(item.path) 
+                  ? "bg-primary text-primary-foreground" 
+                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
+              )}
+              title={item.label}
+            >
+              {item.icon}
+            </Link>
+          ))}
+        </nav>
+      </div>
+      
+      {/* Mobile: Hamburger + Logo */}
+      <div className="flex md:hidden items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
@@ -58,30 +114,23 @@ export function DashboardSidebar() {
           <Menu className="w-5 h-5" />
         </Button>
         
-        {/* Logo with blue W icon and black text */}
         <Link to="/dashboard" className="flex items-center gap-1">
-          <img src={walletIconBlue} alt="wallet icon" className="h-6 w-auto" />
-          <img src={walletTextBlack} alt="wallet" className="h-4 w-auto" />
+          <img src={walletIconBlue} alt="wallet icon" className="h-5 w-auto" />
+          <img src={walletTextBlack} alt="wallet" className="h-3.5 w-auto" />
         </Link>
       </div>
       
-      {/* Mobile logo only (no hamburger on mobile - they use bottom nav) */}
-      <Link to="/dashboard" className="md:hidden flex items-center gap-1">
-        <img src={walletIconBlue} alt="wallet icon" className="h-5 w-auto" />
-        <img src={walletTextBlack} alt="wallet" className="h-3.5 w-auto" />
-      </Link>
-      
-      {/* Sidebar overlay */}
+      {/* Sidebar overlay - only for mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
       
-      {/* Sidebar panel */}
+      {/* Sidebar panel - only for mobile */}
       <div className={cn(
-        "fixed top-0 left-0 h-full w-72 bg-card border-r border-border shadow-lg z-50 transform transition-transform duration-300 ease-out",
+        "fixed top-0 left-0 h-full w-72 bg-card border-r border-border shadow-lg z-50 transform transition-transform duration-300 ease-out md:hidden",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Header */}
