@@ -528,7 +528,7 @@ export default function Auth() {
                 onChange={(e) => setEmail(e.target.value)}
                 onValidChange={setEmailValid}
                 required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
             
@@ -539,7 +539,7 @@ export default function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
 
