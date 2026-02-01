@@ -51,7 +51,7 @@ export function CurrencySelector({ variant = 'light' }: CurrencySelectorProps) {
           "w-[80px] h-9 gap-1",
           isDark 
             ? "bg-white/10 border-white/20 text-white hover:bg-white/20" 
-            : "bg-background border-muted"
+            : "bg-foreground text-background border-foreground hover:bg-foreground/90"
         )}>
           {isUpdating ? (
             <Loader2 className="w-3 h-3 animate-spin" />
