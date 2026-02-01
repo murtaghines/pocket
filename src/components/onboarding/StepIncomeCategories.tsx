@@ -22,7 +22,7 @@ export function StepIncomeCategories({ selectedCategories, onCategoriesChange }:
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 text-muted-foreground">
+      <div className="flex items-center gap-3 text-gray-500">
         <TrendingUp className="w-5 h-5" />
         <p>Select the income categories relevant to you.</p>
       </div>
@@ -33,7 +33,7 @@ export function StepIncomeCategories({ selectedCategories, onCategoriesChange }:
             key={category}
             className={`flex items-center space-x-2 rounded-lg border p-3 cursor-pointer transition-colors ${
               selectedCategories.includes(category)
-                ? 'border-primary bg-primary/5'
+                ? 'border-gray-900 bg-gray-100'
                 : 'border-gray-200 hover:bg-gray-50'
             }`}
             onClick={() => toggleCategory(category)}
@@ -42,7 +42,7 @@ export function StepIncomeCategories({ selectedCategories, onCategoriesChange }:
               id={`income-${category}`}
               checked={selectedCategories.includes(category)}
               onCheckedChange={() => toggleCategory(category)}
-              className="border-gray-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
             />
             <Label
               htmlFor={`income-${category}`}
@@ -54,7 +54,7 @@ export function StepIncomeCategories({ selectedCategories, onCategoriesChange }:
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-gray-500">
         {selectedCategories.length} categories selected
       </p>
     </div>
