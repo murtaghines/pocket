@@ -38,12 +38,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="lg:ml-64 md:ml-20 min-h-screen pb-20 md:pb-0">
         {/* Top header bar with actions */}
         <header className="sticky top-0 z-30 w-full bg-background border-b border-border">
-          <div className="flex h-16 items-center justify-end px-4 md:px-6">
-            {/* Mobile: Add spacing for hamburger menu */}
-            <div className="md:hidden w-12" />
-            
-            <div className="flex items-center gap-2 md:gap-3 ml-auto">
+          <div className="flex h-16 items-center justify-between px-4 md:px-6">
+            {/* Left side: Mobile hamburger space + Currency Selector */}
+            <div className="flex items-center">
+              <div className="md:hidden w-12" />
               <CurrencySelector variant="light" />
+            </div>
+            
+            {/* Right side: Notifications + Avatar */}
+            <div className="flex items-center gap-2 md:gap-3">
               <NotificationBell variant="light" />
               
               {/* User avatar */}

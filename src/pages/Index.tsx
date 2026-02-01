@@ -59,6 +59,11 @@ export default function Index() {
   const currentMonth = monthlyData[monthlyData.length - 1] || { month: '', income: 0, expenses: 0, balance: 0 };
   const previousMonth = monthlyData[monthlyData.length - 2] || { month: '', income: 0, expenses: 0, balance: 0 };
   
+  // Get the month label from the last uploaded data (not current calendar month)
+  const latestMonthLabel = monthlyData.length > 0 
+    ? monthlyData[monthlyData.length - 1].month 
+    : null;
+  
   const convertedCurrentMonth = {
     ...currentMonth,
     income: convertToUserCurrency(currentMonth.income),
@@ -152,14 +157,13 @@ export default function Index() {
           <>
             <EmptyStateBanner hasData={transactions.length > 0} />
 
-            {/* Month label */}
+            {/* Month label - shows the last uploaded month, not current calendar month */}
             <h3 className="text-lg font-semibold mb-4 capitalize text-muted-foreground">
-              {currentMonth.month || currentMonthName}
+              {latestMonthLabel || t('period.noPeriods', 'No data yet')}
             </h3>
 
-            {/* Bento Grid Layout */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-              {/* Main stat cards */}
+            {/* KPIs Row - 3 columns full width */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <StatCard
                 title={t('stats.income')}
                 value={formatCurrency(convertedCurrentMonth.income)}
@@ -187,20 +191,17 @@ export default function Index() {
                 icon={<Wallet className="w-5 h-5" />}
                 delay={200}
               />
-              
-              {/* Investment card */}
-              <InvestmentSummaryCard />
             </div>
 
-            {/* Charts Row - 2 column bento */}
+            {/* Charts Row - Monthly Chart + Investment & Savings sidebar */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              {/* Monthly Chart takes 2 cols */}
               <div className="lg:col-span-2">
                 <MonthlyChart data={convertedMonthlyData} />
               </div>
-              
-              {/* Savings rate */}
-              <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+              <div className="space-y-4">
+                <InvestmentSummaryCard />
+                <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+              </div>
             </div>
 
             {/* Middle Row */}
