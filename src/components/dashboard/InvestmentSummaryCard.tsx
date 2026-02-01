@@ -15,9 +15,9 @@ export function InvestmentSummaryCard() {
   return (
     <Card variant="bento" className="animate-fade-in" style={{ animationDelay: '300ms' }}>
       <CardContent className="p-5">
-        {/* Icon badge - blue gradient */}
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20 mb-4">
-          <PiggyBank className="w-5 h-5 text-white" />
+        {/* Icon badge - blue diffused */}
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+          <PiggyBank className="w-5 h-5 text-primary" />
         </div>
 
         {/* Label */}
