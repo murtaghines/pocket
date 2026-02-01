@@ -51,7 +51,7 @@ export default function Profile() {
           <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
             {/* Header with title and tabs on the same row */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 animate-fade-in">
-              <h2 className="font-display text-3xl font-bold tracking-tight">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">
                 {t('title')}
               </h2>
               
@@ -80,7 +80,7 @@ export default function Profile() {
                 <div className="animate-slide-up">
                   <div className="flex items-center gap-2 mb-4">
                     <FileText className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium">{t('uploads.title')}</h3>
+                    <h3 className="text-base font-medium text-foreground">{t('uploads.title')}</h3>
                   </div>
                   <MonthlyUploadsOrganizer />
                 </div>
@@ -88,7 +88,7 @@ export default function Profile() {
                 <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium">{t('uploads.investmentUploads')}</h3>
+                    <h3 className="text-base font-medium text-foreground">{t('uploads.investmentUploads')}</h3>
                   </div>
                   <InvestmentUploadsOrganizer />
                 </div>
@@ -102,7 +102,7 @@ export default function Profile() {
                 <div className="animate-slide-up flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
                     <User className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium">{t('personalInfo.title')}</h3>
+                    <h3 className="text-base font-medium text-foreground">{t('personalInfo.title')}</h3>
                   </div>
                   <ProfileInfoCard onLogout={handleLogout} className="flex-1" />
                 </div>
@@ -110,7 +110,7 @@ export default function Profile() {
                 <div className="animate-slide-up flex flex-col" style={{ animationDelay: '100ms' }}>
                   <div className="flex items-center gap-2 mb-4">
                     <Globe className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium">{ts('regional.title')}</h3>
+                    <h3 className="text-base font-medium text-foreground">{ts('regional.title')}</h3>
                   </div>
                   <PreferencesForm className="flex-1" />
                 </div>
@@ -120,7 +120,7 @@ export default function Profile() {
               <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
                 <div className="flex items-center gap-2 mb-4">
                   <Tags className="w-4 h-4 text-primary" />
-                  <h3 className="text-base font-medium">{ts('categories.title')}</h3>
+                  <h3 className="text-base font-medium text-foreground">{ts('categories.title')}</h3>
                 </div>
                 <CategoriesEditor />
               </div>
