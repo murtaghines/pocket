@@ -106,7 +106,7 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background pb-20 md:pb-0 dashboard-theme">
       <Header />
       <MobileBottomNav />
       
