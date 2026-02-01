@@ -25,8 +25,8 @@ export function LandingHeader() {
             <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               How it works
             </a>
-            <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Testimonials
+            <a href="#contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Contact
             </a>
           </div>
 
