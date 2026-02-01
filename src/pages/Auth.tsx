@@ -508,11 +508,11 @@ export default function Auth() {
       
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 min-h-screen">
         {/* Header text */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 font-display">
             Welcome back
           </h1>
-          <p className="text-lg text-white/80 max-w-md mx-auto">
+          <p className="text-base text-white/80 max-w-md mx-auto">
             Sign in to continue to wallet
           </p>
         </div>
@@ -528,7 +528,7 @@ export default function Auth() {
                 onChange={(e) => setEmail(e.target.value)}
                 onValidChange={setEmailValid}
                 required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
             
@@ -539,7 +539,7 @@ export default function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
 
