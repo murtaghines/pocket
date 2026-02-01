@@ -10,7 +10,7 @@ interface StatCardProps {
   type?: 'income' | 'expense' | 'neutral' | 'balance';
   icon?: React.ReactNode;
   delay?: number;
-  invertChangeColor?: boolean; // For expenses: increase is bad (red)
+  invertChangeColor?: boolean;
 }
 
 export function StatCard({ 
@@ -26,69 +26,85 @@ export function StatCard({
   const rawPositive = change && change > 0;
   const rawNegative = change && change < 0;
   
-  // For expenses, invert the color logic (increase is bad)
   const isPositive = invertChangeColor ? rawNegative : rawPositive;
   const isNegative = invertChangeColor ? rawPositive : rawNegative;
 
-  // For balance type, use neutral card styling
-  const cardVariant = type === 'balance' ? 'neutral' : type;
+  const getIconBgColor = () => {
+    switch (type) {
+      case 'income': return 'bg-success/10';
+      case 'expense': return 'bg-destructive/10';
+      case 'balance': return 'bg-primary/10';
+      default: return 'bg-muted';
+    }
+  };
+
+  const getIconColor = () => {
+    switch (type) {
+      case 'income': return 'text-success';
+      case 'expense': return 'text-destructive';
+      case 'balance': return 'text-primary';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const getValueColor = () => {
+    switch (type) {
+      case 'income': return 'text-success';
+      case 'expense': return 'text-destructive';
+      case 'balance': return 'text-foreground';
+      default: return 'text-foreground';
+    }
+  };
 
   return (
     <Card 
-      variant={cardVariant}
-      className={cn(
-        "animate-slide-up",
-      )}
+      variant="bento"
+      className="animate-slide-up overflow-hidden"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-muted-foreground">{title}</span>
-          {icon && (
-            <div className={cn(
-              "p-2 rounded-lg",
-              type === 'income' && "bg-success/20 text-success",
-              type === 'expense' && "bg-destructive/20 text-destructive",
-              (type === 'neutral' || type === 'balance') && "bg-muted text-muted-foreground",
-            )}>
-              {icon}
-            </div>
-          )}
+      <div className="p-5">
+        {/* Icon badge */}
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center mb-4",
+          getIconBgColor()
+        )}>
+          <div className={getIconColor()}>
+            {icon}
+          </div>
         </div>
         
-        <div className="space-y-2">
-          <p className={cn(
-            "text-3xl font-display font-bold tracking-tight",
-            type === 'income' && "text-success",
-            type === 'expense' && "text-destructive",
-            type === 'balance' && "text-muted-foreground",
-          )}>
-            {value}
-          </p>
-          
-          {change !== undefined && change !== null && (
-            // Only show comparison if there's actual change data (not 0 with no previous data)
-            (change !== 0 || isPositive || isNegative) ? (
-              <div className="flex items-center gap-1.5 text-sm">
-                {isPositive && <TrendingUp className="w-4 h-4 text-success" />}
-                {isNegative && <TrendingDown className="w-4 h-4 text-destructive" />}
-                {!isPositive && !isNegative && <Minus className="w-4 h-4 text-muted-foreground" />}
-                <span className={cn(
-                  "font-medium",
-                  isPositive && "text-success",
-                  isNegative && "text-destructive",
-                  !isPositive && !isNegative && "text-muted-foreground",
-                )}>
-                  {rawPositive && "+"}
-                  {change}%
-                </span>
-                {changeLabel && (
-                  <span className="text-muted-foreground">{changeLabel}</span>
-                )}
-              </div>
-            ) : null
-          )}
-        </div>
+        {/* Label */}
+        <p className="text-sm font-medium text-muted-foreground mb-1">
+          {title}
+        </p>
+        
+        {/* Value */}
+        <p className={cn(
+          "text-2xl md:text-3xl font-bold tracking-tight font-display",
+          getValueColor()
+        )}>
+          {value}
+        </p>
+        
+        {/* Change indicator */}
+        {change !== undefined && change !== null && (change !== 0 || isPositive || isNegative) && (
+          <div className="flex items-center gap-1.5 mt-3">
+            <div className={cn(
+              "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+              isPositive && "bg-success/10 text-success",
+              isNegative && "bg-destructive/10 text-destructive",
+              !isPositive && !isNegative && "bg-muted text-muted-foreground"
+            )}>
+              {isPositive && <TrendingUp className="w-3 h-3" />}
+              {isNegative && <TrendingDown className="w-3 h-3" />}
+              {!isPositive && !isNegative && <Minus className="w-3 h-3" />}
+              <span>{rawPositive && "+"}{change}%</span>
+            </div>
+            {changeLabel && (
+              <span className="text-xs text-muted-foreground">{changeLabel}</span>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );

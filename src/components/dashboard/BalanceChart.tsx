@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
+import { TrendingUp } from "lucide-react";
 
 interface MonthlyData {
   month: string;
@@ -23,8 +24,8 @@ export function BalanceChart({ data }: BalanceChartProps) {
     if (active && payload && payload.length) {
       const value = payload[0].value;
       return (
-        <div className="bg-card border border-border rounded-lg shadow-lg p-4">
-          <p className="font-display font-semibold text-foreground mb-1">{label}</p>
+        <div className="bg-card border border-border/50 rounded-xl shadow-lg p-4">
+          <p className="font-semibold text-foreground mb-1">{label}</p>
           <p className={`text-lg font-bold ${value >= 0 ? 'text-success' : 'text-destructive'}`}>
             {value >= 0 ? '+' : ''}{formatCurrency(value)}
           </p>
@@ -36,56 +37,68 @@ export function BalanceChart({ data }: BalanceChartProps) {
 
   if (!hasData) {
     return (
-      <Card className="animate-slide-up" style={{ animationDelay: '350ms' }}>
-        <CardHeader>
-          <CardTitle className="text-lg">{t('stats.balance')}</CardTitle>
+      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '350ms' }}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </div>
+            {t('stats.balance')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <EmptyState height="h-[200px]" />
+          <EmptyState height="h-[180px]" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="animate-slide-up" style={{ animationDelay: '350ms' }}>
-      <CardHeader>
-        <CardTitle className="text-lg">{t('stats.balance')}</CardTitle>
+    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '350ms' }}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-primary" />
+          </div>
+          {t('stats.balance')}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[200px]">
+        <div className="h-[180px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
-                <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(160, 84%, 45%)" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="hsl(160, 84%, 45%)" stopOpacity={0}/>
+                <linearGradient id="balanceGradientModern" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(242, 100%, 55%)" stopOpacity={0.2}/>
+                  <stop offset="100%" stopColor="hsl(242, 100%, 55%)" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
               <XAxis 
                 dataKey="month" 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                dy={10}
               />
               <YAxis 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                 tickFormatter={(value) => `${value >= 0 ? '+' : ''}${(value / 1000).toFixed(0)}k`}
+                width={45}
               />
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine y={0} stroke="hsl(var(--border))" strokeDasharray="3 3" />
-              <Line 
+              <Area 
                 type="monotone" 
                 dataKey="balance" 
-                stroke="hsl(160, 84%, 45%)" 
-                strokeWidth={3}
-                dot={{ fill: 'hsl(160, 84%, 45%)', strokeWidth: 0, r: 4 }}
-                activeDot={{ r: 6, fill: 'hsl(160, 84%, 45%)', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                stroke="hsl(242, 100%, 55%)" 
+                strokeWidth={2.5}
+                fill="url(#balanceGradientModern)"
+                dot={{ fill: 'hsl(242, 100%, 55%)', strokeWidth: 0, r: 3 }}
+                activeDot={{ r: 5, fill: 'hsl(242, 100%, 55%)', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

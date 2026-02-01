@@ -6,8 +6,9 @@ import { X, Calendar, FileText, TrendingUp, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useImports, Import } from "@/hooks/useImports";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
-const BANNER_SHOW_UNTIL_DAY = 7; // Show banner from day 1 to day 7 of each month
+const BANNER_SHOW_UNTIL_DAY = 7;
 
 export function MonthClosingBanner() {
   const { t, i18n } = useTranslation('dashboard');
@@ -18,7 +19,6 @@ export function MonthClosingBanner() {
   const now = new Date();
   const currentDay = now.getDate();
   
-  // The last closed month
   const lastClosedMonth = useMemo(() => {
     return new Date(now.getFullYear(), now.getMonth() - 1, 1);
   }, []);
@@ -34,12 +34,10 @@ export function MonthClosingBanner() {
   const countImportsForMonth = (imports: Import[], monthKey: string) => {
     return imports.filter((imp) => {
       const targetMonth = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
-      // Only count NORMALIZED imports as successful
       return targetMonth === monthKey && imp.status === 'NORMALIZED';
     }).length;
   };
 
-  // Count uploads for last closed month
   const { bankUploads, investmentUploads } = useMemo(() => {
     return {
       bankUploads: countImportsForMonth(cashflowImports, lastClosedMonthKey),
@@ -47,7 +45,6 @@ export function MonthClosingBanner() {
     };
   }, [cashflowImports, investingImports, lastClosedMonthKey]);
 
-  // Check local storage for dismissal
   useEffect(() => {
     const dismissedKey = `monthClosingDismissed_${lastClosedMonthKey}`;
     const wasDismissed = localStorage.getItem(dismissedKey);
@@ -62,7 +59,6 @@ export function MonthClosingBanner() {
     setIsDismissed(true);
   };
 
-  // Don't show if dismissed or past day 7
   if (isDismissed || currentDay > BANNER_SHOW_UNTIL_DAY) {
     return null;
   }
@@ -70,17 +66,17 @@ export function MonthClosingBanner() {
   const isComplete = bankUploads > 0 && investmentUploads > 0;
 
   return (
-    <Card className="mb-6 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 animate-fade-in">
-      <CardContent className="p-4 md:p-6">
+    <Card variant="bento" className="mb-6 border-primary/20 bg-primary/5 animate-fade-in">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4 flex-1">
-            <div className="p-2 rounded-full bg-primary/10">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Calendar className="w-6 h-6 text-primary" />
             </div>
             
             <div className="flex-1 space-y-3">
               <div>
-                <h3 className="font-semibold text-lg capitalize">
+                <h3 className="font-semibold text-base capitalize">
                   {t('monthClosing.readyToClose', { month: lastClosedMonthLabel })}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -88,25 +84,35 @@ export function MonthClosingBanner() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{t('monthClosing.bankStatements')}:</span>
-                  <Badge variant={bankUploads > 0 ? "default" : "outline"} className={bankUploads === 0 ? "text-warning border-warning" : ""}>
-                    {t('monthClosing.filesCount', { count: bankUploads })}
-                  </Badge>
+                  <span className="text-sm text-muted-foreground">{t('monthClosing.bankStatements')}:</span>
+                  <span className={cn(
+                    "text-xs font-medium px-2 py-0.5 rounded-full",
+                    bankUploads > 0 
+                      ? "bg-success/10 text-success" 
+                      : "bg-warning/10 text-warning"
+                  )}>
+                    {bankUploads}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{t('monthClosing.investments')}:</span>
-                  <Badge variant={investmentUploads > 0 ? "default" : "outline"} className={investmentUploads === 0 ? "text-warning border-warning" : ""}>
-                    {t('monthClosing.filesCount', { count: investmentUploads })}
-                  </Badge>
+                  <span className="text-sm text-muted-foreground">{t('monthClosing.investments')}:</span>
+                  <span className={cn(
+                    "text-xs font-medium px-2 py-0.5 rounded-full",
+                    investmentUploads > 0 
+                      ? "bg-success/10 text-success" 
+                      : "bg-warning/10 text-warning"
+                  )}>
+                    {investmentUploads}
+                  </span>
                 </div>
               </div>
 
               <Link to="/profile">
-                <Button variant="gradient" size="sm" className="mt-2">
+                <Button size="sm" className="mt-2 rounded-full">
                   {t('monthClosing.goToUpload')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -118,7 +124,7 @@ export function MonthClosingBanner() {
             variant="ghost"
             size="icon"
             onClick={handleDismiss}
-            className="shrink-0 text-muted-foreground hover:text-foreground"
+            className="shrink-0 text-muted-foreground hover:text-foreground rounded-full"
           >
             <X className="w-4 h-4" />
           </Button>

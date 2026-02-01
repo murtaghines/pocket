@@ -21,7 +21,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
-import { TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Loader2, CalendarDays } from "lucide-react";
 
 export default function Index() {
   const { t } = useTranslation('dashboard');
@@ -105,6 +105,14 @@ export default function Index() {
     balance: convertToUserCurrency(summary.balance),
   };
 
+  // Get current date for welcome section
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0 dashboard-theme">
       <Header />
@@ -117,14 +125,16 @@ export default function Index() {
         />
       )}
       
-      <main className="container px-4 md:px-6 py-8">
-        <div className="mb-8 animate-fade-in">
-          <h2 className="font-display text-3xl font-bold tracking-tight">
+      <main className="container px-4 md:px-6 py-6">
+        {/* Welcome Section */}
+        <div className="mb-6 animate-fade-in">
+          <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+            <CalendarDays className="w-4 h-4" />
+            <span>{formattedDate}</span>
+          </div>
+          <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
             {t('title')}
           </h2>
-          <p className="text-muted-foreground mt-1">
-            {currentMonthName}
-          </p>
         </div>
 
         {(isLoading || prefsLoading) && (
@@ -138,11 +148,13 @@ export default function Index() {
             <EmptyStateBanner hasData={transactions.length > 0} />
             <MonthClosingBanner />
 
-            <h3 className="text-xl font-semibold mb-4 capitalize">
+            {/* Month label */}
+            <h3 className="text-lg font-semibold mb-4 capitalize text-muted-foreground">
               {currentMonth.month || currentMonthName}
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+            {/* Stat Cards - Bento Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
               <StatCard
                 title={t('stats.income')}
                 value={formatCurrency(convertedCurrentMonth.income)}
@@ -175,33 +187,38 @@ export default function Index() {
               <MonthStatusIndicator />
             </div>
 
+            {/* Monthly Chart - Full Width */}
             <div className="mb-6">
               <MonthlyChart data={convertedMonthlyData} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <CategoryChart data={convertedCategoryData} />
               <TopExpensesCard transactions={transactions} />
               <WeeklyComparisonChart />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+            {/* Balance and Savings Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
               <div className="lg:col-span-3">
                 <BalanceChart data={convertedMonthlyData} />
               </div>
               <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
             </div>
 
+            {/* Yearly Chart */}
             <div className="mb-6">
               <YearlyBalanceChart data={convertedMonthlyData} />
             </div>
 
+            {/* Transactions Table */}
             <TransactionTable transactions={transactions} />
           </>
         )}
       </main>
 
-      <footer className="border-t mt-12">
+      <footer className="border-t border-border/50 mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
             wallet

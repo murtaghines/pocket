@@ -13,26 +13,32 @@ export function InvestmentSummaryCard() {
     amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
 
   return (
-    <Card className="animate-fade-in" style={{ animationDelay: '300ms' }}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    <Card variant="bento" className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+      <CardContent className="p-5">
+        {/* Icon badge */}
+        <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center mb-4">
+          <PiggyBank className="w-5 h-5 text-purple-600" />
+        </div>
+
+        {/* Label */}
+        <p className="text-sm font-medium text-muted-foreground mb-1">
           {t('investments.title')}
-        </CardTitle>
-        <PiggyBank className="w-5 h-5 text-purple-500" />
-      </CardHeader>
-      <CardContent>
+        </p>
+
         {hasData ? (
           <>
-            <div className="text-2xl font-bold text-purple-600">
+            <p className="text-2xl md:text-3xl font-bold tracking-tight text-purple-600">
               {formatCurrency(totalInvestedThisMonth)}
-            </div>
-            <p className="text-sm text-muted-foreground">
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
               {t('investments.investedThisMonth')}
             </p>
             {totalCurrentValue > 0 && (
-              <p className="text-sm text-green-600 mt-1">
-                {t('investments.totalValue')}: {formatCurrency(totalCurrentValue)}
-              </p>
+              <div className="flex items-center gap-1.5 mt-3">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success font-medium">
+                  {t('investments.totalValue')}: {formatCurrency(totalCurrentValue)}
+                </span>
+              </div>
             )}
           </>
         ) : (
@@ -40,8 +46,9 @@ export function InvestmentSummaryCard() {
             {t('investments.noInvestments')}
           </p>
         )}
-        <Link to="/investments">
-          <Button variant="ghost" size="sm" className="mt-2 w-full">
+        
+        <Link to="/investments" className="block mt-4">
+          <Button variant="ghost" size="sm" className="w-full rounded-xl text-primary hover:bg-primary/5">
             {t('investments.viewInvestments')}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
