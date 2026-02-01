@@ -6,7 +6,7 @@ export function LandingHeader() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
       <div className="max-w-7xl mx-auto">
-        <nav className="flex items-center justify-between bg-card/90 backdrop-blur-xl border border-border/50 rounded-full px-6 py-3">
+        <nav className="flex items-center justify-between bg-accent/95 backdrop-blur-xl border border-border/50 rounded-full px-6 py-3">
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img src={walletTextWhite} alt="wallet" className="h-6 w-auto" />
