@@ -175,7 +175,7 @@ export default function Auth() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
                 />
                 <PasswordStrengthIndicator password={newPassword} />
               </div>
@@ -187,7 +187,7 @@ export default function Auth() {
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
                 />
               </div>
               
@@ -516,7 +516,7 @@ export default function Auth() {
                 onChange={(e) => setEmail(e.target.value)}
                 onValidChange={setEmailValid}
                 required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
             
@@ -527,7 +527,7 @@ export default function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
               />
             </div>
 
@@ -537,7 +537,7 @@ export default function Auth() {
                   id="remember" 
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  className="border-gray-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
                 />
                 <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
                   Remember me
