@@ -131,8 +131,13 @@
     "description": "Upload your bank statements and investments to complete the month's analysis.",
     "bankStatements": "Bank statements",
     "investments": "Investments",
-    "goToUpload": "Go to upload files",
+    "goToUpload": "Upload files",
     "file": "file",
     "files": "files"
+  },
+  "notifications": {
+    "uploadReminder": "Upload {{month}} statements",
+    "uploadDescription": "Complete your financial data for last month to keep your analysis up to date.",
+    "new": "New"
   }
 }
