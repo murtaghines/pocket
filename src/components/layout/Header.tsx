@@ -72,10 +72,10 @@ export function Header() {
           {/* User avatar */}
           <Link to="/profile" className={cn(isProfilePage && "hidden md:block")}>
             <div className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all",
+              "w-9 h-9 rounded-full flex items-center justify-center text-sm font-light transition-all",
               isActive('/profile') 
                 ? "bg-primary text-primary-foreground" 
-                : "bg-muted text-foreground hover:bg-muted/80"
+                : "bg-foreground text-background hover:bg-foreground/90"
             )}>
               {getInitials()}
             </div>
