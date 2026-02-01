@@ -46,7 +46,7 @@ export function MobileBottomNav() {
 
   if (isProfilePage) {
     return (
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-primary">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border">
         <div className="flex items-center justify-around h-16 px-4">
           {profileNavItems.map((item) => {
             const Icon = item.icon;
@@ -59,20 +59,20 @@ export function MobileBottomNav() {
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 px-6 py-2 rounded-xl transition-all duration-200 flex-1 max-w-[140px]",
                   active 
-                    ? "bg-white/20" 
-                    : "hover:bg-white/10 active:scale-95"
+                    ? "bg-primary/10" 
+                    : "hover:bg-muted active:scale-95"
                 )}
               >
                 <Icon 
                   className={cn(
                     "w-5 h-5 transition-colors",
-                    active ? "text-white" : "text-white/70"
+                    active ? "text-primary" : "text-muted-foreground"
                   )} 
                 />
                 <span 
                   className={cn(
                     "text-xs font-medium transition-colors",
-                    active ? "text-white" : "text-white/70"
+                    active ? "text-primary" : "text-muted-foreground"
                   )}
                 >
                   {item.label}
@@ -82,13 +82,13 @@ export function MobileBottomNav() {
           })}
         </div>
         {/* Safe area padding for devices with home indicator */}
-        <div className="h-[env(safe-area-inset-bottom,0)] bg-primary" />
+        <div className="h-[env(safe-area-inset-bottom,0)] bg-background" />
       </nav>
     );
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-primary">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border">
       <div className="flex items-center justify-around h-16 px-4">
         {defaultNavItems.map((item) => {
           const Icon = item.icon;
@@ -101,20 +101,20 @@ export function MobileBottomNav() {
               className={cn(
                 "flex flex-col items-center justify-center gap-1 px-6 py-2 rounded-xl transition-all duration-200 flex-1 max-w-[140px]",
                 active 
-                  ? "bg-white/20" 
-                  : "hover:bg-white/10 active:scale-95"
+                  ? "bg-primary/10" 
+                  : "hover:bg-muted active:scale-95"
               )}
             >
               <Icon 
                 className={cn(
                   "w-5 h-5 transition-colors",
-                  active ? "text-white" : "text-white/70"
+                  active ? "text-primary" : "text-muted-foreground"
                 )} 
               />
               <span 
                 className={cn(
                   "text-xs font-medium transition-colors",
-                  active ? "text-white" : "text-white/70"
+                  active ? "text-primary" : "text-muted-foreground"
                 )}
               >
                 {item.label}
@@ -124,7 +124,7 @@ export function MobileBottomNav() {
         })}
       </div>
       {/* Safe area padding for devices with home indicator */}
-      <div className="h-[env(safe-area-inset-bottom,0)] bg-primary" />
+      <div className="h-[env(safe-area-inset-bottom,0)] bg-background" />
     </nav>
   );
 }
