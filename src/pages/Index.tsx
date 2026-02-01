@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Header } from "@/components/layout/Header";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
@@ -119,130 +119,131 @@ export default function Index() {
   const firstName = profile?.first_name || '';
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0 dashboard-theme">
-      <Header />
-      <MobileBottomNav />
-      
-      {onboardingChecked && (
-        <OnboardingModal 
-          open={showOnboarding} 
-          onComplete={() => setShowOnboarding(false)} 
-        />
-      )}
-      
-      <main className="container px-4 md:px-6 py-6">
-        {/* Welcome Section - Matching reference design */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-fade-in">
-          <DateDisplay />
-          
-          {/* Greeting on the right - with proper text sizing and BLACK color */}
-          <div className="hidden md:block text-right flex-shrink-0">
-            <h2 className="text-xl lg:text-2xl font-bold whitespace-nowrap text-foreground">
-              {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t('welcome.subtitle', 'Here\'s your financial overview')}
+    <DashboardLayout>
+      <div className="pb-20 md:pb-0 dashboard-theme">
+        <MobileBottomNav />
+        
+        {onboardingChecked && (
+          <OnboardingModal 
+            open={showOnboarding} 
+            onComplete={() => setShowOnboarding(false)} 
+          />
+        )}
+        
+        <div className="container px-4 md:px-6 py-6">
+          {/* Welcome Section - Matching reference design */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-fade-in">
+            <DateDisplay />
+            
+            {/* Greeting on the right - with proper text sizing and BLACK color */}
+            <div className="hidden md:block text-right flex-shrink-0">
+              <h2 className="text-xl lg:text-2xl font-bold whitespace-nowrap text-foreground">
+                {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {t('welcome.subtitle', 'Here\'s your financial overview')}
+              </p>
+            </div>
+          </div>
+
+          {(isLoading || prefsLoading) && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {!isLoading && !prefsLoading && (
+            <>
+              <EmptyStateBanner hasData={transactions.length > 0} />
+
+              {/* Month label */}
+              <h3 className="text-lg font-semibold mb-4 capitalize text-muted-foreground">
+                {currentMonth.month || currentMonthName}
+              </h3>
+
+              {/* Bento Grid Layout */}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+                {/* Main stat cards */}
+                <StatCard
+                  title={t('stats.income')}
+                  value={formatCurrency(convertedCurrentMonth.income)}
+                  change={incomeChange}
+                  changeLabel={t('stats.vsLastMonth')}
+                  type="income"
+                  icon={<TrendingUp className="w-5 h-5" />}
+                  delay={0}
+                />
+                <StatCard
+                  title={t('stats.expenses')}
+                  value={formatCurrency(convertedCurrentMonth.expenses)}
+                  change={expenseChange}
+                  changeLabel={t('stats.vsLastMonth')}
+                  type="expense"
+                  icon={<TrendingDown className="w-5 h-5" />}
+                  delay={100}
+                  invertChangeColor={true}
+                />
+                <StatCard
+                  title={t('stats.balance')}
+                  value={formatCurrency(convertedCurrentMonth.balance)}
+                  change={balanceChange}
+                  changeLabel={t('stats.vsLastMonth')}
+                  type="balance"
+                  icon={<Wallet className="w-5 h-5" />}
+                  delay={200}
+                />
+                
+                {/* Investment card */}
+                <InvestmentSummaryCard />
+              </div>
+
+              {/* Charts Row - 2 column bento */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                {/* Monthly Chart takes 2 cols */}
+                <div className="lg:col-span-2">
+                  <MonthlyChart data={convertedMonthlyData} />
+                </div>
+                
+                {/* Savings rate */}
+                <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+              </div>
+
+              {/* Middle Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <CategoryChart data={convertedCategoryData} />
+                <TopExpensesCard transactions={transactions} />
+                <WeeklyComparisonChart />
+              </div>
+
+              {/* Balance Chart Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+                <div className="lg:col-span-3">
+                  <BalanceChart data={convertedMonthlyData} />
+                </div>
+                <div className="hidden lg:block">
+                  {/* Yearly summary or additional card */}
+                </div>
+              </div>
+
+              {/* Yearly Chart */}
+              <div className="mb-6">
+                <YearlyBalanceChart data={convertedMonthlyData} />
+              </div>
+
+              {/* Transactions Table */}
+              <TransactionTable transactions={transactions} />
+            </>
+          )}
+        </div>
+
+        <footer className="border-t border-border/50 mt-12">
+          <div className="container px-4 md:px-6 py-6">
+            <p className="text-sm text-muted-foreground text-center">
+              wallet
             </p>
           </div>
-        </div>
-
-        {(isLoading || prefsLoading) && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
-        )}
-
-        {!isLoading && !prefsLoading && (
-          <>
-            <EmptyStateBanner hasData={transactions.length > 0} />
-
-            {/* Month label */}
-            <h3 className="text-lg font-semibold mb-4 capitalize text-muted-foreground">
-              {currentMonth.month || currentMonthName}
-            </h3>
-
-            {/* Bento Grid Layout */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-              {/* Main stat cards */}
-              <StatCard
-                title={t('stats.income')}
-                value={formatCurrency(convertedCurrentMonth.income)}
-                change={incomeChange}
-                changeLabel={t('stats.vsLastMonth')}
-                type="income"
-                icon={<TrendingUp className="w-5 h-5" />}
-                delay={0}
-              />
-              <StatCard
-                title={t('stats.expenses')}
-                value={formatCurrency(convertedCurrentMonth.expenses)}
-                change={expenseChange}
-                changeLabel={t('stats.vsLastMonth')}
-                type="expense"
-                icon={<TrendingDown className="w-5 h-5" />}
-                delay={100}
-                invertChangeColor={true}
-              />
-              <StatCard
-                title={t('stats.balance')}
-                value={formatCurrency(convertedCurrentMonth.balance)}
-                change={balanceChange}
-                changeLabel={t('stats.vsLastMonth')}
-                type="balance"
-                icon={<Wallet className="w-5 h-5" />}
-                delay={200}
-              />
-              
-              {/* Investment card */}
-              <InvestmentSummaryCard />
-            </div>
-
-            {/* Charts Row - 2 column bento */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              {/* Monthly Chart takes 2 cols */}
-              <div className="lg:col-span-2">
-                <MonthlyChart data={convertedMonthlyData} />
-              </div>
-              
-              {/* Savings rate */}
-              <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
-            </div>
-
-            {/* Middle Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              <CategoryChart data={convertedCategoryData} />
-              <TopExpensesCard transactions={transactions} />
-              <WeeklyComparisonChart />
-            </div>
-
-            {/* Balance Chart Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-              <div className="lg:col-span-3">
-                <BalanceChart data={convertedMonthlyData} />
-              </div>
-              <div className="hidden lg:block">
-                {/* Yearly summary or additional card */}
-              </div>
-            </div>
-
-            {/* Yearly Chart */}
-            <div className="mb-6">
-              <YearlyBalanceChart data={convertedMonthlyData} />
-            </div>
-
-            {/* Transactions Table */}
-            <TransactionTable transactions={transactions} />
-          </>
-        )}
-      </main>
-
-      <footer className="border-t border-border/50 mt-12">
-        <div className="container px-4 md:px-6 py-6">
-          <p className="text-sm text-muted-foreground text-center">
-            wallet
-          </p>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </DashboardLayout>
   );
 }
