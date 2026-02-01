@@ -49,8 +49,8 @@ export function AppSidebar() {
     <>
       {/* Desktop Sidebar: Full with icons + text */}
       <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-40">
-        {/* Logo */}
-        <div className="p-6 border-b border-border">
+        {/* Logo - same height as header (h-16) */}
+        <div className="h-16 px-6 border-b border-border flex items-center">
           <Link to="/dashboard" className="flex items-center gap-2">
             <img src={walletIconBlue} alt="wallet icon" className="h-8 w-auto" />
             <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
@@ -86,8 +86,8 @@ export function AppSidebar() {
 
       {/* Tablet Sidebar: Icons only */}
       <aside className="hidden md:flex lg:hidden flex-col fixed left-0 top-0 h-full w-20 bg-card border-r border-border z-40">
-        {/* Logo */}
-        <div className="p-4 border-b border-border flex justify-center">
+        {/* Logo - same height as header (h-16) */}
+        <div className="h-16 border-b border-border flex items-center justify-center">
           <Link to="/dashboard">
             <img src={walletIconBlue} alt="wallet icon" className="h-8 w-auto" />
           </Link>
