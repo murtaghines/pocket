@@ -83,10 +83,7 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
         >
           <Bell className="w-5 h-5" />
           {hasNotification && (
-            <span className={cn(
-              "absolute top-0 right-0 w-2.5 h-2.5 bg-destructive rounded-full border-2",
-              isDark ? "border-[#171717]" : "border-primary"
-            )} />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full" />
           )}
         </Button>
       </PopoverTrigger>
