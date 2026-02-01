@@ -78,14 +78,14 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
           size="icon"
           className={cn(
             "relative rounded-full",
-            isDark ? "text-white hover:bg-white/10" : "hover:bg-primary/10 text-primary"
+            isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-primary text-white hover:bg-primary/90"
           )}
         >
           <Bell className="w-5 h-5" />
           {hasNotification && (
             <span className={cn(
-              "absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2",
-              isDark ? "border-[#171717]" : "border-background"
+              "absolute top-0 right-0 w-2.5 h-2.5 bg-destructive rounded-full border-2",
+              isDark ? "border-[#171717]" : "border-primary"
             )} />
           )}
         </Button>

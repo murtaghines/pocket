@@ -42,9 +42,9 @@ export function Header() {
           
           {/* Mobile logo - show when no sidebar OR on mobile */}
           {!(isDashboard || isInvestments) && (
-            <Link to="/dashboard" className="flex items-center gap-1">
-              <img src={walletIconBlue} alt="wallet icon" className="h-6 w-auto" />
-              <img src={walletTextBlack} alt="wallet" className="h-4 w-auto" />
+            <Link to="/dashboard" className="flex items-center gap-1.5">
+              <img src={walletIconBlue} alt="wallet icon" className="h-7 w-auto" />
+              <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
             </Link>
           )}
         </div>
@@ -72,10 +72,10 @@ export function Header() {
           {/* User avatar */}
           <Link to="/profile" className={cn(isProfilePage && "hidden md:block")}>
             <div className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium transition-all",
+              "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all",
               isActive('/profile') 
                 ? "bg-primary text-primary-foreground" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                : "bg-muted text-foreground hover:bg-muted/80"
             )}>
               {getInitials()}
             </div>

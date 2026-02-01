@@ -15,7 +15,7 @@ import { DateDisplay } from "@/components/dashboard/DateDisplay";
 import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
-import { MonthStatusIndicator } from "@/components/dashboard/MonthStatusIndicator";
+
 import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useTransactions } from "@/hooks/useTransactions";
@@ -193,9 +193,8 @@ export default function Index() {
                 delay={200}
               />
               
-              {/* Investment and Month Status */}
+              {/* Investment card */}
               <InvestmentSummaryCard />
-              <MonthStatusIndicator />
             </div>
 
             {/* Charts Row - 2 column bento */}
