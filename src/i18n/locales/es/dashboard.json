@@ -1,7 +1,7 @@
 {
   "title": "Panel",
   "welcome": {
-    "title": "¡Bienvenido a fint!",
+    "title": "¡Bienvenido a wallet!",
     "message": "Comienza subiendo tu primer extracto bancario para ver tus finanzas.",
     "uploadButton": "Subir archivo"
   },

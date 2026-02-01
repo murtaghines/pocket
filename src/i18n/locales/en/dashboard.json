@@ -1,7 +1,7 @@
 {
   "title": "Dashboard",
   "welcome": {
-    "title": "Welcome to fint!",
+    "title": "Welcome to wallet!",
     "message": "Start by uploading your first bank statement to see your finances.",
     "uploadButton": "Upload file"
   },

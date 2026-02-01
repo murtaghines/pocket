@@ -134,9 +134,19 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 1:
         return <StepLanguage data={data} updateData={updateData} />;
       case 2:
-        return <StepCountry data={data} updateData={updateData} />;
+        return (
+          <StepCountry 
+            country={data.country} 
+            onCountryChange={(country) => updateData({ country })} 
+          />
+        );
       case 3:
-        return <StepCurrency data={data} updateData={updateData} />;
+        return (
+          <StepCurrency 
+            currency={data.currency} 
+            onCurrencyChange={(currency) => updateData({ currency })} 
+          />
+        );
       case 4:
         return <StepCategories data={data} updateData={updateData} />;
       default:
@@ -147,7 +157,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const getStepTitle = () => {
     switch (step) {
       case 1:
-        return t('onboarding.welcome', 'Welcome to Fint! 👋');
+        return t('onboarding.welcome', 'Welcome to wallet! 👋');
       case 2:
         return t('onboarding.yourCountry', 'Your Country');
       case 3:
