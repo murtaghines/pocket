@@ -1,10 +1,8 @@
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+import { ContactSection } from "@/components/landing/ContactSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 
@@ -16,7 +14,7 @@ export default function Landing() {
         <HeroSection />
         <HowItWorksSection />
         <FeaturesSection />
-        <TestimonialsSection />
+        <ContactSection />
         <CTASection />
       </main>
       <LandingFooter />
