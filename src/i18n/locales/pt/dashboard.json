@@ -105,8 +105,10 @@
     "goToUpload": "Enviar arquivos"
   },
   "notifications": {
+    "title": "Notificações",
     "uploadReminder": "Envie os extratos de {{month}}",
     "uploadDescription": "Complete seus dados financeiros do mês passado para manter sua análise atualizada.",
-    "new": "Novo"
+    "new": "Novo",
+    "empty": "Sem notificações"
   }
 }

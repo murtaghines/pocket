@@ -1,10 +1,11 @@
-import { PiggyBank, LayoutDashboard, User, ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { DashboardSidebar } from "./DashboardSidebar";
+import { NotificationBell } from "./NotificationBell";
 import { useTranslation } from "react-i18next";
 import { useProfile } from "@/hooks/useProfile";
 import walletTextBlack from "@/assets/wallet-text-black.png";
@@ -34,24 +35,19 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Left side - Sidebar trigger & Logo (desktop) / Logo only (mobile) */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* Dashboard sidebar with hamburger - only on dashboard/investments */}
           {(isDashboard || isInvestments) && <DashboardSidebar />}
           
-          {/* Mobile logo - only when no sidebar */}
+          {/* Mobile logo - show when no sidebar OR on mobile */}
           {!(isDashboard || isInvestments) && (
             <Link to="/dashboard" className="flex items-center">
               <img src={walletTextBlack} alt="wallet" className="h-6 w-auto" />
             </Link>
           )}
-          
-          {/* Mobile only logo */}
-          <Link to="/dashboard" className="md:hidden flex items-center">
-            <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
-          </Link>
         </div>
 
-        {/* Right side - Search, Currency & Profile */}
+        {/* Right side - Search, Notifications, Currency & Profile */}
         <div className="flex items-center gap-2 md:gap-3">
           {/* Search button - desktop only */}
           <Button 
@@ -61,6 +57,9 @@ export function Header() {
           >
             <Search className="w-5 h-5 text-muted-foreground" />
           </Button>
+          
+          {/* Notification Bell */}
+          <NotificationBell />
           
           <CurrencySelector />
           

@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   PiggyBank, 
   User, 
-  Settings, 
   Menu,
   X,
   ChevronRight
@@ -12,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import walletIconBlue from "@/assets/wallet-icon-blue.png";
+import walletTextBlack from "@/assets/wallet-text-black.png";
 
 interface NavItem {
   label: string;
@@ -47,7 +46,7 @@ export function DashboardSidebar() {
   
   return (
     <>
-      {/* Hamburger button - only visible on desktop */}
+      {/* Hamburger button and logo - visible on desktop */}
       <div className="hidden md:flex items-center gap-3">
         <Button
           variant="ghost"
@@ -58,12 +57,16 @@ export function DashboardSidebar() {
           <Menu className="w-5 h-5" />
         </Button>
         
-        {/* Logo pill */}
-        <div className="flex items-center gap-2 bg-foreground text-background px-3 py-2 rounded-full">
-          <img src={walletIconBlue} alt="" className="w-5 h-5 invert" />
-          <span className="font-semibold text-sm">wallet</span>
-        </div>
+        {/* Logo using existing asset */}
+        <Link to="/dashboard" className="flex items-center">
+          <img src={walletTextBlack} alt="wallet" className="h-6 w-auto" />
+        </Link>
       </div>
+      
+      {/* Mobile logo only (no hamburger on mobile - they use bottom nav) */}
+      <Link to="/dashboard" className="md:hidden flex items-center">
+        <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
+      </Link>
       
       {/* Sidebar overlay */}
       {isOpen && (
@@ -81,13 +84,7 @@ export function DashboardSidebar() {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-foreground flex items-center justify-center">
-              <img src={walletIconBlue} alt="" className="w-5 h-5 invert" />
-            </div>
-            <div>
-              <span className="font-semibold">wallet</span>
-              <p className="text-xs text-muted-foreground">Dashboard</p>
-            </div>
+            <img src={walletTextBlack} alt="wallet" className="h-6 w-auto" />
           </div>
           <Button
             variant="ghost"

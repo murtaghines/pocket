@@ -14,7 +14,7 @@ import { DateDisplay } from "@/components/dashboard/DateDisplay";
 
 import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
-import { MonthClosingBanner } from "@/components/dashboard/MonthClosingBanner";
+
 import { MonthStatusIndicator } from "@/components/dashboard/MonthStatusIndicator";
 import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
@@ -132,15 +132,15 @@ export default function Index() {
       
       <main className="container px-4 md:px-6 py-6">
         {/* Welcome Section - Matching reference design */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8 animate-fade-in">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-fade-in">
           <DateDisplay />
           
-          {/* Greeting on the right */}
-          <div className="hidden md:block text-right">
-            <h2 className="text-2xl md:text-3xl font-bold">
+          {/* Greeting on the right - with proper text sizing */}
+          <div className="hidden md:block text-right flex-shrink-0">
+            <h2 className="text-xl lg:text-2xl font-bold whitespace-nowrap">
               {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {t('welcome.subtitle', 'Here\'s your financial overview')}
             </p>
           </div>
@@ -155,7 +155,6 @@ export default function Index() {
         {!isLoading && !prefsLoading && (
           <>
             <EmptyStateBanner hasData={transactions.length > 0} />
-            <MonthClosingBanner />
 
             {/* Month label */}
             <h3 className="text-lg font-semibold mb-4 capitalize text-muted-foreground">
