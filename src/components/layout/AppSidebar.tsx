@@ -64,7 +64,7 @@ export function AppSidebar() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                "flex items-center gap-3 px-4 py-3 rounded-full transition-all",
                 isActive(item.path) 
                   ? "bg-primary text-primary-foreground" 
                   : "hover:bg-muted text-foreground"
@@ -100,7 +100,7 @@ export function AppSidebar() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center justify-center w-14 h-14 rounded-xl transition-all mx-auto",
+                "flex items-center justify-center w-14 h-14 rounded-full transition-all mx-auto",
                 isActive(item.path) 
                   ? "bg-primary text-primary-foreground" 
                   : "hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -162,7 +162,7 @@ export function AppSidebar() {
               to={item.path}
               onClick={() => setIsOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                "flex items-center gap-3 px-4 py-3 rounded-full transition-all",
                 isActive(item.path) 
                   ? "bg-primary text-primary-foreground" 
                   : "hover:bg-muted text-foreground"
