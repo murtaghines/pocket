@@ -509,10 +509,10 @@ export default function Auth() {
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 min-h-screen">
         {/* Header text */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 font-display">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
             Welcome back
           </h1>
-          <p className="text-base text-white/80 max-w-md mx-auto">
+          <p className="text-lg text-white/80 max-w-md mx-auto">
             Sign in to continue to wallet
           </p>
         </div>

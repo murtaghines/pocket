@@ -36,7 +36,7 @@ export function LandingHeader() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className={`text-sm ${isLoginMode ? 'bg-white/10 text-white' : ''}`}
+                className={`text-sm ${isLoginMode ? 'font-bold text-white' : ''}`}
               >
                 Sign in
               </Button>
