@@ -1,74 +1,55 @@
-import { OnboardingData } from './OnboardingModal';
+import { MapPin } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Globe } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface StepCountryProps {
-  data: OnboardingData;
-  updateData: (updates: Partial<OnboardingData>) => void;
+  country: string;
+  onCountryChange: (country: string) => void;
 }
 
 const COUNTRIES = [
-  { code: 'AR', name: 'Argentina', currency: 'ARS' },
-  { code: 'AU', name: 'Australia', currency: 'AUD' },
-  { code: 'BR', name: 'Brazil', currency: 'BRL' },
-  { code: 'CA', name: 'Canada', currency: 'CAD' },
-  { code: 'CL', name: 'Chile', currency: 'CLP' },
-  { code: 'CO', name: 'Colombia', currency: 'COP' },
-  { code: 'FR', name: 'France', currency: 'EUR' },
-  { code: 'DE', name: 'Germany', currency: 'EUR' },
-  { code: 'IT', name: 'Italy', currency: 'EUR' },
-  { code: 'JP', name: 'Japan', currency: 'JPY' },
-  { code: 'MX', name: 'Mexico', currency: 'MXN' },
-  { code: 'NL', name: 'Netherlands', currency: 'EUR' },
-  { code: 'PT', name: 'Portugal', currency: 'EUR' },
-  { code: 'ES', name: 'Spain', currency: 'EUR' },
-  { code: 'CH', name: 'Switzerland', currency: 'CHF' },
-  { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
-  { code: 'US', name: 'United States', currency: 'USD' },
-  { code: 'OTHER', name: 'Other', currency: 'EUR' },
+  { code: 'AR', name: 'Argentina' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'CL', name: 'Chile' },
+  { code: 'CO', name: 'Colombia' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'PE', name: 'Peru' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'US', name: 'United States' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'UK', name: 'United Kingdom' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'OTHER', name: 'Other' },
 ];
 
-export function StepCountry({ data, updateData }: StepCountryProps) {
-  const { t } = useTranslation('settings');
-  
-  const handleCountryChange = (countryCode: string) => {
-    const country = COUNTRIES.find(c => c.code === countryCode);
-    updateData({ 
-      country: countryCode,
-      currency: country?.currency || 'EUR',
-    });
-  };
-
+export function StepCountry({ country, onCountryChange }: StepCountryProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 text-muted-foreground">
-        <Globe className="w-5 h-5" />
-        <p>{t('onboarding.countryDescription')}</p>
+        <MapPin className="w-5 h-5" />
+        <p>This helps us customize your experience.</p>
       </div>
 
       <div className="space-y-3">
-        <Label htmlFor="country">{t('onboarding.yourCountry')}</Label>
-        <Select value={data.country} onValueChange={handleCountryChange}>
-          <SelectTrigger id="country" className="w-full">
-            <SelectValue placeholder={t('onboarding.selectCountry')} />
+        <Label htmlFor="country">Country</Label>
+        <Select value={country} onValueChange={onCountryChange}>
+          <SelectTrigger 
+            id="country" 
+            className="w-full h-14 px-4 text-base bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-colors"
+          >
+            <SelectValue placeholder="Select your country" />
           </SelectTrigger>
           <SelectContent>
-            {COUNTRIES.map((country) => (
-              <SelectItem key={country.code} value={country.code}>
-                {country.name}
+            {COUNTRIES.map((c) => (
+              <SelectItem key={c.code} value={c.code}>
+                {c.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-
-      {data.country && (
-        <p className="text-sm text-muted-foreground">
-          {t('onboarding.currencySuggestion', { currency: COUNTRIES.find(c => c.code === data.country)?.currency })}
-        </p>
-      )}
     </div>
   );
 }

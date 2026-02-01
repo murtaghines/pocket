@@ -1,4 +1,4 @@
-const REMEMBER_SESSION_KEY = "fint_remember_session";
+const REMEMBER_SESSION_KEY = "wallet_remember_session";
 const AUTH_KEY = "sb-oqngrwevaazcxeotyrdg-auth-token";
 
 export const setRememberPreference = (remember: boolean): void => {

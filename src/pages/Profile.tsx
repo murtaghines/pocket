@@ -141,7 +141,7 @@ export default function Profile() {
       <footer className="border-t mt-12">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            fint
+            wallet
           </p>
         </div>
       </footer>

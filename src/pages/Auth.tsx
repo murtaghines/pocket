@@ -4,19 +4,22 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { getRememberPreference, setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound } from "lucide-react";
+import { Loader2, KeyRound, ArrowRight } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
-import { StepLanguage } from "@/components/onboarding/StepLanguage";
+import { LandingHeader } from "@/components/landing/LandingHeader";
+import { CTASection } from "@/components/landing/CTASection";
+import { StepName } from "@/components/onboarding/StepName";
+import { StepEmail } from "@/components/onboarding/StepEmail";
 import { StepCountry } from "@/components/onboarding/StepCountry";
 import { StepCurrency } from "@/components/onboarding/StepCurrency";
-import { StepCategories } from "@/components/onboarding/StepCategories";
-import { LandingHeader } from "@/components/landing/LandingHeader";
+import { StepIncomeCategories } from "@/components/onboarding/StepIncomeCategories";
+import { StepExpenseCategories } from "@/components/onboarding/StepExpenseCategories";
+import { StepPassword } from "@/components/onboarding/StepPassword";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
 import {
   DEFAULT_INCOME_CATEGORIES,
@@ -26,16 +29,19 @@ import {
 const REMEMBER_EMAIL_KEY = "wallet_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4 | 5;
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-interface OnboardingData {
-  country: string;
-  currency: string;
-  categories: string[];
-  incomeCategories: string[];
-  expenseCategories: string[];
-  language: string;
-}
+const STEP_QUESTIONS: Record<RegisterStep, string> = {
+  1: "What's your name?",
+  2: "What's your email?",
+  3: "Where are you located?",
+  4: "What's your base currency?",
+  5: "Which income categories apply to you?",
+  6: "Which expense categories do you track?",
+  7: "Create your password",
+};
+
+const TOTAL_STEPS = 7;
 
 function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language || 'en';
@@ -49,27 +55,26 @@ export default function Auth() {
   const isResetMode = searchParams.get("reset") === "true";
   const initialMode = searchParams.get("mode") === "login" ? "login" : "register";
   const { t } = useTranslation('auth');
-  const { t: tc } = useTranslation('common');
   
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [registerStep, setRegisterStep] = useState<RegisterStep>(1);
+  
+  // Form data
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailValid, setEmailValid] = useState(false);
+  const [country, setCountry] = useState("");
+  const [currency, setCurrency] = useState("EUR");
+  const [incomeCategories, setIncomeCategories] = useState<string[]>(DEFAULT_INCOME_CATEGORIES);
+  const [expenseCategories, setExpenseCategories] = useState<string[]>(DEFAULT_EXPENSE_CATEGORIES);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [language] = useState(detectBrowserLanguage());
+  
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [emailValid, setEmailValid] = useState(false);
   
-  const [onboardingData, setOnboardingData] = useState<OnboardingData>(() => ({
-    country: '',
-    currency: 'EUR',
-    categories: [],
-    incomeCategories: DEFAULT_INCOME_CATEGORIES,
-    expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
-    language: detectBrowserLanguage(),
-  }));
-  
+  // Password reset
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -92,10 +97,6 @@ export default function Auth() {
       setRememberPreference(true);
     }
   }, []);
-
-  const updateOnboardingData = (updates: Partial<OnboardingData>) => {
-    setOnboardingData((prev) => ({ ...prev, ...updates }));
-  };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,14 +147,14 @@ export default function Auth() {
       <div className="min-h-screen bg-primary">
         <LandingHeader />
         
-        <div className="pt-32 pb-20 px-4 flex flex-col items-center">
+        <div className="min-h-screen pt-24 pb-20 px-4 flex flex-col items-center justify-center">
           {/* Header text */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
-              {t('setNewPassword')}
+              Set New Password
             </h1>
             <p className="text-lg text-white/80 max-w-md mx-auto">
-              {t('enterNewPassword', 'Enter your new password below')}
+              Enter your new password below
             </p>
           </div>
 
@@ -167,9 +168,9 @@ export default function Auth() {
 
             <form onSubmit={handleUpdatePassword} className="space-y-6">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('newPassword')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
                 <PasswordInput
-                  placeholder={t('placeholders.password')}
+                  placeholder="••••••••"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
@@ -179,9 +180,9 @@ export default function Auth() {
                 <PasswordStrengthIndicator password={newPassword} />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('confirmNewPassword')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
                 <PasswordInput
-                  placeholder={t('placeholders.password')}
+                  placeholder="••••••••"
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                   required
@@ -197,7 +198,7 @@ export default function Auth() {
                   className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl"
                 >
                   {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {t('updatePassword')}
+                  Update Password
                 </Button>
               </div>
             </form>
@@ -208,7 +209,7 @@ export default function Auth() {
               onClick={() => navigate("/auth")}
               className="text-white font-medium underline underline-offset-4 hover:no-underline"
             >
-              {t('backToSignIn')}
+              ← Back to Sign In
             </button>
           </p>
         </div>
@@ -216,13 +217,11 @@ export default function Auth() {
     );
   }
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSignUp = async () => {
     if (password !== confirmPassword) {
       toast({
-        title: t('errors.title'),
-        description: t('errors.passwordMismatch'),
+        title: "Error",
+        description: "Passwords don't match",
         variant: "destructive",
       });
       return;
@@ -230,8 +229,8 @@ export default function Auth() {
 
     if (password.length < 6) {
       toast({
-        title: t('errors.title'),
-        description: t('errors.passwordTooShort'),
+        title: "Error",
+        description: "Password must be at least 6 characters",
         variant: "destructive",
       });
       return;
@@ -245,7 +244,7 @@ export default function Auth() {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
 
-    const allCategories = [...onboardingData.incomeCategories, ...onboardingData.expenseCategories];
+    const allCategories = [...incomeCategories, ...expenseCategories];
     const localeMap: Record<string, string> = {
       en: 'en-US',
       es: 'es-ES',
@@ -266,7 +265,7 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: t('errors.creatingAccount'),
+        title: "Error creating account",
         description: error.message,
         variant: "destructive",
       });
@@ -275,11 +274,11 @@ export default function Auth() {
         try {
           await supabase.from('user_preferences').upsert({
             user_id: data.user.id,
-            country: onboardingData.country,
-            base_currency: onboardingData.currency,
+            country: country,
+            base_currency: currency,
             selected_categories: allCategories,
-            language: onboardingData.language,
-            locale: localeMap[onboardingData.language] || 'en-US',
+            language: language,
+            locale: localeMap[language] || 'en-US',
             onboarding_completed: true,
           });
         } catch (prefError) {
@@ -287,11 +286,11 @@ export default function Auth() {
         }
       }
       
-      localStorage.setItem('i18nextLng', onboardingData.language);
+      localStorage.setItem('i18nextLng', language);
       
       toast({
-        title: t('success.accountCreated'),
-        description: t('success.canSignIn'),
+        title: "Account created!",
+        description: "Please check your email to verify your account.",
       });
       setAuthMode("login");
       setRegisterStep(1);
@@ -310,7 +309,7 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: t('errors.signingIn'),
+        title: "Error signing in",
         description: error.message,
         variant: "destructive",
       });
@@ -328,136 +327,97 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const canProceedStep = () => {
+  const canProceedStep = (): boolean => {
     switch (registerStep) {
       case 1:
-        return !!onboardingData.language;
+        return fullName.trim().length > 0;
       case 2:
-        return !!onboardingData.country;
+        return emailValid;
       case 3:
-        return !!onboardingData.currency;
+        return country.length > 0;
       case 4:
-        return onboardingData.incomeCategories.length > 0 && onboardingData.expenseCategories.length > 0;
+        return currency.length > 0;
       case 5:
-        return fullName.trim() && emailValid && password.length >= 6 && password === confirmPassword;
+        return incomeCategories.length > 0;
+      case 6:
+        return expenseCategories.length > 0;
+      case 7:
+        return password.length >= 6 && password === confirmPassword;
       default:
         return true;
     }
   };
 
-  const getStepQuestion = () => {
-    switch (registerStep) {
-      case 1:
-        return tc('onboarding.selectLanguage', 'What language do you prefer?');
-      case 2:
-        return tc('onboarding.selectCountry', 'Where are you located?');
-      case 3:
-        return tc('onboarding.selectCurrency', 'What\'s your main currency?');
-      case 4:
-        return tc('onboarding.selectCategories', 'Which categories do you use?');
-      case 5:
-        return t('createYourAccount', 'Create your account');
-      default:
-        return '';
+  const handleNext = () => {
+    if (registerStep < TOTAL_STEPS) {
+      setRegisterStep((prev) => (prev + 1) as RegisterStep);
+    } else {
+      handleSignUp();
+    }
+  };
+
+  const handleBack = () => {
+    if (registerStep > 1) {
+      setRegisterStep((prev) => (prev - 1) as RegisterStep);
+    } else {
+      setAuthMode("login");
     }
   };
 
   const renderRegisterStep = () => {
     switch (registerStep) {
       case 1:
-        return <StepLanguage data={onboardingData} updateData={updateOnboardingData} />;
+        return <StepName name={fullName} onNameChange={setFullName} />;
       case 2:
-        return <StepCountry data={onboardingData} updateData={updateOnboardingData} />;
+        return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
       case 3:
-        return <StepCurrency data={onboardingData} updateData={updateOnboardingData} />;
+        return <StepCountry country={country} onCountryChange={setCountry} />;
       case 4:
-        return <StepCategories data={onboardingData} updateData={updateOnboardingData} />;
+        return <StepCurrency currency={currency} onCurrencyChange={setCurrency} />;
       case 5:
+        return <StepIncomeCategories selectedCategories={incomeCategories} onCategoriesChange={setIncomeCategories} />;
+      case 6:
+        return <StepExpenseCategories selectedCategories={expenseCategories} onCategoriesChange={setExpenseCategories} />;
+      case 7:
         return (
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('fullName')}</label>
-              <Input
-                type="text"
-                placeholder={t('placeholders.fullName')}
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('email')}</label>
-              <EmailInput
-                placeholder={t('placeholders.email')}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onValidChange={setEmailValid}
-                required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('password')}</label>
-                <PasswordInput
-                  placeholder={t('placeholders.password')}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('confirmPassword')}</label>
-                <PasswordInput
-                  placeholder={t('placeholders.password')}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
-                />
-              </div>
-            </div>
-            <PasswordStrengthIndicator password={password} />
-          </div>
+          <StepPassword 
+            password={password} 
+            confirmPassword={confirmPassword}
+            onPasswordChange={setPassword}
+            onConfirmPasswordChange={setConfirmPassword}
+          />
         );
       default:
         return null;
     }
   };
 
-  // REGISTER MODE - Multi-step with Landing Header
+  // REGISTER MODE - Full screen with 7 steps
   if (authMode === "register") {
-    const totalSteps = 5;
-
     return (
-      <div className="min-h-screen bg-primary">
+      <div className="min-h-screen bg-primary flex flex-col">
         <LandingHeader />
         
-        <div className="pt-32 pb-20 px-4 flex flex-col items-center">
+        {/* Full-screen Get Started section */}
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 min-h-screen">
           {/* Header text */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
-              {tc('onboarding.letsGetStarted', "Let's get started")}
+              Get Started
             </h1>
             <p className="text-lg text-white/80 max-w-md mx-auto">
-              {tc('onboarding.setupDescription', 'Set up your wallet account in just a few steps')}
+              Set up your wallet account in just a few steps
             </p>
           </div>
 
-          {/* Card - Autonoma style */}
-          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
+          {/* Card - Fixed height to prevent overflow */}
+          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ minHeight: '420px', maxHeight: '500px' }}>
             {/* Progress bar - segmented */}
-            <div className="flex gap-2 mb-8">
-              {Array.from({ length: totalSteps }).map((_, i) => (
+            <div className="flex gap-1 mb-6">
+              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                 <div 
                   key={i}
-                  className={`h-1.5 flex-1 rounded-full transition-colors ${
+                  className={`h-1 flex-1 rounded-full transition-colors ${
                     i < registerStep 
                       ? 'bg-primary' 
                       : 'bg-gray-200'
@@ -468,93 +428,80 @@ export default function Auth() {
 
             {/* Step indicator */}
             <p className="text-sm text-gray-400 mb-2">
-              {registerStep} of {totalSteps}
+              {registerStep} of {TOTAL_STEPS}
             </p>
 
             {/* Question/Title */}
             <h2 className="text-2xl font-semibold text-gray-900 mb-6 font-display">
-              {getStepQuestion()}
+              {STEP_QUESTIONS[registerStep]}
             </h2>
 
-            {/* Step content */}
-            <div className="min-h-[200px]">
+            {/* Step content - scrollable area */}
+            <div className="flex-1 overflow-y-auto min-h-0">
               {renderRegisterStep()}
             </div>
 
-            {/* Navigation */}
-            <div className="flex justify-between items-center pt-8">
-              {registerStep > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => setRegisterStep((prev) => (prev - 1) as RegisterStep)}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
-                >
-                  ← {tc('back')}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setAuthMode("login")}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
-                >
-                  ← {tc('back')}
-                </button>
-              )}
+            {/* Navigation - fixed at bottom */}
+            <div className="flex justify-between items-center pt-6 mt-auto border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+              >
+                ← Back
+              </button>
 
-              {registerStep < 5 ? (
-                <Button 
-                  type="button"
-                  onClick={() => setRegisterStep((prev) => (prev + 1) as RegisterStep)}
-                  disabled={!canProceedStep()}
-                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {tc('next')}
-                </Button>
-              ) : (
-                <Button 
-                  type="button"
-                  onClick={handleSignUp}
-                  disabled={!canProceedStep() || loading}
-                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    t('createAccount')
-                  )}
-                </Button>
-              )}
+              <Button 
+                type="button"
+                onClick={handleNext}
+                disabled={!canProceedStep() || loading}
+                className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : registerStep === TOTAL_STEPS ? (
+                  "Create Account"
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 
           {/* Login link */}
           <p className="text-center mt-8 text-white/80">
-            {t('alreadyHaveAccount', 'Already have an account?')}{' '}
+            Already have an account?{' '}
             <button 
               onClick={() => setAuthMode("login")}
               className="text-white font-medium underline underline-offset-4 hover:no-underline"
             >
-              {t('login')}
+              Log in
             </button>
           </p>
         </div>
+
+        {/* CTA Section - visible when scrolling down */}
+        <CTASection />
       </div>
     );
   }
 
-  // LOGIN MODE with Landing Header
+  // LOGIN MODE
   return (
-    <div className="min-h-screen bg-primary">
+    <div className="min-h-screen bg-primary flex flex-col">
       <LandingHeader />
       
-      <div className="pt-32 pb-20 px-4 flex flex-col items-center">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 min-h-screen">
         {/* Header text */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
-            {t('welcomeBack', 'Welcome back')}
+            Welcome back
           </h1>
           <p className="text-lg text-white/80 max-w-md mx-auto">
-            {t('signInToContinue', 'Sign in to continue to fint')}
+            Sign in to continue to wallet
           </p>
         </div>
 
@@ -562,9 +509,9 @@ export default function Auth() {
         <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
           <form onSubmit={handleSignIn} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('email')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <EmailInput
-                placeholder={t('placeholders.email')}
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onValidChange={setEmailValid}
@@ -574,9 +521,9 @@ export default function Auth() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('password')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <PasswordInput
-                placeholder={t('placeholders.password')}
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -593,20 +540,20 @@ export default function Auth() {
                   className="border-gray-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
-                  {t('rememberMe')}
+                  Remember me
                 </Label>
               </div>
               <button
                 type="button"
                 onClick={() => {
                   toast({
-                    title: t('forgotPassword'),
-                    description: t('contactSupport', 'Please contact support to reset your password.'),
+                    title: "Forgot password?",
+                    description: "Please contact support to reset your password.",
                   });
                 }}
                 className="text-sm text-primary hover:underline"
               >
-                {t('forgotPassword')}
+                Forgot password?
               </button>
             </div>
             
@@ -619,7 +566,7 @@ export default function Auth() {
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  t('login')
+                  "Log in"
                 )}
               </Button>
             </div>
@@ -628,15 +575,18 @@ export default function Auth() {
 
         {/* Register link */}
         <p className="text-center mt-8 text-white/80">
-          {t('noAccount', "Don't have an account?")}{' '}
+          Don't have an account?{' '}
           <button 
             onClick={() => setAuthMode("register")}
             className="text-white font-medium underline underline-offset-4 hover:no-underline"
           >
-            {t('signup')}
+            Get started
           </button>
         </p>
       </div>
+
+      {/* CTA Section */}
+      <CTASection />
     </div>
   );
 }
