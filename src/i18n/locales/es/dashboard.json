@@ -102,6 +102,11 @@
     "description": "Sube tus extractos bancarios e inversiones para completar el análisis del mes.",
     "bankStatements": "Extractos bancarios",
     "investments": "Inversiones",
-    "goToUpload": "Ir a subir archivos"
+    "goToUpload": "Subir archivos"
+  },
+  "notifications": {
+    "uploadReminder": "Sube los extractos de {{month}}",
+    "uploadDescription": "Completa tus datos financieros del mes pasado para mantener tu análisis actualizado.",
+    "new": "Nuevo"
   }
 }
