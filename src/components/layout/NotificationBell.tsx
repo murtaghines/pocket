@@ -49,6 +49,17 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
     return localStorage.getItem(dismissedKey) === 'true';
   });
 
+  // Track read/seen state for each notification
+  const [readBank, setReadBank] = useState(() => {
+    const readKey = `bankRead_${lastClosedMonthKey}`;
+    return localStorage.getItem(readKey) === 'true';
+  });
+  
+  const [readInvestment, setReadInvestment] = useState(() => {
+    const readKey = `investmentRead_${lastClosedMonthKey}`;
+    return localStorage.getItem(readKey) === 'true';
+  });
+
   const countImportsForMonth = (imports: Import[], monthKey: string) => {
     return imports.filter((imp) => {
       const targetMonth = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
@@ -77,7 +88,19 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
     setDismissedInvestment(true);
   };
 
-  const handleNavigateToProfile = () => {
+  const handleClickBank = () => {
+    // Mark as read
+    const readKey = `bankRead_${lastClosedMonthKey}`;
+    localStorage.setItem(readKey, 'true');
+    setReadBank(true);
+    navigate('/profile');
+  };
+
+  const handleClickInvestment = () => {
+    // Mark as read
+    const readKey = `investmentRead_${lastClosedMonthKey}`;
+    localStorage.setItem(readKey, 'true');
+    setReadInvestment(true);
     navigate('/profile');
   };
 
@@ -114,8 +137,11 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
           {/* Bank Statements Notification */}
           {showBankNotification && (
             <div 
-              onClick={handleNavigateToProfile}
-              className="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+              onClick={handleClickBank}
+              className={cn(
+                "flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer",
+                readBank && "bg-gray-50"
+              )}
             >
               <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-4 h-4 text-primary" />
@@ -123,12 +149,17 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <h4 className="font-medium text-sm text-gray-900 capitalize">
+                  <h4 className={cn(
+                    "font-medium text-sm capitalize",
+                    readBank ? "text-gray-500" : "text-gray-900"
+                  )}>
                     {t('notifications.bankReminder', { month: lastClosedMonthLabel, defaultValue: `Upload ${lastClosedMonthLabel} bank statements` })}
                   </h4>
-                  <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-medium">
-                    {t('notifications.new')}
-                  </span>
+                  {!readBank && (
+                    <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-medium">
+                      {t('notifications.new')}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500">
                   {t('notifications.bankDescription', 'Add your bank statements to keep your analysis up to date.')}
@@ -149,8 +180,11 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
           {/* Investment Statements Notification */}
           {showInvestmentNotification && (
             <div 
-              onClick={handleNavigateToProfile}
-              className="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+              onClick={handleClickInvestment}
+              className={cn(
+                "flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer",
+                readInvestment && "bg-gray-50"
+              )}
             >
               <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="w-4 h-4 text-primary" />
@@ -158,12 +192,17 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <h4 className="font-medium text-sm text-gray-900 capitalize">
+                  <h4 className={cn(
+                    "font-medium text-sm capitalize",
+                    readInvestment ? "text-gray-500" : "text-gray-900"
+                  )}>
                     {t('notifications.investmentReminder', { month: lastClosedMonthLabel, defaultValue: `Upload ${lastClosedMonthLabel} investments` })}
                   </h4>
-                  <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-medium">
-                    {t('notifications.new')}
-                  </span>
+                  {!readInvestment && (
+                    <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-medium">
+                      {t('notifications.new')}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500">
                   {t('notifications.investmentDescription', 'Add your investment statements to track your portfolio.')}
