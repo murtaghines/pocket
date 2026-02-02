@@ -1,167 +1,177 @@
 
-
-# Plan: Redisenar seccion "How it works" al estilo Autonoma
+# Plan: Redisenar cabecera de perfil al estilo DateDisplay
 
 ## Objetivo
 
-Replicar exactamente el diseno de pasos de Autonoma: layout de dos columnas donde la mitad izquierda es blanca con el numero, titulo, descripcion y un enlace CTA, y la mitad derecha es un contenedor gris con un visual/mockup.
+Reemplazar el header actual de la pagina de Perfil con un componente similar al `DateDisplay` del dashboard, pero adaptado para mostrar la informacion del usuario y funcionar como un selector de tabs interactivo.
 
 ---
 
-## Diseno de Referencia
+## Diseno Propuesto
 
-Basado en la imagen de Autonoma:
-
+### Estado: Tab "My Data" activo
 ```text
-+------------------------------------------+------------------------------------------+
-|  (fondo blanco)                          |  (fondo gris #f5f5f5)                    |
-|                                          |                                          |
-|  1    Set up the project.                |  +----------------------------------+    |
-|                                          |  |                                  |    |
-|       Load the mobile or web app         |  |     [Screenshot/Mockup]          |    |
-|       you want to run tests over.        |  |                                  |    |
-|                                          |  |                                  |    |
-|       Create an app →                    |  +----------------------------------+    |
-|                                          |                                          |
-+------------------------------------------+------------------------------------------+
-                          (linea divisoria horizontal)
-+------------------------------------------+------------------------------------------+
-|  2    Start testing in minutes.          |  +----------------------------------+    |
-...
++------------+  +------------------+   +   +-------------------+  +------------+
+|  (circulo  |  | Nombre Usuario   |   |   | MY UPLOADS        |  | (circulo   |
+|  persona   |  | email@mail.com   |   |   |               ->  |  |  settings) |
++------------+  +------------------+   +   +-------------------+  +------------+
+   gris           texto negro          |       boton azul           gris
+```
+
+### Estado: Tab "Settings" activo
+```text
++------------+  +------------------+   +   +------------+  +-------------------+
+|  (circulo  |  | Nombre Usuario   |   |   | (circulo   |  | SETTINGS          |
+|  persona   |  | email@mail.com   |   |   |  uploads)  |  |               ->  |
++------------+  +------------------+   +   +------------+  +-------------------+
+   gris           texto negro          |       gris           boton azul
 ```
 
 ---
 
 ## Cambios Principales
 
-### 1. Layout de Dos Columnas 50/50
+### 1. Nuevo Componente ProfileHeader
 
-- **Izquierda (50%)**: Fondo blanco puro
-- **Derecha (50%)**: Fondo gris claro (`#f5f5f5`) que se extiende hasta el borde
+Crear `src/components/profile/ProfileHeader.tsx` con:
 
-### 2. Contenido del Lado Izquierdo
+- **Circulo izquierdo**: Icono de persona (User) en fondo gris
+- **Texto**: Nombre del usuario en grande, email debajo en gris
+- **Divisor vertical**: Linea gris
+- **Selectores de tab interactivos**: 
+  - El tab activo aparece como boton azul redondeado con flecha
+  - El tab inactivo aparece como circulo gris con icono
 
-- Numero pequeno y limpio (no gigante)
-- Titulo en negrita con punto final
-- Descripcion de una o dos lineas maximo
-- Link CTA azul con flecha (no boton)
+### 2. Comportamiento Interactivo
 
-### 3. Visual del Lado Derecho
+- Al hacer clic en el circulo gris del tab inactivo, cambia el tab activo
+- El boton azul expande para mostrar el titulo de la seccion actual
+- El tab que deja de estar activo se contrae a un circulo con icono
 
-- Contenedor gris redondeado
-- Por ahora usaremos una tarjeta oscura con icono (mockup placeholder)
-- En el futuro se pueden agregar screenshots reales del dashboard
+### 3. Datos y Props
 
-### 4. Estructura por Paso
-
-Cada paso ocupa el ancho completo de la pantalla, dividido en dos mitades iguales, separado por lineas horizontales.
+```tsx
+interface ProfileHeaderProps {
+  currentTab: 'data' | 'settings';
+  onTabChange: (tab: string) => void;
+}
+```
 
 ---
 
 ## Detalles Tecnicos
 
-### Archivo a Modificar
-
-`src/components/landing/HowItWorksSection.tsx`
-
-### Estructura del Componente
+### Nuevo Archivo: `src/components/profile/ProfileHeader.tsx`
 
 ```tsx
-// Cada paso como fila completa con dos columnas
-{steps.map((step) => (
-  <div className="border-b border-[#e5e5e5]">
-    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[400px] lg:min-h-[500px]">
-      
-      {/* Lado izquierdo - Contenido (fondo blanco) */}
-      <div className="bg-white flex items-center px-8 lg:px-16 py-16">
-        <div className="max-w-md">
-          <span className="text-sm font-medium text-[#0a0a0a] mb-6 block">
-            {step.number}
-          </span>
-          <h3 className="text-2xl lg:text-3xl font-bold text-[#0a0a0a] mb-4">
-            {step.title}
-          </h3>
-          <p className="text-base text-[#6b7280] mb-6">
-            {step.description}
-          </p>
-          <Link className="text-primary font-medium flex items-center gap-2 hover:gap-3">
-            {step.cta} <ArrowRight />
-          </Link>
-        </div>
-      </div>
-      
-      {/* Lado derecho - Visual (fondo gris) */}
-      <div className="bg-[#f5f5f5] flex items-center justify-center p-8 lg:p-12">
-        <div className="bg-[#1a1a1a] rounded-xl w-full max-w-lg aspect-[4/3] flex items-center justify-center">
-          {/* Mockup placeholder con icono */}
-          <step.icon className="w-12 h-12 text-primary" />
-        </div>
-      </div>
-      
-    </div>
+// Estructura principal
+<div className="flex items-center gap-4 animate-fade-in">
+  {/* Circulo con icono de persona */}
+  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-200 flex items-center justify-center">
+    <User className="w-8 h-8 md:w-10 md:h-10 text-foreground" />
   </div>
-))}
-```
-
-### Datos de los Pasos Actualizados
-
-```tsx
-const steps = [
-  {
-    number: "1",
-    title: "Upload your statements.",
-    description: "Simply drag and drop your bank statements in Excel or PDF format.",
-    cta: "Upload files",
-    icon: Upload,
-  },
-  {
-    number: "2", 
-    title: "AI-powered analysis.",
-    description: "Our intelligent system automatically categorizes every transaction and generates personalized insights.",
-    cta: "See how it works",
-    icon: Brain,
-  },
-  {
-    number: "3",
-    title: "Take control.",
-    description: "Get crystal-clear visibility into your finances with intuitive visualizations.",
-    cta: "Start for free",
-    icon: Target,
-  },
-];
-```
-
-### Encabezado de la Seccion
-
-Mantener el header actual pero ajustar para que siga el mismo estilo limpio:
-
-```tsx
-<div className="py-20 lg:py-28 border-b border-[#e5e5e5] bg-white">
-  <div className="container px-4 md:px-6 lg:px-16">
-    <p className="text-sm text-[#6b7280] uppercase tracking-wider mb-4">
-      How it works
-    </p>
-    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#0a0a0a] leading-tight">
-      From messy data to<br />
-      <span className="text-[#9ca3af]">total financial clarity.</span>
-    </h2>
+  
+  {/* Nombre y email */}
+  <div className="flex flex-col">
+    <span className="text-lg md:text-xl font-bold text-foreground">
+      {displayName || t('profile.guest')}
+    </span>
+    <span className="text-sm md:text-base text-muted-foreground">
+      {user?.email}
+    </span>
   </div>
+  
+  {/* Divisor */}
+  <div className="hidden md:block w-px h-10 bg-border mx-2" />
+  
+  {/* Tab selectors - orden dinamico basado en tab activo */}
+  {currentTab === 'data' ? (
+    <>
+      {/* Uploads activo - boton azul expandido */}
+      <Button variant="default" className="rounded-full gap-2 px-5">
+        {t('tabs.data')}
+        <ArrowRight className="w-4 h-4" />
+      </Button>
+      
+      {/* Settings inactivo - circulo gris */}
+      <Button 
+        variant="outline" 
+        size="icon"
+        className="rounded-full"
+        onClick={() => onTabChange('settings')}
+      >
+        <Settings className="w-4 h-4" />
+      </Button>
+    </>
+  ) : (
+    <>
+      {/* Uploads inactivo - circulo gris */}
+      <Button 
+        variant="outline" 
+        size="icon"
+        className="rounded-full"
+        onClick={() => onTabChange('data')}
+      >
+        <Upload className="w-4 h-4" />
+      </Button>
+      
+      {/* Settings activo - boton azul expandido */}
+      <Button variant="default" className="rounded-full gap-2 px-5">
+        {t('tabs.settings')}
+        <ArrowRight className="w-4 h-4" />
+      </Button>
+    </>
+  )}
 </div>
 ```
 
-### CTA Final
+### Modificaciones a `src/pages/Profile.tsx`
 
-Boton centrado al final de la seccion (mantener el estilo actual).
+1. Importar el nuevo componente `ProfileHeader`
+2. Reemplazar el header actual (lineas 79-101) con:
+
+```tsx
+<ProfileHeader 
+  currentTab={currentTab as 'data' | 'settings'}
+  onTabChange={handleTabChange}
+/>
+```
+
+3. Mantener los `TabsContent` tal como estan
+4. Ocultar el `TabsList` existente (ya no se necesita en desktop, solo mobile lo controla desde bottom nav)
+
+### Traducciones Necesarias
+
+Agregar a los archivos de traduccion (`profile.json`):
+
+```json
+{
+  "header": {
+    "guest": "User"
+  }
+}
+```
+
+---
+
+## Responsividad
+
+### Desktop (md+)
+- Layout horizontal completo con divisor y botones
+- Nombre grande, email visible
+
+### Mobile
+- Se oculta el divisor y los botones de tab (ya hay bottom nav)
+- Solo muestra circulo de persona, nombre y email
 
 ---
 
 ## Resultado Visual Esperado
 
-1. Cada paso es una fila horizontal de ancho completo
-2. Mitad izquierda blanca con texto alineado a la izquierda
-3. Mitad derecha gris con mockup/visual centrado
-4. Numeros pequenos y discretos (no gigantes)
-5. Links CTA azules con flechas
-6. Lineas divisorias sutiles entre cada paso
-7. Aspecto limpio, minimalista y profesional como Autonoma
-
+1. Circulo gris con icono de persona a la izquierda
+2. Nombre del usuario en texto grande y negrita
+3. Email debajo en gris
+4. Linea divisoria vertical
+5. Boton azul redondeado mostrando la seccion actual (MY UPLOADS o SETTINGS)
+6. Circulo gris con el icono de la otra seccion
+7. Al hacer clic en el circulo gris, los roles se intercambian con animacion
