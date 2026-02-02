@@ -93,7 +93,7 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
     const readKey = `bankRead_${lastClosedMonthKey}`;
     localStorage.setItem(readKey, 'true');
     setReadBank(true);
-    navigate('/profile');
+    navigate(`/profile?tab=data&section=bank&month=${lastClosedMonthKey}`);
   };
 
   const handleClickInvestment = () => {
@@ -101,7 +101,7 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
     const readKey = `investmentRead_${lastClosedMonthKey}`;
     localStorage.setItem(readKey, 'true');
     setReadInvestment(true);
-    navigate('/profile');
+    navigate(`/profile?tab=data&section=investment&month=${lastClosedMonthKey}`);
   };
 
   // Check active notifications
