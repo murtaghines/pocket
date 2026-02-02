@@ -98,20 +98,21 @@ export function InvestmentUploadsOrganizer() {
           {monthSlots.map((slot) => {
             const monthKeyForPending = slot.key.replace('-inv', '');
             return (
-              <MonthUploadSlot
-                key={slot.key}
-                monthKey={slot.key}
-                monthLabel={slot.label}
-                monthDate={slot.date}
-                imports={importsByMonth[slot.key] || []}
-                onAddFiles={addFilesForMonth}
-                onProcessFiles={processFilesForMonth}
-                onDeleteImport={deleteImport}
-                isProcessing={isProcessingMonth(monthKeyForPending)}
-                hasPendingFiles={getPendingCountForMonth(monthKeyForPending) > 0}
-                pendingFilesCount={getPendingCountForMonth(monthKeyForPending)}
-                isDeleting={isDeleting}
-              />
+              <div key={slot.key} id={`upload-investment-${monthKeyForPending}`} className="transition-all duration-300">
+                <MonthUploadSlot
+                  monthKey={slot.key}
+                  monthLabel={slot.label}
+                  monthDate={slot.date}
+                  imports={importsByMonth[slot.key] || []}
+                  onAddFiles={addFilesForMonth}
+                  onProcessFiles={processFilesForMonth}
+                  onDeleteImport={deleteImport}
+                  isProcessing={isProcessingMonth(monthKeyForPending)}
+                  hasPendingFiles={getPendingCountForMonth(monthKeyForPending) > 0}
+                  pendingFilesCount={getPendingCountForMonth(monthKeyForPending)}
+                  isDeleting={isDeleting}
+                />
+              </div>
             );
           })}
         </div>

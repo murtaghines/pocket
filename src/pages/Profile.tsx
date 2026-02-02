@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -25,6 +25,32 @@ export default function Profile() {
 
   // Sync tab with URL params
   const currentTab = searchParams.get('tab') || 'data';
+  const highlightSection = searchParams.get('section');
+  const highlightMonth = searchParams.get('month');
+
+  // Scroll to highlighted section on mount
+  useEffect(() => {
+    if (highlightSection && highlightMonth) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        const elementId = highlightSection === 'bank' 
+          ? `upload-bank-${highlightMonth}` 
+          : `upload-investment-${highlightMonth}`;
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight effect
+          element.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+          }, 2000);
+        }
+        // Clear URL params after scrolling
+        setSearchParams({ tab: 'data' });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightSection, highlightMonth, setSearchParams]);
 
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });

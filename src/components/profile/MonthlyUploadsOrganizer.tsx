@@ -107,25 +107,26 @@ export function MonthlyUploadsOrganizer() {
         {monthSlots.map((slot) => {
             const period = getPeriodByMonthKey(slot.key, "CASHFLOW");
             return (
-              <MonthUploadSlot
-                key={slot.key}
-                monthKey={slot.key}
-                monthLabel={slot.label}
-                monthDate={slot.date}
-                imports={importsByMonth[slot.key] || []}
-                onAddFiles={addFilesForMonth}
-                onProcessFiles={processFilesForMonth}
-                onDeleteImport={deleteImport}
-                isProcessing={isProcessingMonth(slot.key)}
-                hasPendingFiles={getPendingCountForMonth(slot.key) > 0}
-                pendingFilesCount={getPendingCountForMonth(slot.key)}
-                isDeleting={isDeleting}
-                period={period}
-                onClosePeriod={closePeriod}
-                onReopenPeriod={reopenPeriod}
-                isClosingPeriod={isClosing}
-                isReopeningPeriod={isReopening}
-              />
+              <div key={slot.key} id={`upload-bank-${slot.key}`} className="transition-all duration-300">
+                <MonthUploadSlot
+                  monthKey={slot.key}
+                  monthLabel={slot.label}
+                  monthDate={slot.date}
+                  imports={importsByMonth[slot.key] || []}
+                  onAddFiles={addFilesForMonth}
+                  onProcessFiles={processFilesForMonth}
+                  onDeleteImport={deleteImport}
+                  isProcessing={isProcessingMonth(slot.key)}
+                  hasPendingFiles={getPendingCountForMonth(slot.key) > 0}
+                  pendingFilesCount={getPendingCountForMonth(slot.key)}
+                  isDeleting={isDeleting}
+                  period={period}
+                  onClosePeriod={closePeriod}
+                  onReopenPeriod={reopenPeriod}
+                  isClosingPeriod={isClosing}
+                  isReopeningPeriod={isReopening}
+                />
+              </div>
             );
           })}
         </div>
