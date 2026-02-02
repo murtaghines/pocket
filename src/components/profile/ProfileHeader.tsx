@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Settings, Upload, User } from "lucide-react";
+import { Settings, Upload, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -21,8 +21,8 @@ export function ProfileHeader({ currentTab, onTabChange }: ProfileHeaderProps) {
 
   return (
     <div className="flex items-center gap-4 animate-fade-in">
-      {/* Circle with person icon */}
-      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-muted flex items-center justify-center">
+      {/* Circle with person icon - same gray as dashboard */}
+      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-200 flex items-center justify-center">
         <User className="w-8 h-8 md:w-10 md:h-10 text-foreground" />
       </div>
       
@@ -43,44 +43,44 @@ export function ProfileHeader({ currentTab, onTabChange }: ProfileHeaderProps) {
       <div className="hidden md:flex items-center gap-3">
         {currentTab === 'data' ? (
           <>
-            {/* Data tab active - expanded blue button */}
+            {/* Data tab active - expanded blue button with Upload icon */}
             <Button 
               variant="default" 
               className="rounded-full gap-2 px-5"
             >
+              <Upload className="w-4 h-4" />
               {t('tabs.data')}
-              <ArrowRight className="w-4 h-4" />
             </Button>
             
-            {/* Settings tab inactive - gray circle */}
+            {/* Settings tab inactive - gray circle with visible icon */}
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="icon"
-              className="rounded-full"
+              className="rounded-full bg-gray-200 hover:bg-gray-300"
               onClick={() => onTabChange('settings')}
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4 text-foreground" />
             </Button>
           </>
         ) : (
           <>
-            {/* Data tab inactive - gray circle */}
+            {/* Data tab inactive - gray circle with visible icon */}
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="icon"
-              className="rounded-full"
+              className="rounded-full bg-gray-200 hover:bg-gray-300"
               onClick={() => onTabChange('data')}
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-4 h-4 text-foreground" />
             </Button>
             
-            {/* Settings tab active - expanded blue button */}
+            {/* Settings tab active - expanded blue button with Settings icon */}
             <Button 
               variant="default" 
               className="rounded-full gap-2 px-5"
             >
+              <Settings className="w-4 h-4" />
               {t('tabs.settings')}
-              <ArrowRight className="w-4 h-4" />
             </Button>
           </>
         )}
