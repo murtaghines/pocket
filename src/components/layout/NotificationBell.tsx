@@ -105,17 +105,17 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0 rounded-xl overflow-hidden bg-background border-border shadow-lg">
-        <div className="px-4 py-3 border-b border-border">
-          <h3 className="font-semibold text-sm text-foreground">{t('notifications.title', 'Notifications')}</h3>
+      <PopoverContent align="end" className="w-80 p-0 rounded-xl overflow-hidden bg-white border-gray-200 shadow-lg">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <h3 className="font-semibold text-sm text-gray-900">{t('notifications.title', 'Notifications')}</h3>
         </div>
         
-        <div className="max-h-80 overflow-y-auto divide-y divide-border">
+        <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
           {/* Bank Statements Notification */}
           {showBankNotification && (
             <div 
               onClick={handleNavigateToProfile}
-              className="flex items-start gap-3 p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+              className="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-4 h-4 text-primary" />
@@ -123,14 +123,14 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <h4 className="font-medium text-sm text-foreground capitalize">
+                  <h4 className="font-medium text-sm text-gray-900 capitalize">
                     {t('notifications.bankReminder', { month: lastClosedMonthLabel, defaultValue: `Upload ${lastClosedMonthLabel} bank statements` })}
                   </h4>
-                  <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-medium">
                     {t('notifications.new')}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500">
                   {t('notifications.bankDescription', 'Add your bank statements to keep your analysis up to date.')}
                 </p>
               </div>
@@ -139,7 +139,7 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
                 variant="ghost"
                 size="icon"
                 onClick={handleDismissBank}
-                className="shrink-0 text-muted-foreground hover:text-foreground rounded-full h-6 w-6"
+                className="shrink-0 text-gray-400 hover:text-gray-600 rounded-full h-6 w-6"
               >
                 <X className="w-3 h-3" />
               </Button>
@@ -150,7 +150,7 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
           {showInvestmentNotification && (
             <div 
               onClick={handleNavigateToProfile}
-              className="flex items-start gap-3 p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+              className="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="w-4 h-4 text-primary" />
@@ -158,14 +158,14 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <h4 className="font-medium text-sm text-foreground capitalize">
+                  <h4 className="font-medium text-sm text-gray-900 capitalize">
                     {t('notifications.investmentReminder', { month: lastClosedMonthLabel, defaultValue: `Upload ${lastClosedMonthLabel} investments` })}
                   </h4>
-                  <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-medium">
                     {t('notifications.new')}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500">
                   {t('notifications.investmentDescription', 'Add your investment statements to track your portfolio.')}
                 </p>
               </div>
@@ -174,7 +174,7 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
                 variant="ghost"
                 size="icon"
                 onClick={handleDismissInvestment}
-                className="shrink-0 text-muted-foreground hover:text-foreground rounded-full h-6 w-6"
+                className="shrink-0 text-gray-400 hover:text-gray-600 rounded-full h-6 w-6"
               >
                 <X className="w-3 h-3" />
               </Button>
@@ -184,8 +184,8 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
           {/* Empty State */}
           {!showBankNotification && !showInvestmentNotification && (
             <div className="p-8 text-center">
-              <Bell className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
+              <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">
                 {t('notifications.empty', 'No notifications')}
               </p>
             </div>
