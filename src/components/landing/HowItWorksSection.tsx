@@ -86,23 +86,6 @@ export function HowItWorksSection() {
         </div>
       ))}
 
-      {/* CTA */}
-      <div className="py-16 lg:py-20 bg-white">
-        <div className="container px-4 md:px-6 text-center">
-          <Link to="/auth">
-            <Button 
-              size="lg" 
-              className="rounded-full px-8 py-6 text-lg font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
-            >
-              Start for free
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
-          <p className="text-sm text-[#9ca3af] mt-4">
-            No credit card required • Free forever for personal use
-          </p>
-        </div>
-      </div>
     </section>
   );
 }
