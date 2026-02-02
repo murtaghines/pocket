@@ -1,101 +1,94 @@
-import { Upload, PieChart, TrendingUp, FileSpreadsheet, Brain, Target, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Upload, Brain, Target, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const steps = [
   {
-    number: "01",
-    title: "Upload your statements",
+    number: "1",
+    title: "Upload your statements.",
     description: "Simply drag and drop your bank statements in Excel or PDF format. We support most major banks and financial institutions worldwide.",
     icon: Upload,
-    features: ["Excel & PDF support", "Multi-bank compatible", "Secure encryption"],
+    bgColor: "bg-white",
+    textColor: "text-[#0a0a0a]",
   },
   {
-    number: "02",
-    title: "AI-powered analysis",
+    number: "2",
+    title: "AI-powered analysis.",
     description: "Our intelligent system automatically categorizes every transaction, detects patterns, and generates personalized insights tailored to your spending habits.",
     icon: Brain,
-    features: ["Smart categorization", "Pattern detection", "Personalized insights"],
+    bgColor: "bg-[#f5f5f5]",
+    textColor: "text-[#0a0a0a]",
   },
   {
-    number: "03",
-    title: "Take control",
+    number: "3",
+    title: "Take control.",
     description: "Get crystal-clear visibility into your finances. Track expenses, monitor savings goals, and make informed decisions with intuitive visualizations.",
     icon: Target,
-    features: ["Visual dashboards", "Goal tracking", "Trend analysis"],
+    bgColor: "bg-white",
+    textColor: "text-[#0a0a0a]",
   },
 ];
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-24 lg:py-32 bg-white">
-      <div className="container px-4 md:px-6">
-        {/* Section header */}
-        <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/10 rounded-full px-4 py-1.5 text-sm text-primary font-medium mb-6">
-            <FileSpreadsheet className="w-4 h-4" />
-            Simple 3-step process
+    <section id="how-it-works" className="bg-white">
+      {/* Section header */}
+      <div className="py-20 lg:py-28 border-b border-[#e5e5e5]">
+        <div className="container px-4 md:px-6">
+          <div className="max-w-3xl">
+            <p className="text-sm text-[#6b7280] uppercase tracking-wider mb-4">
+              How it works
+            </p>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#0a0a0a] leading-tight">
+              From messy data to
+              <br />
+              <span className="text-[#9ca3af]">total financial clarity.</span>
+            </h2>
           </div>
-          
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-[#0a0a0a] tracking-tight">
-            From messy data to
-            <br />
-            <span className="text-[#9ca3af]">total financial clarity</span>
-          </h2>
-          
-          <p className="text-lg md:text-xl text-[#6b7280] max-w-2xl mx-auto">
-            Define your path and start improving your finances in minutes. No spreadsheet skills required.
-          </p>
         </div>
+      </div>
 
-        {/* Steps grid */}
-        <div className="grid md:grid-cols-3 gap-8 lg:gap-12 mb-16">
-          {steps.map((step, index) => (
-            <div 
-              key={step.number}
-              className="group relative"
-            >
-              {/* Connection line for desktop */}
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-16 left-[60%] w-[80%] h-px bg-gradient-to-r from-primary/30 to-transparent" />
-              )}
+      {/* Steps - Vertical layout */}
+      {steps.map((step, index) => (
+        <div 
+          key={step.number}
+          className={`${step.bgColor} border-b border-[#e5e5e5]`}
+        >
+          <div className="container px-4 md:px-6">
+            <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 py-16 lg:py-24 items-center">
+              {/* Number */}
+              <div className="lg:col-span-1">
+                <span className="text-6xl lg:text-7xl font-bold text-[#0a0a0a]">
+                  {step.number}
+                </span>
+              </div>
               
-              {/* Card */}
-              <div className="relative bg-gradient-to-b from-[#fafafa] to-white border border-[#e5e7eb] rounded-2xl p-8 h-full transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-1">
-                {/* Step number */}
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    Step {step.number}
-                  </span>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-300">
-                    <step.icon className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                
-                {/* Content */}
-                <h3 className="text-xl md:text-2xl font-bold mb-3 text-[#0a0a0a]">
+              {/* Content */}
+              <div className="lg:col-span-5">
+                <h3 className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-4 ${step.textColor}`}>
                   {step.title}
                 </h3>
-                <p className="text-[#6b7280] mb-6 leading-relaxed">
+                <p className="text-lg text-[#6b7280] leading-relaxed max-w-lg">
                   {step.description}
                 </p>
-                
-                {/* Features list */}
-                <ul className="space-y-2">
-                  {step.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-[#6b7280]">
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+              </div>
+              
+              {/* Visual placeholder - Icon card */}
+              <div className="lg:col-span-6">
+                <div className="bg-[#1a1a1a] rounded-2xl p-8 lg:p-12 flex items-center justify-center min-h-[280px] lg:min-h-[360px]">
+                  <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl bg-primary/20 flex items-center justify-center">
+                    <step.icon className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
+          </div>
         </div>
+      ))}
 
-        {/* CTA */}
-        <div className="text-center">
+      {/* CTA */}
+      <div className="py-16 lg:py-20 bg-white">
+        <div className="container px-4 md:px-6 text-center">
           <Link to="/auth">
             <Button 
               size="lg" 
