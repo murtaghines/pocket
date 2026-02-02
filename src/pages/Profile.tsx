@@ -5,11 +5,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, TrendingUp, User, Globe, Tags, Settings, Upload } from "lucide-react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { FileText, TrendingUp, User, Globe, Tags } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -75,29 +76,12 @@ export default function Profile() {
       >
         <main className="container px-4 md:px-6 py-8">
           <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-            {/* Header with title and tabs on the same row */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 animate-fade-in">
-              <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">
-                {t('title')}
-              </h2>
-              
-              {/* Hide tabs on mobile - controlled by bottom nav */}
-              <TabsList className="hidden md:inline-flex bg-muted p-1.5 rounded-xl shadow-sm">
-                <TabsTrigger 
-                  value="data" 
-                  className="gap-2 px-5 py-2.5 rounded-lg font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-                >
-                  <Upload className="w-4 h-4" />
-                  {t('tabs.data')}
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="settings" 
-                  className="gap-2 px-5 py-2.5 rounded-lg font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
-                >
-                  <Settings className="w-4 h-4" />
-                  {t('tabs.settings')}
-                </TabsTrigger>
-              </TabsList>
+            {/* Profile Header with user info and tab selectors */}
+            <div className="mb-8">
+              <ProfileHeader 
+                currentTab={currentTab as 'data' | 'settings'}
+                onTabChange={handleTabChange}
+              />
             </div>
 
             {/* My Data Tab - First */}

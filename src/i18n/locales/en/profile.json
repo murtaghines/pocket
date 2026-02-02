@@ -4,6 +4,9 @@
     "settings": "Settings",
     "data": "My Data"
   },
+  "header": {
+    "guest": "User"
+  },
   "personalInfo": {
     "title": "Personal Information",
     "description": "Manage your personal information and account",
