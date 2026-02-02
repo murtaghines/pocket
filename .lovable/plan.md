@@ -1,155 +1,167 @@
 
-# Plan de Mejoras para el Dashboard
 
-## Resumen de Cambios
+# Plan: Redisenar seccion "How it works" al estilo Autonoma
 
-Se implementarán tres mejoras principales en el dashboard:
+## Objetivo
 
-1. **Título del mes dinámico** - Mostrar el mes del último registro subido, no el mes actual
-2. **Reorganización de KPIs** - Income, Expenses y Balance ocuparán todo el ancho horizontal
-3. **Reubicación del selector de moneda** - Moverlo al lado izquierdo del header, junto a la navegación
+Replicar exactamente el diseno de pasos de Autonoma: layout de dos columnas donde la mitad izquierda es blanca con el numero, titulo, descripcion y un enlace CTA, y la mitad derecha es un contenedor gris con un visual/mockup.
 
 ---
 
-## 1. Título del Mes Dinámico
+## Diseno de Referencia
 
-### Problema Actual
-El dashboard muestra "February 2026" (el mes actual), pero el usuario quiere ver el mes del último registro de datos subido.
+Basado en la imagen de Autonoma:
 
-### Solución
-- Obtener el mes más reciente de los datos cargados (del array `monthlyData`)
-- Si hay datos, mostrar el mes del último registro
-- Cuando se sube un nuevo mes, el título se actualiza automáticamente
-
-**Ejemplo:** Si hoy es 3 de febrero pero lo último subido es diciembre → mostrar "December 2025"
-
----
-
-## 2. Reorganización de KPIs (Income, Expenses, Balance)
-
-### Problema Actual
-Los KPIs están en una grilla de 4-5 columnas incluyendo Investments, lo que los hace más pequeños.
-
-### Solución
-- **Income, Expenses, Balance**: Ocuparán todo el ancho en una fila de 3 columnas iguales
-- **Investments**: Mover a una sección separada, posiblemente:
-  - Como un banner debajo de los KPIs principales
-  - Integrado en la fila de gráficos existente
-  - Como tarjeta lateral junto al gráfico de Savings Rate
-
-### Propuesta de Diseño
-```
-+------------------+------------------+------------------+
-|     INCOME       |    EXPENSES      |     BALANCE      |
-|    (1/3 ancho)   |   (1/3 ancho)    |   (1/3 ancho)    |
-+------------------+------------------+------------------+
-
-+----------------------------------------+---------------+
-|         Monthly Balance Chart          |  Investments  |
-|             (2/3 ancho)                | (sidebar card)|
-+----------------------------------------+---------------+
+```text
++------------------------------------------+------------------------------------------+
+|  (fondo blanco)                          |  (fondo gris #f5f5f5)                    |
+|                                          |                                          |
+|  1    Set up the project.                |  +----------------------------------+    |
+|                                          |  |                                  |    |
+|       Load the mobile or web app         |  |     [Screenshot/Mockup]          |    |
+|       you want to run tests over.        |  |                                  |    |
+|                                          |  |                                  |    |
+|       Create an app →                    |  +----------------------------------+    |
+|                                          |                                          |
++------------------------------------------+------------------------------------------+
+                          (linea divisoria horizontal)
++------------------------------------------+------------------------------------------+
+|  2    Start testing in minutes.          |  +----------------------------------+    |
+...
 ```
 
 ---
 
-## 3. Reubicación del Selector de Moneda
+## Cambios Principales
 
-### Problema Actual
-El selector de moneda está a la derecha del header, junto a las notificaciones y el avatar.
+### 1. Layout de Dos Columnas 50/50
 
-### Solución
-- Mover el CurrencySelector al lado izquierdo del header
-- Quedará visualmente asociado a la navegación sin estar dentro del sidebar
-- El lado derecho solo tendrá: Notificaciones + Avatar
+- **Izquierda (50%)**: Fondo blanco puro
+- **Derecha (50%)**: Fondo gris claro (`#f5f5f5`) que se extiende hasta el borde
 
-### Estructura del Header Resultante
-```
-+-----------------------------------------------------------+
-|                          HEADER                            |
-+-----------------------------------------------------------+
-| [€ EUR] (izquierda)              [🔔] [Avatar] (derecha)  |
-+-----------------------------------------------------------+
-```
+### 2. Contenido del Lado Izquierdo
+
+- Numero pequeno y limpio (no gigante)
+- Titulo en negrita con punto final
+- Descripcion de una o dos lineas maximo
+- Link CTA azul con flecha (no boton)
+
+### 3. Visual del Lado Derecho
+
+- Contenedor gris redondeado
+- Por ahora usaremos una tarjeta oscura con icono (mockup placeholder)
+- En el futuro se pueden agregar screenshots reales del dashboard
+
+### 4. Estructura por Paso
+
+Cada paso ocupa el ancho completo de la pantalla, dividido en dos mitades iguales, separado por lineas horizontales.
 
 ---
 
-## Detalles Técnicos
+## Detalles Tecnicos
 
-### Archivos a Modificar
+### Archivo a Modificar
 
-| Archivo | Cambios |
-|---------|---------|
-| `src/pages/Index.tsx` | Lógica del título dinámico basado en el último mes con datos |
-| `src/pages/Index.tsx` | Reorganización del grid de KPIs (3 columnas) |
-| `src/pages/Index.tsx` | Mover InvestmentSummaryCard a nueva ubicación |
-| `src/components/layout/DashboardLayout.tsx` | Mover CurrencySelector a la izquierda del header |
+`src/components/landing/HowItWorksSection.tsx`
 
-### Cambios en Index.tsx
+### Estructura del Componente
 
-**Título del mes:**
 ```tsx
-// Obtener el mes del último registro de datos
-const latestMonthLabel = monthlyData.length > 0 
-  ? monthlyData[monthlyData.length - 1].month 
-  : null;
-
-// Renderizar
-<h3 className="text-lg font-semibold mb-4 capitalize text-muted-foreground">
-  {latestMonthLabel || t('period.noPeriods')}
-</h3>
+// Cada paso como fila completa con dos columnas
+{steps.map((step) => (
+  <div className="border-b border-[#e5e5e5]">
+    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[400px] lg:min-h-[500px]">
+      
+      {/* Lado izquierdo - Contenido (fondo blanco) */}
+      <div className="bg-white flex items-center px-8 lg:px-16 py-16">
+        <div className="max-w-md">
+          <span className="text-sm font-medium text-[#0a0a0a] mb-6 block">
+            {step.number}
+          </span>
+          <h3 className="text-2xl lg:text-3xl font-bold text-[#0a0a0a] mb-4">
+            {step.title}
+          </h3>
+          <p className="text-base text-[#6b7280] mb-6">
+            {step.description}
+          </p>
+          <Link className="text-primary font-medium flex items-center gap-2 hover:gap-3">
+            {step.cta} <ArrowRight />
+          </Link>
+        </div>
+      </div>
+      
+      {/* Lado derecho - Visual (fondo gris) */}
+      <div className="bg-[#f5f5f5] flex items-center justify-center p-8 lg:p-12">
+        <div className="bg-[#1a1a1a] rounded-xl w-full max-w-lg aspect-[4/3] flex items-center justify-center">
+          {/* Mockup placeholder con icono */}
+          <step.icon className="w-12 h-12 text-primary" />
+        </div>
+      </div>
+      
+    </div>
+  </div>
+))}
 ```
 
-**Grid de KPIs:**
-```tsx
-// Antes: grid-cols-2 md:grid-cols-4 lg:grid-cols-5
-// Después: grid-cols-1 md:grid-cols-3
+### Datos de los Pasos Actualizados
 
-<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-  <StatCard title="Income" ... />
-  <StatCard title="Expenses" ... />
-  <StatCard title="Balance" ... />
+```tsx
+const steps = [
+  {
+    number: "1",
+    title: "Upload your statements.",
+    description: "Simply drag and drop your bank statements in Excel or PDF format.",
+    cta: "Upload files",
+    icon: Upload,
+  },
+  {
+    number: "2", 
+    title: "AI-powered analysis.",
+    description: "Our intelligent system automatically categorizes every transaction and generates personalized insights.",
+    cta: "See how it works",
+    icon: Brain,
+  },
+  {
+    number: "3",
+    title: "Take control.",
+    description: "Get crystal-clear visibility into your finances with intuitive visualizations.",
+    cta: "Start for free",
+    icon: Target,
+  },
+];
+```
+
+### Encabezado de la Seccion
+
+Mantener el header actual pero ajustar para que siga el mismo estilo limpio:
+
+```tsx
+<div className="py-20 lg:py-28 border-b border-[#e5e5e5] bg-white">
+  <div className="container px-4 md:px-6 lg:px-16">
+    <p className="text-sm text-[#6b7280] uppercase tracking-wider mb-4">
+      How it works
+    </p>
+    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#0a0a0a] leading-tight">
+      From messy data to<br />
+      <span className="text-[#9ca3af]">total financial clarity.</span>
+    </h2>
+  </div>
 </div>
 ```
 
-**Investments - Nueva ubicación:**
-```tsx
-// Integrar en la fila de gráficos
-<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-  <div className="lg:col-span-2">
-    <MonthlyChart data={...} />
-  </div>
-  <div className="space-y-4">
-    <InvestmentSummaryCard />
-    <SavingsRateCard ... />
-  </div>
-</div>
-```
+### CTA Final
 
-### Cambios en DashboardLayout.tsx
-
-```tsx
-<header className="...">
-  <div className="flex h-16 items-center justify-between px-4 md:px-6">
-    {/* Izquierda: Currency Selector */}
-    <div className="flex items-center">
-      <div className="md:hidden w-12" /> {/* Espacio para hamburguesa en móvil */}
-      <CurrencySelector variant="light" />
-    </div>
-    
-    {/* Derecha: Notificaciones + Avatar */}
-    <div className="flex items-center gap-2 md:gap-3">
-      <NotificationBell variant="light" />
-      <Link to="/profile">...</Link>
-    </div>
-  </div>
-</header>
-```
+Boton centrado al final de la seccion (mantener el estilo actual).
 
 ---
 
-## Resultado Final
+## Resultado Visual Esperado
 
-1. ✅ El título mostrará el mes del último dato subido (ej: "December 2025")
-2. ✅ Income, Expenses y Balance ocuparán todo el ancho horizontal en 3 columnas iguales
-3. ✅ Investments estará junto al gráfico Monthly Balance y Savings Rate
-4. ✅ El selector de moneda estará a la izquierda del header, separado de las notificaciones
+1. Cada paso es una fila horizontal de ancho completo
+2. Mitad izquierda blanca con texto alineado a la izquierda
+3. Mitad derecha gris con mockup/visual centrado
+4. Numeros pequenos y discretos (no gigantes)
+5. Links CTA azules con flechas
+6. Lineas divisorias sutiles entre cada paso
+7. Aspecto limpio, minimalista y profesional como Autonoma
+
