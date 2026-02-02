@@ -6,26 +6,23 @@ const steps = [
   {
     number: "1",
     title: "Upload your statements.",
-    description: "Simply drag and drop your bank statements in Excel or PDF format. We support most major banks and financial institutions worldwide.",
+    description: "Simply drag and drop your bank statements in Excel or PDF format.",
+    cta: "Upload files",
     icon: Upload,
-    bgColor: "bg-white",
-    textColor: "text-[#0a0a0a]",
   },
   {
     number: "2",
     title: "AI-powered analysis.",
-    description: "Our intelligent system automatically categorizes every transaction, detects patterns, and generates personalized insights tailored to your spending habits.",
+    description: "Our intelligent system automatically categorizes every transaction and generates personalized insights.",
+    cta: "See how it works",
     icon: Brain,
-    bgColor: "bg-[#f5f5f5]",
-    textColor: "text-[#0a0a0a]",
   },
   {
     number: "3",
     title: "Take control.",
-    description: "Get crystal-clear visibility into your finances. Track expenses, monitor savings goals, and make informed decisions with intuitive visualizations.",
+    description: "Get crystal-clear visibility into your finances with intuitive visualizations.",
+    cta: "Start for free",
     icon: Target,
-    bgColor: "bg-white",
-    textColor: "text-[#0a0a0a]",
   },
 ];
 
@@ -34,7 +31,7 @@ export function HowItWorksSection() {
     <section id="how-it-works" className="bg-white">
       {/* Section header */}
       <div className="py-20 lg:py-28 border-b border-[#e5e5e5]">
-        <div className="container px-4 md:px-6">
+        <div className="container px-4 md:px-6 lg:px-16">
           <div className="max-w-3xl">
             <p className="text-sm text-[#6b7280] uppercase tracking-wider mb-4">
               How it works
@@ -48,37 +45,40 @@ export function HowItWorksSection() {
         </div>
       </div>
 
-      {/* Steps - Vertical layout */}
+      {/* Steps - Autonoma style 50/50 layout */}
       {steps.map((step, index) => (
         <div 
           key={step.number}
-          className={`${step.bgColor} border-b border-[#e5e5e5]`}
+          className="border-b border-[#e5e5e5]"
         >
-          <div className="container px-4 md:px-6">
-            <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 py-16 lg:py-24 items-center">
-              {/* Number */}
-              <div className="lg:col-span-1">
-                <span className="text-6xl lg:text-7xl font-bold text-[#0a0a0a]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[400px] lg:min-h-[500px]">
+            {/* Left side - Content (white background) */}
+            <div className="bg-white flex items-center px-8 lg:px-16 xl:px-24 py-16">
+              <div className="max-w-md">
+                <span className="text-sm font-medium text-[#0a0a0a] mb-6 block">
                   {step.number}
                 </span>
-              </div>
-              
-              {/* Content */}
-              <div className="lg:col-span-5">
-                <h3 className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-4 ${step.textColor}`}>
+                <h3 className="text-2xl lg:text-3xl font-bold text-[#0a0a0a] mb-4">
                   {step.title}
                 </h3>
-                <p className="text-lg text-[#6b7280] leading-relaxed max-w-lg">
+                <p className="text-base text-[#6b7280] mb-6 leading-relaxed">
                   {step.description}
                 </p>
+                <Link 
+                  to="/auth" 
+                  className="text-primary font-medium inline-flex items-center gap-2 hover:gap-3 transition-all duration-200"
+                >
+                  {step.cta}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
-              
-              {/* Visual placeholder - Icon card */}
-              <div className="lg:col-span-6">
-                <div className="bg-[#1a1a1a] rounded-2xl p-8 lg:p-12 flex items-center justify-center min-h-[280px] lg:min-h-[360px]">
-                  <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl bg-primary/20 flex items-center justify-center">
-                    <step.icon className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />
-                  </div>
+            </div>
+            
+            {/* Right side - Visual (gray background) */}
+            <div className="bg-[#f5f5f5] flex items-center justify-center p-8 lg:p-12">
+              <div className="bg-[#1a1a1a] rounded-xl w-full max-w-lg aspect-[4/3] flex items-center justify-center">
+                <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-primary/20 flex items-center justify-center">
+                  <step.icon className="w-8 h-8 lg:w-10 lg:h-10 text-primary" />
                 </div>
               </div>
             </div>
