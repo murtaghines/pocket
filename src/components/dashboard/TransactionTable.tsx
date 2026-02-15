@@ -159,12 +159,12 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="w-[80px]">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
-                <TableHead className="w-[90px]">{t('transactions.date')}</TableHead>
+                <TableHead className="w-[60px] hidden sm:table-cell">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
+                <TableHead className="w-[70px] hidden sm:table-cell">{t('transactions.date')}</TableHead>
                 <TableHead>{t('transactions.description')}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
                 <TableHead className="hidden md:table-cell">{t('transactions.category')}</TableHead>
-                <TableHead className="hidden sm:table-cell">{t('transactions.bank', { defaultValue: 'Account' })}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('transactions.bank', { defaultValue: 'Account' })}</TableHead>
                 <TableHead className="text-right">{t('transactions.amount')}</TableHead>
               </TableRow>
             </TableHeader>
@@ -183,10 +183,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       key={transaction.id}
                       className="hover:bg-muted/30 transition-colors"
                     >
-                      <TableCell className="text-xs text-muted-foreground uppercase">
+                      <TableCell className="text-xs text-muted-foreground uppercase hidden sm:table-cell">
                         {formatMonth(transaction.date)}
                       </TableCell>
-                      <TableCell className="font-medium text-muted-foreground">
+                      <TableCell className="font-medium text-muted-foreground hidden sm:table-cell">
                         {formatTransactionDate(transaction.date)}
                       </TableCell>
                       <TableCell>
@@ -211,7 +211,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           <span className="truncate">{transaction.description}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell className="hidden md:table-cell">
                         <Badge 
                           className={cn("font-normal rounded-full", movementBadgeColors[movementType])}
                         >
@@ -232,7 +232,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
                         <div className="text-sm">
                           <div>{transaction.bank}</div>
                           <div className="text-xs opacity-70">{transaction.account}</div>
