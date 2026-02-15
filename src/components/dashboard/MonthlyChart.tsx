@@ -27,7 +27,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border/50 rounded-xl shadow-lg p-4">
-          <p className="font-semibold text-foreground mb-2">{label}</p>
+          <p className="font-semibold text-foreground mb-2">{(() => { const [,m] = (label || '').split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || label; })()}</p>
           {payload.map((item: any, index: number) => (
             <div key={index} className="flex items-center gap-2 text-sm">
               <div 
@@ -100,6 +100,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                    tickFormatter={(val) => { const [,m] = val.split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || val; }}
                     dy={10}
                   />
                   <YAxis 
@@ -140,6 +141,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                    tickFormatter={(val) => { const [,m] = val.split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || val; }}
                     dy={10}
                   />
                   <YAxis 

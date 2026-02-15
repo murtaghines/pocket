@@ -16,7 +16,8 @@
     "balance": "Balance",
     "savingsRate": "Savings Rate",
     "vsLastMonth": "vs last month",
-    "thisMonth": "this month"
+    "thisMonth": "this month",
+    "previousBalance": "Previous month balance"
   },
   "charts": {
     "monthlyBalance": "Monthly Balance",

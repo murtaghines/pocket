@@ -202,14 +202,11 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       }
     });
 
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
     return Object.entries(monthlyTotals)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, data]) => {
-        const [, month] = key.split("-");
         return {
-          month: monthNames[parseInt(month) - 1],
+          month: key,
           income: Math.round(data.income * 100) / 100,
           expenses: Math.round(data.expenses * 100) / 100,
           balance: Math.round((data.income - data.expenses) * 100) / 100,
