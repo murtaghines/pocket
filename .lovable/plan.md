@@ -1,177 +1,40 @@
 
-# Plan: Redisenar cabecera de perfil al estilo DateDisplay
 
-## Objetivo
+## Verificacion y Correccion del Flujo de Periodos Abiertos/Cerrados
 
-Reemplazar el header actual de la pagina de Perfil con un componente similar al `DateDisplay` del dashboard, pero adaptado para mostrar la informacion del usuario y funcionar como un selector de tabs interactivo.
+### Problemas Encontrados
 
----
+Despues de revisar todo el codigo, encontre estos problemas concretos:
 
-## Diseno Propuesto
+1. **Drag-and-drop ignora el candado**: Si un mes esta cerrado (candado cerrado), el usuario puede arrastrar archivos sobre el slot y el sistema intenta procesarlos. Recien en el backend se rechaza con error "period_closed". La UI deberia bloquearlo antes.
 
-### Estado: Tab "My Data" activo
-```text
-+------------+  +------------------+   +   +-------------------+  +------------+
-|  (circulo  |  | Nombre Usuario   |   |   | MY UPLOADS        |  | (circulo   |
-|  persona   |  | email@mail.com   |   |   |               ->  |  |  settings) |
-+------------+  +------------------+   +   +-------------------+  +------------+
-   gris           texto negro          |       boton azul           gris
-```
+2. **No hay validacion client-side antes de subir**: El hook `useMonthlyFileUpload` envia archivos directamente al backend sin verificar si el periodo esta cerrado. Esto causa el error que viste.
 
-### Estado: Tab "Settings" activo
-```text
-+------------+  +------------------+   +   +------------+  +-------------------+
-|  (circulo  |  | Nombre Usuario   |   |   | (circulo   |  | SETTINGS          |
-|  persona   |  | email@mail.com   |   |   |  uploads)  |  |               ->  |
-+------------+  +------------------+   +   +------------+  +-------------------+
-   gris           texto negro          |       gris           boton azul
-```
+3. **Race condition al reabrir**: Cuando el usuario hace clic en "Reabrir mes", la query de periodos se invalida y se refresca. Pero si el usuario intenta subir un archivo antes de que termine el refetch, el backend podria seguir viendo el periodo como cerrado.
 
----
+### Solucion Propuesta
 
-## Cambios Principales
+#### 1. Bloquear drag-and-drop en meses cerrados
+En `MonthUploadSlot.tsx`, el handler `handleDrop` debe verificar `isClosed` y mostrar un toast de advertencia en vez de intentar subir.
 
-### 1. Nuevo Componente ProfileHeader
+#### 2. Bloquear el area de upload cuando esta cerrado
+El area de upload (drop zone vacia) y el boton "Add more files" ya se ocultan correctamente cuando `isClosed` es true. Pero el drag-and-drop sigue activo. Se agregara la verificacion ahi.
 
-Crear `src/components/profile/ProfileHeader.tsx` con:
+#### 3. Pasar el estado del periodo al hook de upload
+Modificar `addFilesForMonth` para aceptar un parametro opcional de estado del periodo, o hacer la verificacion directamente en `MonthUploadSlot` antes de llamar a `onAddFiles`.
 
-- **Circulo izquierdo**: Icono de persona (User) en fondo gris
-- **Texto**: Nombre del usuario en grande, email debajo en gris
-- **Divisor vertical**: Linea gris
-- **Selectores de tab interactivos**: 
-  - El tab activo aparece como boton azul redondeado con flecha
-  - El tab inactivo aparece como circulo gris con icono
+### Cambios Tecnicos
 
-### 2. Comportamiento Interactivo
+**Archivo: `src/components/profile/MonthUploadSlot.tsx`**
+- En `handleDrop`: agregar verificacion `if (isClosed)` al inicio, mostrando un toast "Este mes esta cerrado. Reabrilo para subir archivos" y haciendo return sin procesar.
+- En `handleFileInput`: agregar la misma verificacion `if (isClosed)`.
+- Deshabilitar visualmente el area de drag cuando el mes esta cerrado (agregar clase CSS de opacidad reducida y cursor no permitido).
 
-- Al hacer clic en el circulo gris del tab inactivo, cambia el tab activo
-- El boton azul expande para mostrar el titulo de la seccion actual
-- El tab que deja de estar activo se contrae a un circulo con icono
+**Archivo: `src/hooks/useMonthlyFileUpload.tsx`**
+- No requiere cambios, la validacion se hara en la UI antes de llamar a `addFilesForMonth`.
 
-### 3. Datos y Props
+### Resultado Esperado
+- Si el candado esta cerrado: no se puede subir de ninguna forma (ni drag, ni click, ni input). Se muestra un mensaje claro.
+- Si el candado esta abierto: funciona normal.
+- El backend sigue como segunda linea de defensa por si algo pasa.
 
-```tsx
-interface ProfileHeaderProps {
-  currentTab: 'data' | 'settings';
-  onTabChange: (tab: string) => void;
-}
-```
-
----
-
-## Detalles Tecnicos
-
-### Nuevo Archivo: `src/components/profile/ProfileHeader.tsx`
-
-```tsx
-// Estructura principal
-<div className="flex items-center gap-4 animate-fade-in">
-  {/* Circulo con icono de persona */}
-  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-200 flex items-center justify-center">
-    <User className="w-8 h-8 md:w-10 md:h-10 text-foreground" />
-  </div>
-  
-  {/* Nombre y email */}
-  <div className="flex flex-col">
-    <span className="text-lg md:text-xl font-bold text-foreground">
-      {displayName || t('profile.guest')}
-    </span>
-    <span className="text-sm md:text-base text-muted-foreground">
-      {user?.email}
-    </span>
-  </div>
-  
-  {/* Divisor */}
-  <div className="hidden md:block w-px h-10 bg-border mx-2" />
-  
-  {/* Tab selectors - orden dinamico basado en tab activo */}
-  {currentTab === 'data' ? (
-    <>
-      {/* Uploads activo - boton azul expandido */}
-      <Button variant="default" className="rounded-full gap-2 px-5">
-        {t('tabs.data')}
-        <ArrowRight className="w-4 h-4" />
-      </Button>
-      
-      {/* Settings inactivo - circulo gris */}
-      <Button 
-        variant="outline" 
-        size="icon"
-        className="rounded-full"
-        onClick={() => onTabChange('settings')}
-      >
-        <Settings className="w-4 h-4" />
-      </Button>
-    </>
-  ) : (
-    <>
-      {/* Uploads inactivo - circulo gris */}
-      <Button 
-        variant="outline" 
-        size="icon"
-        className="rounded-full"
-        onClick={() => onTabChange('data')}
-      >
-        <Upload className="w-4 h-4" />
-      </Button>
-      
-      {/* Settings activo - boton azul expandido */}
-      <Button variant="default" className="rounded-full gap-2 px-5">
-        {t('tabs.settings')}
-        <ArrowRight className="w-4 h-4" />
-      </Button>
-    </>
-  )}
-</div>
-```
-
-### Modificaciones a `src/pages/Profile.tsx`
-
-1. Importar el nuevo componente `ProfileHeader`
-2. Reemplazar el header actual (lineas 79-101) con:
-
-```tsx
-<ProfileHeader 
-  currentTab={currentTab as 'data' | 'settings'}
-  onTabChange={handleTabChange}
-/>
-```
-
-3. Mantener los `TabsContent` tal como estan
-4. Ocultar el `TabsList` existente (ya no se necesita en desktop, solo mobile lo controla desde bottom nav)
-
-### Traducciones Necesarias
-
-Agregar a los archivos de traduccion (`profile.json`):
-
-```json
-{
-  "header": {
-    "guest": "User"
-  }
-}
-```
-
----
-
-## Responsividad
-
-### Desktop (md+)
-- Layout horizontal completo con divisor y botones
-- Nombre grande, email visible
-
-### Mobile
-- Se oculta el divisor y los botones de tab (ya hay bottom nav)
-- Solo muestra circulo de persona, nombre y email
-
----
-
-## Resultado Visual Esperado
-
-1. Circulo gris con icono de persona a la izquierda
-2. Nombre del usuario en texto grande y negrita
-3. Email debajo en gris
-4. Linea divisoria vertical
-5. Boton azul redondeado mostrando la seccion actual (MY UPLOADS o SETTINGS)
-6. Circulo gris con el icono de la otra seccion
-7. Al hacer clic en el circulo gris, los roles se intercambian con animacion
