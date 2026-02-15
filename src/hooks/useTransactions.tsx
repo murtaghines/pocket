@@ -110,6 +110,23 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       
       // Transform DB transactions to app format
       return (data as DbTransaction[]).map((t): Transaction => {
+        // Clean description: strip "value date: DD mmm YYYY " prefix
+        const rawDesc = t.description_norm || t.description;
+        const cleanDesc = rawDesc.replace(
+          /^value date:\s*\d{1,2}\s+\w{3}\s+\d{4}\s+/i,
+          ''
+        ).trim() || rawDesc;
+
+        // Determine movement: trust DB movement, but fix mismatches
+        // If amount is positive and movement says EXPENSE, override to INCOME
+        // If amount is negative and movement says INCOME, override to EXPENSE
+        let movement = t.movement;
+        if (t.amount > 0 && movement === 'EXPENSE') {
+          movement = 'INCOME';
+        } else if (t.amount < 0 && movement === 'INCOME') {
+          movement = 'EXPENSE';
+        }
+
         // Map movement to legacy type for backward compatibility
         const movementToType: Record<string, "income" | "expense" | "transfer"> = {
           INCOME: "income",
@@ -117,18 +134,18 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           TRANSFER: "transfer",
         };
         
-        const type = t.movement 
-          ? movementToType[t.movement] || t.type
+        const type = movement 
+          ? movementToType[movement] || t.type
           : t.type;
 
         return {
           id: t.id,
           date: t.date,
-          description: t.description_norm || t.description,
+          description: cleanDesc,
           amount: t.amount_base || t.amount,
           currency: t.currency || "EUR",
           type,
-          movement: t.movement,
+          movement,
           category: t.category as Category,
           categorySlug: t.category,
           account: "Main Account",
