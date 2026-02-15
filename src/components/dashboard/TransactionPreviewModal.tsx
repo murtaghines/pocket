@@ -82,9 +82,11 @@ export function TransactionPreviewModal({
   const { formatCurrency, formatDate } = useLocalization();
   const { incomeCategories, expenseCategories, transferCategories } = useCategories("CASHFLOW");
 
-  if (!previewData) return null;
-
-  const { transactions, stats, fileName, isSaved, hasUnsavedChanges } = previewData;
+  const transactions = previewData?.transactions ?? [];
+  const stats = previewData?.stats;
+  const fileName = previewData?.fileName;
+  const isSaved = previewData?.isSaved;
+  const hasUnsavedChanges = previewData?.hasUnsavedChanges;
 
   const summary = useMemo(() => {
     const income = transactions
@@ -99,6 +101,8 @@ export function TransactionPreviewModal({
     const edited = transactions.filter((t) => t.isEdited).length;
     return { income, expenses, transfers, edited };
   }, [transactions]);
+
+  if (!previewData) return null;
 
   const getMovementIcon = (movement: MovementType) => {
     switch (movement) {
@@ -147,7 +151,7 @@ export function TransactionPreviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col dashboard-theme bg-background text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-success" />
