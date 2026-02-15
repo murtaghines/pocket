@@ -95,29 +95,33 @@ export function MonthUploadSlot({
   const totalFiles = imports.length + pendingFilesCount;
   const totalTransactions = imports.reduce((sum, imp) => sum + (imp.transactions_count || 0), 0);
 
-  // Animate progress bar during processing
+  // Animate progress bar during processing - slower, more realistic curve
   useEffect(() => {
     if (isProcessing) {
       setProgress(0);
+      const startTime = Date.now();
       const interval = setInterval(() => {
-        setProgress((prev) => {
-          // Quick start, then slow down approaching 90%
-          if (prev < 30) return prev + 3;
-          if (prev < 60) return prev + 2;
-          if (prev < 85) return prev + 0.5;
-          if (prev < 95) return prev + 0.1;
-          return prev;
-        });
-      }, 100);
+        const elapsed = (Date.now() - startTime) / 1000; // seconds
+        // Logarithmic curve: fast to ~40%, then gradually slows
+        // Reaches ~50% at 10s, ~70% at 30s, ~85% at 60s, asymptotes at ~92%
+        const newProgress = Math.min(92, 20 * Math.log(1 + elapsed * 0.5));
+        setProgress(newProgress);
+      }, 200);
       return () => clearInterval(interval);
     } else {
-      // Complete the progress bar when done
       if (progress > 0 && progress < 100) {
         setProgress(100);
         setTimeout(() => setProgress(0), 500);
       }
     }
   }, [isProcessing]);
+
+  const getProcessingMessage = () => {
+    if (progress < 25) return "Uploading and reading file...";
+    if (progress < 55) return "Extracting transactions with AI...";
+    if (progress < 80) return "Categorizing and deduplicating...";
+    return "Saving to database...";
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -295,7 +299,7 @@ export function MonthUploadSlot({
                 </div>
                 <Progress value={progress} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  Extracting transactions and categorizing automatically
+                  {getProcessingMessage()}
                 </p>
               </div>
             )}
