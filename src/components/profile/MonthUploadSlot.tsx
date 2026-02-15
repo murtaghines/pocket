@@ -133,6 +133,15 @@ export function MonthUploadSlot({
     e.preventDefault();
     e.stopPropagation();
 
+    if (isClosed) {
+      toast({
+        title: "Month closed",
+        description: "Reopen this month before uploading files.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const droppedFiles = Array.from(e.dataTransfer.files).filter(isValidFile);
 
     if (droppedFiles.length === 0) {
@@ -146,11 +155,21 @@ export function MonthUploadSlot({
 
     onAddFiles(droppedFiles, monthDate);
     setIsOpen(true);
-  }, [toast, onAddFiles, monthDate]);
+  }, [toast, onAddFiles, monthDate, isClosed]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles) return;
+
+    if (isClosed) {
+      toast({
+        title: "Month closed",
+        description: "Reopen this month before uploading files.",
+        variant: "destructive",
+      });
+      e.target.value = '';
+      return;
+    }
 
     const validFiles = Array.from(selectedFiles).filter(isValidFile);
     onAddFiles(validFiles, monthDate);
@@ -381,7 +400,7 @@ export function MonthUploadSlot({
             )}
 
             {/* Empty state / Upload area */}
-            {isEmpty && (
+            {isEmpty && !isClosed && (
               <div 
                 className="relative border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors"
               >
@@ -398,6 +417,18 @@ export function MonthUploadSlot({
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Excel, CSV or PDF
+                </p>
+              </div>
+            )}
+
+            {isEmpty && isClosed && (
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center opacity-50 cursor-not-allowed">
+                <Lock className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Month closed
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reopen to upload files
                 </p>
               </div>
             )}
