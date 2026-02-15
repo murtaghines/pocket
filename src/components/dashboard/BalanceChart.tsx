@@ -25,7 +25,7 @@ export function BalanceChart({ data }: BalanceChartProps) {
       const value = payload[0].value;
       return (
         <div className="bg-card border border-border/50 rounded-xl shadow-lg p-4">
-          <p className="font-semibold text-foreground mb-1">{label}</p>
+          <p className="font-semibold text-foreground mb-1">{(() => { const [,m] = (label || '').split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || label; })()}</p>
           <p className={`text-lg font-bold ${value >= 0 ? 'text-success' : 'text-destructive'}`}>
             {value >= 0 ? '+' : ''}{formatCurrency(value)}
           </p>
@@ -78,6 +78,7 @@ export function BalanceChart({ data }: BalanceChartProps) {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                tickFormatter={(val) => { const [,m] = val.split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || val; }}
                 dy={10}
               />
               <YAxis 

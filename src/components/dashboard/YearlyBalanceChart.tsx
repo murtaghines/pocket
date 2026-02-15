@@ -23,7 +23,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border/50 rounded-xl p-3 shadow-lg">
-          <p className="text-xs text-muted-foreground mb-1">{label}</p>
+          <p className="text-xs text-muted-foreground mb-1">{(() => { const [,m] = (label || '').split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || label; })()}</p>
           <p className="text-sm font-bold text-foreground">{formatCurrency(payload[0].value)}</p>
         </div>
       );
@@ -74,6 +74,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                tickFormatter={(val) => { const [,m] = val.split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || val; }}
               />
               <YAxis hide domain={[0, maxBalance * 1.2]} />
               <Tooltip content={<CustomTooltip />} cursor={false} />

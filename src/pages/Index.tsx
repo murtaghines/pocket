@@ -158,9 +158,16 @@ export default function Index() {
             <EmptyStateBanner hasData={transactions.length > 0} />
 
             {/* Month label - shows the last uploaded month, not current calendar month */}
-            <h3 className="text-lg font-semibold mb-4 capitalize text-muted-foreground">
-              {latestMonthLabel || t('period.noPeriods', 'No data yet')}
-            </h3>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold capitalize text-foreground">
+                {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+              </h3>
+              {hasPreviousData && (
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
+                </p>
+              )}
+            </div>
 
             {/* KPIs Row - 3 columns full width */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
