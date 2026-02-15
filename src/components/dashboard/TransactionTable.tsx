@@ -245,8 +245,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           : movementType === 'transfer' ? "text-muted-foreground"
                           : "text-destructive"
                       )}>
-                        {movementType === 'income' ? '+' : '-'}
-                        {formatCurrency(Math.abs(transaction.amount))}
+                        {transaction.amount >= 0 ? '+' : ''}
+                        {formatCurrency(transaction.amount)}
                       </TableCell>
                     </TableRow>
                   );
