@@ -422,14 +422,29 @@ export function MonthUploadSlot({
             )}
 
             {isEmpty && isClosed && (
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center opacity-50 cursor-not-allowed">
-                <Lock className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Month closed
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Reopen to upload files
-                </p>
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center space-y-3">
+                <div className="opacity-50">
+                  <Lock className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Month closed
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Reopen to upload files
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowReopenDialog(true)}
+                  disabled={isReopeningPeriod}
+                >
+                  {isReopeningPeriod ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Unlock className="w-4 h-4 mr-2" />
+                  )}
+                  Reopen month
+                </Button>
               </div>
             )}
 
