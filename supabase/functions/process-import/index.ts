@@ -1115,11 +1115,13 @@ serve(async (req) => {
 
     // Check for date mismatches
     const dateWarnings: Array<{ date: string; description: string; expected: string; found: string }> = [];
+    const monthCounts: Record<string, number> = {};
     
     for (const t of allTransactions) {
       const txDate = t.posted_date || t.date;
       if (txDate) {
         const txMonthKey = extractMonthKey(txDate);
+        monthCounts[txMonthKey] = (monthCounts[txMonthKey] || 0) + 1;
         if (txMonthKey !== normalizedTargetMonth) {
           dateWarnings.push({
             date: txDate,
@@ -1129,6 +1131,34 @@ serve(async (req) => {
           });
         }
       }
+    }
+
+    // If ALL transactions belong to a different month, reject and suggest the correct slot
+    const targetMonthCount = monthCounts[normalizedTargetMonth] || 0;
+    if (allTransactions.length > 0 && targetMonthCount === 0) {
+      // Find the dominant month
+      const dominantMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0];
+      console.log(`[process-import] Wrong month! All ${allTransactions.length} transactions belong to ${dominantMonth[0]}, not ${normalizedTargetMonth}. Deleting import ${importId}`);
+      
+      // Clean up: delete the import record
+      await supabase.from('import_rows').delete().eq('import_id', importId);
+      await supabase.from('imports').delete().eq('id', importId);
+      
+      // Also delete the uploaded file from storage if possible
+      if (fileStorageUrl) {
+        await supabase.storage.from('financial-files').remove([fileStorageUrl]);
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: 'wrong_month',
+          message: `This file contains transactions from ${dominantMonth[0]}, not ${normalizedTargetMonth}. Please upload it in the correct month slot.`,
+          detectedMonth: dominantMonth[0],
+          targetMonth: normalizedTargetMonth,
+          transactionCount: dominantMonth[1]
+        }),
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Get existing transactions for TARGET MONTH ONLY to detect duplicates
