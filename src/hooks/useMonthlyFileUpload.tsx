@@ -175,7 +175,7 @@ export function useMonthlyFileUpload() {
         const message = payload?.message || "Could not process the file";
 
         // Handle specific error codes with appropriate UI
-        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited" || code === "wrong_month") {
+        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited") {
           setPendingFilesByMonth((prev) => ({
             ...prev,
             [monthKey]: (prev[monthKey] || []).map((f) =>
@@ -190,15 +190,10 @@ export function useMonthlyFileUpload() {
           else if (code === "period_closed") title = "Period closed";
           else if (code === "payment_required") title = "No AI credits";
           else if (code === "rate_limited") title = "Too many requests";
-          else if (code === "wrong_month") title = "Wrong month";
-
-          const description = code === "wrong_month" && payload?.detectedMonth
-            ? `This file has transactions from ${payload.detectedMonth}. Upload it in the correct month slot.`
-            : message;
 
           toast({
             title,
-            description,
+            description: message,
             variant: "destructive",
           });
 
@@ -232,10 +227,18 @@ export function useMonthlyFileUpload() {
         description += `, ${stats.transfersDetected} internal transfers`;
       }
 
-      toast({
-        title: "File processed",
-        description: `${uploadFile.name}: ${description}`,
-      });
+      // Show redirect notice if file was moved to a different month
+      if (processData?.redirectedFromMonth && processData?.actualMonth) {
+        toast({
+          title: "File relocated",
+          description: `${uploadFile.name} had transactions from ${processData.actualMonth}, so it was moved there automatically.`,
+        });
+      } else {
+        toast({
+          title: "File processed",
+          description: `${uploadFile.name}: ${description}`,
+        });
+      }
 
       // Refresh data
       queryClient.invalidateQueries({ queryKey: ["transactions"] });

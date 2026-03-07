@@ -899,7 +899,7 @@ serve(async (req) => {
       );
     }
 
-    const normalizedTargetMonth = normalizeTargetMonth(targetMonth);
+    let normalizedTargetMonth = normalizeTargetMonth(targetMonth);
 
     console.log(`[process-import] Starting: domain=${domain}, targetMonth=${normalizedTargetMonth}, contentLength=${fileContent.length}`);
 
@@ -1133,32 +1133,58 @@ serve(async (req) => {
       }
     }
 
-    // If ALL transactions belong to a different month, reject and suggest the correct slot
+    // If ALL transactions belong to a different month, auto-redirect to the correct month
     const targetMonthCount = monthCounts[normalizedTargetMonth] || 0;
+    let redirectedFromMonth: string | null = null;
     if (allTransactions.length > 0 && targetMonthCount === 0) {
       // Find the dominant month
       const dominantMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0];
-      console.log(`[process-import] Wrong month! All ${allTransactions.length} transactions belong to ${dominantMonth[0]}, not ${normalizedTargetMonth}. Deleting import ${importId}`);
+      const correctMonth = dominantMonth[0];
+      console.log(`[process-import] Wrong month detected! All ${allTransactions.length} transactions belong to ${correctMonth}, not ${normalizedTargetMonth}. Auto-redirecting.`);
       
-      // Clean up: delete the import record
-      await supabase.from('import_rows').delete().eq('import_id', importId);
-      await supabase.from('imports').delete().eq('id', importId);
-      
-      // Also delete the uploaded file from storage if possible
-      if (fileStorageUrl) {
-        await supabase.storage.from('financial-files').remove([fileStorageUrl]);
+      redirectedFromMonth = normalizedTargetMonth;
+      normalizedTargetMonth = correctMonth;
+
+      // Check if the correct month's period is closed
+      const { data: correctPeriod } = await supabase
+        .from('periods')
+        .select('id, status')
+        .eq('user_id', userId)
+        .eq('month_key', correctMonth)
+        .eq('domain', domain)
+        .maybeSingle();
+
+      if (correctPeriod?.status === 'CLOSED') {
+        // Can't redirect to a closed period — clean up and reject
+        await supabase.from('import_rows').delete().eq('import_id', importId);
+        await supabase.from('imports').delete().eq('id', importId);
+        if (fileStorageUrl) {
+          await supabase.storage.from('financial-files').remove([fileStorageUrl]);
+        }
+        return new Response(
+          JSON.stringify({ 
+            error: 'period_closed',
+            message: `This file contains transactions from ${correctMonth}, but that period is closed.`
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-      
-      return new Response(
-        JSON.stringify({ 
-          error: 'wrong_month',
-          message: `This file contains transactions from ${dominantMonth[0]}, not ${normalizedTargetMonth}. Please upload it in the correct month slot.`,
-          detectedMonth: dominantMonth[0],
-          targetMonth: normalizedTargetMonth,
-          transactionCount: dominantMonth[1]
-        }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+
+      // Get or create the correct period
+      if (correctPeriod) {
+        periodId = correctPeriod.id;
+      } else {
+        const { data: newCorrectPeriod, error: createErr } = await supabase
+          .from('periods')
+          .insert({ user_id: userId, month_key: correctMonth, domain, status: 'OPEN' })
+          .select('id')
+          .single();
+        if (createErr) throw new Error(`Failed to create period for ${correctMonth}: ${createErr.message}`);
+        periodId = newCorrectPeriod.id;
+      }
+
+      // Update the import record to point to the correct period
+      await supabase.from('imports').update({ period_id: periodId }).eq('id', importId);
     }
 
     // Get existing transactions for TARGET MONTH ONLY to detect duplicates
@@ -1497,6 +1523,8 @@ serve(async (req) => {
         message,
         importId,
         stats,
+        redirectedFromMonth: redirectedFromMonth || undefined,
+        actualMonth: redirectedFromMonth ? normalizedTargetMonth : undefined,
         dateWarnings: dateWarnings.length > 0 ? dateWarnings.slice(0, 10) : undefined
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
