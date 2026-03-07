@@ -175,7 +175,7 @@ export function useMonthlyFileUpload() {
         const message = payload?.message || "Could not process the file";
 
         // Handle specific error codes with appropriate UI
-        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited" || code === "wrong_month") {
+        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited") {
           setPendingFilesByMonth((prev) => ({
             ...prev,
             [monthKey]: (prev[monthKey] || []).map((f) =>
