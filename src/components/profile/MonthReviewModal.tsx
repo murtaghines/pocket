@@ -377,6 +377,7 @@ export function MonthReviewModal({
                   <TableRow>
                     <TableHead className="w-[80px] hidden sm:table-cell">Date</TableHead>
                     <TableHead>Description</TableHead>
+                    <TableHead className="w-[90px] hidden md:table-cell">Bank</TableHead>
                     <TableHead className="w-[120px]">Movement</TableHead>
                     <TableHead className="w-[130px]">Category</TableHead>
                     <TableHead className="text-right w-[90px]">Amount</TableHead>
@@ -389,6 +390,11 @@ export function MonthReviewModal({
                     const availableCategories = getCategoriesForMovement(effectiveMovement);
                     const isEdited = !!edits[tx.id];
                     
+                    // Strip "value date: DD mon YYYY" prefix from description
+                    const cleanDescription = (tx.description_norm || tx.description)
+                      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
+                      .trim();
+                    
                     return (
                       <TableRow 
                         key={tx.id}
@@ -399,13 +405,16 @@ export function MonthReviewModal({
                         </TableCell>
                         <TableCell className="font-medium">
                           <div className="flex flex-col gap-0.5">
-                            <span className="truncate max-w-[180px] text-sm">
-                              {tx.description_norm || tx.description}
+                            <span className="truncate max-w-[250px] text-sm" title={cleanDescription}>
+                              {cleanDescription}
                             </span>
                             <span className="text-xs text-muted-foreground sm:hidden">
                               {formatDate(new Date(tx.date))}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground hidden md:table-cell">
+                          {tx.bank || "—"}
                         </TableCell>
                         <TableCell>
                           {isLocked ? (

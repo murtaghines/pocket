@@ -208,7 +208,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                               <ArrowUpRight className="w-3 h-3 text-destructive" />
                             )}
                           </div>
-                          <span className="truncate">{transaction.description}</span>
+                          <span className="truncate">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
