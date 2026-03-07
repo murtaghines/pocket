@@ -198,7 +198,7 @@ export function useMonthlyFileUpload() {
 
           toast({
             title,
-            description: message,
+            description,
             variant: "destructive",
           });
 
