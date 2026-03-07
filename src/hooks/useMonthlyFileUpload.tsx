@@ -227,10 +227,18 @@ export function useMonthlyFileUpload() {
         description += `, ${stats.transfersDetected} internal transfers`;
       }
 
-      toast({
-        title: "File processed",
-        description: `${uploadFile.name}: ${description}`,
-      });
+      // Show redirect notice if file was moved to a different month
+      if (processData?.redirectedFromMonth && processData?.actualMonth) {
+        toast({
+          title: "File relocated",
+          description: `${uploadFile.name} had transactions from ${processData.actualMonth}, so it was moved there automatically.`,
+        });
+      } else {
+        toast({
+          title: "File processed",
+          description: `${uploadFile.name}: ${description}`,
+        });
+      }
 
       // Refresh data
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
