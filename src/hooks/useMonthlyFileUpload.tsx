@@ -81,6 +81,40 @@ export function useMonthlyFileUpload() {
         throw new Error("The file is empty");
       }
 
+      // Generate file hash for deduplication BEFORE uploading
+      const encoder = new TextEncoder();
+      const data = encoder.encode(fileContent);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      // Client-side duplicate check against existing imports
+      const { data: existingImport } = await supabase
+        .from('imports')
+        .select('id, file_name, transactions_count')
+        .eq('user_id', user.id)
+        .eq('file_hash_sha256', fileHash)
+        .eq('status', 'NORMALIZED')
+        .maybeSingle();
+
+      if (existingImport) {
+        toast({
+          title: "Duplicate file",
+          description: `This file was already processed (${existingImport.file_name}, ${existingImport.transactions_count || 0} transactions).`,
+          variant: "destructive",
+        });
+
+        setPendingFilesByMonth((prev) => ({
+          ...prev,
+          [monthKey]: (prev[monthKey] || []).map((f) =>
+            f.id === uploadFile.id
+              ? { ...f, status: "error" as const, error: "Duplicate file" }
+              : f
+          ),
+        }));
+        return;
+      }
+
       // Upload original file to storage
       const filePath = `${user.id}/${Date.now()}_${uploadFile.name}`;
       const { error: uploadError } = await supabase.storage
@@ -92,13 +126,6 @@ export function useMonthlyFileUpload() {
           "Could not upload the file (connection interrupted). Please try again."
         );
       }
-
-      // Generate file hash for deduplication
-      const encoder = new TextEncoder();
-      const data = encoder.encode(fileContent);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
       // Call the process-import edge function (uses imports table directly)
       const { data: processData, error } = await supabase.functions.invoke(
