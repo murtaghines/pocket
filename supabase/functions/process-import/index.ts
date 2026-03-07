@@ -899,7 +899,7 @@ serve(async (req) => {
       );
     }
 
-    const normalizedTargetMonth = normalizeTargetMonth(targetMonth);
+    let normalizedTargetMonth = normalizeTargetMonth(targetMonth);
 
     console.log(`[process-import] Starting: domain=${domain}, targetMonth=${normalizedTargetMonth}, contentLength=${fileContent.length}`);
 
