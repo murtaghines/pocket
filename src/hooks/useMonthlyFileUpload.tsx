@@ -185,6 +185,7 @@ export function useMonthlyFileUpload() {
             ),
           }));
 
+          let title = "Processing error";
           if (code === "duplicate_file") title = "Duplicate file";
           else if (code === "period_closed") title = "Period closed";
           else if (code === "payment_required") title = "No AI credits";
