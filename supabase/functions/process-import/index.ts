@@ -1523,6 +1523,8 @@ serve(async (req) => {
         message,
         importId,
         stats,
+        redirectedFromMonth: redirectedFromMonth || undefined,
+        actualMonth: redirectedFromMonth ? normalizedTargetMonth : undefined,
         dateWarnings: dateWarnings.length > 0 ? dateWarnings.slice(0, 10) : undefined
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
