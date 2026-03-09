@@ -57,6 +57,12 @@ function detectBrowserLanguage(): SupportedLanguage {
 function AuthBottomSections() {
   return (
     <>
+      {/* Divider line */}
+      <div style={{ background: '#0439D7' }} className="w-full h-px">
+        <div className="container max-w-7xl mx-auto px-6 md:px-12">
+          <div className="h-px bg-white/20" />
+        </div>
+      </div>
       {/* Pre-footer CTA — solid blue like reference */}
       <section className="relative" style={{ background: '#0439D7' }}>
         <div className="container max-w-7xl mx-auto px-6 md:px-12 py-24 lg:py-32">
