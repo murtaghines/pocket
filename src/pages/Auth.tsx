@@ -159,7 +159,7 @@ export default function Auth() {
   // Password Reset Mode
   if (isResetMode) {
     return (
-      <div className="min-h-screen bg-primary">
+      <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #000033 0%, #0012b3 40%, hsl(242, 100%, 55%) 100%)' }}>
         <LandingHeader />
         
         <div className="min-h-screen pt-24 pb-20 px-4 flex flex-col items-center justify-center">
