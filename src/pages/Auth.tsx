@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { getRememberPreference, setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
@@ -12,6 +12,7 @@ import { PasswordStrengthIndicator } from "@/components/ui/password-strength-ind
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
 import { LandingHeader } from "@/components/landing/LandingHeader";
+import walletTextWhite from "@/assets/wallet-text-white.png";
 
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
@@ -43,11 +44,83 @@ const STEP_QUESTIONS: Record<RegisterStep, string> = {
 
 const TOTAL_STEPS = 7;
 
+const AUTH_GRADIENT = 'linear-gradient(180deg, #000022 0%, #0033CC 50%, #0439D7 100%)';
+
 function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language || 'en';
   const baseLang = browserLang.split('-')[0];
   const supported = SUPPORTED_LANGUAGES.find(l => l.code === baseLang);
   return (supported?.code || 'en') as SupportedLanguage;
+}
+
+/* ── Pre-footer CTA + Dark Footer shared across all auth modes ── */
+function AuthBottomSections() {
+  return (
+    <>
+      {/* Pre-footer CTA — solid blue like reference */}
+      <section className="relative" style={{ background: '#0439D7' }}>
+        <div className="container max-w-7xl mx-auto px-6 md:px-12 py-24 lg:py-32">
+          <div className="max-w-2xl">
+            <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-white leading-tight mb-6">
+              Take full control of
+              <br />
+              your finances.
+            </h2>
+            <p className="text-lg md:text-xl text-white/80 mb-10 max-w-xl leading-relaxed">
+              See how wallet helps you organize expenses, investments, and savings. Set up in minutes, not hours.
+            </p>
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-[#0439D7] transition-colors"
+            >
+              <span>Get started free</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Dark footer */}
+      <footer style={{ background: '#0A0A0A' }} className="py-16">
+        <div className="container max-w-7xl mx-auto px-6 md:px-12">
+          {/* Top row */}
+          <div className="flex flex-col md:flex-row justify-between gap-12 mb-16">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <Link to="/" className="inline-block">
+                <img src={walletTextWhite} alt="wallet" className="h-6 w-auto opacity-90" />
+              </Link>
+            </div>
+
+            {/* Link columns */}
+            <div className="flex gap-16 md:gap-24">
+              <div>
+                <p className="text-sm font-medium text-white mb-4">Product</p>
+                <ul className="space-y-3">
+                  <li><a href="/#features" className="text-sm text-white/50 hover:text-white/80 transition-colors">Features</a></li>
+                  <li><a href="/#how-it-works" className="text-sm text-white/50 hover:text-white/80 transition-colors">How it works</a></li>
+                  <li><Link to="/auth?mode=login" className="text-sm text-white/50 hover:text-white/80 transition-colors">Login</Link></li>
+                </ul>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white mb-4">Company</p>
+                <ul className="space-y-3">
+                  <li><a href="/#contact" className="text-sm text-white/50 hover:text-white/80 transition-colors">Contact</a></li>
+                  <li><a href="#" className="text-sm text-white/50 hover:text-white/80 transition-colors">Privacy</a></li>
+                  <li><a href="#" className="text-sm text-white/50 hover:text-white/80 transition-colors">Terms</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom copyright */}
+          <div className="border-t border-white/10 pt-8">
+            <p className="text-sm text-white/40">© 2026 wallet. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </>
+  );
 }
 
 export default function Auth() {
@@ -58,7 +131,6 @@ export default function Auth() {
   
   const [authMode, setAuthModeState] = useState<AuthMode>(modeFromUrl);
   
-  // Sync URL with authMode
   const setAuthMode = (mode: AuthMode) => {
     setAuthModeState(mode);
     if (mode === "login") {
@@ -68,13 +140,11 @@ export default function Auth() {
     }
   };
   
-  // Sync state when URL changes (e.g., browser back/forward or header link click)
   useEffect(() => {
     setAuthModeState(modeFromUrl);
   }, [modeFromUrl]);
   const [registerStep, setRegisterStep] = useState<RegisterStep>(1);
   
-  // Form data
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [emailValid, setEmailValid] = useState(false);
@@ -89,7 +159,6 @@ export default function Auth() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // Password reset
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -159,75 +228,76 @@ export default function Auth() {
   // Password Reset Mode
   if (isResetMode) {
     return (
-      <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #000033 0%, #0012b3 40%, hsl(242, 100%, 55%) 100%)' }}>
-        <LandingHeader />
-        
-        <div className="min-h-screen pt-24 pb-20 px-4 flex flex-col items-center justify-center">
-          {/* Header text */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
-              Set New Password
-            </h1>
-            <p className="text-lg text-white/80 max-w-md mx-auto">
-              Enter your new password below
-            </p>
-          </div>
-
-          {/* Card */}
-          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
-            <div className="flex justify-center mb-6">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <KeyRound className="w-6 h-6 text-primary" />
-              </div>
+      <div className="flex flex-col">
+        <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
+          <LandingHeader />
+          
+          <div className="min-h-screen pt-24 pb-20 px-4 flex flex-col items-center justify-center">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
+                Set New Password
+              </h1>
+              <p className="text-lg text-white/70 max-w-md mx-auto">
+                Enter your new password below
+              </p>
             </div>
 
-            <form onSubmit={handleUpdatePassword} className="space-y-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                <PasswordInput
-                  placeholder="••••••••"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
-                />
-                <PasswordStrengthIndicator password={newPassword} />
+            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
+              <div className="flex justify-center mb-6">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <KeyRound className="w-6 h-6 text-primary" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-                <PasswordInput
-                  placeholder="••••••••"
-                  value={confirmNewPassword}
-                  onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
-                />
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <Button 
-                  type="submit" 
-                  disabled={updateLoading}
-                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl"
-                >
-                  {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Update Password
-                </Button>
-              </div>
-            </form>
-          </div>
 
-          <p className="text-center mt-8 text-white/80">
-            <button 
-              onClick={() => navigate("/auth")}
-              className="text-white font-medium underline underline-offset-4 hover:no-underline"
-            >
-              ← Back to Sign In
-            </button>
-          </p>
+              <form onSubmit={handleUpdatePassword} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                  <PasswordInput
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                  />
+                  <PasswordStrengthIndicator password={newPassword} />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                  <PasswordInput
+                    placeholder="••••••••"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                  />
+                </div>
+                
+                <div className="flex justify-end pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateLoading}
+                    className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl"
+                  >
+                    {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Update Password
+                  </Button>
+                </div>
+              </form>
+            </div>
+
+            <p className="text-center mt-8 text-white/80">
+              <button 
+                onClick={() => navigate("/auth")}
+                className="text-white font-medium underline underline-offset-4 hover:no-underline"
+              >
+                ← Back to Sign In
+              </button>
+            </p>
+          </div>
         </div>
+        <AuthBottomSections />
       </div>
     );
   }
@@ -407,196 +477,189 @@ export default function Auth() {
     }
   };
 
-  // REGISTER MODE - Full screen with 7 steps
+  // REGISTER MODE
   if (authMode === "register") {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #000033 0%, #0012b3 40%, hsl(242, 100%, 55%) 100%)' }}>
-        <LandingHeader />
-        
-        {/* Full-screen Get Started section */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 min-h-screen">
-          {/* Header text */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
-              Get Started
-            </h1>
-            <p className="text-lg text-white/70 max-w-md mx-auto">
-              Set up your wallet account in just a few steps
-            </p>
-          </div>
-
-          {/* Card - Fixed height to prevent overflow */}
-          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ minHeight: '420px', maxHeight: '500px' }}>
-            {/* Progress bar - segmented */}
-            <div className="flex gap-1 mb-6">
-              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                <div 
-                  key={i}
-                  className={`h-1 flex-1 rounded-full transition-colors ${
-                    i < registerStep 
-                      ? 'bg-primary' 
-                      : 'bg-gray-200'
-                  }`}
-                />
-              ))}
+      <div className="flex flex-col">
+        <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
+          <LandingHeader />
+          
+          <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
+                Get Started
+              </h1>
+              <p className="text-lg text-white/70 max-w-md mx-auto">
+                Set up your wallet account in just a few steps
+              </p>
             </div>
 
-            {/* Step indicator */}
-            <p className="text-sm text-gray-400 mb-2">
-              {registerStep} of {TOTAL_STEPS}
-            </p>
+            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ minHeight: '420px', maxHeight: '500px' }}>
+              <div className="flex gap-1 mb-6">
+                {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      i < registerStep 
+                        ? 'bg-primary' 
+                        : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
 
-            {/* Question/Title */}
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6 font-display">
-              {STEP_QUESTIONS[registerStep]}
-            </h2>
+              <p className="text-sm text-gray-400 mb-2">
+                {registerStep} of {TOTAL_STEPS}
+              </p>
 
-            {/* Step content - scrollable area */}
-            <div className="flex-1 overflow-y-auto min-h-0">
-              {renderRegisterStep()}
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6 font-display">
+                {STEP_QUESTIONS[registerStep]}
+              </h2>
+
+              <div className="flex-1 overflow-y-auto min-h-0">
+                {renderRegisterStep()}
+              </div>
+
+              <div className="flex justify-between items-center pt-6 mt-auto border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+                >
+                  ← Back
+                </button>
+
+                <Button 
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!canProceedStep() || loading}
+                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : registerStep === TOTAL_STEPS ? (
+                    "Create Account"
+                  ) : (
+                    <>
+                      Next
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
-            {/* Navigation - fixed at bottom */}
-            <div className="flex justify-between items-center pt-6 mt-auto border-t border-gray-100">
-              <button
-                type="button"
-                onClick={handleBack}
-                className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+            <p className="text-center mt-8 text-white/80">
+              Already have an account?{' '}
+              <button 
+                onClick={() => setAuthMode("login")}
+                className="text-white font-medium underline underline-offset-4 hover:no-underline"
               >
-                ← Back
+                Log in
               </button>
-
-              <Button 
-                type="button"
-                onClick={handleNext}
-                disabled={!canProceedStep() || loading}
-                className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : registerStep === TOTAL_STEPS ? (
-                  "Create Account"
-                ) : (
-                  <>
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
+            </p>
           </div>
-
-          {/* Login link */}
-          <p className="text-center mt-8 text-white/80">
-            Already have an account?{' '}
-            <button 
-              onClick={() => setAuthMode("login")}
-              className="text-white font-medium underline underline-offset-4 hover:no-underline"
-            >
-              Log in
-            </button>
-          </p>
         </div>
+        <AuthBottomSections />
       </div>
     );
   }
 
   // LOGIN MODE
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #000033 0%, #0012b3 40%, hsl(242, 100%, 55%) 100%)' }}>
-      <LandingHeader />
-      
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 min-h-screen">
-        {/* Header text */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
-            Welcome back
-          </h1>
-          <p className="text-lg text-white/70 max-w-md mx-auto">
-            Sign in to continue to wallet
+    <div className="flex flex-col">
+      <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
+        <LandingHeader />
+        
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
+              Welcome back
+            </h1>
+            <p className="text-lg text-white/70 max-w-md mx-auto">
+              Sign in to continue to wallet
+            </p>
+          </div>
+
+          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
+            <form onSubmit={handleSignIn} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <EmailInput
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onValidChange={setEmailValid}
+                  required
+                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <PasswordInput
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="remember" 
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
+                  />
+                  <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
+                    Remember me
+                  </Label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast({
+                      title: "Forgot password?",
+                      description: "Please contact support to reset your password.",
+                    });
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              
+              <div className="flex justify-end pt-4">
+                <Button 
+                  type="submit" 
+                  disabled={loading || !emailValid}
+                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Log in"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <p className="text-center mt-8 text-white/80">
+            Don't have an account?{' '}
+            <button 
+              onClick={() => setAuthMode("register")}
+              className="text-white font-medium underline underline-offset-4 hover:no-underline"
+            >
+              Get started
+            </button>
           </p>
         </div>
-
-        {/* Card */}
-        <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
-          <form onSubmit={handleSignIn} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <EmailInput
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onValidChange={setEmailValid}
-                required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <PasswordInput
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
-                />
-                <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
-                  Remember me
-                </Label>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  toast({
-                    title: "Forgot password?",
-                    description: "Please contact support to reset your password.",
-                  });
-                }}
-                className="text-sm text-primary hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
-            
-            <div className="flex justify-end pt-4">
-              <Button 
-                type="submit" 
-                disabled={loading || !emailValid}
-                className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  "Log in"
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        {/* Register link */}
-        <p className="text-center mt-8 text-white/80">
-          Don't have an account?{' '}
-          <button 
-            onClick={() => setAuthMode("register")}
-            className="text-white font-medium underline underline-offset-4 hover:no-underline"
-          >
-            Get started
-          </button>
-        </p>
       </div>
-
+      <AuthBottomSections />
     </div>
   );
 }
