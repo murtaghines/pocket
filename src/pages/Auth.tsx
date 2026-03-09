@@ -44,7 +44,7 @@ const STEP_QUESTIONS: Record<RegisterStep, string> = {
 
 const TOTAL_STEPS = 7;
 
-const AUTH_GRADIENT = 'linear-gradient(180deg, #0a0a2e 0%, #1a3fcf 35%, #0439D7 60%, #0439D7 100%)';
+const AUTH_GRADIENT = 'linear-gradient(to right, #0a0a2e 0%, #1a3fcf 40%, #0439D7 80%, #3b5efc 100%)';
 
 function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language || 'en';
