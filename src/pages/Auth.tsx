@@ -492,7 +492,7 @@ export default function Auth() {
           
           <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
             <div className="text-center mb-8">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
                 Get Started
               </h1>
               <p className="text-lg text-white/70 max-w-md mx-auto">
@@ -500,7 +500,7 @@ export default function Auth() {
               </p>
             </div>
 
-            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ minHeight: '420px', maxHeight: '500px' }}>
+            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
               <div className="flex gap-1 mb-6">
                 {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                   <div 
@@ -579,7 +579,7 @@ export default function Auth() {
         
         <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
               Welcome back
             </h1>
             <p className="text-lg text-white/70 max-w-md mx-auto">
@@ -587,8 +587,8 @@ export default function Auth() {
             </p>
           </div>
 
-          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
-            <form onSubmit={handleSignIn} className="space-y-6">
+          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
+            <form onSubmit={handleSignIn} className="space-y-6 flex-1 flex flex-col">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                 <EmailInput
@@ -638,7 +638,7 @@ export default function Auth() {
                 </button>
               </div>
               
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-4 mt-auto">
                 <Button 
                   type="submit" 
                   disabled={loading || !emailValid}
