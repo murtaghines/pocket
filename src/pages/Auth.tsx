@@ -410,7 +410,7 @@ export default function Auth() {
   // REGISTER MODE - Full screen with 7 steps
   if (authMode === "register") {
     return (
-      <div className="min-h-screen bg-primary flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #000033 0%, #0012b3 40%, hsl(242, 100%, 55%) 100%)' }}>
         <LandingHeader />
         
         {/* Full-screen Get Started section */}
@@ -420,7 +420,7 @@ export default function Auth() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
               Get Started
             </h1>
-            <p className="text-lg text-white/80 max-w-md mx-auto">
+            <p className="text-lg text-white/70 max-w-md mx-auto">
               Set up your wallet account in just a few steps
             </p>
           </div>
