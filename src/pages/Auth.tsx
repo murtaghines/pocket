@@ -638,7 +638,7 @@ export default function Auth() {
                 </button>
               </div>
               
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-4 mt-auto">
                 <Button 
                   type="submit" 
                   disabled={loading || !emailValid}
