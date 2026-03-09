@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import walletTextWhite from "@/assets/wallet-text-white.png";
+import pocketLogoWhite from "@/assets/pocket-logo-white.png";
+import pocketIcon from "@/assets/pocket-icon.png";
 
 export function LandingHeader() {
   const location = useLocation();
@@ -11,21 +12,22 @@ export function LandingHeader() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
       <div className="max-w-7xl mx-auto">
-        <nav className="flex items-center justify-between bg-accent/95 backdrop-blur-xl border border-border/50 rounded-full px-6 py-3">
+        <nav className="flex items-center justify-between backdrop-blur-xl border border-white/10 rounded-full px-6 py-3" style={{ background: '#0F4264' }}>
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img src={walletTextWhite} alt="wallet" className="h-6 w-auto" />
+          <Link to="/" className="flex items-center gap-2">
+            <img src={pocketIcon} alt="pocket" className="h-7 w-auto" />
+            <img src={pocketLogoWhite} alt="pocket" className="h-4 w-auto" />
           </Link>
 
           {/* Center Navigation - Desktop */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#features" className="text-sm text-white/60 hover:text-white transition-colors">
               Features
             </a>
-            <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#how-it-works" className="text-sm text-white/60 hover:text-white transition-colors">
               How it works
             </a>
-            <a href="#contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#contact" className="text-sm text-white/60 hover:text-white transition-colors">
               Contact
             </a>
           </div>
@@ -36,7 +38,7 @@ export function LandingHeader() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className={`text-sm ${isLoginMode ? 'font-bold text-white' : ''}`}
+                className={`text-sm text-white/80 hover:text-white hover:bg-white/10 ${isLoginMode ? 'font-bold text-white' : ''}`}
               >
                 Sign in
               </Button>
@@ -44,7 +46,7 @@ export function LandingHeader() {
             <Link to="/auth">
               <Button 
                 size="sm" 
-                className={`text-sm rounded-full px-5 ${isRegisterMode ? 'ring-2 ring-white ring-offset-2 ring-offset-accent' : ''}`}
+                className={`text-sm rounded-full px-5 bg-white text-[#0F4264] hover:bg-white/90 ${isRegisterMode ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0F4264]' : ''}`}
               >
                 Get started
               </Button>

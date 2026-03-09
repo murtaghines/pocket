@@ -12,7 +12,8 @@ import { PasswordStrengthIndicator } from "@/components/ui/password-strength-ind
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
 import { LandingHeader } from "@/components/landing/LandingHeader";
-import walletTextWhite from "@/assets/wallet-text-white.png";
+import pocketLogoWhite from "@/assets/pocket-logo-white.png";
+import pocketIcon from "@/assets/pocket-icon.png";
 
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
@@ -27,7 +28,7 @@ import {
   DEFAULT_EXPENSE_CATEGORIES,
 } from "@/lib/categoryTranslations";
 
-const REMEMBER_EMAIL_KEY = "wallet_remember_email";
+const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
 type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -63,9 +64,13 @@ function AuthBottomSections() {
           <div className="h-px bg-white/20" />
         </div>
       </div>
-      {/* Pre-footer CTA — solid blue like reference */}
-      <section className="relative" style={{ background: '#479bd3' }}>
-        <div className="container max-w-7xl mx-auto px-6 md:px-12 py-24 lg:py-32">
+      {/* Pre-footer CTA — solid blue */}
+      <section className="relative overflow-hidden" style={{ background: '#479bd3' }}>
+        {/* Decorative cloud */}
+        <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-10 pointer-events-none">
+          <img src={pocketIcon} alt="" className="w-full h-full object-contain" />
+        </div>
+        <div className="container max-w-7xl mx-auto px-6 md:px-12 py-24 lg:py-32 relative z-10">
           <div className="max-w-2xl">
             <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-white leading-tight mb-6">
               Take full control of
@@ -73,7 +78,7 @@ function AuthBottomSections() {
               your finances.
             </h2>
             <p className="text-lg md:text-xl text-white/80 mb-10 max-w-xl leading-relaxed">
-              See how wallet helps you organize expenses, investments, and savings. Set up in minutes, not hours.
+              See how pocket helps you organize expenses, investments, and savings. Set up in minutes, not hours.
             </p>
             <Link
               to="/auth"
@@ -94,7 +99,7 @@ function AuthBottomSections() {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link to="/" className="inline-block">
-                <img src={walletTextWhite} alt="wallet" className="h-6 w-auto opacity-90" />
+                <img src={pocketLogoWhite} alt="pocket" className="h-5 w-auto opacity-90" />
               </Link>
             </div>
 
@@ -121,7 +126,7 @@ function AuthBottomSections() {
 
           {/* Bottom copyright */}
           <div className="border-t border-white/10 pt-8">
-            <p className="text-sm text-white/40">© 2026 wallet. All rights reserved.</p>
+            <p className="text-sm text-white/40">© 2026 pocket. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -496,7 +501,7 @@ export default function Auth() {
                 Get Started
               </h1>
               <p className="text-lg text-white/70 max-w-md mx-auto">
-                Set up your wallet account in just a few steps
+                Set up your pocket account in just a few steps
               </p>
             </div>
 
@@ -583,7 +588,7 @@ export default function Auth() {
               Welcome back
             </h1>
             <p className="text-lg text-white/70 max-w-md mx-auto">
-              Sign in to continue to wallet
+              Sign in to continue to pocket
             </p>
           </div>
 
