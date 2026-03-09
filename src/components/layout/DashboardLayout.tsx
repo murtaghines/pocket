@@ -7,7 +7,8 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { NotificationBell } from "./NotificationBell";
-import walletTextBlack from "@/assets/wallet-text-black.png";
+import pocketLogoWhite from "@/assets/pocket-logo-white.png";
+import pocketIcon from "@/assets/pocket-icon.png";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -38,13 +39,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background dashboard-theme">
-      {/* Floating top nav bar */}
+      {/* Floating top nav bar - dark blue */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto">
-          <nav className="flex items-center justify-between bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 md:px-6 py-2.5 shadow-sm">
+          <nav className="flex items-center justify-between backdrop-blur-xl rounded-full px-4 md:px-6 py-2.5 shadow-sm" style={{ background: '#0F4264' }}>
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center flex-shrink-0">
-              <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
+            <Link to="/dashboard" className="flex items-center gap-2 flex-shrink-0">
+              <img src={pocketIcon} alt="pocket" className="h-7 w-auto" />
+              <img src={pocketLogoWhite} alt="pocket" className="h-4 w-auto hidden sm:block" />
             </Link>
 
             {/* Center Navigation - Desktop */}
@@ -58,8 +60,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
                       isActive(item.path)
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-white/20 text-white"
+                        : "text-white/60 hover:text-white hover:bg-white/10"
                     )}
                   >
                     <Icon className="w-4 h-4" />
@@ -77,8 +79,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
                   isActive('/profile')
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-foreground text-background hover:bg-foreground/90"
+                    ? "bg-white text-[#0F4264]"
+                    : "bg-white/20 text-white hover:bg-white/30"
                 )}>
                   {getInitials()}
                 </div>
@@ -89,7 +91,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </header>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-xl border-t border-border/50">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ background: '#0F4264' }}>
         <div className="flex items-center justify-around h-14 px-4">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -100,7 +102,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 to={item.path}
                 className={cn(
                   "flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 rounded-xl transition-all flex-1 max-w-[100px]",
-                  active ? "text-primary" : "text-muted-foreground"
+                  active ? "text-white" : "text-white/50"
                 )}
               >
                 <Icon className="w-5 h-5" />
@@ -109,7 +111,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             );
           })}
         </div>
-        <div className="h-[env(safe-area-inset-bottom,0)] bg-card" />
+        <div className="h-[env(safe-area-inset-bottom,0)]" style={{ background: '#0F4264' }} />
       </nav>
 
       {/* Main content - with top padding for floating nav */}
