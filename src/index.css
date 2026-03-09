@@ -16,7 +16,7 @@
     --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 242 100% 55%;
+    --primary: 204 66% 51%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 12%;
@@ -39,7 +39,7 @@
 
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 242 100% 55%;
+    --ring: 204 66% 51%;
 
     --radius: 0.75rem;
 
@@ -72,7 +72,7 @@
     --category-to-investment: 262 83% 58%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(242 100% 55%) 0%, hsl(242 100% 43%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(204 66% 51%) 0%, hsl(204 75% 36%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(0 0% 7%) 0%, hsl(0 0% 10%) 100%);
     --gradient-expense: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(0 72% 40%) 100%);
     --gradient-income: linear-gradient(135deg, hsl(160 84% 45%) 0%, hsl(160 84% 35%) 100%);
@@ -81,16 +81,16 @@
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
-    --shadow-glow: 0 0 30px hsl(242 100% 55% / 0.2);
+    --shadow-glow: 0 0 30px hsl(204 66% 51% / 0.2);
 
     --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 242 100% 55%;
+    --sidebar-primary: 204 66% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 242 100% 55%;
+    --sidebar-ring: 204 66% 51%;
   }
 
   /* Dashboard light theme - Modern bento aesthetic */
@@ -104,7 +104,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
 
-    --primary: 242 100% 55%;
+    --primary: 204 66% 51%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 96%;
@@ -113,8 +113,8 @@
     --muted: 220 20% 96%;
     --muted-foreground: 220 9% 35%;
 
-    --accent: 242 100% 97%;
-    --accent-foreground: 242 100% 55%;
+    --accent: 204 66% 97%;
+    --accent-foreground: 204 66% 51%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -127,7 +127,7 @@
 
     --border: 220 13% 86%;
     --input: 220 13% 91%;
-    --ring: 242 100% 55%;
+    --ring: 204 66% 51%;
 
     --radius: 0.75rem;
 
@@ -135,7 +135,7 @@
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.02);
     --shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.03), 0 1px 2px -1px rgb(0 0 0 / 0.02);
     --shadow-lg: 0 4px 12px -2px rgb(0 0 0 / 0.05), 0 2px 6px -2px rgb(0 0 0 / 0.02);
-    --shadow-glow: 0 0 20px hsl(242 100% 55% / 0.06);
+    --shadow-glow: 0 0 20px hsl(204 66% 51% / 0.06);
     --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.02), 0 1px 2px -1px rgb(0 0 0 / 0.02);
     --shadow-bento: 0 0 0 1px rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.02);
   }
@@ -151,7 +151,7 @@
     --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 242 100% 55%;
+    --primary: 204 66% 51%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 12%;
@@ -174,9 +174,9 @@
 
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 242 100% 55%;
+    --ring: 204 66% 51%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(242 100% 55%) 0%, hsl(242 100% 43%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(204 66% 51%) 0%, hsl(204 75% 36%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(0 0% 7%) 0%, hsl(0 0% 10%) 100%);
     --gradient-expense: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(0 72% 40%) 100%);
     --gradient-income: linear-gradient(135deg, hsl(160 84% 45%) 0%, hsl(160 84% 35%) 100%);
@@ -184,16 +184,16 @@
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
-    --shadow-glow: 0 0 30px hsl(242 100% 55% / 0.2);
+    --shadow-glow: 0 0 30px hsl(204 66% 51% / 0.2);
 
     --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 242 100% 55%;
+    --sidebar-primary: 204 66% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 242 100% 55%;
+    --sidebar-ring: 204 66% 51%;
   }
 }
 
@@ -275,9 +275,9 @@
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 20px hsl(242 100% 55% / 0.2);
+    box-shadow: 0 0 20px hsl(204 66% 51% / 0.2);
   }
   50% {
-    box-shadow: 0 0 40px hsl(242 100% 55% / 0.4);
+    box-shadow: 0 0 40px hsl(204 66% 51% / 0.4);
   }
 }

@@ -44,7 +44,7 @@ const STEP_QUESTIONS: Record<RegisterStep, string> = {
 
 const TOTAL_STEPS = 7;
 
-const AUTH_GRADIENT = 'linear-gradient(to right, #0a0a2e 0%, #1a3fcf 40%, #0439D7 80%, #3b5efc 100%)';
+const AUTH_GRADIENT = 'linear-gradient(to right, #3391D0 0%, #176AA2 100%)';
 
 function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language || 'en';
@@ -58,13 +58,13 @@ function AuthBottomSections() {
   return (
     <>
       {/* Divider line */}
-      <div style={{ background: '#0439D7' }} className="w-full h-px">
+      <div style={{ background: '#479bd3' }} className="w-full h-px">
         <div className="container max-w-7xl mx-auto px-6 md:px-12">
           <div className="h-px bg-white/20" />
         </div>
       </div>
       {/* Pre-footer CTA — solid blue like reference */}
-      <section className="relative" style={{ background: '#0439D7' }}>
+      <section className="relative" style={{ background: '#479bd3' }}>
         <div className="container max-w-7xl mx-auto px-6 md:px-12 py-24 lg:py-32">
           <div className="max-w-2xl">
             <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-white leading-tight mb-6">
@@ -77,7 +77,7 @@ function AuthBottomSections() {
             </p>
             <Link
               to="/auth"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-[#0439D7] transition-colors"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-[#479bd3] transition-colors"
             >
               <span>Get started free</span>
               <ArrowRight className="w-4 h-4" />
