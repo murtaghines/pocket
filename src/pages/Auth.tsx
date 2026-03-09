@@ -77,7 +77,7 @@ function AuthBottomSections() {
             </p>
             <Link
               to="/auth"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-[#0439D7] transition-colors"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-[#479bd3] transition-colors"
             >
               <span>Get started free</span>
               <ArrowRight className="w-4 h-4" />
