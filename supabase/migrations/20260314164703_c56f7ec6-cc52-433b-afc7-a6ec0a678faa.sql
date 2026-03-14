@@ -1,0 +1,1 @@
+ALTER TABLE public.user_preferences ADD COLUMN IF NOT EXISTS joint_account_split numeric NOT NULL DEFAULT 50;

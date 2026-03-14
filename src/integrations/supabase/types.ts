@@ -723,6 +723,7 @@ export type Database = {
           id: string
           investment_platforms: string[] | null
           joint_account_names: string[] | null
+          joint_account_split: number
           language: string
           locale: string
           onboarding_completed: boolean | null
@@ -737,6 +738,7 @@ export type Database = {
           id?: string
           investment_platforms?: string[] | null
           joint_account_names?: string[] | null
+          joint_account_split?: number
           language?: string
           locale?: string
           onboarding_completed?: boolean | null
@@ -751,6 +753,7 @@ export type Database = {
           id?: string
           investment_platforms?: string[] | null
           joint_account_names?: string[] | null
+          joint_account_split?: number
           language?: string
           locale?: string
           onboarding_completed?: boolean | null
