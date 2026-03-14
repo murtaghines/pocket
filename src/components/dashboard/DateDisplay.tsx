@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { CalendarDays, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export type DashboardView = 'monthly' | 'total';
 
@@ -19,7 +20,7 @@ export function DateDisplay({ currentView, onViewChange }: DateDisplayProps) {
   return (
     <div className="flex items-center gap-4 animate-fade-in">
       {/* Large day number in circle */}
-      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-200 flex items-center justify-center">
+      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-muted flex items-center justify-center">
         <span className="text-2xl md:text-3xl font-bold text-foreground">
           {dayNumber}
         </span>
@@ -38,30 +39,39 @@ export function DateDisplay({ currentView, onViewChange }: DateDisplayProps) {
       {/* Divider */}
       <div className="hidden md:block w-px h-10 bg-border mx-2" />
       
-      {/* View toggle buttons */}
-      <div className="hidden md:flex items-center bg-muted/60 rounded-full p-1 gap-1">
-        <button
-          onClick={() => onViewChange('monthly')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
-            currentView === 'monthly'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <CalendarDays className="w-4 h-4" />
-          {t('views.monthly', 'Mensual')}
-        </button>
-        <button
-          onClick={() => onViewChange('total')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
-            currentView === 'total'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          {t('views.total', 'Total')}
-        </button>
+      {/* View toggle - same pattern as ProfileHeader tabs */}
+      <div className="hidden md:flex items-center gap-3">
+        {currentView === 'monthly' ? (
+          <>
+            <Button variant="default" className="rounded-full gap-2 px-5">
+              <CalendarDays className="w-4 h-4" />
+              {t('views.monthly', 'Monthly')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full bg-muted hover:bg-muted/80"
+              onClick={() => onViewChange('total')}
+            >
+              <BarChart3 className="w-4 h-4 text-foreground" />
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full bg-muted hover:bg-muted/80"
+              onClick={() => onViewChange('monthly')}
+            >
+              <CalendarDays className="w-4 h-4 text-foreground" />
+            </Button>
+            <Button variant="default" className="rounded-full gap-2 px-5">
+              <BarChart3 className="w-4 h-4" />
+              {t('views.total', 'Total')}
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
