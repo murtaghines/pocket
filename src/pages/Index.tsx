@@ -3,8 +3,6 @@ import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
-import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
-import { BalanceChart } from "@/components/dashboard/BalanceChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
@@ -12,7 +10,6 @@ import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonCh
 import { DateDisplay, type DashboardView } from "@/components/dashboard/DateDisplay";
 import { TotalView } from "@/components/dashboard/TotalView";
 
-import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
 
@@ -204,15 +201,10 @@ export default function Index() {
                   />
                 </div>
 
-                {/* Charts Row - Monthly Chart + Investment & Savings sidebar */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                  <div className="lg:col-span-2">
-                    <MonthlyChart data={convertedMonthlyData} />
-                  </div>
-                  <div className="space-y-4">
-                    <InvestmentSummaryCard />
-                    <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
-                  </div>
+                {/* Investment & Savings sidebar */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                  <InvestmentSummaryCard />
+                  <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
                 </div>
 
                 {/* Middle Row */}
@@ -221,26 +213,13 @@ export default function Index() {
                   <TopExpensesCard transactions={transactions} />
                   <WeeklyComparisonChart />
                 </div>
-
-                {/* Balance Chart Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-                  <div className="lg:col-span-3">
-                    <BalanceChart data={convertedMonthlyData} />
-                  </div>
-                  <div className="hidden lg:block" />
-                </div>
-
-                {/* Yearly Chart */}
-                <div className="mb-6">
-                  <YearlyBalanceChart data={convertedMonthlyData} />
-                </div>
-
-                {/* Transactions Table */}
-                <TransactionTable transactions={transactions} />
               </>
             ) : (
               <TotalView monthlyData={convertedMonthlyData} />
             )}
+
+            {/* Transactions Table - Always visible */}
+            <TransactionTable transactions={transactions} />
           </>
         )}
       </main>

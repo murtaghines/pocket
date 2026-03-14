@@ -2,11 +2,13 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
-import { TrendingUp, TrendingDown, Wallet, Scale, PiggyBank, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Scale, PiggyBank, Percent } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, CartesianGrid, ReferenceLine, Cell, LineChart, Line,
 } from "recharts";
+import { MonthlyChart } from "./MonthlyChart";
+import { YearlyBalanceChart } from "./YearlyBalanceChart";
 
 interface MonthlyData {
   month: string;
@@ -21,11 +23,10 @@ interface TotalViewProps {
 
 export function TotalView({ monthlyData }: TotalViewProps) {
   const { t } = useTranslation('dashboard');
-  const { formatCurrency, formatMonth } = useLocalization();
+  const { formatCurrency } = useLocalization();
 
   const hasData = monthlyData.length > 0 && monthlyData.some(d => d.income !== 0 || d.expenses !== 0);
 
-  // Aggregate KPIs
   const totalIncome = monthlyData.reduce((s, d) => s + d.income, 0);
   const totalExpenses = monthlyData.reduce((s, d) => s + d.expenses, 0);
   const totalBalance = monthlyData.reduce((s, d) => s + d.balance, 0);
@@ -40,6 +41,12 @@ export function TotalView({ monthlyData }: TotalViewProps) {
     cumulative += d.balance;
     return { ...d, cumulative };
   });
+
+  // Savings rate evolution per month
+  const savingsRateData = monthlyData.map(d => ({
+    month: d.month,
+    rate: d.income > 0 ? Math.round(((d.income - d.expenses) / d.income) * 100) : 0,
+  }));
 
   const formatMonthLabel = (val: string) => {
     const [, m] = val.split('-');
@@ -56,7 +63,9 @@ export function TotalView({ monthlyData }: TotalViewProps) {
             <div key={i} className="flex items-center gap-2 text-xs">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
               <span className="text-muted-foreground">{item.name}:</span>
-              <span className="font-medium text-foreground">{formatCurrency(item.value)}</span>
+              <span className="font-medium text-foreground">
+                {item.dataKey === 'rate' ? `${item.value}%` : formatCurrency(item.value)}
+              </span>
             </div>
           ))}
         </div>
@@ -186,6 +195,9 @@ export function TotalView({ monthlyData }: TotalViewProps) {
         </CardContent>
       </Card>
 
+      {/* Monthly Balance (moved from monthly view) */}
+      <MonthlyChart data={monthlyData} />
+
       {/* Income vs Expenses Trend */}
       <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '300ms' }}>
         <CardHeader className="pb-2">
@@ -222,7 +234,10 @@ export function TotalView({ monthlyData }: TotalViewProps) {
         </CardContent>
       </Card>
 
-      {/* Monthly Balance (Net) */}
+      {/* Yearly Balance (moved from monthly view) */}
+      <YearlyBalanceChart data={monthlyData} />
+
+      {/* Monthly Net Balance */}
       <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '400ms' }}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -259,6 +274,35 @@ export function TotalView({ monthlyData }: TotalViewProps) {
                   ))}
                 </Bar>
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Savings Rate Evolution (NEW) */}
+      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Percent className="w-4 h-4 text-primary" />
+              </div>
+              {t('views.savingsRateEvolution', 'Savings Rate Evolution')}
+            </CardTitle>
+            <p className="text-sm font-semibold text-foreground">{savingsRate}% avg</p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={savingsRateData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={formatMonthLabel} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={(v) => `${v}%`} width={45} domain={['dataMin - 5', 'dataMax + 5']} />
+                <Tooltip content={<ChartTooltip />} />
+                <ReferenceLine y={savingsRate} stroke="hsl(var(--muted-foreground) / 0.3)" strokeDasharray="3 3" label={{ value: `${savingsRate}%`, position: 'right', fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                <Line type="monotone" dataKey="rate" name={t('views.savingsRate', 'Savings Rate')} stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 4 }} activeDot={{ r: 6, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

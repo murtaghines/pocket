@@ -1,76 +1,40 @@
 
 
-## Plan: Restructure Dashboard Views & Transactions
+## Verificacion y Correccion del Flujo de Periodos Abiertos/Cerrados
 
-### Summary
-Reorganize content between Monthly and Total views, move Transactions outside both views to always show at the bottom, and add new visualizations to the Total view.
+### Problemas Encontrados
 
-### Changes
+Despues de revisar todo el codigo, encontre estos problemas concretos:
 
-**1. `src/pages/Index.tsx`** — Restructure the layout:
+1. **Drag-and-drop ignora el candado**: Si un mes esta cerrado (candado cerrado), el usuario puede arrastrar archivos sobre el slot y el sistema intenta procesarlos. Recien en el backend se rechaza con error "period_closed". La UI deberia bloquearlo antes.
 
-**Monthly view keeps:**
-- Month label + KPIs (Income, Expenses, Balance)
-- Investment Summary + Savings Rate sidebar (but without MonthlyChart)
-- Category Breakdown + Top Expenses + Weekly Comparison
-- Remove: `MonthlyChart` (Monthly Balance), `BalanceChart`, `YearlyBalanceChart`
+2. **No hay validacion client-side antes de subir**: El hook `useMonthlyFileUpload` envia archivos directamente al backend sin verificar si el periodo esta cerrado. Esto causa el error que viste.
 
-**Monthly view new additions:**
-- Bank Distribution chart (if exists) or a simple income breakdown by category
+3. **Race condition al reabrir**: Cuando el usuario hace clic en "Reabrir mes", la query de periodos se invalida y se refresca. Pero si el usuario intenta subir un archivo antes de que termine el refetch, el backend podria seguir viendo el periodo como cerrado.
 
-**Total view gets:**
-- Current TotalView content (KPIs, cumulative, income vs expenses, net balance)
-- Add: `MonthlyChart` (Monthly Balance — moved from monthly)
-- Add: `YearlyBalanceChart` (moved from monthly)
-- Add: Savings Rate evolution line chart (new, inside TotalView)
+### Solucion Propuesta
 
-**Transactions** — Rendered AFTER the view conditional block, always visible. Sort descending by date (most recent first).
+#### 1. Bloquear drag-and-drop en meses cerrados
+En `MonthUploadSlot.tsx`, el handler `handleDrop` debe verificar `isClosed` y mostrar un toast de advertencia en vez de intentar subir.
 
-**2. `src/components/dashboard/TotalView.tsx`** — Add props for:
-- `MonthlyChart` data to render the monthly balance chart
-- `YearlyBalanceChart` data  
-- New: Savings Rate evolution per month (line chart showing % saved each month)
-- New: Average monthly income/expenses comparison (horizontal bar or summary)
+#### 2. Bloquear el area de upload cuando esta cerrado
+El area de upload (drop zone vacia) y el boton "Add more files" ya se ocultan correctamente cuando `isClosed` es true. Pero el drag-and-drop sigue activo. Se agregara la verificacion ahi.
 
-**3. `src/components/dashboard/TransactionTable.tsx`** — Ensure transactions are sorted descending by date (most recent first). Currently likely already handled but will verify the sort.
+#### 3. Pasar el estado del periodo al hook de upload
+Modificar `addFilesForMonth` para aceptar un parametro opcional de estado del periodo, o hacer la verificacion directamente en `MonthUploadSlot` antes de llamar a `onAddFiles`.
 
-### Layout Structure After Changes
+### Cambios Tecnicos
 
-```text
-┌─────────────────────────────────────────────┐
-│  Date Display  [Monthly] [Total]   Greeting │
-├─────────────────────────────────────────────┤
-│                                             │
-│  IF MONTHLY:                                │
-│  ┌─────────┬──────────┬──────────┐          │
-│  │ Income  │ Expenses │ Balance  │  KPIs    │
-│  ├─────────┴──┬───────┴──────────┤          │
-│  │ Investment │ Savings Rate     │  Sidebar │
-│  ├────────┬───┴────┬─────────────┤          │
-│  │Category│Top Exp │ This Week   │          │
-│  └────────┴────────┴─────────────┘          │
-│                                             │
-│  IF TOTAL:                                  │
-│  ┌──────┬───────┬───────┬────────┐          │
-│  │Tot.In│Tot.Ex │Saved  │Sav.Rate│  KPIs   │
-│  ├──────┴───────┴───────┴────────┤          │
-│  │ Cumulative Balance Area       │          │
-│  │ Monthly Balance (moved here)  │          │
-│  │ Income vs Expenses Bars       │          │
-│  │ Yearly Balance (moved here)   │          │
-│  │ Monthly Net Balance           │          │
-│  │ Savings Rate Evolution (NEW)  │          │
-│  └───────────────────────────────┘          │
-│                                             │
-│  ALWAYS (both views):                       │
-│  ┌───────────────────────────────┐          │
-│  │ Transactions Table            │          │
-│  │ (all data, sorted desc)       │          │
-│  └───────────────────────────────┘          │
-└─────────────────────────────────────────────┘
-```
+**Archivo: `src/components/profile/MonthUploadSlot.tsx`**
+- En `handleDrop`: agregar verificacion `if (isClosed)` al inicio, mostrando un toast "Este mes esta cerrado. Reabrilo para subir archivos" y haciendo return sin procesar.
+- En `handleFileInput`: agregar la misma verificacion `if (isClosed)`.
+- Deshabilitar visualmente el area de drag cuando el mes esta cerrado (agregar clase CSS de opacidad reducida y cursor no permitido).
 
-### Files to modify
-1. **`src/pages/Index.tsx`** — Remove MonthlyChart, BalanceChart, YearlyBalanceChart from monthly view; pass them to TotalView; move TransactionTable outside the conditional
-2. **`src/components/dashboard/TotalView.tsx`** — Accept and render MonthlyChart + YearlyBalanceChart components; add savings rate evolution line chart
+**Archivo: `src/hooks/useMonthlyFileUpload.tsx`**
+- No requiere cambios, la validacion se hara en la UI antes de llamar a `addFilesForMonth`.
+
+### Resultado Esperado
+- Si el candado esta cerrado: no se puede subir de ninguna forma (ni drag, ni click, ni input). Se muestra un mensaje claro.
+- Si el candado esta abierto: funciona normal.
+- El backend sigue como segunda linea de defensa por si algo pasa.
 
