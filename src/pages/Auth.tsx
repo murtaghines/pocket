@@ -18,9 +18,8 @@ import pocketIcon from "@/assets/pocket-icon.png";
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
 import { StepCountry } from "@/components/onboarding/StepCountry";
-import { StepCurrency } from "@/components/onboarding/StepCurrency";
-import { StepIncomeCategories } from "@/components/onboarding/StepIncomeCategories";
-import { StepExpenseCategories } from "@/components/onboarding/StepExpenseCategories";
+import { StepInvestments } from "@/components/onboarding/StepInvestments";
+import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
 import { StepPassword } from "@/components/onboarding/StepPassword";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
 import {
@@ -31,19 +30,18 @@ import {
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 const STEP_QUESTIONS: Record<RegisterStep, string> = {
   1: "What's your name?",
   2: "What's your email?",
   3: "Where are you located?",
-  4: "What's your base currency?",
-  5: "Which income categories apply to you?",
-  6: "Which expense categories do you track?",
-  7: "Create your password",
+  4: "Do you invest?",
+  5: "Do you share finances?",
+  6: "Create your password",
 };
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 6;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, #3391D0 0%, #176AA2 100%)';
 
@@ -156,13 +154,14 @@ export default function Auth() {
   }, [modeFromUrl]);
   const [registerStep, setRegisterStep] = useState<RegisterStep>(1);
   
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [emailValid, setEmailValid] = useState(false);
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("EUR");
-  const [incomeCategories, setIncomeCategories] = useState<string[]>(DEFAULT_INCOME_CATEGORIES);
-  const [expenseCategories, setExpenseCategories] = useState<string[]>(DEFAULT_EXPENSE_CATEGORIES);
+  const [investmentPlatforms, setInvestmentPlatforms] = useState<string[]>([]);
+  const [jointAccountNames, setJointAccountNames] = useState<string[]>([]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [language] = useState(detectBrowserLanguage());
@@ -336,11 +335,7 @@ export default function Auth() {
 
     const redirectUrl = `${window.location.origin}/`;
 
-    const nameParts = fullName.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-
-    const allCategories = [...incomeCategories, ...expenseCategories];
+    const allCategories = [...DEFAULT_INCOME_CATEGORIES, ...DEFAULT_EXPENSE_CATEGORIES];
     const localeMap: Record<string, string> = {
       en: 'en-US',
       es: 'es-ES',
@@ -353,8 +348,8 @@ export default function Auth() {
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          first_name: firstName,
-          last_name: lastName,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
         }
       }
     });
@@ -376,9 +371,21 @@ export default function Auth() {
             language: language,
             locale: localeMap[language] || 'en-US',
             onboarding_completed: true,
+            investment_platforms: investmentPlatforms,
+            joint_account_names: jointAccountNames,
           });
         } catch (prefError) {
           console.error('Error saving preferences:', prefError);
+        }
+
+        // Also update profiles with new fields
+        try {
+          await supabase.from('profiles').update({
+            investment_platforms: investmentPlatforms,
+            joint_account_names: jointAccountNames,
+          }).eq('user_id', data.user.id);
+        } catch (profileError) {
+          console.error('Error updating profile:', profileError);
         }
       }
       
@@ -426,18 +433,16 @@ export default function Auth() {
   const canProceedStep = (): boolean => {
     switch (registerStep) {
       case 1:
-        return fullName.trim().length > 0;
+        return firstName.trim().length > 0;
       case 2:
         return emailValid;
       case 3:
-        return country.length > 0;
+        return country.length > 0 && currency.length > 0;
       case 4:
-        return currency.length > 0;
+        return true; // optional
       case 5:
-        return incomeCategories.length > 0;
+        return true; // optional
       case 6:
-        return expenseCategories.length > 0;
-      case 7:
         return password.length >= 6 && password === confirmPassword;
       default:
         return true;
@@ -463,18 +468,16 @@ export default function Auth() {
   const renderRegisterStep = () => {
     switch (registerStep) {
       case 1:
-        return <StepName name={fullName} onNameChange={setFullName} />;
+        return <StepName firstName={firstName} lastName={lastName} onFirstNameChange={setFirstName} onLastNameChange={setLastName} />;
       case 2:
         return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
       case 3:
-        return <StepCountry country={country} onCountryChange={setCountry} />;
+        return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
       case 4:
-        return <StepCurrency currency={currency} onCurrencyChange={setCurrency} />;
+        return <StepInvestments country={country} selectedPlatforms={investmentPlatforms} onPlatformsChange={setInvestmentPlatforms} />;
       case 5:
-        return <StepIncomeCategories selectedCategories={incomeCategories} onCategoriesChange={setIncomeCategories} />;
+        return <StepJointAccount jointAccountNames={jointAccountNames} onJointAccountNamesChange={setJointAccountNames} />;
       case 6:
-        return <StepExpenseCategories selectedCategories={expenseCategories} onCategoriesChange={setExpenseCategories} />;
-      case 7:
         return (
           <StepPassword 
             password={password} 

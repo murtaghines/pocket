@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { StepLanguage } from './StepLanguage';
 import { StepCountry } from './StepCountry';
-import { StepCurrency } from './StepCurrency';
-import { StepCategories } from './StepCategories';
+import { StepInvestments } from './StepInvestments';
+import { StepJointAccount } from './StepJointAccount';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
@@ -15,6 +15,7 @@ import {
   DEFAULT_EXPENSE_CATEGORIES,
 } from '@/lib/categoryTranslations';
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
+import { COUNTRY_CURRENCY_MAP } from '@/lib/onboardingConstants';
 
 interface OnboardingModalProps {
   open: boolean;
@@ -24,10 +25,9 @@ interface OnboardingModalProps {
 export interface OnboardingData {
   country: string;
   currency: string;
-  categories: string[];
-  incomeCategories: string[];
-  expenseCategories: string[];
   language: string;
+  investmentPlatforms: string[];
+  jointAccountNames: string[];
 }
 
 const TOTAL_STEPS = 4;
@@ -47,14 +47,12 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const { updatePreferences } = useUserPreferences();
   const { toast } = useToast();
 
-  // Initialize with browser language
   const [data, setData] = useState<OnboardingData>(() => ({
     country: '',
     currency: 'EUR',
-    categories: [],
-    incomeCategories: DEFAULT_INCOME_CATEGORIES,
-    expenseCategories: DEFAULT_EXPENSE_CATEGORIES,
     language: detectBrowserLanguage(),
+    investmentPlatforms: [],
+    jointAccountNames: [],
   }));
 
   const updateData = (updates: Partial<OnboardingData>) => {
@@ -76,9 +74,8 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const handleComplete = async () => {
     setSaving(true);
     try {
-      const allCategories = [...data.incomeCategories, ...data.expenseCategories];
+      const allCategories = [...DEFAULT_INCOME_CATEGORIES, ...DEFAULT_EXPENSE_CATEGORIES];
       
-      // Map language to locale
       const localeMap: Record<string, string> = {
         en: 'en-US',
         es: 'es-ES',
@@ -92,9 +89,10 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         language: data.language,
         locale: localeMap[data.language] || 'en-US',
         onboarding_completed: true,
+        investment_platforms: data.investmentPlatforms,
+        joint_account_names: data.jointAccountNames,
       } as any);
       
-      // Persist language to localStorage for i18next
       localStorage.setItem('i18nextLng', data.language);
 
       toast({
@@ -119,11 +117,11 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 1:
         return !!data.language;
       case 2:
-        return !!data.country;
+        return !!data.country && !!data.currency;
       case 3:
-        return !!data.currency;
+        return true; // optional
       case 4:
-        return data.incomeCategories.length > 0 && data.expenseCategories.length > 0;
+        return true; // optional
       default:
         return true;
     }
@@ -136,19 +134,31 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 2:
         return (
           <StepCountry 
-            country={data.country} 
-            onCountryChange={(country) => updateData({ country })} 
+            country={data.country}
+            currency={data.currency}
+            onCountryChange={(country) => {
+              updateData({ country });
+              const mapped = COUNTRY_CURRENCY_MAP[country];
+              if (mapped) updateData({ country, currency: mapped });
+            }}
+            onCurrencyChange={(currency) => updateData({ currency })}
           />
         );
       case 3:
         return (
-          <StepCurrency 
-            currency={data.currency} 
-            onCurrencyChange={(currency) => updateData({ currency })} 
+          <StepInvestments
+            country={data.country}
+            selectedPlatforms={data.investmentPlatforms}
+            onPlatformsChange={(platforms) => updateData({ investmentPlatforms: platforms })}
           />
         );
       case 4:
-        return <StepCategories data={data} updateData={updateData} />;
+        return (
+          <StepJointAccount
+            jointAccountNames={data.jointAccountNames}
+            onJointAccountNamesChange={(names) => updateData({ jointAccountNames: names })}
+          />
+        );
       default:
         return null;
     }
@@ -159,11 +169,11 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 1:
         return t('onboarding.welcome', 'Welcome to wallet! 👋');
       case 2:
-        return t('onboarding.yourCountry', 'Your Country');
+        return t('onboarding.yourCountry', 'Your Country & Currency');
       case 3:
-        return t('onboarding.baseCurrency', 'Base Currency');
+        return t('onboarding.investments', 'Do you invest?');
       case 4:
-        return t('onboarding.categories', 'Categories');
+        return t('onboarding.jointAccount', 'Shared finances?');
       default:
         return '';
     }
