@@ -530,7 +530,7 @@ export default function Auth() {
                 {STEP_QUESTIONS[registerStep]}
               </h2>
 
-              <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="min-h-0">
                 {renderRegisterStep()}
               </div>
 
