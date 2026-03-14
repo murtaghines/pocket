@@ -76,6 +76,7 @@ interface DbTransaction {
   linked_transaction_id: string | null;
   domain: AppDomain | null;
   account_id: string | null;
+  running_balance: number | null;
 }
 
 interface UseTransactionsOptions {
