@@ -93,7 +93,7 @@ export default function Index() {
     ? Math.round(((convertedCurrentMonth.balance - convertedPreviousMonth.balance) / Math.abs(convertedPreviousMonth.balance)) * 100)
     : undefined;
 
-  const currentMonthName = formatMonth(new Date());
+  
 
   const convertedMonthlyData = monthlyData.map(m => ({
     ...m,
