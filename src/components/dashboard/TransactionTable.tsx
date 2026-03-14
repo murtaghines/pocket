@@ -120,7 +120,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <Select 
               value={categoryFilter} 
               onValueChange={setCategoryFilter}
-              disabled={movementFilter === 'transfer' || availableCategories.length === 0}
+              disabled={availableCategories.length === 0}
             >
               <SelectTrigger className="w-full sm:w-[160px] rounded-xl">
                 <SelectValue placeholder={tc('viewAll')} />
