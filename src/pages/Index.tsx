@@ -9,7 +9,8 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
-import { DateDisplay } from "@/components/dashboard/DateDisplay";
+import { DateDisplay, type DashboardView } from "@/components/dashboard/DateDisplay";
+import { TotalView } from "@/components/dashboard/TotalView";
 
 import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
