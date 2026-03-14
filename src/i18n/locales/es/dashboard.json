@@ -106,6 +106,22 @@
     "investments": "Inversiones",
     "goToUpload": "Subir archivos"
   },
+  "views": {
+    "monthly": "Mensual",
+    "total": "Total",
+    "historicalOverview": "Vista Histórica",
+    "monthsTracked": "{{count}} meses registrados",
+    "totalIncome": "Ingresos Totales",
+    "totalExpenses": "Gastos Totales",
+    "totalSaved": "Total Ahorrado",
+    "savingsRate": "Tasa de Ahorro",
+    "overallAverage": "promedio general",
+    "month": "mes",
+    "cumulativeBalance": "Balance Acumulado",
+    "accumulated": "Acumulado",
+    "incomeVsExpenses": "Tendencia Ingresos vs Gastos",
+    "monthlyNet": "Balance Neto Mensual"
+  },
   "notifications": {
     "title": "Notificaciones",
     "uploadReminder": "Sube los extractos de {{month}}",

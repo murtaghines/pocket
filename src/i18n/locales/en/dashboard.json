@@ -137,6 +137,22 @@
     "file": "file",
     "files": "files"
   },
+  "views": {
+    "monthly": "Monthly",
+    "total": "Total",
+    "historicalOverview": "Historical Overview",
+    "monthsTracked": "{{count}} months tracked",
+    "totalIncome": "Total Income",
+    "totalExpenses": "Total Expenses",
+    "totalSaved": "Total Saved",
+    "savingsRate": "Savings Rate",
+    "overallAverage": "overall average",
+    "month": "mo",
+    "cumulativeBalance": "Cumulative Balance",
+    "accumulated": "Accumulated",
+    "incomeVsExpenses": "Income vs Expenses Trend",
+    "monthlyNet": "Monthly Net Balance"
+  },
   "notifications": {
     "title": "Notifications",
     "uploadReminder": "Upload {{month}} statements",
