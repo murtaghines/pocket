@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { NotificationBell } from "./NotificationBell";
 import pocketLogoWhite from "@/assets/pocket-logo-white.png";
-
+import pocketDecoYellow from "@/assets/pocket-deco-yellow.png";
+import cloudDecoGray from "@/assets/cloud-deco-gray.png";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -38,7 +39,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme">
+    <div className="min-h-screen bg-background dashboard-theme relative overflow-hidden">
+      {/* Decorative brand elements */}
+      <img 
+        src={pocketDecoYellow} 
+        alt="" 
+        className="fixed top-0 left-1/2 -translate-x-1/2 w-28 h-auto z-0 opacity-80 pointer-events-none select-none"
+        aria-hidden="true"
+      />
+      <img 
+        src={cloudDecoGray} 
+        alt="" 
+        className="fixed top-48 -left-8 w-36 h-auto z-0 opacity-40 pointer-events-none select-none"
+        aria-hidden="true"
+      />
+      <img 
+        src={cloudDecoGray} 
+        alt="" 
+        className="fixed bottom-24 -right-6 w-32 h-auto z-0 opacity-30 pointer-events-none select-none"
+        aria-hidden="true"
+      />
+
       {/* Floating top nav bar - dark blue */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto">
@@ -114,7 +135,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </nav>
 
       {/* Main content - with top padding for floating nav */}
-      <div className="pt-20 pb-20 md:pb-0 min-h-screen">
+      <div className="pt-20 pb-20 md:pb-0 min-h-screen relative z-10">
         {children}
       </div>
     </div>

@@ -96,7 +96,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   };
 
   return (
-    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+    <Card variant="bento" className="animate-slide-up border-0 shadow-none bg-transparent" style={{ animationDelay: '400ms' }}>
       <CardHeader className="pb-4">
         <CardTitle className="text-base flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">

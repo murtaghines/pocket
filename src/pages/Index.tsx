@@ -132,11 +132,10 @@ export default function Index() {
       )}
       
       <main className="container px-4 md:px-6 py-6">
-        {/* Welcome Section - Matching reference design */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-fade-in">
+        {/* Welcome Section */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 animate-fade-in">
           <DateDisplay currentView={currentView} onViewChange={setCurrentView} />
           
-          {/* Greeting on the right - with proper text sizing and BLACK color */}
           <div className="hidden md:block text-right flex-shrink-0">
             <h2 className="text-xl lg:text-2xl font-bold whitespace-nowrap text-foreground">
               {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
@@ -157,83 +156,88 @@ export default function Index() {
           <>
             <EmptyStateBanner hasData={transactions.length > 0} />
 
-            {currentView === 'monthly' ? (
-              <>
-                {/* Month label - shows the last uploaded month, not current calendar month */}
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold capitalize text-foreground">
-                    {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
-                  </h3>
-                  {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
-                    </p>
-                  )}
-                  {hasPreviousData && (
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
-                    </p>
-                  )}
-                </div>
+            {/* === WHITE SECTION 1: Analytics === */}
+            <div className="bg-card rounded-3xl p-6 md:p-8 mb-6" style={{ boxShadow: 'var(--shadow-section)' }}>
+              {currentView === 'monthly' ? (
+                <>
+                  {/* Month label */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold capitalize text-foreground">
+                      {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+                    </h3>
+                    {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+                      </p>
+                    )}
+                    {hasPreviousData && (
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
+                      </p>
+                    )}
+                  </div>
 
-                {/* KPIs Row - 3 columns full width */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <StatCard
-                    title={t('stats.income')}
-                    value={formatCurrency(convertedCurrentMonth.income)}
-                    change={incomeChange}
-                    changeLabel={t('stats.vsLastMonth')}
-                    type="income"
-                    icon={<TrendingUp className="w-5 h-5" />}
-                    delay={0}
-                  />
-                  <StatCard
-                    title={t('stats.expenses')}
-                    value={formatCurrency(convertedCurrentMonth.expenses)}
-                    change={expenseChange}
-                    changeLabel={t('stats.vsLastMonth')}
-                    type="expense"
-                    icon={<TrendingDown className="w-5 h-5" />}
-                    delay={100}
-                  />
-                  <StatCard
-                    title={t('stats.balance')}
-                    value={formatCurrency(convertedCurrentMonth.balance)}
-                    change={balanceChange}
-                    changeLabel={t('stats.vsLastMonth')}
-                    type="balance"
-                    icon={<Wallet className="w-5 h-5" />}
-                    delay={200}
-                  />
-                </div>
+                  {/* KPIs Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <StatCard
+                      title={t('stats.income')}
+                      value={formatCurrency(convertedCurrentMonth.income)}
+                      change={incomeChange}
+                      changeLabel={t('stats.vsLastMonth')}
+                      type="income"
+                      icon={<TrendingUp className="w-5 h-5" />}
+                      delay={0}
+                    />
+                    <StatCard
+                      title={t('stats.expenses')}
+                      value={formatCurrency(convertedCurrentMonth.expenses)}
+                      change={expenseChange}
+                      changeLabel={t('stats.vsLastMonth')}
+                      type="expense"
+                      icon={<TrendingDown className="w-5 h-5" />}
+                      delay={100}
+                    />
+                    <StatCard
+                      title={t('stats.balance')}
+                      value={formatCurrency(convertedCurrentMonth.balance)}
+                      change={balanceChange}
+                      changeLabel={t('stats.vsLastMonth')}
+                      type="balance"
+                      icon={<Wallet className="w-5 h-5" />}
+                      delay={200}
+                    />
+                  </div>
 
-                {/* Investment & Savings sidebar */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                  <InvestmentSummaryCard />
-                  <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
-                </div>
+                  {/* Investment & Savings */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                    <InvestmentSummaryCard />
+                    <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+                  </div>
 
-                {/* Middle Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  <CategoryChart data={convertedCategoryData} />
-                  <TopExpensesCard transactions={transactions} />
-                  <WeeklyComparisonChart />
-                </div>
-              </>
-            ) : (
-              <TotalView monthlyData={convertedMonthlyData} />
-            )}
+                  {/* Charts Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <CategoryChart data={convertedCategoryData} />
+                    <TopExpensesCard transactions={transactions} />
+                    <WeeklyComparisonChart />
+                  </div>
+                </>
+              ) : (
+                <TotalView monthlyData={convertedMonthlyData} />
+              )}
+            </div>
 
-            {/* Transactions Table - Always visible */}
-            <TransactionTable transactions={transactions} />
+            {/* === WHITE SECTION 2: Transactions === */}
+            <div className="bg-card rounded-3xl p-6 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
+              <TransactionTable transactions={transactions} />
+            </div>
           </>
         )}
       </main>
 
-      <footer className="border-t border-border/50 mt-12">
+      <footer className="mt-12 relative z-10">
         <div className="container px-4 md:px-6 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            wallet
+            pocket
           </p>
         </div>
       </footer>
