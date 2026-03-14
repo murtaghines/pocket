@@ -159,84 +159,88 @@ export default function Index() {
           <>
             <EmptyStateBanner hasData={transactions.length > 0} />
 
-            {/* Month label - shows the last uploaded month, not current calendar month */}
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold capitalize text-foreground">
-                {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
-              </h3>
-              {hasPreviousData && (
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
-                </p>
-              )}
-            </div>
+            {currentView === 'monthly' ? (
+              <>
+                {/* Month label - shows the last uploaded month, not current calendar month */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold capitalize text-foreground">
+                    {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+                  </h3>
+                  {hasPreviousData && (
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
+                    </p>
+                  )}
+                </div>
 
-            {/* KPIs Row - 3 columns full width */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <StatCard
-                title={t('stats.income')}
-                value={formatCurrency(convertedCurrentMonth.income)}
-                change={incomeChange}
-                changeLabel={t('stats.vsLastMonth')}
-                type="income"
-                icon={<TrendingUp className="w-5 h-5" />}
-                delay={0}
-              />
-              <StatCard
-                title={t('stats.expenses')}
-                value={formatCurrency(convertedCurrentMonth.expenses)}
-                change={expenseChange}
-                changeLabel={t('stats.vsLastMonth')}
-                type="expense"
-                icon={<TrendingDown className="w-5 h-5" />}
-                delay={100}
-              />
-              <StatCard
-                title={t('stats.balance')}
-                value={formatCurrency(convertedCurrentMonth.balance)}
-                change={balanceChange}
-                changeLabel={t('stats.vsLastMonth')}
-                type="balance"
-                icon={<Wallet className="w-5 h-5" />}
-                delay={200}
-              />
-            </div>
+                {/* KPIs Row - 3 columns full width */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <StatCard
+                    title={t('stats.income')}
+                    value={formatCurrency(convertedCurrentMonth.income)}
+                    change={incomeChange}
+                    changeLabel={t('stats.vsLastMonth')}
+                    type="income"
+                    icon={<TrendingUp className="w-5 h-5" />}
+                    delay={0}
+                  />
+                  <StatCard
+                    title={t('stats.expenses')}
+                    value={formatCurrency(convertedCurrentMonth.expenses)}
+                    change={expenseChange}
+                    changeLabel={t('stats.vsLastMonth')}
+                    type="expense"
+                    icon={<TrendingDown className="w-5 h-5" />}
+                    delay={100}
+                  />
+                  <StatCard
+                    title={t('stats.balance')}
+                    value={formatCurrency(convertedCurrentMonth.balance)}
+                    change={balanceChange}
+                    changeLabel={t('stats.vsLastMonth')}
+                    type="balance"
+                    icon={<Wallet className="w-5 h-5" />}
+                    delay={200}
+                  />
+                </div>
 
-            {/* Charts Row - Monthly Chart + Investment & Savings sidebar */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              <div className="lg:col-span-2">
-                <MonthlyChart data={convertedMonthlyData} />
-              </div>
-              <div className="space-y-4">
-                <InvestmentSummaryCard />
-                <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
-              </div>
-            </div>
+                {/* Charts Row - Monthly Chart + Investment & Savings sidebar */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                  <div className="lg:col-span-2">
+                    <MonthlyChart data={convertedMonthlyData} />
+                  </div>
+                  <div className="space-y-4">
+                    <InvestmentSummaryCard />
+                    <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+                  </div>
+                </div>
 
-            {/* Middle Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              <CategoryChart data={convertedCategoryData} />
-              <TopExpensesCard transactions={transactions} />
-              <WeeklyComparisonChart />
-            </div>
+                {/* Middle Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  <CategoryChart data={convertedCategoryData} />
+                  <TopExpensesCard transactions={transactions} />
+                  <WeeklyComparisonChart />
+                </div>
 
-            {/* Balance Chart Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-              <div className="lg:col-span-3">
-                <BalanceChart data={convertedMonthlyData} />
-              </div>
-              <div className="hidden lg:block">
-                {/* Yearly summary or additional card */}
-              </div>
-            </div>
+                {/* Balance Chart Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+                  <div className="lg:col-span-3">
+                    <BalanceChart data={convertedMonthlyData} />
+                  </div>
+                  <div className="hidden lg:block" />
+                </div>
 
-            {/* Yearly Chart */}
-            <div className="mb-6">
-              <YearlyBalanceChart data={convertedMonthlyData} />
-            </div>
+                {/* Yearly Chart */}
+                <div className="mb-6">
+                  <YearlyBalanceChart data={convertedMonthlyData} />
+                </div>
 
-            {/* Transactions Table */}
-            <TransactionTable transactions={transactions} />
+                {/* Transactions Table */}
+                <TransactionTable transactions={transactions} />
+              </>
+            ) : (
+              <TotalView monthlyData={convertedMonthlyData} />
+            )}
           </>
         )}
       </main>
