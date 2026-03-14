@@ -164,17 +164,17 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       </CardHeader>
       <CardContent>
         <div className="rounded-2xl border border-border/50 overflow-hidden">
-          <Table>
+          <Table className="table-auto">
              <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="w-[60px] hidden sm:table-cell">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
-                <TableHead className="w-[70px] hidden sm:table-cell">{t('transactions.date')}</TableHead>
+                <TableHead className="hidden sm:table-cell whitespace-nowrap">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
+                <TableHead className="hidden sm:table-cell whitespace-nowrap">{t('transactions.date')}</TableHead>
                 <TableHead>{t('transactions.description')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('transactions.category')}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('transactions.bank', { defaultValue: 'Account' })}</TableHead>
-                <TableHead className="text-right">{t('transactions.amount')}</TableHead>
-                <TableHead className="text-right hidden lg:table-cell">{t('transactions.balance', { defaultValue: 'Balance' })}</TableHead>
+                <TableHead className="hidden md:table-cell whitespace-nowrap">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
+                <TableHead className="hidden md:table-cell whitespace-nowrap">{t('transactions.category')}</TableHead>
+                <TableHead className="hidden lg:table-cell whitespace-nowrap">{t('transactions.bank', { defaultValue: 'Account' })}</TableHead>
+                <TableHead className="text-right whitespace-nowrap">{t('transactions.amount')}</TableHead>
+                <TableHead className="text-right hidden lg:table-cell whitespace-nowrap">{t('transactions.balance', { defaultValue: 'Balance' })}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
