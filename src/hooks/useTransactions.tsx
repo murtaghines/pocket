@@ -162,25 +162,32 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
   const openingBalanceByMonth: Record<string, number> = (() => {
     if (!transactions.length) return {};
     
-    // Group transactions by month, sorted by date ascending
-    const byMonth: Record<string, Transaction[]> = {};
+    // Group by month -> bank -> transactions
+    const byMonthBank: Record<string, Record<string, Transaction[]>> = {};
     for (const tx of transactions) {
       const monthKey = tx.date.substring(0, 7);
-      if (!byMonth[monthKey]) byMonth[monthKey] = [];
-      byMonth[monthKey].push(tx);
+      if (!byMonthBank[monthKey]) byMonthBank[monthKey] = {};
+      if (!byMonthBank[monthKey][tx.bank]) byMonthBank[monthKey][tx.bank] = [];
+      byMonthBank[monthKey][tx.bank].push(tx);
     }
     
     const result: Record<string, number> = {};
     
-    for (const [monthKey, txs] of Object.entries(byMonth)) {
-      // Sort ascending by date
-      const sorted = [...txs].sort((a, b) => a.date.localeCompare(b.date));
+    for (const [monthKey, banks] of Object.entries(byMonthBank)) {
+      let totalOpening = 0;
+      let hasAnyBalance = false;
       
-      // Find earliest transaction with a running balance
-      const firstWithBalance = sorted.find(t => t.runningBalance != null);
-      if (firstWithBalance && firstWithBalance.runningBalance != null) {
-        // Opening balance = running_balance of first tx minus the tx's own amount
-        result[monthKey] = Math.round((firstWithBalance.runningBalance - firstWithBalance.amount) * 100) / 100;
+      for (const [, txs] of Object.entries(banks)) {
+        const sorted = [...txs].sort((a, b) => a.date.localeCompare(b.date));
+        const firstWithBalance = sorted.find(t => t.runningBalance != null);
+        if (firstWithBalance && firstWithBalance.runningBalance != null) {
+          totalOpening += firstWithBalance.runningBalance - firstWithBalance.amount;
+          hasAnyBalance = true;
+        }
+      }
+      
+      if (hasAnyBalance) {
+        result[monthKey] = Math.round(totalOpening * 100) / 100;
       }
     }
     
