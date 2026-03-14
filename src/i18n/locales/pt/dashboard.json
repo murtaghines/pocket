@@ -17,7 +17,8 @@
     "savingsRate": "Taxa de Poupança",
     "vsLastMonth": "vs mês anterior",
     "thisMonth": "este mês",
-    "previousBalance": "Saldo do mês anterior"
+    "previousBalance": "Saldo do mês anterior",
+    "openingBalance": "Saldo inicial"
   },
   "charts": {
     "monthlyBalance": "Saldo Mensal",
