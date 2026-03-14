@@ -30,6 +30,7 @@ export const categoryLabels: Record<string, string> = {
   // TRANSFER categories
   own_transfer: 'Own Account',
   to_investment: 'To Investment',
+  to_joint_account: 'To Joint Account',
 };
 
 // Movement type labels
