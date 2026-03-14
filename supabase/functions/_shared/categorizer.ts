@@ -62,7 +62,7 @@ export type ExpenseCategory =
   | 'insurance'
   | 'other_expense';
 
-export type TransferCategory = 'own_transfer' | 'to_investment';
+export type TransferCategory = 'own_transfer' | 'to_investment' | 'to_joint_account';
 export type Category = IncomeCategory | ExpenseCategory | TransferCategory;
 
 export interface CategorizationResult {
@@ -315,6 +315,15 @@ const RULE_BUCKETS: RuleBucket[] = [
       'YIELD\\s*EARNED',
       '401K\\s*DISTRIBUTION',
       'IRA\\s*DISTRIBUTION',
+      // EN — interest paid by neobanks / savings accounts
+      'NET\\s*INTEREST\\s*PAID',
+      'INTEREST\\s*PAID\\s*TO',
+      'INTEREST\\s*EARNED',
+      'INTEREST\\s*PAYMENT',
+      'INTEREST\\s*CREDIT',
+      'ANNUAL\\s*INTEREST',
+      'MONTHLY\\s*INTEREST',
+      'ACCRUED\\s*INTEREST',
     ], 0.99),
   },
 
@@ -494,6 +503,11 @@ const RULE_BUCKETS: RuleBucket[] = [
       'N26\\s*SPACES',
       'CUENTA\\s*REMUNERADA',
       'CUENTA\\s*AHORRO\\s*PLUS',
+      // ── Generic savings sub-account keywords (without bank prefix) ─
+      'TO\\s*INSTANT\\s*ACCESS\\s*SAVINGS',
+      'TO\\s*SAVINGS\\s*ACCOUNT',
+      'TO\\s*SAVINGS\\s*POT',
+      'INSTANT\\s*ACCESS\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
       // ── Generic investment movement keywords ──────────────
       // Only phrases that unambiguously mean "moving money to invest"
       'TRASPASO\\s*FOND',
@@ -513,6 +527,27 @@ const RULE_BUCKETS: RuleBucket[] = [
       'STOCKS\\s*AND\\s*SHARES\\s*ISA',
       'ISA\\s*TRANSFER',
     ], 0.99),
+  },
+
+  // ── TRANSFER → to_joint_account ───────────────────────────
+  //
+  // Money sent to a shared/joint account. Expenses from this
+  // account are split by a configurable percentage (default 50%).
+  // The destination is recognized by joint account holder names
+  // injected at runtime via UserContext.joint_account_names.
+  //
+  // Static patterns here catch generic joint account keywords.
+  {
+    movement: 'TRANSFER',
+    category: 'to_joint_account',
+    rules: r([
+      'CUENTA\\s*CONJUNTA',
+      'CUENTA\\s*COMPARTIDA',
+      'JOINT\\s*ACCOUNT',
+      'SHARED\\s*ACCOUNT',
+      'CONTA\\s*CONJUNTA',
+      'CONTA\\s*COMPARTILHADA',
+    ], 0.95),
   },
 
   // ── TRANSFER → own_transfer ───────────────────────────────
@@ -3125,20 +3160,17 @@ export interface CustomCategory {
  *   Joint account: matches the full joint account name as a literal string,
  *   OR the partner's full name (first + last) when provided in jointAccountNames.
  */
-function buildNamePatterns(ctx: UserContext): RegExp[] {
+function buildPersonalNamePatterns(ctx: UserContext): RegExp[] {
   const first = normalize(ctx.firstName);
   const last  = normalize(ctx.lastName);
 
   const patterns: RegExp[] = [
-    // "INES MURTAGH" or "MURTAGH INES" (any order)
     new RegExp(`${first}\\s+${last}`, 'i'),
     new RegExp(`${last}\\s+${first}`, 'i'),
-    // "I. MURTAGH" or "MURTAGH I." (initial format)
     new RegExp(`${first.charAt(0)}[\\s.]+${last}`, 'i'),
     new RegExp(`${last}[\\s,]+${first.charAt(0)}\\b`, 'i'),
   ];
 
-  // Personal aliases (nicknames, maiden name, etc.)
   if (ctx.aliases) {
     for (const alias of ctx.aliases) {
       const a = normalize(alias);
@@ -3147,20 +3179,16 @@ function buildNamePatterns(ctx: UserContext): RegExp[] {
     }
   }
 
-  // Joint accounts — match the full joint account name as a literal string.
-  // The user declares these in their profile settings (e.g. partner's name,
-  // or both last names as they appear on the shared account statements).
-  //
-  // Example: jointAccountNames: ["Carlos Fernandez"]
-  //   → matches "CARLOS FERNANDEZ" anywhere in description
-  //   → "TRANSFERENCIA CTA CARLOS FERNANDEZ" → own_transfer
-  //
-  // Example: jointAccountNames: ["Fernandez Lopez"]
-  //   → matches "FERNANDEZ LOPEZ" (both-last-names format some banks use)
+  return patterns;
+}
+
+/** @deprecated Use buildPersonalNamePatterns instead. Kept for backward compat. */
+function buildNamePatterns(ctx: UserContext): RegExp[] {
+  const patterns = buildPersonalNamePatterns(ctx);
+
   if (ctx.jointAccountNames) {
     for (const name of ctx.jointAccountNames) {
       const normName = normalize(name);
-      // Match the full string as-is (word boundary aware)
       patterns.push(new RegExp(`${normName}`, 'i'));
     }
   }
@@ -3238,12 +3266,29 @@ export function categorize(
 ): CategorizationResult | null {
   const norm = normalize(description);
 
-  // ── Step 1: Name-based self-transfer detection ─────────────
-  // Runs before everything. If the user's name (or a joint account
-  // name) appears in the description, it's an own_transfer.
+  // ── Step 1: Name-based transfer detection ───────────────────
+  // Runs before everything.
+  // 1a. Joint account names → to_joint_account (checked first, more specific)
+  // 1b. User's own name → own_transfer
   if (ctx?.firstName && ctx?.lastName) {
-    const namePatterns = buildNamePatterns(ctx);
-    for (const pattern of namePatterns) {
+    // Check joint account names first (more specific)
+    if (ctx.jointAccountNames?.length) {
+      for (const name of ctx.jointAccountNames) {
+        const normName = normalize(name);
+        if (new RegExp(normName, 'i').test(norm)) {
+          return {
+            movement:    'TRANSFER',
+            category:    'to_joint_account',
+            confidence:  0.99,
+            matchedRule: 'JOINT_ACCOUNT_NAME_MATCH',
+          };
+        }
+      }
+    }
+
+    // Then check user's own name
+    const personalPatterns = buildPersonalNamePatterns(ctx);
+    for (const pattern of personalPatterns) {
       if (pattern.test(norm)) {
         return {
           movement:    'TRANSFER',
@@ -3416,7 +3461,7 @@ export function categorizeBatch(
     const category = match?.category ?? null;
     if (category) byCategory[category] = (byCategory[category] ?? 0) + 1;
 
-    const isNeutralTransfer = category === 'own_transfer';
+    const isNeutralTransfer = category === 'own_transfer' || category === 'to_joint_account';
     const isInvestmentMove  = category === 'to_investment';
     const needsML           = match === null;
 

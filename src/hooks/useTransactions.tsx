@@ -43,6 +43,7 @@ function getCategoryHslColor(categorySlug: string): string {
     'category-pets': 'hsl(32, 95%, 44%)',
     'category-own-transfer': 'hsl(220, 14%, 50%)',
     'category-to-investment': 'hsl(262, 83%, 58%)',
+    'category-to-joint-account': 'hsl(199, 76%, 48%)',
   };
   
   return fallbackColors[varName] || "hsl(220, 10%, 55%)";

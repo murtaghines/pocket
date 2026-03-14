@@ -12,6 +12,7 @@ export interface UserPreferences {
   country?: string;
   selected_categories?: string[];
   onboarding_completed?: boolean;
+  joint_account_split?: number;
   created_at: string;
   updated_at: string;
 }

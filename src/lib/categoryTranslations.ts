@@ -30,6 +30,7 @@ export const categoryLabels: Record<string, string> = {
   // TRANSFER categories
   own_transfer: 'Own Account',
   to_investment: 'To Investment',
+  to_joint_account: 'To Joint Account',
 };
 
 // Movement type labels
@@ -63,6 +64,7 @@ export const categoryIcons: Record<string, string> = {
   rents: 'home',
   own_transfer: 'arrow-left-right',
   to_investment: 'trending-up',
+  to_joint_account: 'users',
 };
 
 // Category colors (CSS variable names)
@@ -92,6 +94,7 @@ export const categoryColors: Record<string, string> = {
   // Transfer
   own_transfer: 'category-own-transfer',
   to_investment: 'category-to-investment',
+  to_joint_account: 'category-to-joint-account',
 };
 
 // Legacy slug mapping - maps old/incorrect slugs to correct ones
@@ -164,7 +167,7 @@ export function getMovementLabel(movement: string): string {
 // Categories by movement type (for onboarding)
 export const INCOME_CATEGORIES = ['salary', 'refunds', 'transfers', 'other_income', 'investment', 'freelance', 'rents'];
 export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
-export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment'];
+export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment', 'to_joint_account'];
 
 // Default selected categories for new users
 export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'other_income'];

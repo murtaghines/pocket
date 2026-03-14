@@ -25,7 +25,8 @@
   },
   "transfer": {
     "own_transfer": "Cuenta Propia",
-    "to_investment": "A Inversión"
+    "to_investment": "A Inversión",
+    "to_joint_account": "A Cuenta Conjunta"
   },
   "movement": {
     "INCOME": "Ingreso",
