@@ -42,6 +42,7 @@
     "category": "Category",
     "movement": "Movement",
     "amount": "Amount",
+    "balance": "Balance",
     "bank": "Bank",
     "edited": "edited"
   },

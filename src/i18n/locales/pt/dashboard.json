@@ -41,6 +41,7 @@
     "category": "Categoria",
     "movement": "Movimento",
     "amount": "Valor",
+    "balance": "Saldo",
     "bank": "Banco",
     "edited": "editado"
   },
