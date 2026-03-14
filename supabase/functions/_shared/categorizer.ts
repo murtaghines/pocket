@@ -3075,6 +3075,19 @@ export interface UserContext {
    *   custom_categories: jsonb  -- array of CustomCategory objects
    */
   customCategories?: CustomCategory[];
+
+  /**
+   * Rule overrides — extra keywords injected into existing standard categories.
+   * These are checked AFTER custom categories but BEFORE standard rule buckets,
+   * allowing the user to force specific transactions into a standard category.
+   *
+   * @example
+   * // User adds "WOSAP" → entertainment (their dance studio)
+   * categoryRuleOverrides: [
+   *   { targetCategory: 'entertainment', keywords: ['WOSAP', 'STUDIO DE BAILE'] }
+   * ]
+   */
+  categoryRuleOverrides?: { targetCategory: string; keywords: string[] }[];
 }
 
 /**
