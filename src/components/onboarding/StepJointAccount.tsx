@@ -35,7 +35,7 @@ export function StepJointAccount({ jointAccountNames, onJointAccountNamesChange 
     <div className="space-y-5">
       <div className="flex items-center gap-3 text-gray-500">
         <Users className="w-5 h-5" />
-        <p className="text-sm">Do you share finances with someone? You can skip this step.</p>
+        <p className="text-sm">Add co-holders to track shared expenses together. You can skip this step.</p>
       </div>
 
       <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">

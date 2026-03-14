@@ -595,7 +595,7 @@ export default function Auth() {
             </p>
           </div>
 
-          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col">
+          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
             <form onSubmit={handleSignIn} className="space-y-6 flex-1 flex flex-col">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
