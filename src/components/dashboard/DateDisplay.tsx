@@ -9,7 +9,7 @@ interface DateDisplayProps {
   hideToggle?: boolean;
 }
 
-export function DateDisplay({ currentView, onViewChange }: DateDisplayProps) {
+export function DateDisplay({ currentView, onViewChange, hideToggle }: DateDisplayProps) {
   const { i18n, t } = useTranslation('dashboard');
   const today = new Date();
   
