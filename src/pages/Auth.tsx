@@ -508,7 +508,7 @@ export default function Auth() {
               </p>
             </div>
 
-            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
+            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col">
               <div className="flex gap-1 mb-6">
                 {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                   <div 
