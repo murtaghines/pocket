@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { NotificationBell } from "./NotificationBell";
 import pocketLogoWhite from "@/assets/pocket-logo-white.png";
-import pocketIcon from "@/assets/pocket-icon.png";
+
 
 interface DashboardLayoutProps {
   children: ReactNode;
