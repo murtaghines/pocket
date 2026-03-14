@@ -223,18 +223,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {movementType === 'transfer' ? (
-                          <span className="text-muted-foreground text-sm">—</span>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <CategoryIcon 
-                              iconName={getCategoryIcon(transaction.category)} 
-                              colorVar={getCategoryColor(transaction.category)} 
-                              size="sm"
-                            />
-                            <span className="text-sm">{getCategoryLabel(transaction.category)}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <CategoryIcon 
+                            iconName={getCategoryIcon(transaction.category)} 
+                            colorVar={getCategoryColor(transaction.category)} 
+                            size="sm"
+                          />
+                          <span className="text-sm">{getCategoryLabel(transaction.category)}</span>
+                        </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground">
                         <div className="text-sm">
