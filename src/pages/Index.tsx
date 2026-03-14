@@ -43,6 +43,7 @@ export default function Index() {
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [currentView, setCurrentView] = useState<DashboardView>('monthly');
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
