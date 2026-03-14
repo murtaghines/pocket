@@ -113,15 +113,8 @@ export default function Index() {
     balance: convertToUserCurrency(summary.balance),
   };
 
-  // Get greeting based on time of day
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('welcome.morning', 'Good morning');
-    if (hour < 18) return t('welcome.afternoon', 'Good afternoon');
-    return t('welcome.evening', 'Good evening');
-  };
 
-  const firstName = profile?.first_name || '';
+
 
   return (
     <DashboardLayout>
