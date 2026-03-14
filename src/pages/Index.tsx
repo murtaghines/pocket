@@ -132,18 +132,9 @@ export default function Index() {
       )}
       
       <main className="container px-4 md:px-6 py-6">
-        {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 animate-fade-in">
-          <DateDisplay currentView={currentView} onViewChange={setCurrentView} />
-          
-          <div className="hidden md:block text-right flex-shrink-0">
-            <h2 className="text-xl lg:text-2xl font-bold whitespace-nowrap text-foreground">
-              {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t('welcome.subtitle', 'Here\'s your financial overview')}
-            </p>
-          </div>
+        {/* Date display */}
+        <div className="mb-6 animate-fade-in">
+          <DateDisplay currentView={currentView} onViewChange={setCurrentView} hideToggle />
         </div>
 
         {(isLoading || prefsLoading) && (
