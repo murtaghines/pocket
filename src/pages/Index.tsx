@@ -158,11 +158,7 @@ export default function Index() {
                         </p>
                       )}
                     </>
-                  )}
-                  {currentView === 'total' && (
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {t('views.total', 'Total')}
-                    </h3>
+                
                   )}
                 </div>
                 
