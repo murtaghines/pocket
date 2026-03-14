@@ -3160,20 +3160,17 @@ export interface CustomCategory {
  *   Joint account: matches the full joint account name as a literal string,
  *   OR the partner's full name (first + last) when provided in jointAccountNames.
  */
-function buildNamePatterns(ctx: UserContext): RegExp[] {
+function buildPersonalNamePatterns(ctx: UserContext): RegExp[] {
   const first = normalize(ctx.firstName);
   const last  = normalize(ctx.lastName);
 
   const patterns: RegExp[] = [
-    // "INES MURTAGH" or "MURTAGH INES" (any order)
     new RegExp(`${first}\\s+${last}`, 'i'),
     new RegExp(`${last}\\s+${first}`, 'i'),
-    // "I. MURTAGH" or "MURTAGH I." (initial format)
     new RegExp(`${first.charAt(0)}[\\s.]+${last}`, 'i'),
     new RegExp(`${last}[\\s,]+${first.charAt(0)}\\b`, 'i'),
   ];
 
-  // Personal aliases (nicknames, maiden name, etc.)
   if (ctx.aliases) {
     for (const alias of ctx.aliases) {
       const a = normalize(alias);
@@ -3182,20 +3179,16 @@ function buildNamePatterns(ctx: UserContext): RegExp[] {
     }
   }
 
-  // Joint accounts — match the full joint account name as a literal string.
-  // The user declares these in their profile settings (e.g. partner's name,
-  // or both last names as they appear on the shared account statements).
-  //
-  // Example: jointAccountNames: ["Carlos Fernandez"]
-  //   → matches "CARLOS FERNANDEZ" anywhere in description
-  //   → "TRANSFERENCIA CTA CARLOS FERNANDEZ" → own_transfer
-  //
-  // Example: jointAccountNames: ["Fernandez Lopez"]
-  //   → matches "FERNANDEZ LOPEZ" (both-last-names format some banks use)
+  return patterns;
+}
+
+/** @deprecated Use buildPersonalNamePatterns instead. Kept for backward compat. */
+function buildNamePatterns(ctx: UserContext): RegExp[] {
+  const patterns = buildPersonalNamePatterns(ctx);
+
   if (ctx.jointAccountNames) {
     for (const name of ctx.jointAccountNames) {
       const normName = normalize(name);
-      // Match the full string as-is (word boundary aware)
       patterns.push(new RegExp(`${normName}`, 'i'));
     }
   }
