@@ -40,25 +40,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background dashboard-theme relative overflow-hidden">
-      {/* Decorative brand elements */}
-      <img 
-        src={pocketDecoYellow} 
-        alt="" 
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-28 h-auto z-0 opacity-80 pointer-events-none select-none"
-        aria-hidden="true"
-      />
-      <img 
-        src={cloudDecoGray} 
-        alt="" 
-        className="fixed top-48 -left-8 w-36 h-auto z-0 opacity-40 pointer-events-none select-none"
-        aria-hidden="true"
-      />
-      <img 
-        src={cloudDecoGray} 
-        alt="" 
-        className="fixed bottom-24 -right-6 w-32 h-auto z-0 opacity-30 pointer-events-none select-none"
-        aria-hidden="true"
-      />
+      {/* Decorative brand elements as background pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+        <img 
+          src={pocketDecoYellow} 
+          alt="" 
+          className="absolute -top-16 -left-16 w-[340px] h-auto opacity-60"
+        />
+        <img 
+          src={cloudDecoGray} 
+          alt="" 
+          className="absolute bottom-12 right-8 w-28 h-auto opacity-40"
+        />
+        <img 
+          src={cloudDecoGray} 
+          alt="" 
+          className="absolute top-1/3 right-1/4 w-20 h-auto opacity-20"
+        />
+      </div>
 
       {/* Floating top nav bar - dark blue */}
       <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3">

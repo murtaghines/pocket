@@ -6,9 +6,10 @@ export type DashboardView = 'monthly' | 'total';
 interface DateDisplayProps {
   currentView: DashboardView;
   onViewChange: (view: DashboardView) => void;
+  hideToggle?: boolean;
 }
 
-export function DateDisplay({ currentView, onViewChange }: DateDisplayProps) {
+export function DateDisplay({ currentView, onViewChange, hideToggle }: DateDisplayProps) {
   const { i18n, t } = useTranslation('dashboard');
   const today = new Date();
   
@@ -35,34 +36,38 @@ export function DateDisplay({ currentView, onViewChange }: DateDisplayProps) {
         </span>
       </div>
       
-      {/* Divider */}
-      <div className="hidden md:block w-px h-10 bg-border mx-2" />
-      
-      {/* View toggle - both labels always visible, active = bold white text on primary */}
-      <div className="hidden md:flex items-center gap-2">
-        <button
-          onClick={() => onViewChange('monthly')}
-          className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm transition-all ${
-            currentView === 'monthly'
-              ? 'bg-primary text-primary-foreground font-semibold'
-              : 'text-foreground/50 font-medium hover:text-foreground/70'
-          }`}
-        >
-          <CalendarDays className="w-4 h-4" />
-          {t('views.monthly', 'Monthly')}
-        </button>
-        <button
-          onClick={() => onViewChange('total')}
-          className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm transition-all ${
-            currentView === 'total'
-              ? 'bg-primary text-primary-foreground font-semibold'
-              : 'text-foreground/50 font-medium hover:text-foreground/70'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          {t('views.total', 'Total')}
-        </button>
-      </div>
+      {!hideToggle && (
+        <>
+          {/* Divider */}
+          <div className="hidden md:block w-px h-10 bg-border mx-2" />
+          
+          {/* View toggle */}
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              onClick={() => onViewChange('monthly')}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm transition-all ${
+                currentView === 'monthly'
+                  ? 'bg-primary text-primary-foreground font-semibold'
+                  : 'text-foreground/50 font-medium hover:text-foreground/70'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              {t('views.monthly', 'Monthly')}
+            </button>
+            <button
+              onClick={() => onViewChange('total')}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm transition-all ${
+                currentView === 'total'
+                  ? 'bg-primary text-primary-foreground font-semibold'
+                  : 'text-foreground/50 font-medium hover:text-foreground/70'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              {t('views.total', 'Total')}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { CalendarDays, BarChart3 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
@@ -92,7 +93,7 @@ export default function Index() {
     ? Math.round(((convertedCurrentMonth.balance - convertedPreviousMonth.balance) / Math.abs(convertedPreviousMonth.balance)) * 100)
     : undefined;
 
-  const currentMonthName = formatMonth(new Date());
+  
 
   const convertedMonthlyData = monthlyData.map(m => ({
     ...m,
@@ -112,15 +113,8 @@ export default function Index() {
     balance: convertToUserCurrency(summary.balance),
   };
 
-  // Get greeting based on time of day
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('welcome.morning', 'Good morning');
-    if (hour < 18) return t('welcome.afternoon', 'Good afternoon');
-    return t('welcome.evening', 'Good evening');
-  };
 
-  const firstName = profile?.first_name || '';
+
 
   return (
     <DashboardLayout>
@@ -132,18 +126,9 @@ export default function Index() {
       )}
       
       <main className="container px-4 md:px-6 py-6">
-        {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 animate-fade-in">
-          <DateDisplay currentView={currentView} onViewChange={setCurrentView} />
-          
-          <div className="hidden md:block text-right flex-shrink-0">
-            <h2 className="text-xl lg:text-2xl font-bold whitespace-nowrap text-foreground">
-              {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t('welcome.subtitle', 'Here\'s your financial overview')}
-            </p>
-          </div>
+        {/* Date display */}
+        <div className="mb-6 animate-fade-in">
+          <DateDisplay currentView={currentView} onViewChange={setCurrentView} hideToggle />
         </div>
 
         {(isLoading || prefsLoading) && (
@@ -158,24 +143,62 @@ export default function Index() {
 
             {/* === WHITE SECTION 1: Analytics === */}
             <div className="bg-card rounded-3xl p-6 md:p-8 mb-6" style={{ boxShadow: 'var(--shadow-section)' }}>
+              {/* Section header with title + view toggle */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  {currentView === 'monthly' && (
+                    <>
+                      <h3 className="text-lg font-semibold capitalize text-foreground">
+                        {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+                      </h3>
+                      {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+                        </p>
+                      )}
+                      {hasPreviousData && (
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
+                        </p>
+                      )}
+                    </>
+                  )}
+                  {currentView === 'total' && (
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {t('views.total', 'Total')}
+                    </h3>
+                  )}
+                </div>
+                
+                {/* View toggle */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentView('monthly')}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-all ${
+                      currentView === 'monthly'
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-muted-foreground font-medium hover:text-foreground'
+                    }`}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t('views.monthly', 'Monthly')}</span>
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('total')}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-all ${
+                      currentView === 'total'
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-muted-foreground font-medium hover:text-foreground'
+                    }`}
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t('views.total', 'Total')}</span>
+                  </button>
+                </div>
+              </div>
+
               {currentView === 'monthly' ? (
                 <>
-                  {/* Month label */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold capitalize text-foreground">
-                      {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
-                    </h3>
-                    {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
-                      </p>
-                    )}
-                    {hasPreviousData && (
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
-                      </p>
-                    )}
-                  </div>
 
                   {/* KPIs Row */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
