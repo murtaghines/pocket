@@ -59,8 +59,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         />
       </div>
 
-      {/* Floating top nav bar - consistent 24px spacing */}
-      <header className="fixed top-0 left-0 right-0 z-50 pt-6 px-6 md:px-10 lg:px-16">
+      {/* Floating top nav bar */}
+      <header className="fixed top-0 left-0 right-0 z-50 pt-4 px-3 md:px-6">
         <div className="max-w-7xl mx-auto">
           <nav className="flex items-center justify-between backdrop-blur-xl rounded-full px-4 md:px-6 py-2.5 shadow-sm" style={{ background: '#0F4264' }}>
             {/* Logo */}
