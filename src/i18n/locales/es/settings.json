@@ -42,7 +42,21 @@
     "confirmDeleteRule": "¿Estás seguro de que querés eliminar esta regla?",
     "confirmDeleteCategory": "¿Estás seguro? Esto también eliminará todas las reglas de esta categoría.",
     "save": "Guardar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "alwaysActiveNote": "Estas categorías están siempre activas. Pocket las asigna automáticamente según la descripción de tus transacciones. Podés agregar reglas personalizadas para ajustar la categorización.",
+    "customRules": "Reglas Personalizadas",
+    "addRuleToCategory": "Agregar regla a una categoría",
+    "customRulesDescription": "Agregá palabras clave para cambiar cómo se categorizan transacciones específicas.",
+    "noCustomRules": "Sin reglas personalizadas aún. Agregá una para cambiar la categorización de un comercio específico.",
+    "myCustomCategories": "Mis Categorías Personalizadas",
+    "createNewCategory": "Crear nueva categoría",
+    "customCategoriesDescription": "Creá categorías nuevas con tu propio nombre y reglas. Aparecerán en tu dashboard junto a las estándar.",
+    "noCustomCategories": "Sin categorías personalizadas aún.",
+    "keywords": "Palabras clave",
+    "keywordPlaceholder": "ej. WOSAP",
+    "selectCategory": "Seleccionar categoría",
+    "overrideHelp": "Si la descripción de una transacción contiene alguna de estas palabras, se clasificará bajo la categoría seleccionada, anulando las reglas predeterminadas.",
+    "customCategoryHelp": "Esta categoría aparecerá en tu dashboard junto a las estándar. Las transacciones que coincidan con tus palabras clave se asignarán aquí primero, antes de verificar las reglas estándar."
   },
   "notifications": {
     "title": "Notificaciones",

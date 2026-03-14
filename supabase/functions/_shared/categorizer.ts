@@ -3284,6 +3284,29 @@ export function categorize(
     }
   }
 
+  // ── Step 2.5: User-defined rule overrides on standard categories ──
+  // These let users add keywords that force transactions into an
+  // existing standard category, overriding the normal regex rules.
+  // e.g. "WOSAP" → entertainment (user's dance studio)
+  if (ctx?.categoryRuleOverrides?.length) {
+    for (const override of ctx.categoryRuleOverrides) {
+      for (const keyword of override.keywords) {
+        const { matched } = fuzzyMatch(keyword, norm);
+        if (matched) {
+          // Determine movement from the target category
+          const bucket = RULE_BUCKETS.find(b => b.category === override.targetCategory);
+          const movement: Movement = bucket?.movement ?? (amount > 0 ? 'INCOME' : 'EXPENSE');
+          return {
+            movement,
+            category:    override.targetCategory as Category,
+            confidence:  0.95,
+            matchedRule: `OVERRIDE:${override.targetCategory}:${keyword}`,
+          };
+        }
+      }
+    }
+  }
+
   // ── Step 3: Standard rule buckets ─────────────────────────
   // country from ctx is used to boost confidence on matches
   // from country-specific patterns (see confidence values in buckets).
