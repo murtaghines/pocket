@@ -70,8 +70,6 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const handleComplete = async () => {
     setSaving(true);
     try {
-      const allCategories = [...DEFAULT_INCOME_CATEGORIES, ...DEFAULT_EXPENSE_CATEGORIES];
-      
       const localeMap: Record<string, string> = {
         en: 'en-US',
         es: 'es-ES',
@@ -81,7 +79,6 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       await updatePreferences({
         country: data.country,
         base_currency: data.currency,
-        selected_categories: allCategories,
         language: data.language,
         locale: localeMap[data.language] || 'en-US',
         onboarding_completed: true,
