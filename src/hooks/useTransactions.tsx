@@ -309,6 +309,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     categoryData,
     bankData,
     summary,
+    openingBalanceByMonth,
     isLoading,
     error,
     deleteTransaction,

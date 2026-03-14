@@ -249,8 +249,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           : movementType === 'transfer' ? "text-muted-foreground"
                           : "text-destructive"
                       )}>
-                        {transaction.amount >= 0 ? '+' : ''}
+                       {transaction.amount >= 0 ? '+' : ''}
                         {formatCurrency(transaction.amount)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground hidden lg:table-cell">
+                        {transaction.runningBalance != null
+                          ? formatCurrency(transaction.runningBalance)
+                          : '—'}
                       </TableCell>
                     </TableRow>
                   );
