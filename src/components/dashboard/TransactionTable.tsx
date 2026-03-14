@@ -82,12 +82,17 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   const formatTransactionDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
   };
 
   const formatMonth = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const year = date.getFullYear();
+    return { month, year };
   };
 
   return (
@@ -187,8 +192,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       key={transaction.id}
                       className="hover:bg-muted/30 transition-colors"
                     >
-                      <TableCell className="text-xs text-muted-foreground uppercase hidden sm:table-cell">
-                        {formatMonth(transaction.date)}
+                      <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
+                        <div className="leading-tight">
+                          <div className="font-medium">{formatMonth(transaction.date).month}</div>
+                          <div className="opacity-70">{formatMonth(transaction.date).year}</div>
+                        </div>
                       </TableCell>
                       <TableCell className="font-medium text-muted-foreground hidden sm:table-cell">
                         {formatTransactionDate(transaction.date)}
