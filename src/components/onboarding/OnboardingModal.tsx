@@ -10,10 +10,6 @@ import { StepJointAccount } from './StepJointAccount';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
-import {
-  DEFAULT_INCOME_CATEGORIES,
-  DEFAULT_EXPENSE_CATEGORIES,
-} from '@/lib/categoryTranslations';
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
 import { COUNTRY_CURRENCY_MAP } from '@/lib/onboardingConstants';
 
