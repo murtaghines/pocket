@@ -167,7 +167,7 @@ export function getMovementLabel(movement: string): string {
 // Categories by movement type (for onboarding)
 export const INCOME_CATEGORIES = ['salary', 'refunds', 'transfers', 'other_income', 'investment', 'freelance', 'rents'];
 export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
-export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment'];
+export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment', 'to_joint_account'];
 
 // Default selected categories for new users
 export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'other_income'];
