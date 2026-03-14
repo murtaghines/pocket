@@ -3273,12 +3273,29 @@ export function categorize(
 ): CategorizationResult | null {
   const norm = normalize(description);
 
-  // ── Step 1: Name-based self-transfer detection ─────────────
-  // Runs before everything. If the user's name (or a joint account
-  // name) appears in the description, it's an own_transfer.
+  // ── Step 1: Name-based transfer detection ───────────────────
+  // Runs before everything.
+  // 1a. Joint account names → to_joint_account (checked first, more specific)
+  // 1b. User's own name → own_transfer
   if (ctx?.firstName && ctx?.lastName) {
-    const namePatterns = buildNamePatterns(ctx);
-    for (const pattern of namePatterns) {
+    // Check joint account names first (more specific)
+    if (ctx.jointAccountNames?.length) {
+      for (const name of ctx.jointAccountNames) {
+        const normName = normalize(name);
+        if (new RegExp(normName, 'i').test(norm)) {
+          return {
+            movement:    'TRANSFER',
+            category:    'to_joint_account',
+            confidence:  0.99,
+            matchedRule: 'JOINT_ACCOUNT_NAME_MATCH',
+          };
+        }
+      }
+    }
+
+    // Then check user's own name
+    const personalPatterns = buildPersonalNamePatterns(ctx);
+    for (const pattern of personalPatterns) {
       if (pattern.test(norm)) {
         return {
           movement:    'TRANSFER',
