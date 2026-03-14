@@ -150,6 +150,60 @@ export default function Index() {
 
             {/* === WHITE SECTION 1: Analytics === */}
             <div className="bg-card rounded-3xl p-6 md:p-8 mb-6" style={{ boxShadow: 'var(--shadow-section)' }}>
+              {/* Section header with title + view toggle */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  {currentView === 'monthly' && (
+                    <>
+                      <h3 className="text-lg font-semibold capitalize text-foreground">
+                        {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+                      </h3>
+                      {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+                        </p>
+                      )}
+                      {hasPreviousData && (
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
+                        </p>
+                      )}
+                    </>
+                  )}
+                  {currentView === 'total' && (
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {t('views.total', 'Total')}
+                    </h3>
+                  )}
+                </div>
+                
+                {/* View toggle */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentView('monthly')}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-all ${
+                      currentView === 'monthly'
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-muted-foreground font-medium hover:text-foreground'
+                    }`}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t('views.monthly', 'Monthly')}</span>
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('total')}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-all ${
+                      currentView === 'total'
+                        ? 'bg-primary text-primary-foreground font-semibold'
+                        : 'text-muted-foreground font-medium hover:text-foreground'
+                    }`}
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t('views.total', 'Total')}</span>
+                  </button>
+                </div>
+              </div>
+
               {currentView === 'monthly' ? (
                 <>
                   {/* Month label */}
