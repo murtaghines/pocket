@@ -450,6 +450,8 @@ export type Database = {
           created_at: string
           first_name: string | null
           id: string
+          investment_platforms: string[] | null
+          joint_account_names: string[] | null
           last_name: string | null
           updated_at: string
           user_id: string
@@ -458,6 +460,8 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id?: string
+          investment_platforms?: string[] | null
+          joint_account_names?: string[] | null
           last_name?: string | null
           updated_at?: string
           user_id: string
@@ -466,6 +470,8 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id?: string
+          investment_platforms?: string[] | null
+          joint_account_names?: string[] | null
           last_name?: string | null
           updated_at?: string
           user_id?: string
@@ -712,6 +718,8 @@ export type Database = {
           country: string | null
           created_at: string | null
           id: string
+          investment_platforms: string[] | null
+          joint_account_names: string[] | null
           language: string
           locale: string
           onboarding_completed: boolean | null
@@ -724,6 +732,8 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           id?: string
+          investment_platforms?: string[] | null
+          joint_account_names?: string[] | null
           language?: string
           locale?: string
           onboarding_completed?: boolean | null
@@ -736,6 +746,8 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           id?: string
+          investment_platforms?: string[] | null
+          joint_account_names?: string[] | null
           language?: string
           locale?: string
           onboarding_completed?: boolean | null
