@@ -30,6 +30,7 @@ export default function Index() {
     monthlyData, 
     categoryData, 
     summary, 
+    openingBalanceByMonth,
     isLoading 
   } = useTransactions();
   
