@@ -8,7 +8,7 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
-import { DateDisplay, type DashboardView } from "@/components/dashboard/DateDisplay";
+import { type DashboardView } from "@/components/dashboard/DateDisplay";
 import { TotalView } from "@/components/dashboard/TotalView";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
@@ -125,11 +125,7 @@ export default function Index() {
         />
       )}
       
-      <main className="container px-4 md:px-6 py-6">
-        {/* Date display */}
-        <div className="mb-6 animate-fade-in">
-          <DateDisplay currentView={currentView} onViewChange={setCurrentView} hideToggle />
-        </div>
+      <main className="container px-4 md:px-6 pt-2">
 
         {(isLoading || prefsLoading) && (
           <div className="flex items-center justify-center py-12">
@@ -142,7 +138,7 @@ export default function Index() {
             <EmptyStateBanner hasData={transactions.length > 0} />
 
             {/* === WHITE SECTION 1: Analytics === */}
-            <div className="bg-card rounded-3xl p-6 md:p-8 mb-6" style={{ boxShadow: 'var(--shadow-section)' }}>
+            <div className="bg-card rounded-3xl pt-20 md:pt-24 px-6 md:px-8 pb-6 md:pb-8 mb-6" style={{ boxShadow: 'var(--shadow-section)' }}>
               {/* Section header with title + view toggle */}
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -162,11 +158,7 @@ export default function Index() {
                         </p>
                       )}
                     </>
-                  )}
-                  {currentView === 'total' && (
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {t('views.total', 'Total')}
-                    </h3>
+                
                   )}
                 </div>
                 
