@@ -94,6 +94,7 @@ export const categoryColors: Record<string, string> = {
   // Transfer
   own_transfer: 'category-own-transfer',
   to_investment: 'category-to-investment',
+  to_joint_account: 'category-to-joint-account',
 };
 
 // Legacy slug mapping - maps old/incorrect slugs to correct ones
