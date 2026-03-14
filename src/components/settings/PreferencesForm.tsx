@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useLanguage } from '@/hooks/useLanguage';
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies';
 import { toast } from 'sonner';
-import { DollarSign, Languages, Loader2 } from 'lucide-react';
+import { DollarSign, Languages, Loader2, Users } from 'lucide-react';
 
 interface PreferencesFormProps {
   className?: string;
@@ -21,8 +22,8 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
   
   const [currency, setCurrency] = useState(preferences.base_currency);
   const [language, setLanguage] = useState<string>(currentLanguage);
+  const [jointSplit, setJointSplit] = useState<number>(preferences.joint_account_split ?? 50);
 
-  // Update local state when preferences change
   useEffect(() => {
     setCurrency(preferences.base_currency);
   }, [preferences.base_currency]);
@@ -31,34 +32,33 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
     setLanguage(currentLanguage);
   }, [currentLanguage]);
 
+  useEffect(() => {
+    setJointSplit(preferences.joint_account_split ?? 50);
+  }, [preferences.joint_account_split]);
+
   const handleSave = () => {
     const languageChanged = language !== currentLanguage;
     const currencyChanged = currency !== preferences.base_currency;
+    const splitChanged = jointSplit !== (preferences.joint_account_split ?? 50);
 
-    // Apply language locally first (instant feedback)
     if (languageChanged) {
       changeLanguage(language as 'en' | 'es' | 'pt');
     }
 
-    // Build updates object - include both language AND currency changes
-    const updates: Record<string, string> = {};
+    const updates: Record<string, string | number> = {};
     if (currencyChanged) updates.base_currency = currency;
     if (languageChanged) updates.language = language;
+    if (splitChanged) updates.joint_account_split = jointSplit;
 
-    // If nothing changed, just return
-    if (Object.keys(updates).length === 0) {
-      return;
-    }
+    if (Object.keys(updates).length === 0) return;
 
-    // Save all changes to database for persistence across sessions
-    updatePreferences(updates, {
+    updatePreferences(updates as any, {
       onSuccess: () => {
         toast.success(t('regional.saved'));
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error('Failed to save preferences:', error);
-        // Language still works locally even if DB sync fails
-        if (languageChanged && !currencyChanged) {
+        if (languageChanged && !currencyChanged && !splitChanged) {
           toast.success(t('regional.saved'));
         } else {
           toast.error(t('regional.errorSaving', 'Error saving preferences'));
@@ -67,7 +67,6 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
     });
   };
 
-  // Preview values
   const previewAmount = 1234.56;
 
   return (
@@ -116,6 +115,28 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Joint Account Split */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            {t('jointAccount.splitPercentage')}
+          </Label>
+          <div className="flex items-center gap-3">
+            <Input
+              type="number"
+              min={1}
+              max={100}
+              value={jointSplit}
+              onChange={(e) => setJointSplit(Math.min(100, Math.max(1, Number(e.target.value))))}
+              className="w-24"
+            />
+            <span className="text-sm text-muted-foreground">%</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t('jointAccount.splitHelp')}
+          </p>
         </div>
 
         {/* Preview */}

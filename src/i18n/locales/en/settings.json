@@ -11,6 +11,12 @@
     "saved": "Preferences saved",
     "errorSaving": "Error saving preferences"
   },
+  "jointAccount": {
+    "title": "Joint Account",
+    "description": "Configure how expenses from shared accounts are split",
+    "splitPercentage": "Your share (%)",
+    "splitHelp": "Your percentage of shared expenses. E.g. 50 means you pay half."
+  },
   "categories": {
     "title": "Categories & Rules",
     "description": "These are the categories the app uses to classify your transactions. You can add custom rules to improve categorization.",

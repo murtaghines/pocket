@@ -11,6 +11,12 @@
     "saved": "Preferências salvas",
     "errorSaving": "Erro ao salvar preferências"
   },
+  "jointAccount": {
+    "title": "Conta Conjunta",
+    "description": "Configure como as despesas de contas compartilhadas são divididas",
+    "splitPercentage": "Sua parte (%)",
+    "splitHelp": "Sua porcentagem das despesas compartilhadas. Ex: 50 significa que você paga metade."
+  },
   "categories": {
     "title": "Categorias e Regras",
     "description": "Estas são as categorias que o app usa para classificar suas transações. Você pode adicionar regras personalizadas para melhorar a categorização.",
