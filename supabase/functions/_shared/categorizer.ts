@@ -503,6 +503,11 @@ const RULE_BUCKETS: RuleBucket[] = [
       'N26\\s*SPACES',
       'CUENTA\\s*REMUNERADA',
       'CUENTA\\s*AHORRO\\s*PLUS',
+      // ── Generic savings sub-account keywords (without bank prefix) ─
+      'TO\\s*INSTANT\\s*ACCESS\\s*SAVINGS',
+      'TO\\s*SAVINGS\\s*ACCOUNT',
+      'TO\\s*SAVINGS\\s*POT',
+      'INSTANT\\s*ACCESS\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
       // ── Generic investment movement keywords ──────────────
       // Only phrases that unambiguously mean "moving money to invest"
       'TRASPASO\\s*FOND',
@@ -522,6 +527,27 @@ const RULE_BUCKETS: RuleBucket[] = [
       'STOCKS\\s*AND\\s*SHARES\\s*ISA',
       'ISA\\s*TRANSFER',
     ], 0.99),
+  },
+
+  // ── TRANSFER → to_joint_account ───────────────────────────
+  //
+  // Money sent to a shared/joint account. Expenses from this
+  // account are split by a configurable percentage (default 50%).
+  // The destination is recognized by joint account holder names
+  // injected at runtime via UserContext.joint_account_names.
+  //
+  // Static patterns here catch generic joint account keywords.
+  {
+    movement: 'TRANSFER',
+    category: 'to_joint_account',
+    rules: r([
+      'CUENTA\\s*CONJUNTA',
+      'CUENTA\\s*COMPARTIDA',
+      'JOINT\\s*ACCOUNT',
+      'SHARED\\s*ACCOUNT',
+      'CONTA\\s*CONJUNTA',
+      'CONTA\\s*COMPARTILHADA',
+    ], 0.95),
   },
 
   // ── TRANSFER → own_transfer ───────────────────────────────
