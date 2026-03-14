@@ -508,7 +508,7 @@ export default function Auth() {
               </p>
             </div>
 
-            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
+            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col">
               <div className="flex gap-1 mb-6">
                 {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                   <div 
@@ -530,7 +530,7 @@ export default function Auth() {
                 {STEP_QUESTIONS[registerStep]}
               </h2>
 
-              <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="min-h-0">
                 {renderRegisterStep()}
               </div>
 
@@ -595,7 +595,7 @@ export default function Auth() {
             </p>
           </div>
 
-          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
+          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col">
             <form onSubmit={handleSignIn} className="space-y-6 flex-1 flex flex-col">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
