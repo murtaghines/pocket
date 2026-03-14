@@ -143,14 +143,17 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               </SelectContent>
             </Select>
           </div>
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder={tc('search')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 mt-5 rounded-xl"
-            />
+          <div className="relative flex-1 flex flex-col gap-1">
+            <span className="text-xs font-medium text-muted-foreground">&nbsp;</span>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder={tc('search')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 rounded-xl"
+              />
+            </div>
           </div>
         </div>
       </CardHeader>
