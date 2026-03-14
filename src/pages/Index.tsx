@@ -11,7 +11,6 @@ import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonCh
 import { DateDisplay, type DashboardView } from "@/components/dashboard/DateDisplay";
 import { TotalView } from "@/components/dashboard/TotalView";
 
-import { YearlyBalanceChart } from "@/components/dashboard/YearlyBalanceChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
 
