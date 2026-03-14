@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
+import { categorize, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,10 +16,36 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // ========== MOVEMENT TYPES ==========
 type MovementType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 
-// ========== CATEGORY SLUGS BY MOVEMENT ==========
-const INCOME_SLUGS = ['salary', 'refunds', 'sales', 'transfers_in', 'other_income'];
-const EXPENSE_SLUGS = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense'];
+// ========== CATEGORY SLUGS BY MOVEMENT (app-level) ==========
+const INCOME_SLUGS = ['salary', 'refunds', 'transfers', 'other_income', 'investment', 'freelance', 'rents'];
+const EXPENSE_SLUGS = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
 const TRANSFER_SLUGS = ['own_transfer', 'to_investment'];
+
+// ========== EXTENDED → APP CATEGORY MAPPING ==========
+// The advanced categorizer uses more categories than the app.
+// This maps extended categories to app-level categories.
+const CATEGORY_SLUG_MAP: Record<string, string> = {
+  // Income extended → app
+  'investments_income': 'investment',
+  'rental_income': 'rents',
+  'transfers_in': 'transfers',
+  'gifts_received': 'other_income',
+  'sales': 'other_income',
+  // Expense extended → app
+  'gifts_given': 'other_expense',
+  'insurance': 'other_expense',
+  'family': 'other_expense',
+  'donations': 'other_expense',
+  'personal_services': 'other_expense',
+  'taxes': 'other_expense',
+};
+
+/** Map an extended category slug to an app-level slug */
+function mapCategorySlug(slug: string): string {
+  // Handle custom_ prefixed categories from the categorizer
+  if (slug.startsWith('custom_')) return slug;
+  return CATEGORY_SLUG_MAP[slug] || slug;
+}
 
 // ========== TX_TYPE to MOVEMENT MAPPING ==========
 const TX_TYPE_TO_MOVEMENT: Record<string, MovementType> = {
@@ -37,237 +64,8 @@ const VALID_TX_TYPES = ['INCOME', 'EXPENSE', 'TRANSFER_INTERNAL', 'SAVINGS_MOVE'
 const VALID_PAYMENT_CHANNELS = ['CARD', 'TRANSFER', 'BIZUM', 'QR', 'CASH', 'DIRECT_DEBIT', 'OTHER'];
 
 // ========== CHUNKING CONFIG ==========
-const CHUNK_SIZE_THRESHOLD = 6000; // Characters threshold for chunking
-const MAX_CHUNK_SIZE = 4000; // Max characters per chunk
-
-// ========== LOCAL PATTERN CATEGORIZER ==========
-// Known patterns for local categorization (saves AI calls)
-type LocalPattern = {
-  categorySlug: string;
-  movement: MovementType;
-};
-
-const LOCAL_PATTERNS: Record<string, LocalPattern> = {
-  // Groceries / Supermercados
-  'mercadona': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'lidl': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'carrefour': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'dia %': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'dia s.a': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'aldi': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'alcampo': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'hipercor': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'el corte ingles alimentacion': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'consum': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'eroski': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'ahorramas': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'bonarea': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'simply': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  'makro': { categorySlug: 'groceries', movement: 'EXPENSE' },
-  
-  // Subscriptions / Suscripciones
-  'netflix': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'spotify': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'hbo': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'max.com': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'disney': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'amazon prime': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'prime video': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'apple.com': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'apple music': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'icloud': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'youtube premium': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'dazn': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'movistar+': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'twitch': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'chatgpt': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'openai': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'notion': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'canva': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'dropbox': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'google storage': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'google one': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  'microsoft 365': { categorySlug: 'subscriptions', movement: 'EXPENSE' },
-  
-  // Transport / Transporte
-  'uber': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'cabify': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'bolt': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'renfe': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'emt madrid': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'metro madrid': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'metro bilbao': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'tmb barcelona': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'parking': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'estacionamiento': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'telepea': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'viatoll': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'peaje': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'blablacar': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'lime': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'tier': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'bird': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'repsol': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'cepsa': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'bp': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'gasolinera': { categorySlug: 'transport', movement: 'EXPENSE' },
-  'shell': { categorySlug: 'transport', movement: 'EXPENSE' },
-  
-  // Restaurants & Delivery
-  'glovo': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  'just eat': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  'uber eats': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  'deliveroo': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  'mcdonalds': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  'burger king': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  'telepizza': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  'dominos': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  'starbucks': { categorySlug: 'restaurants', movement: 'EXPENSE' },
-  
-  // Housing / Vivienda y servicios
-  'endesa': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'naturgy': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'iberdrola': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'repsol gas': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'vodafone': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'movistar': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'orange': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'masmovil': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'yoigo': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'o2': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'pepephone': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'lowi': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'digi': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'alquiler': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'rent': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'hipoteca': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'comunidad de propietarios': { categorySlug: 'housing', movement: 'EXPENSE' },
-  'seguro hogar': { categorySlug: 'housing', movement: 'EXPENSE' },
-  
-  // Shopping
-  'amazon': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'aliexpress': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'zara': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'h&m': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'primark': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'ikea': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'el corte ingles': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'mediamarkt': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'pccomponentes': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'fnac': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'leroy merlin': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  'brico': { categorySlug: 'shopping', movement: 'EXPENSE' },
-  
-  // Health / Salud
-  'farmacia': { categorySlug: 'health', movement: 'EXPENSE' },
-  'pharmacy': { categorySlug: 'health', movement: 'EXPENSE' },
-  'quironsalud': { categorySlug: 'health', movement: 'EXPENSE' },
-  'sanitas': { categorySlug: 'health', movement: 'EXPENSE' },
-  'adeslas': { categorySlug: 'health', movement: 'EXPENSE' },
-  'mapfre salud': { categorySlug: 'health', movement: 'EXPENSE' },
-  'dkv': { categorySlug: 'health', movement: 'EXPENSE' },
-  'asisa': { categorySlug: 'health', movement: 'EXPENSE' },
-  'seguro medico': { categorySlug: 'health', movement: 'EXPENSE' },
-  'dentista': { categorySlug: 'health', movement: 'EXPENSE' },
-  'optica': { categorySlug: 'health', movement: 'EXPENSE' },
-  
-  // Entertainment
-  'cine': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'cinesa': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'yelmo': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'ocine': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'teatro': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'concierto': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'ticketmaster': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'entradas': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'steam': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'playstation': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'xbox': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  'nintendo': { categorySlug: 'entertainment', movement: 'EXPENSE' },
-  
-  // Sports / Deportes
-  'decathlon': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'sprinter': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'sport zone': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'forum sport': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'intersport': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'footlocker': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'jd sports': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'basic fit': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'mcfit': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'anytime fitness': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'gimnasio': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'gym': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'crossfit': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'padel': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'tenis': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'futbol': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'natacion': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'piscina': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'yoga': { categorySlug: 'sports', movement: 'EXPENSE' },
-  'pilates': { categorySlug: 'sports', movement: 'EXPENSE' },
-  
-  // Education
-  'udemy': { categorySlug: 'education', movement: 'EXPENSE' },
-  'coursera': { categorySlug: 'education', movement: 'EXPENSE' },
-  'platzi': { categorySlug: 'education', movement: 'EXPENSE' },
-  'domestika': { categorySlug: 'education', movement: 'EXPENSE' },
-  'masterclass': { categorySlug: 'education', movement: 'EXPENSE' },
-  'duolingo': { categorySlug: 'education', movement: 'EXPENSE' },
-  'babbel': { categorySlug: 'education', movement: 'EXPENSE' },
-  'academia': { categorySlug: 'education', movement: 'EXPENSE' },
-  'universidad': { categorySlug: 'education', movement: 'EXPENSE' },
-  'colegio': { categorySlug: 'education', movement: 'EXPENSE' },
-  
-  // Travel
-  'ryanair': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'vueling': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'iberia': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'easyjet': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'air europa': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'booking': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'airbnb': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'hotel': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'hostel': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'expedia': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'skyscanner': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'ouigo': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'iryo': { categorySlug: 'travel', movement: 'EXPENSE' },
-  'avlo': { categorySlug: 'travel', movement: 'EXPENSE' },
-  
-  // Income patterns (Salary/Payroll)
-  'nomina': { categorySlug: 'salary', movement: 'INCOME' },
-  'nómina': { categorySlug: 'salary', movement: 'INCOME' },
-  'salary': { categorySlug: 'salary', movement: 'INCOME' },
-  'payroll': { categorySlug: 'salary', movement: 'INCOME' },
-  'sueldo': { categorySlug: 'salary', movement: 'INCOME' },
-  'paga extra': { categorySlug: 'salary', movement: 'INCOME' },
-  
-  // Refunds
-  'devolucion': { categorySlug: 'refunds', movement: 'INCOME' },
-  'devolución': { categorySlug: 'refunds', movement: 'INCOME' },
-  'refund': { categorySlug: 'refunds', movement: 'INCOME' },
-  'reembolso': { categorySlug: 'refunds', movement: 'INCOME' },
-  'chargeback': { categorySlug: 'refunds', movement: 'INCOME' },
-};
-
-// Function to match local patterns
-function matchLocalPattern(description: string): LocalPattern | null {
-  const normalizedDesc = description.toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-  
-  for (const [pattern, result] of Object.entries(LOCAL_PATTERNS)) {
-    const normalizedPattern = pattern.toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-    
-    if (normalizedDesc.includes(normalizedPattern)) {
-      return result;
-    }
-  }
-  return null;
-}
+const CHUNK_SIZE_THRESHOLD = 6000;
+const MAX_CHUNK_SIZE = 4000;
 
 // ========== SIMPLIFIED EXTRACTION PROMPT (for large files) ==========
 const SIMPLE_EXTRACTION_PROMPT = `You are a financial data extraction expert. Extract transactions from this bank statement data.
@@ -319,14 +117,14 @@ INCOME: Money entering the user from external sources, increasing available cash
 - Refunds and chargebacks ("Devolución", "Refund", "Chargeback")
 - Sales income from selling items
 - Interest received, dividends
-- Category slugs: salary, refunds, sales, transfers_in, other_income
+- Category slugs: salary, refunds, freelance, rents, investment, transfers, other_income
 
 EXPENSE: Money leaving to a third party representing real consumption or payment.
 - Purchases at stores, restaurants, services
 - Rent, utilities, subscriptions
 - Payments to external merchants or people
 - CRITICAL: If a "transfer" goes to a THIRD PARTY (not own account, not investment), it's EXPENSE, not TRANSFER!
-- Category slugs: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, other_expense
+- Category slugs: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
 
 TRANSFER: Movement between the user's OWN accounts or to their OWN investment accounts. NO consumption.
 - Between own bank accounts (Santander ↔ Revolut ↔ MercadoPago)
@@ -364,8 +162,10 @@ After determining movement, assign the specific category_slug:
 INCOME categories:
 - salary: Payroll, wages, regular employment income (Nómina, Sueldo, Payroll)
 - refunds: Returns, refunds, chargebacks (Devolución, Refund)
-- sales: Income from selling items/goods (not salary)
-- transfers_in: Money received from own accounts (opposite leg of own_transfer)
+- freelance: Freelance, contract payments, consulting fees
+- rents: Rental income from property
+- investment: Investment returns, dividends, interest
+- transfers: Money received from own accounts
 - other_income: Other income not fitting above categories
 
 EXPENSE categories:
@@ -379,6 +179,8 @@ EXPENSE categories:
 - education: Courses, books, training, tuition (Udemy, Coursera)
 - subscriptions: Streaming, software, recurring memberships (Netflix, Spotify)
 - travel: Flights, hotels, tourism, vacation expenses
+- sports: Gym, sports equipment, sports activities
+- pets: Veterinary, pet shops, pet food
 - other_expense: Expenses not fitting above categories, transfers to third parties
 
 TRANSFER categories:
@@ -413,15 +215,15 @@ For each transaction, extract:
 Movement/Category mapping for investments:
 - Contributions/deposits: TRANSFER + to_investment
 - Withdrawals to own account: TRANSFER + own_transfer
-- Dividends: INCOME + other_income
-- Interest: INCOME + other_income
+- Dividends: INCOME + investment
+- Interest: INCOME + investment
 - Platform fees: EXPENSE + other_expense
 - Buy/Sell trades: TRANSFER + to_investment (internal platform movement)
 
 Example output:
 [
   {"posted_date":"2024-12-15","value_date":null,"description_raw":"Aporte mensual","description_clean":"Aporte mensual","amount_signed":500.00,"source_transaction_id":"TX123456","movement":"TRANSFER","category_slug":"to_investment","platform":"Cocos","asset_type":"fund","currency":"EUR"},
-  {"posted_date":"2024-12-10","value_date":"2024-12-11","description_raw":"Dividendo Apple Inc AAPL","description_clean":"Dividendo Apple Inc","amount_signed":12.50,"source_transaction_id":null,"movement":"INCOME","category_slug":"other_income","platform":"DEGIRO","asset_type":"stocks","currency":"USD"},
+  {"posted_date":"2024-12-10","value_date":"2024-12-11","description_raw":"Dividendo Apple Inc AAPL","description_clean":"Dividendo Apple Inc","amount_signed":12.50,"source_transaction_id":null,"movement":"INCOME","category_slug":"investment","platform":"DEGIRO","asset_type":"stocks","currency":"USD"},
   {"posted_date":"2024-12-05","value_date":null,"description_raw":"Comisión custodia","description_clean":"Comisión custodia mensual","amount_signed":-1.50,"source_transaction_id":null,"movement":"EXPENSE","category_slug":"other_expense","platform":"Trade Republic","asset_type":"other","currency":"EUR"}
 ]`;
 
@@ -507,15 +309,17 @@ function validateCategorySlug(slug: string | null, movement: MovementType): stri
     }
   }
   
-  const normalizedSlug = slug.toLowerCase().replace(/\s+/g, '_');
+  const normalizedSlug = slug!.toLowerCase().replace(/\s+/g, '_');
+  // Map extended categories to app categories
+  const mappedSlug = mapCategorySlug(normalizedSlug);
   
   switch (movement) {
     case 'INCOME':
-      return INCOME_SLUGS.includes(normalizedSlug) ? normalizedSlug : 'other_income';
+      return INCOME_SLUGS.includes(mappedSlug) ? mappedSlug : 'other_income';
     case 'EXPENSE':
-      return EXPENSE_SLUGS.includes(normalizedSlug) ? normalizedSlug : 'other_expense';
+      return EXPENSE_SLUGS.includes(mappedSlug) ? mappedSlug : 'other_expense';
     case 'TRANSFER':
-      return TRANSFER_SLUGS.includes(normalizedSlug) ? normalizedSlug : 'own_transfer';
+      return TRANSFER_SLUGS.includes(mappedSlug) ? mappedSlug : 'own_transfer';
   }
 }
 
@@ -686,12 +490,10 @@ async function getCategoryIdBySlug(
 function parseJsonFromAIResponse(rawContent: string): { transactions: any[] | null; error: string | null } {
   let jsonString = rawContent.trim();
   
-  // Remove markdown code blocks more robustly
   jsonString = jsonString.replace(/^```(?:json|JSON)?\s*\n?/g, '');
   jsonString = jsonString.replace(/\n?```\s*$/g, '');
   jsonString = jsonString.trim();
   
-  // Try to find JSON array if not starting with [
   if (!jsonString.startsWith('[') && !jsonString.startsWith('{')) {
     const arrayMatch = jsonString.match(/\[[\s\S]*\]/);
     if (arrayMatch) {
@@ -701,11 +503,9 @@ function parseJsonFromAIResponse(rawContent: string): { transactions: any[] | nu
     }
   }
   
-  // If it's incomplete (truncated), try to fix it
   if (jsonString.startsWith('[') && !jsonString.endsWith(']')) {
     console.log('[process-import] Detected truncated JSON, attempting to fix...');
     
-    // Count opening braces to find where last complete object ends
     let depth = 0;
     let lastValidIndex = -1;
     
@@ -716,22 +516,13 @@ function parseJsonFromAIResponse(rawContent: string): { transactions: any[] | nu
       } else if (char === ']' || char === '}') {
         depth--;
         if (depth === 1 && char === '}') {
-          // We just closed an object at depth 1 (inside the array)
           lastValidIndex = i;
         }
       }
     }
     
     if (lastValidIndex > 0) {
-      // Check if there's a comma after the last valid object
-      let afterLast = jsonString.substring(lastValidIndex + 1).trim();
-      if (afterLast.startsWith(',')) {
-        // Remove trailing comma and close array
-        jsonString = jsonString.substring(0, lastValidIndex + 1) + ']';
-      } else {
-        // Just close array
-        jsonString = jsonString.substring(0, lastValidIndex + 1) + ']';
-      }
+      jsonString = jsonString.substring(0, lastValidIndex + 1) + ']';
       console.log('[process-import] Fixed truncated JSON, length now:', jsonString.length);
     }
   }
@@ -752,12 +543,10 @@ function parseJsonFromAIResponse(rawContent: string): { transactions: any[] | nu
 function splitIntoChunks(content: string): string[] {
   const chunks: string[] = [];
   
-  // First try to split by page markers (--- Page N ---)
   const pagePattern = /---\s*Page\s*\d+\s*---/gi;
   const pages = content.split(pagePattern).filter(p => p.trim().length > 0);
   
   if (pages.length > 1) {
-    // Combine pages into chunks that don't exceed MAX_CHUNK_SIZE
     let currentChunk = '';
     for (const page of pages) {
       if (currentChunk.length + page.length > MAX_CHUNK_SIZE && currentChunk.length > 0) {
@@ -771,10 +560,8 @@ function splitIntoChunks(content: string): string[] {
       chunks.push(currentChunk.trim());
     }
   } else {
-    // Split by character count
     let remaining = content;
     while (remaining.length > MAX_CHUNK_SIZE) {
-      // Try to find a good break point (newline)
       let breakPoint = remaining.lastIndexOf('\n', MAX_CHUNK_SIZE);
       if (breakPoint < MAX_CHUNK_SIZE / 2) {
         breakPoint = MAX_CHUNK_SIZE;
@@ -800,10 +587,7 @@ async function callAIWithRetry(
 ): Promise<{ transactions: any[] | null; error: string | null }> {
   const maxRetries = 2;
   
-  // Use simpler prompt for large files to reduce output size
   const effectivePrompt = isLargeFile ? SIMPLE_EXTRACTION_PROMPT : prompt;
-  
-  // Model selection: use pro for large files or retries
   const model = (isLargeFile || retryCount > 0) ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash';
   
   console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, contentLength=${content.length}, isLargeFile=${isLargeFile}`);
@@ -833,7 +617,6 @@ async function callAIWithRetry(
       return { transactions: null, error: `API error: ${response.status}` };
     }
     
-    // Retry on other errors
     if (retryCount < maxRetries) {
       console.log(`[process-import] Retrying AI call...`);
       await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
@@ -860,7 +643,7 @@ async function callAIWithRetry(
     console.log(`[process-import] Raw content end: START>>>>${rawContent.substring(Math.max(0, rawContent.length - 300))}<<<<END`);
     
     await new Promise(r => setTimeout(r, 1000));
-    return callAIWithRetry(content, prompt, true, retryCount + 1); // Force large file mode on retry
+    return callAIWithRetry(content, prompt, true, retryCount + 1);
   }
   
   return result;
@@ -976,6 +759,34 @@ serve(async (req) => {
     
     const accountsForDetection = userAccounts || [];
 
+    // ========== BUILD USER CONTEXT FOR ADVANCED CATEGORIZER ==========
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    const { data: userPrefs } = await supabase
+      .from('user_preferences')
+      .select('country, base_currency')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const userContext: UserContext | undefined = (userProfile?.first_name && userProfile?.last_name)
+      ? {
+          firstName: userProfile.first_name,
+          lastName: userProfile.last_name,
+          country: (userPrefs?.country as UserContext['country']) || undefined,
+          currency: (userPrefs?.base_currency as UserContext['currency']) || undefined,
+        }
+      : undefined;
+
+    if (userContext) {
+      console.log(`[process-import] UserContext built: ${userContext.firstName} ${userContext.lastName}, country=${userContext.country || 'none'}`);
+    } else {
+      console.log(`[process-import] No UserContext (missing profile name)`);
+    }
+
     // Pre-fetch category IDs for all slugs
     const { data: allCategories } = await supabase
       .from('categories')
@@ -1025,7 +836,6 @@ serve(async (req) => {
     let allTransactions: any[] = [];
     
     if (isLargeFile) {
-      // CHUNKED PROCESSING for large files
       console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
       
       const chunks = splitIntoChunks(fileContent);
@@ -1037,7 +847,6 @@ serve(async (req) => {
         
         if (result.error) {
           console.error(`[process-import] Chunk ${i + 1} failed: ${result.error}`);
-          // Continue with other chunks
           continue;
         }
         
@@ -1047,9 +856,7 @@ serve(async (req) => {
         }
       }
       
-      // Check if any chunk failed due to 402/429 before declaring parse failure
       if (allTransactions.length === 0) {
-        // If we have no transactions, delete the import and return error
         console.log(`[process-import] No transactions extracted, deleting import ${importId}`);
         await supabase.from('imports').delete().eq('id', importId);
         
@@ -1062,7 +869,6 @@ serve(async (req) => {
         );
       }
     } else {
-      // SINGLE CALL for smaller files
       console.log(`[process-import] Small file (${fileContent.length} chars), using single AI call`);
       
       const result = await callAIWithRetry(fileContent, prompt, false);
@@ -1070,11 +876,9 @@ serve(async (req) => {
       if (result.error) {
         console.error(`[process-import] AI processing failed: ${result.error}`);
         
-        // Check for specific API errors (402/429)
         const is402 = result.error.includes('402');
         const is429 = result.error.includes('429');
         
-        // Delete the import record on any error (no FAILED state)
         console.log(`[process-import] AI error, deleting import ${importId}`);
         await supabase.from('imports').delete().eq('id', importId);
         
@@ -1098,7 +902,6 @@ serve(async (req) => {
           );
         }
         
-        // Generic AI error
         return new Response(
           JSON.stringify({ 
             error: 'ai_processing_failed',
@@ -1137,7 +940,6 @@ serve(async (req) => {
     const targetMonthCount = monthCounts[normalizedTargetMonth] || 0;
     let redirectedFromMonth: string | null = null;
     if (allTransactions.length > 0 && targetMonthCount === 0) {
-      // Find the dominant month
       const dominantMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0];
       const correctMonth = dominantMonth[0];
       console.log(`[process-import] Wrong month detected! All ${allTransactions.length} transactions belong to ${correctMonth}, not ${normalizedTargetMonth}. Auto-redirecting.`);
@@ -1145,7 +947,6 @@ serve(async (req) => {
       redirectedFromMonth = normalizedTargetMonth;
       normalizedTargetMonth = correctMonth;
 
-      // Check if the correct month's period is closed
       const { data: correctPeriod } = await supabase
         .from('periods')
         .select('id, status')
@@ -1155,7 +956,6 @@ serve(async (req) => {
         .maybeSingle();
 
       if (correctPeriod?.status === 'CLOSED') {
-        // Can't redirect to a closed period — clean up and reject
         await supabase.from('import_rows').delete().eq('import_id', importId);
         await supabase.from('imports').delete().eq('id', importId);
         if (fileStorageUrl) {
@@ -1170,7 +970,6 @@ serve(async (req) => {
         );
       }
 
-      // Get or create the correct period
       if (correctPeriod) {
         periodId = correctPeriod.id;
       } else {
@@ -1183,7 +982,6 @@ serve(async (req) => {
         periodId = newCorrectPeriod.id;
       }
 
-      // Update the import record to point to the correct period
       await supabase.from('imports').update({ period_id: periodId }).eq('id', importId);
     }
 
@@ -1226,7 +1024,7 @@ serve(async (req) => {
       income: 0,
       expenses: 0,
       categorizedByRule: 0,
-      categorizedByLocalPattern: 0,
+      categorizedByCategorizer: 0,
       categorizedByAI: 0
     };
 
@@ -1309,18 +1107,18 @@ serve(async (req) => {
       seenFingerprints.add(fingerprint);
       seenNaturalKeys.add(naturalKey);
 
-      // === CATEGORIZATION LOGIC (Priority: User Rules > Local Patterns > AI) ===
+      // === CATEGORIZATION LOGIC ===
+      // Priority: User Rules > Advanced Categorizer (2500+ patterns) > AI
       
       // Start with AI/derived categorization as baseline
       let movement: MovementType;
       let categorySlug: string;
-      let categorizedBy: string = 'ai'; // Default: AI categorized
+      let categorizedBy: string = 'ai';
       
       if (t.movement) {
         movement = validateMovement(t.movement);
         categorySlug = validateCategorySlug(t.category_slug, movement);
       } else {
-        // Derive from amount sign
         movement = amountSigned >= 0 ? 'INCOME' : 'EXPENSE';
         categorySlug = movement === 'INCOME' ? 'other_income' : 'other_expense';
       }
@@ -1340,27 +1138,39 @@ serve(async (req) => {
         stats.transfers++;
       }
 
-      // Priority 2: Local pattern matching (before user rules for efficiency, but lower priority)
       let categoryId: string | null = null;
       let categorizationRuleId: string | null = null;
       let categorySource = 'AI';
       
-      // Try local pattern matching first (for large files or any uncategorized)
-      const localPatternMatch = matchLocalPattern(descriptionRaw) || matchLocalPattern(descriptionClean);
+      // ── Priority 2: Advanced Categorizer (2500+ regex patterns) ──
+      // Uses the description_raw for best matching against bank descriptions.
+      // Also tries description_clean as fallback.
+      const categorizerMatch = categorize(descriptionRaw, amountSigned, userContext)
+                            || categorize(descriptionClean, amountSigned, userContext);
       
-      if (localPatternMatch) {
-        movement = localPatternMatch.movement;
-        categorySlug = localPatternMatch.categorySlug;
+      if (categorizerMatch) {
+        // Map extended categories to app categories
+        const mappedCategory = mapCategorySlug(categorizerMatch.category);
+        
+        // Determine movement from categorizer result
+        movement = categorizerMatch.movement as MovementType;
+        categorySlug = mappedCategory;
+        
+        // Validate the mapped slug is valid for this movement
+        categorySlug = validateCategorySlug(categorySlug, movement);
+        
         categoryId = categorySlugToId[categorySlug] || null;
-        categorySource = 'LOCAL_PATTERN';
-        categorizedBy = 'local_pattern';
-        stats.categorizedByLocalPattern++;
-        console.log(`[process-import] Local pattern match: "${descriptionClean.substring(0, 30)}" → ${categorySlug}`);
+        categorySource = 'CATEGORIZER';
+        categorizedBy = 'categorizer';
+        stats.categorizedByCategorizer++;
+        
+        console.log(`[process-import] Categorizer match: "${descriptionRaw.substring(0, 40)}" → ${categorizerMatch.category}→${categorySlug} (confidence: ${categorizerMatch.confidence}, rule: ${categorizerMatch.matchedRule.substring(0, 40)})`);
       } else {
         stats.categorizedByAI++;
+        categoryId = categorySlugToId[categorySlug] || null;
       }
       
-      // Priority 1: User categorization rules (HIGHEST priority - overrides local patterns)
+      // ── Priority 1: User categorization rules (HIGHEST priority) ──
       const ruleMatch = await applyCategoryRules(
         supabase,
         userId,
@@ -1385,17 +1195,13 @@ serve(async (req) => {
         categorySource = 'RULE';
         categorizedBy = 'user_rule';
         
-        // Adjust stats: if local pattern was counted, subtract it
-        if (localPatternMatch) {
-          stats.categorizedByLocalPattern--;
-          stats.categorizedByAI--; // It wasn't AI either
+        // Adjust stats
+        if (categorizerMatch) {
+          stats.categorizedByCategorizer--;
         } else {
           stats.categorizedByAI--;
         }
         stats.categorizedByRule++;
-      } else if (!localPatternMatch) {
-        // No rule and no local pattern - category comes from AI
-        categoryId = categorySlugToId[categorySlug] || null;
       }
 
       const legacyType = getLegacyType(movement);
@@ -1506,16 +1312,16 @@ serve(async (req) => {
     if (stats.categorizedByRule > 0) {
       message += `, ${stats.categorizedByRule} by rules`;
     }
-    if (stats.categorizedByLocalPattern > 0) {
-      message += `, ${stats.categorizedByLocalPattern} by local patterns`;
+    if (stats.categorizedByCategorizer > 0) {
+      message += `, ${stats.categorizedByCategorizer} by categorizer`;
     }
     
-    // Log AI savings info
-    const totalCategorized = stats.categorizedByRule + stats.categorizedByLocalPattern;
+    // Log categorization savings
+    const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer;
     const aiSavingsPercent = stats.newTransactions > 0 
       ? Math.round((totalCategorized / stats.newTransactions) * 100) 
       : 0;
-    console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, local=${stats.categorizedByLocalPattern}, AI=${stats.categorizedByAI}, savings=${aiSavingsPercent}%`);
+    console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, categorizer=${stats.categorizedByCategorizer}, AI=${stats.categorizedByAI}, local_coverage=${aiSavingsPercent}%`);
 
     return new Response(
       JSON.stringify({ 
