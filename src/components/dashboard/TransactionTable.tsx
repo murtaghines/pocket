@@ -192,8 +192,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       key={transaction.id}
                       className="hover:bg-muted/30 transition-colors"
                     >
-                      <TableCell className="text-xs text-muted-foreground uppercase hidden sm:table-cell">
-                        {formatMonth(transaction.date)}
+                      <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
+                        <div className="leading-tight">
+                          <div className="font-medium">{formatMonth(transaction.date).month}</div>
+                          <div className="opacity-70">{formatMonth(transaction.date).year}</div>
+                        </div>
                       </TableCell>
                       <TableCell className="font-medium text-muted-foreground hidden sm:table-cell">
                         {formatTransactionDate(transaction.date)}
