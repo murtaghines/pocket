@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS custom_category_rules jsonb DEFAULT '[]';
