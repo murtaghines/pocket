@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { NotificationBell } from "./NotificationBell";
 import pocketLogoWhite from "@/assets/pocket-logo-white.png";
-import pocketIcon from "@/assets/pocket-icon.png";
+
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -45,8 +45,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <nav className="flex items-center justify-between backdrop-blur-xl rounded-full px-4 md:px-6 py-2.5 shadow-sm" style={{ background: '#0F4264' }}>
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center gap-2 flex-shrink-0">
-              <img src={pocketIcon} alt="pocket" className="h-7 w-auto" />
-              <img src={pocketLogoWhite} alt="pocket" className="h-4 w-auto hidden sm:block" />
+              <img src={pocketLogoWhite} alt="pocket" className="h-5 w-auto" />
             </Link>
 
             {/* Center Navigation - Desktop */}
