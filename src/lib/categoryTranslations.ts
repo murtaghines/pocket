@@ -64,6 +64,7 @@ export const categoryIcons: Record<string, string> = {
   rents: 'home',
   own_transfer: 'arrow-left-right',
   to_investment: 'trending-up',
+  to_joint_account: 'users',
 };
 
 // Category colors (CSS variable names)
