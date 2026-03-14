@@ -1,0 +1,62 @@
+export const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  AR: 'ARS',
+  BR: 'BRL',
+  CL: 'CLP',
+  CO: 'COP',
+  MX: 'MXN',
+  PE: 'PEN',
+  ES: 'EUR',
+  US: 'USD',
+  PT: 'EUR',
+  UK: 'GBP',
+  DE: 'EUR',
+  FR: 'EUR',
+  IT: 'EUR',
+  OTHER: 'USD',
+};
+
+export const COUNTRIES = [
+  { code: 'AR', name: 'Argentina' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'CL', name: 'Chile' },
+  { code: 'CO', name: 'Colombia' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'PE', name: 'Peru' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'US', name: 'United States' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'UK', name: 'United Kingdom' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'OTHER', name: 'Other' },
+];
+
+export const INVESTMENT_PLATFORMS_BY_COUNTRY: Record<string, string[]> = {
+  AR: ['Balanz', 'Bull Market', 'IOL (InvertirOnline)', 'Cocos Capital', 'PPI (Portfolio Personal)', 'Naranja X', 'Mercado Pago'],
+  BR: ['XP Investimentos', 'NuInvest', 'Rico', 'Clear', 'BTG Pactual', 'Inter'],
+  CL: ['Renta4', 'Bci Corredor de Bolsa', 'Fintual', 'BTG Pactual Chile'],
+  CO: ['Tyba', 'Skandia', 'Acciones y Valores', 'BTG Pactual Colombia'],
+  MX: ['GBM+', 'Bursanet', 'Kuspit', 'Flink', 'Hey Banco'],
+  PE: ['Tyba Perú', 'Credicorp Capital', 'Renta4 SAB'],
+  ES: ['Degiro', 'Interactive Brokers', 'MyInvestor', 'Indexa Capital', 'Renta 4', 'Openbank'],
+  US: ['Robinhood', 'Fidelity', 'Charles Schwab', 'Vanguard', 'E*TRADE', 'Interactive Brokers'],
+  PT: ['Degiro', 'Interactive Brokers', 'XTB', 'Trading 212'],
+  UK: ['Hargreaves Lansdown', 'AJ Bell', 'Interactive Investor', 'Freetrade', 'Trading 212'],
+  DE: ['Trade Republic', 'Scalable Capital', 'ING DiBa', 'Comdirect', 'Degiro'],
+  FR: ['Boursorama', 'Degiro', 'Trade Republic', 'Bourse Direct', 'Fortuneo'],
+  IT: ['Degiro', 'Fineco', 'Directa', 'Trade Republic', 'Scalable Capital'],
+  OTHER: ['Interactive Brokers', 'Degiro', 'eToro', 'Trading 212'],
+};
+
+export const CURRENCIES = [
+  { code: 'ARS', name: 'Argentine Peso', symbol: '$' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+  { code: 'CLP', name: 'Chilean Peso', symbol: '$' },
+  { code: 'COP', name: 'Colombian Peso', symbol: '$' },
+  { code: 'EUR', name: 'Euro', symbol: '€' },
+  { code: 'GBP', name: 'British Pound', symbol: '£' },
+  { code: 'MXN', name: 'Mexican Peso', symbol: '$' },
+  { code: 'PEN', name: 'Peruvian Sol', symbol: 'S/' },
+  { code: 'USD', name: 'US Dollar', symbol: '$' },
+];
