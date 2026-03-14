@@ -3461,7 +3461,7 @@ export function categorizeBatch(
     const category = match?.category ?? null;
     if (category) byCategory[category] = (byCategory[category] ?? 0) + 1;
 
-    const isNeutralTransfer = category === 'own_transfer';
+    const isNeutralTransfer = category === 'own_transfer' || category === 'to_joint_account';
     const isInvestmentMove  = category === 'to_investment';
     const needsML           = match === null;
 
