@@ -33,7 +33,7 @@ export function useCustomCategories() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
-      return (data?.custom_category_rules as CategoryRule[] | null) ?? [];
+      return ((data?.custom_category_rules as unknown) as CategoryRule[] | null) ?? [];
     },
     enabled: !!user?.id,
   });
