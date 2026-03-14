@@ -133,8 +133,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="h-[env(safe-area-inset-bottom,0)]" style={{ background: '#0F4264' }} />
       </nav>
 
-      {/* Main content - extra top margin so gray bg peeks above the white card */}
-      <div className="pt-4 pb-20 md:pb-0 min-h-screen relative z-10">
+      {/* Main content - tiny padding so gray peeks through */}
+      <div className="p-2 md:p-3 pb-20 md:pb-3 min-h-screen relative z-10">
         {children}
       </div>
     </div>

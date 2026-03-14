@@ -138,7 +138,7 @@ export default function Index() {
             <EmptyStateBanner hasData={transactions.length > 0} />
 
             {/* === WHITE SECTION 1: Analytics === */}
-            <div className="bg-card rounded-3xl pt-24 md:pt-28 px-6 md:px-8 pb-6 md:pb-8 mb-6" style={{ boxShadow: 'var(--shadow-section)' }}>
+            <div className="bg-card rounded-2xl md:rounded-3xl pt-20 md:pt-24 px-4 md:px-8 pb-6 md:pb-8 mb-2 md:mb-3" style={{ boxShadow: 'var(--shadow-section)' }}>
               {/* Section header with title + view toggle */}
               <div className="flex items-center justify-between mb-6">
                 <div>
