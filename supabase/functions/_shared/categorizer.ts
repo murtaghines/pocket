@@ -315,6 +315,15 @@ const RULE_BUCKETS: RuleBucket[] = [
       'YIELD\\s*EARNED',
       '401K\\s*DISTRIBUTION',
       'IRA\\s*DISTRIBUTION',
+      // EN — interest paid by neobanks / savings accounts
+      'NET\\s*INTEREST\\s*PAID',
+      'INTEREST\\s*PAID\\s*TO',
+      'INTEREST\\s*EARNED',
+      'INTEREST\\s*PAYMENT',
+      'INTEREST\\s*CREDIT',
+      'ANNUAL\\s*INTEREST',
+      'MONTHLY\\s*INTEREST',
+      'ACCRUED\\s*INTEREST',
     ], 0.99),
   },
 
