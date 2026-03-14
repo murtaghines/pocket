@@ -57,7 +57,6 @@ export function StepCountry({ country, currency, onCountryChange, onCurrencyChan
               ))}
             </SelectContent>
           </Select>
-        </div>
       </div>
     </div>
   );
