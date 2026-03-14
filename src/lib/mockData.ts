@@ -48,6 +48,7 @@ export interface Transaction {
   categorySlug?: string;
   account: string;
   bank: string;
+  runningBalance?: number | null;
 }
 
 export interface MonthlyData {

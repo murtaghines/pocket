@@ -17,7 +17,8 @@
     "savingsRate": "Savings Rate",
     "vsLastMonth": "vs last month",
     "thisMonth": "this month",
-    "previousBalance": "Previous month balance"
+    "previousBalance": "Previous month balance",
+    "openingBalance": "Opening balance"
   },
   "charts": {
     "monthlyBalance": "Monthly Balance",
@@ -41,6 +42,7 @@
     "category": "Category",
     "movement": "Movement",
     "amount": "Amount",
+    "balance": "Balance",
     "bank": "Bank",
     "edited": "edited"
   },

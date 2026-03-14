@@ -160,7 +160,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       <CardContent>
         <div className="rounded-2xl border border-border/50 overflow-hidden">
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="w-[60px] hidden sm:table-cell">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
                 <TableHead className="w-[70px] hidden sm:table-cell">{t('transactions.date')}</TableHead>
@@ -169,12 +169,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <TableHead className="hidden md:table-cell">{t('transactions.category')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t('transactions.bank', { defaultValue: 'Account' })}</TableHead>
                 <TableHead className="text-right">{t('transactions.amount')}</TableHead>
+                <TableHead className="text-right hidden lg:table-cell">{t('transactions.balance', { defaultValue: 'Balance' })}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTransactions.length === 0 ? (
+               {filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {t('transactions.noTransactions')}
                   </TableCell>
                 </TableRow>
@@ -248,8 +249,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           : movementType === 'transfer' ? "text-muted-foreground"
                           : "text-destructive"
                       )}>
-                        {transaction.amount >= 0 ? '+' : ''}
+                       {transaction.amount >= 0 ? '+' : ''}
                         {formatCurrency(transaction.amount)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground hidden lg:table-cell">
+                        {transaction.runningBalance != null
+                          ? formatCurrency(transaction.runningBalance)
+                          : '—'}
                       </TableCell>
                     </TableRow>
                   );

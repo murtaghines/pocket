@@ -76,6 +76,7 @@ interface DbTransaction {
   linked_transaction_id: string | null;
   domain: AppDomain | null;
   account_id: string | null;
+  running_balance: number | null;
 }
 
 interface UseTransactionsOptions {
@@ -150,11 +151,41 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           categorySlug: t.category,
           account: "Main Account",
           bank: t.bank || "Unknown",
+          runningBalance: t.running_balance,
         };
       });
     },
     enabled: !!user,
   });
+
+  // Compute opening balance per month from running_balance data
+  const openingBalanceByMonth: Record<string, number> = (() => {
+    if (!transactions.length) return {};
+    
+    // Group transactions by month, sorted by date ascending
+    const byMonth: Record<string, Transaction[]> = {};
+    for (const tx of transactions) {
+      const monthKey = tx.date.substring(0, 7);
+      if (!byMonth[monthKey]) byMonth[monthKey] = [];
+      byMonth[monthKey].push(tx);
+    }
+    
+    const result: Record<string, number> = {};
+    
+    for (const [monthKey, txs] of Object.entries(byMonth)) {
+      // Sort ascending by date
+      const sorted = [...txs].sort((a, b) => a.date.localeCompare(b.date));
+      
+      // Find earliest transaction with a running balance
+      const firstWithBalance = sorted.find(t => t.runningBalance != null);
+      if (firstWithBalance && firstWithBalance.runningBalance != null) {
+        // Opening balance = running_balance of first tx minus the tx's own amount
+        result[monthKey] = Math.round((firstWithBalance.runningBalance - firstWithBalance.amount) * 100) / 100;
+      }
+    }
+    
+    return result;
+  })();
 
   const deleteTransaction = useMutation({
     mutationFn: async (id: string) => {
@@ -278,6 +309,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     categoryData,
     bankData,
     summary,
+    openingBalanceByMonth,
     isLoading,
     error,
     deleteTransaction,

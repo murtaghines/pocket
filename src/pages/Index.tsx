@@ -30,6 +30,7 @@ export default function Index() {
     monthlyData, 
     categoryData, 
     summary, 
+    openingBalanceByMonth,
     isLoading 
   } = useTransactions();
   
@@ -163,6 +164,11 @@ export default function Index() {
                   <h3 className="text-lg font-semibold capitalize text-foreground">
                     {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
                   </h3>
+                  {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+                    </p>
+                  )}
                   {hasPreviousData && (
                     <p className="text-sm text-muted-foreground mt-0.5">
                       {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
