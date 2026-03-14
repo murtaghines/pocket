@@ -6,6 +6,7 @@ export type DashboardView = 'monthly' | 'total';
 interface DateDisplayProps {
   currentView: DashboardView;
   onViewChange: (view: DashboardView) => void;
+  hideToggle?: boolean;
 }
 
 export function DateDisplay({ currentView, onViewChange }: DateDisplayProps) {
