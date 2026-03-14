@@ -57,10 +57,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     key={item.path}
                     to={item.path}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all",
                       isActive(item.path)
-                        ? "bg-white/20 text-white"
-                        : "text-white/60 hover:text-white hover:bg-white/10"
+                        ? "text-white font-bold"
+                        : "text-white/60 hover:text-white hover:bg-white/10 font-medium"
                     )}
                   >
                     <Icon className="w-4 h-4" />
