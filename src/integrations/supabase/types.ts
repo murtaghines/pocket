@@ -448,6 +448,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          custom_category_rules: Json | null
           first_name: string | null
           id: string
           investment_platforms: string[] | null
@@ -458,6 +459,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_category_rules?: Json | null
           first_name?: string | null
           id?: string
           investment_platforms?: string[] | null
@@ -468,6 +470,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_category_rules?: Json | null
           first_name?: string | null
           id?: string
           investment_platforms?: string[] | null

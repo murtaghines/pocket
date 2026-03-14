@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategories } from '@/hooks/useCategories';
 import { useCategorizationRules } from '@/hooks/useCategorizationRules';
 import { CategoryRulesList } from './CategoryRulesList';
 import { AddRuleDialog } from './AddRuleDialog';
+import { CustomCategoriesManager } from './CustomCategoriesManager';
 
 export function CategoriesEditor() {
   const { t } = useTranslation('settings');
@@ -22,8 +23,15 @@ export function CategoriesEditor() {
         <p className="text-sm text-muted-foreground">
           {t('categories.description')}
         </p>
+        <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-muted/50 border">
+          <Info className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            {t('categories.alwaysActiveNote', 'These categories are always active. Pocket automatically assigns them based on your transaction descriptions. You can add custom rules to fine-tune how transactions are categorized.')}
+          </p>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        {/* Standard categories with rules */}
         <Tabs defaultValue="expense" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="income" className="flex items-center gap-1.5 text-xs">
@@ -62,6 +70,11 @@ export function CategoriesEditor() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Custom categories & rule overrides */}
+        <div className="border-t pt-4">
+          <CustomCategoriesManager />
+        </div>
 
         <AddRuleDialog
           open={!!addRuleFor}

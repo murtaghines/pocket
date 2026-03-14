@@ -1,58 +1,40 @@
 
 
-## Plan: Categories System Revamp (3 Parts)
+## Verificacion y Correccion del Flujo de Periodos Abiertos/Cerrados
 
-### Current State
-- **OnboardingModal**: Already 4 steps (Language, Country, Investments, JointAccount) — no categories step. Already imports `DEFAULT_INCOME_CATEGORIES` / `DEFAULT_EXPENSE_CATEGORIES` but only to save them all on completion. **No StepCategories exists.** The user's verification request is already satisfied — the categories step was removed in the previous implementation.
-- **CategoriesEditor**: Shows standard categories grouped by income/expense with expandable rules per category. Already supports adding rules to existing categories via `categorization_rules` table.
-- **Categorizer**: Already has `UserContext.customCategories` and `CustomCategory` interface with fuzzy matching. Already handles custom categories BEFORE standard rules.
-- **process-import edge function**: Builds `UserContext` but does NOT include `jointAccountNames`, `investmentPlatforms`, or `customCategories`.
+### Problemas Encontrados
 
-### What Needs to Change
+Despues de revisar todo el codigo, encontre estos problemas concretos:
 
-**Part 1: OnboardingModal cleanup** — Minor. Remove unused `DEFAULT_INCOME_CATEGORIES`/`DEFAULT_EXPENSE_CATEGORIES` imports from OnboardingModal (line 13-16). The `handleComplete` still references them (line 77, 88) — remove `selected_categories` from the `updatePreferences` call. The modal already has no categories step.
+1. **Drag-and-drop ignora el candado**: Si un mes esta cerrado (candado cerrado), el usuario puede arrastrar archivos sobre el slot y el sistema intenta procesarlos. Recien en el backend se rechaza con error "period_closed". La UI deberia bloquearlo antes.
 
-**Part 2: Profile Categories Section** — The existing `CategoriesEditor` already shows standard categories + rules. Enhance it:
-1. Add a read-only note explaining categories are always active
-2. Add ability to **create custom categories** (new name + movement type + keywords) — stored in `categorization_rules` table with a new approach, OR in a new `custom_categories` jsonb column on `profiles`
-3. Keep existing rule-adding flow for standard categories
+2. **No hay validacion client-side antes de subir**: El hook `useMonthlyFileUpload` envia archivos directamente al backend sin verificar si el periodo esta cerrado. Esto causa el error que viste.
 
-Given the user's data model suggestion (`custom_category_rules` jsonb on profiles), I'll follow that approach:
-- Add `custom_category_rules jsonb DEFAULT '[]'` to `profiles` table
-- Create a new `CustomCategoriesManager` component for creating/editing/deleting custom categories
-- Update `CategoriesEditor` to include the transparency note + custom categories section
-- Add a `useCustomCategories` hook for CRUD on `profiles.custom_category_rules`
+3. **Race condition al reabrir**: Cuando el usuario hace clic en "Reabrir mes", la query de periodos se invalida y se refresca. Pero si el usuario intenta subir un archivo antes de que termine el refetch, el backend podria seguir viendo el periodo como cerrado.
 
-**Part 3: Connect to Categorizer** — Update `process-import/index.ts` to:
-- Fetch `profiles.joint_account_names`, `profiles.investment_platforms`, `profiles.custom_category_rules`
-- Map `custom_category_rules` entries to `UserContext.customCategories` and inject rule overrides
-- Add `categoryRuleOverrides` support to the categorizer (new field on UserContext + check in `categorize()` before standard rules)
+### Solucion Propuesta
 
-### Files
+#### 1. Bloquear drag-and-drop en meses cerrados
+En `MonthUploadSlot.tsx`, el handler `handleDrop` debe verificar `isClosed` y mostrar un toast de advertencia en vez de intentar subir.
 
-**Database Migration:**
-```sql
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS custom_category_rules jsonb DEFAULT '[]';
-```
+#### 2. Bloquear el area de upload cuando esta cerrado
+El area de upload (drop zone vacia) y el boton "Add more files" ya se ocultan correctamente cuando `isClosed` es true. Pero el drag-and-drop sigue activo. Se agregara la verificacion ahi.
 
-**Create:**
-- `src/components/settings/CustomCategoriesManager.tsx` — UI for creating/managing custom categories with name, movement type, and keyword chips
-- `src/hooks/useCustomCategories.tsx` — CRUD hook for `profiles.custom_category_rules`
+#### 3. Pasar el estado del periodo al hook de upload
+Modificar `addFilesForMonth` para aceptar un parametro opcional de estado del periodo, o hacer la verificacion directamente en `MonthUploadSlot` antes de llamar a `onAddFiles`.
 
-**Modify:**
-- `src/components/onboarding/OnboardingModal.tsx` — Remove category imports and `selected_categories` from save
-- `src/components/settings/CategoriesEditor.tsx` — Add transparency note, integrate custom categories section
-- `supabase/functions/_shared/categorizer.ts` — Add `categoryRuleOverrides` to `UserContext`, check overrides in `categorize()` before standard rules
-- `supabase/functions/process-import/index.ts` — Expand profile query to include `joint_account_names`, `investment_platforms`, `custom_category_rules`; build full `UserContext` with custom categories and rule overrides
-- `src/i18n/locales/en/settings.json`, `es/settings.json`, `pt/settings.json` — Add translations for custom categories UI
+### Cambios Tecnicos
 
-### Rule Override Logic in Categorizer
-Add to `UserContext`:
-```typescript
-categoryRuleOverrides?: { targetCategory: string; keywords: string[] }[];
-```
+**Archivo: `src/components/profile/MonthUploadSlot.tsx`**
+- En `handleDrop`: agregar verificacion `if (isClosed)` al inicio, mostrando un toast "Este mes esta cerrado. Reabrilo para subir archivos" y haciendo return sin procesar.
+- En `handleFileInput`: agregar la misma verificacion `if (isClosed)`.
+- Deshabilitar visualmente el area de drag cuando el mes esta cerrado (agregar clase CSS de opacidad reducida y cursor no permitido).
 
-In `categorize()`, after custom categories check (Step 2) and before standard rules (Step 3), add Step 2.5:
-- For each override, fuzzy-match keywords against description
-- If matched, find the standard category slug and return it with confidence 0.95
+**Archivo: `src/hooks/useMonthlyFileUpload.tsx`**
+- No requiere cambios, la validacion se hara en la UI antes de llamar a `addFilesForMonth`.
+
+### Resultado Esperado
+- Si el candado esta cerrado: no se puede subir de ninguna forma (ni drag, ni click, ni input). Se muestra un mensaje claro.
+- Si el candado esta abierto: funciona normal.
+- El backend sigue como segunda linea de defensa por si algo pasa.
 

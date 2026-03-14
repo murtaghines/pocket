@@ -3075,6 +3075,19 @@ export interface UserContext {
    *   custom_categories: jsonb  -- array of CustomCategory objects
    */
   customCategories?: CustomCategory[];
+
+  /**
+   * Rule overrides — extra keywords injected into existing standard categories.
+   * These are checked AFTER custom categories but BEFORE standard rule buckets,
+   * allowing the user to force specific transactions into a standard category.
+   *
+   * @example
+   * // User adds "WOSAP" → entertainment (their dance studio)
+   * categoryRuleOverrides: [
+   *   { targetCategory: 'entertainment', keywords: ['WOSAP', 'STUDIO DE BAILE'] }
+   * ]
+   */
+  categoryRuleOverrides?: { targetCategory: string; keywords: string[] }[];
 }
 
 /**
@@ -3265,6 +3278,29 @@ export function categorize(
             category:    `custom_${cc.slug}` as Category,
             confidence:  0.95,
             matchedRule: `CUSTOM:${cc.slug}:${keyword}`,
+          };
+        }
+      }
+    }
+  }
+
+  // ── Step 2.5: User-defined rule overrides on standard categories ──
+  // These let users add keywords that force transactions into an
+  // existing standard category, overriding the normal regex rules.
+  // e.g. "WOSAP" → entertainment (user's dance studio)
+  if (ctx?.categoryRuleOverrides?.length) {
+    for (const override of ctx.categoryRuleOverrides) {
+      for (const keyword of override.keywords) {
+        const { matched } = fuzzyMatch(keyword, norm);
+        if (matched) {
+          // Determine movement from the target category
+          const bucket = RULE_BUCKETS.find(b => b.category === override.targetCategory);
+          const movement: Movement = bucket?.movement ?? (amount > 0 ? 'INCOME' : 'EXPENSE');
+          return {
+            movement,
+            category:    override.targetCategory as Category,
+            confidence:  0.95,
+            matchedRule: `OVERRIDE:${override.targetCategory}:${keyword}`,
           };
         }
       }

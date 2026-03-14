@@ -762,7 +762,7 @@ serve(async (req) => {
     // ========== BUILD USER CONTEXT FOR ADVANCED CATEGORIZER ==========
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('first_name, last_name')
+      .select('first_name, last_name, joint_account_names, investment_platforms, custom_category_rules')
       .eq('user_id', userId)
       .maybeSingle();
     
@@ -772,12 +772,32 @@ serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
+    // Parse custom_category_rules from profile
+    const customRules = (userProfile?.custom_category_rules as any[]) || [];
+    const customCategories = customRules
+      .filter((r: any) => r.type === 'custom_category')
+      .map((r: any) => ({
+        slug: r.slug,
+        name: r.name,
+        movement: r.movement as 'INCOME' | 'EXPENSE',
+        keywords: r.keywords as string[],
+      }));
+    const categoryRuleOverrides = customRules
+      .filter((r: any) => r.type === 'rule_override')
+      .map((r: any) => ({
+        targetCategory: r.targetCategorySlug,
+        keywords: r.keywords as string[],
+      }));
+
     const userContext: UserContext | undefined = (userProfile?.first_name && userProfile?.last_name)
       ? {
           firstName: userProfile.first_name,
           lastName: userProfile.last_name,
           country: (userPrefs?.country as UserContext['country']) || undefined,
           currency: (userPrefs?.base_currency as UserContext['currency']) || undefined,
+          jointAccountNames: userProfile.joint_account_names || undefined,
+          customCategories: customCategories.length > 0 ? customCategories : undefined,
+          categoryRuleOverrides: categoryRuleOverrides.length > 0 ? categoryRuleOverrides : undefined,
         }
       : undefined;
 
