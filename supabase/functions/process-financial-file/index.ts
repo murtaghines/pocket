@@ -273,7 +273,7 @@ serve(async (req) => {
       
       // INSERT MODE: First time saving
       const transactionsToInsert = transactions.map((t: any) => {
-        const movement = normalizeMovement(t.movement || t.type, t.amount);
+        const movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
         const categorySlug = validateCategory(t.category, movement);
         const categoryInfo = categoryMap.get(categorySlug);
         
