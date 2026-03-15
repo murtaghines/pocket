@@ -30,7 +30,7 @@ import {
   ArrowUpCircle, 
   ArrowRightLeft, 
   Loader2,
-  FileCheck2,
+  Pencil,
   Lock
 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
