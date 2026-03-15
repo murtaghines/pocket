@@ -2,7 +2,6 @@ import { Upload, FileSpreadsheet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useTranslation } from "react-i18next";
 
 interface EmptyStateBannerProps {
   hasData: boolean;
