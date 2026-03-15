@@ -41,10 +41,7 @@ export default function Profile() {
           <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
             {/* Profile Header */}
             <div className="mb-8">
-              <ProfileHeader 
-                currentTab="settings"
-                onTabChange={() => {}}
-              />
+              <ProfileHeader />
             </div>
 
             {/* Settings content */}
