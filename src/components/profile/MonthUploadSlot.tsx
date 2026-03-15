@@ -293,7 +293,7 @@ export function MonthUploadSlot({
                   <TableCell className="py-2" colSpan={2}>
                     <div className="flex items-center gap-2 min-w-0">
                       {getStatusIcon(status)}
-                      <span className="text-sm text-foreground font-medium truncate max-w-[280px]">{imp.file_name}</span>
+                      <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[280px]">{imp.file_name}</span>
                       {status === "FAILED" && errorMessage && (
                         <HoverCard>
                           <HoverCardTrigger asChild>
