@@ -53,6 +53,7 @@ export type ExpenseCategory =
   | 'education'
   | 'subscriptions'
   | 'travel'
+  | 'sports'
   | 'pets'
   | 'gifts_given'
   | 'personal_services'
@@ -1696,6 +1697,11 @@ const RULE_BUCKETS: RuleBucket[] = [
       'TAKE\\s*AWAY',
       'TAKEAWAY\\b',
       'SUSHI\\s*RESTAURANT',
+      // ── Generic food keywords ES ──────────────────────────
+      'COMIDA\\b',                // "COMIDA" alone → restaurants
+      'ALMUERZO\\b',
+      'CENA\\b',
+      'BRUNCH\\b',
     ], 0.97),
   },
 
@@ -2060,6 +2066,11 @@ const RULE_BUCKETS: RuleBucket[] = [
       'SEGURO\\s*AUTO',
       'SEGURO\\s*COCHE',
       'SEGURO\\s*VEHICULO',
+      // ── Generic vehicle keywords ES ───────────────────────
+      '\\bAUTO\\b',               // "AUTO" alone → transport
+      '\\bAUTOMOVIL\\b',
+      '\\bCOCHE\\b',
+      '\\bVEHICULO\\b',
       'TALLER\\s*MECANICO',
       'RENTING\\s*VEHICULO',
       'LEASING\\s*VEHICULO',
@@ -2587,6 +2598,61 @@ const RULE_BUCKETS: RuleBucket[] = [
       // ── Bill aggregators LATAM ────────────────────────────
       // These are service payment networks — categorized as other_expense
       // NOT here: RAPIPAGO, PAGOFACIL, ABITAB, REDPAGOS → other_expense
+      // ── Generic purchase keywords ─────────────────────────
+      'REGALO\\b',               // "REGALO KINDLE" etc → shopping
+      'COMPRA\\b',
+    ], 0.95),
+  },
+
+  // ── expense / sports ──────────────────────────────────────
+  {
+    movement: 'EXPENSE',
+    category: 'sports',
+    rules: r([
+      // ── Winter sports ─────────────────────────────────────
+      'SKI\\b',
+      'ESQUI\\b',
+      'SNOWBOARD\\b',
+      'ESTACION\\s*ESQUI',
+      'FORFAIT\\b',
+      // ── Other sports ──────────────────────────────────────
+      'DEPORTE\\b',
+      'DEPORTES\\b',
+      'FUTBOL\\b',
+      'PADEL\\b',
+      'TENIS\\b',
+      'NATACION\\b',
+      'PISCINA\\b',
+      'PILATES\\b',
+      'YOGA\\b',
+      'RUNNING\\b',
+      'MARATON\\b',
+      'CICLISMO\\b',
+      'BICICLETA\\b',
+      'SURF\\b',
+      'ESCALADA\\b',
+      'CLIMBING\\b',
+      'BOXING\\b',
+      'BOXEO\\b',
+      'MARTIAL\\s*ARTS',
+      'ARTES\\s*MARCIALES',
+      'CROSSFIT\\b',
+      'SPINNING\\b',
+      // ── Sports facilities ─────────────────────────────────
+      'POLIDEPORTIVO\\b',
+      'CANCHA\\b',
+      'CLUB\\s*DEPORTIVO',
+      'CENTRO\\s*DEPORTIVO',
+      // ── EN ────────────────────────────────────────────────
+      'SPORTS\\b',
+      'ATHLETIC\\b',
+      'SKIING\\b',
+      'GOLF\\s*CLUB',
+      'TENNIS\\s*CLUB',
+      'SWIM\\b',
+      'SWIMMING\\s*POOL',
+      'ICE\\s*SKATING',
+      'SKATING\\b',
     ], 0.95),
   },
 
