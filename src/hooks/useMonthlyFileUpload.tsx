@@ -142,6 +142,7 @@ export function useMonthlyFileUpload() {
             fileMime: uploadFile.file.type || "application/octet-stream",
             fileStorageUrl: filePath,
             sourceType: "BANK",
+            accountId: accountId || null,
           },
         }
       );
