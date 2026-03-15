@@ -90,7 +90,7 @@ export function MonthlyUploadsOrganizer() {
       {monthSlots.map((slot) => {
         const period = getPeriodByMonthKey(slot.key, "CASHFLOW");
         return (
-          <div key={slot.key} id={`upload-bank-${slot.key}`} className="transition-all duration-300">
+          <div key={slot.key} id={`upload-bank-${slot.key}`}>
             <MonthUploadSlot
               monthKey={slot.key}
               monthLabel={slot.label}
