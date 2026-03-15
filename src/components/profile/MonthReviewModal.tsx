@@ -374,14 +374,13 @@ export function MonthReviewModal({
             <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px] hidden sm:table-cell">Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="w-[90px] hidden md:table-cell">Bank</TableHead>
-                    <TableHead className="w-[120px]">Movement</TableHead>
-                    <TableHead className="w-[130px]">Category</TableHead>
-                    <TableHead className="text-right w-[90px]">Amount</TableHead>
-                  </TableRow>
+                 <TableRow>
+                     <TableHead className="w-[80px] hidden sm:table-cell">Date</TableHead>
+                     <TableHead>Description</TableHead>
+                     <TableHead className="w-[120px]">Movement</TableHead>
+                     <TableHead className="w-[130px]">Category</TableHead>
+                     <TableHead className="text-right w-[90px]">Amount</TableHead>
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.map((tx) => {
