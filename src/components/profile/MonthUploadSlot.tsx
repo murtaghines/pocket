@@ -401,7 +401,7 @@ export function MonthUploadSlot({
             {/* Empty state */}
             {isEmpty && !isClosed && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={5} className="py-8">
+                <TableCell colSpan={5} className="py-8 md:py-8">
                   <div className="relative text-center">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <Plus className="w-6 h-6 mx-auto text-muted-foreground mb-1.5" />
