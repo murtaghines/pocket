@@ -6,8 +6,9 @@ import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
+import { AccountsManager } from "@/components/settings/AccountsManager";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { User, Globe, Tags } from "lucide-react";
+import { User, Globe, Tags, Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
