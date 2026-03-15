@@ -74,81 +74,83 @@ export default function Profile() {
           isLoggingOut ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <main className="container px-4 md:px-6 py-8">
-          <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-            {/* Profile Header with user info and tab selectors */}
-            <div className="mb-8">
-              <ProfileHeader 
-                currentTab={currentTab as 'data' | 'settings'}
-                onTabChange={handleTabChange}
-              />
-            </div>
-
-            {/* My Data Tab - First */}
-            <TabsContent value="data" className="animate-fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="animate-slide-up">
-                  <div className="flex items-center gap-2 mb-4">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium text-foreground">{t('uploads.title')}</h3>
-                  </div>
-                  <MonthlyUploadsOrganizer />
-                </div>
-
-                <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium text-foreground">{t('uploads.investmentUploads')}</h3>
-                  </div>
-                  <InvestmentUploadsOrganizer />
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* Settings Tab */}
-            <TabsContent value="settings" className="animate-fade-in space-y-6">
-              {/* Personal Info & Regional Settings - same row, equal height */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="animate-slide-up flex flex-col">
-                  <div className="flex items-center gap-2 mb-4">
-                    <User className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium text-foreground">{t('personalInfo.title')}</h3>
-                  </div>
-                  <ProfileInfoCard onLogout={handleLogout} className="flex-1" />
-                </div>
-
-                <div className="animate-slide-up flex flex-col" style={{ animationDelay: '100ms' }}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Globe className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium text-foreground">{ts('regional.title')}</h3>
-                  </div>
-                  <PreferencesForm className="flex-1" />
-                </div>
+        <main className="max-w-[1400px] mx-auto">
+          <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
+            <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
+              {/* Profile Header with user info and tab selectors */}
+              <div className="mb-8">
+                <ProfileHeader 
+                  currentTab={currentTab as 'data' | 'settings'}
+                  onTabChange={handleTabChange}
+                />
               </div>
 
-              {/* Categories - full width */}
-              <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Tags className="w-4 h-4 text-primary" />
-                  <h3 className="text-base font-medium text-foreground">{ts('categories.title')}</h3>
-                </div>
-                <CategoriesEditor />
-              </div>
+              {/* My Data Tab - First */}
+              <TabsContent value="data" className="animate-fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="animate-slide-up">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <h3 className="text-base font-medium text-foreground">{t('uploads.title')}</h3>
+                    </div>
+                    <MonthlyUploadsOrganizer />
+                  </div>
 
-              {/* Delete Account - Only in Settings tab */}
-              <div className="animate-slide-up pt-8 border-t" style={{ animationDelay: '200ms' }}>
-                <div className="max-w-xs mx-auto">
-                  <DeleteAccountDialog />
+                  <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      <h3 className="text-base font-medium text-foreground">{t('uploads.investmentUploads')}</h3>
+                    </div>
+                    <InvestmentUploadsOrganizer />
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+
+              {/* Settings Tab */}
+              <TabsContent value="settings" className="animate-fade-in space-y-6">
+                {/* Personal Info & Regional Settings - same row, equal height */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="animate-slide-up flex flex-col">
+                    <div className="flex items-center gap-2 mb-4">
+                      <User className="w-4 h-4 text-primary" />
+                      <h3 className="text-base font-medium text-foreground">{t('personalInfo.title')}</h3>
+                    </div>
+                    <ProfileInfoCard onLogout={handleLogout} className="flex-1" />
+                  </div>
+
+                  <div className="animate-slide-up flex flex-col" style={{ animationDelay: '100ms' }}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Globe className="w-4 h-4 text-primary" />
+                      <h3 className="text-base font-medium text-foreground">{ts('regional.title')}</h3>
+                    </div>
+                    <PreferencesForm className="flex-1" />
+                  </div>
+                </div>
+
+                {/* Categories - full width */}
+                <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Tags className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-medium text-foreground">{ts('categories.title')}</h3>
+                  </div>
+                  <CategoriesEditor />
+                </div>
+
+                {/* Delete Account - Only in Settings tab */}
+                <div className="animate-slide-up pt-8 border-t" style={{ animationDelay: '200ms' }}>
+                  <div className="max-w-xs mx-auto">
+                    <DeleteAccountDialog />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         </main>
 
-        <footer className="border-t mt-12">
+        <footer className="mt-12 relative z-10">
           <div className="container px-4 md:px-6 py-6">
             <p className="text-sm text-muted-foreground text-center">
-              wallet
+              pocket
             </p>
           </div>
         </footer>
