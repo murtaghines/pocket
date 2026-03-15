@@ -245,7 +245,7 @@ serve(async (req) => {
         for (const t of transactions) {
           const existingId = existingHashMap.get(t.transaction_hash);
           if (existingId) {
-            const movement = normalizeMovement(t.movement || t.type, t.amount);
+            const movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
             const categorySlug = validateCategory(t.category, movement);
             const categoryInfo = categoryMap.get(categorySlug);
             
