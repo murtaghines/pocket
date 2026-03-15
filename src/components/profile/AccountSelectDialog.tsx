@@ -33,7 +33,7 @@ export function AccountSelectDialog({
   onConfirm,
   fileName,
 }: AccountSelectDialogProps) {
-  const { accounts, createAccount, isCreating } = useAccounts();
+  const { accounts, isCreating } = useAccounts();
   const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
@@ -41,34 +41,55 @@ export function AccountSelectDialog({
   const [newAccountName, setNewAccountName] = useState("");
   const [newInstitution, setNewInstitution] = useState("");
 
+  // Auto-select if only one account exists
+  useState(() => {
+    if (cashAccounts.length === 1 && !selectedAccountId) {
+      setSelectedAccountId(cashAccounts[0].id);
+    }
+  });
+
   const handleConfirm = () => {
     if (selectedAccountId) {
       onConfirm(selectedAccountId);
-      // Reset
       setShowNewForm(false);
       setNewAccountName("");
       setNewInstitution("");
     }
   };
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!newAccountName.trim()) return;
-    createAccount(
-      {
+    
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { useAuth } = await import("@/hooks/useAuth");
+    
+    // Use supabase directly for inline creation
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('accounts')
+      .insert({
+        user_id: user.id,
         name: newAccountName.trim(),
-        institution: newInstitution.trim() || undefined,
-        account_role: 'CASH',
-        domain_default: 'CASHFLOW',
-      },
-      {
-        onSuccess: (data: any) => {
-          setSelectedAccountId(data.id);
-          setShowNewForm(false);
-          setNewAccountName("");
-          setNewInstitution("");
-        },
-      } as any
-    );
+        institution: newInstitution.trim() || null,
+        account_role: 'CASH' as const,
+        domain_default: 'CASHFLOW' as const,
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating account:', error);
+      return;
+    }
+    
+    if (data) {
+      setSelectedAccountId(data.id);
+      setShowNewForm(false);
+      setNewAccountName("");
+      setNewInstitution("");
+    }
   };
 
   return (
