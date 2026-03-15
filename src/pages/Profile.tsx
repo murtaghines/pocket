@@ -6,8 +6,9 @@ import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
+import { AccountsManager } from "@/components/settings/AccountsManager";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { User, Globe, Tags } from "lucide-react";
+import { User, Globe, Tags, Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -72,6 +73,15 @@ export default function Profile() {
                   <h3 className="text-base font-medium text-foreground">{ts('categories.title')}</h3>
                 </div>
                 <CategoriesEditor />
+              </div>
+
+              {/* Accounts */}
+              <div className="animate-slide-up" style={{ animationDelay: '175ms' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-medium text-foreground">{t('accounts.title', 'Accounts')}</h3>
+                </div>
+                <AccountsManager />
               </div>
 
               {/* Delete Account */}
