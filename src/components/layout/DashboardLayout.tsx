@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PiggyBank, User } from "lucide-react";
+import { LayoutDashboard, PiggyBank, FolderOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTranslation } from "react-i18next";

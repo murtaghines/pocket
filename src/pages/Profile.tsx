@@ -1,16 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
-import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { FileText, TrendingUp, User, Globe, Tags } from "lucide-react";
+import { User, Globe, Tags } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,43 +16,9 @@ export default function Profile() {
   const { t: tc } = useTranslation('common');
   const { t: ts } = useTranslation('settings');
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { signOut } = useAuth();
   const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  // Sync tab with URL params
-  const currentTab = searchParams.get('tab') || 'data';
-  const highlightSection = searchParams.get('section');
-  const highlightMonth = searchParams.get('month');
-
-  // Scroll to highlighted section on mount
-  useEffect(() => {
-    if (highlightSection && highlightMonth) {
-      // Small delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        const elementId = highlightSection === 'bank' 
-          ? `upload-bank-${highlightMonth}` 
-          : `upload-investment-${highlightMonth}`;
-        const element = document.getElementById(elementId);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Add highlight effect
-          element.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
-          setTimeout(() => {
-            element.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
-          }, 2000);
-        }
-        // Clear URL params after scrolling
-        setSearchParams({ tab: 'data' });
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [highlightSection, highlightMonth, setSearchParams]);
-
-  const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
-  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -76,74 +39,51 @@ export default function Profile() {
       >
         <main className="max-w-[1400px] mx-auto">
           <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
-            <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-              {/* Profile Header with user info and tab selectors */}
-              <div className="mb-8">
-                <ProfileHeader 
-                  currentTab={currentTab as 'data' | 'settings'}
-                  onTabChange={handleTabChange}
-                />
+            {/* Profile Header */}
+            <div className="mb-8">
+              <ProfileHeader 
+                currentTab="settings"
+                onTabChange={() => {}}
+              />
+            </div>
+
+            {/* Settings content */}
+            <div className="space-y-6">
+              {/* Personal Info & Regional Settings - same row, equal height */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="animate-slide-up flex flex-col">
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-medium text-foreground">{t('personalInfo.title')}</h3>
+                  </div>
+                  <ProfileInfoCard onLogout={handleLogout} className="flex-1" />
+                </div>
+
+                <div className="animate-slide-up flex flex-col" style={{ animationDelay: '100ms' }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Globe className="w-4 h-4 text-primary" />
+                    <h3 className="text-base font-medium text-foreground">{ts('regional.title')}</h3>
+                  </div>
+                  <PreferencesForm className="flex-1" />
+                </div>
               </div>
 
-              {/* My Data Tab - First */}
-              <TabsContent value="data" className="animate-fade-in">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="animate-slide-up">
-                    <div className="flex items-center gap-2 mb-4">
-                      <FileText className="w-4 h-4 text-primary" />
-                      <h3 className="text-base font-medium text-foreground">{t('uploads.title')}</h3>
-                    </div>
-                    <MonthlyUploadsOrganizer />
-                  </div>
-
-                  <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-                    <div className="flex items-center gap-2 mb-4">
-                      <TrendingUp className="w-4 h-4 text-primary" />
-                      <h3 className="text-base font-medium text-foreground">{t('uploads.investmentUploads')}</h3>
-                    </div>
-                    <InvestmentUploadsOrganizer />
-                  </div>
+              {/* Categories - full width */}
+              <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Tags className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-medium text-foreground">{ts('categories.title')}</h3>
                 </div>
-              </TabsContent>
+                <CategoriesEditor />
+              </div>
 
-              {/* Settings Tab */}
-              <TabsContent value="settings" className="animate-fade-in space-y-6">
-                {/* Personal Info & Regional Settings - same row, equal height */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="animate-slide-up flex flex-col">
-                    <div className="flex items-center gap-2 mb-4">
-                      <User className="w-4 h-4 text-primary" />
-                      <h3 className="text-base font-medium text-foreground">{t('personalInfo.title')}</h3>
-                    </div>
-                    <ProfileInfoCard onLogout={handleLogout} className="flex-1" />
-                  </div>
-
-                  <div className="animate-slide-up flex flex-col" style={{ animationDelay: '100ms' }}>
-                    <div className="flex items-center gap-2 mb-4">
-                      <Globe className="w-4 h-4 text-primary" />
-                      <h3 className="text-base font-medium text-foreground">{ts('regional.title')}</h3>
-                    </div>
-                    <PreferencesForm className="flex-1" />
-                  </div>
+              {/* Delete Account */}
+              <div className="animate-slide-up pt-8 border-t" style={{ animationDelay: '200ms' }}>
+                <div className="max-w-xs mx-auto">
+                  <DeleteAccountDialog />
                 </div>
-
-                {/* Categories - full width */}
-                <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Tags className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium text-foreground">{ts('categories.title')}</h3>
-                  </div>
-                  <CategoriesEditor />
-                </div>
-
-                {/* Delete Account - Only in Settings tab */}
-                <div className="animate-slide-up pt-8 border-t" style={{ animationDelay: '200ms' }}>
-                  <div className="max-w-xs mx-auto">
-                    <DeleteAccountDialog />
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </div>
         </main>
 

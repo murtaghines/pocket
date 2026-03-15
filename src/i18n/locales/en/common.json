@@ -36,6 +36,7 @@
     "dashboard": "Dashboard",
     "investments": "Investments",
     "profile": "Profile",
+    "myData": "My Data",
     "settings": "Settings",
     "logout": "Log out",
     "logoutSuccess": "Logged out successfully"
