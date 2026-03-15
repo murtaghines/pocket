@@ -17,8 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Building2, Upload } from "lucide-react";
-import { useAccounts, type Account } from "@/hooks/useAccounts";
+import { Plus, Building2, Upload, Loader2 } from "lucide-react";
+import { useAccounts } from "@/hooks/useAccounts";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AccountSelectDialogProps {
   open: boolean;
@@ -33,20 +36,16 @@ export function AccountSelectDialog({
   onConfirm,
   fileName,
 }: AccountSelectDialogProps) {
-  const { accounts, isCreating } = useAccounts();
+  const { accounts } = useAccounts();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [showNewForm, setShowNewForm] = useState(false);
   const [newAccountName, setNewAccountName] = useState("");
   const [newInstitution, setNewInstitution] = useState("");
-
-  // Auto-select if only one account exists
-  useState(() => {
-    if (cashAccounts.length === 1 && !selectedAccountId) {
-      setSelectedAccountId(cashAccounts[0].id);
-    }
-  });
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleConfirm = () => {
     if (selectedAccountId) {
@@ -58,37 +57,35 @@ export function AccountSelectDialog({
   };
 
   const handleCreateAccount = async () => {
-    if (!newAccountName.trim()) return;
+    if (!newAccountName.trim() || !user) return;
     
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { useAuth } = await import("@/hooks/useAuth");
-    
-    // Use supabase directly for inline creation
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from('accounts')
-      .insert({
-        user_id: user.id,
-        name: newAccountName.trim(),
-        institution: newInstitution.trim() || null,
-        account_role: 'CASH' as const,
-        domain_default: 'CASHFLOW' as const,
-      })
-      .select()
-      .single();
-    
-    if (error) {
+    setIsCreating(true);
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .insert({
+          user_id: user.id,
+          name: newAccountName.trim(),
+          institution: newInstitution.trim() || null,
+          account_role: 'CASH' as const,
+          domain_default: 'CASHFLOW' as const,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setSelectedAccountId(data.id);
+        setShowNewForm(false);
+        setNewAccountName("");
+        setNewInstitution("");
+        queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      }
+    } catch (error) {
       console.error('Error creating account:', error);
-      return;
-    }
-    
-    if (data) {
-      setSelectedAccountId(data.id);
-      setShowNewForm(false);
-      setNewAccountName("");
-      setNewInstitution("");
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -182,7 +179,11 @@ export function AccountSelectDialog({
                   onClick={handleCreateAccount}
                   disabled={!newAccountName.trim() || isCreating}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  {isCreating ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4 mr-2" />
+                  )}
                   Create
                 </Button>
               </div>
