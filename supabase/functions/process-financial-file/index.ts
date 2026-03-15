@@ -68,12 +68,12 @@ TRANSFER (money moving between own accounts):
 
 DETECTION RULES:
 
-1. TRANSFER detection - Mark movement as "TRANSFER" if:
-   - Description contains: "Transferencia a", "Transferencia de", "Traspaso", "Bizum enviado", "Bizum recibido"
-   - Between known banks/neobanks: "a Revolut", "desde Santander", "N26", "Wise"
-   - Self-transfers: "a cuenta propia", "entre cuentas"
-   - Use "to_investment" for transfers to: Savings, MyInvestor, Trade Republic, DEGIRO, Indexa, crypto platforms
-   - Use "own_transfer" for transfers between regular bank accounts
+1. TRANSFER detection - Mark movement as "TRANSFER" ONLY if:
+   - Explicitly between own accounts: "Traspaso", "a cuenta propia", "entre cuentas"
+   - To own savings/investment: "MyInvestor", "Trade Republic", "Cocos", "DEGIRO", broker
+   - CRITICAL: Generic "Transferencia recibida/emitida", "Bizum recibido/enviado" are NOT transfers!
+   - A Bizum or transfer to/from another PERSON is INCOME (if positive) or EXPENSE (if negative)
+   - "Transferencia" alone does NOT mean it's a transfer between own accounts
 
 2. INCOME detection - Mark movement as "INCOME" if:
    - Amount is positive
