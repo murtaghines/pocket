@@ -92,8 +92,7 @@ export function AccountSelectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md dashboard-theme bg-background text-foreground">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-primary" />
+          <DialogTitle>
             {t('accounts.selectAccount', 'Select account')}
           </DialogTitle>
           <DialogDescription>
