@@ -92,9 +92,15 @@ export function MonthReviewModal({
 }: MonthReviewModalProps) {
   const { formatCurrency, formatDate } = useLocalization();
   const { categories } = useCategories("CASHFLOW");
+  const { accounts } = useAccounts();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  const getAccountNameById = (accountId: string | null) => {
+    if (!accountId) return null;
+    return accounts.find(a => a.id === accountId)?.name || null;
+  };
   const [edits, setEdits] = useState<Record<string, TransactionEdits>>({});
 
   // Fetch transactions for this month (optionally filtered by import)
