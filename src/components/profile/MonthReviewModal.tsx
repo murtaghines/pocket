@@ -412,9 +412,6 @@ export function MonthReviewModal({
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground hidden md:table-cell">
-                          {tx.bank || "—"}
-                        </TableCell>
                         <TableCell>
                           {isLocked ? (
                             <div className="flex items-center gap-1.5">
