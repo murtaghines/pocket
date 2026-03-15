@@ -337,10 +337,6 @@ export function MonthUploadSlot({
                 isDeleting={isDeleting} 
               />
             )}
-                  );
-                })}
-              </div>
-            )}
 
             {/* Empty state / Upload area */}
             {isEmpty && !isClosed && (
