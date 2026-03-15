@@ -387,6 +387,183 @@ export function MonthUploadSlot({
               </div>
             )}
 
+function ImportFilesList({ imports, onDeleteImport, isDeleting }: { 
+  imports: Import[]; 
+  onDeleteImport: (id: string) => void; 
+  isDeleting: boolean;
+}) {
+  const { accounts } = useAccounts();
+  const queryClient = useQueryClient();
+  const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
+
+  const getAccountName = (accountId: string | null) => {
+    if (!accountId) return null;
+    return accounts.find(a => a.id === accountId)?.name || null;
+  };
+
+  const handleAccountChange = async (importId: string, newAccountId: string) => {
+    // Update import
+    await supabase
+      .from('imports')
+      .update({ account_id: newAccountId })
+      .eq('id', importId);
+
+    // Update all transactions linked to this import
+    await supabase
+      .from('transactions')
+      .update({ account_id: newAccountId })
+      .eq('import_id', importId);
+
+    queryClient.invalidateQueries({ queryKey: ['imports'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  };
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      day: '2-digit',
+      month: 'short',
+    });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'NORMALIZED': return <CheckCircle2 className="w-4 h-4 text-success" />;
+      case 'PARSED':
+      case 'UPLOADED': return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
+      case 'FAILED': return <AlertCircle className="w-4 h-4 text-destructive" />;
+      default: return <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />;
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {imports.map((imp) => {
+        const isStaleProcessing =
+          (imp.status === "PARSED" || imp.status === "UPLOADED") &&
+          Date.now() - new Date(imp.uploaded_at).getTime() > 5 * 60 * 1000;
+
+        const status = isStaleProcessing ? "FAILED" : imp.status;
+        const errorMessage = isStaleProcessing
+          ? "Processing interrupted. Please re-upload."
+          : imp.error_message;
+
+        const accountName = getAccountName(imp.account_id);
+
+        return (
+          <div
+            key={imp.id}
+            className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg text-sm"
+          >
+            {getStatusIcon(status)}
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-xs font-medium">{imp.file_name}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {status === "NORMALIZED" && imp.transactions_count
+                  ? <span>{imp.transactions_count} transactions</span>
+                  : status === "FAILED" && errorMessage
+                    ? <span className="text-destructive truncate">{errorMessage.slice(0, 40)}...</span>
+                    : <span>{formatDate(imp.uploaded_at)} • {formatFileSize(imp.file_size)}</span>
+                }
+              </div>
+            </div>
+
+            {/* Account badge / selector */}
+            {cashAccounts.length > 0 && (
+              <Select
+                value={imp.account_id || ''}
+                onValueChange={(val) => handleAccountChange(imp.id, val)}
+              >
+                <SelectTrigger className="h-7 w-auto min-w-[100px] max-w-[140px] text-xs border-none bg-muted hover:bg-muted/80 px-2 gap-1">
+                  <Building2 className="w-3 h-3 text-muted-foreground shrink-0" />
+                  <SelectValue placeholder="No account">
+                    {accountName || 'No account'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {cashAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id} className="text-xs">
+                      {a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {!cashAccounts.length && accountName && (
+              <Badge variant="outline" className="text-xs shrink-0">
+                <Building2 className="w-3 h-3 mr-1" />
+                {accountName}
+              </Badge>
+            )}
+
+            {/* Error details */}
+            {status === "FAILED" && errorMessage && (
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                    <Info className="w-3.5 h-3.5" />
+                  </Button>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-80" align="end">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                      <h4 className="text-sm font-semibold">Processing error</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{errorMessage}</p>
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Tip:</strong> If it's a scanned PDF, try converting it to CSV or Excel before uploading.
+                      </p>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+            )}
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete file?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    All transactions associated with "{imp.file_name}" will be deleted.
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onDeleteImport(imp.id)}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
             {/* Add more files button - when OPEN */}
             {!isEmpty && !isClosed && (
