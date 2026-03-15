@@ -338,7 +338,7 @@ export function MonthReviewModal({
           </div>
         ) : transactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileCheck2 className="w-12 h-12 text-muted-foreground/50 mb-4" />
+            <Pencil className="w-12 h-12 text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">No transactions for this month</p>
             <p className="text-sm text-muted-foreground/70 mt-1">
               Upload and process files first
