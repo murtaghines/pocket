@@ -455,7 +455,7 @@ serve(async (req) => {
       seenHashesInBatch.add(hash);
 
       // Normalize movement and validate category
-      let movement = normalizeMovement(t.movement || t.type, t.amount);
+      let movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
       
       // POST-PROCESSING: If user's name is in the description, it's likely a self-transfer
       const description = t.description || '';
