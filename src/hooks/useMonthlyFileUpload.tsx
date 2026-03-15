@@ -61,7 +61,7 @@ export function useMonthlyFileUpload() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const processFile = useCallback(async (uploadFile: PendingFile, targetMonth: Date, monthKey: string) => {
+  const processFile = useCallback(async (uploadFile: PendingFile, targetMonth: Date, monthKey: string, accountId?: string) => {
     if (!user) return;
 
     const targetMonthStr = `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`;
