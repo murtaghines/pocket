@@ -75,6 +75,15 @@ export default function Profile() {
                 <CategoriesEditor />
               </div>
 
+              {/* Accounts */}
+              <div className="animate-slide-up" style={{ animationDelay: '175ms' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  <h3 className="text-base font-medium text-foreground">{t('accounts.title', 'Accounts')}</h3>
+                </div>
+                <AccountsManager />
+              </div>
+
               {/* Delete Account */}
               <div className="animate-slide-up pt-8 border-t" style={{ animationDelay: '200ms' }}>
                 <div className="max-w-xs mx-auto">
