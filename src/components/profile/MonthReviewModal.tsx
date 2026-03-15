@@ -71,6 +71,7 @@ interface MonthReviewModalProps {
   monthKey: string; // YYYY-MM
   monthLabel: string;
   isLocked?: boolean;
+  importId?: string; // Filter to a specific import
 }
 
 // Local edits state
