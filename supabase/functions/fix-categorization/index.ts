@@ -100,7 +100,15 @@ serve(async (req) => {
       // If it has explicit self-transfer signals, keep as TRANSFER
       if (hasSelfTransferSignal(descRaw)) continue;
       
-      // If it's a generic transfer description without self-transfer signals, fix it
+      // If the user's own name appears in the description, it's a self-transfer — keep as TRANSFER
+      if (userFirstName && userLastName && userFirstName.length >= 3 && userLastName.length >= 3) {
+        const descNorm = descRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const firstNorm = userFirstName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const lastNorm = userLastName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (descNorm.includes(firstNorm) && descNorm.includes(lastNorm)) continue;
+      }
+      
+      // Generic transfer without self-transfer signals or own name → fix it
       const newMovement = tx.amount >= 0 ? 'INCOME' : 'EXPENSE';
       const newCategory = tx.amount >= 0 ? 'other_income' : 'other_expense';
       
