@@ -124,10 +124,12 @@ export function AccountSelectDialog({
                   </Select>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2 py-6 text-center">
-                  <Inbox className="w-8 h-8 text-muted-foreground/50" />
+                <div className="flex flex-col items-center gap-1 py-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    {t('accounts.noAccountsYet', 'No accounts yet. Create one to get started.')}
+                    {t('accounts.noAccountsYet1', 'No accounts yet.')}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('accounts.noAccountsYet2', 'Create one to get started.')}
                   </p>
                 </div>
               )}
