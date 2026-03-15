@@ -34,7 +34,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navItems = [
     { label: t('navigation.dashboard'), path: '/dashboard', icon: LayoutDashboard },
     { label: t('navigation.investments'), path: '/investments', icon: PiggyBank },
-    { label: t('navigation.profile'), path: '/profile', icon: User },
+    { label: t('navigation.myData'), path: '/my-data', icon: FolderOpen },
   ];
 
   return (
