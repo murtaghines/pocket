@@ -7,7 +7,9 @@ import { StepLanguage } from './StepLanguage';
 import { StepCountry } from './StepCountry';
 import { StepInvestments } from './StepInvestments';
 import { StepJointAccount } from './StepJointAccount';
+import { StepAccounts } from './StepAccounts';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useAccounts } from '@/hooks/useAccounts';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
@@ -29,7 +31,6 @@ export interface OnboardingData {
 
 const TOTAL_STEPS = 5;
 
-// Detect browser language
 function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language || 'en';
   const baseLang = browserLang.split('-')[0];
@@ -42,6 +43,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const { updatePreferences } = useUserPreferences();
+  const { createAccount } = useAccounts();
   const { toast } = useToast();
 
   const [data, setData] = useState<OnboardingData>(() => ({
@@ -50,6 +52,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     language: detectBrowserLanguage(),
     investmentPlatforms: [],
     jointAccountNames: [],
+    accountNames: [],
   }));
 
   const updateData = (updates: Partial<OnboardingData>) => {
@@ -86,6 +89,11 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         investment_platforms: data.investmentPlatforms,
         joint_account_names: data.jointAccountNames,
       } as any);
+
+      // Create accounts from onboarding
+      for (const name of data.accountNames) {
+        createAccount({ name, account_role: 'CASH', domain_default: 'CASHFLOW' });
+      }
       
       localStorage.setItem('i18nextLng', data.language);
 
@@ -113,9 +121,11 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 2:
         return !!data.country && !!data.currency;
       case 3:
-        return true; // optional
+        return true;
       case 4:
-        return true; // optional
+        return true;
+      case 5:
+        return true;
       default:
         return true;
     }
@@ -140,13 +150,20 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         );
       case 3:
         return (
+          <StepAccounts
+            accountNames={data.accountNames}
+            onAccountNamesChange={(names) => updateData({ accountNames: names })}
+          />
+        );
+      case 4:
+        return (
           <StepInvestments
             country={data.country}
             selectedPlatforms={data.investmentPlatforms}
             onPlatformsChange={(platforms) => updateData({ investmentPlatforms: platforms })}
           />
         );
-      case 4:
+      case 5:
         return (
           <StepJointAccount
             jointAccountNames={data.jointAccountNames}
@@ -165,8 +182,10 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       case 2:
         return t('onboarding.yourCountry', 'Your Country & Currency');
       case 3:
-        return t('onboarding.investments', 'Do you invest?');
+        return t('onboarding.accounts', 'Your accounts');
       case 4:
+        return t('onboarding.investments', 'Do you invest?');
+      case 5:
         return t('onboarding.jointAccount', 'Shared finances?');
       default:
         return '';
