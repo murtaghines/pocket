@@ -2065,6 +2065,11 @@ const RULE_BUCKETS: RuleBucket[] = [
       'SEGURO\\s*AUTO',
       'SEGURO\\s*COCHE',
       'SEGURO\\s*VEHICULO',
+      // ── Generic vehicle keywords ES ───────────────────────
+      '\\bAUTO\\b',               // "AUTO" alone → transport
+      '\\bAUTOMOVIL\\b',
+      '\\bCOCHE\\b',
+      '\\bVEHICULO\\b',
       'TALLER\\s*MECANICO',
       'RENTING\\s*VEHICULO',
       'LEASING\\s*VEHICULO',
