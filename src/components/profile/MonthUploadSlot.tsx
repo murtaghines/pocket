@@ -571,6 +571,17 @@ export function MonthUploadSlot({
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Account Select Dialog */}
+      <AccountSelectDialog
+        open={showAccountDialog}
+        onOpenChange={(open) => {
+          setShowAccountDialog(open);
+          if (!open) setPendingFiles([]);
+        }}
+        onConfirm={handleAccountConfirm}
+        fileName={pendingFiles.length === 1 ? pendingFiles[0].name : undefined}
+      />
+
       {/* Review Modal */}
       <MonthReviewModal
         open={showReviewModal}
