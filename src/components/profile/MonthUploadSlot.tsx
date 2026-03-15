@@ -88,6 +88,8 @@ export function MonthUploadSlot({
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [showReopenDialog, setShowReopenDialog] = useState(false);
+  const [showAccountDialog, setShowAccountDialog] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
