@@ -129,10 +129,11 @@ EXPENSE: Money leaving to a third party representing real consumption or payment
 TRANSFER: Movement between the user's OWN accounts or to their OWN investment accounts. NO consumption.
 - Between own bank accounts (Santander ↔ Revolut ↔ MercadoPago)
 - To own savings/investment accounts (broker, instant access savings, trading)
-- CRITICAL: Only TRANSFER if destination is user's own account or investment platform!
+- CRITICAL: Only TRANSFER if destination is CONFIRMED to be user's own account or investment platform!
+- CRITICAL: "Transferencia recibida/emitida", "Bizum recibido/enviado" are NOT automatically TRANSFER!
 - Category slugs: own_transfer (between own accounts), to_investment (to savings/investment)
 
-=== TRANSFER vs EXPENSE DECISION (CRITICAL RULE) ===
+=== TRANSFER vs EXPENSE/INCOME DECISION (CRITICAL RULE) ===
 
 A transaction is ONLY a TRANSFER if you can confirm with HIGH CONFIDENCE that:
 1. It goes to another account belonging to the SAME USER (own_transfer), OR
@@ -149,11 +150,14 @@ Signals for TRANSFER (to_investment):
 - "Instant Access Savings", "Trading", "ETF", "Broker", "Cocos", "Trade Republic"
 - Movement to remunerative savings accounts
 
-If UNCERTAIN whether a transfer goes to own account or third party:
-→ Classify as EXPENSE with category "other_expense"
+CRITICAL - These are NOT TRANSFER:
+- "Transferencia recibida" or "Transferencia emitida" without explicit self-transfer context
+- "Bizum recibido" or "Bizum enviado" (these are payments to/from other people)
+- Any transfer to/from a person whose name is NOT the user
+- When uncertain: positive amount → INCOME, negative amount → EXPENSE
 
-Bizum/transfer to friend, family, or unknown person = EXPENSE (not TRANSFER!)
-Payment to merchant via bank transfer = EXPENSE (not TRANSFER!)
+If UNCERTAIN whether a transfer goes to own account or third party:
+→ Use the amount sign: positive = INCOME, negative = EXPENSE
 
 === CATEGORY ASSIGNMENT (Step 2) ===
 
@@ -272,9 +276,15 @@ async function calculateFingerprint(
 }
 
 function extractMonthKey(dateStr: string): string {
-  const date = new Date(dateStr);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  // Parse YYYY-MM-DD directly to avoid timezone issues with new Date()
+  const match = dateStr.match(/^(\d{4})-(\d{2})/);
+  if (match) {
+    return `${match[1]}-${match[2]}`;
+  }
+  // Fallback for other formats
+  const date = new Date(dateStr + 'T12:00:00Z');
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
   return `${year}-${month}`;
 }
 
@@ -349,9 +359,8 @@ function detectInternalTransfer(
   counterpartyRaw: string | null,
   userAccounts: Array<{ name: string; institution: string | null; account_role: string }>
 ): { isTransfer: boolean; categorySlug: string } {
-  if (movement === 'TRANSFER') {
-    return { isTransfer: true, categorySlug: 'own_transfer' };
-  }
+  // DO NOT blindly trust AI's TRANSFER classification.
+  // Only confirm as transfer if explicit signals are found below.
   
   const textToCheck = `${descriptionRaw} ${descriptionClean} ${counterpartyRaw || ''}`.toLowerCase();
   

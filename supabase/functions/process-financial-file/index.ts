@@ -68,12 +68,12 @@ TRANSFER (money moving between own accounts):
 
 DETECTION RULES:
 
-1. TRANSFER detection - Mark movement as "TRANSFER" if:
-   - Description contains: "Transferencia a", "Transferencia de", "Traspaso", "Bizum enviado", "Bizum recibido"
-   - Between known banks/neobanks: "a Revolut", "desde Santander", "N26", "Wise"
-   - Self-transfers: "a cuenta propia", "entre cuentas"
-   - Use "to_investment" for transfers to: Savings, MyInvestor, Trade Republic, DEGIRO, Indexa, crypto platforms
-   - Use "own_transfer" for transfers between regular bank accounts
+1. TRANSFER detection - Mark movement as "TRANSFER" ONLY if:
+   - Explicitly between own accounts: "Traspaso", "a cuenta propia", "entre cuentas"
+   - To own savings/investment: "MyInvestor", "Trade Republic", "Cocos", "DEGIRO", broker
+   - CRITICAL: Generic "Transferencia recibida/emitida", "Bizum recibido/enviado" are NOT transfers!
+   - A Bizum or transfer to/from another PERSON is INCOME (if positive) or EXPENSE (if negative)
+   - "Transferencia" alone does NOT mean it's a transfer between own accounts
 
 2. INCOME detection - Mark movement as "INCOME" if:
    - Amount is positive
@@ -107,9 +107,26 @@ function generateHash(hashSource: string): string {
 }
 
 // Validate and normalize movement type
-function normalizeMovement(movement: string, amount: number): 'INCOME' | 'EXPENSE' | 'TRANSFER' {
+function normalizeMovement(movement: string, amount: number, description: string): 'INCOME' | 'EXPENSE' | 'TRANSFER' {
   const upper = (movement || '').toUpperCase();
-  if (upper === 'TRANSFER') return 'TRANSFER';
+  // Don't blindly trust AI's TRANSFER classification.
+  // Only confirm TRANSFER if description has explicit self-transfer signals.
+  if (upper === 'TRANSFER') {
+    const descUpper = (description || '').toUpperCase();
+    const selfTransferSignals = [
+      'CUENTA PROPIA', 'ENTRE CUENTAS', 'TRASPASO', 'A MI CUENTA',
+      'OWN ACCOUNT', 'INTERNAL TRANSFER', 'MOVIMIENTO INTERNO',
+      'SAVINGS', 'BROKER', 'TRADING', 'INVESTMENT', 'COCOS',
+      'TRADE REPUBLIC', 'DEGIRO', 'MYINVESTOR', 'INDEXA',
+      'INSTANT ACCESS', 'FROM SAVINGS', 'TO SAVINGS',
+    ];
+    if (selfTransferSignals.some(s => descUpper.includes(s))) {
+      return 'TRANSFER';
+    }
+    // Generic "transferencia" without self-transfer signals → use amount sign
+    if (amount > 0) return 'INCOME';
+    return 'EXPENSE';
+  }
   if (upper === 'INCOME' || amount > 0) return 'INCOME';
   return 'EXPENSE';
 }
@@ -228,7 +245,7 @@ serve(async (req) => {
         for (const t of transactions) {
           const existingId = existingHashMap.get(t.transaction_hash);
           if (existingId) {
-            const movement = normalizeMovement(t.movement || t.type, t.amount);
+            const movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
             const categorySlug = validateCategory(t.category, movement);
             const categoryInfo = categoryMap.get(categorySlug);
             
@@ -256,7 +273,7 @@ serve(async (req) => {
       
       // INSERT MODE: First time saving
       const transactionsToInsert = transactions.map((t: any) => {
-        const movement = normalizeMovement(t.movement || t.type, t.amount);
+        const movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
         const categorySlug = validateCategory(t.category, movement);
         const categoryInfo = categoryMap.get(categorySlug);
         
@@ -438,7 +455,7 @@ serve(async (req) => {
       seenHashesInBatch.add(hash);
 
       // Normalize movement and validate category
-      let movement = normalizeMovement(t.movement || t.type, t.amount);
+      let movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
       
       // POST-PROCESSING: If user's name is in the description, it's likely a self-transfer
       const description = t.description || '';

@@ -1,46 +1,40 @@
 
 
-## Plan: Fix Transfer Miscategorization & Date Parsing Bug
+## Verificacion y Correccion del Flujo de Periodos Abiertos/Cerrados
 
-### Problem 1: "TRANSFERENCIA" → wrongly classified as TRANSFER movement
+### Problemas Encontrados
 
-**Root cause** — Three layers all incorrectly assume any "transferencia" is an own-account transfer:
+Despues de revisar todo el codigo, encontre estos problemas concretos:
 
-1. **`categorizer.ts` (lines ~710-735)**: Generic patterns like `TRANSFERENCIA\s*RECIBIDA`, `TRANSFERENCIA\s*EMITIDA`, `TRANSFERENCIA\s*INMEDIATA`, `BIZUM\s*RECIBIDO`, `BIZUM\s*ENVIADO` all map to `own_transfer` (TRANSFER). These fire for ALL transfers, even ones from/to third parties.
+1. **Drag-and-drop ignora el candado**: Si un mes esta cerrado (candado cerrado), el usuario puede arrastrar archivos sobre el slot y el sistema intenta procesarlos. Recien en el backend se rechaza con error "period_closed". La UI deberia bloquearlo antes.
 
-2. **`process-import/index.ts` (lines 345-354)**: `detectInternalTransfer()` auto-confirms any `movement === 'TRANSFER'` from AI as a real transfer without checking if it's actually between own accounts.
+2. **No hay validacion client-side antes de subir**: El hook `useMonthlyFileUpload` envia archivos directamente al backend sin verificar si el periodo esta cerrado. Esto causa el error que viste.
 
-3. **AI prompts** (both edge functions): Tell the AI to mark "Transferencia a/de" as TRANSFER movement.
+3. **Race condition al reabrir**: Cuando el usuario hace clic en "Reabrir mes", la query de periodos se invalida y se refresca. Pero si el usuario intenta subir un archivo antes de que termine el refetch, el backend podria seguir viendo el periodo como cerrado.
 
-**Fix**: Remove generic transfer patterns from the categorizer's `own_transfer` bucket. Only keep patterns that explicitly indicate self-transfers (e.g., "traspaso entre cuentas", "transferencia a cuenta propia"). Generic "TRANSFERENCIA RECIBIDA/EMITIDA" and "BIZUM RECIBIDO/ENVIADO" should fall through to null (AI/ML) which will classify based on amount sign. Update `detectInternalTransfer` to not blindly trust AI's TRANSFER classification. Update AI prompts to be stricter.
+### Solucion Propuesta
 
-### Problem 2: Jan 31 transactions → classified as February
+#### 1. Bloquear drag-and-drop en meses cerrados
+En `MonthUploadSlot.tsx`, el handler `handleDrop` debe verificar `isClosed` y mostrar un toast de advertencia en vez de intentar subir.
 
-**Root cause**: `extractMonthKey()` in `process-import/index.ts` (line 274) uses `new Date(dateStr)` then `getMonth()`. When `dateStr` is "2025-01-31", `new Date()` creates UTC midnight, but depending on runtime timezone, `getMonth()` could shift. 
+#### 2. Bloquear el area de upload cuando esta cerrado
+El area de upload (drop zone vacia) y el boton "Add more files" ya se ocultan correctamente cuando `isClosed` es true. Pero el drag-and-drop sigue activo. Se agregara la verificacion ahi.
 
-**Fix**: Parse the YYYY-MM-DD string directly without `new Date()`.
+#### 3. Pasar el estado del periodo al hook de upload
+Modificar `addFilesForMonth` para aceptar un parametro opcional de estado del periodo, o hacer la verificacion directamente en `MonthUploadSlot` antes de llamar a `onAddFiles`.
 
-### Problem 3: Fix existing data
+### Cambios Tecnicos
 
-**Fix**: Write a backend function to re-run categorization on all existing transactions, using the corrected categorizer. Transactions currently marked as TRANSFER that don't match the stricter rules get re-evaluated. Also fix dates for Jan 31 transactions wrongly assigned to February.
+**Archivo: `src/components/profile/MonthUploadSlot.tsx`**
+- En `handleDrop`: agregar verificacion `if (isClosed)` al inicio, mostrando un toast "Este mes esta cerrado. Reabrilo para subir archivos" y haciendo return sin procesar.
+- En `handleFileInput`: agregar la misma verificacion `if (isClosed)`.
+- Deshabilitar visualmente el area de drag cuando el mes esta cerrado (agregar clase CSS de opacidad reducida y cursor no permitido).
 
----
+**Archivo: `src/hooks/useMonthlyFileUpload.tsx`**
+- No requiere cambios, la validacion se hara en la UI antes de llamar a `addFilesForMonth`.
 
-### Files to modify
-
-1. **`supabase/functions/_shared/categorizer.ts`** — Remove generic transfer patterns from `own_transfer` bucket (lines ~707-735). Keep only explicit self-transfer phrases. Remove `BIZUM RECIBIDO/ENVIADO` from transfer bucket (Bizum to/from others is income/expense).
-
-2. **`supabase/functions/process-import/index.ts`**:
-   - Fix `extractMonthKey()` to parse date string directly
-   - Fix `detectInternalTransfer()` to NOT auto-confirm `movement === 'TRANSFER'` from AI; instead require explicit signals
-   - Update AI prompt to be stricter about TRANSFER classification (emphasize that generic "transferencia" to/from third parties is INCOME/EXPENSE)
-
-3. **`supabase/functions/process-financial-file/index.ts`**:
-   - Fix AI prompt transfer detection rules
-   - Fix `normalizeMovement()` to not blindly trust TRANSFER from AI
-
-4. **New edge function: `supabase/functions/fix-categorization/index.ts`** — One-time fix to:
-   - Re-run the corrected categorizer on all existing transactions
-   - Fix transactions wrongly marked TRANSFER that are actually INCOME/EXPENSE
-   - Fix date assignments for transactions from the last day of each month that were shifted to the next month
+### Resultado Esperado
+- Si el candado esta cerrado: no se puede subir de ninguna forma (ni drag, ni click, ni input). Se muestra un mensaje claro.
+- Si el candado esta abierto: funciona normal.
+- El backend sigue como segunda linea de defensa por si algo pasa.
 

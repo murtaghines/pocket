@@ -704,35 +704,11 @@ const RULE_BUCKETS: RuleBucket[] = [
         'DESDE\\s*BANDES\\b',
       ], 0.90),
 
-      // ── Bizum received FROM self (high confidence) ─────────
-      // "BIZUM RECIBIDO" without a third-party name is usually
-      // a self-transfer from another device/account.
-      ...r([
-        'BIZUM\\s*RECIBIDO',
-        'BIZUM\\s*ENVIADO',
-      ], 0.85),
-
-      // ── Generic transfer patterns (LOW confidence) ─────────
-      // These fire only when nothing above matched.
-      // Low confidence = ML can override if it finds a person name.
-      ...r([
-        'TRANSFERENCIA\\s*RECIBIDA',
-        'TRANSFERENCIA\\s*EMITIDA',
-        'TRANSFERENCIA\\s*INMEDIATA',
-        'TRANSFERENCIA\\s*SEPA',
-        'SEPA\\s*CREDIT\\s*TRANSFER',
-        'RECEIVED\\s*TRANSFER',
-        'OUTGOING\\s*TRANSFER',
-        'BANK\\s*TRANSFER',
-        'WIRE\\s*TRANSFER',
-        'FASTER\\s*PAYMENT',
-        'FASTER\\s*PAYMENTS\\b',
-        'FPS\\b',
-        'CHAPS\\b',
-        'BACS\\b',
-        'TEF\\b',
-        'TRANSFERENCIA\\s*TEF',
-      ], 0.75),
+      // ── NOTE: Generic "TRANSFERENCIA RECIBIDA/EMITIDA", "BIZUM RECIBIDO/ENVIADO" ──
+      // These are NOT included here because they could be to/from third parties.
+      // Only explicit self-transfer phrases (above) should match own_transfer.
+      // Generic transfers fall through to AI which classifies based on amount sign
+      // and counterparty context.
     ],
   },
 
