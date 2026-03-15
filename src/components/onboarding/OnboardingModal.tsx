@@ -24,9 +24,10 @@ export interface OnboardingData {
   language: string;
   investmentPlatforms: string[];
   jointAccountNames: string[];
+  accountNames: string[];
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 // Detect browser language
 function detectBrowserLanguage(): SupportedLanguage {
