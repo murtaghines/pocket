@@ -69,75 +69,57 @@ export function InvestmentUploadsOrganizer() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="pb-4">
-          <p className="text-sm text-muted-foreground">
-            {t('uploads.uploadStatements')}
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
+        ))}
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <p className="text-sm text-muted-foreground">
-          {t('uploads.uploadStatements')}
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="space-y-3">
-          {monthSlots.map((slot) => {
-            const monthKeyForPending = slot.key.replace('-inv', '');
-            return (
-              <div key={slot.key} id={`upload-investment-${monthKeyForPending}`} className="transition-all duration-300">
-                <MonthUploadSlot
-                  monthKey={slot.key}
-                  monthLabel={slot.label}
-                  monthDate={slot.date}
-                  imports={importsByMonth[slot.key] || []}
-                  onAddFiles={addFilesForMonth}
-                  onProcessFiles={processFilesForMonth}
-                  onDeleteImport={deleteImport}
-                  isProcessing={isProcessingMonth(monthKeyForPending)}
-                  hasPendingFiles={getPendingCountForMonth(monthKeyForPending) > 0}
-                  pendingFilesCount={getPendingCountForMonth(monthKeyForPending)}
-                  isDeleting={isDeleting}
-                />
-              </div>
-            );
-          })}
-        </div>
+    <div className="space-y-3">
+      {monthSlots.map((slot) => {
+        const monthKeyForPending = slot.key.replace('-inv', '');
+        return (
+          <div key={slot.key} id={`upload-investment-${monthKeyForPending}`} className="transition-all duration-300">
+            <MonthUploadSlot
+              monthKey={slot.key}
+              monthLabel={slot.label}
+              monthDate={slot.date}
+              imports={importsByMonth[slot.key] || []}
+              onAddFiles={addFilesForMonth}
+              onProcessFiles={processFilesForMonth}
+              onDeleteImport={deleteImport}
+              isProcessing={isProcessingMonth(monthKeyForPending)}
+              hasPendingFiles={getPendingCountForMonth(monthKeyForPending) > 0}
+              pendingFilesCount={getPendingCountForMonth(monthKeyForPending)}
+              isDeleting={isDeleting}
+            />
+          </div>
+        );
+      })}
 
-        <div className="flex gap-2">
-          {canShowLess && (
-            <Button 
-              variant="outline" 
-              className="flex-1"
-              onClick={handleShowLess}
-            >
-              <ChevronUp className="w-4 h-4 mr-2" />
-              {t('uploads.showLess')}
-            </Button>
-          )}
+      <div className="flex gap-2">
+        {canShowLess && (
           <Button 
             variant="outline" 
             className="flex-1"
-            onClick={handleLoadMore}
+            onClick={handleShowLess}
           >
-            <ChevronDown className="w-4 h-4 mr-2" />
-            {t('uploads.loadMore')}
+            <ChevronUp className="w-4 h-4 mr-2" />
+            {t('uploads.showLess')}
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        )}
+        <Button 
+          variant="outline" 
+          className="flex-1"
+          onClick={handleLoadMore}
+        >
+          <ChevronDown className="w-4 h-4 mr-2" />
+          {t('uploads.loadMore')}
+        </Button>
+      </div>
+    </div>
   );
 }

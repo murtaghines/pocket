@@ -13,7 +13,6 @@ export default function MyData() {
   const highlightSection = searchParams.get('section');
   const highlightMonth = searchParams.get('month');
 
-  // Scroll to highlighted section on mount
   useEffect(() => {
     if (highlightSection && highlightMonth) {
       const timer = setTimeout(() => {
@@ -36,31 +35,33 @@ export default function MyData() {
 
   return (
     <DashboardLayout>
-      <main className="max-w-[1400px] mx-auto">
+      <main className="max-w-[1400px] mx-auto space-y-4">
+        {/* Bank Statements - Full width */}
         <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
-          <div className="mb-8 animate-fade-in">
-            <h2 className="font-display text-3xl font-bold tracking-tight">
-              {t('uploads.title', 'My Data')}
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="w-5 h-5 text-primary" />
+            <h2 className="font-display text-xl font-bold tracking-tight">
+              {t('uploads.bankStatements', 'Bank Statements')}
             </h2>
           </div>
+          <p className="text-sm text-muted-foreground mb-6">
+            {t('uploads.uploadBankStatements')}
+          </p>
+          <MonthlyUploadsOrganizer />
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="animate-slide-up">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium text-foreground">{t('uploads.bankStatements', 'Bank Statements')}</h3>
-              </div>
-              <MonthlyUploadsOrganizer />
-            </div>
-
-            <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-medium text-foreground">{t('uploads.investmentUploads')}</h3>
-              </div>
-              <InvestmentUploadsOrganizer />
-            </div>
+        {/* Investment Uploads - Full width */}
+        <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <h2 className="font-display text-xl font-bold tracking-tight">
+              {t('uploads.investmentUploads')}
+            </h2>
           </div>
+          <p className="text-sm text-muted-foreground mb-6">
+            {t('uploads.uploadStatements')}
+          </p>
+          <InvestmentUploadsOrganizer />
         </div>
       </main>
 
