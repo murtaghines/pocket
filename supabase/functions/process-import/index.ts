@@ -357,7 +357,8 @@ function detectInternalTransfer(
   descriptionRaw: string,
   descriptionClean: string,
   counterpartyRaw: string | null,
-  userAccounts: Array<{ name: string; institution: string | null; account_role: string }>
+  userAccounts: Array<{ name: string; institution: string | null; account_role: string }>,
+  userName?: { firstName: string | null; lastName: string | null }
 ): { isTransfer: boolean; categorySlug: string } {
   // DO NOT blindly trust AI's TRANSFER classification.
   // Only confirm as transfer if explicit signals are found below.
@@ -400,6 +401,23 @@ function detectInternalTransfer(
   for (const pattern of ownTransferPatterns) {
     if (pattern.test(textToCheck)) {
       return { isTransfer: true, categorySlug: 'own_transfer' };
+    }
+  }
+  
+  // Check if the user's own name appears in the description/counterparty
+  // If so, it's a transfer between own accounts (sending money to yourself)
+  if (userName) {
+    const descNorm = textToCheck.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    if (userName.firstName && userName.firstName.length >= 3) {
+      const firstNorm = userName.firstName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (userName.lastName && userName.lastName.length >= 3) {
+        const lastNorm = userName.lastName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        // Both first AND last name must appear to avoid false positives
+        if (descNorm.includes(firstNorm) && descNorm.includes(lastNorm)) {
+          return { isTransfer: true, categorySlug: 'own_transfer' };
+        }
+      }
     }
   }
   
@@ -1158,7 +1176,8 @@ serve(async (req) => {
         descriptionRaw,
         descriptionClean,
         counterpartyRaw,
-        accountsForDetection
+        accountsForDetection,
+        userContext ? { firstName: userContext.firstName, lastName: userContext.lastName } : undefined
       );
       
       if (transferDetection.isTransfer && movement !== 'TRANSFER') {
