@@ -160,9 +160,10 @@ export function MonthUploadSlot({
       return;
     }
 
-    onAddFiles(droppedFiles, monthDate);
-    setIsOpen(true);
-  }, [toast, onAddFiles, monthDate, isClosed]);
+    // Store files and show account selection dialog
+    setPendingFiles(droppedFiles);
+    setShowAccountDialog(true);
+  }, [toast, isClosed]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
