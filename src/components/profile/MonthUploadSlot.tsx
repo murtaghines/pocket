@@ -52,7 +52,7 @@ interface MonthUploadSlotProps {
   monthLabel: string;
   monthDate: Date;
   imports: Import[];
-  onAddFiles: (files: File[], targetMonth: Date) => void;
+  onAddFiles: (files: File[], targetMonth: Date, accountId?: string) => void;
   onProcessFiles: (targetMonth: Date) => Promise<void>;
   onDeleteImport: (importId: string) => void;
   isProcessing: boolean;
