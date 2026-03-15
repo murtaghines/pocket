@@ -1075,7 +1075,7 @@ const RULE_BUCKETS: RuleBucket[] = [
       'ORA\\s*MULTA',            // Ordenación del Tráfico Ayuntamiento
       // ── AR ────────────────────────────────────────────────
       'AFIP\\b',
-      'ARCA\\b',                 // Nueva denominación de AFIP
+      '\\bARCA\\b',                 // Nueva denominación de AFIP (word boundary to avoid LAMARCA)
       'ARBA\\b',                 // Agencia Recaudación Buenos Aires
       'AGIP\\b',                 // Administración Gubernamental Ingresos Públicos CABA
       'DGR\\b',                  // Dirección General de Rentas (provincias)
