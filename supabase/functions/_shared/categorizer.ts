@@ -1696,6 +1696,11 @@ const RULE_BUCKETS: RuleBucket[] = [
       'TAKE\\s*AWAY',
       'TAKEAWAY\\b',
       'SUSHI\\s*RESTAURANT',
+      // ── Generic food keywords ES ──────────────────────────
+      'COMIDA\\b',                // "COMIDA" alone → restaurants
+      'ALMUERZO\\b',
+      'CENA\\b',
+      'BRUNCH\\b',
     ], 0.97),
   },
 
