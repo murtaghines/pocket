@@ -331,99 +331,12 @@ export function MonthUploadSlot({
             )}
             {/* Existing imports */}
             {imports.length > 0 && (
-              <div className="space-y-2">
-                {imports.map((imp) => {
-                  const isStaleProcessing =
-                    (imp.status === "PARSED" || imp.status === "UPLOADED") &&
-                    Date.now() - new Date(imp.uploaded_at).getTime() > 5 * 60 * 1000;
-
-                  const status = isStaleProcessing ? "FAILED" : imp.status;
-                  const errorMessage = isStaleProcessing
-                    ? "Processing interrupted (connection or tab closed). Please re-upload the file."
-                    : imp.error_message;
-
-                  return (
-                    <div
-                      key={imp.id}
-                      className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg text-sm"
-                    >
-                      {getStatusIcon(status)}
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate text-xs font-medium">{imp.file_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                        {status === "NORMALIZED" && imp.transactions_count
-                            ? `${imp.transactions_count} transactions`
-                            : status === "FAILED" && errorMessage
-                              ? (
-                                  <span className="text-destructive truncate">
-                                    {errorMessage.slice(0, 40)}...
-                                  </span>
-                                )
-                              : `${formatDate(imp.uploaded_at)} • ${formatFileSize(imp.file_size)}`}
-                        </p>
-                      </div>
-
-                      {/* Error details hover card for FAILED imports */}
-                      {status === "FAILED" && errorMessage && (
-                        <HoverCard>
-                          <HoverCardTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                            >
-                              <Info className="w-3.5 h-3.5" />
-                            </Button>
-                          </HoverCardTrigger>
-                          <HoverCardContent className="w-80" align="end">
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-destructive" />
-                                <h4 className="text-sm font-semibold">Processing error</h4>
-                              </div>
-                              <p className="text-xs text-muted-foreground">{errorMessage}</p>
-                              <div className="pt-2 border-t">
-                                <p className="text-xs text-muted-foreground">
-                                  <strong>Tip:</strong> If it's a scanned PDF,
-                                  try converting it to CSV or Excel before uploading.
-                                </p>
-                              </div>
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                      )}
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            disabled={isDeleting}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete file?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              All transactions associated with "{imp.file_name}" will be deleted.
-                              This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => onDeleteImport(imp.id)}
-                              className="bg-destructive hover:bg-destructive/90"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+              <ImportFilesList 
+                imports={imports} 
+                onDeleteImport={onDeleteImport} 
+                isDeleting={isDeleting} 
+              />
+            )}
                   );
                 })}
               </div>
