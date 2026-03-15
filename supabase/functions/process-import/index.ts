@@ -272,9 +272,15 @@ async function calculateFingerprint(
 }
 
 function extractMonthKey(dateStr: string): string {
-  const date = new Date(dateStr);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  // Parse YYYY-MM-DD directly to avoid timezone issues with new Date()
+  const match = dateStr.match(/^(\d{4})-(\d{2})/);
+  if (match) {
+    return `${match[1]}-${match[2]}`;
+  }
+  // Fallback for other formats
+  const date = new Date(dateStr + 'T12:00:00Z');
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
   return `${year}-${month}`;
 }
 
