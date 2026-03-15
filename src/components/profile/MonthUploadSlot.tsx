@@ -335,7 +335,7 @@ export function MonthUploadSlot({
                   </TableCell>
 
                   {/* Account */}
-                  <TableCell className="py-2">
+                  <TableCell className="py-2 hidden md:table-cell">
                     {cashAccounts.length > 0 ? (
                       <Select value={imp.account_id || ''} onValueChange={(val) => handleAccountChange(imp.id, val)}>
                         <SelectTrigger className="h-7 w-full text-xs border-border bg-transparent hover:bg-muted/50 px-2 gap-1">
