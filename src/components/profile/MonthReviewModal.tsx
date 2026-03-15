@@ -30,11 +30,12 @@ import {
   ArrowUpCircle, 
   ArrowRightLeft, 
   Loader2,
-  FileCheck2,
+  Pencil,
   Lock
 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
+import { useAccounts } from "@/hooks/useAccounts";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -63,6 +64,7 @@ interface MonthTransaction {
   category: string;
   category_id: string | null;
   bank: string | null;
+  account_id: string | null;
 }
 
 interface MonthReviewModalProps {
@@ -90,9 +92,15 @@ export function MonthReviewModal({
 }: MonthReviewModalProps) {
   const { formatCurrency, formatDate } = useLocalization();
   const { categories } = useCategories("CASHFLOW");
+  const { accounts } = useAccounts();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  const getAccountNameById = (accountId: string | null) => {
+    if (!accountId) return null;
+    return accounts.find(a => a.id === accountId)?.name || null;
+  };
   const [edits, setEdits] = useState<Record<string, TransactionEdits>>({});
 
   // Fetch transactions for this month (optionally filtered by import)
@@ -108,7 +116,7 @@ export function MonthReviewModal({
       
       let query = supabase
         .from("transactions")
-        .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank")
+        .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank, account_id")
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
         .gte("date", startDate.toISOString().split("T")[0])
@@ -323,8 +331,8 @@ export function MonthReviewModal({
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col dashboard-theme bg-background text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileCheck2 className="w-5 h-5 text-primary" />
-            Review - {monthLabel}
+            <Pencil className="w-5 h-5 text-primary" />
+            Edit - {monthLabel}
           </DialogTitle>
           <DialogDescription>
             {transactions.length} transactions in this month
@@ -337,7 +345,7 @@ export function MonthReviewModal({
           </div>
         ) : transactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileCheck2 className="w-12 h-12 text-muted-foreground/50 mb-4" />
+            <Pencil className="w-12 h-12 text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">No transactions for this month</p>
             <p className="text-sm text-muted-foreground/70 mt-1">
               Upload and process files first
@@ -385,6 +393,7 @@ export function MonthReviewModal({
                  <TableRow>
                      <TableHead className="w-[80px] hidden sm:table-cell">Date</TableHead>
                      <TableHead>Description</TableHead>
+                     <TableHead className="w-[100px] hidden md:table-cell">Account</TableHead>
                      <TableHead className="w-[120px]">Movement</TableHead>
                      <TableHead className="w-[130px]">Category</TableHead>
                      <TableHead className="text-right w-[90px]">Amount</TableHead>
@@ -419,6 +428,11 @@ export function MonthReviewModal({
                               {formatDate(new Date(tx.date))}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="text-xs text-muted-foreground">
+                            {getAccountNameById(tx.account_id) || tx.bank || '—'}
+                          </span>
                         </TableCell>
                         <TableCell>
                           {isLocked ? (
