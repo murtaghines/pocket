@@ -101,7 +101,7 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
     const readKey = `investmentRead_${lastClosedMonthKey}`;
     localStorage.setItem(readKey, 'true');
     setReadInvestment(true);
-    navigate(`/profile?tab=data&section=investment&month=${lastClosedMonthKey}`);
+    navigate(`/my-data?section=investment&month=${lastClosedMonthKey}`);
   };
 
   // Check active notifications
