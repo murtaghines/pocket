@@ -90,9 +90,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               })}
             </div>
 
-            {/* Right side: Currency + Notifications + Avatar */}
+            {/* Right side: Notifications + Avatar */}
             <div className="flex items-center gap-2">
-              <CurrencySelector variant="light" />
               <NotificationBell variant="light" />
               <Link to="/profile" className="hidden md:block">
                 <div className={cn(
