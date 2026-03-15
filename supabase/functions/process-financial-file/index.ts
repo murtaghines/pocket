@@ -107,9 +107,26 @@ function generateHash(hashSource: string): string {
 }
 
 // Validate and normalize movement type
-function normalizeMovement(movement: string, amount: number): 'INCOME' | 'EXPENSE' | 'TRANSFER' {
+function normalizeMovement(movement: string, amount: number, description: string): 'INCOME' | 'EXPENSE' | 'TRANSFER' {
   const upper = (movement || '').toUpperCase();
-  if (upper === 'TRANSFER') return 'TRANSFER';
+  // Don't blindly trust AI's TRANSFER classification.
+  // Only confirm TRANSFER if description has explicit self-transfer signals.
+  if (upper === 'TRANSFER') {
+    const descUpper = (description || '').toUpperCase();
+    const selfTransferSignals = [
+      'CUENTA PROPIA', 'ENTRE CUENTAS', 'TRASPASO', 'A MI CUENTA',
+      'OWN ACCOUNT', 'INTERNAL TRANSFER', 'MOVIMIENTO INTERNO',
+      'SAVINGS', 'BROKER', 'TRADING', 'INVESTMENT', 'COCOS',
+      'TRADE REPUBLIC', 'DEGIRO', 'MYINVESTOR', 'INDEXA',
+      'INSTANT ACCESS', 'FROM SAVINGS', 'TO SAVINGS',
+    ];
+    if (selfTransferSignals.some(s => descUpper.includes(s))) {
+      return 'TRANSFER';
+    }
+    // Generic "transferencia" without self-transfer signals → use amount sign
+    if (amount > 0) return 'INCOME';
+    return 'EXPENSE';
+  }
   if (upper === 'INCOME' || amount > 0) return 'INCOME';
   return 'EXPENSE';
 }

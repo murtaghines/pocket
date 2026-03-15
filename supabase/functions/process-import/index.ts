@@ -355,9 +355,8 @@ function detectInternalTransfer(
   counterpartyRaw: string | null,
   userAccounts: Array<{ name: string; institution: string | null; account_role: string }>
 ): { isTransfer: boolean; categorySlug: string } {
-  if (movement === 'TRANSFER') {
-    return { isTransfer: true, categorySlug: 'own_transfer' };
-  }
+  // DO NOT blindly trust AI's TRANSFER classification.
+  // Only confirm as transfer if explicit signals are found below.
   
   const textToCheck = `${descriptionRaw} ${descriptionClean} ${counterpartyRaw || ''}`.toLowerCase();
   
