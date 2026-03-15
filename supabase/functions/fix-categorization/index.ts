@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
+import { normalize, categorize } from "../_shared/categorizer.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,40 +10,6 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Self-transfer signals that confirm a TRANSFER is truly between own accounts
-const SELF_TRANSFER_SIGNALS = [
-  'CUENTA PROPIA', 'ENTRE CUENTAS', 'TRASPASO', 'A MI CUENTA',
-  'OWN ACCOUNT', 'INTERNAL TRANSFER', 'MOVIMIENTO INTERNO',
-  'FROM SAVINGS', 'TO SAVINGS', 'INSTANT ACCESS',
-  'BROKER', 'TRADING', 'ETF', 'INVESTMENT',
-  'COCOS', 'TRADE REPUBLIC', 'DEGIRO', 'MYINVESTOR', 'INDEXA',
-  'FINIZENS', 'ETORO',
-  'TRASPASO A AHORRO', 'A FAVOR DE MI',
-  'MERCADO PAGO A MERCADO PAGO', // self between MP accounts
-];
-
-// Patterns that should NOT be TRANSFER (generic bank transfer language)
-const GENERIC_TRANSFER_PATTERNS = [
-  /TRANSFERENCIA\s*(RECIBIDA|EMITIDA|INMEDIATA|SEPA|TEF)/i,
-  /BIZUM\s*(RECIBIDO|ENVIADO|A\s|DE\s)/i,
-  /SEPA\s*CREDIT\s*TRANSFER/i,
-  /RECEIVED\s*TRANSFER/i,
-  /OUTGOING\s*TRANSFER/i,
-  /BANK\s*TRANSFER/i,
-  /WIRE\s*TRANSFER/i,
-  /FASTER\s*PAYMENT/i,
-];
-
-function isGenericTransferDescription(desc: string): boolean {
-  const upper = (desc || '').toUpperCase();
-  return GENERIC_TRANSFER_PATTERNS.some(p => p.test(upper));
-}
-
-function hasSelfTransferSignal(desc: string): boolean {
-  const upper = (desc || '').toUpperCase();
-  return SELF_TRANSFER_SIGNALS.some(s => upper.includes(s));
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -51,7 +18,7 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    const { userId, dryRun = true } = await req.json();
+    const { userId, dryRun = true, mode = 'all' } = await req.json();
 
     if (!userId) {
       return new Response(
@@ -60,18 +27,31 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[fix-categorization] Starting for user ${userId}, dryRun=${dryRun}`);
+    console.log(`[fix-categorization] Starting for user ${userId}, dryRun=${dryRun}, mode=${mode}`);
 
     // Fetch user profile for name matching
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('first_name, last_name')
+      .select('first_name, last_name, joint_account_names, investment_platforms')
       .eq('user_id', userId)
       .maybeSingle();
 
-    const userFirstName = userProfile?.first_name || null;
-    const userLastName = userProfile?.last_name || null;
-    console.log(`[fix-categorization] User name: ${userFirstName} ${userLastName}`);
+    const userName = {
+      firstName: userProfile?.first_name || null,
+      lastName: userProfile?.last_name || null,
+    };
+
+    // Build UserContext for categorizer
+    const userContext = {
+      userName,
+      jointHolders: (userProfile?.joint_account_names || []).map((n: string) => {
+        const parts = n.trim().split(/\s+/);
+        return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
+      }),
+      investmentPlatforms: userProfile?.investment_platforms || [],
+    };
+
+    console.log(`[fix-categorization] User: ${userName.firstName} ${userName.lastName}`);
 
     // Fetch category IDs
     const { data: categories } = await supabase
@@ -80,61 +60,65 @@ serve(async (req) => {
       .eq('domain', 'CASHFLOW');
 
     const categorySlugToId: Record<string, string> = {};
-    categories?.forEach((c: any) => { if (c.slug) categorySlugToId[c.slug] = c.id; });
+    const categoryIdToSlug: Record<string, string> = {};
+    categories?.forEach((c: any) => {
+      if (c.slug) {
+        categorySlugToId[c.slug] = c.id;
+        categoryIdToSlug[c.id] = c.slug;
+      }
+    });
 
-    // ========== FIX 1: TRANSFER transactions that should be INCOME/EXPENSE ==========
-    const { data: transferTxs, error: fetchErr } = await supabase
+    // Fetch ALL cashflow transactions for this user
+    const { data: allTxs, error: fetchErr } = await supabase
       .from('transactions')
-      .select('id, description, description_raw, amount, movement, category, date, period_id')
+      .select('id, description, description_raw, amount, movement, category, category_id, date, period_id, categorized_by')
       .eq('user_id', userId)
-      .eq('movement', 'TRANSFER')
       .eq('domain', 'CASHFLOW');
 
     if (fetchErr) throw fetchErr;
 
-    const transferFixes: Array<{ id: string; oldMovement: string; newMovement: string; oldCategory: string; newCategory: string; description: string }> = [];
+    console.log(`[fix-categorization] Found ${allTxs?.length || 0} total transactions`);
 
-    for (const tx of (transferTxs || [])) {
-      const descRaw = tx.description_raw || tx.description || '';
+    const fixes: Array<{
+      id: string;
+      description: string;
+      oldMovement: string;
+      newMovement: string;
+      oldCategory: string;
+      newCategory: string;
+    }> = [];
+
+    for (const tx of (allTxs || [])) {
+      // Skip user-manually-set categories
+      if (tx.categorized_by === 'user' || tx.categorized_by === 'user_rule') continue;
+
+      const desc = tx.description_raw || tx.description || '';
+      if (!desc.trim()) continue;
+
+      // Re-run the categorizer with the updated rules
+      const result = categorize(desc, tx.amount, userContext);
       
-      // If it has explicit self-transfer signals, keep as TRANSFER
-      if (hasSelfTransferSignal(descRaw)) continue;
-      
-      // If the user's own name appears in the description, it's a self-transfer — keep as TRANSFER
-      if (userFirstName && userLastName && userFirstName.length >= 3 && userLastName.length >= 3) {
-        const descNorm = descRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const firstNorm = userFirstName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const lastNorm = userLastName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        if (descNorm.includes(firstNorm) && descNorm.includes(lastNorm)) continue;
+      if (!result) continue; // No match from categorizer
+
+      const currentCategory = tx.category || '';
+      const currentMovement = tx.movement || '';
+
+      // Check if categorization changed
+      if (result.category !== currentCategory || result.movement !== currentMovement) {
+        fixes.push({
+          id: tx.id,
+          description: desc.substring(0, 80),
+          oldMovement: currentMovement,
+          newMovement: result.movement,
+          oldCategory: currentCategory,
+          newCategory: result.category,
+        });
       }
-      
-      // Generic transfer without self-transfer signals or own name → fix it
-      const newMovement = tx.amount >= 0 ? 'INCOME' : 'EXPENSE';
-      const newCategory = tx.amount >= 0 ? 'other_income' : 'other_expense';
-      
-      transferFixes.push({
-        id: tx.id,
-        oldMovement: tx.movement,
-        newMovement,
-        oldCategory: tx.category,
-        newCategory,
-        description: descRaw.substring(0, 60),
-      });
     }
 
-    console.log(`[fix-categorization] Found ${transferFixes.length} TRANSFER transactions to fix`);
+    console.log(`[fix-categorization] Found ${fixes.length} transactions to re-categorize`);
 
-    // ========== FIX 2: Date assignments (last day of month shifted to next month) ==========
-    // Find transactions where the date is the last day of a month but the period is wrong
-    const { data: allTxs, error: allErr } = await supabase
-      .from('transactions')
-      .select('id, date, period_id')
-      .eq('user_id', userId)
-      .eq('domain', 'CASHFLOW');
-
-    if (allErr) throw allErr;
-
-    // Get all periods for this user
+    // ========== FIX DATE ASSIGNMENTS ==========
     const { data: periods } = await supabase
       .from('periods')
       .select('id, month_key')
@@ -152,34 +136,24 @@ serve(async (req) => {
 
     for (const tx of (allTxs || [])) {
       if (!tx.date || !tx.period_id) continue;
-      
-      // Extract month from date string directly (no Date parsing)
       const match = tx.date.match(/^(\d{4})-(\d{2})/);
       if (!match) continue;
-      
       const txMonthKey = `${match[1]}-${match[2]}`;
       const periodMonth = periodIdToMonth[tx.period_id];
-      
       if (periodMonth && txMonthKey !== periodMonth) {
-        // Transaction date doesn't match its period
         const correctPeriodId = monthToPeriodId[txMonthKey];
         if (correctPeriodId) {
-          dateFixes.push({
-            id: tx.id,
-            date: tx.date,
-            oldPeriod: periodMonth,
-            newPeriod: txMonthKey,
-          });
+          dateFixes.push({ id: tx.id, date: tx.date, oldPeriod: periodMonth, newPeriod: txMonthKey });
         }
       }
     }
 
-    console.log(`[fix-categorization] Found ${dateFixes.length} transactions with wrong period assignment`);
+    console.log(`[fix-categorization] Found ${dateFixes.length} date fixes`);
 
     // ========== APPLY FIXES ==========
     if (!dryRun) {
-      let transferFixCount = 0;
-      for (const fix of transferFixes) {
+      let catFixCount = 0;
+      for (const fix of fixes) {
         const newCategoryId = categorySlugToId[fix.newCategory] || null;
         const { error: updateErr } = await supabase
           .from('transactions')
@@ -188,12 +162,13 @@ serve(async (req) => {
             type: fix.newMovement.toLowerCase(),
             category: fix.newCategory,
             category_id: newCategoryId,
-            categorized_by: 'fix_script',
-            category_source: 'FIX_SCRIPT',
+            categorized_by: 'fix_script_v2',
+            category_source: 'FIX_SCRIPT_V2',
           })
           .eq('id', fix.id);
         
-        if (!updateErr) transferFixCount++;
+        if (!updateErr) catFixCount++;
+        else console.error(`[fix-categorization] Error updating ${fix.id}:`, updateErr);
       }
 
       let dateFixCount = 0;
@@ -204,21 +179,19 @@ serve(async (req) => {
             .from('transactions')
             .update({ period_id: correctPeriodId })
             .eq('id', fix.id);
-          
           if (!updateErr) dateFixCount++;
         }
       }
 
-      console.log(`[fix-categorization] Applied ${transferFixCount} transfer fixes, ${dateFixCount} date fixes`);
+      console.log(`[fix-categorization] Applied ${catFixCount} category fixes, ${dateFixCount} date fixes`);
 
-      // Audit log
       await supabase.from('audit_log').insert({
         user_id: userId,
         entity_type: 'bulk_fix',
         entity_id: userId,
-        action: 'fix_categorization',
+        action: 'fix_categorization_v2',
         diff_json: {
-          transferFixes: transferFixCount,
+          categoryFixes: catFixCount,
           dateFixes: dateFixCount,
           timestamp: new Date().toISOString(),
         }
@@ -228,10 +201,10 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           applied: true,
-          transferFixes: transferFixCount,
+          categoryFixes: catFixCount,
           dateFixes: dateFixCount,
           details: {
-            transferSamples: transferFixes.slice(0, 10),
+            categorySamples: fixes.slice(0, 20),
             dateSamples: dateFixes.slice(0, 10),
           }
         }),
@@ -239,15 +212,15 @@ serve(async (req) => {
       );
     }
 
-    // DRY RUN: Just return what would be changed
+    // DRY RUN
     return new Response(
       JSON.stringify({
         success: true,
         dryRun: true,
-        transferFixesCount: transferFixes.length,
+        categoryFixesCount: fixes.length,
         dateFixesCount: dateFixes.length,
-        transferSamples: transferFixes.slice(0, 20),
-        dateSamples: dateFixes.slice(0, 20),
+        categorySamples: fixes.slice(0, 30),
+        dateSamples: dateFixes.slice(0, 10),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -261,4 +234,3 @@ serve(async (req) => {
     );
   }
 });
-
