@@ -478,10 +478,10 @@ export function MonthUploadSlot({
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="py-2">
+                <TableCell className="py-2 hidden md:table-cell">
                   <span className="text-sm font-semibold text-foreground">{totalTransactions}</span>
                 </TableCell>
-                <TableCell className="py-2">
+                <TableCell className="py-2 hidden md:table-cell">
                   <span className="text-xs text-muted-foreground">
                     {uniqueAccounts.length > 0 ? uniqueAccounts.join(', ') : '—'}
                   </span>
