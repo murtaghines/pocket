@@ -180,10 +180,21 @@ export function MonthUploadSlot({
     }
 
     const validFiles = Array.from(selectedFiles).filter(isValidFile);
-    onAddFiles(validFiles, monthDate);
-    setIsOpen(true);
+    if (validFiles.length > 0) {
+      setPendingFiles(validFiles);
+      setShowAccountDialog(true);
+    }
     
     e.target.value = '';
+  };
+
+  const handleAccountConfirm = (accountId: string) => {
+    setShowAccountDialog(false);
+    if (pendingFiles.length > 0) {
+      onAddFiles(pendingFiles, monthDate, accountId);
+      setPendingFiles([]);
+      setIsOpen(true);
+    }
   };
 
   const formatFileSize = (bytes: number | null) => {
