@@ -429,6 +429,11 @@ export function MonthReviewModal({
                             </span>
                           </div>
                         </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="text-xs text-muted-foreground">
+                            {getAccountNameById(tx.account_id) || tx.bank || '—'}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           {isLocked ? (
                             <div className="flex items-center gap-1.5">
