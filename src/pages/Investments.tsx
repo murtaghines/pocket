@@ -64,7 +64,7 @@ export default function Investments() {
                 {t('upload.description')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link to="/profile">
+                <Link to="/my-data">
                   <Button variant="gradient" size="lg">
                     <Upload className="w-4 h-4 mr-2" />
                     {t('upload.title')}
