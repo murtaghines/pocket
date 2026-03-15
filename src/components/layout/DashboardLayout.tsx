@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { CurrencySelector } from "./CurrencySelector";
 import { NotificationBell } from "./NotificationBell";
 import pocketLogoWhite from "@/assets/pocket-logo-white.png";
 import pocketDecoYellow from "@/assets/pocket-deco-yellow.png";
@@ -59,10 +58,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         />
       </div>
 
-      {/* Floating top nav bar - aligned with card content (wrapper p + card px) */}
-      <header className="fixed top-0 left-0 right-0 z-50 pt-6 px-[calc(0.5rem+1rem)] md:px-[calc(0.75rem+2rem)]">
+      {/* Static top nav bar — standalone, not inside white containers */}
+      <div className="sticky top-0 z-50 px-2 md:px-3 pt-2 md:pt-3">
         <div className="max-w-[1400px] mx-auto">
-          <nav className="flex items-center justify-between backdrop-blur-xl rounded-full px-4 md:px-6 py-2 shadow-sm" style={{ background: '#0F4264' }}>
+          <nav className="flex items-center justify-between backdrop-blur-xl rounded-2xl px-4 md:px-6 py-2 shadow-sm" style={{ background: '#0F4264' }}>
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center gap-2 flex-shrink-0">
               <img src={pocketLogoWhite} alt="pocket" className="h-5 w-auto" />
@@ -106,7 +105,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </nav>
         </div>
-      </header>
+      </div>
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ background: '#0F4264' }}>
@@ -132,8 +131,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="h-[env(safe-area-inset-bottom,0)]" style={{ background: '#0F4264' }} />
       </nav>
 
-      {/* Main content - tiny padding so gray peeks through */}
-      <div className="p-2 md:p-3 pb-20 md:pb-3 min-h-screen relative z-10">
+      {/* Main content — spacing between nav and content sections */}
+      <div className="px-2 md:px-3 pt-2 md:pt-3 pb-20 md:pb-3 min-h-[calc(100vh-80px)] relative z-10">
         {children}
       </div>
     </div>
