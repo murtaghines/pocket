@@ -53,6 +53,7 @@ export type ExpenseCategory =
   | 'education'
   | 'subscriptions'
   | 'travel'
+  | 'sports'
   | 'pets'
   | 'gifts_given'
   | 'personal_services'
