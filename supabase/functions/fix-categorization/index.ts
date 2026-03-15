@@ -36,22 +36,15 @@ serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
-    const userName = {
-      firstName: userProfile?.first_name || null,
-      lastName: userProfile?.last_name || null,
-    };
-
     // Build UserContext for categorizer
     const userContext = {
-      userName,
-      jointHolders: (userProfile?.joint_account_names || []).map((n: string) => {
-        const parts = n.trim().split(/\s+/);
-        return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
-      }),
+      firstName: userProfile?.first_name || '',
+      lastName: userProfile?.last_name || '',
+      jointAccountNames: userProfile?.joint_account_names || [],
       investmentPlatforms: userProfile?.investment_platforms || [],
     };
 
-    console.log(`[fix-categorization] User: ${userName.firstName} ${userName.lastName}`);
+    console.log(`[fix-categorization] User: ${userContext.firstName} ${userContext.lastName}`);
 
     // Fetch category IDs
     const { data: categories } = await supabase
