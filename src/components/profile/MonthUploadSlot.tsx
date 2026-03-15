@@ -12,6 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -25,7 +33,6 @@ import {
   Unlock,
   Eye,
   Info,
-  Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -55,159 +62,6 @@ const ACCEPTED_TYPES = [
   'text/csv',
   'application/pdf'
 ];
-
-// ── Extracted sub-component for file list with account info ──
-
-function ImportFilesList({ imports, onDeleteImport, isDeleting }: { 
-  imports: Import[]; 
-  onDeleteImport: (id: string) => void; 
-  isDeleting: boolean;
-}) {
-  const { accounts } = useAccounts();
-  const queryClient = useQueryClient();
-  const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
-
-  const getAccountName = (accountId: string | null) => {
-    if (!accountId) return null;
-    return accounts.find(a => a.id === accountId)?.name || null;
-  };
-
-  const handleAccountChange = async (importId: string, newAccountId: string) => {
-    await supabase
-      .from('imports')
-      .update({ account_id: newAccountId })
-      .eq('id', importId);
-
-    await supabase
-      .from('transactions')
-      .update({ account_id: newAccountId })
-      .eq('import_id', importId);
-
-    queryClient.invalidateQueries({ queryKey: ['imports'] });
-    queryClient.invalidateQueries({ queryKey: ['transactions'] });
-  };
-
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return '';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'NORMALIZED': return <CheckCircle2 className="w-4 h-4 text-success" />;
-      case 'PARSED':
-      case 'UPLOADED': return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
-      case 'FAILED': return <AlertCircle className="w-4 h-4 text-destructive" />;
-      default: return <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />;
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      {imports.map((imp) => {
-        const isStaleProcessing =
-          (imp.status === "PARSED" || imp.status === "UPLOADED") &&
-          Date.now() - new Date(imp.uploaded_at).getTime() > 5 * 60 * 1000;
-
-        const status = isStaleProcessing ? "FAILED" : imp.status;
-        const errorMessage = isStaleProcessing
-          ? "Processing interrupted. Please re-upload."
-          : imp.error_message;
-        const accountName = getAccountName(imp.account_id);
-
-        return (
-          <div key={imp.id} className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg text-sm">
-            {getStatusIcon(status)}
-            <div className="flex-1 min-w-0">
-              <p className="truncate text-xs font-medium">{imp.file_name}</p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                {status === "NORMALIZED" && imp.transactions_count
-                  ? <span>{imp.transactions_count} transactions</span>
-                  : status === "FAILED" && errorMessage
-                    ? <span className="text-destructive truncate">{errorMessage.slice(0, 40)}...</span>
-                    : <span>{formatDate(imp.uploaded_at)} • {formatFileSize(imp.file_size)}</span>
-                }
-              </div>
-            </div>
-
-            {/* Account selector */}
-            {cashAccounts.length > 0 && (
-              <Select value={imp.account_id || ''} onValueChange={(val) => handleAccountChange(imp.id, val)}>
-                <SelectTrigger className="h-7 w-auto min-w-[100px] max-w-[140px] text-xs border-none bg-muted hover:bg-muted/80 px-2 gap-1">
-                  <Building2 className="w-3 h-3 text-muted-foreground shrink-0" />
-                  <span className="truncate">{accountName || 'No account'}</span>
-                </SelectTrigger>
-                <SelectContent>
-                  {cashAccounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {!cashAccounts.length && accountName && (
-              <Badge variant="outline" className="text-xs shrink-0">
-                <Building2 className="w-3 h-3 mr-1" />{accountName}
-              </Badge>
-            )}
-
-            {status === "FAILED" && errorMessage && (
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
-                    <Info className="w-3.5 h-3.5" />
-                  </Button>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-80" align="end">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-destructive" />
-                      <h4 className="text-sm font-semibold">Processing error</h4>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{errorMessage}</p>
-                    <div className="pt-2 border-t">
-                      <p className="text-xs text-muted-foreground">
-                        <strong>Tip:</strong> If it's a scanned PDF, try converting it to CSV or Excel.
-                      </p>
-                    </div>
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            )}
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" disabled={isDeleting}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete file?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    All transactions associated with "{imp.file_name}" will be deleted. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onDeleteImport(imp.id)} className="bg-destructive hover:bg-destructive/90">
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ── Main component ──
 
@@ -250,12 +104,17 @@ export function MonthUploadSlot({
 }: MonthUploadSlotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewImportId, setReviewImportId] = useState<string | undefined>(undefined);
+  const [reviewTitle, setReviewTitle] = useState<string>("");
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [showReopenDialog, setShowReopenDialog] = useState(false);
   const [showAccountDialog, setShowAccountDialog] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
+  const { accounts } = useAccounts();
+  const queryClient = useQueryClient();
+  const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
 
   const isClosed = period?.status === 'CLOSED';
   const totalFiles = imports.length + pendingFilesCount;
@@ -337,6 +196,46 @@ export function MonthUploadSlot({
     }
   };
 
+  const getAccountName = (accountId: string | null) => {
+    if (!accountId) return null;
+    return accounts.find(a => a.id === accountId)?.name || null;
+  };
+
+  const handleAccountChange = async (importId: string, newAccountId: string) => {
+    await supabase
+      .from('imports')
+      .update({ account_id: newAccountId })
+      .eq('id', importId);
+    await supabase
+      .from('transactions')
+      .update({ account_id: newAccountId })
+      .eq('import_id', importId);
+    queryClient.invalidateQueries({ queryKey: ['imports'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'NORMALIZED': return <CheckCircle2 className="w-4 h-4 text-success" />;
+      case 'PARSED':
+      case 'UPLOADED': return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
+      case 'FAILED': return <AlertCircle className="w-4 h-4 text-destructive" />;
+      default: return <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />;
+    }
+  };
+
+  const openFileReview = (imp: Import) => {
+    setReviewImportId(imp.id);
+    setReviewTitle(imp.file_name);
+    setShowReviewModal(true);
+  };
+
+  const openMonthReview = () => {
+    setReviewImportId(undefined);
+    setReviewTitle("");
+    setShowReviewModal(true);
+  };
+
   const isEmpty = totalFiles === 0;
 
   return (
@@ -360,30 +259,14 @@ export function MonthUploadSlot({
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {isClosed && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <Lock className="w-3 h-3" /> Closed
+                </Badge>
+              )}
               <Badge variant={isEmpty ? "outline" : "secondary"} className={cn(isEmpty && "text-muted-foreground border-dashed")}>
                 {imports.length} file{imports.length !== 1 ? 's' : ''}
               </Badge>
-              {period && !isEmpty && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (isClosed) setShowReopenDialog(true);
-                    else setShowCloseDialog(true);
-                  }}
-                  disabled={isClosingPeriod || isReopeningPeriod}
-                >
-                  {isClosingPeriod || isReopeningPeriod ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : isClosed ? (
-                    <Lock className="w-4 h-4 text-primary" />
-                  ) : (
-                    <Unlock className="w-4 h-4 text-muted-foreground" />
-                  )}
-                </Button>
-              )}
             </div>
           </div>
         </CollapsibleTrigger>
@@ -403,9 +286,144 @@ export function MonthUploadSlot({
               </div>
             )}
 
-            {/* File list with account info */}
+            {/* Files table */}
             {imports.length > 0 && (
-              <ImportFilesList imports={imports} onDeleteImport={onDeleteImport} isDeleting={isDeleting} />
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
+                      <TableHead className="text-xs font-medium h-8">File</TableHead>
+                      <TableHead className="text-xs font-medium h-8">Account</TableHead>
+                      <TableHead className="text-xs font-medium h-8 text-center w-[100px]">Transactions</TableHead>
+                      <TableHead className="text-xs font-medium h-8 text-right w-[120px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {imports.map((imp) => {
+                      const isStaleProcessing =
+                        (imp.status === "PARSED" || imp.status === "UPLOADED") &&
+                        Date.now() - new Date(imp.uploaded_at).getTime() > 5 * 60 * 1000;
+                      const status = isStaleProcessing ? "FAILED" : imp.status;
+                      const errorMessage = isStaleProcessing
+                        ? "Processing interrupted. Please re-upload."
+                        : imp.error_message;
+                      const accountName = getAccountName(imp.account_id);
+
+                      return (
+                        <TableRow key={imp.id} className="group">
+                          {/* File name + status */}
+                          <TableCell className="py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {getStatusIcon(status)}
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium truncate max-w-[200px]">{imp.file_name}</p>
+                                {status === "FAILED" && errorMessage && (
+                                  <p className="text-xs text-destructive truncate max-w-[200px]">{errorMessage.slice(0, 50)}</p>
+                                )}
+                              </div>
+                              {status === "FAILED" && errorMessage && (
+                                <HoverCard>
+                                  <HoverCardTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:text-destructive shrink-0">
+                                      <Info className="w-3 h-3" />
+                                    </Button>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent className="w-80" align="start">
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 text-destructive" />
+                                        <h4 className="text-sm font-semibold">Processing error</h4>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground">{errorMessage}</p>
+                                      <div className="pt-2 border-t">
+                                        <p className="text-xs text-muted-foreground">
+                                          <strong>Tip:</strong> If it's a scanned PDF, try converting it to CSV or Excel.
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* Account selector */}
+                          <TableCell className="py-2">
+                            {cashAccounts.length > 0 ? (
+                              <Select value={imp.account_id || ''} onValueChange={(val) => handleAccountChange(imp.id, val)}>
+                                <SelectTrigger className="h-7 w-auto min-w-[100px] max-w-[150px] text-xs border-muted bg-muted/40 hover:bg-muted px-2 gap-1">
+                                  <span className="truncate">{accountName || 'No account'}</span>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {cashAccounts.map((a) => (
+                                    <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">{accountName || '—'}</span>
+                            )}
+                          </TableCell>
+
+                          {/* Transactions count */}
+                          <TableCell className="py-2 text-center">
+                            {status === "NORMALIZED" && imp.transactions_count ? (
+                              <span className="text-xs font-medium">{imp.transactions_count}</span>
+                            ) : status === "FAILED" ? (
+                              <span className="text-xs text-destructive">—</span>
+                            ) : (
+                              <Loader2 className="w-3 h-3 animate-spin mx-auto text-muted-foreground" />
+                            )}
+                          </TableCell>
+
+                          {/* Actions: Review + Delete */}
+                          <TableCell className="py-2 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              {status === "NORMALIZED" && imp.transactions_count && imp.transactions_count > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs text-primary hover:text-primary"
+                                  onClick={() => openFileReview(imp)}
+                                >
+                                  <Eye className="w-3.5 h-3.5 mr-1" />
+                                  Review
+                                </Button>
+                              )}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                    disabled={isDeleting}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete file?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      All transactions associated with "{imp.file_name}" will be deleted. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => onDeleteImport(imp.id)} className="bg-destructive hover:bg-destructive/90">
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
 
             {/* Empty state */}
@@ -432,28 +450,75 @@ export function MonthUploadSlot({
               </div>
             )}
 
-            {/* Add more / Review */}
+            {/* Add more files button */}
             {!isEmpty && !isClosed && (
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isProcessing} />
-                  <Button variant="outline" size="sm" className="w-full" disabled={isProcessing}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Add more files
-                  </Button>
-                </div>
-                <Button variant="gradient" size="sm" onClick={() => setShowReviewModal(true)} disabled={isProcessing}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Review
+              <div className="relative">
+                <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isProcessing} />
+                <Button variant="outline" size="sm" className="w-full" disabled={isProcessing}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Add more files
                 </Button>
               </div>
             )}
 
-            {!isEmpty && isClosed && (
-              <Button variant="outline" size="sm" className="w-full" onClick={() => setShowReviewModal(true)}>
-                <Eye className="w-4 h-4 mr-2" />
-                View transactions
-              </Button>
+            {/* Month footer: Close/Reopen + Review all */}
+            {!isEmpty && (
+              <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  {!isClosed && totalTransactions > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-8"
+                      onClick={() => openMonthReview()}
+                      disabled={isProcessing}
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1.5" />
+                      Review all ({totalTransactions})
+                    </Button>
+                  )}
+                  {isClosed && (
+                    <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => openMonthReview()}>
+                      <Eye className="w-3.5 h-3.5 mr-1.5" />
+                      View transactions ({totalTransactions})
+                    </Button>
+                  )}
+                </div>
+                <div>
+                  {period && !isClosed && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowCloseDialog(true)}
+                      disabled={isClosingPeriod}
+                    >
+                      {isClosingPeriod ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Close month
+                    </Button>
+                  )}
+                  {period && isClosed && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowReopenDialog(true)}
+                      disabled={isReopeningPeriod}
+                    >
+                      {isReopeningPeriod ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Unlock className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Reopen month
+                    </Button>
+                  )}
+                </div>
+              </div>
             )}
           </CardContent>
         </CollapsibleContent>
@@ -512,8 +577,9 @@ export function MonthUploadSlot({
         open={showReviewModal}
         onOpenChange={setShowReviewModal}
         monthKey={monthKey}
-        monthLabel={monthLabel}
+        monthLabel={reviewTitle || monthLabel}
         isLocked={isClosed}
+        importId={reviewImportId}
       />
     </Collapsible>
   );

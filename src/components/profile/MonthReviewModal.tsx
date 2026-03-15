@@ -71,6 +71,7 @@ interface MonthReviewModalProps {
   monthKey: string; // YYYY-MM
   monthLabel: string;
   isLocked?: boolean;
+  importId?: string; // Filter to a specific import
 }
 
 // Local edits state
@@ -85,6 +86,7 @@ export function MonthReviewModal({
   monthKey,
   monthLabel,
   isLocked = false,
+  importId,
 }: MonthReviewModalProps) {
   const { formatCurrency, formatDate } = useLocalization();
   const { categories } = useCategories("CASHFLOW");
@@ -93,9 +95,9 @@ export function MonthReviewModal({
   const queryClient = useQueryClient();
   const [edits, setEdits] = useState<Record<string, TransactionEdits>>({});
 
-  // Fetch transactions for this month
+  // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ["month-transactions", monthKey, user?.id],
+    queryKey: ["month-transactions", monthKey, user?.id, importId],
     queryFn: async () => {
       if (!user) return [];
       
@@ -104,7 +106,7 @@ export function MonthReviewModal({
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0); // Last day of month
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("transactions")
         .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank")
         .eq("user_id", user.id)
@@ -112,6 +114,12 @@ export function MonthReviewModal({
         .gte("date", startDate.toISOString().split("T")[0])
         .lte("date", endDate.toISOString().split("T")[0])
         .order("date", { ascending: false });
+
+      if (importId) {
+        query = query.eq("import_id", importId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as MonthTransaction[];
