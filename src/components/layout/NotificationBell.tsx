@@ -93,7 +93,7 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
     const readKey = `bankRead_${lastClosedMonthKey}`;
     localStorage.setItem(readKey, 'true');
     setReadBank(true);
-    navigate(`/profile?tab=data&section=bank&month=${lastClosedMonthKey}`);
+    navigate(`/my-data?section=bank&month=${lastClosedMonthKey}`);
   };
 
   const handleClickInvestment = () => {
