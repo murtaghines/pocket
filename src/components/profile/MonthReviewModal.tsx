@@ -63,6 +63,7 @@ interface MonthTransaction {
   category: string;
   category_id: string | null;
   bank: string | null;
+  account_id: string | null;
 }
 
 interface MonthReviewModalProps {

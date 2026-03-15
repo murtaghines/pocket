@@ -14,12 +14,13 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { 
-  Upload, 
+  Plus, 
   FileSpreadsheet, 
   CheckCircle2, 
   Loader2, 
@@ -27,7 +28,7 @@ import {
   Trash2,
   Lock,
   Unlock,
-  Eye,
+  Pencil,
   Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -110,8 +111,13 @@ export function MonthUploadSlot({
   const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
 
   const isClosed = period?.status === 'CLOSED';
-  const totalFiles = imports.length + pendingFilesCount;
   const totalTransactions = imports.reduce((sum, imp) => sum + (imp.transactions_count || 0), 0);
+
+  // Unique account names
+  const uniqueAccounts = [...new Set(imports.map(imp => {
+    const acc = accounts.find(a => a.id === imp.account_id);
+    return acc?.name;
+  }).filter(Boolean))];
 
   useEffect(() => {
     if (isProcessing) {
@@ -189,8 +195,8 @@ export function MonthUploadSlot({
   };
 
   const getAccountName = (accountId: string | null) => {
-    if (!accountId) return null;
-    return accounts.find(a => a.id === accountId)?.name || null;
+    if (!accountId) return "—";
+    return accounts.find(a => a.id === accountId)?.name || "—";
   };
 
   const handleAccountChange = async (importId: string, newAccountId: string) => {
@@ -208,11 +214,11 @@ export function MonthUploadSlot({
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'NORMALIZED': return <CheckCircle2 className="w-4 h-4 text-success" />;
+      case 'NORMALIZED': return <CheckCircle2 className="w-3.5 h-3.5 text-success" />;
       case 'PARSED':
-      case 'UPLOADED': return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
-      case 'FAILED': return <AlertCircle className="w-4 h-4 text-destructive" />;
-      default: return <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />;
+      case 'UPLOADED': return <Loader2 className="w-3.5 h-3.5 text-warning animate-spin" />;
+      case 'FAILED': return <AlertCircle className="w-3.5 h-3.5 text-destructive" />;
+      default: return <FileSpreadsheet className="w-3.5 h-3.5 text-muted-foreground" />;
     }
   };
 
@@ -228,7 +234,7 @@ export function MonthUploadSlot({
     setShowReviewModal(true);
   };
 
-  const isEmpty = totalFiles === 0;
+  const isEmpty = imports.length === 0 && pendingFilesCount === 0;
 
   return (
     <div
@@ -250,31 +256,24 @@ export function MonthUploadSlot({
         </div>
       )}
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      {/* Main Table */}
+      <div className="border border-border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead className="text-xs font-semibold h-9" colSpan={2}>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="text-xs font-semibold text-foreground h-9" colSpan={2}>
                 <div className="flex items-center gap-2">
                   <span className="capitalize">{monthLabel}</span>
                   {isClosed && (
-                    <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5">
+                    <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5 border-muted-foreground/30">
                       <Lock className="w-2.5 h-2.5" /> Closed
                     </Badge>
                   )}
                 </div>
               </TableHead>
-              <TableHead className="text-xs font-medium h-9 text-center w-[100px]">
-                {totalTransactions > 0 && (
-                  <span className="text-muted-foreground">{totalTransactions} txns</span>
-                )}
-              </TableHead>
-              <TableHead className="text-xs font-medium h-9 text-right w-[160px]">
-                <Badge variant={isEmpty ? "outline" : "secondary"} className={cn("text-[10px]", isEmpty && "text-muted-foreground border-dashed")}>
-                  {imports.length} file{imports.length !== 1 ? 's' : ''}
-                </Badge>
-              </TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[90px]">Txns</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px]">Account</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -287,7 +286,6 @@ export function MonthUploadSlot({
               const errorMessage = isStaleProcessing
                 ? "Processing interrupted. Please re-upload."
                 : imp.error_message;
-              const accountName = getAccountName(imp.account_id);
 
               return (
                 <TableRow key={imp.id} className="group">
@@ -295,12 +293,7 @@ export function MonthUploadSlot({
                   <TableCell className="py-2" colSpan={2}>
                     <div className="flex items-center gap-2 min-w-0">
                       {getStatusIcon(status)}
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium truncate max-w-[280px]">{imp.file_name}</p>
-                        {status === "FAILED" && errorMessage && (
-                          <p className="text-xs text-destructive truncate max-w-[280px]">{errorMessage.slice(0, 50)}</p>
-                        )}
-                      </div>
+                      <span className="text-sm text-foreground font-medium truncate max-w-[280px]">{imp.file_name}</span>
                       {status === "FAILED" && errorMessage && (
                         <HoverCard>
                           <HoverCardTrigger asChild>
@@ -324,47 +317,53 @@ export function MonthUploadSlot({
                           </HoverCardContent>
                         </HoverCard>
                       )}
-                      {/* Account selector inline */}
-                      {cashAccounts.length > 0 ? (
-                        <Select value={imp.account_id || ''} onValueChange={(val) => handleAccountChange(imp.id, val)}>
-                          <SelectTrigger className="h-6 w-auto min-w-[90px] max-w-[130px] text-[11px] border-muted bg-muted/40 hover:bg-muted px-2 gap-1 ml-auto shrink-0">
-                            <span className="truncate">{accountName || 'No account'}</span>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cashAccounts.map((a) => (
-                              <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        accountName && <span className="text-[11px] text-muted-foreground ml-auto shrink-0">{accountName}</span>
-                      )}
                     </div>
-                  </TableCell>
-
-                  {/* Transactions count */}
-                  <TableCell className="py-2 text-center">
-                    {status === "NORMALIZED" && imp.transactions_count ? (
-                      <span className="text-xs font-medium">{imp.transactions_count}</span>
-                    ) : status === "FAILED" ? (
-                      <span className="text-xs text-destructive">—</span>
-                    ) : (
-                      <Loader2 className="w-3 h-3 animate-spin mx-auto text-muted-foreground" />
+                    {status === "FAILED" && errorMessage && (
+                      <p className="text-xs text-destructive mt-0.5 ml-5 truncate max-w-[280px]">{errorMessage.slice(0, 60)}</p>
                     )}
                   </TableCell>
 
-                  {/* Actions */}
+                  {/* Transactions count */}
+                  <TableCell className="py-2">
+                    {status === "NORMALIZED" && imp.transactions_count ? (
+                      <span className="text-sm text-foreground">{imp.transactions_count}</span>
+                    ) : status === "FAILED" ? (
+                      <span className="text-sm text-destructive">—</span>
+                    ) : (
+                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                    )}
+                  </TableCell>
+
+                  {/* Account */}
+                  <TableCell className="py-2">
+                    {cashAccounts.length > 0 ? (
+                      <Select value={imp.account_id || ''} onValueChange={(val) => handleAccountChange(imp.id, val)}>
+                        <SelectTrigger className="h-7 w-full text-xs border-border bg-transparent hover:bg-muted/50 px-2 gap-1">
+                          <span className="truncate text-foreground">{getAccountName(imp.account_id)}</span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cashAccounts.map((a) => (
+                            <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{getAccountName(imp.account_id)}</span>
+                    )}
+                  </TableCell>
+
+                  {/* Actions: Edit + Delete */}
                   <TableCell className="py-2 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {status === "NORMALIZED" && imp.transactions_count && imp.transactions_count > 0 && (
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="h-6 px-2.5 text-[11px] bg-primary/10 text-primary hover:bg-primary/20 border-0"
+                          className="h-7 px-2.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0"
                           onClick={() => openFileReview(imp)}
                         >
-                          <Eye className="w-3 h-3 mr-1" />
-                          Review
+                          <Pencil className="w-3 h-3 mr-1" />
+                          Edit
                         </Button>
                       )}
                       <AlertDialog>
@@ -399,13 +398,13 @@ export function MonthUploadSlot({
               );
             })}
 
-            {/* Empty state row */}
+            {/* Empty state */}
             {isEmpty && !isClosed && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={4} className="py-6">
+                <TableCell colSpan={5} className="py-8">
                   <div className="relative text-center">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <Upload className="w-6 h-6 mx-auto text-muted-foreground mb-1.5" />
+                    <Plus className="w-6 h-6 mx-auto text-muted-foreground mb-1.5" />
                     <p className="text-sm text-muted-foreground">Drag files or click to upload</p>
                     <p className="text-xs text-muted-foreground mt-0.5">Excel, CSV or PDF</p>
                   </div>
@@ -415,7 +414,7 @@ export function MonthUploadSlot({
 
             {isEmpty && isClosed && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={4} className="py-6">
+                <TableCell colSpan={5} className="py-6">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-muted-foreground">Month closed — no files uploaded</p>
                     <Button variant="outline" size="sm" onClick={() => setShowReopenDialog(true)} disabled={isReopeningPeriod}>
@@ -427,79 +426,83 @@ export function MonthUploadSlot({
               </TableRow>
             )}
 
-            {/* Add more files row */}
+            {/* Add new file row */}
             {!isEmpty && !isClosed && (
-              <TableRow className="hover:bg-muted/30">
-                <TableCell colSpan={4} className="py-2">
+              <TableRow className="hover:bg-muted/30 border-t border-dashed">
+                <TableCell colSpan={5} className="py-2">
                   <div className="relative">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isProcessing} />
-                    <div className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span className="text-xs">Add more files</span>
-                    </div>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-
-            {/* Footer row: Review all + Close/Reopen */}
-            {!isEmpty && (
-              <TableRow className="bg-muted/20 hover:bg-muted/30 border-t">
-                <TableCell colSpan={4} className="py-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      {totalTransactions > 0 && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="h-7 px-3 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0"
-                          onClick={() => openMonthReview()}
-                          disabled={isProcessing}
-                        >
-                          <Eye className="w-3.5 h-3.5 mr-1.5" />
-                          {isClosed ? `View all (${totalTransactions})` : `Review all (${totalTransactions})`}
-                        </Button>
-                      )}
-                    </div>
-                    <div>
-                      {period && !isClosed && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-muted-foreground hover:text-foreground"
-                          onClick={() => setShowCloseDialog(true)}
-                          disabled={isClosingPeriod}
-                        >
-                          {isClosingPeriod ? (
-                            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                          ) : (
-                            <Lock className="w-3.5 h-3.5 mr-1.5" />
-                          )}
-                          Close month
-                        </Button>
-                      )}
-                      {period && isClosed && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-muted-foreground hover:text-foreground"
-                          onClick={() => setShowReopenDialog(true)}
-                          disabled={isReopeningPeriod}
-                        >
-                          {isReopeningPeriod ? (
-                            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                          ) : (
-                            <Unlock className="w-3.5 h-3.5 mr-1.5" />
-                          )}
-                          Reopen month
-                        </Button>
-                      )}
+                    <div className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer">
+                      <Plus className="w-4 h-4" />
+                      <span className="text-sm font-medium">Add new file</span>
                     </div>
                   </div>
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
+
+          {/* Totals footer */}
+          {!isEmpty && (
+            <TableFooter>
+              <TableRow className="bg-muted/30 hover:bg-muted/40 border-t">
+                <TableCell colSpan={2} className="py-2">
+                  <div className="flex items-center gap-3">
+                    {/* Close/Reopen month on left */}
+                    {period && !isClosed && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowCloseDialog(true)}
+                        disabled={isClosingPeriod}
+                      >
+                        {isClosingPeriod ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Lock className="w-3.5 h-3.5 mr-1.5" />}
+                        Close month
+                      </Button>
+                    )}
+                    {period && isClosed && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowReopenDialog(true)}
+                        disabled={isReopeningPeriod}
+                      >
+                        {isReopeningPeriod ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Unlock className="w-3.5 h-3.5 mr-1.5" />}
+                        Reopen month
+                      </Button>
+                    )}
+                    {!period && (
+                      <span className="text-xs font-medium text-foreground">{imports.length} file{imports.length !== 1 ? 's' : ''}</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="py-2">
+                  <span className="text-sm font-semibold text-foreground">{totalTransactions}</span>
+                </TableCell>
+                <TableCell className="py-2">
+                  <span className="text-xs text-muted-foreground">
+                    {uniqueAccounts.length > 0 ? uniqueAccounts.join(', ') : '—'}
+                  </span>
+                </TableCell>
+                <TableCell className="py-2 text-right">
+                  {totalTransactions > 0 && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 px-3 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0 font-medium"
+                      onClick={() => openMonthReview()}
+                      disabled={isProcessing}
+                    >
+                      <Pencil className="w-3 h-3 mr-1" />
+                      Edit all
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+          )}
         </Table>
       </div>
 
