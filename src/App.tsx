@@ -14,6 +14,7 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
 import Profile from "./pages/Profile";
+import MyData from "./pages/MyData";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -94,6 +95,11 @@ const App = () => (
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-data" element={
+              <ProtectedRoute>
+                <MyData />
               </ProtectedRoute>
             } />
             <Route path="/auth" element={

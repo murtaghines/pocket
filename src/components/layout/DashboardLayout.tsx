@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PiggyBank, User } from "lucide-react";
+import { LayoutDashboard, PiggyBank, FolderOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTranslation } from "react-i18next";
@@ -34,7 +34,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navItems = [
     { label: t('navigation.dashboard'), path: '/dashboard', icon: LayoutDashboard },
     { label: t('navigation.investments'), path: '/investments', icon: PiggyBank },
-    { label: t('navigation.profile'), path: '/profile', icon: User },
+    { label: t('navigation.myData'), path: '/my-data', icon: FolderOpen },
   ];
 
   return (

@@ -35,6 +35,7 @@
     "dashboard": "Panel",
     "investments": "Inversiones",
     "profile": "Perfil",
+    "myData": "Mis Datos",
     "settings": "Configuración",
     "logout": "Cerrar sesión",
     "logoutSuccess": "Sesión cerrada correctamente"
