@@ -61,7 +61,7 @@ export function useMonthlyFileUpload() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const processFile = useCallback(async (uploadFile: PendingFile, targetMonth: Date, monthKey: string) => {
+  const processFile = useCallback(async (uploadFile: PendingFile, targetMonth: Date, monthKey: string, accountId?: string) => {
     if (!user) return;
 
     const targetMonthStr = `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`;
@@ -142,6 +142,7 @@ export function useMonthlyFileUpload() {
             fileMime: uploadFile.file.type || "application/octet-stream",
             fileStorageUrl: filePath,
             sourceType: "BANK",
+            accountId: accountId || null,
           },
         }
       );
@@ -291,7 +292,7 @@ export function useMonthlyFileUpload() {
     }
   }, [user, toast, queryClient]);
 
-  const addFilesForMonth = useCallback((files: File[], targetMonth: Date) => {
+  const addFilesForMonth = useCallback((files: File[], targetMonth: Date, accountId?: string) => {
     if (!user) {
       toast({
         title: "Error",
@@ -325,9 +326,9 @@ export function useMonthlyFileUpload() {
       [monthKey]: [...(prev[monthKey] || []), ...newFiles],
     }));
 
-    // Auto-process each file immediately
+    // Auto-process each file immediately with the selected account
     newFiles.forEach((newFile) => {
-      processFile(newFile, targetMonth, monthKey);
+      processFile(newFile, targetMonth, monthKey, accountId);
     });
   }, [user, toast, processFile]);
 

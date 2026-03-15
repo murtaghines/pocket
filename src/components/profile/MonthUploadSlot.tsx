@@ -36,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { MonthReviewModal } from "./MonthReviewModal";
+import { AccountSelectDialog } from "./AccountSelectDialog";
 import { Period } from "@/hooks/usePeriods";
 
 const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.pdf'];
@@ -51,7 +52,7 @@ interface MonthUploadSlotProps {
   monthLabel: string;
   monthDate: Date;
   imports: Import[];
-  onAddFiles: (files: File[], targetMonth: Date) => void;
+  onAddFiles: (files: File[], targetMonth: Date, accountId?: string) => void;
   onProcessFiles: (targetMonth: Date) => Promise<void>;
   onDeleteImport: (importId: string) => void;
   isProcessing: boolean;
@@ -87,6 +88,8 @@ export function MonthUploadSlot({
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [showReopenDialog, setShowReopenDialog] = useState(false);
+  const [showAccountDialog, setShowAccountDialog] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
@@ -157,9 +160,10 @@ export function MonthUploadSlot({
       return;
     }
 
-    onAddFiles(droppedFiles, monthDate);
-    setIsOpen(true);
-  }, [toast, onAddFiles, monthDate, isClosed]);
+    // Store files and show account selection dialog
+    setPendingFiles(droppedFiles);
+    setShowAccountDialog(true);
+  }, [toast, isClosed]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -176,10 +180,21 @@ export function MonthUploadSlot({
     }
 
     const validFiles = Array.from(selectedFiles).filter(isValidFile);
-    onAddFiles(validFiles, monthDate);
-    setIsOpen(true);
+    if (validFiles.length > 0) {
+      setPendingFiles(validFiles);
+      setShowAccountDialog(true);
+    }
     
     e.target.value = '';
+  };
+
+  const handleAccountConfirm = (accountId: string) => {
+    setShowAccountDialog(false);
+    if (pendingFiles.length > 0) {
+      onAddFiles(pendingFiles, monthDate, accountId);
+      setPendingFiles([]);
+      setIsOpen(true);
+    }
   };
 
   const formatFileSize = (bytes: number | null) => {
@@ -555,6 +570,17 @@ export function MonthUploadSlot({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Account Select Dialog */}
+      <AccountSelectDialog
+        open={showAccountDialog}
+        onOpenChange={(open) => {
+          setShowAccountDialog(open);
+          if (!open) setPendingFiles([]);
+        }}
+        onConfirm={handleAccountConfirm}
+        fileName={pendingFiles.length === 1 ? pendingFiles[0].name : undefined}
+      />
 
       {/* Review Modal */}
       <MonthReviewModal
