@@ -324,7 +324,7 @@ export function MonthUploadSlot({
                   </TableCell>
 
                   {/* Transactions count */}
-                  <TableCell className="py-2">
+                  <TableCell className="py-2 hidden md:table-cell">
                     {status === "NORMALIZED" && imp.transactions_count ? (
                       <span className="text-sm text-foreground">{imp.transactions_count}</span>
                     ) : status === "FAILED" ? (
