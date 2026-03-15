@@ -387,6 +387,7 @@ export function MonthReviewModal({
                  <TableRow>
                      <TableHead className="w-[80px] hidden sm:table-cell">Date</TableHead>
                      <TableHead>Description</TableHead>
+                     <TableHead className="w-[100px] hidden md:table-cell">Account</TableHead>
                      <TableHead className="w-[120px]">Movement</TableHead>
                      <TableHead className="w-[130px]">Category</TableHead>
                      <TableHead className="text-right w-[90px]">Amount</TableHead>
