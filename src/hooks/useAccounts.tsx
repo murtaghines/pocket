@@ -122,6 +122,52 @@ export function useAccounts() {
     }
   });
 
+  const reassignAndDelete = useMutation({
+    mutationFn: async ({ deleteId, reassignToId }: { deleteId: string; reassignToId: string }) => {
+      // Reassign imports
+      const { error: importErr } = await supabase
+        .from('imports')
+        .update({ account_id: reassignToId })
+        .eq('account_id', deleteId);
+      if (importErr) throw importErr;
+
+      // Reassign transactions
+      const { error: txErr } = await supabase
+        .from('transactions')
+        .update({ account_id: reassignToId })
+        .eq('account_id', deleteId);
+      if (txErr) throw txErr;
+
+      // Now delete the account
+      const { error: delErr } = await supabase
+        .from('accounts')
+        .delete()
+        .eq('id', deleteId);
+      if (delErr) throw delErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['imports'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Account reassigned and deleted');
+    },
+    onError: (error) => {
+      console.error('Error reassigning account:', error);
+      toast.error('Error deleting account');
+    }
+  });
+
+  const getLinkedDataCount = async (accountId: string) => {
+    const [imports, transactions] = await Promise.all([
+      supabase.from('imports').select('id', { count: 'exact', head: true }).eq('account_id', accountId),
+      supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('account_id', accountId),
+    ]);
+    return {
+      importsCount: imports.count || 0,
+      transactionsCount: transactions.count || 0,
+    };
+  };
+
   const getAccountByName = (name: string): Account | undefined => {
     return accounts.find(a => a.name.toLowerCase() === name.toLowerCase());
   };
@@ -141,9 +187,11 @@ export function useAccounts() {
     createAccount: createAccount.mutate,
     updateAccount: updateAccount.mutate,
     deleteAccount: deleteAccount.mutate,
+    reassignAndDelete: reassignAndDelete.mutate,
     isCreating: createAccount.isPending,
     isUpdating: updateAccount.isPending,
-    isDeleting: deleteAccount.isPending,
+    isDeleting: deleteAccount.isPending || reassignAndDelete.isPending,
+    getLinkedDataCount,
     getAccountByName,
     getCashAccounts,
     getInvestmentAccounts
