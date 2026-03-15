@@ -271,8 +271,8 @@ export function MonthUploadSlot({
                   )}
                 </div>
               </TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[90px]">Txns</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px]">Account</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[90px] hidden md:table-cell">Txns</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden md:table-cell">Account</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -293,7 +293,7 @@ export function MonthUploadSlot({
                   <TableCell className="py-2" colSpan={2}>
                     <div className="flex items-center gap-2 min-w-0">
                       {getStatusIcon(status)}
-                      <span className="text-sm text-foreground font-medium truncate max-w-[280px]">{imp.file_name}</span>
+                      <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[280px]">{imp.file_name}</span>
                       {status === "FAILED" && errorMessage && (
                         <HoverCard>
                           <HoverCardTrigger asChild>
@@ -324,7 +324,7 @@ export function MonthUploadSlot({
                   </TableCell>
 
                   {/* Transactions count */}
-                  <TableCell className="py-2">
+                  <TableCell className="py-2 hidden md:table-cell">
                     {status === "NORMALIZED" && imp.transactions_count ? (
                       <span className="text-sm text-foreground">{imp.transactions_count}</span>
                     ) : status === "FAILED" ? (
@@ -335,7 +335,7 @@ export function MonthUploadSlot({
                   </TableCell>
 
                   {/* Account */}
-                  <TableCell className="py-2">
+                  <TableCell className="py-2 hidden md:table-cell">
                     {cashAccounts.length > 0 ? (
                       <Select value={imp.account_id || ''} onValueChange={(val) => handleAccountChange(imp.id, val)}>
                         <SelectTrigger className="h-7 w-full text-xs border-border bg-transparent hover:bg-muted/50 px-2 gap-1">
@@ -401,7 +401,7 @@ export function MonthUploadSlot({
             {/* Empty state */}
             {isEmpty && !isClosed && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={5} className="py-8">
+                <TableCell colSpan={5} className="py-8 md:py-8">
                   <div className="relative text-center">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <Plus className="w-6 h-6 mx-auto text-muted-foreground mb-1.5" />
@@ -414,7 +414,7 @@ export function MonthUploadSlot({
 
             {isEmpty && isClosed && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={5} className="py-6">
+                <TableCell colSpan={5} className="py-4 md:py-6">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-muted-foreground">Month closed — no files uploaded</p>
                     <Button variant="outline" size="sm" onClick={() => setShowReopenDialog(true)} disabled={isReopeningPeriod}>
@@ -478,10 +478,10 @@ export function MonthUploadSlot({
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="py-2">
+                <TableCell className="py-2 hidden md:table-cell">
                   <span className="text-sm font-semibold text-foreground">{totalTransactions}</span>
                 </TableCell>
-                <TableCell className="py-2">
+                <TableCell className="py-2 hidden md:table-cell">
                   <span className="text-xs text-muted-foreground">
                     {uniqueAccounts.length > 0 ? uniqueAccounts.join(', ') : '—'}
                   </span>
