@@ -36,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { MonthReviewModal } from "./MonthReviewModal";
+import { AccountSelectDialog } from "./AccountSelectDialog";
 import { Period } from "@/hooks/usePeriods";
 
 const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.pdf'];
