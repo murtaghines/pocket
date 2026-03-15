@@ -62,6 +62,17 @@ serve(async (req) => {
 
     console.log(`[fix-categorization] Starting for user ${userId}, dryRun=${dryRun}`);
 
+    // Fetch user profile for name matching
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const userFirstName = userProfile?.first_name || null;
+    const userLastName = userProfile?.last_name || null;
+    console.log(`[fix-categorization] User name: ${userFirstName} ${userLastName}`);
+
     // Fetch category IDs
     const { data: categories } = await supabase
       .from('categories')

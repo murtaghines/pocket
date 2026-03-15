@@ -1176,7 +1176,8 @@ serve(async (req) => {
         descriptionRaw,
         descriptionClean,
         counterpartyRaw,
-        accountsForDetection
+        accountsForDetection,
+        userContext ? { firstName: userContext.firstName, lastName: userContext.lastName } : undefined
       );
       
       if (transferDetection.isTransfer && movement !== 'TRANSFER') {
