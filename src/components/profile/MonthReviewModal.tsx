@@ -109,7 +109,7 @@ export function MonthReviewModal({
       
       let query = supabase
         .from("transactions")
-        .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank")
+        .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank, account_id")
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
         .gte("date", startDate.toISOString().split("T")[0])
