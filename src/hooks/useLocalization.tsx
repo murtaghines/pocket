@@ -28,6 +28,7 @@ export function useLocalization() {
         currency: currencyToUse,
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
+        useGrouping: true,
       }).format(amount);
     } catch {
       // Fallback for invalid currency codes
@@ -35,6 +36,7 @@ export function useLocalization() {
         style: 'decimal',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
+        useGrouping: true,
       }).format(amount) + ` ${currencyToUse}`;
     }
   }, [locale, baseCurrency]);
@@ -48,19 +50,21 @@ export function useLocalization() {
         currency: currencyToUse,
         notation: 'compact',
         maximumFractionDigits: 1,
+        useGrouping: true,
       }).format(amount);
     } catch {
       return new Intl.NumberFormat(locale, {
         style: 'decimal',
         notation: 'compact',
         maximumFractionDigits: 1,
+        useGrouping: true,
       }).format(amount) + ` ${currencyToUse}`;
     }
   }, [locale, baseCurrency]);
 
   // Format number according to user preferences
   const formatNumber = useCallback((value: number, options?: Intl.NumberFormatOptions) => {
-    return new Intl.NumberFormat(locale, options).format(value);
+    return new Intl.NumberFormat(locale, { useGrouping: true, ...options }).format(value);
   }, [locale]);
 
   // Format percentage
