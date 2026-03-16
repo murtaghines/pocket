@@ -131,17 +131,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     return { month, year };
   };
 
-  const movementFilterLabel = selectedMovements.length === 0
+  const movementFilterLabel = selectedMovements.length === 0 || allMovementsSelected
     ? tc('viewAll')
-    : selectedMovements.length === 1
-      ? movementLabels[selectedMovements[0] as MovementType]
-      : `${selectedMovements.length} selected`;
+    : selectedMovements.map(m => movementLabels[m as MovementType]).join(', ');
 
-  const categoryFilterLabel = selectedCategories.length === 0
+  const categoryFilterLabel = selectedCategories.length === 0 || allCategoriesSelected
     ? tc('viewAll')
-    : selectedCategories.length === 1
-      ? getCategoryLabel(selectedCategories[0])
-      : `${selectedCategories.length} selected`;
+    : selectedCategories.map(c => getCategoryLabel(c)).join(', ');
 
   return (
     <Card variant="bento" className="animate-slide-up border-0 shadow-none bg-transparent" style={{ animationDelay: '400ms' }}>
