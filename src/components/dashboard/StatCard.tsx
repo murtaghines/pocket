@@ -19,6 +19,7 @@ export function StatCard({
   value, 
   change, 
   changeLabel,
+  previousValue,
   type = 'neutral',
   icon,
   delay = 0,
