@@ -274,10 +274,12 @@ export function MonthUploadSlot({
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9">File</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[60px] hidden md:table-cell">Type</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden lg:table-cell">Uploaded</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] hidden lg:table-cell">Date</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[70px] hidden lg:table-cell">Time</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[90px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden md:table-cell">Account</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] text-right">Actions</TableHead>
+              <TableHead className="h-9 w-[40px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -336,10 +338,15 @@ export function MonthUploadSlot({
 
                   {/* Date uploaded */}
                   <TableCell className="py-2 hidden lg:table-cell">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-foreground">
                       {new Date(imp.uploaded_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
-                      {' '}
-                      <span className="text-muted-foreground/60">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                    </span>
+                  </TableCell>
+
+                  {/* Time uploaded */}
+                  <TableCell className="py-2 hidden lg:table-cell">
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </TableCell>
 
@@ -394,33 +401,37 @@ export function MonthUploadSlot({
                           )}
                         </Button>
                       )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                            disabled={isDeleting}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete file?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              All transactions associated with "{imp.file_name}" will be deleted. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDeleteImport(imp.id)} className="bg-destructive hover:bg-destructive/90">
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
                     </div>
+                  </TableCell>
+
+                  {/* Delete column */}
+                  <TableCell className="py-2 text-center">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground/40 hover:text-destructive transition-colors"
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete file?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            All transactions associated with "{imp.file_name}" will be deleted. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDeleteImport(imp.id)} className="bg-destructive hover:bg-destructive/90">
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               );
@@ -429,7 +440,7 @@ export function MonthUploadSlot({
             {/* Empty state - same as add new file row */}
             {isEmpty && !isClosed && (
               <TableRow className="hover:bg-muted/30">
-                <TableCell colSpan={6} className="py-2">
+                <TableCell colSpan={8} className="py-2">
                   <div className="relative">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer">
@@ -443,7 +454,7 @@ export function MonthUploadSlot({
 
             {isEmpty && isClosed && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={6} className="py-4 md:py-6">
+                <TableCell colSpan={8} className="py-4 md:py-6">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-muted-foreground">Month closed — no files uploaded</p>
                     <Button variant="outline" size="sm" onClick={() => setShowReopenDialog(true)} disabled={isReopeningPeriod}>
@@ -458,7 +469,7 @@ export function MonthUploadSlot({
             {/* Add new file row */}
             {!isEmpty && !isClosed && (
               <TableRow className="hover:bg-muted/30 border-t border-dashed">
-                <TableCell colSpan={6} className="py-2">
+                <TableCell colSpan={8} className="py-2">
                   <div className="relative">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isProcessing} />
                     <div className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer">
@@ -506,13 +517,12 @@ export function MonthUploadSlot({
                 </TableCell>
                 <TableCell className="py-2 hidden md:table-cell" />
                 <TableCell className="py-2 hidden lg:table-cell" />
+                <TableCell className="py-2 hidden lg:table-cell" />
                 <TableCell className="py-2 hidden md:table-cell">
                   <span className="text-sm font-semibold text-foreground">{totalTransactions}</span>
                 </TableCell>
                 <TableCell className="py-2 hidden md:table-cell">
-                  <span className="text-xs font-semibold text-foreground">
-                    {uniqueAccounts.length} account{uniqueAccounts.length !== 1 ? 's' : ''}
-                  </span>
+                  <span className="text-sm font-semibold text-foreground">{uniqueAccounts.length}</span>
                 </TableCell>
                 <TableCell className="py-2">
                   <div className="flex justify-end">
@@ -538,6 +548,7 @@ export function MonthUploadSlot({
                     )}
                   </div>
                 </TableCell>
+                <TableCell className="py-2" />
               </TableRow>
             </TableFooter>
           )}
