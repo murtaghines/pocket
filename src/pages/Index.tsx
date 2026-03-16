@@ -210,7 +210,7 @@ export default function Index() {
                       change={expenseChange}
                       changeLabel={t('stats.vsLastMonth')}
                       type="expense"
-                      icon={<ArrowUpRight className="w-5 h-5" />}
+                      icon={<Minus className="w-5 h-5" />}
                       delay={100}
                       invertChangeColor={true}
                     />
