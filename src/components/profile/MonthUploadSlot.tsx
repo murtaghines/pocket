@@ -360,11 +360,19 @@ export function MonthUploadSlot({
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="h-7 px-2.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0"
+                          className={cn(
+                            "h-7 px-2.5 text-xs border-0",
+                            isClosed
+                              ? "bg-success/10 text-success hover:bg-success/20"
+                              : "bg-primary/10 text-primary hover:bg-primary/20"
+                          )}
                           onClick={() => openFileReview(imp)}
                         >
-                          <Pencil className="w-3 h-3 mr-1" />
-                          Edit
+                          {isClosed ? (
+                            <><Eye className="w-3 h-3 mr-1" />View</>
+                          ) : (
+                            <><Pencil className="w-3 h-3 mr-1" />Edit</>
+                          )}
                         </Button>
                       )}
                       <AlertDialog>
