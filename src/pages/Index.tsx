@@ -21,7 +21,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
-import { TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
+import { Wallet, Loader2 } from "lucide-react";
 
 export default function Index() {
   const { t } = useTranslation('dashboard');
