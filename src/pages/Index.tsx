@@ -212,6 +212,7 @@ export default function Index() {
                       type="expense"
                       icon={<TrendingDown className="w-5 h-5" />}
                       delay={100}
+                      invertChangeColor={true}
                     />
                     <StatCard
                       title={t('stats.balance')}
