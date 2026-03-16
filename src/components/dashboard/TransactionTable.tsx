@@ -110,9 +110,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(t.category);
+    const matchesCategory = selectedCategories.length === 0 || allCategoriesSelected || selectedCategories.includes(t.category);
     const movementType = getMovementType(t);
-    const matchesMovement = selectedMovements.length === 0 || selectedMovements.includes(movementType);
+    const matchesMovement = selectedMovements.length === 0 || allMovementsSelected || selectedMovements.includes(movementType);
     return matchesSearch && matchesCategory && matchesMovement;
   });
 
