@@ -120,7 +120,7 @@ export function StatCard({
                 "text-xs",
                 isBalanceCard ? "text-white/50" : "text-muted-foreground"
               )}>
-                {changeLabel}: {previousValue}
+                previous: {previousValue}
               </span>
             )}
           </div>
