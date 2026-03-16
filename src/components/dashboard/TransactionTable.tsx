@@ -220,7 +220,6 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
 
           {/* Search */}
           <div className="relative">
