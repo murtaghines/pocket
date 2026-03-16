@@ -163,7 +163,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   <div className="flex flex-col gap-0.5">
                     <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
                       <Checkbox
-                        checked={selectedMovements.length === 0}
+                        checked={allMovementsSelected || selectedMovements.length === 0}
                         onCheckedChange={toggleAllMovements}
                       />
                       <span className="text-sm">{tc('viewAll')}</span>
