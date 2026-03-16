@@ -201,7 +201,7 @@ export default function Index() {
                       change={incomeChange}
                       changeLabel={t('stats.vsLastMonth')}
                       type="income"
-                      icon={<TrendingUp className="w-5 h-5" />}
+                      icon={<ArrowDownLeft className="w-5 h-5" />}
                       delay={0}
                     />
                     <StatCard
