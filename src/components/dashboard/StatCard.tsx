@@ -7,6 +7,7 @@ interface StatCardProps {
   value: string;
   change?: number;
   changeLabel?: string;
+  previousValue?: string;
   type?: 'income' | 'expense' | 'neutral' | 'balance';
   icon?: React.ReactNode;
   delay?: number;
