@@ -293,11 +293,11 @@ export function MonthUploadSlot({
 
               return (
                 <TableRow key={imp.id} className="group">
-                  {/* File name + status */}
-                  <TableCell className="py-2" colSpan={2}>
+                   {/* File name + status */}
+                  <TableCell className="py-2">
                     <div className="flex items-center gap-2 min-w-0">
                       {getStatusIcon(status)}
-                      <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[280px]">{imp.file_name}</span>
+                      <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[250px]">{imp.file_name}</span>
                       {status === "FAILED" && errorMessage && (
                         <HoverCard>
                           <HoverCardTrigger asChild>
@@ -325,6 +325,22 @@ export function MonthUploadSlot({
                     {status === "FAILED" && errorMessage && (
                       <p className="text-xs text-destructive mt-0.5 ml-5 truncate max-w-[280px]">{errorMessage.slice(0, 60)}</p>
                     )}
+                  </TableCell>
+
+                  {/* File type */}
+                  <TableCell className="py-2 hidden md:table-cell">
+                    <Badge variant="outline" className="text-[10px] font-medium uppercase px-1.5 py-0">
+                      {imp.file_name.split('.').pop() || '—'}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Date uploaded */}
+                  <TableCell className="py-2 hidden lg:table-cell">
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(imp.uploaded_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {' '}
+                      <span className="text-muted-foreground/60">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                    </span>
                   </TableCell>
 
                   {/* Transactions count */}
