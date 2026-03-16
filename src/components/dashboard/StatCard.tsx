@@ -26,8 +26,9 @@ export function StatCard({
   const rawPositive = change && change > 0;
   const rawNegative = change && change < 0;
   
-  const isPositive = invertChangeColor ? rawNegative : rawPositive;
-  const isNegative = invertChangeColor ? rawPositive : rawNegative;
+  // Color: inverted for expenses (up = bad/red, down = good/green)
+  const isColorPositive = invertChangeColor ? rawNegative : rawPositive;
+  const isColorNegative = invertChangeColor ? rawPositive : rawNegative;
 
   // Balance card gets special blue background treatment
   const isBalanceCard = type === 'balance';
@@ -96,20 +97,20 @@ export function StatCard({
         </p>
         
         {/* Change indicator - more compact */}
-        {change !== undefined && change !== null && (change !== 0 || isPositive || isNegative) && (
+        {change !== undefined && change !== null && (change !== 0 || rawPositive || rawNegative) && (
           <div className="flex items-center gap-1.5 mt-2">
             <div className={cn(
               "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium",
-              isBalanceCard && isPositive && "bg-white/20 text-white",
-              isBalanceCard && isNegative && "bg-white/20 text-white",
-              isBalanceCard && !isPositive && !isNegative && "bg-white/20 text-white/70",
-              !isBalanceCard && isPositive && "bg-success/10 text-success",
-              !isBalanceCard && isNegative && "bg-destructive/10 text-destructive",
-              !isBalanceCard && !isPositive && !isNegative && "bg-muted text-muted-foreground"
+              isBalanceCard && isColorPositive && "bg-white/20 text-white",
+              isBalanceCard && isColorNegative && "bg-white/20 text-white",
+              isBalanceCard && !isColorPositive && !isColorNegative && "bg-white/20 text-white/70",
+              !isBalanceCard && isColorPositive && "bg-success/10 text-success",
+              !isBalanceCard && isColorNegative && "bg-destructive/10 text-destructive",
+              !isBalanceCard && !isColorPositive && !isColorNegative && "bg-muted text-muted-foreground"
             )}>
-              {isPositive && <TrendingUp className="w-3 h-3" />}
-              {isNegative && <TrendingDown className="w-3 h-3" />}
-              {!isPositive && !isNegative && <Minus className="w-3 h-3" />}
+              {rawPositive && <TrendingUp className="w-3 h-3" />}
+              {rawNegative && <TrendingDown className="w-3 h-3" />}
+              {!rawPositive && !rawNegative && <Minus className="w-3 h-3" />}
               <span>{rawPositive && "+"}{change}%</span>
             </div>
           </div>
