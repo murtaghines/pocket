@@ -40,12 +40,12 @@ export default function MyData() {
         <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
           <div className="flex items-center gap-2 mb-1">
             <FileText className="w-5 h-5 text-primary" />
-            <h2 className="font-display text-xl font-bold tracking-tight">
-              {t('uploads.bankStatements', 'Bank Statements')}
+            <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
+              Upload your bank statements, credit card bills, or expense reports
             </h2>
           </div>
           <p className="text-sm text-muted-foreground mb-6">
-            {t('uploads.uploadBankStatements')} — Excel (.xlsx, .xls), CSV, PDF
+            Accepted formats: Excel (.xlsx, .xls), CSV, PDF
           </p>
           <MonthlyUploadsOrganizer />
         </div>
