@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CalendarDays, BarChart3 } from "lucide-react";
+import { CalendarDays, BarChart3, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
@@ -21,7 +21,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
-import { TrendingUp, TrendingDown, Wallet, Loader2 } from "lucide-react";
+import { Wallet, Loader2 } from "lucide-react";
 
 export default function Index() {
   const { t } = useTranslation('dashboard');
@@ -201,7 +201,7 @@ export default function Index() {
                       change={incomeChange}
                       changeLabel={t('stats.vsLastMonth')}
                       type="income"
-                      icon={<TrendingUp className="w-5 h-5" />}
+                      icon={<ArrowDownLeft className="w-5 h-5" />}
                       delay={0}
                     />
                     <StatCard
@@ -210,7 +210,7 @@ export default function Index() {
                       change={expenseChange}
                       changeLabel={t('stats.vsLastMonth')}
                       type="expense"
-                      icon={<TrendingDown className="w-5 h-5" />}
+                      icon={<ArrowUpRight className="w-5 h-5" />}
                       delay={100}
                       invertChangeColor={true}
                     />
