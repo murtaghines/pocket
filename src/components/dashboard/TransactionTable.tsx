@@ -149,7 +149,6 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           {t('transactions.title')}
         </CardTitle>
         <div className="flex flex-col gap-2 mt-2">
-          <div className="grid grid-cols-2 gap-2">
             {/* Movement multi-select */}
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-muted-foreground">{t('transactions.movement', { defaultValue: 'Movement' })}</span>
