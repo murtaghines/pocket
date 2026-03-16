@@ -244,7 +244,7 @@ export default function Index() {
             </div>
 
             {/* === WHITE SECTION 2: Transactions === */}
-            <div className="bg-card rounded-xl md:rounded-2xl p-3 md:p-6" style={{ boxShadow: 'var(--shadow-section)' }}>
+            <div className="bg-card rounded-xl md:rounded-2xl p-3 md:p-4" style={{ boxShadow: 'var(--shadow-section)' }}>
               <div className="max-h-[500px] overflow-y-auto">
                 <TransactionTable transactions={transactions} />
               </div>

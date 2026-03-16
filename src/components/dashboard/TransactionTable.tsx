@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Transaction, Category } from "@/lib/mockData";
-import { Search, ArrowUpRight, ArrowDownRight, Minus, List } from "lucide-react";
+import { Search, ArrowUpRight, ArrowDownRight, Minus, List, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from "@/lib/categoryTranslations";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -44,10 +46,17 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const { t } = useTranslation('dashboard');
   const { t: tc } = useTranslation('common');
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [movementFilter, setMovementFilter] = useState<string>("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
   const { formatCurrency } = useLocalization();
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+
+  const movementOptions: { value: MovementType; label: string }[] = [
+    { value: 'income', label: t('stats.income') },
+    { value: 'expense', label: t('stats.expenses') },
+    { value: 'transfer', label: t('transactions.transfer', { defaultValue: 'Transfer' }) },
+    { value: 'investment', label: t('investments.title') },
+  ];
 
   const movementLabels: Record<MovementType, string> = {
     income: t('stats.income'),
@@ -58,25 +67,41 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES, ...TRANSFER_CATEGORIES];
   
-  const availableCategories = movementFilter === "all" 
+  const availableCategories = selectedMovements.length === 0
     ? allCategories
-    : categoriesByMovement[movementFilter as MovementType] || [];
+    : selectedMovements.flatMap(m => categoriesByMovement[m as MovementType] || []);
 
-  const handleMovementChange = (value: string) => {
-    setMovementFilter(value);
-    if (value !== "all") {
-      const newCategories = categoriesByMovement[value as MovementType] || [];
-      if (!newCategories.includes(categoryFilter)) {
-        setCategoryFilter("all");
+  const toggleMovement = (value: string) => {
+    setSelectedMovements(prev => {
+      const next = prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value];
+      // Reset categories that are no longer available
+      if (next.length > 0) {
+        const newAvailable = next.flatMap(m => categoriesByMovement[m as MovementType] || []);
+        setSelectedCategories(prev => prev.filter(c => newAvailable.includes(c)));
       }
-    }
+      return next;
+    });
+  };
+
+  const toggleCategory = (value: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
+
+  const toggleAllMovements = () => {
+    setSelectedMovements([]);
+  };
+
+  const toggleAllCategories = () => {
+    setSelectedCategories([]);
   };
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || t.category === categoryFilter;
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(t.category);
     const movementType = getMovementType(t);
-    const matchesMovement = movementFilter === "all" || movementType === movementFilter;
+    const matchesMovement = selectedMovements.length === 0 || selectedMovements.includes(movementType);
     return matchesSearch && matchesCategory && matchesMovement;
   });
 
@@ -95,74 +120,115 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     return { month, year };
   };
 
+  const movementFilterLabel = selectedMovements.length === 0
+    ? tc('viewAll')
+    : selectedMovements.length === 1
+      ? movementLabels[selectedMovements[0] as MovementType]
+      : `${selectedMovements.length} selected`;
+
+  const categoryFilterLabel = selectedCategories.length === 0
+    ? tc('viewAll')
+    : selectedCategories.length === 1
+      ? getCategoryLabel(selectedCategories[0])
+      : `${selectedCategories.length} selected`;
+
   return (
     <Card variant="bento" className="animate-slide-up border-0 shadow-none bg-transparent" style={{ animationDelay: '400ms' }}>
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-2 pt-0 px-0">
         <CardTitle className="text-base flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
             <List className="w-4 h-4 text-primary" />
           </div>
           {t('transactions.title')}
         </CardTitle>
-        <div className="flex flex-col sm:flex-row gap-3 mt-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">{t('transactions.movement', { defaultValue: 'Movements' })}</span>
-            <Select value={movementFilter} onValueChange={handleMovementChange}>
-              <SelectTrigger className="w-full sm:w-[160px] rounded-xl">
-                <SelectValue placeholder={tc('viewAll')} />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="all">{tc('viewAll')}</SelectItem>
-                <SelectItem value="income">{t('stats.income')}</SelectItem>
-                <SelectItem value="expense">{t('stats.expenses')}</SelectItem>
-                <SelectItem value="transfer">{t('transactions.transfer', { defaultValue: 'Transfer' })}</SelectItem>
-                <SelectItem value="investment">{t('investments.title')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">{t('transactions.category')}</span>
-            <Select 
-              value={categoryFilter} 
-              onValueChange={setCategoryFilter}
-              disabled={availableCategories.length === 0}
-            >
-              <SelectTrigger className="w-full sm:w-[160px] rounded-xl">
-                <SelectValue placeholder={tc('viewAll')} />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="all">{tc('viewAll')}</SelectItem>
-                {availableCategories.map(cat => (
-                  <SelectItem key={cat} value={cat}>
-                    <div className="flex items-center gap-2">
-                      <CategoryIcon 
-                        iconName={getCategoryIcon(cat)} 
-                        colorVar={getCategoryColor(cat)} 
-                        size="sm"
-                        showBackground={false}
+        <div className="flex flex-col gap-2 mt-2">
+          <div className="grid grid-cols-2 gap-2">
+            {/* Movement multi-select */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-muted-foreground">{t('transactions.movement', { defaultValue: 'Movement' })}</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between rounded-xl h-9 text-sm font-normal">
+                    <span className="truncate">{movementFilterLabel}</span>
+                    <ChevronDown className="w-3.5 h-3.5 opacity-50 flex-shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-2 rounded-xl" align="start">
+                  <div className="flex flex-col gap-0.5">
+                    <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
+                      <Checkbox
+                        checked={selectedMovements.length === 0}
+                        onCheckedChange={toggleAllMovements}
                       />
-                      {getCategoryLabel(cat)}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="relative flex-1 flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">&nbsp;</span>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder={tc('search')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 rounded-xl"
-              />
+                      <span className="text-sm">{tc('viewAll')}</span>
+                    </label>
+                    {movementOptions.map(opt => (
+                      <label key={opt.value} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
+                        <Checkbox
+                          checked={selectedMovements.includes(opt.value)}
+                          onCheckedChange={() => toggleMovement(opt.value)}
+                        />
+                        <span className="text-sm">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
+
+            {/* Category multi-select */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-muted-foreground">{t('transactions.category')}</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between rounded-xl h-9 text-sm font-normal">
+                    <span className="truncate">{categoryFilterLabel}</span>
+                    <ChevronDown className="w-3.5 h-3.5 opacity-50 flex-shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2 rounded-xl max-h-64 overflow-y-auto" align="start">
+                  <div className="flex flex-col gap-0.5">
+                    <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
+                      <Checkbox
+                        checked={selectedCategories.length === 0}
+                        onCheckedChange={toggleAllCategories}
+                      />
+                      <span className="text-sm">{tc('viewAll')}</span>
+                    </label>
+                    {availableCategories.map(cat => (
+                      <label key={cat} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
+                        <Checkbox
+                          checked={selectedCategories.includes(cat)}
+                          onCheckedChange={() => toggleCategory(cat)}
+                        />
+                        <CategoryIcon 
+                          iconName={getCategoryIcon(cat)} 
+                          colorVar={getCategoryColor(cat)} 
+                          size="sm"
+                          showBackground={false}
+                        />
+                        <span className="text-sm">{getCategoryLabel(cat)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={tc('search')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 rounded-xl h-9"
+            />
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 pb-0">
         <div className="rounded-2xl border border-border/50 overflow-hidden">
           <Table className="table-auto">
              <TableHeader>
@@ -268,7 +334,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             </TableBody>
           </Table>
         </div>
-        <p className="text-sm text-muted-foreground mt-4">
+        <p className="text-sm text-muted-foreground mt-3">
           {filteredTransactions.length} / {transactions.length}
         </p>
       </CardContent>
