@@ -257,21 +257,24 @@ export function MonthUploadSlot({
         </div>
       )}
 
+      {/* Month title */}
+      <div className="flex items-center gap-2 mb-2">
+        <h3 className="text-sm font-semibold text-foreground capitalize">{monthLabel}</h3>
+        {isClosed && (
+          <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5 border-muted-foreground/30">
+            <Lock className="w-2.5 h-2.5" /> Closed
+          </Badge>
+        )}
+      </div>
+
       {/* Main Table */}
       <div className="border border-border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-xs font-semibold text-foreground h-9" colSpan={2}>
-                <div className="flex items-center gap-2">
-                  <span className="capitalize">{monthLabel}</span>
-                  {isClosed && (
-                    <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5 border-muted-foreground/30">
-                      <Lock className="w-2.5 h-2.5" /> Closed
-                    </Badge>
-                  )}
-                </div>
-              </TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9">File</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[60px] hidden md:table-cell">Type</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden lg:table-cell">Uploaded</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[90px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden md:table-cell">Account</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] text-right">Actions</TableHead>
