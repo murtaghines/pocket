@@ -7,6 +7,7 @@ interface StatCardProps {
   value: string;
   change?: number;
   changeLabel?: string;
+  previousValue?: string;
   type?: 'income' | 'expense' | 'neutral' | 'balance';
   icon?: React.ReactNode;
   delay?: number;
@@ -18,6 +19,7 @@ export function StatCard({
   value, 
   change, 
   changeLabel,
+  previousValue,
   type = 'neutral',
   icon,
   delay = 0,
@@ -113,6 +115,14 @@ export function StatCard({
               {!rawPositive && !rawNegative && <Minus className="w-3 h-3" />}
               <span>{Math.abs(change)}%</span>
             </div>
+            {previousValue && (
+              <span className={cn(
+                "text-xs",
+                isBalanceCard ? "text-white/50" : "text-muted-foreground"
+              )}>
+                vs {previousValue}
+              </span>
+            )}
           </div>
         )}
       </div>

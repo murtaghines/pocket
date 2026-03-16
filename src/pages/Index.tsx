@@ -200,6 +200,7 @@ export default function Index() {
                       value={formatCurrency(convertedCurrentMonth.income)}
                       change={incomeChange}
                       changeLabel={t('stats.vsLastMonth')}
+                      previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.income) : undefined}
                       type="income"
                       icon={<Plus className="w-5 h-5" />}
                       delay={0}
@@ -209,6 +210,7 @@ export default function Index() {
                       value={formatCurrency(convertedCurrentMonth.expenses)}
                       change={expenseChange}
                       changeLabel={t('stats.vsLastMonth')}
+                      previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.expenses) : undefined}
                       type="expense"
                       icon={<Minus className="w-5 h-5" />}
                       delay={100}
@@ -219,6 +221,7 @@ export default function Index() {
                       value={formatCurrency(convertedCurrentMonth.balance)}
                       change={balanceChange}
                       changeLabel={t('stats.vsLastMonth')}
+                      previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.balance) : undefined}
                       type="balance"
                       icon={<Wallet className="w-5 h-5" />}
                       delay={200}
