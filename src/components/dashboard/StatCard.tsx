@@ -115,6 +115,14 @@ export function StatCard({
               {!rawPositive && !rawNegative && <Minus className="w-3 h-3" />}
               <span>{Math.abs(change)}%</span>
             </div>
+            {previousValue && (
+              <span className={cn(
+                "text-xs",
+                isBalanceCard ? "text-white/50" : "text-muted-foreground"
+              )}>
+                vs {previousValue}
+              </span>
+            )}
           </div>
         )}
       </div>
