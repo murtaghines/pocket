@@ -28,7 +28,7 @@ export function useLocalization() {
         currency: currencyToUse,
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-        useGrouping: true,
+        useGrouping: 'always' as any,
       }).format(amount);
     } catch {
       // Fallback for invalid currency codes
