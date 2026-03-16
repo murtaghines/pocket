@@ -111,7 +111,7 @@ export function StatCard({
               {rawPositive && <ArrowUp className="w-3 h-3" />}
               {rawNegative && <ArrowDown className="w-3 h-3" />}
               {!rawPositive && !rawNegative && <Minus className="w-3 h-3" />}
-              <span>{rawPositive && "+"}{change}%</span>
+              <span>{Math.abs(change)}%</span>
             </div>
           </div>
         )}
