@@ -117,7 +117,7 @@ export function MonthlyUploadsOrganizer() {
         {canShowLess && (
           <Button 
             variant="outline" 
-            className="flex-1"
+            className="flex-1 text-foreground border-border"
             onClick={handleShowLess}
           >
             <ChevronUp className="w-4 h-4 mr-2" />
@@ -126,7 +126,7 @@ export function MonthlyUploadsOrganizer() {
         )}
         <Button 
           variant="outline" 
-          className="flex-1"
+          className="flex-1 text-foreground border-border"
           onClick={handleLoadMore}
         >
           <ChevronDown className="w-4 h-4 mr-2" />
