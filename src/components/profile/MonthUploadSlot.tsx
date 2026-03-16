@@ -473,17 +473,15 @@ export function MonthUploadSlot({
                         Reopen month
                       </Button>
                     )}
-                    {!period && (
-                      <span className="text-xs font-medium text-foreground">{imports.length} file{imports.length !== 1 ? 's' : ''}</span>
-                    )}
+                    <span className="text-xs font-semibold text-foreground">{imports.length} file{imports.length !== 1 ? 's' : ''}</span>
                   </div>
                 </TableCell>
                 <TableCell className="py-2 hidden md:table-cell">
                   <span className="text-sm font-semibold text-foreground">{totalTransactions}</span>
                 </TableCell>
                 <TableCell className="py-2 hidden md:table-cell">
-                  <span className="text-xs text-muted-foreground">
-                    {uniqueAccounts.length > 0 ? uniqueAccounts.join(', ') : '—'}
+                  <span className="text-xs font-semibold text-foreground">
+                    {uniqueAccounts.length} account{uniqueAccounts.length !== 1 ? 's' : ''}
                   </span>
                 </TableCell>
                 <TableCell className="py-2 text-right">
@@ -491,7 +489,7 @@ export function MonthUploadSlot({
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="h-7 px-3 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0 font-medium"
+                      className="h-7 px-3 text-xs bg-primary/10 text-primary hover:bg-primary/20 border-0 font-medium rounded-full"
                       onClick={() => openMonthReview()}
                       disabled={isProcessing}
                     >
