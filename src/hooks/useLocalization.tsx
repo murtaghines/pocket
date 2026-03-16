@@ -36,7 +36,7 @@ export function useLocalization() {
         style: 'decimal',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-        useGrouping: true,
+        useGrouping: 'always' as any,
       }).format(amount) + ` ${currencyToUse}`;
     }
   }, [locale, baseCurrency]);
