@@ -45,7 +45,7 @@ export default function MyData() {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground mb-6">
-            {t('uploads.uploadBankStatements')}
+            {t('uploads.uploadBankStatements')} — Excel (.xlsx, .xls), CSV, PDF
           </p>
           <MonthlyUploadsOrganizer />
         </div>
