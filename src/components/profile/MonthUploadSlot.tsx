@@ -274,10 +274,12 @@ export function MonthUploadSlot({
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9">File</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[60px] hidden md:table-cell">Type</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden lg:table-cell">Uploaded</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] hidden lg:table-cell">Date</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[70px] hidden lg:table-cell">Time</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[90px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden md:table-cell">Account</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] text-right">Actions</TableHead>
+              <TableHead className="h-9 w-[40px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
