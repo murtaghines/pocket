@@ -108,8 +108,8 @@ export function StatCard({
               !isBalanceCard && isColorNegative && "bg-destructive/10 text-destructive",
               !isBalanceCard && !isColorPositive && !isColorNegative && "bg-muted text-muted-foreground"
             )}>
-              {rawPositive && <TrendingUp className="w-3 h-3" />}
-              {rawNegative && <TrendingDown className="w-3 h-3" />}
+              {rawPositive && <ArrowUp className="w-3 h-3" />}
+              {rawNegative && <ArrowDown className="w-3 h-3" />}
               {!rawPositive && !rawNegative && <Minus className="w-3 h-3" />}
               <span>{rawPositive && "+"}{change}%</span>
             </div>
