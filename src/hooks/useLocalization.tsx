@@ -50,7 +50,7 @@ export function useLocalization() {
         currency: currencyToUse,
         notation: 'compact',
         maximumFractionDigits: 1,
-        useGrouping: true,
+        useGrouping: 'always' as any,
       }).format(amount);
     } catch {
       return new Intl.NumberFormat(locale, {
