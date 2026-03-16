@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useInvestments } from "@/hooks/useInvestments";
+import { useLocalization } from "@/hooks/useLocalization";
 import { PiggyBank, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,9 +9,7 @@ import { useTranslation } from "react-i18next";
 export function InvestmentSummaryCard() {
   const { totalInvestedThisMonth, totalCurrentValue, hasData } = useInvestments();
   const { t } = useTranslation('dashboard');
-
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
+  const { formatCurrency } = useLocalization();
 
   return (
     <Card variant="bento" className="animate-fade-in" style={{ animationDelay: '300ms' }}>

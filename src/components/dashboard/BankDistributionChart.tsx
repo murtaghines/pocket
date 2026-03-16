@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { CreditCard, Building2 } from "lucide-react";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface BankData {
   name: string;
@@ -27,9 +28,7 @@ const DEFAULT_COLORS = [
 
 export function BankDistributionChart({ data }: BankDistributionChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-
-  const formatCurrency = (value: number) =>
-    value.toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
+  const { formatCurrency } = useLocalization();
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
