@@ -257,21 +257,24 @@ export function MonthUploadSlot({
         </div>
       )}
 
+      {/* Month title */}
+      <div className="flex items-center gap-2 mb-2">
+        <h3 className="text-sm font-semibold text-foreground capitalize">{monthLabel}</h3>
+        {isClosed && (
+          <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5 border-muted-foreground/30">
+            <Lock className="w-2.5 h-2.5" /> Closed
+          </Badge>
+        )}
+      </div>
+
       {/* Main Table */}
       <div className="border border-border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-xs font-semibold text-foreground h-9" colSpan={2}>
-                <div className="flex items-center gap-2">
-                  <span className="capitalize">{monthLabel}</span>
-                  {isClosed && (
-                    <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5 border-muted-foreground/30">
-                      <Lock className="w-2.5 h-2.5" /> Closed
-                    </Badge>
-                  )}
-                </div>
-              </TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9">File</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[60px] hidden md:table-cell">Type</TableHead>
+              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden lg:table-cell">Uploaded</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[90px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden md:table-cell">Account</TableHead>
               <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] text-right">Actions</TableHead>
@@ -290,11 +293,11 @@ export function MonthUploadSlot({
 
               return (
                 <TableRow key={imp.id} className="group">
-                  {/* File name + status */}
-                  <TableCell className="py-2" colSpan={2}>
+                   {/* File name + status */}
+                  <TableCell className="py-2">
                     <div className="flex items-center gap-2 min-w-0">
                       {getStatusIcon(status)}
-                      <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[280px]">{imp.file_name}</span>
+                      <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[250px]">{imp.file_name}</span>
                       {status === "FAILED" && errorMessage && (
                         <HoverCard>
                           <HoverCardTrigger asChild>
@@ -322,6 +325,22 @@ export function MonthUploadSlot({
                     {status === "FAILED" && errorMessage && (
                       <p className="text-xs text-destructive mt-0.5 ml-5 truncate max-w-[280px]">{errorMessage.slice(0, 60)}</p>
                     )}
+                  </TableCell>
+
+                  {/* File type */}
+                  <TableCell className="py-2 hidden md:table-cell">
+                    <Badge variant="outline" className="text-[10px] font-medium uppercase px-1.5 py-0">
+                      {imp.file_name.split('.').pop() || '—'}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Date uploaded */}
+                  <TableCell className="py-2 hidden lg:table-cell">
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(imp.uploaded_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {' '}
+                      <span className="text-muted-foreground/60">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
+                    </span>
                   </TableCell>
 
                   {/* Transactions count */}
@@ -410,7 +429,7 @@ export function MonthUploadSlot({
             {/* Empty state - same as add new file row */}
             {isEmpty && !isClosed && (
               <TableRow className="hover:bg-muted/30">
-                <TableCell colSpan={5} className="py-2">
+                <TableCell colSpan={6} className="py-2">
                   <div className="relative">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer">
@@ -424,7 +443,7 @@ export function MonthUploadSlot({
 
             {isEmpty && isClosed && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={5} className="py-4 md:py-6">
+                <TableCell colSpan={6} className="py-4 md:py-6">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-muted-foreground">Month closed — no files uploaded</p>
                     <Button variant="outline" size="sm" onClick={() => setShowReopenDialog(true)} disabled={isReopeningPeriod}>
@@ -439,7 +458,7 @@ export function MonthUploadSlot({
             {/* Add new file row */}
             {!isEmpty && !isClosed && (
               <TableRow className="hover:bg-muted/30 border-t border-dashed">
-                <TableCell colSpan={5} className="py-2">
+                <TableCell colSpan={6} className="py-2">
                   <div className="relative">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isProcessing} />
                     <div className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer">
@@ -456,9 +475,8 @@ export function MonthUploadSlot({
           {!isEmpty && (
             <TableFooter>
               <TableRow className="bg-muted/30 hover:bg-muted/40 border-t">
-                <TableCell colSpan={2} className="py-2">
+                <TableCell className="py-2">
                   <div className="flex items-center gap-3">
-                    {/* Close/Reopen month on left */}
                     {period && !isClosed && (
                       <Button
                         variant="ghost"
@@ -486,6 +504,8 @@ export function MonthUploadSlot({
                     <span className="text-xs font-semibold text-foreground">{imports.length} file{imports.length !== 1 ? 's' : ''}</span>
                   </div>
                 </TableCell>
+                <TableCell className="py-2 hidden md:table-cell" />
+                <TableCell className="py-2 hidden lg:table-cell" />
                 <TableCell className="py-2 hidden md:table-cell">
                   <span className="text-sm font-semibold text-foreground">{totalTransactions}</span>
                 </TableCell>
