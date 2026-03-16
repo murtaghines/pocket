@@ -67,15 +67,18 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES, ...TRANSFER_CATEGORIES];
   
-  const availableCategories = selectedMovements.length === 0
+  const availableCategories = selectedMovements.length === 0 || selectedMovements.length === movementOptions.length
     ? allCategories
     : selectedMovements.flatMap(m => categoriesByMovement[m as MovementType] || []);
+
+  const allMovementsSelected = selectedMovements.length === movementOptions.length;
+  const allCategoriesSelected = selectedCategories.length === availableCategories.length;
 
   const toggleMovement = (value: string) => {
     setSelectedMovements(prev => {
       const next = prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value];
       // Reset categories that are no longer available
-      if (next.length > 0) {
+      if (next.length > 0 && next.length < movementOptions.length) {
         const newAvailable = next.flatMap(m => categoriesByMovement[m as MovementType] || []);
         setSelectedCategories(prev => prev.filter(c => newAvailable.includes(c)));
       }
@@ -90,11 +93,19 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   };
 
   const toggleAllMovements = () => {
-    setSelectedMovements([]);
+    if (allMovementsSelected) {
+      setSelectedMovements([]);
+    } else {
+      setSelectedMovements(movementOptions.map(o => o.value));
+    }
   };
 
   const toggleAllCategories = () => {
-    setSelectedCategories([]);
+    if (allCategoriesSelected) {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories([...availableCategories]);
+    }
   };
 
   const filteredTransactions = transactions.filter(t => {
