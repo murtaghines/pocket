@@ -440,7 +440,7 @@ export function MonthUploadSlot({
             {/* Empty state - same as add new file row */}
             {isEmpty && !isClosed && (
               <TableRow className="hover:bg-muted/30">
-                <TableCell colSpan={6} className="py-2">
+                <TableCell colSpan={8} className="py-2">
                   <div className="relative">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer">
@@ -454,7 +454,7 @@ export function MonthUploadSlot({
 
             {isEmpty && isClosed && (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={6} className="py-4 md:py-6">
+                <TableCell colSpan={8} className="py-4 md:py-6">
                   <div className="text-center space-y-2">
                     <p className="text-sm text-muted-foreground">Month closed — no files uploaded</p>
                     <Button variant="outline" size="sm" onClick={() => setShowReopenDialog(true)} disabled={isReopeningPeriod}>
@@ -469,7 +469,7 @@ export function MonthUploadSlot({
             {/* Add new file row */}
             {!isEmpty && !isClosed && (
               <TableRow className="hover:bg-muted/30 border-t border-dashed">
-                <TableCell colSpan={6} className="py-2">
+                <TableCell colSpan={8} className="py-2">
                   <div className="relative">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isProcessing} />
                     <div className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer">
@@ -517,13 +517,12 @@ export function MonthUploadSlot({
                 </TableCell>
                 <TableCell className="py-2 hidden md:table-cell" />
                 <TableCell className="py-2 hidden lg:table-cell" />
+                <TableCell className="py-2 hidden lg:table-cell" />
                 <TableCell className="py-2 hidden md:table-cell">
                   <span className="text-sm font-semibold text-foreground">{totalTransactions}</span>
                 </TableCell>
                 <TableCell className="py-2 hidden md:table-cell">
-                  <span className="text-xs font-semibold text-foreground">
-                    {uniqueAccounts.length} account{uniqueAccounts.length !== 1 ? 's' : ''}
-                  </span>
+                  <span className="text-sm font-semibold text-foreground">{uniqueAccounts.length}</span>
                 </TableCell>
                 <TableCell className="py-2">
                   <div className="flex justify-end">
@@ -549,6 +548,7 @@ export function MonthUploadSlot({
                     )}
                   </div>
                 </TableCell>
+                <TableCell className="py-2" />
               </TableRow>
             </TableFooter>
           )}
