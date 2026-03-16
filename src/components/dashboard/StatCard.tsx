@@ -26,8 +26,9 @@ export function StatCard({
   const rawPositive = change && change > 0;
   const rawNegative = change && change < 0;
   
-  const isPositive = invertChangeColor ? rawNegative : rawPositive;
-  const isNegative = invertChangeColor ? rawPositive : rawNegative;
+  // Color: inverted for expenses (up = bad/red, down = good/green)
+  const isColorPositive = invertChangeColor ? rawNegative : rawPositive;
+  const isColorNegative = invertChangeColor ? rawPositive : rawNegative;
 
   // Balance card gets special blue background treatment
   const isBalanceCard = type === 'balance';
