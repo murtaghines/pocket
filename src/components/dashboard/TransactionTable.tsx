@@ -67,15 +67,18 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES, ...TRANSFER_CATEGORIES];
   
-  const availableCategories = selectedMovements.length === 0
+  const availableCategories = selectedMovements.length === 0 || selectedMovements.length === movementOptions.length
     ? allCategories
     : selectedMovements.flatMap(m => categoriesByMovement[m as MovementType] || []);
+
+  const allMovementsSelected = selectedMovements.length === movementOptions.length;
+  const allCategoriesSelected = selectedCategories.length === availableCategories.length;
 
   const toggleMovement = (value: string) => {
     setSelectedMovements(prev => {
       const next = prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value];
       // Reset categories that are no longer available
-      if (next.length > 0) {
+      if (next.length > 0 && next.length < movementOptions.length) {
         const newAvailable = next.flatMap(m => categoriesByMovement[m as MovementType] || []);
         setSelectedCategories(prev => prev.filter(c => newAvailable.includes(c)));
       }
@@ -90,18 +93,26 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   };
 
   const toggleAllMovements = () => {
-    setSelectedMovements([]);
+    if (allMovementsSelected) {
+      setSelectedMovements([]);
+    } else {
+      setSelectedMovements(movementOptions.map(o => o.value));
+    }
   };
 
   const toggleAllCategories = () => {
-    setSelectedCategories([]);
+    if (allCategoriesSelected) {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories([...availableCategories]);
+    }
   };
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(t.category);
+    const matchesCategory = selectedCategories.length === 0 || allCategoriesSelected || selectedCategories.includes(t.category);
     const movementType = getMovementType(t);
-    const matchesMovement = selectedMovements.length === 0 || selectedMovements.includes(movementType);
+    const matchesMovement = selectedMovements.length === 0 || allMovementsSelected || selectedMovements.includes(movementType);
     return matchesSearch && matchesCategory && matchesMovement;
   });
 
@@ -120,17 +131,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     return { month, year };
   };
 
-  const movementFilterLabel = selectedMovements.length === 0
+  const movementFilterLabel = selectedMovements.length === 0 || allMovementsSelected
     ? tc('viewAll')
-    : selectedMovements.length === 1
-      ? movementLabels[selectedMovements[0] as MovementType]
-      : `${selectedMovements.length} selected`;
+    : selectedMovements.map(m => movementLabels[m as MovementType]).join(', ');
 
-  const categoryFilterLabel = selectedCategories.length === 0
+  const categoryFilterLabel = selectedCategories.length === 0 || allCategoriesSelected
     ? tc('viewAll')
-    : selectedCategories.length === 1
-      ? getCategoryLabel(selectedCategories[0])
-      : `${selectedCategories.length} selected`;
+    : selectedCategories.map(c => getCategoryLabel(c)).join(', ');
 
   return (
     <Card variant="bento" className="animate-slide-up border-0 shadow-none bg-transparent" style={{ animationDelay: '400ms' }}>
@@ -142,7 +149,6 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           {t('transactions.title')}
         </CardTitle>
         <div className="flex flex-col gap-2 mt-2">
-          <div className="grid grid-cols-2 gap-2">
             {/* Movement multi-select */}
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-muted-foreground">{t('transactions.movement', { defaultValue: 'Movement' })}</span>
@@ -157,7 +163,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   <div className="flex flex-col gap-0.5">
                     <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
                       <Checkbox
-                        checked={selectedMovements.length === 0}
+                        checked={allMovementsSelected || selectedMovements.length === 0}
                         onCheckedChange={toggleAllMovements}
                       />
                       <span className="text-sm">{tc('viewAll')}</span>
@@ -190,7 +196,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   <div className="flex flex-col gap-0.5">
                     <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
                       <Checkbox
-                        checked={selectedCategories.length === 0}
+                        checked={allCategoriesSelected || selectedCategories.length === 0}
                         onCheckedChange={toggleAllCategories}
                       />
                       <span className="text-sm">{tc('viewAll')}</span>
@@ -214,7 +220,6 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
 
           {/* Search */}
           <div className="relative">
