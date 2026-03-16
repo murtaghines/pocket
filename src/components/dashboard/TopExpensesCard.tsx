@@ -50,8 +50,8 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
     <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20">
-            <Receipt className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Receipt className="w-4 h-4 text-primary" />
           </div>
           {t('topExpenses.title')}
         </CardTitle>
