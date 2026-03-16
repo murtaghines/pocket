@@ -64,7 +64,7 @@ export function useLocalization() {
 
   // Format number according to user preferences
   const formatNumber = useCallback((value: number, options?: Intl.NumberFormatOptions) => {
-    return new Intl.NumberFormat(locale, { useGrouping: true, ...options }).format(value);
+    return new Intl.NumberFormat(locale, { useGrouping: 'always' as any, ...options }).format(value);
   }, [locale]);
 
   // Format percentage
