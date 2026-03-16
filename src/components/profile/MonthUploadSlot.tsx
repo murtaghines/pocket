@@ -407,15 +407,16 @@ export function MonthUploadSlot({
               );
             })}
 
-            {/* Empty state */}
+            {/* Empty state - same as add new file row */}
             {isEmpty && !isClosed && (
-              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={5} className="py-8 md:py-8">
-                  <div className="relative text-center">
+              <TableRow className="hover:bg-muted/30">
+                <TableCell colSpan={5} className="py-2">
+                  <div className="relative">
                     <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <Plus className="w-6 h-6 mx-auto text-muted-foreground mb-1.5" />
-                    <p className="text-sm text-muted-foreground">Drag files or click to upload</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Excel, CSV or PDF</p>
+                    <div className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors cursor-pointer">
+                      <Plus className="w-4 h-4" />
+                      <span className="text-sm font-medium">Add new file</span>
+                    </div>
                   </div>
                 </TableCell>
               </TableRow>
