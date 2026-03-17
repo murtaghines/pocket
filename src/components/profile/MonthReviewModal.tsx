@@ -344,7 +344,7 @@ export function MonthReviewModal({
               user_id: user.id,
               domain: "CASHFLOW" as const,
               pattern,
-              match_type: "contains",
+              match_type: "CONTAINS",
               match_field: "description_norm",
               category_id: category.id,
               priority: Math.floor(Date.now() / 1000),
