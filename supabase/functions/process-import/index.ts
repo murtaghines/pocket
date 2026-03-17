@@ -469,19 +469,20 @@ async function applyCategoryRules(
       : descriptionClean.toLowerCase();
     
     let matches = false;
+    const mt = rule.match_type.toUpperCase();
     
-    if (rule.match_type === 'contains') {
+    if (mt === 'CONTAINS') {
       matches = textToMatch.includes(rule.pattern.toLowerCase());
-    } else if (rule.match_type === 'starts_with') {
+    } else if (mt === 'STARTS_WITH') {
       matches = textToMatch.startsWith(rule.pattern.toLowerCase());
-    } else if (rule.match_type === 'regex') {
+    } else if (mt === 'REGEX') {
       try {
         const regex = new RegExp(rule.pattern, 'i');
         matches = regex.test(textToMatch);
       } catch {
         // Invalid regex, skip
       }
-    } else if (rule.match_type === 'exact') {
+    } else if (mt === 'EXACT') {
       matches = textToMatch === rule.pattern.toLowerCase();
     }
     

@@ -68,9 +68,6 @@ export function AddRuleDialog({ open, categoryName, editingRule, onClose, onSave
               placeholder={t('categories.patternPlaceholder')}
               autoFocus
             />
-            <p className="text-xs text-muted-foreground">
-              {t('categories.patternHelp')}
-            </p>
           </div>
 
           <div className="space-y-2">
@@ -82,14 +79,13 @@ export function AddRuleDialog({ open, categoryName, editingRule, onClose, onSave
               <SelectContent>
                 <SelectItem value="CONTAINS">{t('categories.contains')}</SelectItem>
                 <SelectItem value="STARTS_WITH">{t('categories.startsWith')}</SelectItem>
+                <SelectItem value="EXACT">{t('categories.exact')}</SelectItem>
                 <SelectItem value="REGEX">{t('categories.regex')}</SelectItem>
               </SelectContent>
             </Select>
-            {matchType === 'REGEX' && (
-              <p className="text-xs text-muted-foreground">
-                {t('categories.regexHelp')}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              {t(`categories.matchHelp_${matchType}`)}
+            </p>
           </div>
         </div>
 
