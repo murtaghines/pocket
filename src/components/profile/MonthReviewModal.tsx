@@ -202,13 +202,6 @@ export function MonthReviewModal({
         category: defaultCategory,
       },
     }));
-
-    updateTransaction.mutate({
-      transactionId,
-      movement: newMovement,
-      categorySlug: defaultCategory,
-      categoryId: category?.id || null,
-    });
   };
 
   // Handle category change
