@@ -395,11 +395,11 @@ export function MonthReviewModal({
                 <TableHeader>
                  <TableRow>
                      <TableHead className="w-[10%]">Date</TableHead>
-                     <TableHead className="w-[35%]">Description</TableHead>
+                     <TableHead className="w-[40%]">Description</TableHead>
                      <TableHead className="w-[10%]">Account</TableHead>
-                     <TableHead className="w-[15%]">Movement</TableHead>
-                     <TableHead className="w-[18%]">Category</TableHead>
-                     <TableHead className="text-right w-[12%]">Amount</TableHead>
+                     <TableHead className="w-[13%]">Movement</TableHead>
+                     <TableHead className="w-[17%]">Category</TableHead>
+                     <TableHead className="text-right w-[10%]">Amount</TableHead>
                    </TableRow>
                 </TableHeader>
                 <TableBody>
