@@ -492,7 +492,7 @@ export function MonthUploadSlot({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                        className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-3"
                         onClick={() => setShowCloseDialog(true)}
                         disabled={isClosingPeriod}
                       >
@@ -504,7 +504,7 @@ export function MonthUploadSlot({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                        className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-3"
                         onClick={() => setShowReopenDialog(true)}
                         disabled={isReopeningPeriod}
                       >
