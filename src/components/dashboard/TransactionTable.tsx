@@ -282,13 +282,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                               : "bg-destructive/10"
                           )}>
                             {movementType === 'income' ? (
-                              <ArrowDownRight className="w-3 h-3 text-success" />
+                              <Plus className="w-3 h-3 text-success" />
                             ) : movementType === 'investment' ? (
                               <Minus className="w-3 h-3 text-purple-600" />
                             ) : movementType === 'transfer' ? (
                               <Minus className="w-3 h-3 text-muted-foreground" />
                             ) : (
-                              <ArrowUpRight className="w-3 h-3 text-destructive" />
+                              <Minus className="w-3 h-3 text-destructive" />
                             )}
                           </div>
                           <span className="truncate">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
