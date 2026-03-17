@@ -395,11 +395,11 @@ export function MonthReviewModal({
                 <TableHeader>
                  <TableRow>
                      <TableHead className="w-[10%]">Date</TableHead>
-                     <TableHead className="w-[35%]">Description</TableHead>
+                     <TableHead className="w-[40%]">Description</TableHead>
                      <TableHead className="w-[10%]">Account</TableHead>
-                     <TableHead className="w-[15%]">Movement</TableHead>
-                     <TableHead className="w-[18%]">Category</TableHead>
-                     <TableHead className="text-right w-[12%]">Amount</TableHead>
+                     <TableHead className="w-[13%]">Movement</TableHead>
+                     <TableHead className="w-[17%]">Category</TableHead>
+                     <TableHead className="text-right w-[10%]">Amount</TableHead>
                    </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -443,7 +443,16 @@ export function MonthReviewModal({
                               value={effectiveMovement}
                               onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger 
+                                className="h-8 text-xs border-0"
+                                style={{ 
+                                  backgroundColor: effectiveMovement === 'INCOME' 
+                                    ? 'hsl(var(--success) / 0.12)' 
+                                    : effectiveMovement === 'TRANSFER' 
+                                    ? 'hsl(var(--warning) / 0.12)' 
+                                    : 'hsl(var(--destructive) / 0.12)' 
+                                }}
+                              >
                                 <SelectValue>
                                   <div className="flex items-center gap-1.5">
                                     {getMovementIcon(effectiveMovement)}
@@ -491,7 +500,10 @@ export function MonthReviewModal({
                               value={effectiveCategory}
                               onValueChange={(value) => handleCategoryChange(tx.id, value)}
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger 
+                                className="h-8 text-xs border-0"
+                                style={{ backgroundColor: `hsl(var(${getCategoryColor(effectiveCategory)}) / 0.12)` }}
+                              >
                                 <SelectValue>
                                   <div className="flex items-center gap-1.5">
                                     <CategoryIcon 
@@ -522,10 +534,7 @@ export function MonthReviewModal({
                             </Select>
                           )}
                         </TableCell>
-                        <TableCell className={cn(
-                          "text-right font-medium tabular-nums text-sm",
-                          getMovementColor(effectiveMovement)
-                        )}>
+                        <TableCell className="text-right font-medium tabular-nums text-sm">
                           {formatCurrency(tx.amount)}
                         </TableCell>
                       </TableRow>
