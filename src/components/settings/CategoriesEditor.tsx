@@ -83,7 +83,7 @@ export function CategoriesEditor() {
           onSave={(pattern, matchType) => {
             if (!addRuleFor) return;
             addRule.mutate(
-              { category_id: addRuleFor.id, pattern, match_type: matchType, match_field: 'description' },
+              { category_id: addRuleFor.id, pattern, match_type: matchType, match_field: 'description_norm' },
               { onSuccess: () => setAddRuleFor(null) }
             );
           }}
