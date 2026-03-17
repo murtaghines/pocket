@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.fix-categorization]
 verify_jwt = false
+
+[functions.apply-rules-retroactive]
+verify_jwt = false

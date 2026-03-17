@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import {
@@ -26,6 +26,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   CheckCircle2, 
   PlusCircle, 
@@ -33,7 +43,8 @@ import {
   ArrowRightLeft, 
   Loader2,
   Pencil,
-  Lock
+  Lock,
+  Brain
 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
@@ -78,6 +89,15 @@ interface MonthReviewModalProps {
   importId?: string; // Filter to a specific import
 }
 
+// Info about rules that were created
+interface CreatedRule {
+  pattern: string;
+  categorySlug: string;
+  categoryId: string | null;
+  movement: string;
+  txDescription: string;
+}
+
 // Local edits state
 interface TransactionEdits {
   movement?: MovementType;
@@ -105,7 +125,10 @@ export function MonthReviewModal({
     return accounts.find(a => a.id === accountId)?.name || null;
   };
   const [edits, setEdits] = useState<Record<string, TransactionEdits>>({});
-
+  const [showRetroactiveDialog, setShowRetroactiveDialog] = useState(false);
+  const [createdRules, setCreatedRules] = useState<CreatedRule[]>([]);
+  const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
+  const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
   // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["month-transactions", monthKey, user?.id, importId],
@@ -278,14 +301,15 @@ export function MonthReviewModal({
   const handleConfirm = async () => {
     const editEntries = Object.entries(edits);
     if (editEntries.length === 0) {
-      // No edits, just close
       onOpenChange(false);
       return;
     }
 
     setIsSaving(true);
     try {
-      // Batch save all edits
+      const newRules: CreatedRule[] = [];
+      const savedTxIds: string[] = [];
+
       const savePromises = editEntries.map(async ([txId, edit]) => {
         const tx = transactions.find(t => t.id === txId);
         if (!tx) return;
@@ -294,7 +318,6 @@ export function MonthReviewModal({
         const effectiveCategory = edit.category || normalizeCategory(tx.category || "other_expense");
         const category = categories.find(c => c.slug === effectiveCategory);
 
-        // 1. Update the transaction
         const { error: updateError } = await supabase
           .from("transactions")
           .update({
@@ -307,12 +330,12 @@ export function MonthReviewModal({
           .eq("id", txId);
 
         if (updateError) throw updateError;
+        savedTxIds.push(txId);
 
-        // 2. Auto-create categorization rule
-        const pattern = (tx.description_norm || tx.description)
+        const cleanDesc = (tx.description_norm || tx.description)
           .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
-          .trim()
-          .toLowerCase();
+          .trim();
+        const pattern = cleanDesc.toLowerCase();
 
         if (pattern && category?.id && user) {
           const { error: ruleError } = await supabase
@@ -327,7 +350,15 @@ export function MonthReviewModal({
               priority: Math.floor(Date.now() / 1000),
             });
 
-          if (ruleError) {
+          if (!ruleError) {
+            newRules.push({
+              pattern,
+              categorySlug: effectiveCategory,
+              categoryId: category.id,
+              movement: effectiveMovement,
+              txDescription: cleanDesc,
+            });
+          } else {
             console.warn("Could not create categorization rule:", ruleError);
           }
         }
@@ -335,18 +366,27 @@ export function MonthReviewModal({
 
       await Promise.all(savePromises);
 
-      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
 
       toast({
-        title: "✓ Changes saved",
-        description: `${editEntries.length} transaction(s) updated and rules created for ${monthLabel}`,
+        title: `✓ ${editEntries.length} change(s) saved`,
+        description: newRules.length > 0 
+          ? `${newRules.length} rule(s) added to the categorizer`
+          : `Transactions updated for ${monthLabel}`,
+        duration: 6000,
       });
 
       setEdits({});
-      onOpenChange(false);
+
+      if (newRules.length > 0) {
+        setCreatedRules(newRules);
+        setEditedTxIds(savedTxIds);
+        setShowRetroactiveDialog(true);
+      } else {
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error("Error saving edits:", error);
       toast({
@@ -359,237 +399,350 @@ export function MonthReviewModal({
     }
   };
 
+  const handleApplyRetroactive = async () => {
+    setIsApplyingRetroactive(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('apply-rules-retroactive', {
+        body: {
+          rules: createdRules.map(r => ({
+            pattern: r.pattern,
+            categoryId: r.categoryId,
+            categorySlug: r.categorySlug,
+            movement: r.movement,
+          })),
+          excludeTransactionIds: editedTxIds,
+        },
+      });
+
+      if (error) throw error;
+
+      const totalUpdated = data?.totalUpdated || 0;
+      
+      if (totalUpdated > 0) {
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["month-transactions"] });
+        
+        toast({
+          title: "✓ Rules applied to history",
+          description: `${totalUpdated} historical transaction(s) re-categorized`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "No additional matches",
+          description: "No other transactions matched these patterns",
+          duration: 4000,
+        });
+      }
+    } catch (error) {
+      console.error("Error applying retroactive rules:", error);
+      toast({
+        title: "Error",
+        description: "Could not apply rules to historical data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplyingRetroactive(false);
+      setShowRetroactiveDialog(false);
+      setCreatedRules([]);
+      setEditedTxIds([]);
+      onOpenChange(false);
+    }
+  };
+
+  const handleSkipRetroactive = () => {
+    setShowRetroactiveDialog(false);
+    setCreatedRules([]);
+    setEditedTxIds([]);
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleCancel(); else onOpenChange(v); }}>
-      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme bg-background text-foreground">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Pencil className="w-5 h-5 text-primary" />
-            Edit - {monthLabel}
-          </DialogTitle>
-          <DialogDescription>
-            {transactions.length} transactions in this month
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={(v) => { if (!v && !showRetroactiveDialog) handleCancel(); else onOpenChange(v); }}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme bg-background text-foreground">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-primary" />
+              Edit - {monthLabel}
+            </DialogTitle>
+            <DialogDescription>
+              {transactions.length} transactions in this month
+            </DialogDescription>
+          </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : transactions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Pencil className="w-12 h-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">No transactions for this month</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">
-              Upload and process files first
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Locked Banner */}
-            {isLocked && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border">
-                <Lock className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  This month is closed. You cannot edit categories.
-                </span>
-              </div>
-            )}
-
-            {/* Stats Summary */}
-            <div className="flex gap-4 flex-wrap text-sm">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-                <PlusCircle className="w-4 h-4 text-success" />
-                <span className="text-success font-medium">{formatCurrency(summary.income)}</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
-                <MinusCircle className="w-4 h-4 text-destructive" />
-                <span className="text-destructive font-medium">{formatCurrency(summary.expenses)}</span>
-              </div>
-              {summary.transfers > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
-                  <ArrowRightLeft className="w-4 h-4 text-warning" />
-                  <span className="text-warning font-medium">{summary.transfers}</span>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Pencil className="w-12 h-12 text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">No transactions for this month</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">
+                Upload and process files first
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Locked Banner */}
+              {isLocked && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border">
+                  <Lock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    This month is closed. You cannot edit categories.
+                  </span>
                 </div>
               )}
-              {summary.edited > 0 && !isLocked && (
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  {summary.edited} edited
-                </Badge>
-              )}
-            </div>
 
-            {/* Transaction Table */}
-            <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
-              <Table className="w-full table-fixed">
-                <TableHeader>
-                 <TableRow>
-                     <TableHead className="w-[10%]">Date</TableHead>
-                     <TableHead className="w-[40%]">Description</TableHead>
-                     <TableHead className="w-[10%]">Account</TableHead>
-                     <TableHead className="w-[13%]">Movement</TableHead>
-                     <TableHead className="w-[17%]">Category</TableHead>
-                     <TableHead className="text-right w-[10%]">Amount</TableHead>
-                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((tx) => {
-                    const effectiveMovement = getEffectiveMovement(tx);
-                    const effectiveCategory = getEffectiveCategory(tx);
-                    const availableCategories = getCategoriesForMovement(effectiveMovement);
-                    const isEdited = !!edits[tx.id];
-                    
-                    // Strip "value date: DD mon YYYY" prefix from description
-                    const cleanDescription = (tx.description_norm || tx.description)
-                      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
-                      .trim();
-                    
-                    return (
-                      <TableRow 
-                        key={tx.id}
-                        className={cn(isEdited && "bg-primary/5")}
-                      >
-                        <TableCell className="text-sm">
-                          {formatDate(new Date(tx.date))}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          <span className="break-words" title={cleanDescription}>
-                            {cleanDescription}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {getAccountNameById(tx.account_id) || tx.bank || '—'}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {isLocked ? (
-                            <div className="flex items-center gap-1.5">
-                              {getMovementIcon(effectiveMovement)}
-                              <span className={cn("font-medium", getMovementColor(effectiveMovement))}>
-                                {translateMovement(effectiveMovement)}
-                              </span>
-                            </div>
-                          ) : (
-                            <Select
-                              value={effectiveMovement}
-                              onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
-                            >
-                              <SelectTrigger 
-                                className="h-8 text-sm border-0"
-                                style={{ 
-                                  backgroundColor: effectiveMovement === 'INCOME' 
-                                    ? 'hsl(var(--success) / 0.12)' 
-                                    : effectiveMovement === 'TRANSFER' 
-                                    ? 'hsl(var(--warning) / 0.12)' 
-                                    : 'hsl(var(--destructive) / 0.12)' 
-                                }}
+              {/* Stats Summary */}
+              <div className="flex gap-4 flex-wrap text-sm">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
+                  <PlusCircle className="w-4 h-4 text-success" />
+                  <span className="text-success font-medium">{formatCurrency(summary.income)}</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
+                  <MinusCircle className="w-4 h-4 text-destructive" />
+                  <span className="text-destructive font-medium">{formatCurrency(summary.expenses)}</span>
+                </div>
+                {summary.transfers > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
+                    <ArrowRightLeft className="w-4 h-4 text-warning" />
+                    <span className="text-warning font-medium">{summary.transfers}</span>
+                  </div>
+                )}
+                {summary.edited > 0 && !isLocked && (
+                  <Badge variant="secondary" className="bg-primary/10 text-primary">
+                    {summary.edited} edited
+                  </Badge>
+                )}
+              </div>
+
+              {/* Transaction Table */}
+              <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
+                <Table className="w-full table-fixed">
+                  <TableHeader>
+                   <TableRow>
+                       <TableHead className="w-[10%]">Date</TableHead>
+                       <TableHead className="w-[40%]">Description</TableHead>
+                       <TableHead className="w-[10%]">Account</TableHead>
+                       <TableHead className="w-[13%]">Movement</TableHead>
+                       <TableHead className="w-[17%]">Category</TableHead>
+                       <TableHead className="text-right w-[10%]">Amount</TableHead>
+                     </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map((tx) => {
+                      const effectiveMovement = getEffectiveMovement(tx);
+                      const effectiveCategory = getEffectiveCategory(tx);
+                      const availableCategories = getCategoriesForMovement(effectiveMovement);
+                      const isEdited = !!edits[tx.id];
+                      
+                      const cleanDescription = (tx.description_norm || tx.description)
+                        .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
+                        .trim();
+                      
+                      return (
+                        <TableRow 
+                          key={tx.id}
+                          className={cn(isEdited && "bg-primary/5")}
+                        >
+                          <TableCell className="text-sm">
+                            {formatDate(new Date(tx.date))}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            <span className="break-words" title={cleanDescription}>
+                              {cleanDescription}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {getAccountNameById(tx.account_id) || tx.bank || '—'}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {isLocked ? (
+                              <div className="flex items-center gap-1.5">
+                                {getMovementIcon(effectiveMovement)}
+                                <span className={cn("font-medium", getMovementColor(effectiveMovement))}>
+                                  {translateMovement(effectiveMovement)}
+                                </span>
+                              </div>
+                            ) : (
+                              <Select
+                                value={effectiveMovement}
+                                onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
                               >
-                                <SelectValue>
-                                  <div className="flex items-center gap-1.5">
-                                    {getMovementIcon(effectiveMovement)}
-                                    <span className={getMovementColor(effectiveMovement)}>
-                                      {translateMovement(effectiveMovement)}
-                                    </span>
-                                  </div>
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="INCOME">
-                                  <div className="flex items-center gap-2">
-                                    <PlusCircle className="w-4 h-4 text-success" />
-                                    <span className="text-success">{translateMovement("INCOME")}</span>
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="EXPENSE">
-                                  <div className="flex items-center gap-2">
-                                    <MinusCircle className="w-4 h-4 text-destructive" />
-                                    <span className="text-destructive">{translateMovement("EXPENSE")}</span>
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="TRANSFER">
-                                  <div className="flex items-center gap-2">
-                                    <ArrowRightLeft className="w-4 h-4 text-warning" />
-                                    <span className="text-warning">{translateMovement("TRANSFER")}</span>
-                                  </div>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {isLocked ? (
-                            <div className="flex items-center gap-1.5">
-                              <CategoryIcon 
-                                iconName={getCategoryIcon(effectiveCategory)} 
-                                colorVar={getCategoryColor(effectiveCategory)} 
-                                size="sm"
-                              />
-                              <span>{translateCategory(effectiveCategory)}</span>
-                            </div>
-                          ) : (
-                            <Select
-                              value={effectiveCategory}
-                              onValueChange={(value) => handleCategoryChange(tx.id, value)}
-                            >
-                              <SelectTrigger 
-                                className="h-8 text-sm border-0"
-                                style={{ backgroundColor: `hsl(var(--${getCategoryColor(effectiveCategory)}) / 0.12)` }}
-                              >
-                                <SelectValue>
-                                  <div className="flex items-center gap-1.5">
-                                    <CategoryIcon 
-                                      iconName={getCategoryIcon(effectiveCategory)} 
-                                      colorVar={getCategoryColor(effectiveCategory)} 
-                                      size="sm"
-                                      showBackground={false}
-                                    />
-                                    {translateCategory(effectiveCategory)}
-                                  </div>
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableCategories.map((catSlug) => (
-                                  <SelectItem key={catSlug} value={catSlug}>
+                                <SelectTrigger 
+                                  className="h-8 text-sm border-0"
+                                  style={{ 
+                                    backgroundColor: effectiveMovement === 'INCOME' 
+                                      ? 'hsl(var(--success) / 0.12)' 
+                                      : effectiveMovement === 'TRANSFER' 
+                                      ? 'hsl(var(--warning) / 0.12)' 
+                                      : 'hsl(var(--destructive) / 0.12)' 
+                                  }}
+                                >
+                                  <SelectValue>
+                                    <div className="flex items-center gap-1.5">
+                                      {getMovementIcon(effectiveMovement)}
+                                      <span className={getMovementColor(effectiveMovement)}>
+                                        {translateMovement(effectiveMovement)}
+                                      </span>
+                                    </div>
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="INCOME">
                                     <div className="flex items-center gap-2">
+                                      <PlusCircle className="w-4 h-4 text-success" />
+                                      <span className="text-success">{translateMovement("INCOME")}</span>
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="EXPENSE">
+                                    <div className="flex items-center gap-2">
+                                      <MinusCircle className="w-4 h-4 text-destructive" />
+                                      <span className="text-destructive">{translateMovement("EXPENSE")}</span>
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="TRANSFER">
+                                    <div className="flex items-center gap-2">
+                                      <ArrowRightLeft className="w-4 h-4 text-warning" />
+                                      <span className="text-warning">{translateMovement("TRANSFER")}</span>
+                                    </div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {isLocked ? (
+                              <div className="flex items-center gap-1.5">
+                                <CategoryIcon 
+                                  iconName={getCategoryIcon(effectiveCategory)} 
+                                  colorVar={getCategoryColor(effectiveCategory)} 
+                                  size="sm"
+                                />
+                                <span>{translateCategory(effectiveCategory)}</span>
+                              </div>
+                            ) : (
+                              <Select
+                                value={effectiveCategory}
+                                onValueChange={(value) => handleCategoryChange(tx.id, value)}
+                              >
+                                <SelectTrigger 
+                                  className="h-8 text-sm border-0"
+                                  style={{ backgroundColor: `hsl(var(--${getCategoryColor(effectiveCategory)}) / 0.12)` }}
+                                >
+                                  <SelectValue>
+                                    <div className="flex items-center gap-1.5">
                                       <CategoryIcon 
-                                        iconName={getCategoryIcon(catSlug)} 
-                                        colorVar={getCategoryColor(catSlug)} 
+                                        iconName={getCategoryIcon(effectiveCategory)} 
+                                        colorVar={getCategoryColor(effectiveCategory)} 
                                         size="sm"
                                         showBackground={false}
                                       />
-                                      {translateCategory(catSlug)}
+                                      {translateCategory(effectiveCategory)}
                                     </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right font-medium tabular-nums text-sm">
-                          {formatCurrency(tx.amount)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </>
-        )}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableCategories.map((catSlug) => (
+                                    <SelectItem key={catSlug} value={catSlug}>
+                                      <div className="flex items-center gap-2">
+                                        <CategoryIcon 
+                                          iconName={getCategoryIcon(catSlug)} 
+                                          colorVar={getCategoryColor(catSlug)} 
+                                          size="sm"
+                                          showBackground={false}
+                                        />
+                                        {translateCategory(catSlug)}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-medium tabular-nums text-sm">
+                            {formatCurrency(tx.amount)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button onClick={handleConfirm} disabled={transactions.length === 0 || isSaving}>
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-            )}
-            {Object.keys(edits).length > 0 ? `Save ${Object.keys(edits).length} change(s)` : 'Confirm'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirm} disabled={transactions.length === 0 || isSaving}>
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+              )}
+              {Object.keys(edits).length > 0 ? `Save ${Object.keys(edits).length} change(s)` : 'Confirm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Retroactive Rules Dialog */}
+      <AlertDialog open={showRetroactiveDialog} onOpenChange={setShowRetroactiveDialog}>
+        <AlertDialogContent className="dashboard-theme bg-background text-foreground">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />
+              Apply rules to historical data?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  {createdRules.length} new categorization rule(s) were created:
+                </p>
+                <div className="space-y-1.5 max-h-40 overflow-auto">
+                  {createdRules.map((rule, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm px-2 py-1 rounded bg-muted/50">
+                      <CategoryIcon 
+                        iconName={getCategoryIcon(rule.categorySlug)} 
+                        colorVar={getCategoryColor(rule.categorySlug)} 
+                        size="sm"
+                        showBackground={false}
+                      />
+                      <span className="truncate text-foreground" title={rule.txDescription}>
+                        "{rule.txDescription.substring(0, 35)}{rule.txDescription.length > 35 ? '…' : ''}"
+                      </span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="font-medium text-foreground whitespace-nowrap">
+                        {translateCategory(rule.categorySlug)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-muted-foreground">
+                  Do you want to apply these rules to all existing transactions with matching descriptions? This will re-categorize historical data automatically.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleSkipRetroactive} disabled={isApplyingRetroactive}>
+              Skip
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleApplyRetroactive} disabled={isApplyingRetroactive}>
+              {isApplyingRetroactive ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Brain className="w-4 h-4 mr-2" />
+              )}
+              Apply to all history
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
