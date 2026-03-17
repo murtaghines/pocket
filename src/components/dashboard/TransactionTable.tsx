@@ -148,9 +148,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           </div>
           {t('transactions.title')}
         </CardTitle>
-        <div className="flex flex-col md:flex-row gap-2 mt-2">
+        <div className="flex flex-col md:flex-row md:items-end gap-2 mt-2">
             {/* Movement multi-select */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 flex-1">
               <span className="text-xs font-medium text-muted-foreground">{t('transactions.movement', { defaultValue: 'Movement' })}</span>
               <Popover>
                 <PopoverTrigger asChild>
@@ -183,7 +183,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             </div>
 
             {/* Category multi-select */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 flex-1">
               <span className="text-xs font-medium text-muted-foreground">{t('transactions.category')}</span>
               <Popover>
                 <PopoverTrigger asChild>
@@ -222,7 +222,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             </div>
 
           {/* Search */}
-          <div className="relative">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder={tc('search')}
