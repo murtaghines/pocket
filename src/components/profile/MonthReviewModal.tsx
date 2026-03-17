@@ -98,6 +98,7 @@ export function MonthReviewModal({
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   
   const getAccountNameById = (accountId: string | null) => {
     if (!accountId) return null;
