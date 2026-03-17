@@ -443,7 +443,16 @@ export function MonthReviewModal({
                               value={effectiveMovement}
                               onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger 
+                                className="h-8 text-xs border-0"
+                                style={{ 
+                                  backgroundColor: effectiveMovement === 'INCOME' 
+                                    ? 'hsl(var(--success) / 0.12)' 
+                                    : effectiveMovement === 'TRANSFER' 
+                                    ? 'hsl(var(--warning) / 0.12)' 
+                                    : 'hsl(var(--destructive) / 0.12)' 
+                                }}
+                              >
                                 <SelectValue>
                                   <div className="flex items-center gap-1.5">
                                     {getMovementIcon(effectiveMovement)}
