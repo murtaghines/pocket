@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, PiggyBank, FolderOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { profile } = useProfile();
   const location = useLocation();
   const { t } = useTranslation('common');
+
+  // Add dashboard-theme to body so portaled elements (popovers, selects, dialogs) inherit light theme
+  useEffect(() => {
+    document.body.classList.add('dashboard-theme');
+    return () => {
+      document.body.classList.remove('dashboard-theme');
+    };
+  }, []);
   
   const isActive = (path: string) => location.pathname === path;
 
