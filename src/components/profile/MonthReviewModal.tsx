@@ -138,44 +138,7 @@ export function MonthReviewModal({
     enabled: open && !!user,
   });
 
-  // Update transaction mutation
-  const updateTransaction = useMutation({
-    mutationFn: async ({ 
-      transactionId, 
-      movement,
-      categorySlug, 
-      categoryId 
-    }: { 
-      transactionId: string; 
-      movement: MovementType;
-      categorySlug: string;
-      categoryId: string | null;
-    }) => {
-      const { error } = await supabase
-        .from("transactions")
-        .update({ 
-          movement,
-          category: categorySlug,
-          category_id: categoryId,
-          category_source: "manual"
-        })
-        .eq("id", transactionId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    },
-    onError: (error) => {
-      console.error("Error updating transaction:", error);
-      toast({
-        title: "Error",
-        description: "Could not update the transaction",
-        variant: "destructive",
-      });
-    },
-  });
+  const [isSaving, setIsSaving] = useState(false);
 
   // Get categories for a movement type
   const getCategoriesForMovement = (movement: MovementType): string[] => {
@@ -239,13 +202,6 @@ export function MonthReviewModal({
         category: defaultCategory,
       },
     }));
-
-    updateTransaction.mutate({
-      transactionId,
-      movement: newMovement,
-      categorySlug: defaultCategory,
-      categoryId: category?.id || null,
-    });
   };
 
   // Handle category change
@@ -263,13 +219,6 @@ export function MonthReviewModal({
         category: newCategorySlug,
       },
     }));
-
-    updateTransaction.mutate({
-      transactionId,
-      movement: effectiveMovement,
-      categorySlug: newCategorySlug,
-      categoryId: category?.id || null,
-    });
   };
 
   // Translate movement label
@@ -321,16 +270,97 @@ export function MonthReviewModal({
     }
   };
 
-  const handleConfirm = () => {
-    toast({
-      title: "✓ Month reviewed",
-      description: `${transactions.length} transactions confirmed for ${monthLabel}`,
-    });
+  const handleCancel = () => {
+    setEdits({});
     onOpenChange(false);
   };
 
+  const handleConfirm = async () => {
+    const editEntries = Object.entries(edits);
+    if (editEntries.length === 0) {
+      // No edits, just close
+      onOpenChange(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Batch save all edits
+      const savePromises = editEntries.map(async ([txId, edit]) => {
+        const tx = transactions.find(t => t.id === txId);
+        if (!tx) return;
+
+        const effectiveMovement = edit.movement || getEffectiveMovement(tx);
+        const effectiveCategory = edit.category || normalizeCategory(tx.category || "other_expense");
+        const category = categories.find(c => c.slug === effectiveCategory);
+
+        // 1. Update the transaction
+        const { error: updateError } = await supabase
+          .from("transactions")
+          .update({
+            movement: effectiveMovement,
+            category: effectiveCategory,
+            category_id: category?.id || null,
+            category_source: "MANUAL",
+            categorized_by: "user",
+          })
+          .eq("id", txId);
+
+        if (updateError) throw updateError;
+
+        // 2. Auto-create categorization rule
+        const pattern = (tx.description_norm || tx.description)
+          .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
+          .trim()
+          .toLowerCase();
+
+        if (pattern && category?.id && user) {
+          const { error: ruleError } = await supabase
+            .from("categorization_rules")
+            .insert({
+              user_id: user.id,
+              domain: "CASHFLOW" as const,
+              pattern,
+              match_type: "contains",
+              match_field: "description",
+              category_id: category.id,
+              priority: Math.floor(Date.now() / 1000),
+            });
+
+          if (ruleError) {
+            console.warn("Could not create categorization rule:", ruleError);
+          }
+        }
+      });
+
+      await Promise.all(savePromises);
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+
+      toast({
+        title: "✓ Changes saved",
+        description: `${editEntries.length} transaction(s) updated and rules created for ${monthLabel}`,
+      });
+
+      setEdits({});
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error saving edits:", error);
+      toast({
+        title: "Error",
+        description: "Could not save some changes. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleCancel(); else onOpenChange(v); }}>
       <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme bg-background text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -547,12 +577,16 @@ export function MonthReviewModal({
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={handleConfirm} disabled={transactions.length === 0}>
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Confirm
+          <Button onClick={handleConfirm} disabled={transactions.length === 0 || isSaving}>
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+            )}
+            {Object.keys(edits).length > 0 ? `Save ${Object.keys(edits).length} change(s)` : 'Confirm'}
           </Button>
         </DialogFooter>
       </DialogContent>
