@@ -419,23 +419,16 @@ export function MonthReviewModal({
                         key={tx.id}
                         className={cn(isEdited && "bg-primary/5")}
                       >
-                        <TableCell className="text-muted-foreground text-xs hidden sm:table-cell">
+                        <TableCell className="text-sm">
                           {formatDate(new Date(tx.date))}
                         </TableCell>
-                        <TableCell className="font-medium">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="truncate max-w-[250px] text-sm" title={cleanDescription}>
-                              {cleanDescription}
-                            </span>
-                            <span className="text-xs text-muted-foreground sm:hidden">
-                              {formatDate(new Date(tx.date))}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <span className="text-xs text-muted-foreground">
-                            {getAccountNameById(tx.account_id) || tx.bank || '—'}
+                        <TableCell className="text-sm">
+                          <span className="break-words" title={cleanDescription}>
+                            {cleanDescription}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {getAccountNameById(tx.account_id) || tx.bank || '—'}
                         </TableCell>
                         <TableCell>
                           {isLocked ? (
