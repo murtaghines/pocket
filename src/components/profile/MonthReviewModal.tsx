@@ -502,7 +502,7 @@ export function MonthReviewModal({
                             >
                               <SelectTrigger 
                                 className="h-8 text-sm border-0"
-                                style={{ backgroundColor: `hsl(var(${getCategoryColor(effectiveCategory)}) / 0.12)` }}
+                                style={{ backgroundColor: `hsl(var(--${getCategoryColor(effectiveCategory)}) / 0.12)` }}
                               >
                                 <SelectValue>
                                   <div className="flex items-center gap-1.5">
