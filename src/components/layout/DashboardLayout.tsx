@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, PiggyBank, FolderOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
