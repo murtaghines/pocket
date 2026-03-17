@@ -485,9 +485,14 @@ export function MonthReviewModal({
                         </TableCell>
                         <TableCell>
                           {isLocked ? (
-                            <Badge variant="outline" className="text-xs">
-                              {translateCategory(effectiveCategory)}
-                            </Badge>
+                            <div className="flex items-center gap-1.5">
+                              <CategoryIcon 
+                                iconName={getCategoryIcon(effectiveCategory)} 
+                                colorVar={getCategoryColor(effectiveCategory)} 
+                                size="sm"
+                              />
+                              <span className="text-xs">{translateCategory(effectiveCategory)}</span>
+                            </div>
                           ) : (
                             <Select
                               value={effectiveCategory}
@@ -495,13 +500,29 @@ export function MonthReviewModal({
                             >
                               <SelectTrigger className="h-8 text-xs">
                                 <SelectValue>
-                                  {translateCategory(effectiveCategory)}
+                                  <div className="flex items-center gap-1.5">
+                                    <CategoryIcon 
+                                      iconName={getCategoryIcon(effectiveCategory)} 
+                                      colorVar={getCategoryColor(effectiveCategory)} 
+                                      size="sm"
+                                      showBackground={false}
+                                    />
+                                    {translateCategory(effectiveCategory)}
+                                  </div>
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
                                 {availableCategories.map((catSlug) => (
                                   <SelectItem key={catSlug} value={catSlug}>
-                                    {translateCategory(catSlug)}
+                                    <div className="flex items-center gap-2">
+                                      <CategoryIcon 
+                                        iconName={getCategoryIcon(catSlug)} 
+                                        colorVar={getCategoryColor(catSlug)} 
+                                        size="sm"
+                                        showBackground={false}
+                                      />
+                                      {translateCategory(catSlug)}
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
