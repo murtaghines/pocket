@@ -138,44 +138,7 @@ export function MonthReviewModal({
     enabled: open && !!user,
   });
 
-  // Update transaction mutation
-  const updateTransaction = useMutation({
-    mutationFn: async ({ 
-      transactionId, 
-      movement,
-      categorySlug, 
-      categoryId 
-    }: { 
-      transactionId: string; 
-      movement: MovementType;
-      categorySlug: string;
-      categoryId: string | null;
-    }) => {
-      const { error } = await supabase
-        .from("transactions")
-        .update({ 
-          movement,
-          category: categorySlug,
-          category_id: categoryId,
-          category_source: "manual"
-        })
-        .eq("id", transactionId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    },
-    onError: (error) => {
-      console.error("Error updating transaction:", error);
-      toast({
-        title: "Error",
-        description: "Could not update the transaction",
-        variant: "destructive",
-      });
-    },
-  });
+  const [isSaving, setIsSaving] = useState(false);
 
   // Get categories for a movement type
   const getCategoriesForMovement = (movement: MovementType): string[] => {
