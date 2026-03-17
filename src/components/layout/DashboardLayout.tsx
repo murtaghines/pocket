@@ -19,6 +19,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { profile } = useProfile();
   const location = useLocation();
   const { t } = useTranslation('common');
+
+  // Add dashboard-theme to body so portaled elements (popovers, selects, dialogs) inherit light theme
+  useEffect(() => {
+    document.body.classList.add('dashboard-theme');
+    return () => {
+      document.body.classList.remove('dashboard-theme');
+    };
+  }, []);
   
   const isActive = (path: string) => location.pathname === path;
 
