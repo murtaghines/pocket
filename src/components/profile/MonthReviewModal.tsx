@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
