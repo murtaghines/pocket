@@ -28,8 +28,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle2, 
-  ArrowDownCircle, 
-  ArrowUpCircle, 
+  PlusCircle, 
+  MinusCircle, 
   ArrowRightLeft, 
   Loader2,
   Pencil,
@@ -298,9 +298,9 @@ export function MonthReviewModal({
   const getMovementIcon = (movement: MovementType) => {
     switch (movement) {
       case "INCOME":
-        return <ArrowDownCircle className="w-4 h-4 text-success" />;
+        return <PlusCircle className="w-4 h-4 text-success" />;
       case "EXPENSE":
-        return <ArrowUpCircle className="w-4 h-4 text-destructive" />;
+        return <MinusCircle className="w-4 h-4 text-destructive" />;
       case "TRANSFER":
         return <ArrowRightLeft className="w-4 h-4 text-warning" />;
       default:
@@ -369,11 +369,11 @@ export function MonthReviewModal({
             {/* Stats Summary */}
             <div className="flex gap-4 flex-wrap text-sm">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-                <ArrowDownCircle className="w-4 h-4 text-success" />
+                <PlusCircle className="w-4 h-4 text-success" />
                 <span className="text-success font-medium">{formatCurrency(summary.income)}</span>
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
-                <ArrowUpCircle className="w-4 h-4 text-destructive" />
+                <MinusCircle className="w-4 h-4 text-destructive" />
                 <span className="text-destructive font-medium">{formatCurrency(summary.expenses)}</span>
               </div>
               {summary.transfers > 0 && (
@@ -465,13 +465,13 @@ export function MonthReviewModal({
                               <SelectContent>
                                 <SelectItem value="INCOME">
                                   <div className="flex items-center gap-2">
-                                    <ArrowDownCircle className="w-4 h-4 text-success" />
+                                    <PlusCircle className="w-4 h-4 text-success" />
                                     <span className="text-success">{translateMovement("INCOME")}</span>
                                   </div>
                                 </SelectItem>
                                 <SelectItem value="EXPENSE">
                                   <div className="flex items-center gap-2">
-                                    <ArrowUpCircle className="w-4 h-4 text-destructive" />
+                                    <MinusCircle className="w-4 h-4 text-destructive" />
                                     <span className="text-destructive">{translateMovement("EXPENSE")}</span>
                                   </div>
                                 </SelectItem>
