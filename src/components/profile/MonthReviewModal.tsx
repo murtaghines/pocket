@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
+import { CategoryIcon } from "@/components/ui/category-icon";
 import {
   Dialog,
   DialogContent,
@@ -96,6 +98,7 @@ export function MonthReviewModal({
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   
   const getAccountNameById = (accountId: string | null) => {
     if (!accountId) return null;
@@ -328,7 +331,7 @@ export function MonthReviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col dashboard-theme bg-background text-foreground">
+      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme bg-background text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="w-5 h-5 text-primary" />
@@ -482,9 +485,14 @@ export function MonthReviewModal({
                         </TableCell>
                         <TableCell>
                           {isLocked ? (
-                            <Badge variant="outline" className="text-xs">
-                              {translateCategory(effectiveCategory)}
-                            </Badge>
+                            <div className="flex items-center gap-1.5">
+                              <CategoryIcon 
+                                iconName={getCategoryIcon(effectiveCategory)} 
+                                colorVar={getCategoryColor(effectiveCategory)} 
+                                size="sm"
+                              />
+                              <span className="text-xs">{translateCategory(effectiveCategory)}</span>
+                            </div>
                           ) : (
                             <Select
                               value={effectiveCategory}
@@ -492,13 +500,29 @@ export function MonthReviewModal({
                             >
                               <SelectTrigger className="h-8 text-xs">
                                 <SelectValue>
-                                  {translateCategory(effectiveCategory)}
+                                  <div className="flex items-center gap-1.5">
+                                    <CategoryIcon 
+                                      iconName={getCategoryIcon(effectiveCategory)} 
+                                      colorVar={getCategoryColor(effectiveCategory)} 
+                                      size="sm"
+                                      showBackground={false}
+                                    />
+                                    {translateCategory(effectiveCategory)}
+                                  </div>
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
                                 {availableCategories.map((catSlug) => (
                                   <SelectItem key={catSlug} value={catSlug}>
-                                    {translateCategory(catSlug)}
+                                    <div className="flex items-center gap-2">
+                                      <CategoryIcon 
+                                        iconName={getCategoryIcon(catSlug)} 
+                                        colorVar={getCategoryColor(catSlug)} 
+                                        size="sm"
+                                        showBackground={false}
+                                      />
+                                      {translateCategory(catSlug)}
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
