@@ -219,13 +219,6 @@ export function MonthReviewModal({
         category: newCategorySlug,
       },
     }));
-
-    updateTransaction.mutate({
-      transactionId,
-      movement: effectiveMovement,
-      categorySlug: newCategorySlug,
-      categoryId: category?.id || null,
-    });
   };
 
   // Translate movement label
