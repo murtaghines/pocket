@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Transaction, Category } from "@/lib/mockData";
-import { Search, ArrowUpRight, ArrowDownRight, Minus, List, ChevronDown } from "lucide-react";
+import { Search, Plus, Minus, List, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
