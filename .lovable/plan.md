@@ -1,40 +1,53 @@
 
 
-## Verificacion y Correccion del Flujo de Periodos Abiertos/Cerrados
+## Plan: Defer saves to Confirm + Auto-create categorization rules
 
-### Problemas Encontrados
+### Problem
+1. Currently, changing movement/category in the MonthReviewModal immediately saves to the database via `updateTransaction.mutate()`. Changes persist even without clicking Confirm.
+2. There's no learning mechanism — when a user manually re-categorizes a transaction, that knowledge isn't stored as a rule for future automatic categorization.
 
-Despues de revisar todo el codigo, encontre estos problemas concretos:
+### Solution
 
-1. **Drag-and-drop ignora el candado**: Si un mes esta cerrado (candado cerrado), el usuario puede arrastrar archivos sobre el slot y el sistema intenta procesarlos. Recien en el backend se rechaza con error "period_closed". La UI deberia bloquearlo antes.
+#### 1. Defer all saves until Confirm
+- **Remove** the `updateTransaction.mutate()` calls from `handleMovementChange` and `handleCategoryChange`. These handlers should only update the local `edits` state.
+- **Move** the batch save logic into `handleConfirm`:
+  - Iterate over all entries in `edits`, build update payloads, and execute them (can use `Promise.all` for parallel updates).
+  - Mark saved transactions with `categorized_by: 'user'` and `category_source: 'MANUAL'`.
+- **Cancel discards edits**: When the user clicks Cancel or closes the dialog, clear `edits` state — no DB writes happen.
+- Show a visual indicator (e.g., the existing `summary.edited` badge + row highlight) so users know which rows have pending changes.
 
-2. **No hay validacion client-side antes de subir**: El hook `useMonthlyFileUpload` envia archivos directamente al backend sin verificar si el periodo esta cerrado. Esto causa el error que viste.
+#### 2. Auto-create categorization rules on Confirm
+For each edited transaction in the `edits` map, after successfully saving:
+- Extract the transaction's `description_norm` (or `description` as fallback) as the pattern.
+- Insert a new row into `categorization_rules` with:
+  - `user_id`, `domain: 'CASHFLOW'`
+  - `pattern`: the normalized description
+  - `match_type: 'contains'`
+  - `match_field: 'description'`
+  - `category_id`: the new category's UUID
+  - `priority`: timestamp-based (e.g., `Date.now()` modulo a safe int) so newer rules always have higher priority than older ones for the same pattern.
+- This leverages the existing `categorization_rules` table and the categorizer's rule-matching logic in `process-import`, which already checks user rules first (`user_rule` source).
+- The existing Settings > Categories UI already displays and allows deletion of these rules — no changes needed there.
 
-3. **Race condition al reabrir**: Cuando el usuario hace clic en "Reabrir mes", la query de periodos se invalida y se refresca. Pero si el usuario intenta subir un archivo antes de que termine el refetch, el backend podria seguir viendo el periodo como cerrado.
+#### 3. Priority handling for conflicting rules
+- Use `priority: Math.floor(Date.now() / 1000)` so each new rule naturally has a higher priority than previous ones.
+- The categorizer in `process-import` already orders by `priority DESC`, so the most recent rule wins.
+- If a user later deletes a rule from Settings, the next-highest-priority rule (or default categorization) takes over.
 
-### Solucion Propuesta
+### Files to modify
+- **`src/components/profile/MonthReviewModal.tsx`**: Refactor `handleMovementChange`/`handleCategoryChange` to be local-only; move DB writes + rule creation into `handleConfirm`.
 
-#### 1. Bloquear drag-and-drop en meses cerrados
-En `MonthUploadSlot.tsx`, el handler `handleDrop` debe verificar `isClosed` y mostrar un toast de advertencia en vez de intentar subir.
+### Technical details
 
-#### 2. Bloquear el area de upload cuando esta cerrado
-El area de upload (drop zone vacia) y el boton "Add more files" ya se ocultan correctamente cuando `isClosed` es true. Pero el drag-and-drop sigue activo. Se agregara la verificacion ahi.
-
-#### 3. Pasar el estado del periodo al hook de upload
-Modificar `addFilesForMonth` para aceptar un parametro opcional de estado del periodo, o hacer la verificacion directamente en `MonthUploadSlot` antes de llamar a `onAddFiles`.
-
-### Cambios Tecnicos
-
-**Archivo: `src/components/profile/MonthUploadSlot.tsx`**
-- En `handleDrop`: agregar verificacion `if (isClosed)` al inicio, mostrando un toast "Este mes esta cerrado. Reabrilo para subir archivos" y haciendo return sin procesar.
-- En `handleFileInput`: agregar la misma verificacion `if (isClosed)`.
-- Deshabilitar visualmente el area de drag cuando el mes esta cerrado (agregar clase CSS de opacidad reducida y cursor no permitido).
-
-**Archivo: `src/hooks/useMonthlyFileUpload.tsx`**
-- No requiere cambios, la validacion se hara en la UI antes de llamar a `addFilesForMonth`.
-
-### Resultado Esperado
-- Si el candado esta cerrado: no se puede subir de ninguna forma (ni drag, ni click, ni input). Se muestra un mensaje claro.
-- Si el candado esta abierto: funciona normal.
-- El backend sigue como segunda linea de defensa por si algo pasa.
+```text
+User changes dropdown → local edits state only (no DB call)
+User clicks Cancel    → edits cleared, dialog closes
+User clicks Confirm   → for each edit:
+  1. UPDATE transactions SET movement, category, category_id, 
+     categorized_by='user', category_source='MANUAL'
+  2. INSERT INTO categorization_rules (user_id, domain, pattern, 
+     match_type, match_field, category_id, priority)
+     VALUES (uid, 'CASHFLOW', description_norm, 'contains', 
+     'description', new_category_id, unix_timestamp)
+```
 
