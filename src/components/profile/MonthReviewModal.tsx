@@ -391,15 +391,15 @@ export function MonthReviewModal({
 
             {/* Transaction Table */}
             <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
-              <Table>
+              <Table className="w-full table-fixed">
                 <TableHeader>
                  <TableRow>
-                     <TableHead className="w-[80px] hidden sm:table-cell">Date</TableHead>
-                     <TableHead>Description</TableHead>
-                     <TableHead className="w-[100px] hidden md:table-cell">Account</TableHead>
-                     <TableHead className="w-[120px]">Movement</TableHead>
-                     <TableHead className="w-[130px]">Category</TableHead>
-                     <TableHead className="text-right w-[90px]">Amount</TableHead>
+                     <TableHead className="w-[10%]">Date</TableHead>
+                     <TableHead className="w-[35%]">Description</TableHead>
+                     <TableHead className="w-[10%]">Account</TableHead>
+                     <TableHead className="w-[15%]">Movement</TableHead>
+                     <TableHead className="w-[18%]">Category</TableHead>
+                     <TableHead className="text-right w-[12%]">Amount</TableHead>
                    </TableRow>
                 </TableHeader>
                 <TableBody>
