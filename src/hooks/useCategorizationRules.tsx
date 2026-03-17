@@ -37,7 +37,7 @@ export function useCategorizationRules() {
         category_id: rule.category_id,
         pattern: rule.pattern,
         match_type: rule.match_type,
-        match_field: rule.match_field,
+        match_field: rule.match_field === 'description' ? 'description_norm' : rule.match_field,
         priority: 100,
       });
       if (error) throw error;
