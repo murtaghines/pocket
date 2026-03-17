@@ -28,8 +28,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { 
   CheckCircle2, 
-  ArrowDownCircle, 
-  ArrowUpCircle, 
+  PlusCircle, 
+  MinusCircle, 
   ArrowRightLeft, 
   Loader2,
   Pencil,
