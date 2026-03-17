@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Pencil, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { CategoryIcon } from '@/components/ui/category-icon';
@@ -14,10 +14,17 @@ interface Props {
   categories: Category[];
   getRulesForCategory: (categoryId: string) => Rule[];
   onAddRule: (category: Category) => void;
+  onEditRule: (rule: Rule, category: Category) => void;
   onDeleteRule: (ruleId: string) => void;
 }
 
-export function CategoryRulesList({ categories, getRulesForCategory, onAddRule, onDeleteRule }: Props) {
+const matchTypeKey = (mt: string) => {
+  if (mt === 'STARTS_WITH') return 'categories.startsWith';
+  if (mt === 'REGEX') return 'categories.regex';
+  return 'categories.contains';
+};
+
+export function CategoryRulesList({ categories, getRulesForCategory, onAddRule, onEditRule, onDeleteRule }: Props) {
   const { t } = useTranslation('settings');
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -70,18 +77,28 @@ export function CategoryRulesList({ categories, getRulesForCategory, onAddRule, 
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <Badge variant="outline" className="text-[10px] shrink-0">
-                            {rule.match_type === 'exact' || rule.match_type === 'STARTS_WITH' ? t('categories.exact') : t('categories.contains')}
+                            {t(matchTypeKey(rule.match_type))}
                           </Badge>
                           <code className="text-xs font-mono truncate">{rule.pattern}</code>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
-                          onClick={() => onDeleteRule(rule.id)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={() => onEditRule(rule, cat)}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive hover:text-destructive"
+                            onClick={() => onDeleteRule(rule.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>

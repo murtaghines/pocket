@@ -36,10 +36,21 @@ export function useCategorizationRules() {
         domain: "CASHFLOW" as const,
         category_id: rule.category_id,
         pattern: rule.pattern,
-        match_type: rule.match_type === 'contains' ? 'CONTAINS' : rule.match_type === 'exact' ? 'STARTS_WITH' : rule.match_type,
+        match_type: rule.match_type,
         match_field: rule.match_field === 'description' ? 'description_norm' : rule.match_field,
         priority: 100,
       });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categorization_rules"] }),
+  });
+
+  const updateRule = useMutation({
+    mutationFn: async (params: { ruleId: string; pattern: string; match_type: string }) => {
+      const { error } = await supabase
+        .from("categorization_rules")
+        .update({ pattern: params.pattern, match_type: params.match_type })
+        .eq("id", params.ruleId);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categorization_rules"] }),
@@ -60,5 +71,5 @@ export function useCategorizationRules() {
     return rules.filter((r) => r.category_id === categoryId);
   };
 
-  return { rules, isLoading, addRule, deleteRule, getRulesForCategory };
+  return { rules, isLoading, addRule, updateRule, deleteRule, getRulesForCategory };
 }
