@@ -70,7 +70,7 @@ export function CategoryRulesList({ categories, getRulesForCategory, onAddRule, 
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <Badge variant="outline" className="text-[10px] shrink-0">
-                            {rule.match_type === 'exact' ? t('categories.exact') : t('categories.contains')}
+                            {rule.match_type === 'exact' || rule.match_type === 'STARTS_WITH' ? t('categories.exact') : t('categories.contains')}
                           </Badge>
                           <code className="text-xs font-mono truncate">{rule.pattern}</code>
                         </div>
