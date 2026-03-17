@@ -8,14 +8,51 @@ import { useCategorizationRules } from '@/hooks/useCategorizationRules';
 import { CategoryRulesList } from './CategoryRulesList';
 import { AddRuleDialog } from './AddRuleDialog';
 import { CustomCategoriesManager } from './CustomCategoriesManager';
+import type { Database } from '@/integrations/supabase/types';
+
+type Rule = Database["public"]["Tables"]["categorization_rules"]["Row"];
+
+interface RuleDialogState {
+  categoryId: string;
+  categoryName: string;
+  editingRule?: { id: string; pattern: string; matchType: string } | null;
+}
 
 export function CategoriesEditor() {
   const { t } = useTranslation('settings');
   const { incomeCategories, expenseCategories, isLoading: catsLoading } = useCategories('CASHFLOW');
-  const { rules, isLoading: rulesLoading, addRule, deleteRule, getRulesForCategory } = useCategorizationRules();
-  const [addRuleFor, setAddRuleFor] = useState<{ id: string; name: string } | null>(null);
+  const { rules, isLoading: rulesLoading, addRule, updateRule, deleteRule, getRulesForCategory } = useCategorizationRules();
+  const [dialogState, setDialogState] = useState<RuleDialogState | null>(null);
 
   const isLoading = catsLoading || rulesLoading;
+
+  const handleAddRule = (cat: { id: string; name: string }) => {
+    setDialogState({ categoryId: cat.id, categoryName: cat.name });
+  };
+
+  const handleEditRule = (rule: Rule, cat: { id: string; name: string }) => {
+    setDialogState({
+      categoryId: cat.id,
+      categoryName: cat.name,
+      editingRule: { id: rule.id, pattern: rule.pattern, matchType: rule.match_type },
+    });
+  };
+
+  const handleSave = (pattern: string, matchType: string) => {
+    if (!dialogState) return;
+    const editing = dialogState.editingRule;
+    if (editing) {
+      updateRule.mutate(
+        { ruleId: editing.id, pattern, match_type: matchType },
+        { onSuccess: () => setDialogState(null) }
+      );
+    } else {
+      addRule.mutate(
+        { category_id: dialogState.categoryId, pattern, match_type: matchType, match_field: 'description_norm' },
+        { onSuccess: () => setDialogState(null) }
+      );
+    }
+  };
 
   return (
     <Card>
@@ -31,7 +68,6 @@ export function CategoriesEditor() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Standard categories with rules */}
         <Tabs defaultValue="expense" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="income" className="flex items-center gap-1.5 text-xs">
@@ -51,7 +87,8 @@ export function CategoriesEditor() {
               <CategoryRulesList
                 categories={incomeCategories}
                 getRulesForCategory={getRulesForCategory}
-                onAddRule={(cat) => setAddRuleFor({ id: cat.id, name: cat.name })}
+                onAddRule={handleAddRule}
+                onEditRule={handleEditRule}
                 onDeleteRule={(id) => deleteRule.mutate(id)}
               />
             )}
@@ -64,30 +101,25 @@ export function CategoriesEditor() {
               <CategoryRulesList
                 categories={expenseCategories}
                 getRulesForCategory={getRulesForCategory}
-                onAddRule={(cat) => setAddRuleFor({ id: cat.id, name: cat.name })}
+                onAddRule={handleAddRule}
+                onEditRule={handleEditRule}
                 onDeleteRule={(id) => deleteRule.mutate(id)}
               />
             )}
           </TabsContent>
         </Tabs>
 
-        {/* Custom categories & rule overrides */}
         <div className="border-t pt-4">
           <CustomCategoriesManager />
         </div>
 
         <AddRuleDialog
-          open={!!addRuleFor}
-          categoryName={addRuleFor?.name || ''}
-          onClose={() => setAddRuleFor(null)}
-          onSave={(pattern, matchType) => {
-            if (!addRuleFor) return;
-            addRule.mutate(
-              { category_id: addRuleFor.id, pattern, match_type: matchType, match_field: 'description_norm' },
-              { onSuccess: () => setAddRuleFor(null) }
-            );
-          }}
-          isSaving={addRule.isPending}
+          open={!!dialogState}
+          categoryName={dialogState?.categoryName || ''}
+          editingRule={dialogState?.editingRule}
+          onClose={() => setDialogState(null)}
+          onSave={handleSave}
+          isSaving={addRule.isPending || updateRule.isPending}
         />
       </CardContent>
     </Card>

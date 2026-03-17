@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,29 +7,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 
+interface EditingRule {
+  id: string;
+  pattern: string;
+  matchType: string;
+}
+
 interface Props {
   open: boolean;
   categoryName: string;
+  editingRule?: EditingRule | null;
   onClose: () => void;
   onSave: (pattern: string, matchType: string) => void;
   isSaving: boolean;
 }
 
-export function AddRuleDialog({ open, categoryName, onClose, onSave, isSaving }: Props) {
+export function AddRuleDialog({ open, categoryName, editingRule, onClose, onSave, isSaving }: Props) {
   const { t } = useTranslation('settings');
   const [pattern, setPattern] = useState('');
-  const [matchType, setMatchType] = useState('contains');
+  const [matchType, setMatchType] = useState('CONTAINS');
+
+  useEffect(() => {
+    if (open && editingRule) {
+      setPattern(editingRule.pattern);
+      setMatchType(editingRule.matchType);
+    } else if (open) {
+      setPattern('');
+      setMatchType('CONTAINS');
+    }
+  }, [open, editingRule]);
+
+  const isEditing = !!editingRule;
 
   const handleSave = () => {
     if (!pattern.trim()) return;
     onSave(pattern.trim(), matchType);
-    setPattern('');
-    setMatchType('contains');
   };
 
   const handleClose = () => {
     setPattern('');
-    setMatchType('contains');
+    setMatchType('CONTAINS');
     onClose();
   };
 
@@ -38,7 +55,7 @@ export function AddRuleDialog({ open, categoryName, onClose, onSave, isSaving }:
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle className="text-base">
-            {t('categories.addRule')} — {categoryName}
+            {isEditing ? t('categories.editRule') : t('categories.addRule')} — {categoryName}
           </DialogTitle>
         </DialogHeader>
 
@@ -63,10 +80,16 @@ export function AddRuleDialog({ open, categoryName, onClose, onSave, isSaving }:
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="contains">{t('categories.contains')}</SelectItem>
-                <SelectItem value="exact">{t('categories.exact')}</SelectItem>
+                <SelectItem value="CONTAINS">{t('categories.contains')}</SelectItem>
+                <SelectItem value="STARTS_WITH">{t('categories.startsWith')}</SelectItem>
+                <SelectItem value="REGEX">{t('categories.regex')}</SelectItem>
               </SelectContent>
             </Select>
+            {matchType === 'REGEX' && (
+              <p className="text-xs text-muted-foreground">
+                {t('categories.regexHelp')}
+              </p>
+            )}
           </div>
         </div>
 
