@@ -125,7 +125,10 @@ export function MonthReviewModal({
     return accounts.find(a => a.id === accountId)?.name || null;
   };
   const [edits, setEdits] = useState<Record<string, TransactionEdits>>({});
-
+  const [showRetroactiveDialog, setShowRetroactiveDialog] = useState(false);
+  const [createdRules, setCreatedRules] = useState<CreatedRule[]>([]);
+  const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
+  const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
   // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["month-transactions", monthKey, user?.id, importId],
