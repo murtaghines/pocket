@@ -430,11 +430,11 @@ export function MonthReviewModal({
                         <TableCell className="text-sm">
                           {getAccountNameById(tx.account_id) || tx.bank || '—'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm">
                           {isLocked ? (
                             <div className="flex items-center gap-1.5">
                               {getMovementIcon(effectiveMovement)}
-                              <span className={cn("text-xs font-medium", getMovementColor(effectiveMovement))}>
+                              <span className={cn("font-medium", getMovementColor(effectiveMovement))}>
                                 {translateMovement(effectiveMovement)}
                               </span>
                             </div>
@@ -444,7 +444,7 @@ export function MonthReviewModal({
                               onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
                             >
                               <SelectTrigger 
-                                className="h-8 text-xs border-0"
+                                className="h-8 text-sm border-0"
                                 style={{ 
                                   backgroundColor: effectiveMovement === 'INCOME' 
                                     ? 'hsl(var(--success) / 0.12)' 
@@ -485,7 +485,7 @@ export function MonthReviewModal({
                             </Select>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm">
                           {isLocked ? (
                             <div className="flex items-center gap-1.5">
                               <CategoryIcon 
@@ -493,7 +493,7 @@ export function MonthReviewModal({
                                 colorVar={getCategoryColor(effectiveCategory)} 
                                 size="sm"
                               />
-                              <span className="text-xs">{translateCategory(effectiveCategory)}</span>
+                              <span>{translateCategory(effectiveCategory)}</span>
                             </div>
                           ) : (
                             <Select
@@ -501,7 +501,7 @@ export function MonthReviewModal({
                               onValueChange={(value) => handleCategoryChange(tx.id, value)}
                             >
                               <SelectTrigger 
-                                className="h-8 text-xs border-0"
+                                className="h-8 text-sm border-0"
                                 style={{ backgroundColor: `hsl(var(${getCategoryColor(effectiveCategory)}) / 0.12)` }}
                               >
                                 <SelectValue>
