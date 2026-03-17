@@ -534,10 +534,7 @@ export function MonthReviewModal({
                             </Select>
                           )}
                         </TableCell>
-                        <TableCell className={cn(
-                          "text-right font-medium tabular-nums text-sm",
-                          getMovementColor(effectiveMovement)
-                        )}>
+                        <TableCell className="text-right font-medium tabular-nums text-sm">
                           {formatCurrency(tx.amount)}
                         </TableCell>
                       </TableRow>
