@@ -270,12 +270,93 @@ export function MonthReviewModal({
     }
   };
 
-  const handleConfirm = () => {
-    toast({
-      title: "✓ Month reviewed",
-      description: `${transactions.length} transactions confirmed for ${monthLabel}`,
-    });
+  const handleCancel = () => {
+    setEdits({});
     onOpenChange(false);
+  };
+
+  const handleConfirm = async () => {
+    const editEntries = Object.entries(edits);
+    if (editEntries.length === 0) {
+      // No edits, just close
+      onOpenChange(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Batch save all edits
+      const savePromises = editEntries.map(async ([txId, edit]) => {
+        const tx = transactions.find(t => t.id === txId);
+        if (!tx) return;
+
+        const effectiveMovement = edit.movement || getEffectiveMovement(tx);
+        const effectiveCategory = edit.category || normalizeCategory(tx.category || "other_expense");
+        const category = categories.find(c => c.slug === effectiveCategory);
+
+        // 1. Update the transaction
+        const { error: updateError } = await supabase
+          .from("transactions")
+          .update({
+            movement: effectiveMovement,
+            category: effectiveCategory,
+            category_id: category?.id || null,
+            category_source: "MANUAL",
+            categorized_by: "user",
+          })
+          .eq("id", txId);
+
+        if (updateError) throw updateError;
+
+        // 2. Auto-create categorization rule
+        const pattern = (tx.description_norm || tx.description)
+          .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
+          .trim()
+          .toLowerCase();
+
+        if (pattern && category?.id && user) {
+          const { error: ruleError } = await supabase
+            .from("categorization_rules")
+            .insert({
+              user_id: user.id,
+              domain: "CASHFLOW" as const,
+              pattern,
+              match_type: "contains",
+              match_field: "description",
+              category_id: category.id,
+              priority: Math.floor(Date.now() / 1000),
+            });
+
+          if (ruleError) {
+            console.warn("Could not create categorization rule:", ruleError);
+          }
+        }
+      });
+
+      await Promise.all(savePromises);
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+
+      toast({
+        title: "✓ Changes saved",
+        description: `${editEntries.length} transaction(s) updated and rules created for ${monthLabel}`,
+      });
+
+      setEdits({});
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error saving edits:", error);
+      toast({
+        title: "Error",
+        description: "Could not save some changes. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
