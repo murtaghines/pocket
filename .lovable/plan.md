@@ -1,40 +1,42 @@
 
 
-## Verificacion y Correccion del Flujo de Periodos Abiertos/Cerrados
+## Plan: Texto explicativo dinámico por tipo de match + agregar "Exact Match"
 
-### Problemas Encontrados
+### Descubrimiento
+Revisando el motor de categorización (`process-import/index.ts`), encontré que soporta **4 tipos** (no 3):
+- `contains` — el texto aparece en cualquier parte de la descripción
+- `starts_with` — la descripción empieza con ese texto
+- `exact` — la descripción es exactamente igual al texto
+- `regex` — patrón avanzado de expresión regular
 
-Despues de revisar todo el codigo, encontre estos problemas concretos:
+Actualmente la UI solo muestra 3 (falta Exact Match).
 
-1. **Drag-and-drop ignora el candado**: Si un mes esta cerrado (candado cerrado), el usuario puede arrastrar archivos sobre el slot y el sistema intenta procesarlos. Recien en el backend se rechaza con error "period_closed". La UI deberia bloquearlo antes.
+Tambien hay un **bug**: el motor compara en minúsculas (`'contains'`), pero la UI guarda en mayúsculas (`'CONTAINS'`). Hay que alinear esto.
 
-2. **No hay validacion client-side antes de subir**: El hook `useMonthlyFileUpload` envia archivos directamente al backend sin verificar si el periodo esta cerrado. Esto causa el error que viste.
+### Cambios
 
-3. **Race condition al reabrir**: Cuando el usuario hace clic en "Reabrir mes", la query de periodos se invalida y se refresca. Pero si el usuario intenta subir un archivo antes de que termine el refetch, el backend podria seguir viendo el periodo como cerrado.
+#### 1. Agregar "Exact Match" como 4ta opción en el dialog
+Un `SelectItem` más con valor `EXACT`.
 
-### Solucion Propuesta
+#### 2. Texto de ayuda dinámico debajo del selector de Match Type
+En vez de mostrar ayuda solo para Regex, mostrar una descripción clara para **cada** tipo:
 
-#### 1. Bloquear drag-and-drop en meses cerrados
-En `MonthUploadSlot.tsx`, el handler `handleDrop` debe verificar `isClosed` y mostrar un toast de advertencia en vez de intentar subir.
+- **Contains**: "If the transaction description includes this text anywhere, it will match. Example: 'Netflix' matches 'NETFLIX MONTHLY PAYMENT'."
+- **Starts With**: "Matches only if the description begins with this text. Example: 'BIZUM' matches 'BIZUM DE JUAN' but not 'PAGO BIZUM'."
+- **Exact Match**: "Matches only if the description is exactly this text, word for word. Useful for very specific transactions."
+- **Regex**: "Advanced: use a regular expression pattern. Example: 'amazon|amzn' matches both 'AMAZON' and 'AMZN MKTP'."
 
-#### 2. Bloquear el area de upload cuando esta cerrado
-El area de upload (drop zone vacia) y el boton "Add more files" ya se ocultan correctamente cuando `isClosed` es true. Pero el drag-and-drop sigue activo. Se agregara la verificacion ahi.
+#### 3. Fix bug de case mismatch
+Actualizar `process-import/index.ts` para comparar con `.toLowerCase()` o uppercase, alineando con lo que guarda la DB.
 
-#### 3. Pasar el estado del periodo al hook de upload
-Modificar `addFilesForMonth` para aceptar un parametro opcional de estado del periodo, o hacer la verificacion directamente en `MonthUploadSlot` antes de llamar a `onAddFiles`.
+#### 4. Traducciones EN/ES/PT
+Agregar keys para las 4 descripciones de ayuda y para "Exact Match".
 
-### Cambios Tecnicos
-
-**Archivo: `src/components/profile/MonthUploadSlot.tsx`**
-- En `handleDrop`: agregar verificacion `if (isClosed)` al inicio, mostrando un toast "Este mes esta cerrado. Reabrilo para subir archivos" y haciendo return sin procesar.
-- En `handleFileInput`: agregar la misma verificacion `if (isClosed)`.
-- Deshabilitar visualmente el area de drag cuando el mes esta cerrado (agregar clase CSS de opacidad reducida y cursor no permitido).
-
-**Archivo: `src/hooks/useMonthlyFileUpload.tsx`**
-- No requiere cambios, la validacion se hara en la UI antes de llamar a `addFilesForMonth`.
-
-### Resultado Esperado
-- Si el candado esta cerrado: no se puede subir de ninguna forma (ni drag, ni click, ni input). Se muestra un mensaje claro.
-- Si el candado esta abierto: funciona normal.
-- El backend sigue como segunda linea de defensa por si algo pasa.
+### Archivos a modificar
+- `src/components/settings/AddRuleDialog.tsx` — agregar Exact Match + texto dinámico por tipo
+- `supabase/functions/process-import/index.ts` — fix case comparison
+- `supabase/functions/apply-rules-retroactive/index.ts` — verificar mismo fix
+- `src/i18n/locales/en/settings.json` — nuevas keys de ayuda
+- `src/i18n/locales/es/settings.json` — traducciones
+- `src/i18n/locales/pt/settings.json` — traducciones
 
