@@ -36,7 +36,7 @@ export function useCategorizationRules() {
         domain: "CASHFLOW" as const,
         category_id: rule.category_id,
         pattern: rule.pattern,
-        match_type: rule.match_type,
+        match_type: rule.match_type === 'contains' ? 'CONTAINS' : rule.match_type === 'exact' ? 'STARTS_WITH' : rule.match_type,
         match_field: rule.match_field === 'description' ? 'description_norm' : rule.match_field,
         priority: 100,
       });
