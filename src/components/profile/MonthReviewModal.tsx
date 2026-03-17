@@ -500,7 +500,10 @@ export function MonthReviewModal({
                               value={effectiveCategory}
                               onValueChange={(value) => handleCategoryChange(tx.id, value)}
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger 
+                                className="h-8 text-xs border-0"
+                                style={{ backgroundColor: `hsl(var(${getCategoryColor(effectiveCategory)}) / 0.12)` }}
+                              >
                                 <SelectValue>
                                   <div className="flex items-center gap-1.5">
                                     <CategoryIcon 
