@@ -391,15 +391,15 @@ export function MonthReviewModal({
 
             {/* Transaction Table */}
             <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
-              <Table>
+              <Table className="w-full table-fixed">
                 <TableHeader>
                  <TableRow>
-                     <TableHead className="w-[80px] hidden sm:table-cell">Date</TableHead>
-                     <TableHead>Description</TableHead>
-                     <TableHead className="w-[100px] hidden md:table-cell">Account</TableHead>
-                     <TableHead className="w-[120px]">Movement</TableHead>
-                     <TableHead className="w-[130px]">Category</TableHead>
-                     <TableHead className="text-right w-[90px]">Amount</TableHead>
+                     <TableHead className="w-[10%]">Date</TableHead>
+                     <TableHead className="w-[35%]">Description</TableHead>
+                     <TableHead className="w-[10%]">Account</TableHead>
+                     <TableHead className="w-[15%]">Movement</TableHead>
+                     <TableHead className="w-[18%]">Category</TableHead>
+                     <TableHead className="text-right w-[12%]">Amount</TableHead>
                    </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -419,23 +419,16 @@ export function MonthReviewModal({
                         key={tx.id}
                         className={cn(isEdited && "bg-primary/5")}
                       >
-                        <TableCell className="text-muted-foreground text-xs hidden sm:table-cell">
+                        <TableCell className="text-sm">
                           {formatDate(new Date(tx.date))}
                         </TableCell>
-                        <TableCell className="font-medium">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="truncate max-w-[250px] text-sm" title={cleanDescription}>
-                              {cleanDescription}
-                            </span>
-                            <span className="text-xs text-muted-foreground sm:hidden">
-                              {formatDate(new Date(tx.date))}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <span className="text-xs text-muted-foreground">
-                            {getAccountNameById(tx.account_id) || tx.bank || '—'}
+                        <TableCell className="text-sm">
+                          <span className="break-words" title={cleanDescription}>
+                            {cleanDescription}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {getAccountNameById(tx.account_id) || tx.bank || '—'}
                         </TableCell>
                         <TableCell>
                           {isLocked ? (
