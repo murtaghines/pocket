@@ -302,20 +302,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center gap-2">
-                          <CategoryIcon 
-                            iconName={getCategoryIcon(transaction.category)} 
-                            colorVar={getCategoryColor(transaction.category)} 
-                            size="sm"
-                          />
-                          <span className="text-sm">{getCategoryLabel(transaction.category)}</span>
-                        </div>
+                        <CategoryIcon 
+                          iconName={getCategoryIcon(transaction.category)} 
+                          colorVar={getCategoryColor(transaction.category)} 
+                          size="sm"
+                        />
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        <div className="text-sm">
-                          <div>{transaction.bank}</div>
-                          <div className="text-xs opacity-70">{transaction.account}</div>
-                        </div>
+                      <TableCell className="hidden lg:table-cell">
+                        <span className="text-sm text-muted-foreground truncate block">{transaction.account}</span>
                       </TableCell>
                       <TableCell className={cn(
                         "text-right font-semibold tabular-nums",
