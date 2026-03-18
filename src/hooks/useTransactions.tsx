@@ -159,8 +159,8 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           movement,
           category: t.category as Category,
           categorySlug: t.category,
-          account: "Main Account",
-          bank: t.bank || "Unknown",
+          account: t.account_id ? (accountMap[t.account_id] || t.bank || "Unknown") : (t.bank || "Unknown"),
+          bank: t.account_id ? (accountMap[t.account_id] || t.bank || "Unknown") : (t.bank || "Unknown"),
           runningBalance: t.running_balance,
         };
       });
