@@ -241,9 +241,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <TableHead className="hidden sm:table-cell whitespace-nowrap w-[50px]">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
                 <TableHead className="hidden sm:table-cell whitespace-nowrap w-[82px]">{t('transactions.date')}</TableHead>
                 <TableHead>{t('transactions.description')}</TableHead>
-                <TableHead className="hidden md:table-cell whitespace-nowrap w-[85px]">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
-                <TableHead className="hidden md:table-cell w-[56px]">{t('transactions.category')}</TableHead>
-                <TableHead className="hidden lg:table-cell whitespace-nowrap w-[100px]">Account</TableHead>
+                <TableHead className="hidden md:table-cell whitespace-nowrap w-[110px]">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
+                <TableHead className="hidden md:table-cell whitespace-nowrap w-[170px]">{t('transactions.category')}</TableHead>
+                <TableHead className="hidden lg:table-cell whitespace-nowrap w-[120px]">Account</TableHead>
                 <TableHead className="text-right whitespace-nowrap w-[95px]">{t('transactions.amount')}</TableHead>
                 <TableHead className="text-right hidden lg:table-cell whitespace-nowrap w-[80px]">{t('transactions.balance', { defaultValue: 'Balance' })}</TableHead>
               </TableRow>
