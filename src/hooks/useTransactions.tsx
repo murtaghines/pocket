@@ -95,6 +95,15 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     queryFn: async () => {
       if (!user) return [];
       
+      // Fetch accounts for this user to map account_id -> name
+      const { data: accountsData } = await supabase
+        .from("accounts")
+        .select("id, name")
+        .eq("user_id", user.id);
+      
+      const accountMap: Record<string, string> = {};
+      (accountsData || []).forEach(a => { accountMap[a.id] = a.name; });
+
       let query = supabase
         .from("transactions")
         .select("*")
