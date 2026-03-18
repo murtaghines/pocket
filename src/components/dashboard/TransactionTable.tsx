@@ -235,7 +235,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <div className="rounded-2xl border border-border/50 overflow-hidden">
-          <Table className="table-auto">
+          <Table className="table-fixed w-full">
              <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="hidden sm:table-cell whitespace-nowrap">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
