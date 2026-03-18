@@ -235,17 +235,17 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <div className="rounded-2xl border border-border/50 overflow-hidden">
-          <Table className="table-auto">
+          <Table className="table-fixed w-full">
              <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="hidden sm:table-cell whitespace-nowrap">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
-                <TableHead className="hidden sm:table-cell whitespace-nowrap">{t('transactions.date')}</TableHead>
+                <TableHead className="hidden sm:table-cell whitespace-nowrap w-[60px]">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
+                <TableHead className="hidden sm:table-cell whitespace-nowrap w-[90px]">{t('transactions.date')}</TableHead>
                 <TableHead>{t('transactions.description')}</TableHead>
-                <TableHead className="hidden md:table-cell whitespace-nowrap">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
-                <TableHead className="hidden md:table-cell whitespace-nowrap">{t('transactions.category')}</TableHead>
-                <TableHead className="hidden lg:table-cell whitespace-nowrap">{t('transactions.bank', { defaultValue: 'Account' })}</TableHead>
-                <TableHead className="text-right whitespace-nowrap">{t('transactions.amount')}</TableHead>
-                <TableHead className="text-right hidden lg:table-cell whitespace-nowrap">{t('transactions.balance', { defaultValue: 'Balance' })}</TableHead>
+                <TableHead className="hidden md:table-cell whitespace-nowrap w-[100px]">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
+                <TableHead className="hidden md:table-cell whitespace-nowrap w-[50px]">{t('transactions.category')}</TableHead>
+                <TableHead className="hidden lg:table-cell whitespace-nowrap w-[100px]">{t('transactions.bank', { defaultValue: 'Account' })}</TableHead>
+                <TableHead className="text-right whitespace-nowrap w-[100px]">{t('transactions.amount')}</TableHead>
+                <TableHead className="text-right hidden lg:table-cell whitespace-nowrap w-[90px]">{t('transactions.balance', { defaultValue: 'Balance' })}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -291,7 +291,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                               <Minus className="w-3 h-3 text-destructive" />
                             )}
                           </div>
-                          <span className="truncate">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
+                          <span className="break-words line-clamp-2">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
