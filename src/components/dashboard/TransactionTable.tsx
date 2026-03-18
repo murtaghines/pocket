@@ -302,11 +302,19 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <CategoryIcon 
-                          iconName={getCategoryIcon(transaction.category)} 
-                          colorVar={getCategoryColor(transaction.category)} 
-                          size="sm"
-                        />
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CategoryIcon 
+                            iconName={getCategoryIcon(transaction.category)} 
+                            colorVar={getCategoryColor(transaction.category)} 
+                            size="sm"
+                          />
+                          <span
+                            className="text-sm text-muted-foreground truncate"
+                            title={getCategoryLabel(transaction.category)}
+                          >
+                            {getCategoryLabel(transaction.category)}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <span className="text-sm text-muted-foreground truncate block">{transaction.account}</span>
