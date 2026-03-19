@@ -44,28 +44,28 @@
     --radius: 0.75rem;
 
     /* Category colors - Income */
-    --category-salary: 142 76% 36%;
+    --category-salary: 45 85% 55%;
     --category-refunds: 199 89% 48%;
     --category-transfers: 217 91% 60%;
     --category-other-income: 0 0% 50%;
-    --category-investment: 262 83% 58%;
+    --category-investment: 210 70% 40%;
     --category-freelance: 280 65% 60%;
-    --category-rents: 45 93% 47%;
+    --category-rents: 32 80% 55%;
     
     /* Category colors - Expense */
-    --category-housing: 25 95% 53%;
-    --category-groceries: 142 71% 45%;
-    --category-restaurants: 12 76% 61%;
+    --category-housing: 25 85% 55%;
+    --category-groceries: 185 60% 45%;
+    --category-restaurants: 28 75% 60%;
     --category-transport: 217 91% 60%;
-    --category-health: 340 82% 52%;
+    --category-health: 210 55% 50%;
     --category-entertainment: 280 87% 65%;
-    --category-shopping: 326 78% 60%;
+    --category-shopping: 35 90% 50%;
     --category-education: 199 89% 48%;
     --category-subscriptions: 262 83% 58%;
     --category-travel: 45 93% 47%;
-    --category-sports: 174 72% 40%;
+    --category-sports: 195 65% 45%;
     --category-other-expense: 0 0% 50%;
-    --category-pets: 32 95% 44%;
+    --category-pets: 22 80% 50%;
     
     /* Category colors - Transfer */
     --category-own-transfer: 0 0% 50%;
