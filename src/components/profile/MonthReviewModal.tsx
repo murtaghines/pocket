@@ -771,6 +771,76 @@ export function MonthReviewModal({
         </DialogContent>
       </Dialog>
 
+      {/* Rule Selection Dialog */}
+      <AlertDialog open={showRuleSelectionDialog} onOpenChange={setShowRuleSelectionDialog}>
+        <AlertDialogContent className="dashboard-theme bg-background text-foreground max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />
+              Save as categorization rules?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Select which changes should become permanent rules. Future transactions with similar descriptions will be automatically categorized.
+                </p>
+                <div className="space-y-2 max-h-60 overflow-auto">
+                  {potentialRules.map((rule, i) => (
+                    <label
+                      key={i}
+                      className={cn(
+                        "flex items-center gap-3 text-sm px-3 py-2.5 rounded-lg border cursor-pointer transition-colors",
+                        selectedRuleIndices.has(i)
+                          ? "bg-primary/5 border-primary/30"
+                          : "bg-muted/30 border-border/50 opacity-70"
+                      )}
+                    >
+                      <Checkbox
+                        checked={selectedRuleIndices.has(i)}
+                        onCheckedChange={() => toggleRuleSelection(i)}
+                      />
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="truncate text-foreground" title={rule.txDescription}>
+                          "{rule.txDescription.substring(0, 40)}{rule.txDescription.length > 40 ? '…' : ''}"
+                        </span>
+                        <span className="text-muted-foreground shrink-0">→</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <CategoryIcon
+                            iconName={getCategoryIcon(rule.categorySlug)}
+                            colorVar={getCategoryColor(rule.categorySlug)}
+                            size="sm"
+                            showBackground={false}
+                          />
+                          <span className="font-medium text-foreground whitespace-nowrap">
+                            {translateCategory(rule.categorySlug)}
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedRuleIndices.size} of {potentialRules.length} selected
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleSkipRuleSelection} disabled={isSaving}>
+              Skip all
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveSelectedRules} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+              )}
+              Save {selectedRuleIndices.size} rule(s)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Retroactive Rules Dialog */}
       <AlertDialog open={showRetroactiveDialog} onOpenChange={setShowRetroactiveDialog}>
         <AlertDialogContent className="dashboard-theme bg-background text-foreground">
