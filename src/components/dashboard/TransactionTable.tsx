@@ -272,6 +272,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       <TableCell className="font-medium text-muted-foreground hidden sm:table-cell whitespace-nowrap">
                         {formatTransactionDate(transaction.date)}
                       </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge 
+                          className={cn("font-normal rounded-full", movementBadgeColors[movementType])}
+                        >
+                          {movementLabels[movementType]}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className={cn(
@@ -293,13 +300,6 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           </div>
                           <span className="break-words line-clamp-2">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
                         </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge 
-                          className={cn("font-normal rounded-full", movementBadgeColors[movementType])}
-                        >
-                          {movementLabels[movementType]}
-                        </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-2 min-w-0">
