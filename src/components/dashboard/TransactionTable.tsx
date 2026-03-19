@@ -274,32 +274,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <Badge 
-                          className={cn("font-normal rounded-full", movementBadgeColors[movementType])}
+                          className={cn("font-normal rounded-full gap-1", movementBadgeColors[movementType])}
                         >
+                          {movementType === 'income' ? <Plus className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                           {movementLabels[movementType]}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className={cn(
-                            "p-1.5 rounded-lg flex-shrink-0",
-                            movementType === 'income' ? "bg-success/10"
-                              : movementType === 'investment' ? "bg-purple-100"
-                              : movementType === 'transfer' ? "bg-muted"
-                              : "bg-destructive/10"
-                          )}>
-                            {movementType === 'income' ? (
-                              <Plus className="w-3 h-3 text-success" />
-                            ) : movementType === 'investment' ? (
-                              <Minus className="w-3 h-3 text-purple-600" />
-                            ) : movementType === 'transfer' ? (
-                              <Minus className="w-3 h-3 text-muted-foreground" />
-                            ) : (
-                              <Minus className="w-3 h-3 text-destructive" />
-                            )}
-                          </div>
-                          <span className="break-words line-clamp-2">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
-                        </div>
+                        <span className="break-words line-clamp-2">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-2 min-w-0">
