@@ -345,6 +345,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     investmentMovements,
     monthlyData,
     categoryData,
+    incomeCategoryData,
     bankData,
     summary,
     openingBalanceByMonth,
