@@ -160,11 +160,6 @@ export default function Index() {
                           {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
                         </p>
                       )}
-                      {hasPreviousData && (
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {t('stats.previousBalance', { defaultValue: 'Previous month balance' })}: {formatCurrency(convertedPreviousMonth.balance)}
-                        </p>
-                      )}
                     </>
                 
                   )}
