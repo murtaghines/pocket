@@ -135,18 +135,19 @@ export function MonthReviewModal({
     queryFn: async () => {
       if (!user) return [];
       
-      // Calculate start and end dates for the month
+      // Calculate start and end dates using string parsing to avoid timezone shifts
       const [year, month] = monthKey.split("-").map(Number);
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0); // Last day of month
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, month, 0).getDate(); // getDate() is safe here
+      const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       
       let query = supabase
         .from("transactions")
         .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank, account_id")
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
-        .gte("date", startDate.toISOString().split("T")[0])
-        .lte("date", endDate.toISOString().split("T")[0])
+        .gte("date", startDate)
+        .lte("date", endDate)
         .order("date", { ascending: false });
 
       if (importId) {
