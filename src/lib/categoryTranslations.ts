@@ -7,7 +7,7 @@ export const categoryLabels: Record<string, string> = {
   salary: 'Salary',
   refunds: 'Refunds',
   transfers: 'Transfers',
-  other_income: 'Other Income',
+  other_income: 'Other',
   investment: 'Investment',
   freelance: 'Freelance',
   rents: 'Rents',
@@ -28,7 +28,7 @@ export const categoryLabels: Record<string, string> = {
   pets: 'Pets',
 
   // TRANSFER categories
-  own_transfer: 'Own Account',
+  own_transfer: 'To Myself',
   to_investment: 'To Investment',
   to_joint_account: 'To Joint Account',
 };
@@ -45,7 +45,7 @@ export const categoryIcons: Record<string, string> = {
   salary: 'briefcase',
   refunds: 'rotate-ccw',
   transfers: 'arrow-down-left',
-  other_income: 'plus-circle',
+  other_income: 'more-horizontal',
   housing: 'home',
   groceries: 'shopping-cart',
   restaurants: 'utensils',
