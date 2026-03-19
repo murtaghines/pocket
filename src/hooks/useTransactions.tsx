@@ -295,9 +295,9 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     }));
   })();
 
-  // Calculate category income (excluding transfers)
+  // Calculate category income (excluding transfers) - current month only
   const incomeCategoryData = (() => {
-    const incomes = financialTransactions.filter(
+    const incomes = currentMonthTransactions.filter(
       (t) => t.movement === "INCOME" || t.type === "income"
     );
     const categoryTotals: Record<string, number> = {};
