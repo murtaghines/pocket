@@ -23,6 +23,8 @@
   "charts": {
     "monthlyBalance": "Balance Mensual",
     "categoryBreakdown": "Desglose por Categoría",
+    "spendingByCategory": "Gastos por Categoría",
+    "incomeByCategory": "Ingresos por Categoría",
     "expensesByBank": "Gastos por Banco",
     "weeklyComparison": "Esta Semana",
     "yearlyBalance": "Balance Anual",

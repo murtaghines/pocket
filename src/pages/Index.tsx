@@ -4,10 +4,11 @@ import { CalendarDays, BarChart3, Plus, Minus } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
+import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
-import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
+
 import { type DashboardView } from "@/components/dashboard/DateDisplay";
 import { TotalView } from "@/components/dashboard/TotalView";
 
@@ -29,7 +30,8 @@ export default function Index() {
   const { 
     transactions, 
     monthlyData, 
-    categoryData, 
+    categoryData,
+    incomeCategoryData,
     summary, 
     openingBalanceByMonth,
     isLoading 
@@ -103,6 +105,11 @@ export default function Index() {
   }));
 
   const convertedCategoryData = categoryData.map(c => ({
+    ...c,
+    value: convertToUserCurrency(c.value),
+  }));
+
+  const convertedIncomeCategoryData = incomeCategoryData.map(c => ({
     ...c,
     value: convertToUserCurrency(c.value),
   }));
@@ -236,9 +243,9 @@ export default function Index() {
 
                   {/* Charts Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <CategoryChart data={convertedCategoryData} />
+                    <SpendingByCategoryChart data={convertedCategoryData} />
+                    <CategoryChart data={convertedIncomeCategoryData} />
                     <TopExpensesCard transactions={transactions} />
-                    <WeeklyComparisonChart />
                   </div>
                 </>
               ) : (

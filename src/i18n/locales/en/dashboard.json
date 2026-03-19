@@ -23,6 +23,8 @@
   "charts": {
     "monthlyBalance": "Monthly Balance",
     "categoryBreakdown": "Category Breakdown",
+    "spendingByCategory": "Spending by Category",
+    "incomeByCategory": "Income by Category",
     "expensesByBank": "Expenses by Bank",
     "weeklyComparison": "This Week",
     "yearlyBalance": "Yearly Balance",

@@ -283,6 +283,27 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     }));
   })();
 
+  // Calculate category income (excluding transfers)
+  const incomeCategoryData = (() => {
+    const incomes = financialTransactions.filter(
+      (t) => t.movement === "INCOME" || t.type === "income"
+    );
+    const categoryTotals: Record<string, number> = {};
+    
+    incomes.forEach((t) => {
+      const categoryKey = t.categorySlug || t.category;
+      const absAmount = Math.abs(t.amount);
+      categoryTotals[categoryKey] = (categoryTotals[categoryKey] || 0) + absAmount;
+    });
+    
+    return Object.entries(categoryTotals).map(([category, value]) => ({
+      name: getCategoryLabel(category),
+      value: Math.round(value * 100) / 100,
+      category: category as Category,
+      color: getCategoryHslColor(category),
+    }));
+  })();
+
   // Calculate bank expenses (excluding transfers)
   const bankData = (() => {
     const expenses = financialTransactions.filter(
@@ -324,6 +345,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     investmentMovements,
     monthlyData,
     categoryData,
+    incomeCategoryData,
     bankData,
     summary,
     openingBalanceByMonth,
