@@ -49,7 +49,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <PieChartIcon className="w-4 h-4 text-primary" />
             </div>
-            {t('charts.categoryBreakdown')}
+            {t('charts.incomeByCategory', 'Income by Category')}
           </CardTitle>
         </CardHeader>
         <CardContent>
