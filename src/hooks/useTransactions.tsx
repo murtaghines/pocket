@@ -316,9 +316,9 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     }));
   })();
 
-  // Calculate bank expenses (excluding transfers)
+  // Calculate bank expenses (excluding transfers) - current month only
   const bankData = (() => {
-    const expenses = financialTransactions.filter(
+    const expenses = currentMonthTransactions.filter(
       (t) => t.movement === "EXPENSE" || t.type === "expense"
     );
     const bankTotals: Record<string, number> = {};
@@ -334,13 +334,13 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     }));
   })();
 
-  // Calculate month summary (excluding transfers)
+  // Calculate month summary (excluding transfers) - current month only
   const summary = (() => {
-    const income = financialTransactions
+    const income = currentMonthTransactions
       .filter((t) => t.movement === "INCOME" || t.type === "income")
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     
-    const expenses = financialTransactions
+    const expenses = currentMonthTransactions
       .filter((t) => t.movement === "EXPENSE" || t.type === "expense")
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     
