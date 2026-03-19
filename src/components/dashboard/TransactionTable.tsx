@@ -240,8 +240,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="hidden sm:table-cell whitespace-nowrap w-[50px]">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
                 <TableHead className="hidden sm:table-cell whitespace-nowrap w-[82px]">{t('transactions.date')}</TableHead>
-                <TableHead>{t('transactions.description')}</TableHead>
                 <TableHead className="hidden md:table-cell whitespace-nowrap w-[110px]">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
+                <TableHead>{t('transactions.description')}</TableHead>
                 <TableHead className="hidden md:table-cell whitespace-nowrap w-[170px]">{t('transactions.category')}</TableHead>
                 <TableHead className="hidden lg:table-cell whitespace-nowrap w-[120px]">Account</TableHead>
                 <TableHead className="text-right whitespace-nowrap w-[95px]">{t('transactions.amount')}</TableHead>
