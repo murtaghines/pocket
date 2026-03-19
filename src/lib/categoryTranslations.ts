@@ -28,7 +28,7 @@ export const categoryLabels: Record<string, string> = {
   pets: 'Pets',
 
   // TRANSFER categories
-  own_transfer: 'Own Account',
+  own_transfer: 'To Myself',
   to_investment: 'To Investment',
   to_joint_account: 'To Joint Account',
 };
