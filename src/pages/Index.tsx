@@ -8,7 +8,7 @@ import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCatego
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
-import { WeeklyComparisonChart } from "@/components/dashboard/WeeklyComparisonChart";
+
 import { type DashboardView } from "@/components/dashboard/DateDisplay";
 import { TotalView } from "@/components/dashboard/TotalView";
 
