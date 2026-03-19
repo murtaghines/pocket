@@ -320,7 +320,7 @@ export function MonthReviewModal({
 
     setIsSaving(true);
     try {
-      const newRules: CreatedRule[] = [];
+      const pendingRules: PotentialRule[] = [];
       const savedTxIds: string[] = [];
 
       const savePromises = editEntries.map(async ([txId, edit]) => {
@@ -350,30 +350,14 @@ export function MonthReviewModal({
           .trim();
         const pattern = cleanDesc.toLowerCase();
 
-        if (pattern && category?.id && user) {
-          const { error: ruleError } = await supabase
-            .from("categorization_rules")
-            .insert({
-              user_id: user.id,
-              domain: "CASHFLOW" as const,
-              pattern,
-              match_type: "CONTAINS",
-              match_field: "description_norm",
-              category_id: category.id,
-              priority: Math.floor(Date.now() / 1000),
-            });
-
-          if (!ruleError) {
-            newRules.push({
-              pattern,
-              categorySlug: effectiveCategory,
-              categoryId: category.id,
-              movement: effectiveMovement,
-              txDescription: cleanDesc,
-            });
-          } else {
-            console.warn("Could not create categorization rule:", ruleError);
-          }
+        if (pattern && category?.id) {
+          pendingRules.push({
+            pattern,
+            categorySlug: effectiveCategory,
+            categoryId: category.id,
+            movement: effectiveMovement,
+            txDescription: cleanDesc,
+          });
         }
       });
 
@@ -381,22 +365,20 @@ export function MonthReviewModal({
 
       queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
 
       toast({
         title: `✓ ${editEntries.length} change(s) saved`,
-        description: newRules.length > 0 
-          ? `${newRules.length} rule(s) added to the categorizer`
-          : `Transactions updated for ${monthLabel}`,
-        duration: 6000,
+        description: `Transactions updated for ${monthLabel}`,
+        duration: 4000,
       });
 
       setEdits({});
+      setEditedTxIds(savedTxIds);
 
-      if (newRules.length > 0) {
-        setCreatedRules(newRules);
-        setEditedTxIds(savedTxIds);
-        setShowRetroactiveDialog(true);
+      if (pendingRules.length > 0) {
+        setPotentialRules(pendingRules);
+        setSelectedRuleIndices(new Set(pendingRules.map((_, i) => i))); // all selected by default
+        setShowRuleSelectionDialog(true);
       } else {
         onOpenChange(false);
       }
@@ -410,6 +392,92 @@ export function MonthReviewModal({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSaveSelectedRules = async () => {
+    const selectedRules = potentialRules.filter((_, i) => selectedRuleIndices.has(i));
+    
+    if (selectedRules.length === 0) {
+      setShowRuleSelectionDialog(false);
+      setPotentialRules([]);
+      setSelectedRuleIndices(new Set());
+      onOpenChange(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const newRules: CreatedRule[] = [];
+
+      for (const rule of selectedRules) {
+        if (rule.categoryId && user) {
+          const { error: ruleError } = await supabase
+            .from("categorization_rules")
+            .insert({
+              user_id: user.id,
+              domain: "CASHFLOW" as const,
+              pattern: rule.pattern,
+              match_type: "CONTAINS",
+              match_field: "description_norm",
+              category_id: rule.categoryId,
+              priority: Math.floor(Date.now() / 1000),
+            });
+
+          if (!ruleError) {
+            newRules.push(rule);
+          } else {
+            console.warn("Could not create categorization rule:", ruleError);
+          }
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+
+      toast({
+        title: `✓ ${newRules.length} rule(s) created`,
+        description: `These patterns will be used for future categorization`,
+        duration: 5000,
+      });
+
+      setShowRuleSelectionDialog(false);
+      setPotentialRules([]);
+      setSelectedRuleIndices(new Set());
+
+      if (newRules.length > 0) {
+        setCreatedRules(newRules);
+        setShowRetroactiveDialog(true);
+      } else {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error("Error creating rules:", error);
+      toast({
+        title: "Error",
+        description: "Could not create some rules. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSkipRuleSelection = () => {
+    setShowRuleSelectionDialog(false);
+    setPotentialRules([]);
+    setSelectedRuleIndices(new Set());
+    onOpenChange(false);
+  };
+
+  const toggleRuleSelection = (index: number) => {
+    setSelectedRuleIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
   };
 
   const handleApplyRetroactive = async () => {
