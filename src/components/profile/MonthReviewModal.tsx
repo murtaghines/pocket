@@ -349,7 +349,13 @@ export function MonthReviewModal({
         const cleanDesc = (tx.description_norm || tx.description)
           .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
           .trim();
-        const pattern = cleanDesc.toLowerCase();
+        // Extract a reusable pattern: strip trailing card numbers, locations, dates
+        const pattern = cleanDesc
+          .toLowerCase()
+          .replace(/,?\s*tarj\.?\s*:?\s*\*?\d+\s*$/i, '') // strip card numbers
+          .replace(/,?\s*\d{2}\/\d{2}\/\d{4}\s*$/i, '')   // strip trailing dates
+          .replace(/\s+/g, ' ')                             // normalize spaces
+          .trim();
 
         if (pattern && category?.id) {
           pendingRules.push({
