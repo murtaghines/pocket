@@ -45,7 +45,7 @@ export const categoryIcons: Record<string, string> = {
   salary: 'briefcase',
   refunds: 'rotate-ccw',
   transfers: 'arrow-down-left',
-  other_income: 'plus-circle',
+  other_income: 'more-horizontal',
   housing: 'home',
   groceries: 'shopping-cart',
   restaurants: 'utensils',
