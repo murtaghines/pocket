@@ -89,6 +89,15 @@ interface MonthReviewModalProps {
   importId?: string; // Filter to a specific import
 }
 
+// Info about potential rules from edits
+interface PotentialRule {
+  pattern: string;
+  categorySlug: string;
+  categoryId: string | null;
+  movement: string;
+  txDescription: string;
+}
+
 // Info about rules that were created
 interface CreatedRule {
   pattern: string;
