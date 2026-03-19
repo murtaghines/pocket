@@ -240,8 +240,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="hidden sm:table-cell whitespace-nowrap w-[50px]">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
                 <TableHead className="hidden sm:table-cell whitespace-nowrap w-[82px]">{t('transactions.date')}</TableHead>
-                <TableHead>{t('transactions.description')}</TableHead>
                 <TableHead className="hidden md:table-cell whitespace-nowrap w-[110px]">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
+                <TableHead>{t('transactions.description')}</TableHead>
                 <TableHead className="hidden md:table-cell whitespace-nowrap w-[170px]">{t('transactions.category')}</TableHead>
                 <TableHead className="hidden lg:table-cell whitespace-nowrap w-[120px]">Account</TableHead>
                 <TableHead className="text-right whitespace-nowrap w-[95px]">{t('transactions.amount')}</TableHead>
@@ -272,6 +272,13 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       <TableCell className="font-medium text-muted-foreground hidden sm:table-cell whitespace-nowrap">
                         {formatTransactionDate(transaction.date)}
                       </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge 
+                          className={cn("font-normal rounded-full", movementBadgeColors[movementType])}
+                        >
+                          {movementLabels[movementType]}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className={cn(
@@ -293,13 +300,6 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                           </div>
                           <span className="break-words line-clamp-2">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
                         </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge 
-                          className={cn("font-normal rounded-full", movementBadgeColors[movementType])}
-                        >
-                          {movementLabels[movementType]}
-                        </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-2 min-w-0">
