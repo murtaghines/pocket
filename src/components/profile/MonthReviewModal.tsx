@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -89,6 +90,15 @@ interface MonthReviewModalProps {
   importId?: string; // Filter to a specific import
 }
 
+// Info about potential rules from edits
+interface PotentialRule {
+  pattern: string;
+  categorySlug: string;
+  categoryId: string | null;
+  movement: string;
+  txDescription: string;
+}
+
 // Info about rules that were created
 interface CreatedRule {
   pattern: string;
@@ -126,6 +136,9 @@ export function MonthReviewModal({
   };
   const [edits, setEdits] = useState<Record<string, TransactionEdits>>({});
   const [showRetroactiveDialog, setShowRetroactiveDialog] = useState(false);
+  const [showRuleSelectionDialog, setShowRuleSelectionDialog] = useState(false);
+  const [potentialRules, setPotentialRules] = useState<PotentialRule[]>([]);
+  const [selectedRuleIndices, setSelectedRuleIndices] = useState<Set<number>>(new Set());
   const [createdRules, setCreatedRules] = useState<CreatedRule[]>([]);
   const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
   const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
@@ -308,7 +321,7 @@ export function MonthReviewModal({
 
     setIsSaving(true);
     try {
-      const newRules: CreatedRule[] = [];
+      const pendingRules: PotentialRule[] = [];
       const savedTxIds: string[] = [];
 
       const savePromises = editEntries.map(async ([txId, edit]) => {
@@ -338,30 +351,14 @@ export function MonthReviewModal({
           .trim();
         const pattern = cleanDesc.toLowerCase();
 
-        if (pattern && category?.id && user) {
-          const { error: ruleError } = await supabase
-            .from("categorization_rules")
-            .insert({
-              user_id: user.id,
-              domain: "CASHFLOW" as const,
-              pattern,
-              match_type: "CONTAINS",
-              match_field: "description_norm",
-              category_id: category.id,
-              priority: Math.floor(Date.now() / 1000),
-            });
-
-          if (!ruleError) {
-            newRules.push({
-              pattern,
-              categorySlug: effectiveCategory,
-              categoryId: category.id,
-              movement: effectiveMovement,
-              txDescription: cleanDesc,
-            });
-          } else {
-            console.warn("Could not create categorization rule:", ruleError);
-          }
+        if (pattern && category?.id) {
+          pendingRules.push({
+            pattern,
+            categorySlug: effectiveCategory,
+            categoryId: category.id,
+            movement: effectiveMovement,
+            txDescription: cleanDesc,
+          });
         }
       });
 
@@ -369,22 +366,20 @@ export function MonthReviewModal({
 
       queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
 
       toast({
         title: `✓ ${editEntries.length} change(s) saved`,
-        description: newRules.length > 0 
-          ? `${newRules.length} rule(s) added to the categorizer`
-          : `Transactions updated for ${monthLabel}`,
-        duration: 6000,
+        description: `Transactions updated for ${monthLabel}`,
+        duration: 4000,
       });
 
       setEdits({});
+      setEditedTxIds(savedTxIds);
 
-      if (newRules.length > 0) {
-        setCreatedRules(newRules);
-        setEditedTxIds(savedTxIds);
-        setShowRetroactiveDialog(true);
+      if (pendingRules.length > 0) {
+        setPotentialRules(pendingRules);
+        setSelectedRuleIndices(new Set(pendingRules.map((_, i) => i))); // all selected by default
+        setShowRuleSelectionDialog(true);
       } else {
         onOpenChange(false);
       }
@@ -398,6 +393,92 @@ export function MonthReviewModal({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSaveSelectedRules = async () => {
+    const selectedRules = potentialRules.filter((_, i) => selectedRuleIndices.has(i));
+    
+    if (selectedRules.length === 0) {
+      setShowRuleSelectionDialog(false);
+      setPotentialRules([]);
+      setSelectedRuleIndices(new Set());
+      onOpenChange(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const newRules: CreatedRule[] = [];
+
+      for (const rule of selectedRules) {
+        if (rule.categoryId && user) {
+          const { error: ruleError } = await supabase
+            .from("categorization_rules")
+            .insert({
+              user_id: user.id,
+              domain: "CASHFLOW" as const,
+              pattern: rule.pattern,
+              match_type: "CONTAINS",
+              match_field: "description_norm",
+              category_id: rule.categoryId,
+              priority: Math.floor(Date.now() / 1000),
+            });
+
+          if (!ruleError) {
+            newRules.push(rule);
+          } else {
+            console.warn("Could not create categorization rule:", ruleError);
+          }
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+
+      toast({
+        title: `✓ ${newRules.length} rule(s) created`,
+        description: `These patterns will be used for future categorization`,
+        duration: 5000,
+      });
+
+      setShowRuleSelectionDialog(false);
+      setPotentialRules([]);
+      setSelectedRuleIndices(new Set());
+
+      if (newRules.length > 0) {
+        setCreatedRules(newRules);
+        setShowRetroactiveDialog(true);
+      } else {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error("Error creating rules:", error);
+      toast({
+        title: "Error",
+        description: "Could not create some rules. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSkipRuleSelection = () => {
+    setShowRuleSelectionDialog(false);
+    setPotentialRules([]);
+    setSelectedRuleIndices(new Set());
+    onOpenChange(false);
+  };
+
+  const toggleRuleSelection = (index: number) => {
+    setSelectedRuleIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
   };
 
   const handleApplyRetroactive = async () => {
@@ -690,6 +771,76 @@ export function MonthReviewModal({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Rule Selection Dialog */}
+      <AlertDialog open={showRuleSelectionDialog} onOpenChange={setShowRuleSelectionDialog}>
+        <AlertDialogContent className="dashboard-theme bg-background text-foreground max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />
+              Save as categorization rules?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Select which changes should become permanent rules. Future transactions with similar descriptions will be automatically categorized.
+                </p>
+                <div className="space-y-2 max-h-60 overflow-auto">
+                  {potentialRules.map((rule, i) => (
+                    <label
+                      key={i}
+                      className={cn(
+                        "flex items-center gap-3 text-sm px-3 py-2.5 rounded-lg border cursor-pointer transition-colors",
+                        selectedRuleIndices.has(i)
+                          ? "bg-primary/5 border-primary/30"
+                          : "bg-muted/30 border-border/50 opacity-70"
+                      )}
+                    >
+                      <Checkbox
+                        checked={selectedRuleIndices.has(i)}
+                        onCheckedChange={() => toggleRuleSelection(i)}
+                      />
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="truncate text-foreground" title={rule.txDescription}>
+                          "{rule.txDescription.substring(0, 40)}{rule.txDescription.length > 40 ? '…' : ''}"
+                        </span>
+                        <span className="text-muted-foreground shrink-0">→</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <CategoryIcon
+                            iconName={getCategoryIcon(rule.categorySlug)}
+                            colorVar={getCategoryColor(rule.categorySlug)}
+                            size="sm"
+                            showBackground={false}
+                          />
+                          <span className="font-medium text-foreground whitespace-nowrap">
+                            {translateCategory(rule.categorySlug)}
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedRuleIndices.size} of {potentialRules.length} selected
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleSkipRuleSelection} disabled={isSaving}>
+              Skip all
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveSelectedRules} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+              )}
+              Save {selectedRuleIndices.size} rule(s)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Retroactive Rules Dialog */}
       <AlertDialog open={showRetroactiveDialog} onOpenChange={setShowRetroactiveDialog}>
