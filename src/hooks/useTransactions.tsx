@@ -262,9 +262,21 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       });
   })();
 
-  // Calculate category expenses (excluding transfers)
+  // Determine the latest month key for filtering charts/summary
+  const latestMonthKey = monthlyData.length > 0 ? monthlyData[monthlyData.length - 1].month : null;
+
+  // Filter financial transactions to only the latest month
+  const currentMonthTransactions = latestMonthKey
+    ? financialTransactions.filter((t) => {
+        const date = new Date(t.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        return monthKey === latestMonthKey;
+      })
+    : financialTransactions;
+
+  // Calculate category expenses (excluding transfers) - current month only
   const categoryData = (() => {
-    const expenses = financialTransactions.filter(
+    const expenses = currentMonthTransactions.filter(
       (t) => t.movement === "EXPENSE" || t.type === "expense"
     );
     const categoryTotals: Record<string, number> = {};
