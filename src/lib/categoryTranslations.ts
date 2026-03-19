@@ -7,7 +7,7 @@ export const categoryLabels: Record<string, string> = {
   salary: 'Salary',
   refunds: 'Refunds',
   transfers: 'Transfers',
-  other_income: 'Other Income',
+  other_income: 'Other',
   investment: 'Investment',
   freelance: 'Freelance',
   rents: 'Rents',
