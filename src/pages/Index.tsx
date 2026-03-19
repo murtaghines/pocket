@@ -235,16 +235,16 @@ export default function Index() {
                     />
                   </div>
 
-                  {/* Investment & Savings */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                  {/* Investment, Savings & Income Breakdown */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
                     <InvestmentSummaryCard />
                     <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+                    <CategoryChart data={convertedIncomeCategoryData} />
                   </div>
 
-                  {/* Charts Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Expense Charts Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <SpendingByCategoryChart data={convertedCategoryData} />
-                    <CategoryChart data={convertedIncomeCategoryData} />
                     <TopExpensesCard transactions={transactions} />
                   </div>
                 </>
