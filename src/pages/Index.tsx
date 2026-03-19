@@ -109,6 +109,11 @@ export default function Index() {
     value: convertToUserCurrency(c.value),
   }));
 
+  const convertedIncomeCategoryData = incomeCategoryData.map(c => ({
+    ...c,
+    value: convertToUserCurrency(c.value),
+  }));
+
   const convertedSummary = {
     income: convertToUserCurrency(summary.income),
     expenses: convertToUserCurrency(summary.expenses),
