@@ -135,6 +135,9 @@ export function MonthReviewModal({
   };
   const [edits, setEdits] = useState<Record<string, TransactionEdits>>({});
   const [showRetroactiveDialog, setShowRetroactiveDialog] = useState(false);
+  const [showRuleSelectionDialog, setShowRuleSelectionDialog] = useState(false);
+  const [potentialRules, setPotentialRules] = useState<PotentialRule[]>([]);
+  const [selectedRuleIndices, setSelectedRuleIndices] = useState<Set<number>>(new Set());
   const [createdRules, setCreatedRules] = useState<CreatedRule[]>([]);
   const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
   const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
