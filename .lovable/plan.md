@@ -1,40 +1,29 @@
 
 
-## Verificacion y Correccion del Flujo de Periodos Abiertos/Cerrados
+## Plan: Fix Opening Balance Calculation
 
-### Problemas Encontrados
+### Problem
+The opening balance for each month is calculated incorrectly because when multiple transactions share the same date (e.g., Feb 1), the code picks an arbitrary one to compute `running_balance - amount`. This gives different results depending on which transaction is selected. For February, the correct opening is **940.66** but the code may return 915.96 or another wrong value.
 
-Despues de revisar todo el codigo, encontre estos problemas concretos:
+### Root Cause
+In `useTransactions.tsx` (line 191), transactions are sorted by date string only. When multiple transactions fall on the same date, their relative order is undefined. The code then picks whichever appears first, leading to non-deterministic opening balance values.
 
-1. **Drag-and-drop ignora el candado**: Si un mes esta cerrado (candado cerrado), el usuario puede arrastrar archivos sobre el slot y el sistema intenta procesarlos. Recien en el backend se rechaza con error "period_closed". La UI deberia bloquearlo antes.
+### Fix (1 file: `src/hooks/useTransactions.tsx`)
 
-2. **No hay validacion client-side antes de subir**: El hook `useMonthlyFileUpload` envia archivos directamente al backend sin verificar si el periodo esta cerrado. Esto causa el error que viste.
+Replace the opening balance computation (lines 172-205) with a deterministic algorithm:
 
-3. **Race condition al reabrir**: Cuando el usuario hace clic en "Reabrir mes", la query de periodos se invalida y se refresca. Pero si el usuario intenta subir un archivo antes de que termine el refetch, el backend podria seguir viendo el periodo como cerrado.
+1. For each bank on the earliest date of a month, collect all transactions that have a `running_balance`.
+2. Build a set of all `running_balance` values on that date.
+3. Find the **first chronological transaction** by identifying the one whose `running_balance - amount` is NOT in the set of running_balances. This value is the balance before any transaction occurred — the true opening balance.
+4. Sum across all banks to get the total opening balance for the month.
 
-### Solucion Propuesta
+**Why this works:** Each transaction's running_balance equals the previous transaction's running_balance plus its amount. So for every transaction except the first, `running_balance - amount` equals another transaction's running_balance. For the first transaction, `running_balance - amount` equals the opening balance, which is not any transaction's running_balance.
 
-#### 1. Bloquear drag-and-drop en meses cerrados
-En `MonthUploadSlot.tsx`, el handler `handleDrop` debe verificar `isClosed` y mostrar un toast de advertencia en vez de intentar subir.
+**Fallback:** If the algorithm can't find the first transaction (e.g., due to floating-point coincidence), fall back to selecting the transaction with the maximum `running_balance - amount` on the earliest date — this is correct when net daily flow is negative (the most common case).
 
-#### 2. Bloquear el area de upload cuando esta cerrado
-El area de upload (drop zone vacia) y el boton "Add more files" ya se ocultan correctamente cuando `isClosed` es true. Pero el drag-and-drop sigue activo. Se agregara la verificacion ahi.
-
-#### 3. Pasar el estado del periodo al hook de upload
-Modificar `addFilesForMonth` para aceptar un parametro opcional de estado del periodo, o hacer la verificacion directamente en `MonthUploadSlot` antes de llamar a `onAddFiles`.
-
-### Cambios Tecnicos
-
-**Archivo: `src/components/profile/MonthUploadSlot.tsx`**
-- En `handleDrop`: agregar verificacion `if (isClosed)` al inicio, mostrando un toast "Este mes esta cerrado. Reabrilo para subir archivos" y haciendo return sin procesar.
-- En `handleFileInput`: agregar la misma verificacion `if (isClosed)`.
-- Deshabilitar visualmente el area de drag cuando el mes esta cerrado (agregar clase CSS de opacidad reducida y cursor no permitido).
-
-**Archivo: `src/hooks/useMonthlyFileUpload.tsx`**
-- No requiere cambios, la validacion se hara en la UI antes de llamar a `addFilesForMonth`.
-
-### Resultado Esperado
-- Si el candado esta cerrado: no se puede subir de ninguna forma (ni drag, ni click, ni input). Se muestra un mensaje claro.
-- Si el candado esta abierto: funciona normal.
-- El backend sigue como segunda linea de defensa por si algo pasa.
+### Verification
+With the user's Feb 1 data:
+- 7 transactions, running_balances: {927.26, 917.46, 916.96, 926.76, 919.76, 915.96, 910.28}
+- Transaction with rb=927.26, amount=-13.40: candidate opening = 940.66
+- 940.66 is NOT in the running_balance set → confirmed as the true opening ✓
 
