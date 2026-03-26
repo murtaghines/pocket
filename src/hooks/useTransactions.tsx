@@ -188,12 +188,34 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       let hasAnyBalance = false;
       
       for (const [, txs] of Object.entries(banks)) {
-        const sorted = [...txs].sort((a, b) => a.date.localeCompare(b.date));
-        const firstWithBalance = sorted.find(t => t.runningBalance != null);
-        if (firstWithBalance && firstWithBalance.runningBalance != null) {
-          totalOpening += firstWithBalance.runningBalance - firstWithBalance.amount;
-          hasAnyBalance = true;
+        // Get transactions with running_balance on the earliest date
+        const withBalance = txs.filter(t => t.runningBalance != null);
+        if (!withBalance.length) continue;
+        
+        // Find the earliest date for this bank in this month
+        const earliestDate = withBalance.reduce((min, t) => t.date < min ? t.date : min, withBalance[0].date);
+        const txsOnEarliestDate = withBalance.filter(t => t.date === earliestDate);
+        
+        // Build set of all running_balance values (as integers to avoid float issues)
+        const balanceSet = new Set(txsOnEarliestDate.map(t => Math.round(t.runningBalance! * 100)));
+        
+        // Find the first transaction: its (running_balance - amount) is NOT in the balance set
+        const firstTx = txsOnEarliestDate.find(t => {
+          const candidateOpening = Math.round((t.runningBalance! - t.amount) * 100);
+          return !balanceSet.has(candidateOpening);
+        });
+        
+        if (firstTx) {
+          totalOpening += firstTx.runningBalance! - firstTx.amount;
+        } else {
+          // Fallback: pick the transaction with max (running_balance - amount)
+          const fallback = txsOnEarliestDate.reduce((best, t) => {
+            const opening = t.runningBalance! - t.amount;
+            return opening > (best.runningBalance! - best.amount) ? t : best;
+          });
+          totalOpening += fallback.runningBalance! - fallback.amount;
         }
+        hasAnyBalance = true;
       }
       
       if (hasAnyBalance) {
