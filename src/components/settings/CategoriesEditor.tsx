@@ -24,7 +24,7 @@ export function CategoriesEditor() {
   const { toast } = useToast();
   const { incomeCategories, expenseCategories, isLoading: catsLoading } = useCategories('CASHFLOW');
   const { rules, isLoading: rulesLoading, addRule, updateRule, deleteRule, getRulesForCategory } = useCategorizationRules();
-  const { customCategories, isSaving, addCustomCategory, removeRule: removeCustomRule, rules: allCustomRules } = useCustomCategories();
+  const { customCategories, isSaving, addCustomCategory, removeRule: removeCustomRule, rules: allCustomRules, getVisualOverride, setVisualOverride } = useCustomCategories();
   const [dialogState, setDialogState] = useState<RuleDialogState | null>(null);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
 
@@ -125,6 +125,8 @@ export function CategoriesEditor() {
               onDeleteRule={(id) => deleteRule.mutate(id)}
               customCategories={incomeCustom}
               onDeleteCustomCategory={handleDeleteCustomCategory}
+              getVisualOverride={getVisualOverride}
+              onSetVisualOverride={setVisualOverride}
             />
           )}
         </div>
@@ -151,6 +153,8 @@ export function CategoriesEditor() {
               onDeleteRule={(id) => deleteRule.mutate(id)}
               customCategories={expenseCustom}
               onDeleteCustomCategory={handleDeleteCustomCategory}
+              getVisualOverride={getVisualOverride}
+              onSetVisualOverride={setVisualOverride}
             />
           )}
         </div>
