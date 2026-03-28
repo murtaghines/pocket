@@ -140,7 +140,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </nav>
 
       {/* Main content — spacing between nav and content sections */}
-      <div className="px-2 md:px-3 pt-2 md:pt-3 pb-20 md:pb-3 min-h-[calc(100vh-80px)] relative z-10">
+      <div className="px-2 md:px-3 pt-16 md:pt-[72px] pb-20 md:pb-3 min-h-[calc(100vh-80px)] relative z-10">
         {children}
       </div>
     </div>
