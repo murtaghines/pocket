@@ -19,7 +19,14 @@ export interface CustomCategoryRule {
   icon?: string;
 }
 
-export type CategoryRule = RuleOverride | CustomCategoryRule;
+export interface VisualOverride {
+  type: "visual_override";
+  categorySlug: string;
+  color?: string;
+  icon?: string;
+}
+
+export type CategoryRule = RuleOverride | CustomCategoryRule | VisualOverride;
 
 export function useCustomCategories() {
   const { user } = useAuth();
