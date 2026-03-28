@@ -85,16 +85,34 @@ export function useCustomCategories() {
 
   const ruleOverrides = rules.filter((r): r is RuleOverride => r.type === "rule_override");
   const customCategories = rules.filter((r): r is CustomCategoryRule => r.type === "custom_category");
+  const visualOverrides = rules.filter((r): r is VisualOverride => r.type === "visual_override");
+
+  const getVisualOverride = (slug: string): VisualOverride | undefined =>
+    visualOverrides.find(v => v.categorySlug === slug);
+
+  const setVisualOverride = (slug: string, color?: string, icon?: string) => {
+    const existing = rules.findIndex(r => r.type === "visual_override" && (r as VisualOverride).categorySlug === slug);
+    const override: VisualOverride = { type: "visual_override", categorySlug: slug, color, icon };
+    if (existing >= 0) {
+      const newRules = [...rules];
+      newRules[existing] = override;
+      return saveRules.mutateAsync(newRules);
+    }
+    return saveRules.mutateAsync([...rules, override]);
+  };
 
   return {
     rules,
     ruleOverrides,
     customCategories,
+    visualOverrides,
     isLoading,
     isSaving: saveRules.isPending,
     addRuleOverride,
     addCustomCategory,
     removeRule,
     updateRule,
+    getVisualOverride,
+    setVisualOverride,
   };
 }
