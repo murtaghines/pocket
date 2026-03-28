@@ -1,29 +1,28 @@
 
 
-## Plan: Fix Opening Balance Calculation
+## Plan: Redesign Categories & Rules Section
 
-### Problem
-The opening balance for each month is calculated incorrectly because when multiple transactions share the same date (e.g., Feb 1), the code picks an arbitrary one to compute `running_balance - amount`. This gives different results depending on which transaction is selected. For February, the correct opening is **940.66** but the code may return 915.96 or another wrong value.
+### Changes
 
-### Root Cause
-In `useTransactions.tsx` (line 191), transactions are sorted by date string only. When multiple transactions fall on the same date, their relative order is undefined. The code then picks whichever appears first, leading to non-deterministic opening balance values.
+**1. Side-by-side layout for Income & Expenses (`CategoriesEditor.tsx`)**
+- Replace the `Tabs` component with a two-column grid layout (`grid grid-cols-1 md:grid-cols-2 gap-6`)
+- Each column gets its own header with the icon and count (e.g., "Income (7)" / "Expenses (13)")
+- Both lists are always visible on wider screens, stacking vertically on mobile
 
-### Fix (1 file: `src/hooks/useTransactions.tsx`)
+**2. Remove redundant "Custom Rules" section (`CustomCategoriesManager.tsx`)**
+- Remove the "Add rule to a category" button and the Rule Overrides section entirely (the override dialog and its state)
+- Since every category already has an "Add rule" button inside its expanded view, this section is duplicative
+- Keep only the "My Custom Categories" section with the "Create new category" button
 
-Replace the opening balance computation (lines 172-205) with a deterministic algorithm:
+**3. Visual refresh (`CategoryRulesList.tsx` + `CategoriesEditor.tsx`)**
+- Remove the outer `Card` wrapper — use a cleaner open layout with subtle section headers
+- Category items: remove the grey `bg-background` border box look, use a cleaner row style with a subtle bottom border or hover highlight instead of heavy bordered cards
+- Add a small colored dot or left accent bar using the category's color for visual interest
+- Rules inside expanded categories: use a slightly more polished pill/tag style
+- Column headers get a subtle colored accent (green tint for Income, orange/warm tint for Expenses)
 
-1. For each bank on the earliest date of a month, collect all transactions that have a `running_balance`.
-2. Build a set of all `running_balance` values on that date.
-3. Find the **first chronological transaction** by identifying the one whose `running_balance - amount` is NOT in the set of running_balances. This value is the balance before any transaction occurred — the true opening balance.
-4. Sum across all banks to get the total opening balance for the month.
-
-**Why this works:** Each transaction's running_balance equals the previous transaction's running_balance plus its amount. So for every transaction except the first, `running_balance - amount` equals another transaction's running_balance. For the first transaction, `running_balance - amount` equals the opening balance, which is not any transaction's running_balance.
-
-**Fallback:** If the algorithm can't find the first transaction (e.g., due to floating-point coincidence), fall back to selecting the transaction with the maximum `running_balance - amount` on the earliest date — this is correct when net daily flow is negative (the most common case).
-
-### Verification
-With the user's Feb 1 data:
-- 7 transactions, running_balances: {927.26, 917.46, 916.96, 926.76, 919.76, 915.96, 910.28}
-- Transaction with rb=927.26, amount=-13.40: candidate opening = 940.66
-- 940.66 is NOT in the running_balance set → confirmed as the true opening ✓
+### Files to modify
+1. **`src/components/settings/CategoriesEditor.tsx`** — Replace Tabs with side-by-side grid, remove Card wrapper, simplify header
+2. **`src/components/settings/CategoryRulesList.tsx`** — Refresh item styling with color accents and cleaner rows
+3. **`src/components/settings/CustomCategoriesManager.tsx`** — Remove the Rule Overrides section entirely, keep only Custom Categories
 
