@@ -15,6 +15,8 @@ export interface CustomCategoryRule {
   name: string;
   movement: "INCOME" | "EXPENSE";
   keywords: string[];
+  color?: string;
+  icon?: string;
 }
 
 export type CategoryRule = RuleOverride | CustomCategoryRule;
