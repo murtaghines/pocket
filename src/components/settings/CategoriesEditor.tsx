@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategories } from '@/hooks/useCategories';
@@ -55,73 +53,79 @@ export function CategoriesEditor() {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <p className="text-sm text-muted-foreground">
-          {t('categories.description')}
+    <div className="space-y-8">
+      {/* Info banner */}
+      <div className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/40 border border-border/50">
+        <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {t('categories.alwaysActiveNote', 'These categories are always active. Pocket automatically assigns them based on your transaction descriptions. You can add custom rules to fine-tune how transactions are categorized.')}
         </p>
-        <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-muted/50 border">
-          <Info className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            {t('categories.alwaysActiveNote', 'These categories are always active. Pocket automatically assigns them based on your transaction descriptions. You can add custom rules to fine-tune how transactions are categorized.')}
-          </p>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <Tabs defaultValue="expense" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="income" className="flex items-center gap-1.5 text-xs">
-              <TrendingUp className="w-3.5 h-3.5" />
-              {t('categories.income')} ({incomeCategories.length})
-            </TabsTrigger>
-            <TabsTrigger value="expense" className="flex items-center gap-1.5 text-xs">
-              <TrendingDown className="w-3.5 h-3.5" />
-              {t('categories.expenses')} ({expenseCategories.length})
-            </TabsTrigger>
-          </TabsList>
+      </div>
 
-          <TabsContent value="income" className="mt-3">
-            {isLoading ? (
-              <div className="text-sm text-muted-foreground text-center py-4">Loading...</div>
-            ) : (
-              <CategoryRulesList
-                categories={incomeCategories}
-                getRulesForCategory={getRulesForCategory}
-                onAddRule={handleAddRule}
-                onEditRule={handleEditRule}
-                onDeleteRule={(id) => deleteRule.mutate(id)}
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="expense" className="mt-3">
-            {isLoading ? (
-              <div className="text-sm text-muted-foreground text-center py-4">Loading...</div>
-            ) : (
-              <CategoryRulesList
-                categories={expenseCategories}
-                getRulesForCategory={getRulesForCategory}
-                onAddRule={handleAddRule}
-                onEditRule={handleEditRule}
-                onDeleteRule={(id) => deleteRule.mutate(id)}
-              />
-            )}
-          </TabsContent>
-        </Tabs>
-
-        <div className="border-t pt-4">
-          <CustomCategoriesManager />
+      {/* Side-by-side Income & Expenses */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Income Column */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b-2 border-emerald-500/30">
+            <div className="flex items-center justify-center w-6 h-6 rounded-md bg-emerald-500/10">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h3 className="text-sm font-semibold tracking-tight">
+              {t('categories.income')}
+            </h3>
+            <span className="text-xs text-muted-foreground">({incomeCategories.length})</span>
+          </div>
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
+          ) : (
+            <CategoryRulesList
+              categories={incomeCategories}
+              getRulesForCategory={getRulesForCategory}
+              onAddRule={handleAddRule}
+              onEditRule={handleEditRule}
+              onDeleteRule={(id) => deleteRule.mutate(id)}
+            />
+          )}
         </div>
 
-        <AddRuleDialog
-          open={!!dialogState}
-          categoryName={dialogState?.categoryName || ''}
-          editingRule={dialogState?.editingRule}
-          onClose={() => setDialogState(null)}
-          onSave={handleSave}
-          isSaving={addRule.isPending || updateRule.isPending}
-        />
-      </CardContent>
-    </Card>
+        {/* Expenses Column */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b-2 border-orange-500/30">
+            <div className="flex items-center justify-center w-6 h-6 rounded-md bg-orange-500/10">
+              <TrendingDown className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <h3 className="text-sm font-semibold tracking-tight">
+              {t('categories.expenses')}
+            </h3>
+            <span className="text-xs text-muted-foreground">({expenseCategories.length})</span>
+          </div>
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
+          ) : (
+            <CategoryRulesList
+              categories={expenseCategories}
+              getRulesForCategory={getRulesForCategory}
+              onAddRule={handleAddRule}
+              onEditRule={handleEditRule}
+              onDeleteRule={(id) => deleteRule.mutate(id)}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Custom Categories */}
+      <div className="border-t pt-6">
+        <CustomCategoriesManager />
+      </div>
+
+      <AddRuleDialog
+        open={!!dialogState}
+        categoryName={dialogState?.categoryName || ''}
+        editingRule={dialogState?.editingRule}
+        onClose={() => setDialogState(null)}
+        onSave={handleSave}
+        isSaving={addRule.isPending || updateRule.isPending}
+      />
+    </div>
   );
 }
