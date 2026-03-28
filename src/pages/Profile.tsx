@@ -57,41 +57,41 @@ export default function Profile() {
 
           {/* Personal Info & Regional Settings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <SectionHeader icon={User} title={t('personalInfo.title')} delay="50ms" />
-              <div className="animate-slide-up" style={{ animationDelay: '50ms' }}>
+            <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '50ms', boxShadow: 'var(--shadow-card)' }}>
+              <SectionHeader icon={User} title={t('personalInfo.title')} />
+              <div className="mt-4">
                 <ProfileInfoCard onLogout={handleLogout} />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <SectionHeader icon={Globe} title={ts('regional.title')} delay="100ms" />
-              <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+            <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '100ms', boxShadow: 'var(--shadow-card)' }}>
+              <SectionHeader icon={Globe} title={ts('regional.title')} />
+              <div className="mt-4">
                 <PreferencesForm />
               </div>
             </div>
           </div>
 
           {/* Categories */}
-          <div className="space-y-3">
-            <SectionHeader icon={Tags} title={ts('categories.title')} delay="150ms" />
-            <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '150ms', boxShadow: 'var(--shadow-card)' }}>
+          <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '150ms', boxShadow: 'var(--shadow-card)' }}>
+            <SectionHeader icon={Tags} title={ts('categories.title')} />
+            <div className="mt-4">
               <CategoriesEditor />
             </div>
           </div>
 
-          {/* Accounts */}
-          <div className="space-y-3">
-            <SectionHeader icon={Building2} title={t('accounts.title', 'Accounts')} delay="175ms" />
-            <div className="animate-slide-up" style={{ animationDelay: '175ms' }}>
+          {/* Banking Accounts */}
+          <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '175ms', boxShadow: 'var(--shadow-card)' }}>
+            <SectionHeader icon={Landmark} title={t('accounts.title', 'Banking Accounts')} />
+            <div className="mt-4">
               <AccountsManager />
             </div>
           </div>
 
           {/* Delete Account */}
-          <div className="space-y-3">
-            <SectionHeader icon={Trash2} title={t('account.title')} delay="200ms" />
-            <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '200ms', boxShadow: 'var(--shadow-card)' }}>
+          <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '200ms', boxShadow: 'var(--shadow-card)' }}>
+            <SectionHeader icon={Trash2} title={t('account.title')} />
+            <div className="mt-4">
               <p className="text-xs text-muted-foreground mb-4">
                 {t('account.deleteWarning')}
               </p>
