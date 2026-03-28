@@ -125,6 +125,8 @@ export function CategoriesEditor() {
               onDeleteRule={(id) => deleteRule.mutate(id)}
               customCategories={incomeCustom}
               onDeleteCustomCategory={handleDeleteCustomCategory}
+              getVisualOverride={getVisualOverride}
+              onSetVisualOverride={setVisualOverride}
             />
           )}
         </div>
