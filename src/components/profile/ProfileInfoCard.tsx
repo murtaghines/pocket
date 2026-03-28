@@ -64,9 +64,9 @@ export function ProfileInfoCard({ onLogout, className }: ProfileInfoCardProps) {
     : null;
 
   return (
-    <Card className={className}>
+    <Card className={`${className || ''}`} style={{ boxShadow: 'var(--shadow-card)' }}>
       <CardHeader className="pb-4 flex flex-row items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {t('personalInfo.description')}
         </p>
         {!isEditing && (

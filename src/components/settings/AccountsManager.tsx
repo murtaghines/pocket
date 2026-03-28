@@ -82,8 +82,8 @@ export function AccountsManager({ className }: { className?: string }) {
 
   return (
     <>
-      <div className={`bg-card border rounded-xl p-5 space-y-4 ${className || ''}`}>
-        <p className="text-sm text-muted-foreground">
+      <div className={`bg-card border rounded-xl p-5 md:p-6 space-y-4 ${className || ''}`} style={{ boxShadow: 'var(--shadow-card)' }}>
+        <p className="text-xs text-muted-foreground">
           {t('accounts.managerDescription', 'Manage your bank accounts and cards. These appear when uploading files.')}
         </p>
 

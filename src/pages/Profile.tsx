@@ -8,9 +8,20 @@ import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 import { AccountsManager } from "@/components/settings/AccountsManager";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { User, Globe, Tags, Building2 } from "lucide-react";
+import { User, Globe, Tags, Building2, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+
+function SectionHeader({ icon: Icon, title, delay = "0ms" }: { icon: React.ElementType; title: string; delay?: string }) {
+  return (
+    <div className="flex items-center gap-2.5 animate-slide-up" style={{ animationDelay: delay }}>
+      <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
+        <Icon className="w-3.5 h-3.5 text-primary" />
+      </div>
+      <h3 className="text-sm font-semibold text-foreground tracking-tight">{title}</h3>
+    </div>
+  );
+}
 
 export default function Profile() {
   const { t } = useTranslation('profile');
@@ -38,57 +49,54 @@ export default function Profile() {
           isLoggingOut ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <main className="max-w-[1400px] mx-auto">
-          <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
-            {/* Profile Header */}
-            <div className="mb-8">
-              <ProfileHeader />
+        <main className="max-w-[1400px] mx-auto space-y-6">
+          {/* Profile Header */}
+          <div className="bg-card rounded-xl p-5 md:p-6 animate-fade-in" style={{ boxShadow: 'var(--shadow-card)' }}>
+            <ProfileHeader />
+          </div>
+
+          {/* Personal Info & Regional Settings */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <SectionHeader icon={User} title={t('personalInfo.title')} delay="50ms" />
+              <div className="animate-slide-up" style={{ animationDelay: '50ms' }}>
+                <ProfileInfoCard onLogout={handleLogout} />
+              </div>
             </div>
 
-            {/* Settings content */}
-            <div className="space-y-6">
-              {/* Personal Info & Regional Settings - same row, equal height */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="animate-slide-up flex flex-col">
-                  <div className="flex items-center gap-2 mb-4">
-                    <User className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium text-foreground">{t('personalInfo.title')}</h3>
-                  </div>
-                  <ProfileInfoCard onLogout={handleLogout} className="flex-1" />
-                </div>
-
-                <div className="animate-slide-up flex flex-col" style={{ animationDelay: '100ms' }}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Globe className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-medium text-foreground">{ts('regional.title')}</h3>
-                  </div>
-                  <PreferencesForm className="flex-1" />
-                </div>
+            <div className="space-y-3">
+              <SectionHeader icon={Globe} title={ts('regional.title')} delay="100ms" />
+              <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+                <PreferencesForm />
               </div>
+            </div>
+          </div>
 
-              {/* Categories - full width */}
-              <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Tags className="w-4 h-4 text-primary" />
-                  <h3 className="text-base font-medium text-foreground">{ts('categories.title')}</h3>
-                </div>
-                <CategoriesEditor />
-              </div>
+          {/* Categories */}
+          <div className="space-y-3">
+            <SectionHeader icon={Tags} title={ts('categories.title')} delay="150ms" />
+            <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '150ms', boxShadow: 'var(--shadow-card)' }}>
+              <CategoriesEditor />
+            </div>
+          </div>
 
-              {/* Accounts */}
-              <div className="animate-slide-up" style={{ animationDelay: '175ms' }}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Building2 className="w-4 h-4 text-primary" />
-                  <h3 className="text-base font-medium text-foreground">{t('accounts.title', 'Accounts')}</h3>
-                </div>
-                <AccountsManager />
-              </div>
+          {/* Accounts */}
+          <div className="space-y-3">
+            <SectionHeader icon={Building2} title={t('accounts.title', 'Accounts')} delay="175ms" />
+            <div className="animate-slide-up" style={{ animationDelay: '175ms' }}>
+              <AccountsManager />
+            </div>
+          </div>
 
-              {/* Delete Account */}
-              <div className="animate-slide-up pt-8 border-t" style={{ animationDelay: '200ms' }}>
-                <div className="max-w-xs mx-auto">
-                  <DeleteAccountDialog />
-                </div>
+          {/* Delete Account */}
+          <div className="space-y-3">
+            <SectionHeader icon={Trash2} title={t('account.title')} delay="200ms" />
+            <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '200ms', boxShadow: 'var(--shadow-card)' }}>
+              <p className="text-xs text-muted-foreground mb-4">
+                {t('account.deleteWarning')}
+              </p>
+              <div className="max-w-xs">
+                <DeleteAccountDialog />
               </div>
             </div>
           </div>
