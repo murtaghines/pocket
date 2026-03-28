@@ -24,7 +24,7 @@ export function CategoriesEditor() {
   const { toast } = useToast();
   const { incomeCategories, expenseCategories, isLoading: catsLoading } = useCategories('CASHFLOW');
   const { rules, isLoading: rulesLoading, addRule, updateRule, deleteRule, getRulesForCategory } = useCategorizationRules();
-  const { customCategories, isSaving, addCustomCategory, removeRule: removeCustomRule, rules: allCustomRules } = useCustomCategories();
+  const { customCategories, isSaving, addCustomCategory, removeRule: removeCustomRule, rules: allCustomRules, getVisualOverride, setVisualOverride } = useCustomCategories();
   const [dialogState, setDialogState] = useState<RuleDialogState | null>(null);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
 
