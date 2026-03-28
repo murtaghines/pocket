@@ -67,7 +67,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Static top nav bar — standalone, not inside white containers */}
-      <div className="sticky top-0 z-50 px-2 md:px-3 pt-2 md:pt-3">
+      <div className="fixed top-0 left-0 right-0 z-50 px-2 md:px-3 pt-2 md:pt-3">
         <div className="max-w-[1400px] mx-auto">
           <nav className="flex items-center justify-between backdrop-blur-xl rounded-2xl px-4 md:px-6 py-2 shadow-sm" style={{ background: '#0F4264' }}>
             {/* Logo */}
