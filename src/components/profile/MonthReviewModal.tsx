@@ -442,22 +442,8 @@ export function MonthReviewModal({
         }
       }
 
-      // Also save to categorization_rules for backward compatibility
-      for (const rule of newRules) {
-        if (rule.categoryId) {
-          await supabase
-            .from("categorization_rules")
-            .insert({
-              user_id: user!.id,
-              domain: "CASHFLOW" as const,
-              pattern: rule.pattern,
-              match_type: rule.match_type === 'fuzzy' ? 'CONTAINS' : rule.match_type.toUpperCase(),
-              match_field: "description_norm",
-              category_id: rule.categoryId,
-              priority: Math.floor(Date.now() / 1000),
-            });
-        }
-      }
+      // No longer dual-writing to categorization_rules — the edge function
+      // now reads both user_rules and categorization_rules directly.
 
       queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
 

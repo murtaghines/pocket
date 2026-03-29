@@ -58,13 +58,29 @@ export function useCategorizationRules() {
 
   const deleteRule = useMutation({
     mutationFn: async (ruleId: string) => {
+      // Get the rule's pattern before deleting, to clean up matching user_rules
+      const ruleToDelete = rules.find(r => r.id === ruleId);
+      
       const { error } = await supabase
         .from("categorization_rules")
         .delete()
         .eq("id", ruleId);
       if (error) throw error;
+
+      // Also clean up any matching user_rules with the same pattern
+      if (ruleToDelete && user?.id) {
+        await supabase
+          .from("user_rules")
+          .update({ is_active: false, deleted_at: new Date().toISOString() })
+          .eq("user_id", user.id)
+          .eq("pattern", ruleToDelete.pattern)
+          .eq("is_active", true);
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categorization_rules"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+      queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+    },
   });
 
   const getRulesForCategory = (categoryId: string): Rule[] => {
