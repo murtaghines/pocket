@@ -113,14 +113,25 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     const sorted = [...transactions].sort((a, b) => {
       const dateCmp = a.date.localeCompare(b.date);
       if (dateCmp !== 0) return dateCmp;
-      // Same date: income first, then transfers, then expenses (so balance builds logically)
       const order = { income: 0, transfer: 1, expense: 2 };
       const typeA = getMovementType(a);
       const typeB = getMovementType(b);
       return (order[typeA === 'investment' ? 'expense' : typeA] || 2) - (order[typeB === 'investment' ? 'expense' : typeB] || 2);
     });
+
+    // Derive opening balance from the first transaction that has a bank-reported runningBalance
+    let startingBalance = 0;
+    const firstWithBalance = sorted.find(tx => tx.runningBalance != null);
+    if (firstWithBalance) {
+      // Walk backwards: opening = bank_balance - sum of all amounts up to (and including) that tx
+      const idx = sorted.indexOf(firstWithBalance);
+      let sumUpTo = 0;
+      for (let i = 0; i <= idx; i++) sumUpTo += sorted[i].amount;
+      startingBalance = firstWithBalance.runningBalance! - sumUpTo;
+    }
+
     const map = new Map<string, number>();
-    let balance = 0;
+    let balance = startingBalance;
     for (const tx of sorted) {
       balance += tx.amount;
       map.set(tx.id, Math.round(balance * 100) / 100);
