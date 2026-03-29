@@ -79,8 +79,12 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave }: ColorIcon
   const [icon, setIcon] = useState(currentIcon);
   const { t } = useTranslation('settings');
 
+  const toPasscalCase = (name: string) =>
+    name.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+
   const renderIcon = (iconName: string, size = 16) => {
-    const Ic = icons[iconName as keyof typeof icons];
+    const key = toPasscalCase(iconName);
+    const Ic = icons[key as keyof typeof icons];
     return Ic ? <Ic size={size} strokeWidth={1.8} /> : null;
   };
 
