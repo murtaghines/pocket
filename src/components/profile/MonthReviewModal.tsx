@@ -95,19 +95,17 @@ interface MonthReviewModalProps {
 // Info about potential rules from edits
 interface PotentialRule {
   pattern: string;
+  match_type: MatchType;
+  tokens: string[];
   categorySlug: string;
   categoryId: string | null;
   movement: string;
   txDescription: string;
 }
 
-// Info about rules that were created
-interface CreatedRule {
-  pattern: string;
-  categorySlug: string;
-  categoryId: string | null;
-  movement: string;
-  txDescription: string;
+// Info about rules that were created (includes DB id)
+interface CreatedRule extends PotentialRule {
+  ruleId: string;
 }
 
 // Local edits state
