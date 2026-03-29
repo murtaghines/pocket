@@ -108,6 +108,26 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     }
   };
 
+  // Compute cumulative running balance across ALL transactions sorted chronologically
+  const computedBalanceMap = (() => {
+    const sorted = [...transactions].sort((a, b) => {
+      const dateCmp = a.date.localeCompare(b.date);
+      if (dateCmp !== 0) return dateCmp;
+      // Same date: income first, then transfers, then expenses (so balance builds logically)
+      const order = { income: 0, transfer: 1, expense: 2 };
+      const typeA = getMovementType(a);
+      const typeB = getMovementType(b);
+      return (order[typeA === 'investment' ? 'expense' : typeA] || 2) - (order[typeB === 'investment' ? 'expense' : typeB] || 2);
+    });
+    const map = new Map<string, number>();
+    let balance = 0;
+    for (const tx of sorted) {
+      balance += tx.amount;
+      map.set(tx.id, Math.round(balance * 100) / 100);
+    }
+    return map;
+  })();
+
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategories.length === 0 || allCategoriesSelected || selectedCategories.includes(t.category);
@@ -312,8 +332,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         {formatCurrency(transaction.amount)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground hidden lg:table-cell">
-                        {transaction.runningBalance != null
-                          ? formatCurrency(transaction.runningBalance)
+                        {computedBalanceMap.has(transaction.id)
+                          ? formatCurrency(computedBalanceMap.get(transaction.id)!)
                           : '—'}
                       </TableCell>
                     </TableRow>
