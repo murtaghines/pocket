@@ -373,6 +373,7 @@ serve(async (req) => {
           bank: t.bank || null,
           transaction_hash: t.transaction_hash,
           domain: 'CASHFLOW',
+          ...(ruleIdApplied ? { rule_id_applied: ruleIdApplied } : {}),
         };
       });
 
