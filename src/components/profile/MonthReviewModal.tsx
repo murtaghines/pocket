@@ -340,6 +340,7 @@ export function MonthReviewModal({
             category_id: category?.id || null,
             category_source: "MANUAL",
             categorized_by: "user",
+            user_corrected: true,
           })
           .eq("id", txId);
 
@@ -349,17 +350,15 @@ export function MonthReviewModal({
         const cleanDesc = (tx.description_norm || tx.description)
           .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
           .trim();
-        // Extract a reusable pattern: strip trailing card numbers, locations, dates
-        const pattern = cleanDesc
-          .toLowerCase()
-          .replace(/,?\s*tarj\.?\s*:?\s*\*?\d+\s*$/i, '') // strip card numbers
-          .replace(/,?\s*\d{2}\/\d{2}\/\d{4}\s*$/i, '')   // strip trailing dates
-          .replace(/\s+/g, ' ')                             // normalize spaces
-          .trim();
 
-        if (pattern && category?.id) {
+        // Build a smart rule from the description
+        const ruleData = buildRuleFromCorrection(cleanDesc, effectiveMovement, effectiveCategory);
+
+        if (category?.id) {
           pendingRules.push({
-            pattern,
+            pattern: ruleData.pattern,
+            match_type: ruleData.match_type,
+            tokens: ruleData.tokens,
             categorySlug: effectiveCategory,
             categoryId: category.id,
             movement: effectiveMovement,
