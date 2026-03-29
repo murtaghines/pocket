@@ -259,9 +259,8 @@ serve(async (req) => {
       .order('source', { ascending: false })   // 'user_correction' > 'manual'
       .order('created_at', { ascending: false }); // newest first
 
-    const sortedUserRules = userRules || [];
     const ruleHitCounts = new Map<string, number>();
-    console.log(`Loaded ${sortedUserRules.length} active user rules`);
+    console.log(`Loaded ${(userRules || []).length} active user rules`);
 
     // Fetch category IDs from database for mapping
     const { data: categories } = await supabase
@@ -270,11 +269,49 @@ serve(async (req) => {
       .eq('domain', 'CASHFLOW');
 
     const categoryMap = new Map<string, { id: string; movement_type: string }>();
+    const categoryIdToSlug = new Map<string, string>();
     categories?.forEach(cat => {
       if (cat.slug) {
         categoryMap.set(cat.slug, { id: cat.id, movement_type: cat.movement_type });
+        categoryIdToSlug.set(cat.id, cat.slug);
       }
     });
+
+    // Also load categorization_rules (from Settings UI) and merge them
+    const { data: settingsRules } = await supabase
+      .from('categorization_rules')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('domain', 'CASHFLOW')
+      .order('priority', { ascending: false });
+
+    // Convert settings rules to the same shape as user_rules
+    const convertedSettingsRules = (settingsRules || []).map(r => {
+      const slug = r.category_id ? (categoryIdToSlug.get(r.category_id) || 'other_expense') : 'other_expense';
+      const catInfo = categoryMap.get(slug);
+      const movementType = catInfo?.movement_type || 'EXPENSE';
+      // Map match_type: SMART/CONTAINS/STARTS_WITH/EXACT/REGEX → lowercase
+      let matchType = (r.match_type || 'contains').toLowerCase();
+      if (matchType === 'smart') matchType = 'fuzzy';
+      // For fuzzy, extract tokens from pattern
+      const tokens = matchType === 'fuzzy'
+        ? (r.pattern || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter((t: string) => t.length >= 2)
+        : [];
+      return {
+        id: r.id,
+        match_type: matchType,
+        pattern: r.pattern,
+        tokens,
+        movement: movementType,
+        category: slug,
+        confidence: 0.9,
+        source: 'manual',
+      };
+    });
+
+    // user_rules first (higher priority), then settings rules
+    const sortedUserRules = [...(userRules || []), ...convertedSettingsRules];
+    console.log(`Total rules (user_rules + settings): ${sortedUserRules.length}`);
 
     // CONFIRM MODE: Save or update pre-validated transactions
     if (confirmTransactions && transactions && recordId && userId) {
