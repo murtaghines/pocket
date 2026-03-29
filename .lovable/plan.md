@@ -1,35 +1,57 @@
 
 
-## Plan: Integrate User Rules into Edge Function
+## Findings: Rule Lifecycle Verification
 
-### Summary
-Load user rules from `user_rules` table before AI categorization runs. For each transaction, check user rules first — if matched, skip the AI's category entirely. After processing, update `applied_count` and `last_applied_at` for fired rules.
+### Issue 1: Settings rules don't reach the categorizer
+Rules created via the "+" button in **Categorization & Rules** are saved to the `categorization_rules` table. But the `process-financial-file` edge function only reads from the `user_rules` table. **These rules are never evaluated by the categorizer.**
 
-### Changes to `supabase/functions/process-financial-file/index.ts`
+The `process-import` edge function does read `categorization_rules`, but `process-financial-file` (the main one) does not.
 
-**1. Add `applyUserRules` function (after `containsUserName`, ~line 183)**
-- Normalizes description (uppercase, strip accents, collapse special chars)
-- Iterates rules in order (user_correction first, newest first)
-- Supports all match types: fuzzy, contains, starts_with, exact, regex
-- Returns `{ movement, category, confidence, ruleId }` or `null`
+### Issue 2: Edit works but only for `categorization_rules`
+When you edit a rule in Settings, `useCategorizationRules.updateRule` updates the `categorization_rules` table correctly. But since the categorizer doesn't read that table, the edit has no practical effect on future file processing.
 
-**2. Load user rules after profile fetch (~line 208)**
-- Query `user_rules` where `user_id = userId`, `is_active = true`
-- Order by `source DESC` (user_correction > manual), then `created_at DESC` (newest first)
-- Store as `userRules` array, also create a `ruleHitCounts` map to track which rules fired
+### Issue 3: Delete works but same gap
+Deleting a rule removes it from `categorization_rules`. Again, not read by the main categorizer.
 
-**3. Apply user rules in the transaction processing loop (~line 457)**
-- Before `normalizeMovement` / `validateCategory`, call `applyUserRules(description, userRules)`
-- If a rule matches: use its movement + category, set `rule_id_applied` on the transaction, skip self-transfer detection and AI category validation
-- If no rule matches: proceed with existing AI categorization logic as-is
-- Track hits in `ruleHitCounts` map
+### Issue 4: MonthReviewModal writes to BOTH tables (redundantly)
+When creating a rule from the file preview, `MonthReviewModal` inserts into both `user_rules` AND `categorization_rules` (lines 420-458). This is redundant and can cause drift.
 
-**4. Same logic in CONFIRM MODE (~line 245-278)**
-- When confirming/inserting transactions, also apply user rules before `normalizeMovement`/`validateCategory`
+---
 
-**5. Update rule stats after processing (before returning response)**
-- For each rule that fired, batch update `applied_count` and `last_applied_at`
+## Plan: Unify Rules on `user_rules` Table
+
+### Approach
+Make Settings rules also write to `user_rules` instead of (or in addition to) `categorization_rules`. This ensures all rules are evaluated by the categorizer.
+
+### Changes
+
+**1. Update `useCategorizationRules.tsx` — Write to `user_rules` table**
+- `addRule`: Insert into `user_rules` with `source: 'manual'`, mapping `category_id` → category slug lookup, and storing the pattern/match_type. Also keep inserting into `categorization_rules` for backward compatibility.
+- `updateRule`: Update the corresponding `user_rules` row (need to track the `user_rules` ID alongside the `categorization_rules` ID).
+- `deleteRule`: When deleting from `categorization_rules`, also soft-delete (set `is_active = false`) or hard-delete the matching `user_rules` row.
+
+**2. Alternative simpler approach — Make edge function also read `categorization_rules`**
+- Add a second query in `process-financial-file/index.ts` to load `categorization_rules` and merge them into the rule evaluation pipeline (converting match types: `SMART`→`fuzzy`, `CONTAINS`→`contains`, etc.)
+- This avoids changing any client code
+
+**Recommended: Option 2** (less risk, fewer changes)
+
+### Implementation details
+
+**File: `supabase/functions/process-financial-file/index.ts`**
+- After loading `user_rules`, also load `categorization_rules` for the user
+- Convert each `categorization_rule` into the same shape as a `user_rule` (mapping `category_id` → slug via the categories lookup, `SMART`→`fuzzy`, etc.)
+- Append them AFTER `user_rules` in the sorted array (so `user_rules` always win)
+- The `applyUserRules` function already handles all match types
+
+**File: `src/hooks/useCategorizationRules.tsx`**
+- On `deleteRule`: also delete any matching `user_rules` row with same pattern (to clean up duplicates from MonthReviewModal dual-writes)
+
+**File: `src/components/profile/MonthReviewModal.tsx`**
+- Remove the redundant write to `categorization_rules` (lines 446-459) since the edge function will now read `user_rules` directly
 
 ### Files to modify
-1. `supabase/functions/process-financial-file/index.ts` — all changes in this single file
+1. `supabase/functions/process-financial-file/index.ts` — also load + merge `categorization_rules`
+2. `src/components/profile/MonthReviewModal.tsx` — remove dual-write to `categorization_rules`
+3. `src/hooks/useCategorizationRules.tsx` — on delete, also clean up matching `user_rules` rows
 
