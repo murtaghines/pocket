@@ -1,49 +1,22 @@
 
 
-## Plan: Redesign Profile Page — Titles Inside Cards, Integrated Custom Categories with Color & Icon Picker
+## Plan: Create `user_rules` Table and Add Transaction Columns
 
-### Summary
-Move section titles inside their white cards, rename "Accounts" to "Banking Accounts", eliminate the separate "My Custom Categories" section, and integrate custom categories directly into the Income/Expense lists with a "Create new category" button under the Categories title. Custom categories appear inline (with a visual badge marking them as user-created and a delete button). Add a curated color palette picker and icon picker to the create dialog.
+### What
+Run the SQL migration the user provided to:
+1. Create the `user_rules` table with RLS
+2. Add 3 new columns to `transactions` table (`rule_id_applied`, `user_corrected`, `auto_recategorized`)
 
-### Changes
+### Important Notes
+- The `user_id` column references `profiles(id)` — but the `profiles` table uses `user_id` (uuid) as the user identifier, not `id`. The `id` column is an auto-generated UUID primary key, not the auth user ID. This means the foreign key should reference `profiles(user_id)` instead, OR better yet, reference `auth.users(id)` directly (but that's not recommended per project conventions). The safest approach: **remove the FK constraint** and just store `auth.uid()` directly, matching the pattern used by all other tables in this project (accounts, transactions, uploads, etc. all use `user_id uuid NOT NULL` without FK references).
+- The `CHECK` constraints should be replaced with validation triggers per project guidelines (CHECK constraints must be immutable).
 
-**1. Profile.tsx — Titles inside cards**
-- Move each `SectionHeader` inside its corresponding `bg-card` container instead of above it
-- Rename "Accounts" title to "Banking Accounts"
-- Remove the separate Custom Categories section entirely (no more `<CustomCategoriesManager />` as a standalone block)
+### Adjusted SQL
+I'll run the migration with these corrections:
+- `user_id` will be a plain `uuid NOT NULL` (no FK to profiles, matching project convention)
+- Replace CHECK constraints with a validation trigger
+- Keep everything else as specified
 
-**2. CategoriesEditor.tsx — Integrated custom category creation**
-- Add a "Create new category" button next to the Categories section title (inside the card, at the top)
-- Remove the `<CustomCategoriesManager />` import and the separate border-t section
-- When creating a custom category, the user picks: name, type (Income/Expense), keywords, color (from curated palette), and icon (from curated Lucide icon set)
-- Store `color` (HSL string) and `icon` (Lucide icon name) in the `CustomCategoryRule` type
-
-**3. CustomCategoryRule type update (useCustomCategories.tsx)**
-- Add optional `color?: string` and `icon?: string` fields to `CustomCategoryRule`
-- These store the user's chosen HSL color and Lucide icon name
-
-**4. CategoryRulesList.tsx — Show custom categories inline**
-- Accept a new prop `customCategories` (filtered by movement type)
-- Render custom categories at the bottom of each list with:
-  - The user-chosen color as the accent bar (falling back to a default)
-  - The user-chosen icon (falling back to "circle")
-  - A small "Custom" badge to distinguish from system categories
-  - A delete button (trash icon) on hover
-  - Expandable like system categories to show keywords as rules
-- System categories do NOT have a delete button
-
-**5. Create Category Dialog — Color & Icon picker**
-- **Color palette**: A curated grid of ~12-16 HSL colors (avoiding red/green per the existing design system). Rendered as clickable circles with a check mark on the selected one.
-- **Icon picker**: A curated grid of ~20-24 common Lucide icons (e.g., coffee, gift, baby, music, book, wrench, scissors, palette, flame, zap, sparkles, crown, star, tag, anchor, compass, umbrella, wine, cake, dog, cat, truck, shield, key). Rendered as a scrollable grid of clickable icon buttons.
-- Both selections are optional with sensible defaults (grey color, circle icon)
-
-**6. useCategoryTranslations.tsx — Support custom category visuals**
-- When `getCategoryColor` or `getCategoryIcon` is called with a custom category slug not in the hardcoded maps, the caller will pass the custom color/icon directly. No changes needed to this hook — the `CategoryRulesList` component will use the custom values directly for custom categories.
-
-### Files to modify
-1. `src/pages/Profile.tsx` — titles inside cards, rename Accounts, remove standalone CustomCategoriesManager
-2. `src/components/settings/CategoriesEditor.tsx` — add "Create new category" button, integrate creation dialog, pass custom categories to lists
-3. `src/hooks/useCustomCategories.tsx` — add `color` and `icon` fields to type
-4. `src/components/settings/CategoryRulesList.tsx` — render custom categories inline with delete, custom visuals
-5. `src/components/settings/CustomCategoriesManager.tsx` — repurpose as just the Dialog component (or inline into CategoriesEditor)
+### Files to update after migration
+Once the migration runs, the `src/integrations/supabase/types.ts` will auto-update. No immediate code changes needed — this is just the schema setup.
 
