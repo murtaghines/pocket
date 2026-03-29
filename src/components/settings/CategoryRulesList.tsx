@@ -40,8 +40,10 @@ interface Props {
 }
 
 const matchTypeKey = (mt: string) => {
+  if (mt === 'SMART') return 'categories.smartMatch';
   if (mt === 'STARTS_WITH') return 'categories.startsWith';
   if (mt === 'REGEX') return 'categories.regex';
+  if (mt === 'EXACT') return 'categories.exact';
   return 'categories.contains';
 };
 
