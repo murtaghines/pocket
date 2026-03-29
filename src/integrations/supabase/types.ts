@@ -487,6 +487,7 @@ export type Database = {
           amount: number
           amount_base: number | null
           auth_date: string | null
+          auto_recategorized: boolean | null
           bank: string | null
           categorization_rule_id: string | null
           categorized_by: string | null
@@ -513,6 +514,7 @@ export type Database = {
           payment_channel: string | null
           period_id: string | null
           posted_date: string | null
+          rule_id_applied: string | null
           running_balance: number | null
           source_row_hash: string | null
           source_transaction_id: string | null
@@ -521,6 +523,7 @@ export type Database = {
           tx_type: string | null
           type: string
           upload_id: string | null
+          user_corrected: boolean | null
           user_id: string
           value_date: string | null
         }
@@ -529,6 +532,7 @@ export type Database = {
           amount: number
           amount_base?: number | null
           auth_date?: string | null
+          auto_recategorized?: boolean | null
           bank?: string | null
           categorization_rule_id?: string | null
           categorized_by?: string | null
@@ -555,6 +559,7 @@ export type Database = {
           payment_channel?: string | null
           period_id?: string | null
           posted_date?: string | null
+          rule_id_applied?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
           source_transaction_id?: string | null
@@ -563,6 +568,7 @@ export type Database = {
           tx_type?: string | null
           type: string
           upload_id?: string | null
+          user_corrected?: boolean | null
           user_id: string
           value_date?: string | null
         }
@@ -571,6 +577,7 @@ export type Database = {
           amount?: number
           amount_base?: number | null
           auth_date?: string | null
+          auto_recategorized?: boolean | null
           bank?: string | null
           categorization_rule_id?: string | null
           categorized_by?: string | null
@@ -597,6 +604,7 @@ export type Database = {
           payment_channel?: string | null
           period_id?: string | null
           posted_date?: string | null
+          rule_id_applied?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
           source_transaction_id?: string | null
@@ -605,6 +613,7 @@ export type Database = {
           tx_type?: string | null
           type?: string
           upload_id?: string | null
+          user_corrected?: boolean | null
           user_id?: string
           value_date?: string | null
         }
@@ -759,6 +768,60 @@ export type Database = {
           onboarding_completed?: boolean | null
           selected_categories?: string[] | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_rules: {
+        Row: {
+          applied_count: number
+          category: string
+          confidence: number
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          last_applied_at: string | null
+          match_type: string
+          movement: string
+          original_description: string | null
+          pattern: string
+          source: string
+          tokens: string[] | null
+          user_id: string
+        }
+        Insert: {
+          applied_count?: number
+          category: string
+          confidence?: number
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_applied_at?: string | null
+          match_type?: string
+          movement: string
+          original_description?: string | null
+          pattern: string
+          source?: string
+          tokens?: string[] | null
+          user_id: string
+        }
+        Update: {
+          applied_count?: number
+          category?: string
+          confidence?: number
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_applied_at?: string | null
+          match_type?: string
+          movement?: string
+          original_description?: string | null
+          pattern?: string
+          source?: string
+          tokens?: string[] | null
           user_id?: string
         }
         Relationships: []
