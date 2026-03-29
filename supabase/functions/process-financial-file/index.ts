@@ -301,8 +301,21 @@ serve(async (req) => {
         for (const t of transactions) {
           const existingId = existingHashMap.get(t.transaction_hash);
           if (existingId) {
-            const movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
-            const categorySlug = validateCategory(t.category, movement);
+            // User rules take priority
+            const userRuleResult = applyUserRules(t.description || '', sortedUserRules);
+            let movement: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+            let categorySlug: string;
+            let ruleIdApplied: string | null = null;
+
+            if (userRuleResult) {
+              movement = userRuleResult.movement as 'INCOME' | 'EXPENSE' | 'TRANSFER';
+              categorySlug = userRuleResult.category;
+              ruleIdApplied = userRuleResult.ruleId;
+              ruleHitCounts.set(ruleIdApplied, (ruleHitCounts.get(ruleIdApplied) || 0) + 1);
+            } else {
+              movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
+              categorySlug = validateCategory(t.category, movement);
+            }
             const categoryInfo = categoryMap.get(categorySlug);
             
             await supabase
@@ -312,6 +325,7 @@ serve(async (req) => {
                 type: movement.toLowerCase(),
                 category: categorySlug,
                 category_id: categoryInfo?.id || null,
+                ...(ruleIdApplied ? { rule_id_applied: ruleIdApplied } : {}),
               })
               .eq('id', existingId);
           }
