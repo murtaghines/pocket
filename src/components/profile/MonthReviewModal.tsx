@@ -64,6 +64,8 @@ import {
   getMovementLabel,
   normalizeCategory
 } from "@/lib/categoryTranslations";
+import { buildRuleFromCorrection, ruleMatchesDescription } from "@/lib/userRules";
+import type { MatchType } from "@/lib/userRules";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
@@ -93,19 +95,17 @@ interface MonthReviewModalProps {
 // Info about potential rules from edits
 interface PotentialRule {
   pattern: string;
+  match_type: MatchType;
+  tokens: string[];
   categorySlug: string;
   categoryId: string | null;
   movement: string;
   txDescription: string;
 }
 
-// Info about rules that were created
-interface CreatedRule {
-  pattern: string;
-  categorySlug: string;
-  categoryId: string | null;
-  movement: string;
-  txDescription: string;
+// Info about rules that were created (includes DB id)
+interface CreatedRule extends PotentialRule {
+  ruleId: string;
 }
 
 // Local edits state
@@ -340,6 +340,7 @@ export function MonthReviewModal({
             category_id: category?.id || null,
             category_source: "MANUAL",
             categorized_by: "user",
+            user_corrected: true,
           })
           .eq("id", txId);
 
@@ -349,17 +350,15 @@ export function MonthReviewModal({
         const cleanDesc = (tx.description_norm || tx.description)
           .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
           .trim();
-        // Extract a reusable pattern: strip trailing card numbers, locations, dates
-        const pattern = cleanDesc
-          .toLowerCase()
-          .replace(/,?\s*tarj\.?\s*:?\s*\*?\d+\s*$/i, '') // strip card numbers
-          .replace(/,?\s*\d{2}\/\d{2}\/\d{4}\s*$/i, '')   // strip trailing dates
-          .replace(/\s+/g, ' ')                             // normalize spaces
-          .trim();
 
-        if (pattern && category?.id) {
+        // Build a smart rule from the description
+        const ruleData = buildRuleFromCorrection(cleanDesc, effectiveMovement, effectiveCategory);
+
+        if (category?.id) {
           pendingRules.push({
-            pattern,
+            pattern: ruleData.pattern,
+            match_type: ruleData.match_type,
+            tokens: ruleData.tokens,
             categorySlug: effectiveCategory,
             categoryId: category.id,
             movement: effectiveMovement,
@@ -417,24 +416,46 @@ export function MonthReviewModal({
       const newRules: CreatedRule[] = [];
 
       for (const rule of selectedRules) {
-        if (rule.categoryId && user) {
-          const { error: ruleError } = await supabase
-            .from("categorization_rules")
+        if (user) {
+          const { data: insertedRule, error: ruleError } = await supabase
+            .from("user_rules")
             .insert({
               user_id: user.id,
+              source: "user_correction" as const,
+              match_type: rule.match_type,
+              pattern: rule.pattern,
+              tokens: rule.tokens,
+              movement: rule.movement,
+              category: rule.categorySlug,
+              confidence: 0.99,
+              original_description: rule.txDescription,
+              is_active: true,
+            })
+            .select("id")
+            .single();
+
+          if (!ruleError && insertedRule) {
+            newRules.push({ ...rule, ruleId: insertedRule.id });
+          } else {
+            console.warn("Could not create user rule:", ruleError);
+          }
+        }
+      }
+
+      // Also save to categorization_rules for backward compatibility
+      for (const rule of newRules) {
+        if (rule.categoryId) {
+          await supabase
+            .from("categorization_rules")
+            .insert({
+              user_id: user!.id,
               domain: "CASHFLOW" as const,
               pattern: rule.pattern,
-              match_type: "CONTAINS",
+              match_type: rule.match_type === 'fuzzy' ? 'CONTAINS' : rule.match_type.toUpperCase(),
               match_field: "description_norm",
               category_id: rule.categoryId,
               priority: Math.floor(Date.now() / 1000),
             });
-
-          if (!ruleError) {
-            newRules.push(rule);
-          } else {
-            console.warn("Could not create categorization rule:", ruleError);
-          }
         }
       }
 
@@ -490,22 +511,62 @@ export function MonthReviewModal({
   const handleApplyRetroactive = async () => {
     setIsApplyingRetroactive(true);
     try {
-      const { data, error } = await supabase.functions.invoke('apply-rules-retroactive', {
-        body: {
-          rules: createdRules.map(r => ({
-            pattern: r.pattern,
-            categoryId: r.categoryId,
-            categorySlug: r.categorySlug,
-            movement: r.movement,
-          })),
-          excludeTransactionIds: editedTxIds,
-        },
-      });
+      // Fetch all user transactions to find matches client-side
+      const { data: allTransactions, error: fetchError } = await supabase
+        .from("transactions")
+        .select("id, description, description_norm, category, movement")
+        .eq("user_id", user!.id)
+        .eq("domain", "CASHFLOW");
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      const totalUpdated = data?.totalUpdated || 0;
-      
+      let totalUpdated = 0;
+
+      for (const rule of createdRules) {
+        // Find matching transactions (excluding already-edited ones)
+        const matches = (allTransactions || []).filter(tx => {
+          if (editedTxIds.includes(tx.id)) return false;
+          const desc = tx.description_norm || tx.description;
+          return ruleMatchesDescription(rule.match_type, rule.pattern, rule.tokens, desc);
+        });
+
+        if (matches.length === 0) continue;
+
+        const matchIds = matches.map(tx => tx.id);
+
+        // Update in batches of 100
+        for (let i = 0; i < matchIds.length; i += 100) {
+          const batch = matchIds.slice(i, i + 100);
+          const { error: updateError } = await supabase
+            .from("transactions")
+            .update({
+              movement: rule.movement as any,
+              category: rule.categorySlug,
+              category_id: rule.categoryId,
+              category_source: "USER_RULE",
+              categorized_by: "user_rule",
+              auto_recategorized: true,
+              rule_id_applied: rule.ruleId,
+            })
+            .in("id", batch);
+
+          if (updateError) {
+            console.warn("Error updating batch:", updateError);
+          } else {
+            totalUpdated += batch.length;
+          }
+        }
+
+        // Update applied_count on the rule
+        await supabase
+          .from("user_rules")
+          .update({
+            applied_count: matches.length,
+            last_applied_at: new Date().toISOString(),
+          })
+          .eq("id", rule.ruleId);
+      }
+
       if (totalUpdated > 0) {
         queryClient.invalidateQueries({ queryKey: ["transactions"] });
         queryClient.invalidateQueries({ queryKey: ["month-transactions"] });
