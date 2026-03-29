@@ -602,6 +602,21 @@ serve(async (req) => {
 
     console.log(`New: ${newTransactions.length}, Duplicates: ${stats.duplicates}, Transfers: ${stats.transfers}`);
 
+    // Update applied_count and last_applied_at for rules that fired
+    if (ruleHitCounts.size > 0) {
+      console.log(`Updating stats for ${ruleHitCounts.size} matched user rules`);
+      for (const [ruleId, hitCount] of ruleHitCounts) {
+        const rule = sortedUserRules.find((r: any) => r.id === ruleId);
+        await supabase
+          .from('user_rules')
+          .update({
+            applied_count: (rule?.applied_count || 0) + hitCount,
+            last_applied_at: new Date().toISOString(),
+          })
+          .eq('id', ruleId);
+      }
+    }
+
     // PREVIEW MODE - Keep status as PARSED, don't save transactions yet
     if (previewOnly) {
       await supabase
