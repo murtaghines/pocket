@@ -182,6 +182,49 @@ function containsUserName(description: string, firstName: string | null, lastNam
   return false;
 }
 
+// Apply user rules before AI categorization — user rules always win
+interface UserRuleMatch {
+  movement: string;
+  category: string;
+  confidence: number;
+  ruleId: string;
+}
+
+function applyUserRules(description: string, rules: any[]): UserRuleMatch | null {
+  const norm = (description || '')
+    .toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  for (const rule of rules) {
+    let matched = false;
+    if (rule.match_type === 'fuzzy') {
+      const tokens: string[] = rule.tokens || [];
+      matched = tokens.length > 0 && tokens.every((t: string) => norm.includes(t.toUpperCase()));
+    } else if (rule.match_type === 'contains') {
+      matched = norm.includes((rule.pattern || '').toUpperCase());
+    } else if (rule.match_type === 'starts_with') {
+      matched = norm.startsWith((rule.pattern || '').toUpperCase());
+    } else if (rule.match_type === 'exact') {
+      matched = norm === (rule.pattern || '').toUpperCase();
+    } else if (rule.match_type === 'regex') {
+      try { matched = new RegExp(rule.pattern, 'i').test(description); } catch { /* ignore */ }
+    }
+
+    if (matched) {
+      return {
+        movement: rule.movement,
+        category: rule.category,
+        confidence: rule.confidence,
+        ruleId: rule.id,
+      };
+    }
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -206,6 +249,19 @@ serve(async (req) => {
     const userLastName = profile?.last_name || null;
 
     console.log(`User profile loaded: ${userFirstName} ${userLastName}`);
+
+    // Load user rules — these take priority over AI categorization
+    const { data: userRules } = await supabase
+      .from('user_rules')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('source', { ascending: false })   // 'user_correction' > 'manual'
+      .order('created_at', { ascending: false }); // newest first
+
+    const sortedUserRules = userRules || [];
+    const ruleHitCounts = new Map<string, number>();
+    console.log(`Loaded ${sortedUserRules.length} active user rules`);
 
     // Fetch category IDs from database for mapping
     const { data: categories } = await supabase
@@ -245,8 +301,21 @@ serve(async (req) => {
         for (const t of transactions) {
           const existingId = existingHashMap.get(t.transaction_hash);
           if (existingId) {
-            const movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
-            const categorySlug = validateCategory(t.category, movement);
+            // User rules take priority
+            const userRuleResult = applyUserRules(t.description || '', sortedUserRules);
+            let movement: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+            let categorySlug: string;
+            let ruleIdApplied: string | null = null;
+
+            if (userRuleResult) {
+              movement = userRuleResult.movement as 'INCOME' | 'EXPENSE' | 'TRANSFER';
+              categorySlug = userRuleResult.category;
+              ruleIdApplied = userRuleResult.ruleId;
+              ruleHitCounts.set(ruleIdApplied, (ruleHitCounts.get(ruleIdApplied) || 0) + 1);
+            } else {
+              movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
+              categorySlug = validateCategory(t.category, movement);
+            }
             const categoryInfo = categoryMap.get(categorySlug);
             
             await supabase
@@ -256,6 +325,7 @@ serve(async (req) => {
                 type: movement.toLowerCase(),
                 category: categorySlug,
                 category_id: categoryInfo?.id || null,
+                ...(ruleIdApplied ? { rule_id_applied: ruleIdApplied } : {}),
               })
               .eq('id', existingId);
           }
@@ -273,8 +343,21 @@ serve(async (req) => {
       
       // INSERT MODE: First time saving
       const transactionsToInsert = transactions.map((t: any) => {
-        const movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
-        const categorySlug = validateCategory(t.category, movement);
+        // User rules take priority
+        const userRuleResult = applyUserRules(t.description || '', sortedUserRules);
+        let movement: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+        let categorySlug: string;
+        let ruleIdApplied: string | null = null;
+
+        if (userRuleResult) {
+          movement = userRuleResult.movement as 'INCOME' | 'EXPENSE' | 'TRANSFER';
+          categorySlug = userRuleResult.category;
+          ruleIdApplied = userRuleResult.ruleId;
+          ruleHitCounts.set(ruleIdApplied, (ruleHitCounts.get(ruleIdApplied) || 0) + 1);
+        } else {
+          movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
+          categorySlug = validateCategory(t.category, movement);
+        }
         const categoryInfo = categoryMap.get(categorySlug);
         
         return {
@@ -290,6 +373,7 @@ serve(async (req) => {
           bank: t.bank || null,
           transaction_hash: t.transaction_hash,
           domain: 'CASHFLOW',
+          ...(ruleIdApplied ? { rule_id_applied: ruleIdApplied } : {}),
         };
       });
 
@@ -455,30 +539,45 @@ serve(async (req) => {
       seenHashesInBatch.add(hash);
 
       // Normalize movement and validate category
-      let movement = normalizeMovement(t.movement || t.type, t.amount, t.description || '');
-      
-      // POST-PROCESSING: If user's name is in the description, it's likely a self-transfer
       const description = t.description || '';
-      if (containsUserName(description, userFirstName, userLastName)) {
-        // Override to TRANSFER/own_transfer when user's name appears in payment/transfer descriptions
-        const descLower = description.toLowerCase();
-        const isPaymentOrTransfer = descLower.includes('payment') || 
-                                     descLower.includes('transfer') || 
-                                     descLower.includes('pago') ||
-                                     descLower.includes('bizum') ||
-                                     descLower.includes('from') ||
-                                     descLower.includes('to') ||
-                                     descLower.includes('de ') ||
-                                     descLower.includes('a ');
-        if (isPaymentOrTransfer) {
-          console.log(`Self-transfer detected: "${description}" contains user name`);
-          movement = 'TRANSFER';
+
+      // User rules take absolute priority
+      const userRuleResult = applyUserRules(description, sortedUserRules);
+      let movement: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+      let categorySlug: string;
+      let ruleIdApplied: string | null = null;
+
+      if (userRuleResult) {
+        movement = userRuleResult.movement as 'INCOME' | 'EXPENSE' | 'TRANSFER';
+        categorySlug = userRuleResult.category;
+        ruleIdApplied = userRuleResult.ruleId;
+        ruleHitCounts.set(ruleIdApplied, (ruleHitCounts.get(ruleIdApplied) || 0) + 1);
+        console.log(`User rule matched: "${description}" → ${movement}/${categorySlug}`);
+      } else {
+        movement = normalizeMovement(t.movement || t.type, t.amount, description);
+        
+        // POST-PROCESSING: If user's name is in the description, it's likely a self-transfer
+        if (containsUserName(description, userFirstName, userLastName)) {
+          const descLower = description.toLowerCase();
+          const isPaymentOrTransfer = descLower.includes('payment') || 
+                                       descLower.includes('transfer') || 
+                                       descLower.includes('pago') ||
+                                       descLower.includes('bizum') ||
+                                       descLower.includes('from') ||
+                                       descLower.includes('to') ||
+                                       descLower.includes('de ') ||
+                                       descLower.includes('a ');
+          if (isPaymentOrTransfer) {
+            console.log(`Self-transfer detected: "${description}" contains user name`);
+            movement = 'TRANSFER';
+          }
         }
+        
+        categorySlug = movement === 'TRANSFER' && containsUserName(description, userFirstName, userLastName)
+          ? 'own_transfer'
+          : validateCategory(t.category, movement);
       }
-      
-      const categorySlug = movement === 'TRANSFER' && containsUserName(description, userFirstName, userLastName)
-        ? 'own_transfer'
-        : validateCategory(t.category, movement);
+
       const categoryInfo = categoryMap.get(categorySlug);
 
       // Track stats
@@ -487,21 +586,37 @@ serve(async (req) => {
 
       newTransactions.push({
         user_id: userId,
-        import_id: recordId, // Using import_id for unified system
+        import_id: recordId,
         date: t.date,
         description: t.description || 'No description',
         amount: t.amount,
-        type: movement.toLowerCase(), // Legacy
+        type: movement.toLowerCase(),
         movement: movement,
-        category: categorySlug, // Legacy
+        category: categorySlug,
         category_id: categoryInfo?.id || null,
         bank: t.bank || null,
         transaction_hash: hash,
         domain: 'CASHFLOW',
+        ...(ruleIdApplied ? { rule_id_applied: ruleIdApplied } : {}),
       });
     }
 
     console.log(`New: ${newTransactions.length}, Duplicates: ${stats.duplicates}, Transfers: ${stats.transfers}`);
+
+    // Update applied_count and last_applied_at for rules that fired
+    if (ruleHitCounts.size > 0) {
+      console.log(`Updating stats for ${ruleHitCounts.size} matched user rules`);
+      for (const [ruleId, hitCount] of ruleHitCounts) {
+        const rule = sortedUserRules.find((r: any) => r.id === ruleId);
+        await supabase
+          .from('user_rules')
+          .update({
+            applied_count: (rule?.applied_count || 0) + hitCount,
+            last_applied_at: new Date().toISOString(),
+          })
+          .eq('id', ruleId);
+      }
+    }
 
     // PREVIEW MODE - Keep status as PARSED, don't save transactions yet
     if (previewOnly) {
