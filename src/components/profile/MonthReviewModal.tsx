@@ -511,22 +511,62 @@ export function MonthReviewModal({
   const handleApplyRetroactive = async () => {
     setIsApplyingRetroactive(true);
     try {
-      const { data, error } = await supabase.functions.invoke('apply-rules-retroactive', {
-        body: {
-          rules: createdRules.map(r => ({
-            pattern: r.pattern,
-            categoryId: r.categoryId,
-            categorySlug: r.categorySlug,
-            movement: r.movement,
-          })),
-          excludeTransactionIds: editedTxIds,
-        },
-      });
+      // Fetch all user transactions to find matches client-side
+      const { data: allTransactions, error: fetchError } = await supabase
+        .from("transactions")
+        .select("id, description, description_norm, category, movement")
+        .eq("user_id", user!.id)
+        .eq("domain", "CASHFLOW");
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      const totalUpdated = data?.totalUpdated || 0;
-      
+      let totalUpdated = 0;
+
+      for (const rule of createdRules) {
+        // Find matching transactions (excluding already-edited ones)
+        const matches = (allTransactions || []).filter(tx => {
+          if (editedTxIds.includes(tx.id)) return false;
+          const desc = tx.description_norm || tx.description;
+          return ruleMatchesDescription(rule.match_type, rule.pattern, rule.tokens, desc);
+        });
+
+        if (matches.length === 0) continue;
+
+        const matchIds = matches.map(tx => tx.id);
+
+        // Update in batches of 100
+        for (let i = 0; i < matchIds.length; i += 100) {
+          const batch = matchIds.slice(i, i + 100);
+          const { error: updateError } = await supabase
+            .from("transactions")
+            .update({
+              movement: rule.movement as any,
+              category: rule.categorySlug,
+              category_id: rule.categoryId,
+              category_source: "USER_RULE",
+              categorized_by: "user_rule",
+              auto_recategorized: true,
+              rule_id_applied: rule.ruleId,
+            })
+            .in("id", batch);
+
+          if (updateError) {
+            console.warn("Error updating batch:", updateError);
+          } else {
+            totalUpdated += batch.length;
+          }
+        }
+
+        // Update applied_count on the rule
+        await supabase
+          .from("user_rules")
+          .update({
+            applied_count: matches.length,
+            last_applied_at: new Date().toISOString(),
+          })
+          .eq("id", rule.ruleId);
+      }
+
       if (totalUpdated > 0) {
         queryClient.invalidateQueries({ queryKey: ["transactions"] });
         queryClient.invalidateQueries({ queryKey: ["month-transactions"] });
