@@ -182,6 +182,49 @@ function containsUserName(description: string, firstName: string | null, lastNam
   return false;
 }
 
+// Apply user rules before AI categorization — user rules always win
+interface UserRuleMatch {
+  movement: string;
+  category: string;
+  confidence: number;
+  ruleId: string;
+}
+
+function applyUserRules(description: string, rules: any[]): UserRuleMatch | null {
+  const norm = (description || '')
+    .toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  for (const rule of rules) {
+    let matched = false;
+    if (rule.match_type === 'fuzzy') {
+      const tokens: string[] = rule.tokens || [];
+      matched = tokens.length > 0 && tokens.every((t: string) => norm.includes(t.toUpperCase()));
+    } else if (rule.match_type === 'contains') {
+      matched = norm.includes((rule.pattern || '').toUpperCase());
+    } else if (rule.match_type === 'starts_with') {
+      matched = norm.startsWith((rule.pattern || '').toUpperCase());
+    } else if (rule.match_type === 'exact') {
+      matched = norm === (rule.pattern || '').toUpperCase();
+    } else if (rule.match_type === 'regex') {
+      try { matched = new RegExp(rule.pattern, 'i').test(description); } catch { /* ignore */ }
+    }
+
+    if (matched) {
+      return {
+        movement: rule.movement,
+        category: rule.category,
+        confidence: rule.confidence,
+        ruleId: rule.id,
+      };
+    }
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
