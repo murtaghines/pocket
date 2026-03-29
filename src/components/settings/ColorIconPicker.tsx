@@ -41,7 +41,7 @@ const CURATED_ICONS = [
   'briefcase', 'rotate-ccw', 'arrow-down-left', 'circle-plus', 'trending-up',
   'laptop', 'home', 'shopping-cart', 'utensils', 'car',
   'heart-pulse', 'gamepad-2', 'shopping-bag', 'graduation-cap', 'repeat',
-  'plane', 'dumbbell', 'more-horizontal', 'paw-print', 'arrow-left-right',
+  'plane', 'dumbbell', 'ellipsis', 'paw-print', 'arrow-left-right',
   // Food & drink
   'coffee', 'wine', 'cake', 'apple', 'beer',
   // People & social
