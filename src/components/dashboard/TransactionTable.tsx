@@ -332,8 +332,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         {formatCurrency(transaction.amount)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground hidden lg:table-cell">
-                        {transaction.runningBalance != null
-                          ? formatCurrency(transaction.runningBalance)
+                        {computedBalanceMap.has(transaction.id)
+                          ? formatCurrency(computedBalanceMap.get(transaction.id)!)
                           : '—'}
                       </TableCell>
                     </TableRow>
