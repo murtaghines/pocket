@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Trash2, Pencil, ChevronDown, ChevronRight, Palette, Check } from 'lucide-react';
+import { Plus, Trash2, Pencil, ChevronDown, ChevronRight, Palette } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
