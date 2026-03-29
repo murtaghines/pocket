@@ -64,6 +64,8 @@ import {
   getMovementLabel,
   normalizeCategory
 } from "@/lib/categoryTranslations";
+import { buildRuleFromCorrection, ruleMatchesDescription } from "@/lib/userRules";
+import type { MatchType } from "@/lib/userRules";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
