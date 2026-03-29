@@ -250,6 +250,19 @@ serve(async (req) => {
 
     console.log(`User profile loaded: ${userFirstName} ${userLastName}`);
 
+    // Load user rules — these take priority over AI categorization
+    const { data: userRules } = await supabase
+      .from('user_rules')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('source', { ascending: false })   // 'user_correction' > 'manual'
+      .order('created_at', { ascending: false }); // newest first
+
+    const sortedUserRules = userRules || [];
+    const ruleHitCounts = new Map<string, number>();
+    console.log(`Loaded ${sortedUserRules.length} active user rules`);
+
     // Fetch category IDs from database for mapping
     const { data: categories } = await supabase
       .from('categories')
