@@ -129,7 +129,7 @@ export function CategoryRulesList({
                           {t('categories.editColorIcon', 'Edit color & icon')}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[280px] p-3" align="start">
+                      <PopoverContent className="w-[340px] p-4" align="start">
                         <ColorIconPicker
                           currentColor={accentColor || '210 30% 50%'}
                           currentIcon={override?.icon || defaultIcon}
