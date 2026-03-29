@@ -8,24 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { CategoryIcon } from '@/components/ui/category-icon';
 import type { Database } from '@/integrations/supabase/types';
+import { ColorIconPicker } from '@/components/settings/ColorIconPicker';
 import type { CustomCategoryRule, VisualOverride } from '@/hooks/useCustomCategories';
 
 type Category = Database["public"]["Tables"]["categories"]["Row"];
 type Rule = Database["public"]["Tables"]["categorization_rules"]["Row"];
-
-const CURATED_COLORS = [
-  '220 70% 55%', '250 60% 58%', '280 55% 55%', '310 50% 55%',
-  '340 65% 55%', '25 80% 55%', '45 85% 50%', '175 60% 42%',
-  '195 70% 48%', '160 50% 45%', '35 60% 50%', '270 40% 50%',
-  '200 50% 40%', '15 70% 50%', '330 45% 50%', '210 30% 50%',
-];
-
-const CURATED_ICONS = [
-  'coffee', 'gift', 'baby', 'music', 'book', 'wrench',
-  'scissors', 'palette', 'flame', 'zap', 'sparkles', 'crown',
-  'star', 'tag', 'anchor', 'compass', 'umbrella', 'wine',
-  'cake', 'dog', 'cat', 'truck', 'shield', 'key',
-];
 
 interface Props {
   categories: Category[];
