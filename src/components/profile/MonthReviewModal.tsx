@@ -416,24 +416,46 @@ export function MonthReviewModal({
       const newRules: CreatedRule[] = [];
 
       for (const rule of selectedRules) {
-        if (rule.categoryId && user) {
-          const { error: ruleError } = await supabase
-            .from("categorization_rules")
+        if (user) {
+          const { data: insertedRule, error: ruleError } = await supabase
+            .from("user_rules")
             .insert({
               user_id: user.id,
+              source: "user_correction" as const,
+              match_type: rule.match_type,
+              pattern: rule.pattern,
+              tokens: rule.tokens,
+              movement: rule.movement,
+              category: rule.categorySlug,
+              confidence: 0.99,
+              original_description: rule.txDescription,
+              is_active: true,
+            })
+            .select("id")
+            .single();
+
+          if (!ruleError && insertedRule) {
+            newRules.push({ ...rule, ruleId: insertedRule.id });
+          } else {
+            console.warn("Could not create user rule:", ruleError);
+          }
+        }
+      }
+
+      // Also save to categorization_rules for backward compatibility
+      for (const rule of newRules) {
+        if (rule.categoryId) {
+          await supabase
+            .from("categorization_rules")
+            .insert({
+              user_id: user!.id,
               domain: "CASHFLOW" as const,
               pattern: rule.pattern,
-              match_type: "CONTAINS",
+              match_type: rule.match_type === 'fuzzy' ? 'CONTAINS' : rule.match_type.toUpperCase(),
               match_field: "description_norm",
               category_id: rule.categoryId,
               priority: Math.floor(Date.now() / 1000),
             });
-
-          if (!ruleError) {
-            newRules.push(rule);
-          } else {
-            console.warn("Could not create categorization rule:", ruleError);
-          }
         }
       }
 
