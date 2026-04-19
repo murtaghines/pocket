@@ -9,6 +9,7 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateGaugeCard } from "@/components/dashboard/SavingsRateGaugeCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
+import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
