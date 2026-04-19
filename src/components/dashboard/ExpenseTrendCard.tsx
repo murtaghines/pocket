@@ -91,15 +91,22 @@ export function ExpenseTrendCard({
     }
   };
 
+  const change =
+    previousExpense && previousExpense > 0
+      ? Math.round(((totalExpense - previousExpense) / previousExpense) * 100)
+      : undefined;
+  const isUp = change !== undefined && change > 0;
+  const isDown = change !== undefined && change < 0;
+
   return (
     <Card
       variant="bento"
-      className="animate-slide-up overflow-hidden border-0 bg-destructive text-white h-[280px] flex flex-col"
+      className="animate-slide-up overflow-hidden border-0 bg-destructive text-white h-[260px] flex flex-col"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="p-5 md:p-6 relative flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-3">
           <p className="text-xs font-medium uppercase tracking-wide text-white/80">
             {t("stats.expenses")}
           </p>
@@ -108,24 +115,38 @@ export function ExpenseTrendCard({
           </div>
         </div>
 
-        {/* Big value (always month total, static) + hover info */}
-        <div className="mb-3">
-          <p className="text-3xl md:text-4xl font-bold tracking-tight font-display text-white">
-            {formatCurrency(totalExpense)}
-          </p>
-          <p className="text-xs text-white/80 mt-2 h-4">
-            {hoverPoint
-              ? `${formatHoverDate(hoverPoint.date)}: ${formatCurrency(hoverPoint.daily)}`
-              : ""}
-          </p>
-        </div>
+        {/* Big value (always month total, static) */}
+        <p className="text-3xl md:text-4xl font-bold tracking-tight font-display text-white">
+          {formatCurrency(totalExpense)}
+        </p>
 
-        {/* Trend chart fills remaining space */}
-        <div className="flex-1 -mx-2 min-h-0">
+        {/* Comparison vs last month */}
+        {change !== undefined && (
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white">
+              {isUp && <ArrowUp className="w-3 h-3" />}
+              {isDown && <ArrowDown className="w-3 h-3" />}
+              <span>{Math.abs(change)}%</span>
+            </div>
+            <span className="text-xs text-white/70">
+              {t("stats.vsLastMonth")}
+            </span>
+          </div>
+        )}
+
+        {/* Hover info line (reserved space, no layout shift) */}
+        <p className="text-xs text-white/80 mt-2 h-4">
+          {hoverPoint
+            ? `${formatHoverDate(hoverPoint.date)}: ${formatCurrency(hoverPoint.daily)}`
+            : ""}
+        </p>
+
+        {/* Trend chart — fixed compact height */}
+        <div className="h-12 -mx-2 mt-auto">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={daily}
-              margin={{ top: 4, right: 8, bottom: 0, left: 8 }}
+              margin={{ top: 2, right: 8, bottom: 0, left: 8 }}
               onMouseMove={(e: any) => {
                 if (e && typeof e.activeTooltipIndex === "number") {
                   setHoverIdx(e.activeTooltipIndex);
