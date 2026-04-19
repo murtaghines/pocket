@@ -1,57 +1,88 @@
 
 
-## Findings: Rule Lifecycle Verification
+## Análisis honesto de qué se puede y qué no
 
-### Issue 1: Settings rules don't reach the categorizer
-Rules created via the "+" button in **Categorization & Rules** are saved to the `categorization_rules` table. But the `process-financial-file` edge function only reads from the `user_rules` table. **These rules are never evaluated by the categorizer.**
+**Lo que SÍ tenemos en datos** (tablas `accounts` + `transactions`):
+- `accounts.name` → nombre que el usuario le puso a la cuenta (ej: "BBVA Principal")
+- `accounts.institution` → banco (ej: "BBVA", "Santander") — opcional
+- `accounts.currency_base` → moneda
+- `transactions.account_id` → cada transacción está ligada a una cuenta
+- `transactions.running_balance` → saldo después de cada movimiento (cuando el resumen lo trae)
+- Lógica de **opening balance** ya implementada en `useTransactions` que calcula saldo del mes por banco/cuenta
 
-The `process-import` edge function does read `categorization_rules`, but `process-financial-file` (the main one) does not.
+**Lo que NO tenemos y NO se puede inferir de los resúmenes**:
+- ❌ Marca de tarjeta (VISA / Mastercard / Amex)
+- ❌ Fecha de vencimiento (04/24, 09/26, etc.)
+- ❌ Últimos 4 dígitos `**** 9090` — los resúmenes a veces lo traen en la descripción de la transacción, pero no de forma estructurada por cuenta
+- ❌ Una cuenta puede tener N tarjetas o todo puede ser por transferencia → no hay forma fiable de mapear "tarjeta → balance"
 
-### Issue 2: Edit works but only for `categorization_rules`
-When you edit a rule in Settings, `useCategorizationRules.updateRule` updates the `categorization_rules` table correctly. But since the categorizer doesn't read that table, the edit has no practical effect on future file processing.
+**Conclusión**: hacer "tarjetas tipo VISA" como las imágenes de referencia sería **inventar datos**. No lo recomiendo. Pero sí podemos hacer algo que **se inspire en esa estética** y muestre información real: el **balance actual por cuenta bancaria**, no por tarjeta.
 
-### Issue 3: Delete works but same gap
-Deleting a rule removes it from `categorization_rules`. Again, not read by the main categorizer.
+## Propuesta: "Accounts Stack" al lado del Weekly Flow
 
-### Issue 4: MonthReviewModal writes to BOTH tables (redundantly)
-When creating a rule from the file preview, `MonthReviewModal` inserts into both `user_rules` AND `categorization_rules` (lines 420-458). This is redundant and can cause drift.
+Una columna a la derecha del Weekly Flow con **mini-cards apiladas**, una por cuenta CASH, mostrando el balance actual del último mes (saldo final = opening balance del mes + flujo neto del mes para esa cuenta, usando la lógica de `running_balance` que ya existe).
 
----
+### Diseño visual (inspirado en las imágenes pero honesto)
 
-## Plan: Unify Rules on `user_rules` Table
+```text
+┌──────────────────────────────────────┬─────────────────────┐
+│  Weekly Flow                         │  Accounts           │
+│  ┌────────────────────────────────┐  │  ┌───────────────┐  │
+│  │     gráfico W1 W2 W3 W4        │  │  │ ● BBVA        │  │
+│  │                                │  │  │ Principal     │  │
+│  │                                │  │  │ €12.430,55    │  │
+│  └────────────────────────────────┘  │  │ EUR · current │  │
+│                                       │  └───────────────┘  │
+│                                       │  ┌───────────────┐  │
+│                                       │  │ ● Santander   │  │
+│                                       │  │ €3.210,00     │  │
+│                                       │  └───────────────┘  │
+│                                       │  + Add account     │
+└──────────────────────────────────────┴─────────────────────┘
+```
 
-### Approach
-Make Settings rules also write to `user_rules` instead of (or in addition to) `categorization_rules`. This ensures all rules are evaluated by the categorizer.
+Cada mini-card:
+- **Color de marca**: usamos el azul brand `#1b76ff` para una, amarillo brand `#ffd027` para otra, alternando — coherente con la identidad Pocket. NO inventamos VISA/Mastercard.
+- **Header**: nombre de la cuenta + institución (si existe)
+- **Balance grande**: saldo calculado al final del último mes con datos
+- **Footer sutil**: moneda y "current balance" — sin fecha falsa de vencimiento, sin **** 1234 inventado
+- **Esquina decorativa**: un círculo translúcido tipo las imágenes para mantener la estética
+- Si hay más de 3 cuentas → scroll vertical interno
 
-### Changes
+### Estructura técnica
 
-**1. Update `useCategorizationRules.tsx` — Write to `user_rules` table**
-- `addRule`: Insert into `user_rules` with `source: 'manual'`, mapping `category_id` → category slug lookup, and storing the pattern/match_type. Also keep inserting into `categorization_rules` for backward compatibility.
-- `updateRule`: Update the corresponding `user_rules` row (need to track the `user_rules` ID alongside the `categorization_rules` ID).
-- `deleteRule`: When deleting from `categorization_rules`, also soft-delete (set `is_active = false`) or hard-delete the matching `user_rules` row.
+**1. Nuevo componente** `src/components/dashboard/AccountsStackCard.tsx`
+- Props: `transactions`, `monthKey`, `convert`, `formatCurrency`
+- Usa `useAccounts()` para listar cuentas CASH
+- Para cada cuenta calcula: `opening_balance(mes) + Σ(transacciones del mes en esa cuenta)`
+- Si no hay `running_balance` para una cuenta → muestra solo el flujo neto del mes con label "Net flow" en vez de "Balance" (transparencia con el usuario)
+- Empty state limpio si no hay cuentas
 
-**2. Alternative simpler approach — Make edge function also read `categorization_rules`**
-- Add a second query in `process-financial-file/index.ts` to load `categorization_rules` and merge them into the rule evaluation pipeline (converting match types: `SMART`→`fuzzy`, `CONTAINS`→`contains`, etc.)
-- This avoids changing any client code
+**2. Layout en `src/pages/Index.tsx`**
+- Cambiar la sección "Weekly Flow" de `mb-4` simple a un grid:
+```tsx
+<div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 mb-4">
+  <DailyFlowChart ... />
+  <AccountsStackCard ... />
+</div>
+```
+- En mobile se apilan; en desktop la columna de cuentas es fija ~320px.
 
-**Recommended: Option 2** (less risk, fewer changes)
+**3. Estilo de mini-cards**
+- Border radius `rounded-2xl`, sombra suave consistente con el resto del dashboard
+- Alternancia de colores brand (azul → amarillo → blanco con border azul) para diferenciar visualmente cuentas sin inventar marcas
+- Tipografía: nombre `text-sm font-medium`, balance `text-2xl font-bold tabular-nums`
 
-### Implementation details
+### Lo que NO vamos a hacer (para ser honestos contigo)
 
-**File: `supabase/functions/process-financial-file/index.ts`**
-- After loading `user_rules`, also load `categorization_rules` for the user
-- Convert each `categorization_rule` into the same shape as a `user_rule` (mapping `category_id` → slug via the categories lookup, `SMART`→`fuzzy`, etc.)
-- Append them AFTER `user_rules` in the sorted array (so `user_rules` always win)
-- The `applyUserRules` function already handles all match types
+- ❌ Mostrar logos de VISA/Mastercard
+- ❌ Mostrar `**** 1234` salvo que el usuario lo haya escrito en el nombre de la cuenta
+- ❌ Mostrar fechas de vencimiento
+- ❌ Pretender que las cuentas son tarjetas físicas
 
-**File: `src/hooks/useCategorizationRules.tsx`**
-- On `deleteRule`: also delete any matching `user_rules` row with same pattern (to clean up duplicates from MonthReviewModal dual-writes)
+### Alcance
 
-**File: `src/components/profile/MonthReviewModal.tsx`**
-- Remove the redundant write to `categorization_rules` (lines 446-459) since the edge function will now read `user_rules` directly
-
-### Files to modify
-1. `supabase/functions/process-financial-file/index.ts` — also load + merge `categorization_rules`
-2. `src/components/profile/MonthReviewModal.tsx` — remove dual-write to `categorization_rules`
-3. `src/hooks/useCategorizationRules.tsx` — on delete, also clean up matching `user_rules` rows
+- 1 archivo nuevo (`AccountsStackCard.tsx`)
+- 1 archivo editado (`Index.tsx` — solo el wrapper del grid)
+- Sin cambios de DB, sin migraciones
 
