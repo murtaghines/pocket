@@ -150,56 +150,59 @@ export function ExpenseTrendCard({
             : ""}
         </p>
 
-        {/* Trend chart — fixed compact height */}
-        <div className="h-12 -mx-2 mt-auto">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={daily}
-              margin={{ top: 2, right: 8, bottom: 0, left: 8 }}
-              onMouseMove={(e: any) => {
-                if (e && typeof e.activeTooltipIndex === "number") {
-                  setHoverIdx(e.activeTooltipIndex);
-                }
+      </div>
+
+      {/* Trend chart — full width, fills bottom of card */}
+      <div className="absolute left-0 right-0 bottom-0 h-14 pointer-events-auto">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart
+            data={daily}
+            margin={{ top: 4, right: 2, bottom: 0, left: 2 }}
+            onMouseMove={(e: any) => {
+              if (e && typeof e.activeTooltipIndex === "number") {
+                setHoverIdx(e.activeTooltipIndex);
+              }
+            }}
+            onMouseLeave={() => setHoverIdx(null)}
+          >
+            <defs>
+              <linearGradient id="expense-trend-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity={0.25} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="day" hide />
+            <YAxis hide domain={[0, "dataMax"]} />
+            <Tooltip
+              cursor={{
+                stroke: "#ffffff",
+                strokeWidth: 1,
+                strokeOpacity: 0.5,
+                strokeDasharray: "3 3",
               }}
-              onMouseLeave={() => setHoverIdx(null)}
-            >
-              <defs>
-                <linearGradient id="expense-trend-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="#ffffff" stopOpacity={0.18} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="day" hide />
-              <YAxis hide domain={[0, "dataMax"]} />
-              <Tooltip
-                cursor={{
-                  stroke: "#ffffff",
-                  strokeWidth: 1,
-                  strokeOpacity: 0.5,
-                  strokeDasharray: "3 3",
-                }}
-                content={() => null}
-              />
-              <Area
-                type="natural"
-                dataKey="display"
-                stroke="#ffffff"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="url(#expense-trend-fill)"
-                dot={false}
-                activeDot={{
-                  r: 4,
-                  fill: "#ffffff",
-                  stroke: "hsl(var(--destructive))",
-                  strokeWidth: 2,
-                }}
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+              content={() => null}
+            />
+            <Area
+              type="monotone"
+              dataKey="display"
+              stroke="#ffffff"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="url(#expense-trend-fill)"
+              fillOpacity={1}
+              baseValue={0}
+              dot={false}
+              activeDot={{
+                r: 4,
+                fill: "#ffffff",
+                stroke: "hsl(var(--destructive))",
+                strokeWidth: 2,
+              }}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </Card>
   );
