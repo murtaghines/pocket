@@ -6,9 +6,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
-import pocketLogoWhite from "@/assets/pocket-logo-white.png";
-import pocketDecoYellow from "@/assets/pocket-deco-yellow.png";
-import cloudDecoGray from "@/assets/cloud-deco-gray.png";
+import { ThemeToggle } from "./ThemeToggle";
+import walletIconBlue from "@/assets/wallet-icon-blue.png";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -20,14 +19,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const { t } = useTranslation('common');
 
-  // Add dashboard-theme to body so portaled elements (popovers, selects, dialogs) inherit light theme
+  // Add dashboard-theme to body so portaled elements (popovers, selects, dialogs) inherit theme
   useEffect(() => {
     document.body.classList.add('dashboard-theme');
     return () => {
       document.body.classList.remove('dashboard-theme');
     };
   }, []);
-  
+
   const isActive = (path: string) => location.pathname === path;
 
   const getInitials = () => {
@@ -46,66 +45,50 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme relative overflow-hidden">
-      {/* Decorative brand elements as background pattern */}
-      <div className="fixed inset-0 z-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
-        <img 
-          src={pocketDecoYellow} 
-          alt="" 
-          className="absolute -top-16 -left-16 w-[340px] h-auto opacity-60"
-        />
-        <img 
-          src={cloudDecoGray} 
-          alt="" 
-          className="absolute bottom-12 right-8 w-28 h-auto opacity-40"
-        />
-        <img 
-          src={cloudDecoGray} 
-          alt="" 
-          className="absolute top-1/3 right-1/4 w-20 h-auto opacity-20"
-        />
-      </div>
-
-      {/* Static top nav bar — standalone, not inside white containers */}
-      <div className="fixed top-0 left-0 right-0 z-50 px-2 md:px-3 pt-2 md:pt-3">
-        <div className="max-w-[1400px] mx-auto">
-          <nav className="flex items-center justify-between backdrop-blur-xl rounded-2xl px-4 md:px-6 py-2 shadow-sm" style={{ background: '#0F4264' }}>
+    <div className="min-h-screen bg-background dashboard-theme relative">
+      {/* Top nav — clean, light, inspired by reference */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-5">
+          <nav className="flex items-center justify-between gap-4">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center gap-2 flex-shrink-0">
-              <img src={pocketLogoWhite} alt="pocket" className="h-5 w-auto" />
+            <Link to="/dashboard" className="flex items-center flex-shrink-0">
+              <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
             </Link>
 
-            {/* Center Navigation - Desktop */}
-            <div className="hidden md:flex items-center gap-1">
+            {/* Center Navigation - text-only links with underline on active */}
+            <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
               {navItems.map((item) => {
-                const Icon = item.icon;
+                const active = isActive(item.path);
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all",
-                      isActive(item.path)
-                        ? "text-white font-bold"
-                        : "text-white/60 hover:text-white hover:bg-white/10 font-medium"
+                      "relative text-base transition-colors py-1",
+                      active
+                        ? "text-foreground font-semibold"
+                        : "text-muted-foreground hover:text-foreground font-normal"
                     )}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
+                    {item.label}
+                    {active && (
+                      <span className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-foreground rounded-full" />
+                    )}
                   </Link>
                 );
               })}
             </div>
 
-            {/* Right side: Notifications + Avatar */}
-            <div className="flex items-center gap-2">
+            {/* Right side: Theme toggle + Bell + Avatar */}
+            <div className="flex items-center gap-2 md:gap-3">
+              <ThemeToggle />
               <NotificationBell variant="light" />
-              <Link to="/profile" className="hidden md:block">
+              <Link to="/profile">
                 <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
+                  "w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all overflow-hidden",
                   isActive('/profile')
-                    ? "bg-white text-[#0F4264]"
-                    : "bg-white/20 text-white hover:bg-white/30"
+                    ? "bg-primary text-primary-foreground ring-2 ring-primary/20"
+                    : "bg-muted text-foreground hover:bg-muted/70"
                 )}>
                   {getInitials()}
                 </div>
@@ -113,10 +96,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </nav>
         </div>
-      </div>
+      </header>
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ background: '#0F4264' }}>
+      {/* Mobile bottom nav - kept for mobile UX */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
         <div className="flex items-center justify-around h-14 px-4">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -127,7 +110,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 to={item.path}
                 className={cn(
                   "flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 rounded-xl transition-all flex-1 max-w-[100px]",
-                  active ? "text-white" : "text-white/50"
+                  active ? "text-foreground" : "text-muted-foreground"
                 )}
               >
                 <Icon className="w-5 h-5" />
@@ -136,13 +119,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             );
           })}
         </div>
-        <div className="h-[env(safe-area-inset-bottom,0)]" style={{ background: '#0F4264' }} />
+        <div className="h-[env(safe-area-inset-bottom,0)] bg-card" />
       </nav>
 
-      {/* Main content — spacing between nav and content sections */}
-      <div className="px-2 md:px-3 pt-16 md:pt-[72px] pb-20 md:pb-3 min-h-[calc(100vh-80px)] relative z-10">
+      {/* Main content */}
+      <main className="max-w-[1400px] mx-auto px-4 md:px-8 pb-20 md:pb-8 relative z-10">
         {children}
-      </div>
+      </main>
     </div>
   );
 }
