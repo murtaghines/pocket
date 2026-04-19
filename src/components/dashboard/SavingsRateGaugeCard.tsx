@@ -118,10 +118,10 @@ export function SavingsRateGaugeCard({
           </p>
         )}
 
-        <div className="relative mt-1 flex flex-1 items-end justify-center overflow-hidden">
+        <div className="relative mt-2 flex h-[132px] flex-none items-end justify-center">
           <svg
-            viewBox="0 0 320 180"
-            className="w-full h-auto"
+            viewBox="-18 -18 356 212"
+            className="h-[132px] w-full overflow-visible"
             preserveAspectRatio="xMidYMid meet"
           >
             <defs>
