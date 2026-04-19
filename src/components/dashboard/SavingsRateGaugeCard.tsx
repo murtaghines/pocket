@@ -23,45 +23,46 @@ export function SavingsRateGaugeCard({
   const { t } = useTranslation("dashboard");
 
   const currentRate = computeRate(income, expenses);
-  const previousRate =
-    previousIncome !== undefined && previousExpenses !== undefined
-      ? computeRate(previousIncome, previousExpenses)
-      : 0;
+  const hasPrevious =
+    previousIncome !== undefined && previousExpenses !== undefined;
+  const previousRate = hasPrevious
+    ? computeRate(previousIncome!, previousExpenses!)
+    : 0;
 
   const clampedCurrent = Math.max(0, Math.min(100, currentRate));
   const clampedPrev = Math.max(0, Math.min(100, previousRate));
   const lower = Math.min(clampedCurrent, clampedPrev);
   const higher = Math.max(clampedCurrent, clampedPrev);
-  const isImprovement = currentRate >= previousRate;
   const delta = currentRate - previousRate;
 
   const getRatingLabel = () => {
-    if (currentRate <= 0) return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
-    if (currentRate >= 30) return t("stats.excellent", { defaultValue: "Excellent" });
-    if (currentRate >= 15) return t("stats.good", { defaultValue: "Good" });
+    if (currentRate <= 0)
+      return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
+    if (currentRate >= 30)
+      return t("stats.excellent", { defaultValue: "Excellent" });
+    if (currentRate >= 15)
+      return t("stats.good", { defaultValue: "Good" });
     return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
   };
 
-  const deltaLabel =
-    previousIncome !== undefined && previousExpenses !== undefined
-      ? delta >= 0
-        ? t("stats.savingsImproved", {
-            defaultValue: "Savings improved by +{{delta}}%",
-            delta: Math.abs(delta),
-          })
-        : t("stats.savingsDecreased", {
-            defaultValue: "Savings decreased by -{{delta}}%",
-            delta: Math.abs(delta),
-          })
-      : getRatingLabel();
+  const deltaLabel = hasPrevious
+    ? delta >= 0
+      ? t("stats.savingsImproved", {
+          defaultValue: "Savings improved by +{{delta}}%",
+          delta: Math.abs(delta),
+        })
+      : t("stats.savingsDecreased", {
+          defaultValue: "Savings decreased by -{{delta}}%",
+          delta: Math.abs(delta),
+        })
+    : getRatingLabel();
 
-  // Semi-circular gauge geometry
-  const radius = 80;
-  const cx = 100;
-  const cy = 100;
+  // Geometry — large arc, then we crop the SVG viewBox to "zoom in" on the top.
+  const radius = 140;
+  const cx = 160;
+  const cy = 170;
   const arcLength = Math.PI * radius;
 
-  // Angle helper: 0% -> 180° (left), 100% -> 0° (right)
   const angleFor = (pct: number) => 180 - (pct / 100) * 180;
   const pointAt = (pct: number) => {
     const rad = (angleFor(pct) * Math.PI) / 180;
@@ -71,16 +72,11 @@ export function SavingsRateGaugeCard({
   const lowerPoint = pointAt(lower);
   const higherPoint = pointAt(higher);
 
-  // Dashes for: full track, "before" filled track (up to lower), "delta" colored track (lower -> higher)
-  const dashTrack = arcLength;
-  const dashBefore = (lower / 100) * arcLength;
+  // Dash math
+  const dashLower = (lower / 100) * arcLength;
   const dashDelta = ((higher - lower) / 100) * arcLength;
-  const offsetDelta = dashBefore;
 
-  // Color of the change segment
-  const changeColor = isImprovement
-    ? "hsl(var(--primary))"
-    : "hsl(var(--destructive))";
+  const arcPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
 
   return (
     <Card
@@ -109,95 +105,127 @@ export function SavingsRateGaugeCard({
           </span>
         </div>
 
-        {/* Gauge */}
-        <div className="flex-1 flex items-end justify-center -mb-1">
+        {/* Gauge area — zoomed crop of the top of the arc */}
+        <div className="flex-1 flex items-end justify-center overflow-hidden">
+          {/* viewBox crops the top portion only — gives the "zoomed in" look */}
           <svg
-            viewBox="0 0 200 130"
-            className="w-full h-auto max-h-[130px]"
+            viewBox="20 25 280 110"
+            className="w-full h-auto"
             preserveAspectRatio="xMidYMax meet"
           >
             <defs>
+              {/* Thin radial-looking stripes for the empty track */}
               <pattern
                 id="gauge-stripes-bg"
                 patternUnits="userSpaceOnUse"
-                width="5"
-                height="5"
+                width="6"
+                height="6"
                 patternTransform="rotate(45)"
               >
-                <rect width="5" height="5" fill="hsl(var(--muted))" />
                 <line
                   x1="0"
                   y1="0"
                   x2="0"
-                  y2="5"
-                  stroke="hsl(var(--background))"
-                  strokeWidth="2"
+                  y2="6"
+                  stroke="hsl(var(--muted-foreground) / 0.45)"
+                  strokeWidth="1.2"
                 />
               </pattern>
             </defs>
 
-            {/* Full background striped track (remaining) */}
+            {/* Empty track — thin striped lines */}
             <path
-              d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+              d={arcPath}
               fill="none"
               stroke="url(#gauge-stripes-bg)"
-              strokeWidth="22"
-              strokeLinecap="round"
+              strokeWidth="32"
+              strokeLinecap="butt"
             />
 
-            {/* "Before" segment — solid darker fill from 0 up to the lower of the two rates */}
+            {/* Previous-month fill — dark gray solid */}
             {lower > 0 && (
               <path
-                d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+                d={arcPath}
                 fill="none"
-                stroke="hsl(var(--muted-foreground) / 0.35)"
-                strokeWidth="22"
+                stroke="hsl(var(--muted-foreground) / 0.55)"
+                strokeWidth="32"
                 strokeLinecap="round"
-                strokeDasharray={`${dashBefore} ${dashTrack}`}
+                strokeDasharray={`${dashLower} ${arcLength}`}
               />
             )}
 
-            {/* Delta segment — colored, between previous and current */}
+            {/* Delta fill — brand blue, between previous and current */}
             {higher > lower && (
               <path
-                d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+                d={arcPath}
                 fill="none"
-                stroke={changeColor}
-                strokeWidth="22"
+                stroke="hsl(var(--primary))"
+                strokeWidth="32"
                 strokeLinecap="round"
-                strokeDasharray={`${dashDelta} ${dashTrack}`}
-                strokeDashoffset={-offsetDelta}
+                strokeDasharray={`${dashDelta} ${arcLength}`}
+                strokeDashoffset={-dashLower}
                 style={{ transition: "stroke-dashoffset 1.2s ease-out" }}
               />
             )}
 
-            {/* Dark dot at the start of the colored change (= previous rate position) */}
-            <circle
-              cx={lowerPoint.x}
-              cy={lowerPoint.y}
-              r="9"
-              fill="hsl(var(--foreground) / 0.85)"
-            />
-            <circle
-              cx={lowerPoint.x}
-              cy={lowerPoint.y}
-              r="3.5"
-              fill="hsl(var(--background))"
-            />
+            {/* Marker for the previous rate — dark donut */}
+            {hasPrevious && (
+              <>
+                <circle
+                  cx={lowerPoint.x}
+                  cy={lowerPoint.y}
+                  r="14"
+                  fill="hsl(var(--muted-foreground) / 0.85)"
+                />
+                <circle
+                  cx={lowerPoint.x}
+                  cy={lowerPoint.y}
+                  r="6"
+                  fill="hsl(var(--card))"
+                />
+              </>
+            )}
 
-            {/* Bright dot at the end of the colored change (= current rate position) */}
+            {/* Marker for current rate — blue donut with white center + needle */}
             {higher > lower && (
               <>
-                <circle cx={higherPoint.x} cy={higherPoint.y} r="11" fill={changeColor} />
-                <circle cx={higherPoint.x} cy={higherPoint.y} r="5.5" fill="#ffffff" />
-                {/* Vertical needle dropping from current marker */}
                 <line
                   x1={higherPoint.x}
-                  y1={higherPoint.y + 11}
+                  y1={higherPoint.y + 14}
                   x2={higherPoint.x}
-                  y2={cy + 14}
-                  stroke={changeColor}
-                  strokeWidth="1.5"
+                  y2={cy + 6}
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="2"
+                />
+                <circle
+                  cx={higherPoint.x}
+                  cy={higherPoint.y}
+                  r="16"
+                  fill="hsl(var(--primary))"
+                />
+                <circle
+                  cx={higherPoint.x}
+                  cy={higherPoint.y}
+                  r="7"
+                  fill="#ffffff"
+                />
+              </>
+            )}
+
+            {/* If no previous data, show only the current marker on the empty track */}
+            {!hasPrevious && clampedCurrent > 0 && (
+              <>
+                <circle
+                  cx={pointAt(clampedCurrent).x}
+                  cy={pointAt(clampedCurrent).y}
+                  r="16"
+                  fill="hsl(var(--primary))"
+                />
+                <circle
+                  cx={pointAt(clampedCurrent).x}
+                  cy={pointAt(clampedCurrent).y}
+                  r="7"
+                  fill="#ffffff"
                 />
               </>
             )}
