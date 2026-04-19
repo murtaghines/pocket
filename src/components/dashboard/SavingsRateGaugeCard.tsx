@@ -104,6 +104,14 @@ export function SavingsRateGaugeCard({
             %
           </span>
         </div>
+        {hasPrevious && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {t("stats.previousMonthShort", {
+              defaultValue: "Previous: {{rate}}%",
+              rate: previousRate,
+            })}
+          </p>
+        )}
 
         {/* Gauge area — zoomed crop of the top of the arc */}
         <div className="flex-1 flex items-end justify-center overflow-hidden">
