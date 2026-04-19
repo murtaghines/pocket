@@ -3,16 +3,14 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
-import { Activity } from "lucide-react";
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
-  Legend,
 } from "recharts";
 
 interface DailyFlowChartProps {
@@ -21,62 +19,127 @@ interface DailyFlowChartProps {
   convert: (amount: number) => number;
 }
 
-interface WeekPoint {
-  weekIndex: number;
+interface FlowPoint {
+  key: string;
   label: string;
   rangeLabel: string;
   income: number;
   expense: number;
 }
 
+type ViewMode = "week" | "weekday";
+
+const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+
 export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
+  const [view, setView] = useState<ViewMode>("week");
 
-  const data: WeekPoint[] = useMemo(() => {
+  const data: FlowPoint[] = useMemo(() => {
     if (!monthKey) return [];
     const [y, m] = monthKey.split("-").map(Number);
     const daysInMonth = new Date(y, m, 0).getDate();
 
-    // Build 1 bucket per ISO-style week of the month (groups of 7 days starting day 1)
-    const bucketCount = Math.ceil(daysInMonth / 7);
-    const buckets: WeekPoint[] = Array.from({ length: bucketCount }, (_, i) => {
-      const startDay = i * 7 + 1;
-      const endDay = Math.min(startDay + 6, daysInMonth);
-      return {
-        weekIndex: i + 1,
-        label: `W${i + 1}`,
-        rangeLabel: `${String(startDay).padStart(2, "0")}–${String(endDay).padStart(2, "0")}/${String(m).padStart(2, "0")}`,
-        income: 0,
-        expense: 0,
-      };
-    });
+    if (view === "week") {
+      const bucketCount = Math.ceil(daysInMonth / 7);
+      const buckets: FlowPoint[] = Array.from({ length: bucketCount }, (_, i) => {
+        const startDay = i * 7 + 1;
+        const endDay = Math.min(startDay + 6, daysInMonth);
+        return {
+          key: `W${i + 1}`,
+          label: `W${i + 1}`,
+          rangeLabel: `${String(startDay).padStart(2, "0")}–${String(endDay).padStart(2, "0")}/${String(m).padStart(2, "0")}`,
+          income: 0,
+          expense: 0,
+        };
+      });
+
+      transactions.forEach((tx) => {
+        if (!tx.date.startsWith(monthKey)) return;
+        const d = parseInt(tx.date.slice(8, 10), 10);
+        if (!d) return;
+        const idx = Math.min(Math.floor((d - 1) / 7), bucketCount - 1);
+        const amt = Math.abs(convert(tx.amount));
+        if (tx.type === "income") buckets[idx].income += amt;
+        else if (tx.type === "expense") buckets[idx].expense += amt;
+      });
+
+      return buckets;
+    }
+
+    // Weekday view: Mon..Sun aggregating all matching weekdays of the month
+    const weekdayBuckets: FlowPoint[] = WEEKDAY_KEYS.map((k) => ({
+      key: k,
+      label: t(`weekdays.${k}`, {
+        defaultValue: k.charAt(0).toUpperCase() + k.slice(1),
+      }),
+      rangeLabel: t(`weekdays.full.${k}`, {
+        defaultValue: k.charAt(0).toUpperCase() + k.slice(1),
+      }),
+      income: 0,
+      expense: 0,
+    }));
 
     transactions.forEach((tx) => {
       if (!tx.date.startsWith(monthKey)) return;
-      const d = parseInt(tx.date.slice(8, 10), 10);
-      if (!d) return;
-      const idx = Math.min(Math.floor((d - 1) / 7), bucketCount - 1);
+      const [yy, mm, dd] = tx.date.split("-").map(Number);
+      if (!yy || !mm || !dd) return;
+      // JS getDay: 0=Sun..6=Sat. Convert to Mon=0..Sun=6
+      const jsDay = new Date(yy, mm - 1, dd).getDay();
+      const idx = (jsDay + 6) % 7;
       const amt = Math.abs(convert(tx.amount));
-      if (tx.type === "income") buckets[idx].income += amt;
-      else if (tx.type === "expense") buckets[idx].expense += amt;
+      if (tx.type === "income") weekdayBuckets[idx].income += amt;
+      else if (tx.type === "expense") weekdayBuckets[idx].expense += amt;
     });
 
-    return buckets;
-  }, [transactions, monthKey, convert]);
+    return weekdayBuckets;
+  }, [transactions, monthKey, convert, view, t]);
 
   const hasData = data.some((d) => d.income > 0 || d.expense > 0);
-
   const incomeLabel = t("stats.income", "Income");
   const expenseLabel = t("stats.expenses", "Expenses");
+
+  const titleText =
+    view === "week"
+      ? t("charts.weeklyFlow", "Weekly Flow")
+      : t("charts.weekdayFlow", "Weekday Flow");
+
+  const ToggleButtons = (
+    <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
+      <button
+        type="button"
+        onClick={() => setView("week")}
+        className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+          view === "week"
+            ? "bg-card text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        {t("charts.toggleWeek", { defaultValue: "Week" })}
+      </button>
+      <button
+        type="button"
+        onClick={() => setView("weekday")}
+        className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+          view === "weekday"
+            ? "bg-card text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        {t("charts.toggleWeekday", { defaultValue: "Weekday" })}
+      </button>
+    </div>
+  );
 
   if (!hasData) {
     return (
       <Card variant="bento" className="animate-slide-up" style={{ animationDelay: "150ms" }}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">
-            {t("charts.weeklyFlow", "Weekly Flow")}
-          </CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-lg font-semibold">{titleText}</CardTitle>
+            {ToggleButtons}
+          </div>
         </CardHeader>
         <CardContent>
           <EmptyState height="h-[260px]" />
@@ -93,8 +156,10 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
     return (
       <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[180px]">
         <p className="text-xs font-medium text-foreground">{point?.label}</p>
-        <p className="text-xs text-muted-foreground mb-2">{point?.rangeLabel}</p>
-        <div className="flex items-center justify-between gap-3 text-sm">
+        {point?.rangeLabel && point.rangeLabel !== point.label && (
+          <p className="text-xs text-muted-foreground mb-2">{point.rangeLabel}</p>
+        )}
+        <div className="flex items-center justify-between gap-3 text-sm mt-1">
           <span className="flex items-center gap-1.5 text-foreground">
             <span className="w-2 h-2 rounded-full bg-success" /> {incomeLabel}
           </span>
@@ -113,37 +178,30 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
   return (
     <Card variant="bento" className="animate-slide-up" style={{ animationDelay: "150ms" }}>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-lg font-semibold">
-            {t("charts.weeklyFlow", "Weekly Flow")}
-          </CardTitle>
-          <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-success" /> {incomeLabel}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-destructive" /> {expenseLabel}
-            </span>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <CardTitle className="text-lg font-semibold">{titleText}</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-success" /> {incomeLabel}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-destructive" /> {expenseLabel}
+              </span>
+            </div>
+            {ToggleButtons}
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="w-full h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
+            <BarChart
               data={data}
               margin={{ top: 12, right: 12, bottom: 8, left: 0 }}
+              barCategoryGap="20%"
+              barGap={4}
             >
-              <defs>
-                <linearGradient id="dailyflow-income" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="dailyflow-expense" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
               <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
               <XAxis
                 dataKey="label"
@@ -163,39 +221,25 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
               />
               <Tooltip
                 content={<CustomTooltip />}
-                cursor={{
-                  stroke: "hsl(var(--muted-foreground))",
-                  strokeOpacity: 0.4,
-                  strokeDasharray: "3 3",
-                }}
+                cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.3 }}
               />
-              <Area
-                type="monotone"
+              <Bar
                 dataKey="income"
                 name={incomeLabel}
-                stroke="hsl(var(--success))"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                fill="url(#dailyflow-income)"
-                fillOpacity={1}
-                dot={false}
-                activeDot={{ r: 4, fill: "hsl(var(--success))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
+                fill="hsl(var(--success))"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={36}
                 isAnimationActive={false}
               />
-              <Area
-                type="monotone"
+              <Bar
                 dataKey="expense"
                 name={expenseLabel}
-                stroke="hsl(var(--destructive))"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                fill="url(#dailyflow-expense)"
-                fillOpacity={1}
-                dot={false}
-                activeDot={{ r: 4, fill: "hsl(var(--destructive))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
+                fill="hsl(var(--destructive))"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={36}
                 isAnimationActive={false}
               />
-            </AreaChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
