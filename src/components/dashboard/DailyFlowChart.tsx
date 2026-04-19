@@ -92,10 +92,11 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
     if (!active || !payload || !payload.length) return null;
     const incomeVal = payload.find((p: any) => p.dataKey === "income")?.value ?? 0;
     const expenseVal = payload.find((p: any) => p.dataKey === "expense")?.value ?? 0;
-    const point = data.find((d) => d.day === label);
+    const point = data.find((d) => d.label === label);
     return (
-      <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[160px]">
-        <p className="text-xs text-muted-foreground mb-2">{point?.dateLabel}</p>
+      <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[180px]">
+        <p className="text-xs font-medium text-foreground">{point?.label}</p>
+        <p className="text-xs text-muted-foreground mb-2">{point?.rangeLabel}</p>
         <div className="flex items-center justify-between gap-3 text-sm">
           <span className="flex items-center gap-1.5 text-foreground">
             <span className="w-2 h-2 rounded-full bg-success" /> {incomeLabel}
@@ -120,7 +121,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <Activity className="w-4 h-4 text-primary" />
             </div>
-            {t("charts.dailyFlow", "Daily Flow")}
+            {t("charts.weeklyFlow", "Weekly Flow")}
           </CardTitle>
           <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
@@ -151,12 +152,10 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
               </defs>
               <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
               <XAxis
-                dataKey="day"
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                dataKey="label"
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
-                interval="preserveStartEnd"
-                minTickGap={20}
               />
               <YAxis
                 tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
