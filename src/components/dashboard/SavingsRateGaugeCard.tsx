@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ArrowDown, ArrowUp } from "lucide-react";
 
 interface SavingsRateGaugeCardProps {
   income: number;
