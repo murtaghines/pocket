@@ -69,9 +69,10 @@ export function ExpenseTrendCard({
       rawPoints.push({ day: d, dayAmt });
     }
 
-    // Compress values with sqrt to give visibility to small/zero days,
-    // and add a small floor so the line never collapses to 0.
-    const floor = maxAmt > 0 ? Math.sqrt(maxAmt) * 0.08 : 1;
+    // Compress values with sqrt so small days remain visible vs spikes,
+    // and add a small floor so zero-days share an identical baseline.
+    const sqrtMax = Math.sqrt(maxAmt);
+    const floor = sqrtMax > 0 ? sqrtMax * 0.08 : 1;
     const points: DailyPoint[] = rawPoints.map(({ day, dayAmt }) => ({
       day,
       date: `${monthKey}-${String(day).padStart(2, "0")}`,
