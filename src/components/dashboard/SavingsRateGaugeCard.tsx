@@ -252,17 +252,7 @@ export function SavingsRateGaugeCard({
             </svg>
           </div>
 
-          {/* Caption below the gauge — two lines, centered */}
-          {hasPrevious ? (
-            <div className="mt-2 text-center">
-              <p className="text-[11px] leading-4 text-muted-foreground">
-                {deltaActionLabel}
-              </p>
-              <p className="text-[11px] font-semibold leading-4 text-foreground">
-                {deltaAmountLabel}
-              </p>
-            </div>
-          ) : (
+          {!hasPrevious && (
             <p className="mt-2 text-center text-[11px] leading-4 text-muted-foreground">
               {getRatingLabel()}
             </p>
