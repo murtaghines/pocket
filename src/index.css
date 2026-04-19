@@ -96,7 +96,7 @@
 
   /* Dashboard light theme - New Pocket brand: #1b76ff blue, #ffd027 yellow, #ebebeb bg */
   .dashboard-theme {
-    --background: 0 0% 92%;
+    --background: 0 0% 100%;
     --foreground: 0 0% 3%;
 
     --card: 0 0% 100%;
