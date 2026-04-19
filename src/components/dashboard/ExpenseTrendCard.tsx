@@ -183,7 +183,7 @@ export function ExpenseTrendCard({
               content={() => null}
             />
             <Area
-              type="natural"
+              type="monotone"
               dataKey="display"
               stroke="#ffffff"
               strokeWidth={2}
