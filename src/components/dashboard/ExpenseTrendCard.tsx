@@ -182,7 +182,7 @@ export function ExpenseTrendCard({
               />
               <Area
                 type="monotone"
-                dataKey="amount"
+                dataKey="display"
                 stroke="#ffffff"
                 strokeWidth={2}
                 fill="url(#expense-trend-fill)"
