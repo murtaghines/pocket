@@ -47,12 +47,12 @@ export function SavingsRateGaugeCard({
 
   const deltaLabel = hasPrevious
     ? delta >= 0
-      ? t("stats.savingsImproved", {
-          defaultValue: "Savings improved by +{{delta}}%",
+      ? t("stats.savingsImprovedPp", {
+          defaultValue: "Savings improved by +{{delta}} pp",
           delta: Math.abs(delta),
         })
-      : t("stats.savingsDecreased", {
-          defaultValue: "Savings decreased by -{{delta}}%",
+      : t("stats.savingsDecreasedPp", {
+          defaultValue: "Savings decreased by -{{delta}} pp",
           delta: Math.abs(delta),
         })
     : getRatingLabel();
