@@ -6,7 +6,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
+import { SavingsRateGaugeCard } from "@/components/dashboard/SavingsRateGaugeCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 
