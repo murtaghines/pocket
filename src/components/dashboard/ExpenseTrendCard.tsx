@@ -132,12 +132,12 @@ export function ExpenseTrendCard({
         {/* Comparison vs last month */}
         {change !== undefined && (
           <div className="flex items-center gap-2 mt-2">
-            <div className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white">
-              {isUp && <ArrowUp className="w-3 h-3" />}
-              {isDown && <ArrowDown className="w-3 h-3" />}
+            <div className="flex items-center gap-0.5 px-2.5 py-1 rounded-full text-sm font-semibold bg-white/20 text-white">
+              {isUp && <ArrowUp className="w-3.5 h-3.5" />}
+              {isDown && <ArrowDown className="w-3.5 h-3.5" />}
               <span>{Math.abs(change)}%</span>
             </div>
-            <span className="text-xs text-white/70">
+            <span className="text-sm text-white/70">
               {t("stats.vsLastMonth")}
             </span>
           </div>
