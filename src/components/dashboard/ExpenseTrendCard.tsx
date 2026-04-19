@@ -14,8 +14,9 @@ import {
 interface DailyPoint {
   day: number;
   date: string; // YYYY-MM-DD
-  amount: number; // cumulative expense up to this day
-  daily: number; // expense on this day only
+  amount: number; // raw daily expense
+  daily: number; // expense on this day only (real value)
+  display: number; // compressed value for chart rendering
 }
 
 interface ExpenseTrendCardProps {
