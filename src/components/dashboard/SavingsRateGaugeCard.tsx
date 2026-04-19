@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ArrowDown, ArrowUp } from "lucide-react";
 
 interface SavingsRateGaugeCardProps {
   income: number;
@@ -110,12 +110,28 @@ export function SavingsRateGaugeCard({
         </div>
 
         {hasPrevious && (
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("stats.previousMonthShort", {
-              defaultValue: "Previous: {{rate}}%",
-              rate: previousRate,
-            })}
-          </p>
+          <div className="mt-0.5 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">
+              {t("stats.previousMonthShort", {
+                defaultValue: "Previous: {{rate}}%",
+                rate: previousRate,
+              })}
+            </span>
+            <span
+              className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold ${
+                delta >= 0
+                  ? "bg-primary/10 text-primary"
+                  : "bg-destructive/10 text-destructive"
+              }`}
+            >
+              {delta >= 0 ? (
+                <ArrowUp className="h-3 w-3" strokeWidth={2.5} />
+              ) : (
+                <ArrowDown className="h-3 w-3" strokeWidth={2.5} />
+              )}
+              {Math.abs(delta)} pp
+            </span>
+          </div>
         )}
 
         <div className="relative mt-3 flex flex-1 flex-col justify-end overflow-hidden">
@@ -236,17 +252,7 @@ export function SavingsRateGaugeCard({
             </svg>
           </div>
 
-          {/* Caption below the gauge — two lines, centered */}
-          {hasPrevious ? (
-            <div className="mt-2 text-center">
-              <p className="text-[11px] leading-4 text-muted-foreground">
-                {deltaActionLabel}
-              </p>
-              <p className="text-[11px] font-semibold leading-4 text-foreground">
-                {deltaAmountLabel}
-              </p>
-            </div>
-          ) : (
+          {!hasPrevious && (
             <p className="mt-2 text-center text-[11px] leading-4 text-muted-foreground">
               {getRatingLabel()}
             </p>
