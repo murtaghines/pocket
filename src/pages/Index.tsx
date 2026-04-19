@@ -12,6 +12,7 @@ import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
+import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 
 
 import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
@@ -207,12 +208,18 @@ export default function Index() {
               />
             </div>
 
-            {/* Daily Flow — income vs expense across the days of the month */}
-            <div className="mb-4">
+            {/* Weekly Flow + Accounts Stack */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 mb-4">
               <DailyFlowChart
                 transactions={transactions}
                 monthKey={latestMonthLabel}
                 convert={convertToUserCurrency}
+              />
+              <AccountsStackCard
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                convert={convertToUserCurrency}
+                formatCurrency={formatCurrency}
               />
             </div>
 
