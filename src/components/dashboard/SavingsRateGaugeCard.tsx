@@ -135,11 +135,11 @@ export function SavingsRateGaugeCard({
         )}
 
         <div className="relative mt-3 flex flex-1 flex-col justify-end overflow-hidden">
-          <div className="mx-[-18%] w-[136%] overflow-hidden">
+          <div className="w-full overflow-hidden">
             <svg
-              viewBox="0 0 320 190"
+              viewBox="16 42 288 132"
               className="block w-full h-auto"
-              preserveAspectRatio="xMidYMid meet"
+              preserveAspectRatio="xMidYMax meet"
             >
               <defs>
                 <pattern
