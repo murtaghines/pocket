@@ -36,7 +36,7 @@ export function StatCard({
   const isBalanceCard = type === 'balance';
 
   const getIconBgColor = () => {
-    if (isBalanceCard) return 'bg-white/20';
+    if (isBalanceCard) return 'bg-primary/10';
     switch (type) {
       case 'income': return 'bg-success/10';
       case 'expense': return 'bg-destructive/10';
@@ -45,7 +45,7 @@ export function StatCard({
   };
 
   const getIconColor = () => {
-    if (isBalanceCard) return 'text-white';
+    if (isBalanceCard) return 'text-primary';
     switch (type) {
       case 'income': return 'text-success';
       case 'expense': return 'text-destructive';
@@ -54,7 +54,7 @@ export function StatCard({
   };
 
   const getValueColor = () => {
-    if (isBalanceCard) return 'text-white';
+    if (isBalanceCard) return 'text-primary';
     switch (type) {
       case 'income': return 'text-success';
       case 'expense': return 'text-destructive';
@@ -66,12 +66,12 @@ export function StatCard({
     <Card 
       variant="bento"
       className={cn(
-        "animate-slide-up overflow-hidden",
-        isBalanceCard && "bg-primary border-primary"
+        "animate-slide-up overflow-hidden relative",
+        isBalanceCard && "border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10"
       )}
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="p-4 md:p-5">
+      <div className="p-4 md:p-5 relative">
         {/* Icon badge */}
         <div className={cn(
           "w-9 h-9 rounded-xl flex items-center justify-center mb-3",
@@ -85,7 +85,7 @@ export function StatCard({
         {/* Label */}
         <p className={cn(
           "text-xs font-medium mb-1 uppercase tracking-wide",
-          isBalanceCard ? "text-white/70" : "text-muted-foreground"
+          isBalanceCard ? "text-primary/70" : "text-muted-foreground"
         )}>
           {title}
         </p>
@@ -93,7 +93,8 @@ export function StatCard({
         {/* Value - larger and bolder */}
         <p className={cn(
           "text-xl md:text-2xl font-bold tracking-tight font-display",
-          getValueColor()
+          isBalanceCard && "bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent",
+          !isBalanceCard && getValueColor()
         )}>
           {value}
         </p>
@@ -103,9 +104,7 @@ export function StatCard({
           <div className="flex items-center gap-1.5 mt-2">
             <div className={cn(
               "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium",
-              isBalanceCard && isColorPositive && "bg-white/20 text-white",
-              isBalanceCard && isColorNegative && "bg-white/20 text-white",
-              isBalanceCard && !isColorPositive && !isColorNegative && "bg-white/20 text-white/70",
+              isBalanceCard && "bg-primary/10 text-primary",
               !isBalanceCard && isColorPositive && "bg-success/10 text-success",
               !isBalanceCard && isColorNegative && "bg-destructive/10 text-destructive",
               !isBalanceCard && !isColorPositive && !isColorNegative && "bg-muted text-muted-foreground"
@@ -118,7 +117,7 @@ export function StatCard({
             {previousValue && (
               <span className={cn(
                 "text-xs",
-                isBalanceCard ? "text-white/50" : "text-muted-foreground"
+                isBalanceCard ? "text-primary/60" : "text-muted-foreground"
               )}>
                 previous: {previousValue}
               </span>
