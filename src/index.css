@@ -52,20 +52,20 @@
     --category-freelance: 260 60% 62%;       /* soft violet */
     --category-rents: 35 90% 60%;            /* warm amber */
 
-    /* Category colors - Expense (cohesive with brand, no muddy mustards) */
-    --category-housing: 14 85% 60%;          /* warm coral */
-    --category-groceries: 160 55% 45%;       /* fresh teal-green */
-    --category-restaurants: 25 90% 60%;      /* appetizing orange */
+    /* Category colors - Expense (cohesive, all distinct, no pinks) */
+    --category-housing: 14 80% 58%;          /* warm coral-red */
+    --category-groceries: 145 55% 42%;       /* fresh green */
+    --category-restaurants: 22 95% 58%;      /* lively vibrant orange */
     --category-transport: 210 80% 55%;       /* clear blue */
-    --category-health: 350 75% 60%;          /* soft red-pink */
-    --category-entertainment: 280 70% 62%;   /* purple */
-    --category-shopping: 320 70% 60%;        /* magenta-pink */
-    --category-education: 190 75% 45%;       /* cyan-teal */
-    --category-subscriptions: 250 70% 62%;   /* indigo */
+    --category-health: 355 70% 55%;          /* clean red */
+    --category-entertainment: 280 65% 60%;   /* purple */
+    --category-shopping: 240 65% 62%;        /* indigo-blue */
+    --category-education: 190 80% 42%;       /* cyan-teal */
+    --category-subscriptions: 250 55% 55%;   /* deep indigo */
     --category-travel: 47 100% 57%;          /* brand yellow */
-    --category-sports: 170 65% 42%;          /* deep teal */
+    --category-sports: 175 70% 38%;          /* deep teal */
     --category-other-expense: 220 10% 55%;   /* neutral slate */
-    --category-pets: 18 75% 58%;             /* warm terracotta */
+    --category-pets: 30 85% 55%;             /* warm amber-orange */
 
     /* Category colors - Transfer */
     --category-own-transfer: 220 12% 50%;    /* neutral slate */
