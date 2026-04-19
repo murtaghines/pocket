@@ -37,12 +37,11 @@ export function ExpenseTrendCard({
   transactions,
   monthKey,
   totalExpense,
-  previousExpense,
   convert,
   formatCurrency,
   delay = 0,
 }: ExpenseTrendCardProps) {
-  const { t } = useTranslation("dashboard");
+  const { t, i18n } = useTranslation("dashboard");
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const daily: DailyPoint[] = useMemo(() => {
@@ -50,7 +49,6 @@ export function ExpenseTrendCard({
     const [y, m] = monthKey.split("-").map(Number);
     const daysInMonth = new Date(y, m, 0).getDate();
 
-    // sum expenses per day (positive value)
     const perDay = new Map<number, number>();
     transactions.forEach((tx) => {
       if (tx.type !== "expense") return;
@@ -67,79 +65,62 @@ export function ExpenseTrendCard({
       points.push({
         day: d,
         date: `${monthKey}-${String(d).padStart(2, "0")}`,
-        amount: dayAmt, // per-day expense (not cumulative)
+        amount: dayAmt,
         daily: dayAmt,
       });
     }
     return points;
   }, [transactions, monthKey, convert]);
 
-  const change =
-    previousExpense && previousExpense > 0
-      ? Math.round(((totalExpense - previousExpense) / previousExpense) * 100)
-      : undefined;
-
-  // For expenses, UP is bad (red kept on white pill), DOWN is good
-  const isUp = change !== undefined && change > 0;
-  const isDown = change !== undefined && change < 0;
-
   const hoverPoint =
     hoverIdx !== null && hoverIdx >= 0 && hoverIdx < daily.length
       ? daily[hoverIdx]
       : null;
 
+  const formatHoverDate = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    try {
+      return new Intl.DateTimeFormat(i18n.language || "en", {
+        day: "2-digit",
+        month: "2-digit",
+      }).format(dt);
+    } catch {
+      return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}`;
+    }
+  };
+
   return (
     <Card
       variant="bento"
-      className="animate-slide-up overflow-hidden border-0 bg-destructive text-white"
+      className="animate-slide-up overflow-hidden border-0 bg-destructive text-white h-[280px] flex flex-col"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="p-5 md:p-6 relative">
+      <div className="p-5 md:p-6 relative flex flex-col h-full">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-white/80">
-              {t("stats.expenses")}
-            </p>
-          </div>
-          {/* Minus icon top-right (white pill) */}
+          <p className="text-xs font-medium uppercase tracking-wide text-white/80">
+            {t("stats.expenses")}
+          </p>
           <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
             <Minus className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
         </div>
 
-        {/* Big value */}
-        <div className="mb-4">
+        {/* Big value (always month total, static) + hover info */}
+        <div className="mb-3">
           <p className="text-3xl md:text-4xl font-bold tracking-tight font-display text-white">
-            {formatCurrency(hoverPoint ? hoverPoint.amount : totalExpense)}
+            {formatCurrency(totalExpense)}
           </p>
-          {/* Change vs previous month */}
-          {change !== undefined && (
-            <div className="flex items-center gap-2 mt-2">
-              <div
-                className={cn(
-                  "flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white"
-                )}
-              >
-                {isUp && <ArrowUp className="w-3 h-3" />}
-                {isDown && <ArrowDown className="w-3 h-3" />}
-                <span>{Math.abs(change)}%</span>
-              </div>
-              <span className="text-xs text-white/70">
-                {t("stats.vsLastMonth")}
-              </span>
-            </div>
-          )}
-          {hoverPoint && (
-            <p className="text-xs text-white/80 mt-1">
-              {t("stats.day", { defaultValue: "Day" })} {hoverPoint.day} · +
-              {formatCurrency(hoverPoint.daily)}
-            </p>
-          )}
+          <p className="text-xs text-white/80 mt-2 h-4">
+            {hoverPoint
+              ? `${formatHoverDate(hoverPoint.date)}: ${formatCurrency(hoverPoint.daily)}`
+              : ""}
+          </p>
         </div>
 
-        {/* Trend chart */}
-        <div className="h-24 -mx-2">
+        {/* Trend chart fills remaining space */}
+        <div className="flex-1 -mx-2 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={daily}
