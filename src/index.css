@@ -96,7 +96,7 @@
 
   /* Dashboard light theme - Reference card-on-gray aesthetic */
   .dashboard-theme {
-    --background: 0 0% 100%;
+    --background: 0 0% 92%;
     --foreground: 0 0% 9%;
 
     --card: 0 0% 100%;
