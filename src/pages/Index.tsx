@@ -8,7 +8,7 @@ import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCatego
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
-import { ExpenseTrendCard } from "@/components/dashboard/ExpenseTrendCard";
+import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
