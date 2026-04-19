@@ -207,6 +207,15 @@ export default function Index() {
               />
             </div>
 
+            {/* Daily Flow — income vs expense across the days of the month */}
+            <div className="mb-4">
+              <DailyFlowChart
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                convert={convertToUserCurrency}
+              />
+            </div>
+
             {/* Investment & Income Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               <InvestmentSummaryCard />
