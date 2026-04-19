@@ -165,8 +165,8 @@ export function ExpenseTrendCard({
             >
               <defs>
                 <linearGradient id="expense-trend-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
+                  <stop offset="100%" stopColor="#ffffff" stopOpacity={0.18} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="day" hide />
@@ -181,10 +181,12 @@ export function ExpenseTrendCard({
                 content={() => null}
               />
               <Area
-                type="monotone"
+                type="natural"
                 dataKey="display"
                 stroke="#ffffff"
                 strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 fill="url(#expense-trend-fill)"
                 dot={false}
                 activeDot={{
