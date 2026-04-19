@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
 import { LanguagePreferenceSync } from "@/components/layout/LanguagePreferenceSync";
 import { SUPPORTED_LANGUAGES } from "@/i18n/config";
@@ -74,6 +75,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <ThemeProvider>
       <TooltipProvider>
         <NetworkStatusBanner />
         <LanguagePreferenceSync />
@@ -112,6 +114,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
