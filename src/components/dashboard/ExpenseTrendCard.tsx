@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Minus, ArrowUp, ArrowDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Minus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   ResponsiveContainer,
