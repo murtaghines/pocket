@@ -118,13 +118,12 @@ export function SavingsRateGaugeCard({
           </p>
         )}
 
-        <div className="relative mt-3 flex flex-1 flex-col justify-end">
-          {/* Gauge — zoomed crop, fills the full width of the card */}
-          <div className="w-full overflow-hidden">
+        <div className="relative mt-3 flex flex-1 flex-col justify-end overflow-hidden">
+          <div className="mx-[-18%] w-[136%] overflow-hidden">
             <svg
-              viewBox="40 40 240 110"
+              viewBox="0 0 320 190"
               className="block w-full h-auto"
-              preserveAspectRatio="xMidYMax meet"
+              preserveAspectRatio="xMidYMid meet"
             >
               <defs>
                 <pattern
@@ -139,7 +138,7 @@ export function SavingsRateGaugeCard({
                     y1="0"
                     x2="0"
                     y2="6"
-                    stroke="hsl(var(--muted-foreground) / 0.45)"
+                    stroke="hsl(var(--muted-foreground) / 0.42)"
                     strokeWidth="1.2"
                   />
                 </pattern>
@@ -149,7 +148,7 @@ export function SavingsRateGaugeCard({
                 d={arcPath}
                 fill="none"
                 stroke="url(#gauge-stripes-bg)"
-                strokeWidth="34"
+                strokeWidth="38"
                 strokeLinecap="round"
               />
 
@@ -157,8 +156,8 @@ export function SavingsRateGaugeCard({
                 <path
                   d={arcPath}
                   fill="none"
-                  stroke="hsl(var(--muted-foreground) / 0.55)"
-                  strokeWidth="34"
+                  stroke="hsl(var(--muted-foreground) / 0.56)"
+                  strokeWidth="38"
                   strokeLinecap="round"
                   strokeDasharray={`${previousDash} ${arcLength}`}
                 />
@@ -169,7 +168,7 @@ export function SavingsRateGaugeCard({
                   d={arcPath}
                   fill="none"
                   stroke="hsl(var(--primary))"
-                  strokeWidth="34"
+                  strokeWidth="38"
                   strokeLinecap="round"
                   strokeDasharray={`${currentDash} ${arcLength}`}
                 />
@@ -180,7 +179,7 @@ export function SavingsRateGaugeCard({
                   d={arcPath}
                   fill="none"
                   stroke="hsl(var(--primary))"
-                  strokeWidth="34"
+                  strokeWidth="38"
                   strokeLinecap="round"
                   strokeDasharray={`${deltaDash} ${arcLength}`}
                   strokeDashoffset={deltaOffset}
@@ -192,13 +191,13 @@ export function SavingsRateGaugeCard({
                   <circle
                     cx={previousPoint.x}
                     cy={previousPoint.y}
-                    r="15"
-                    fill="hsl(var(--muted-foreground) / 0.85)"
+                    r="18"
+                    fill="hsl(var(--muted-foreground) / 0.88)"
                   />
                   <circle
                     cx={previousPoint.x}
                     cy={previousPoint.y}
-                    r="6.5"
+                    r="8.5"
                     fill="hsl(var(--card))"
                   />
                 </>
@@ -208,22 +207,28 @@ export function SavingsRateGaugeCard({
                 <>
                   <line
                     x1={currentPoint.x}
-                    y1={currentPoint.y + 16}
+                    y1={currentPoint.y + 18}
                     x2={currentPoint.x}
-                    y2={cy + 8}
-                    stroke="hsl(var(--primary) / 0.35)"
+                    y2={cy + 16}
+                    stroke="hsl(var(--primary) / 0.25)"
                     strokeWidth="2"
                   />
                   <circle
                     cx={currentPoint.x}
                     cy={currentPoint.y}
-                    r="17"
+                    r="25"
+                    fill="hsl(var(--primary) / 0.16)"
+                  />
+                  <circle
+                    cx={currentPoint.x}
+                    cy={currentPoint.y}
+                    r="18"
                     fill="hsl(var(--primary))"
                   />
                   <circle
                     cx={currentPoint.x}
                     cy={currentPoint.y}
-                    r="7"
+                    r="8"
                     fill="hsl(var(--card))"
                   />
                 </>
