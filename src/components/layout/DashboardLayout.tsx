@@ -1,11 +1,11 @@
 import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PiggyBank, FolderOpen } from "lucide-react";
+import { LayoutDashboard, PiggyBank, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { NotificationBell } from "./NotificationBell";
+import { DataFolderButton } from "./DataFolderButton";
 import { ThemeToggle } from "./ThemeToggle";
 import walletIconBlue from "@/assets/wallet-icon-blue.png";
 
@@ -39,9 +39,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const navItems = [
-    { label: t('navigation.dashboard'), path: '/dashboard', icon: LayoutDashboard },
+    { label: t('navigation.dashboard', 'Dashboard'), path: '/dashboard', icon: LayoutDashboard },
+    { label: t('navigation.total', 'Total'), path: '/total', icon: BarChart3 },
     { label: t('navigation.investments'), path: '/investments', icon: PiggyBank },
-    { label: t('navigation.myData'), path: '/my-data', icon: FolderOpen },
   ];
 
   return (
@@ -83,7 +83,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Right side: Theme toggle + Bell + Avatar */}
             <div className="flex items-center gap-2 md:gap-3">
               <ThemeToggle />
-              <NotificationBell variant="light" />
+              <DataFolderButton />
               <Link to="/profile">
                 <div className={cn(
                   "w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold transition-all overflow-hidden",
