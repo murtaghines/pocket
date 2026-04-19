@@ -41,10 +41,7 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
     return (
       <Card variant="bento" className="animate-slide-up" style={{ animationDelay: `${delay}ms` }}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-primary" />
-            </div>
+          <CardTitle className="text-lg font-semibold">
             {t('stats.savingsRate')}
           </CardTitle>
         </CardHeader>
@@ -62,10 +59,7 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
       style={{ animationDelay: `${delay}ms` }}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-primary" />
-          </div>
+        <CardTitle className="text-lg font-semibold">
           {t('stats.savingsRate')}
         </CardTitle>
       </CardHeader>

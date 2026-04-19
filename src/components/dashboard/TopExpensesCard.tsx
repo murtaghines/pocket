@@ -32,11 +32,8 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
     return (
       <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
         <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Receipt className="w-4 h-4 text-primary" />
-          </div>
-            {t('topExpenses.title')}
+        <CardTitle className="text-lg font-semibold">
+          {t('topExpenses.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -49,10 +46,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
   return (
     <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Receipt className="w-4 h-4 text-primary" />
-          </div>
+        <CardTitle className="text-lg font-semibold">
           {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
