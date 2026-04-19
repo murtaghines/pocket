@@ -50,33 +50,34 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-5">
           <nav className="flex items-center justify-between gap-4">
-            {/* Logo */}
-            <Link to="/dashboard" className="flex items-center flex-shrink-0">
-              <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
-            </Link>
+            {/* Left: Logo + inline navigation */}
+            <div className="flex items-center gap-8">
+              <Link to="/dashboard" className="flex items-center flex-shrink-0">
+                <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
+              </Link>
 
-            {/* Center Navigation - text-only links with underline on active */}
-            <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-              {navItems.map((item) => {
-                const active = isActive(item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={cn(
-                      "relative text-base transition-colors py-1",
-                      active
-                        ? "text-foreground font-semibold"
-                        : "text-muted-foreground hover:text-foreground font-normal"
-                    )}
-                  >
-                    {item.label}
-                    {active && (
-                      <span className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-foreground rounded-full" />
-                    )}
-                  </Link>
-                );
-              })}
+              <div className="hidden md:flex items-center gap-7">
+                {navItems.map((item) => {
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={cn(
+                        "relative text-base transition-colors py-1",
+                        active
+                          ? "text-foreground font-semibold"
+                          : "text-muted-foreground hover:text-foreground font-normal"
+                      )}
+                    >
+                      {item.label}
+                      {active && (
+                        <span className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-foreground rounded-full" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Right side: Theme toggle + Bell + Avatar */}
