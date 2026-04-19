@@ -235,16 +235,16 @@ export function SavingsRateGaugeCard({
           </svg>
 
           {hasPrevious ? (
-            <div className="pointer-events-none absolute inset-x-0 bottom-4 text-center">
-              <p className="text-[11px] leading-4 text-muted-foreground whitespace-nowrap">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center">
+              <p className="text-[11px] leading-4 text-muted-foreground">
                 {deltaActionLabel}
               </p>
-              <p className="text-[11px] font-semibold leading-4 text-foreground whitespace-nowrap">
+              <p className="text-[11px] font-semibold leading-4 text-foreground">
                 {deltaAmountLabel}
               </p>
             </div>
           ) : (
-            <p className="pointer-events-none absolute inset-x-0 bottom-4 text-center text-[11px] leading-4 text-muted-foreground whitespace-nowrap">
+            <p className="pointer-events-none absolute inset-x-0 bottom-0 text-center text-[11px] leading-4 text-muted-foreground">
               {getRatingLabel()}
             </p>
           )}
