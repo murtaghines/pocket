@@ -61,16 +61,24 @@ export function ExpenseTrendCard({
       perDay.set(d, (perDay.get(d) || 0) + amt);
     });
 
-    const points: DailyPoint[] = [];
+    const rawPoints = [];
+    let maxAmt = 0;
     for (let d = 1; d <= daysInMonth; d++) {
       const dayAmt = perDay.get(d) || 0;
-      points.push({
-        day: d,
-        date: `${monthKey}-${String(d).padStart(2, "0")}`,
-        amount: dayAmt,
-        daily: dayAmt,
-      });
+      if (dayAmt > maxAmt) maxAmt = dayAmt;
+      rawPoints.push({ day: d, dayAmt });
     }
+
+    // Compress values with sqrt to give visibility to small/zero days,
+    // and add a small floor so the line never collapses to 0.
+    const floor = maxAmt > 0 ? Math.sqrt(maxAmt) * 0.08 : 1;
+    const points: DailyPoint[] = rawPoints.map(({ day, dayAmt }) => ({
+      day,
+      date: `${monthKey}-${String(day).padStart(2, "0")}`,
+      amount: dayAmt,
+      daily: dayAmt,
+      display: Math.sqrt(dayAmt) + floor,
+    }));
     return points;
   }, [transactions, monthKey, convert]);
 
