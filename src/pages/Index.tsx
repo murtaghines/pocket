@@ -186,7 +186,7 @@ export default function Index() {
               <TrendKpiCard
                 kind="balance"
                 label={t('stats.balance')}
-                icon={<Wallet className="w-5 h-5 text-white" strokeWidth={2.5} />}
+                icon={<Wallet className="w-5 h-5 text-primary" strokeWidth={2.5} />}
                 bgClass="bg-primary"
                 transactions={transactions}
                 monthKey={latestMonthLabel}
