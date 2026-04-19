@@ -37,6 +37,7 @@ export function ExpenseTrendCard({
   transactions,
   monthKey,
   totalExpense,
+  previousExpense,
   convert,
   formatCurrency,
   delay = 0,
