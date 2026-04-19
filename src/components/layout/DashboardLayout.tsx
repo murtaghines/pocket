@@ -86,7 +86,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <NotificationBell variant="light" />
               <Link to="/profile">
                 <div className={cn(
-                  "w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all overflow-hidden",
+                  "w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold transition-all overflow-hidden",
                   isActive('/profile')
                     ? "bg-primary text-primary-foreground ring-2 ring-primary/20"
                     : "bg-muted text-foreground hover:bg-muted/70"

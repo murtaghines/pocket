@@ -118,13 +118,13 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
           variant="ghost" 
           size="icon"
           className={cn(
-            "relative rounded-full w-9 h-9",
-            isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-primary text-white hover:bg-primary/90"
+            "relative rounded-full w-11 h-11",
+            isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-muted text-foreground hover:bg-muted/70"
           )}
         >
-          <Bell className="w-4 h-4" />
+          <Bell className="w-5 h-5" />
           {hasNotification && (
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full" />
+            <span className="absolute top-2 right-2.5 w-2.5 h-2.5 bg-destructive rounded-full" />
           )}
         </Button>
       </PopoverTrigger>
