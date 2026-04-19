@@ -11,6 +11,7 @@ import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
 import { LanguagePreferenceSync } from "@/components/layout/LanguagePreferenceSync";
 import { SUPPORTED_LANGUAGES } from "@/i18n/config";
 import Index from "./pages/Index";
+import Total from "./pages/Total";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
@@ -87,6 +88,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            } />
+            <Route path="/total" element={
+              <ProtectedRoute>
+                <Total />
               </ProtectedRoute>
             } />
             <Route path="/investments" element={
