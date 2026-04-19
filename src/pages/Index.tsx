@@ -9,6 +9,7 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateGaugeCard } from "@/components/dashboard/SavingsRateGaugeCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
+import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
@@ -203,6 +204,15 @@ export default function Index() {
                 previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
                 previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
                 delay={300}
+              />
+            </div>
+
+            {/* Daily Flow — income vs expense across the days of the month */}
+            <div className="mb-4">
+              <DailyFlowChart
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                convert={convertToUserCurrency}
               />
             </div>
 
