@@ -62,15 +62,13 @@ export function ExpenseTrendCard({
       perDay.set(d, (perDay.get(d) || 0) + amt);
     });
 
-    let cum = 0;
     const points: DailyPoint[] = [];
     for (let d = 1; d <= daysInMonth; d++) {
       const dayAmt = perDay.get(d) || 0;
-      cum += dayAmt;
       points.push({
         day: d,
         date: `${monthKey}-${String(d).padStart(2, "0")}`,
-        amount: cum,
+        amount: dayAmt, // per-day expense (not cumulative)
         daily: dayAmt,
       });
     }
