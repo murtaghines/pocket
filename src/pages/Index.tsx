@@ -8,6 +8,7 @@ import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCatego
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
+import { ExpenseTrendCard } from "@/components/dashboard/ExpenseTrendCard";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
@@ -164,16 +165,14 @@ export default function Index() {
                 icon={<Plus className="w-5 h-5" />}
                 delay={0}
               />
-              <StatCard
-                title={t('stats.expenses')}
-                value={formatCurrency(convertedCurrentMonth.expenses)}
-                change={expenseChange}
-                changeLabel={t('stats.vsLastMonth')}
-                previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.expenses) : undefined}
-                type="expense"
-                icon={<Minus className="w-5 h-5" />}
+              <ExpenseTrendCard
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                totalExpense={convertedCurrentMonth.expenses}
+                previousExpense={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                convert={convertToUserCurrency}
+                formatCurrency={formatCurrency}
                 delay={100}
-                invertChangeColor={true}
               />
               <StatCard
                 title={t('stats.balance')}
