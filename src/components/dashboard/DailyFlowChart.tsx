@@ -78,7 +78,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <Activity className="w-4 h-4 text-primary" />
             </div>
-            {t("charts.dailyFlow", "Daily Flow")}
+            {t("charts.weeklyFlow", "Weekly Flow")}
           </CardTitle>
         </CardHeader>
         <CardContent>
