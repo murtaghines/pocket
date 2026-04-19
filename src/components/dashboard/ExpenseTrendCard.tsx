@@ -111,10 +111,10 @@ export function ExpenseTrendCard({
   return (
     <Card
       variant="bento"
-      className="animate-slide-up overflow-hidden border-0 bg-destructive text-white h-[260px] flex flex-col"
+      className="animate-slide-up overflow-hidden border-0 bg-destructive text-white h-[260px] flex flex-col relative"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="p-5 md:p-6 relative flex flex-col h-full">
+      <div className="px-5 md:px-6 pt-5 md:pt-6 relative flex flex-col h-full z-10">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <p className="text-xs font-medium uppercase tracking-wide text-white/80">
