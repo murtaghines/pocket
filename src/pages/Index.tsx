@@ -200,6 +200,8 @@ export default function Index() {
               <SavingsRateGaugeCard
                 income={convertedCurrentMonth.income}
                 expenses={convertedCurrentMonth.expenses}
+                previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
                 delay={300}
               />
             </div>
