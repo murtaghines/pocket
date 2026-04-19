@@ -6,7 +6,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
+import { SavingsRateGaugeCard } from "@/components/dashboard/SavingsRateGaugeCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 
@@ -154,7 +154,7 @@ export default function Index() {
             </div>
 
             {/* KPIs Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_0.75fr] gap-4 mb-4">
               <TrendKpiCard
                 kind="income"
                 label={t('stats.income')}
@@ -197,12 +197,16 @@ export default function Index() {
                 positiveIsGood
                 delay={200}
               />
+              <SavingsRateGaugeCard
+                income={convertedCurrentMonth.income}
+                expenses={convertedCurrentMonth.expenses}
+                delay={300}
+              />
             </div>
 
-            {/* Investment, Savings & Income Breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            {/* Investment & Income Breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               <InvestmentSummaryCard />
-              <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
               <CategoryChart data={convertedIncomeCategoryData} />
             </div>
 
