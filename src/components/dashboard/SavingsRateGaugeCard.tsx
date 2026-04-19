@@ -60,9 +60,9 @@ export function SavingsRateGaugeCard({
       })
     : null;
 
-  const radius = 140;
+  const radius = 148;
   const cx = 160;
-  const cy = 168;
+  const cy = 176;
   const arcLength = Math.PI * radius;
   const arcPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
 
