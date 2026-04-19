@@ -114,10 +114,10 @@ export function SavingsRateGaugeCard({
         )}
 
         {/* Gauge area — zoomed crop of the top of the arc */}
-        <div className="flex-1 flex items-end justify-center overflow-hidden">
+        <div className="flex-1 flex items-end justify-center overflow-hidden relative">
           {/* viewBox crops the top portion only — gives the "zoomed in" look */}
           <svg
-            viewBox="20 25 280 110"
+            viewBox="0 35 320 130"
             className="w-full h-auto"
             preserveAspectRatio="xMidYMax meet"
           >
