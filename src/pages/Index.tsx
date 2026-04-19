@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CalendarDays, BarChart3, Plus, Minus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
@@ -8,9 +8,6 @@ import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCatego
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
-
-import { type DashboardView } from "@/components/dashboard/DateDisplay";
-import { TotalView } from "@/components/dashboard/TotalView";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
@@ -44,7 +41,6 @@ export default function Index() {
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [currentView, setCurrentView] = useState<DashboardView>('monthly');
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
@@ -147,105 +143,67 @@ export default function Index() {
               
               <EmptyStateBanner hasData={transactions.length > 0} />
 
-              {/* Section header with title + view toggle */}
+              {/* Section header with title */}
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  {currentView === 'monthly' && (
-                    <>
-                      <h3 className="text-lg font-semibold capitalize text-foreground">
-                        {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
-                      </h3>
-                      {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
-                        </p>
-                      )}
-                    </>
-                
+                  <h3 className="text-lg font-semibold capitalize text-foreground">
+                    {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+                  </h3>
+                  {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+                    </p>
                   )}
-                </div>
-                
-                {/* View toggle */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setCurrentView('monthly')}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-all ${
-                      currentView === 'monthly'
-                        ? 'bg-primary text-primary-foreground font-semibold'
-                        : 'text-muted-foreground font-medium hover:text-foreground'
-                    }`}
-                  >
-                    <CalendarDays className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t('views.monthly', 'Monthly')}</span>
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('total')}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm transition-all ${
-                      currentView === 'total'
-                        ? 'bg-primary text-primary-foreground font-semibold'
-                        : 'text-muted-foreground font-medium hover:text-foreground'
-                    }`}
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t('views.total', 'Total')}</span>
-                  </button>
                 </div>
               </div>
 
-              {currentView === 'monthly' ? (
-                <>
+              {/* KPIs Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <StatCard
+                  title={t('stats.income')}
+                  value={formatCurrency(convertedCurrentMonth.income)}
+                  change={incomeChange}
+                  changeLabel={t('stats.vsLastMonth')}
+                  previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.income) : undefined}
+                  type="income"
+                  icon={<Plus className="w-5 h-5" />}
+                  delay={0}
+                />
+                <StatCard
+                  title={t('stats.expenses')}
+                  value={formatCurrency(convertedCurrentMonth.expenses)}
+                  change={expenseChange}
+                  changeLabel={t('stats.vsLastMonth')}
+                  previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.expenses) : undefined}
+                  type="expense"
+                  icon={<Minus className="w-5 h-5" />}
+                  delay={100}
+                  invertChangeColor={true}
+                />
+                <StatCard
+                  title={t('stats.balance')}
+                  value={formatCurrency(convertedCurrentMonth.balance)}
+                  change={balanceChange}
+                  changeLabel={t('stats.vsLastMonth')}
+                  previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.balance) : undefined}
+                  type="balance"
+                  icon={<Wallet className="w-5 h-5" />}
+                  delay={200}
+                />
+              </div>
 
-                  {/* KPIs Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <StatCard
-                      title={t('stats.income')}
-                      value={formatCurrency(convertedCurrentMonth.income)}
-                      change={incomeChange}
-                      changeLabel={t('stats.vsLastMonth')}
-                      previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.income) : undefined}
-                      type="income"
-                      icon={<Plus className="w-5 h-5" />}
-                      delay={0}
-                    />
-                    <StatCard
-                      title={t('stats.expenses')}
-                      value={formatCurrency(convertedCurrentMonth.expenses)}
-                      change={expenseChange}
-                      changeLabel={t('stats.vsLastMonth')}
-                      previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.expenses) : undefined}
-                      type="expense"
-                      icon={<Minus className="w-5 h-5" />}
-                      delay={100}
-                      invertChangeColor={true}
-                    />
-                    <StatCard
-                      title={t('stats.balance')}
-                      value={formatCurrency(convertedCurrentMonth.balance)}
-                      change={balanceChange}
-                      changeLabel={t('stats.vsLastMonth')}
-                      previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.balance) : undefined}
-                      type="balance"
-                      icon={<Wallet className="w-5 h-5" />}
-                      delay={200}
-                    />
-                  </div>
+              {/* Investment, Savings & Income Breakdown */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                <InvestmentSummaryCard />
+                <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+                <CategoryChart data={convertedIncomeCategoryData} />
+              </div>
 
-                  {/* Investment, Savings & Income Breakdown */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                    <InvestmentSummaryCard />
-                    <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
-                    <CategoryChart data={convertedIncomeCategoryData} />
-                  </div>
-
-                  {/* Expense Charts Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <SpendingByCategoryChart data={convertedCategoryData} />
-                    <TopExpensesCard transactions={transactions} />
-                  </div>
-                </>
-              ) : (
-                <TotalView monthlyData={convertedMonthlyData} />
-              )}
+              {/* Expense Charts Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SpendingByCategoryChart data={convertedCategoryData} />
+                <TopExpensesCard transactions={transactions} />
+              </div>
             </div>
 
             {/* === WHITE SECTION 2: Transactions === */}
