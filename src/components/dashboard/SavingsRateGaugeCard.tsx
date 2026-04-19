@@ -45,17 +45,17 @@ export function SavingsRateGaugeCard({
     return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
   };
 
-  const deltaLabel = hasPrevious
+  const deltaActionLabel = hasPrevious
     ? delta >= 0
-      ? t("stats.savingsImprovedPp", {
-          defaultValue: "Savings improved by +{{delta}} pp",
-          delta: Math.abs(delta),
-        })
-      : t("stats.savingsDecreasedPp", {
-          defaultValue: "Savings decreased by -{{delta}} pp",
-          delta: Math.abs(delta),
-        })
-    : getRatingLabel();
+      ? t("stats.savingsIncreased", { defaultValue: "Savings increased" })
+      : t("stats.savingsDecreased", { defaultValue: "Savings decreased" })
+    : null;
+  const deltaAmountLabel = hasPrevious
+    ? t("stats.byNPp", {
+        defaultValue: "by {{delta}} pp",
+        delta: Math.abs(delta),
+      })
+    : null;
 
   // Geometry — large arc, then we crop the SVG viewBox to "zoom in" on the top.
   const radius = 140;
@@ -81,7 +81,7 @@ export function SavingsRateGaugeCard({
   return (
     <Card
       variant="bento"
-      className="animate-slide-up overflow-hidden border-0 bg-card text-foreground h-[260px] flex flex-col relative"
+      className="animate-slide-up overflow-hidden bg-card text-foreground h-[260px] flex flex-col relative border border-border/60 shadow-sm"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="p-5 md:p-6 relative flex flex-col h-full">
@@ -114,10 +114,10 @@ export function SavingsRateGaugeCard({
         )}
 
         {/* Gauge area — zoomed crop of the top of the arc */}
-        <div className="flex-1 flex items-end justify-center overflow-hidden">
+        <div className="flex-1 flex items-end justify-center overflow-hidden relative">
           {/* viewBox crops the top portion only — gives the "zoomed in" look */}
           <svg
-            viewBox="20 25 280 110"
+            viewBox="0 35 320 130"
             className="w-full h-auto"
             preserveAspectRatio="xMidYMax meet"
           >
@@ -238,12 +238,23 @@ export function SavingsRateGaugeCard({
               </>
             )}
           </svg>
-        </div>
 
-        {/* Caption */}
-        <p className="text-sm text-muted-foreground text-center mt-1">
-          {deltaLabel}
-        </p>
+          {/* Caption inside the gauge — two lines, centered */}
+          {hasPrevious ? (
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-3 text-center pointer-events-none">
+              <p className="text-xs text-muted-foreground leading-tight">
+                {deltaActionLabel}
+              </p>
+              <p className="text-xs font-semibold text-foreground leading-tight">
+                {deltaAmountLabel}
+              </p>
+            </div>
+          ) : (
+            <p className="absolute left-1/2 -translate-x-1/2 bottom-3 text-xs text-muted-foreground text-center">
+              {getRatingLabel()}
+            </p>
+          )}
+        </div>
       </div>
     </Card>
   );
