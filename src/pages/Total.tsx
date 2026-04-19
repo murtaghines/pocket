@@ -34,17 +34,20 @@ export default function Total() {
 
         {!isLoading && !prefsLoading && (
           <>
-            <div className="bg-card rounded-xl md:rounded-2xl pt-6 md:pt-8 px-4 md:px-8 pb-6 md:pb-8 mb-2 md:mb-3" style={{ boxShadow: 'var(--shadow-section)' }}>
-              <div className="flex items-center gap-2 mb-6">
-                <BarChart3 className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-semibold text-foreground">
-                  {t('views.total', 'Total')}
-                </h3>
-              </div>
+            <div className="mb-6">
+              <h3 className="text-2xl md:text-3xl font-semibold text-foreground">
+                {t('views.total', 'Total')}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t('views.totalSubtitle', 'Accumulated view across all periods')}
+              </p>
+            </div>
+
+            <div className="mb-4">
               <TotalView monthlyData={convertedMonthlyData} />
             </div>
 
-            <div className="bg-card rounded-xl md:rounded-2xl p-3 md:p-4" style={{ boxShadow: 'var(--shadow-section)' }}>
+            <div className="bg-card rounded-2xl p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
               <div className="max-h-[500px] overflow-y-auto">
                 <TransactionTable transactions={transactions} />
               </div>

@@ -138,76 +138,70 @@ export default function Index() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* === WHITE SECTION 1: Analytics === */}
-            <div className="bg-card rounded-xl md:rounded-2xl pt-6 md:pt-8 px-4 md:px-8 pb-6 md:pb-8 mb-2 md:mb-3" style={{ boxShadow: 'var(--shadow-section)' }}>
-              
-              <EmptyStateBanner hasData={transactions.length > 0} />
+            <EmptyStateBanner hasData={transactions.length > 0} />
 
-              {/* Section header with title */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold capitalize text-foreground">
-                    {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
-                  </h3>
-                  {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* KPIs Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <StatCard
-                  title={t('stats.income')}
-                  value={formatCurrency(convertedCurrentMonth.income)}
-                  change={incomeChange}
-                  changeLabel={t('stats.vsLastMonth')}
-                  previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.income) : undefined}
-                  type="income"
-                  icon={<Plus className="w-5 h-5" />}
-                  delay={0}
-                />
-                <StatCard
-                  title={t('stats.expenses')}
-                  value={formatCurrency(convertedCurrentMonth.expenses)}
-                  change={expenseChange}
-                  changeLabel={t('stats.vsLastMonth')}
-                  previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.expenses) : undefined}
-                  type="expense"
-                  icon={<Minus className="w-5 h-5" />}
-                  delay={100}
-                  invertChangeColor={true}
-                />
-                <StatCard
-                  title={t('stats.balance')}
-                  value={formatCurrency(convertedCurrentMonth.balance)}
-                  change={balanceChange}
-                  changeLabel={t('stats.vsLastMonth')}
-                  previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.balance) : undefined}
-                  type="balance"
-                  icon={<Wallet className="w-5 h-5" />}
-                  delay={200}
-                />
-              </div>
-
-              {/* Investment, Savings & Income Breakdown */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                <InvestmentSummaryCard />
-                <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
-                <CategoryChart data={convertedIncomeCategoryData} />
-              </div>
-
-              {/* Expense Charts Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SpendingByCategoryChart data={convertedCategoryData} />
-                <TopExpensesCard transactions={transactions} />
-              </div>
+            {/* Section header */}
+            <div className="mb-6">
+              <h3 className="text-2xl md:text-3xl font-semibold capitalize text-foreground">
+                {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+              </h3>
+              {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+                </p>
+              )}
             </div>
 
-            {/* === WHITE SECTION 2: Transactions === */}
-            <div className="bg-card rounded-xl md:rounded-2xl p-3 md:p-4" style={{ boxShadow: 'var(--shadow-section)' }}>
+            {/* KPIs Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <StatCard
+                title={t('stats.income')}
+                value={formatCurrency(convertedCurrentMonth.income)}
+                change={incomeChange}
+                changeLabel={t('stats.vsLastMonth')}
+                previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.income) : undefined}
+                type="income"
+                icon={<Plus className="w-5 h-5" />}
+                delay={0}
+              />
+              <StatCard
+                title={t('stats.expenses')}
+                value={formatCurrency(convertedCurrentMonth.expenses)}
+                change={expenseChange}
+                changeLabel={t('stats.vsLastMonth')}
+                previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.expenses) : undefined}
+                type="expense"
+                icon={<Minus className="w-5 h-5" />}
+                delay={100}
+                invertChangeColor={true}
+              />
+              <StatCard
+                title={t('stats.balance')}
+                value={formatCurrency(convertedCurrentMonth.balance)}
+                change={balanceChange}
+                changeLabel={t('stats.vsLastMonth')}
+                previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.balance) : undefined}
+                type="balance"
+                icon={<Wallet className="w-5 h-5" />}
+                delay={200}
+              />
+            </div>
+
+            {/* Investment, Savings & Income Breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+              <InvestmentSummaryCard />
+              <SavingsRateCard income={convertedSummary.income} expenses={convertedSummary.expenses} delay={250} />
+              <CategoryChart data={convertedIncomeCategoryData} />
+            </div>
+
+            {/* Expense Charts Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <SpendingByCategoryChart data={convertedCategoryData} />
+              <TopExpensesCard transactions={transactions} />
+            </div>
+
+            {/* Transactions */}
+            <div className="bg-card rounded-2xl p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
               <div className="max-h-[500px] overflow-y-auto">
                 <TransactionTable transactions={transactions} />
               </div>
