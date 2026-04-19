@@ -47,12 +47,12 @@ export function SavingsRateGaugeCard({
 
   const deltaLabel = hasPrevious
     ? delta >= 0
-      ? t("stats.savingsImproved", {
-          defaultValue: "Savings improved by +{{delta}}%",
+      ? t("stats.savingsImprovedPp", {
+          defaultValue: "Savings improved by +{{delta}} pp",
           delta: Math.abs(delta),
         })
-      : t("stats.savingsDecreased", {
-          defaultValue: "Savings decreased by -{{delta}}%",
+      : t("stats.savingsDecreasedPp", {
+          defaultValue: "Savings decreased by -{{delta}} pp",
           delta: Math.abs(delta),
         })
     : getRatingLabel();
@@ -104,6 +104,14 @@ export function SavingsRateGaugeCard({
             %
           </span>
         </div>
+        {hasPrevious && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {t("stats.previousMonthShort", {
+              defaultValue: "Previous: {{rate}}%",
+              rate: previousRate,
+            })}
+          </p>
+        )}
 
         {/* Gauge area — zoomed crop of the top of the arc */}
         <div className="flex-1 flex items-end justify-center overflow-hidden">
