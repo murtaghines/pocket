@@ -185,10 +185,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   return (
     <Card variant="bento" className="animate-slide-up border-0 shadow-none bg-transparent" style={{ animationDelay: '400ms' }}>
       <CardHeader className="pb-2 pt-0 px-0">
-        <CardTitle className="text-base flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <List className="w-4 h-4 text-primary" />
-          </div>
+        <CardTitle className="text-lg font-semibold">
           {t('transactions.title')}
         </CardTitle>
         <div className="flex flex-col md:flex-row md:items-end gap-2 mt-2">
