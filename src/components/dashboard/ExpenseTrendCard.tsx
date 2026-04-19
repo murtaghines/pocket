@@ -152,12 +152,12 @@ export function ExpenseTrendCard({
 
       </div>
 
-      {/* Trend chart — full width, fills bottom of card */}
-      <div className="absolute left-0 right-0 bottom-0 h-14 pointer-events-auto">
+      {/* Trend chart — curve sits higher, gradient extends to card bottom */}
+      <div className="absolute left-0 right-0 bottom-0 h-20 pointer-events-auto">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={daily}
-            margin={{ top: 4, right: 2, bottom: 0, left: 2 }}
+            margin={{ top: 8, right: 2, bottom: 16, left: 2 }}
             onMouseMove={(e: any) => {
               if (e && typeof e.activeTooltipIndex === "number") {
                 setHoverIdx(e.activeTooltipIndex);
@@ -167,8 +167,8 @@ export function ExpenseTrendCard({
           >
             <defs>
               <linearGradient id="expense-trend-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity={0.25} />
+                <stop offset="0%" stopColor="#ffffff" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis dataKey="day" hide />
@@ -191,7 +191,6 @@ export function ExpenseTrendCard({
               strokeLinejoin="round"
               fill="url(#expense-trend-fill)"
               fillOpacity={1}
-              baseValue={0}
               dot={false}
               activeDot={{
                 r: 4,
