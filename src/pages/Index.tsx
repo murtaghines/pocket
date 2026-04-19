@@ -8,7 +8,7 @@ import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCatego
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { SavingsRateCard } from "@/components/dashboard/SavingsRateCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
-import { ExpenseTrendCard } from "@/components/dashboard/ExpenseTrendCard";
+import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 
@@ -155,33 +155,46 @@ export default function Index() {
 
             {/* KPIs Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <StatCard
-                title={t('stats.income')}
-                value={formatCurrency(convertedCurrentMonth.income)}
-                change={incomeChange}
-                changeLabel={t('stats.vsLastMonth')}
-                previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.income) : undefined}
-                type="income"
-                icon={<Plus className="w-5 h-5" />}
-                delay={0}
-              />
-              <ExpenseTrendCard
+              <TrendKpiCard
+                kind="income"
+                label={t('stats.income')}
+                icon={<Plus className="w-5 h-5 text-white" strokeWidth={2.5} />}
+                bgClass="bg-success"
                 transactions={transactions}
                 monthKey={latestMonthLabel}
-                totalExpense={convertedCurrentMonth.expenses}
-                previousExpense={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                total={convertedCurrentMonth.income}
+                previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
                 convert={convertToUserCurrency}
                 formatCurrency={formatCurrency}
+                positiveIsGood
+                delay={0}
+              />
+              <TrendKpiCard
+                kind="expense"
+                label={t('stats.expenses')}
+                icon={<Minus className="w-5 h-5 text-white" strokeWidth={2.5} />}
+                bgClass="bg-destructive"
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                total={convertedCurrentMonth.expenses}
+                previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                convert={convertToUserCurrency}
+                formatCurrency={formatCurrency}
+                positiveIsGood={false}
                 delay={100}
               />
-              <StatCard
-                title={t('stats.balance')}
-                value={formatCurrency(convertedCurrentMonth.balance)}
-                change={balanceChange}
-                changeLabel={t('stats.vsLastMonth')}
-                previousValue={hasPreviousData ? formatCurrency(convertedPreviousMonth.balance) : undefined}
-                type="balance"
-                icon={<Wallet className="w-5 h-5" />}
+              <TrendKpiCard
+                kind="balance"
+                label={t('stats.balance')}
+                icon={<Wallet className="w-5 h-5 text-white" strokeWidth={2.5} />}
+                bgClass="bg-primary"
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                total={convertedCurrentMonth.balance}
+                previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
+                convert={convertToUserCurrency}
+                formatCurrency={formatCurrency}
+                positiveIsGood
                 delay={200}
               />
             </div>

@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, ReactNode } from "react";
 import { Card } from "@/components/ui/card";
-import { Minus, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   ResponsiveContainer,
@@ -13,36 +13,51 @@ import {
 
 interface DailyPoint {
   day: number;
-  date: string; // YYYY-MM-DD
-  amount: number; // raw daily expense
-  daily: number; // expense on this day only (real value)
-  display: number; // compressed value for chart rendering
+  date: string;
+  daily: number;
+  display: number;
 }
 
-interface ExpenseTrendCardProps {
-  /** All transactions (we filter by month here) */
+export type TrendKind = "income" | "expense" | "balance";
+
+interface TrendKpiCardProps {
+  kind: TrendKind;
+  /** Label (e.g. "Income", "Expenses", "Balance") */
+  label: string;
+  /** Icon shown in the top-right circle (already styled in white) */
+  icon: ReactNode;
+  /** Background color CSS (Tailwind bg-*) */
+  bgClass: string;
+  /** All transactions for the period */
   transactions: Array<{ date: string; amount: number; type: string }>;
   /** YYYY-MM */
   monthKey: string | null;
-  /** Total month expense (already converted to user currency) */
-  totalExpense: number;
-  /** Previous month total expense (for comparison) */
-  previousExpense?: number;
+  /** Total month value already converted (signed for balance) */
+  total: number;
+  /** Previous month total (for comparison) */
+  previousTotal?: number;
   /** Currency conversion (raw EUR -> user currency) */
   convert: (amount: number) => number;
   formatCurrency: (n: number) => string;
+  /** Higher is better (income, balance) vs lower is better (expense) */
+  positiveIsGood?: boolean;
   delay?: number;
 }
 
-export function ExpenseTrendCard({
+export function TrendKpiCard({
+  kind,
+  label,
+  icon,
+  bgClass,
   transactions,
   monthKey,
-  totalExpense,
-  previousExpense,
+  total,
+  previousTotal,
   convert,
   formatCurrency,
+  positiveIsGood = true,
   delay = 0,
-}: ExpenseTrendCardProps) {
+}: TrendKpiCardProps) {
   const { t, i18n } = useTranslation("dashboard");
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
@@ -53,34 +68,45 @@ export function ExpenseTrendCard({
 
     const perDay = new Map<number, number>();
     transactions.forEach((tx) => {
-      if (tx.type !== "expense") return;
       if (!tx.date.startsWith(monthKey)) return;
       const d = parseInt(tx.date.slice(8, 10), 10);
       if (!d) return;
-      const amt = Math.abs(convert(tx.amount));
-      perDay.set(d, (perDay.get(d) || 0) + amt);
+      const amt = convert(tx.amount);
+      let contribution = 0;
+      if (kind === "income" && tx.type === "income") contribution = Math.abs(amt);
+      else if (kind === "expense" && tx.type === "expense") contribution = Math.abs(amt);
+      else if (kind === "balance") {
+        if (tx.type === "income") contribution = Math.abs(amt);
+        else if (tx.type === "expense") contribution = -Math.abs(amt);
+      }
+      if (contribution !== 0) {
+        perDay.set(d, (perDay.get(d) || 0) + contribution);
+      }
     });
 
     const rawPoints = [];
-    let maxAmt = 0;
+    let maxAbs = 0;
     for (let d = 1; d <= daysInMonth; d++) {
       const dayAmt = perDay.get(d) || 0;
-      if (dayAmt > maxAmt) maxAmt = dayAmt;
+      if (Math.abs(dayAmt) > maxAbs) maxAbs = Math.abs(dayAmt);
       rawPoints.push({ day: d, dayAmt });
     }
 
-    // Compress values with sqrt to give visibility to small/zero days,
-    // and add a small floor so the line never collapses to 0.
-    const floor = maxAmt > 0 ? Math.sqrt(maxAmt) * 0.08 : 1;
-    const points: DailyPoint[] = rawPoints.map(({ day, dayAmt }) => ({
-      day,
-      date: `${monthKey}-${String(day).padStart(2, "0")}`,
-      amount: dayAmt,
-      daily: dayAmt,
-      display: Math.sqrt(dayAmt) + floor,
-    }));
+    // Compress with sqrt + floor so small/zero days remain visible.
+    // For balance (signed), preserve sign on the display value.
+    const floor = maxAbs > 0 ? Math.sqrt(maxAbs) * 0.08 : 1;
+    const points: DailyPoint[] = rawPoints.map(({ day, dayAmt }) => {
+      const sign = dayAmt < 0 ? -1 : 1;
+      const compressed = Math.sqrt(Math.abs(dayAmt)) + floor;
+      return {
+        day,
+        date: `${monthKey}-${String(day).padStart(2, "0")}`,
+        daily: dayAmt,
+        display: kind === "balance" ? sign * compressed : compressed,
+      };
+    });
     return points;
-  }, [transactions, monthKey, convert]);
+  }, [transactions, monthKey, convert, kind]);
 
   const hoverPoint =
     hoverIdx !== null && hoverIdx >= 0 && hoverIdx < daily.length
@@ -101,32 +127,34 @@ export function ExpenseTrendCard({
   };
 
   const change =
-    previousExpense && previousExpense > 0
-      ? Math.round(((totalExpense - previousExpense) / previousExpense) * 100)
+    previousTotal !== undefined && previousTotal !== 0
+      ? Math.round(((total - previousTotal) / Math.abs(previousTotal)) * 100)
       : undefined;
   const isUp = change !== undefined && change > 0;
   const isDown = change !== undefined && change < 0;
 
+  const gradientId = `trend-fill-${kind}`;
+
   return (
     <Card
       variant="bento"
-      className="animate-slide-up overflow-hidden border-0 bg-destructive text-white h-[260px] flex flex-col"
+      className={`animate-slide-up overflow-hidden border-0 ${bgClass} text-white h-[260px] flex flex-col relative`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="p-5 md:p-6 relative flex flex-col h-full">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <p className="text-xs font-medium uppercase tracking-wide text-white/80">
-            {t("stats.expenses")}
+            {label}
           </p>
           <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
-            <Minus className="w-5 h-5 text-white" strokeWidth={2.5} />
+            {icon}
           </div>
         </div>
 
-        {/* Big value (always month total, static) */}
+        {/* Big value */}
         <p className="text-3xl md:text-4xl font-bold tracking-tight font-display text-white">
-          {formatCurrency(totalExpense)}
+          {formatCurrency(total)}
         </p>
 
         {/* Comparison vs last month */}
@@ -149,7 +177,6 @@ export function ExpenseTrendCard({
             ? `${formatHoverDate(hoverPoint.date)}: ${formatCurrency(hoverPoint.daily)}`
             : ""}
         </p>
-
       </div>
 
       {/* Trend chart — curve sits higher, gradient extends to card bottom */}
@@ -166,13 +193,13 @@ export function ExpenseTrendCard({
             onMouseLeave={() => setHoverIdx(null)}
           >
             <defs>
-              <linearGradient id="expense-trend-fill" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#ffffff" stopOpacity={0.5} />
                 <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis dataKey="day" hide />
-            <YAxis hide domain={[0, "dataMax"]} />
+            <YAxis hide domain={kind === "balance" ? ["dataMin", "dataMax"] : [0, "dataMax"]} />
             <Tooltip
               cursor={{
                 stroke: "#ffffff",
@@ -189,13 +216,14 @@ export function ExpenseTrendCard({
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              fill="url(#expense-trend-fill)"
+              fill={`url(#${gradientId})`}
               fillOpacity={1}
               dot={false}
               activeDot={{
                 r: 4,
                 fill: "#ffffff",
-                stroke: "hsl(var(--destructive))",
+                stroke: "#000000",
+                strokeOpacity: 0.15,
                 strokeWidth: 2,
               }}
               isAnimationActive={false}
