@@ -45,17 +45,17 @@ export function SavingsRateGaugeCard({
     return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
   };
 
-  const deltaLabel = hasPrevious
+  const deltaActionLabel = hasPrevious
     ? delta >= 0
-      ? t("stats.savingsImprovedPp", {
-          defaultValue: "Savings improved by +{{delta}} pp",
-          delta: Math.abs(delta),
-        })
-      : t("stats.savingsDecreasedPp", {
-          defaultValue: "Savings decreased by -{{delta}} pp",
-          delta: Math.abs(delta),
-        })
-    : getRatingLabel();
+      ? t("stats.savingsIncreased", { defaultValue: "Savings increased" })
+      : t("stats.savingsDecreased", { defaultValue: "Savings decreased" })
+    : null;
+  const deltaAmountLabel = hasPrevious
+    ? t("stats.byNPp", {
+        defaultValue: "by {{delta}} pp",
+        delta: Math.abs(delta),
+      })
+    : null;
 
   // Geometry — large arc, then we crop the SVG viewBox to "zoom in" on the top.
   const radius = 140;
