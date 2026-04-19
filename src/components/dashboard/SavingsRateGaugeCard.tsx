@@ -10,6 +10,7 @@ interface SavingsRateGaugeCardProps {
   delay?: number;
 }
 
+const clampRate = (value: number) => Math.max(0, Math.min(100, value));
 const computeRate = (inc: number, exp: number) =>
   inc > 0 ? Math.round(((inc - exp) / inc) * 100) : 0;
 
@@ -26,22 +27,23 @@ export function SavingsRateGaugeCard({
   const hasPrevious =
     previousIncome !== undefined && previousExpenses !== undefined;
   const previousRate = hasPrevious
-    ? computeRate(previousIncome!, previousExpenses!)
+    ? computeRate(previousIncome as number, previousExpenses as number)
     : 0;
 
-  const clampedCurrent = Math.max(0, Math.min(100, currentRate));
-  const clampedPrev = Math.max(0, Math.min(100, previousRate));
-  const lower = Math.min(clampedCurrent, clampedPrev);
-  const higher = Math.max(clampedCurrent, clampedPrev);
+  const currentClamped = clampRate(currentRate);
+  const previousClamped = clampRate(previousRate);
   const delta = currentRate - previousRate;
 
   const getRatingLabel = () => {
-    if (currentRate <= 0)
+    if (currentRate <= 0) {
       return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
-    if (currentRate >= 30)
+    }
+    if (currentRate >= 30) {
       return t("stats.excellent", { defaultValue: "Excellent" });
-    if (currentRate >= 15)
+    }
+    if (currentRate >= 15) {
       return t("stats.good", { defaultValue: "Good" });
+    }
     return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
   };
 
@@ -50,6 +52,7 @@ export function SavingsRateGaugeCard({
       ? t("stats.savingsIncreased", { defaultValue: "Savings increased" })
       : t("stats.savingsDecreased", { defaultValue: "Savings decreased" })
     : null;
+
   const deltaAmountLabel = hasPrevious
     ? t("stats.byNPp", {
         defaultValue: "by {{delta}} pp",
@@ -57,55 +60,57 @@ export function SavingsRateGaugeCard({
       })
     : null;
 
-  // Geometry — large arc, then we crop the SVG viewBox to "zoom in" on the top.
   const radius = 140;
   const cx = 160;
-  const cy = 170;
+  const cy = 168;
   const arcLength = Math.PI * radius;
+  const arcPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
 
   const angleFor = (pct: number) => 180 - (pct / 100) * 180;
   const pointAt = (pct: number) => {
     const rad = (angleFor(pct) * Math.PI) / 180;
-    return { x: cx + radius * Math.cos(rad), y: cy - radius * Math.sin(rad) };
+    return {
+      x: cx + radius * Math.cos(rad),
+      y: cy - radius * Math.sin(rad),
+    };
   };
 
-  const lowerPoint = pointAt(lower);
-  const higherPoint = pointAt(higher);
-
-  // Dash math
-  const dashLower = (lower / 100) * arcLength;
-  const dashDelta = ((higher - lower) / 100) * arcLength;
-
-  const arcPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
+  const previousPoint = pointAt(previousClamped);
+  const currentPoint = pointAt(currentClamped);
+  const deltaStart = Math.min(previousClamped, currentClamped);
+  const deltaEnd = Math.max(previousClamped, currentClamped);
+  const previousDash = (previousClamped / 100) * arcLength;
+  const currentDash = (currentClamped / 100) * arcLength;
+  const deltaDash = ((deltaEnd - deltaStart) / 100) * arcLength;
+  const deltaOffset = -((deltaStart / 100) * arcLength);
 
   return (
     <Card
       variant="bento"
-      className="animate-slide-up overflow-hidden bg-card text-foreground h-[260px] flex flex-col relative border border-border/60 shadow-sm"
+      className="animate-slide-up relative flex h-[260px] flex-col overflow-hidden border border-border/70 bg-card text-foreground shadow-sm"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="p-5 md:p-6 relative flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-3">
+      <div className="relative flex h-full flex-col p-5 md:p-6">
+        <div className="mb-3 flex items-start justify-between">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("stats.savingsRate")}
           </p>
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-            <ArrowUpRight className="w-5 h-5 text-foreground" strokeWidth={2.5} />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+            <ArrowUpRight className="h-5 w-5 text-foreground" strokeWidth={2.5} />
           </div>
         </div>
 
-        {/* Big value */}
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl md:text-4xl font-bold tracking-tight font-display text-foreground">
+          <span className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
             {currentRate}
           </span>
-          <span className="text-xl md:text-2xl font-semibold text-muted-foreground/60">
+          <span className="text-xl font-semibold text-muted-foreground/60 md:text-2xl">
             %
           </span>
         </div>
+
         {hasPrevious && (
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             {t("stats.previousMonthShort", {
               defaultValue: "Previous: {{rate}}%",
               rate: previousRate,
@@ -113,16 +118,13 @@ export function SavingsRateGaugeCard({
           </p>
         )}
 
-        {/* Gauge area — zoomed crop of the top of the arc */}
-        <div className="flex-1 flex items-end justify-center overflow-hidden relative">
-          {/* viewBox crops the top portion only — gives the "zoomed in" look */}
+        <div className="relative mt-2 flex h-[132px] flex-none items-end justify-center">
           <svg
-            viewBox="0 35 320 130"
-            className="w-full h-auto"
-            preserveAspectRatio="xMidYMax meet"
+            viewBox="-18 -18 356 212"
+            className="h-[132px] w-full overflow-visible"
+            preserveAspectRatio="xMidYMid meet"
           >
             <defs>
-              {/* Thin radial-looking stripes for the empty track */}
               <pattern
                 id="gauge-stripes-bg"
                 patternUnits="userSpaceOnUse"
@@ -135,122 +137,114 @@ export function SavingsRateGaugeCard({
                   y1="0"
                   x2="0"
                   y2="6"
-                  stroke="hsl(var(--muted-foreground) / 0.45)"
-                  strokeWidth="1.2"
+                  stroke="hsl(var(--muted-foreground) / 0.35)"
+                  strokeWidth="1.1"
                 />
               </pattern>
             </defs>
 
-            {/* Empty track — thin striped lines */}
             <path
               d={arcPath}
               fill="none"
               stroke="url(#gauge-stripes-bg)"
               strokeWidth="32"
-              strokeLinecap="butt"
+              strokeLinecap="round"
             />
 
-            {/* Previous-month fill — dark gray solid */}
-            {lower > 0 && (
+            {hasPrevious && previousClamped > 0 && (
               <path
                 d={arcPath}
                 fill="none"
                 stroke="hsl(var(--muted-foreground) / 0.55)"
                 strokeWidth="32"
                 strokeLinecap="round"
-                strokeDasharray={`${dashLower} ${arcLength}`}
+                strokeDasharray={`${previousDash} ${arcLength}`}
               />
             )}
 
-            {/* Delta fill — brand blue, between previous and current */}
-            {higher > lower && (
+            {!hasPrevious && currentClamped > 0 && (
               <path
                 d={arcPath}
                 fill="none"
                 stroke="hsl(var(--primary))"
                 strokeWidth="32"
                 strokeLinecap="round"
-                strokeDasharray={`${dashDelta} ${arcLength}`}
-                strokeDashoffset={-dashLower}
-                style={{ transition: "stroke-dashoffset 1.2s ease-out" }}
+                strokeDasharray={`${currentDash} ${arcLength}`}
               />
             )}
 
-            {/* Marker for the previous rate — dark donut */}
+            {hasPrevious && deltaDash > 0 && (
+              <path
+                d={arcPath}
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="32"
+                strokeLinecap="round"
+                strokeDasharray={`${deltaDash} ${arcLength}`}
+                strokeDashoffset={deltaOffset}
+              />
+            )}
+
             {hasPrevious && (
               <>
                 <circle
-                  cx={lowerPoint.x}
-                  cy={lowerPoint.y}
+                  cx={previousPoint.x}
+                  cy={previousPoint.y}
                   r="14"
                   fill="hsl(var(--muted-foreground) / 0.85)"
                 />
                 <circle
-                  cx={lowerPoint.x}
-                  cy={lowerPoint.y}
+                  cx={previousPoint.x}
+                  cy={previousPoint.y}
                   r="6"
                   fill="hsl(var(--card))"
                 />
               </>
             )}
 
-            {/* Marker for current rate — blue donut with white center + needle */}
-            {higher > lower && (
+            {(currentClamped > 0 || !hasPrevious) && (
               <>
                 <line
-                  x1={higherPoint.x}
-                  y1={higherPoint.y + 14}
-                  x2={higherPoint.x}
-                  y2={cy + 6}
-                  stroke="hsl(var(--primary))"
+                  x1={currentPoint.x}
+                  y1={currentPoint.y + 16}
+                  x2={currentPoint.x}
+                  y2={cy + 18}
+                  stroke="hsl(var(--primary) / 0.3)"
                   strokeWidth="2"
                 />
                 <circle
-                  cx={higherPoint.x}
-                  cy={higherPoint.y}
+                  cx={currentPoint.x}
+                  cy={currentPoint.y}
+                  r="21"
+                  fill="hsl(var(--primary) / 0.18)"
+                />
+                <circle
+                  cx={currentPoint.x}
+                  cy={currentPoint.y}
                   r="16"
                   fill="hsl(var(--primary))"
                 />
                 <circle
-                  cx={higherPoint.x}
-                  cy={higherPoint.y}
+                  cx={currentPoint.x}
+                  cy={currentPoint.y}
                   r="7"
-                  fill="#ffffff"
-                />
-              </>
-            )}
-
-            {/* If no previous data, show only the current marker on the empty track */}
-            {!hasPrevious && clampedCurrent > 0 && (
-              <>
-                <circle
-                  cx={pointAt(clampedCurrent).x}
-                  cy={pointAt(clampedCurrent).y}
-                  r="16"
-                  fill="hsl(var(--primary))"
-                />
-                <circle
-                  cx={pointAt(clampedCurrent).x}
-                  cy={pointAt(clampedCurrent).y}
-                  r="7"
-                  fill="#ffffff"
+                  fill="hsl(var(--card))"
                 />
               </>
             )}
           </svg>
 
-          {/* Caption inside the gauge — two lines, centered */}
           {hasPrevious ? (
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-3 text-center pointer-events-none">
-              <p className="text-xs text-muted-foreground leading-tight">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center">
+              <p className="text-[11px] leading-4 text-muted-foreground">
                 {deltaActionLabel}
               </p>
-              <p className="text-xs font-semibold text-foreground leading-tight">
+              <p className="text-[11px] font-semibold leading-4 text-foreground">
                 {deltaAmountLabel}
               </p>
             </div>
           ) : (
-            <p className="absolute left-1/2 -translate-x-1/2 bottom-3 text-xs text-muted-foreground text-center">
+            <p className="pointer-events-none absolute inset-x-0 bottom-0 text-center text-[11px] leading-4 text-muted-foreground">
               {getRatingLabel()}
             </p>
           )}
