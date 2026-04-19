@@ -16,7 +16,7 @@
     --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 204 66% 51%;
+    --primary: 216 100% 55%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 12%;
@@ -39,7 +39,7 @@
 
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 204 66% 51%;
+    --ring: 216 100% 55%;
 
     --radius: 0.75rem;
 
@@ -94,49 +94,49 @@
     --sidebar-ring: 204 66% 51%;
   }
 
-  /* Dashboard light theme - Reference card-on-gray aesthetic */
+  /* Dashboard light theme - New Pocket brand: #1b76ff blue, #ffd027 yellow, #ebebeb bg */
   .dashboard-theme {
     --background: 0 0% 92%;
-    --foreground: 0 0% 9%;
+    --foreground: 0 0% 3%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 0 0% 3%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 0 0% 3%;
 
-    --primary: 204 66% 51%;
+    --primary: 216 100% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 45 100% 58%;
+    --secondary-foreground: 0 0% 3%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 35%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 35%;
 
-    --accent: 204 66% 97%;
-    --accent-foreground: 204 66% 51%;
+    --accent: 216 100% 96%;
+    --accent-foreground: 216 100% 45%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 12 99% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
+    --success: 150 100% 37%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 45 100% 58%;
+    --warning-foreground: 0 0% 3%;
 
-    --border: 220 13% 93%;
-    --input: 220 13% 91%;
-    --ring: 204 66% 51%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 216 100% 55%;
 
     --radius: 0.75rem;
 
-    /* Card sits on white bg: hairline border + soft drop shadow underneath */
+    /* Card sits on light gray bg: hairline border + soft drop shadow */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
     --shadow-md: 0 2px 6px -1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
     --shadow-lg: 0 6px 16px -4px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-    --shadow-glow: 0 0 20px hsl(204 66% 51% / 0.06);
+    --shadow-glow: 0 0 20px hsl(216 100% 55% / 0.08);
     --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 4px 12px -2px rgb(0 0 0 / 0.06);
     --shadow-bento: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 6px 16px -4px rgb(0 0 0 / 0.08);
     --shadow-section: 0 4px 16px -4px rgb(0 0 0 / 0.06);
