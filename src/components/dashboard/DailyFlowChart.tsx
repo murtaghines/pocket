@@ -74,10 +74,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
     return (
       <Card variant="bento" className="animate-slide-up" style={{ animationDelay: "150ms" }}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Activity className="w-4 h-4 text-primary" />
-            </div>
+          <CardTitle className="text-lg font-semibold">
             {t("charts.weeklyFlow", "Weekly Flow")}
           </CardTitle>
         </CardHeader>
@@ -117,10 +114,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
     <Card variant="bento" className="animate-slide-up" style={{ animationDelay: "150ms" }}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Activity className="w-4 h-4 text-primary" />
-            </div>
+          <CardTitle className="text-lg font-semibold">
             {t("charts.weeklyFlow", "Weekly Flow")}
           </CardTitle>
           <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
