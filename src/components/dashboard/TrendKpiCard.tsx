@@ -134,45 +134,69 @@ export function TrendKpiCard({
   const isDown = change !== undefined && change < 0;
 
   const gradientId = `trend-fill-${kind}`;
+  const isBalance = kind === "balance";
+
+  // Balance card uses inverted styling: white bg + blue accents
+  const cardClasses = isBalance
+    ? "bg-card border border-primary/20"
+    : `border-0 ${bgClass} text-white`;
+
+  const labelClass = isBalance ? "text-primary/70" : "text-white/80";
+  const iconBgClass = isBalance ? "bg-primary/10" : "bg-white/15 backdrop-blur-sm";
+  const iconColorClass = isBalance ? "text-primary" : "";
+  const valueClass = isBalance
+    ? "bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
+    : "text-white";
+  const chipClass = isBalance ? "bg-primary/10 text-primary" : "bg-white/20 text-white";
+  const chipMutedClass = isBalance ? "text-primary/60" : "text-white/70";
+  const hoverTextClass = isBalance ? "text-primary/70" : "text-white/80";
+
+  // Chart colors
+  const chartStroke = isBalance ? "hsl(var(--primary))" : "#ffffff";
+  const chartGradColor = isBalance ? "hsl(var(--primary))" : "#ffffff";
+  const chartGradStartOp = isBalance ? 0.35 : 0.5;
+  const cursorStroke = isBalance ? "hsl(var(--primary))" : "#ffffff";
+  const dotFill = isBalance ? "hsl(var(--primary))" : "#ffffff";
+  const dotStroke = isBalance ? "hsl(var(--primary))" : "#000000";
 
   return (
     <Card
       variant="bento"
-      className={`animate-slide-up overflow-hidden border-0 ${bgClass} text-white h-[260px] flex flex-col relative`}
+      className={`animate-slide-up overflow-hidden ${cardClasses} h-[260px] flex flex-col relative`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="p-5 md:p-6 relative flex flex-col h-full">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-white/80">
+          <p className={`text-xs font-medium uppercase tracking-wide ${labelClass}`}>
             {label}
           </p>
-          <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBgClass} ${iconColorClass}`}>
             {icon}
           </div>
         </div>
 
         {/* Big value */}
-        <p className="text-3xl md:text-4xl font-bold tracking-tight font-display text-white">
+        <p className={`text-3xl md:text-4xl font-bold tracking-tight font-display ${valueClass}`}>
           {formatCurrency(total)}
         </p>
 
         {/* Comparison vs last month */}
         {change !== undefined && (
           <div className="flex items-center gap-2 mt-2">
-            <div className="flex items-center gap-0.5 px-2.5 py-1 rounded-full text-sm font-semibold bg-white/20 text-white">
+            <div className={`flex items-center gap-0.5 px-2.5 py-1 rounded-full text-sm font-semibold ${chipClass}`}>
               {isUp && <ArrowUp className="w-3.5 h-3.5" />}
               {isDown && <ArrowDown className="w-3.5 h-3.5" />}
               <span>{Math.abs(change)}%</span>
             </div>
-            <span className="text-sm text-white/70">
+            <span className={`text-sm ${chipMutedClass}`}>
               {t("stats.vsLastMonth")}
             </span>
           </div>
         )}
 
         {/* Hover info line (reserved space, no layout shift) */}
-        <p className="text-xs text-white/80 mt-2 h-4">
+        <p className={`text-xs mt-2 h-4 ${hoverTextClass}`}>
           {hoverPoint
             ? `${formatHoverDate(hoverPoint.date)}: ${formatCurrency(hoverPoint.daily)}`
             : ""}
@@ -194,15 +218,15 @@ export function TrendKpiCard({
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity={0.5} />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+                <stop offset="0%" stopColor={chartGradColor} stopOpacity={chartGradStartOp} />
+                <stop offset="100%" stopColor={chartGradColor} stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis dataKey="day" hide />
             <YAxis hide domain={kind === "balance" ? ["dataMin", "dataMax"] : [0, "dataMax"]} />
             <Tooltip
               cursor={{
-                stroke: "#ffffff",
+                stroke: cursorStroke,
                 strokeWidth: 1,
                 strokeOpacity: 0.5,
                 strokeDasharray: "3 3",
@@ -212,7 +236,7 @@ export function TrendKpiCard({
             <Area
               type="natural"
               dataKey="display"
-              stroke="#ffffff"
+              stroke={chartStroke}
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -221,8 +245,8 @@ export function TrendKpiCard({
               dot={false}
               activeDot={{
                 r: 4,
-                fill: "#ffffff",
-                stroke: "#000000",
+                fill: dotFill,
+                stroke: dotStroke,
                 strokeOpacity: 0.15,
                 strokeWidth: 2,
               }}
