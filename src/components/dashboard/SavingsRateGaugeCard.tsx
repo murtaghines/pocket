@@ -118,124 +118,122 @@ export function SavingsRateGaugeCard({
           </p>
         )}
 
-        <div className="relative mt-2 flex h-[132px] flex-none items-end justify-center">
-          <svg
-            viewBox="-18 -18 356 212"
-            className="h-[132px] w-full overflow-visible"
-            preserveAspectRatio="xMidYMid meet"
-          >
-            <defs>
-              <pattern
-                id="gauge-stripes-bg"
-                patternUnits="userSpaceOnUse"
-                width="6"
-                height="6"
-                patternTransform="rotate(45)"
-              >
-                <line
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="6"
-                  stroke="hsl(var(--muted-foreground) / 0.35)"
-                  strokeWidth="1.1"
-                />
-              </pattern>
-            </defs>
+        <div className="relative mt-3 flex flex-1 flex-col justify-end">
+          {/* Gauge — zoomed crop, fills the full width of the card */}
+          <div className="w-full overflow-hidden">
+            <svg
+              viewBox="40 40 240 110"
+              className="block w-full h-auto"
+              preserveAspectRatio="xMidYMax meet"
+            >
+              <defs>
+                <pattern
+                  id="gauge-stripes-bg"
+                  patternUnits="userSpaceOnUse"
+                  width="6"
+                  height="6"
+                  patternTransform="rotate(45)"
+                >
+                  <line
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="6"
+                    stroke="hsl(var(--muted-foreground) / 0.45)"
+                    strokeWidth="1.2"
+                  />
+                </pattern>
+              </defs>
 
-            <path
-              d={arcPath}
-              fill="none"
-              stroke="url(#gauge-stripes-bg)"
-              strokeWidth="32"
-              strokeLinecap="round"
-            />
-
-            {hasPrevious && previousClamped > 0 && (
               <path
                 d={arcPath}
                 fill="none"
-                stroke="hsl(var(--muted-foreground) / 0.55)"
-                strokeWidth="32"
+                stroke="url(#gauge-stripes-bg)"
+                strokeWidth="34"
                 strokeLinecap="round"
-                strokeDasharray={`${previousDash} ${arcLength}`}
               />
-            )}
 
-            {!hasPrevious && currentClamped > 0 && (
-              <path
-                d={arcPath}
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="32"
-                strokeLinecap="round"
-                strokeDasharray={`${currentDash} ${arcLength}`}
-              />
-            )}
+              {hasPrevious && previousClamped > 0 && (
+                <path
+                  d={arcPath}
+                  fill="none"
+                  stroke="hsl(var(--muted-foreground) / 0.55)"
+                  strokeWidth="34"
+                  strokeLinecap="round"
+                  strokeDasharray={`${previousDash} ${arcLength}`}
+                />
+              )}
 
-            {hasPrevious && deltaDash > 0 && (
-              <path
-                d={arcPath}
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="32"
-                strokeLinecap="round"
-                strokeDasharray={`${deltaDash} ${arcLength}`}
-                strokeDashoffset={deltaOffset}
-              />
-            )}
+              {!hasPrevious && currentClamped > 0 && (
+                <path
+                  d={arcPath}
+                  fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="34"
+                  strokeLinecap="round"
+                  strokeDasharray={`${currentDash} ${arcLength}`}
+                />
+              )}
 
-            {hasPrevious && (
-              <>
-                <circle
-                  cx={previousPoint.x}
-                  cy={previousPoint.y}
-                  r="14"
-                  fill="hsl(var(--muted-foreground) / 0.85)"
+              {hasPrevious && deltaDash > 0 && (
+                <path
+                  d={arcPath}
+                  fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="34"
+                  strokeLinecap="round"
+                  strokeDasharray={`${deltaDash} ${arcLength}`}
+                  strokeDashoffset={deltaOffset}
                 />
-                <circle
-                  cx={previousPoint.x}
-                  cy={previousPoint.y}
-                  r="6"
-                  fill="hsl(var(--card))"
-                />
-              </>
-            )}
+              )}
 
-            {(currentClamped > 0 || !hasPrevious) && (
-              <>
-                <line
-                  x1={currentPoint.x}
-                  y1={currentPoint.y + 16}
-                  x2={currentPoint.x}
-                  y2={cy + 18}
-                  stroke="hsl(var(--primary) / 0.3)"
-                  strokeWidth="2"
-                />
-                <circle
-                  cx={currentPoint.x}
-                  cy={currentPoint.y}
-                  r="21"
-                  fill="hsl(var(--primary) / 0.18)"
-                />
-                <circle
-                  cx={currentPoint.x}
-                  cy={currentPoint.y}
-                  r="16"
-                  fill="hsl(var(--primary))"
-                />
-                <circle
-                  cx={currentPoint.x}
-                  cy={currentPoint.y}
-                  r="7"
-                  fill="hsl(var(--card))"
-                />
-              </>
-            )}
-          </svg>
+              {hasPrevious && (
+                <>
+                  <circle
+                    cx={previousPoint.x}
+                    cy={previousPoint.y}
+                    r="15"
+                    fill="hsl(var(--muted-foreground) / 0.85)"
+                  />
+                  <circle
+                    cx={previousPoint.x}
+                    cy={previousPoint.y}
+                    r="6.5"
+                    fill="hsl(var(--card))"
+                  />
+                </>
+              )}
 
+              {(currentClamped > 0 || !hasPrevious) && (
+                <>
+                  <line
+                    x1={currentPoint.x}
+                    y1={currentPoint.y + 16}
+                    x2={currentPoint.x}
+                    y2={cy + 8}
+                    stroke="hsl(var(--primary) / 0.35)"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx={currentPoint.x}
+                    cy={currentPoint.y}
+                    r="17"
+                    fill="hsl(var(--primary))"
+                  />
+                  <circle
+                    cx={currentPoint.x}
+                    cy={currentPoint.y}
+                    r="7"
+                    fill="hsl(var(--card))"
+                  />
+                </>
+              )}
+            </svg>
+          </div>
+
+          {/* Caption below the gauge — two lines, centered */}
           {hasPrevious ? (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center">
+            <div className="mt-2 text-center">
               <p className="text-[11px] leading-4 text-muted-foreground">
                 {deltaActionLabel}
               </p>
@@ -244,7 +242,7 @@ export function SavingsRateGaugeCard({
               </p>
             </div>
           ) : (
-            <p className="pointer-events-none absolute inset-x-0 bottom-0 text-center text-[11px] leading-4 text-muted-foreground">
+            <p className="mt-2 text-center text-[11px] leading-4 text-muted-foreground">
               {getRatingLabel()}
             </p>
           )}
