@@ -21,48 +21,48 @@ interface DailyFlowChartProps {
   convert: (amount: number) => number;
 }
 
-interface DayPoint {
-  day: number;
-  dateLabel: string;
+interface WeekPoint {
+  weekIndex: number;
+  label: string;
+  rangeLabel: string;
   income: number;
   expense: number;
 }
 
 export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowChartProps) {
-  const { t, i18n } = useTranslation("dashboard");
+  const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
-  const [hoverDay, setHoverDay] = useState<DayPoint | null>(null);
 
-  const data: DayPoint[] = useMemo(() => {
+  const data: WeekPoint[] = useMemo(() => {
     if (!monthKey) return [];
     const [y, m] = monthKey.split("-").map(Number);
     const daysInMonth = new Date(y, m, 0).getDate();
 
-    const incomeByDay = new Map<number, number>();
-    const expenseByDay = new Map<number, number>();
+    // Build 1 bucket per ISO-style week of the month (groups of 7 days starting day 1)
+    const bucketCount = Math.ceil(daysInMonth / 7);
+    const buckets: WeekPoint[] = Array.from({ length: bucketCount }, (_, i) => {
+      const startDay = i * 7 + 1;
+      const endDay = Math.min(startDay + 6, daysInMonth);
+      return {
+        weekIndex: i + 1,
+        label: `W${i + 1}`,
+        rangeLabel: `${String(startDay).padStart(2, "0")}–${String(endDay).padStart(2, "0")}/${String(m).padStart(2, "0")}`,
+        income: 0,
+        expense: 0,
+      };
+    });
 
     transactions.forEach((tx) => {
       if (!tx.date.startsWith(monthKey)) return;
       const d = parseInt(tx.date.slice(8, 10), 10);
       if (!d) return;
+      const idx = Math.min(Math.floor((d - 1) / 7), bucketCount - 1);
       const amt = Math.abs(convert(tx.amount));
-      if (tx.type === "income") {
-        incomeByDay.set(d, (incomeByDay.get(d) || 0) + amt);
-      } else if (tx.type === "expense") {
-        expenseByDay.set(d, (expenseByDay.get(d) || 0) + amt);
-      }
+      if (tx.type === "income") buckets[idx].income += amt;
+      else if (tx.type === "expense") buckets[idx].expense += amt;
     });
 
-    const points: DayPoint[] = [];
-    for (let d = 1; d <= daysInMonth; d++) {
-      points.push({
-        day: d,
-        dateLabel: `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}`,
-        income: incomeByDay.get(d) || 0,
-        expense: expenseByDay.get(d) || 0,
-      });
-    }
-    return points;
+    return buckets;
   }, [transactions, monthKey, convert]);
 
   const hasData = data.some((d) => d.income > 0 || d.expense > 0);
@@ -78,7 +78,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <Activity className="w-4 h-4 text-primary" />
             </div>
-            {t("charts.dailyFlow", "Daily Flow")}
+            {t("charts.weeklyFlow", "Weekly Flow")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -92,10 +92,11 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
     if (!active || !payload || !payload.length) return null;
     const incomeVal = payload.find((p: any) => p.dataKey === "income")?.value ?? 0;
     const expenseVal = payload.find((p: any) => p.dataKey === "expense")?.value ?? 0;
-    const point = data.find((d) => d.day === label);
+    const point = data.find((d) => d.label === label);
     return (
-      <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[160px]">
-        <p className="text-xs text-muted-foreground mb-2">{point?.dateLabel}</p>
+      <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[180px]">
+        <p className="text-xs font-medium text-foreground">{point?.label}</p>
+        <p className="text-xs text-muted-foreground mb-2">{point?.rangeLabel}</p>
         <div className="flex items-center justify-between gap-3 text-sm">
           <span className="flex items-center gap-1.5 text-foreground">
             <span className="w-2 h-2 rounded-full bg-success" /> {incomeLabel}
@@ -120,7 +121,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <Activity className="w-4 h-4 text-primary" />
             </div>
-            {t("charts.dailyFlow", "Daily Flow")}
+            {t("charts.weeklyFlow", "Weekly Flow")}
           </CardTitle>
           <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
@@ -151,12 +152,10 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
               </defs>
               <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
               <XAxis
-                dataKey="day"
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                dataKey="label"
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
-                interval="preserveStartEnd"
-                minTickGap={20}
               />
               <YAxis
                 tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
