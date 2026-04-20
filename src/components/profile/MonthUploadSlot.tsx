@@ -109,6 +109,7 @@ export function MonthUploadSlot({
   const { toast } = useToast();
   const { accounts } = useAccounts();
   const queryClient = useQueryClient();
+  const { formatDate: formatDatePref } = useLocalization();
   const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
 
   const isClosed = period?.status === 'CLOSED';
