@@ -28,19 +28,11 @@ function formatFileSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function UploadItem({ upload, onDelete, isDeleting }: { 
+function UploadItem({ upload, onDelete, isDeleting, formatDate }: { 
   upload: Upload; 
   onDelete: (id: string) => void;
   isDeleting: boolean;
+  formatDate: (d: string) => string;
 }) {
   const statusColors: Record<string, string> = {
     pending: "bg-yellow-500/20 text-yellow-600",
