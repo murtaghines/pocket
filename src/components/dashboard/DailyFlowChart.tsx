@@ -195,9 +195,9 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
-    const incomeVal = payload.find((p: any) => p.dataKey === "income")?.value ?? 0;
-    const expenseVal = payload.find((p: any) => p.dataKey === "expense")?.value ?? 0;
     const point = data.find((d) => d.label === label);
+    const incomeVal = point?.income ?? 0;
+    const expenseVal = point?.expense ?? 0;
     return (
       <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[180px]">
         <p className="text-xs font-medium text-foreground">{point?.label}</p>
