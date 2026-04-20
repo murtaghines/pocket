@@ -6,9 +6,8 @@ import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
-import { AccountsManager } from "@/components/settings/AccountsManager";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { User, Globe, Tags, Landmark, Trash2 } from "lucide-react";
+import { User, Globe, Tags, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -77,14 +76,6 @@ export default function Profile() {
             <SectionHeader icon={Tags} title={ts('categories.title')} />
             <div className="mt-4">
               <CategoriesEditor />
-            </div>
-          </div>
-
-          {/* Banking Accounts */}
-          <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '175ms', boxShadow: 'var(--shadow-card)' }}>
-            <SectionHeader icon={Landmark} title={t('accounts.title', 'Banking Accounts')} />
-            <div className="mt-4">
-              <AccountsManager />
             </div>
           </div>
 
