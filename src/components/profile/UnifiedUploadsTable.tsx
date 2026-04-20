@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { Import, useImports } from "@/hooks/useImports";
 import { useAccounts } from "@/hooks/useAccounts";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +26,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MonthReviewModal } from "./MonthReviewModal";
 import { AccountSelectDialog } from "./AccountSelectDialog";
-import { usePeriods, Period } from "@/hooks/usePeriods";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,11 +39,9 @@ export function UnifiedUploadsTable() {
   const { t } = useTranslation("profile");
   const { formatMonth, formatDate: formatDatePref } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting, toggleLockImport, isTogglingLock } = useImports("CASHFLOW");
-  const { addFilesForMonth, isProcessingMonth, getPendingCountForMonth } = useMonthlyFileUpload();
-  const { getPeriodByMonthKey } = usePeriods("CASHFLOW");
+  const { addFilesForMonth, isProcessingMonth } = useMonthlyFileUpload();
   const { accounts } = useAccounts();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
