@@ -97,48 +97,44 @@ export function SavingsRateGaugeCard({
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="relative flex h-full flex-col p-4 md:p-5">
-        <div className="mb-2 flex items-start justify-between">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("stats.savingsRate")}
-          </p>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-            <ArrowUpRight className="h-4 w-4 text-foreground" strokeWidth={2.5} />
-          </div>
-        </div>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t("stats.savingsRate")}
+        </p>
 
-        <div className="flex items-baseline gap-1">
-          <span className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-            {currentRate}
-          </span>
-          <span className="text-lg font-semibold text-muted-foreground/60 md:text-xl">
-            %
-          </span>
-        </div>
-
-        {hasPrevious && (
-          <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-            <span className="text-muted-foreground">
-              {t("stats.previousMonthShort", {
-                defaultValue: "Previous: {{rate}}%",
-                rate: previousRate,
-              })}
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <div className="flex items-baseline gap-1">
+            <span className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              {currentRate}
             </span>
-            <span
-              className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold ${
-                delta >= 0
-                  ? "bg-primary/10 text-primary"
-                  : "bg-destructive/10 text-destructive"
-              }`}
-            >
-              {delta >= 0 ? (
-                <ArrowUp className="h-3 w-3" strokeWidth={2.5} />
-              ) : (
-                <ArrowDown className="h-3 w-3" strokeWidth={2.5} />
-              )}
-              {Math.abs(delta)} pp
+            <span className="text-lg font-semibold text-muted-foreground/60 md:text-xl">
+              %
             </span>
           </div>
-        )}
+          {hasPrevious && (
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="text-muted-foreground">
+                {t("stats.previousMonthShort", {
+                  defaultValue: "Previous: {{rate}}%",
+                  rate: previousRate,
+                })}
+              </span>
+              <span
+                className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold ${
+                  delta >= 0
+                    ? "bg-primary/10 text-primary"
+                    : "bg-destructive/10 text-destructive"
+                }`}
+              >
+                {delta >= 0 ? (
+                  <ArrowUp className="h-3 w-3" strokeWidth={2.5} />
+                ) : (
+                  <ArrowDown className="h-3 w-3" strokeWidth={2.5} />
+                )}
+                {Math.abs(delta)} pp
+              </span>
+            </div>
+          )}
+        </div>
 
         <div className="relative mt-1 flex flex-1 flex-col justify-end overflow-hidden">
           <div className="mx-[-18%] w-[136%] overflow-hidden">
