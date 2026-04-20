@@ -242,6 +242,23 @@ export function useImports(domain?: AppDomain) {
     }
   });
 
+  const toggleLockImport = useMutation({
+    mutationFn: async ({ importId, locked }: { importId: string; locked: boolean }) => {
+      const { error } = await supabase
+        .from('imports')
+        .update({ locked } as any)
+        .eq('id', importId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['imports'] });
+      toast.success(vars.locked ? 'File locked' : 'File unlocked');
+    },
+    onError: () => {
+      toast.error('Could not update file lock');
+    }
+  });
+
   // Helper to extract PDF text
   const extractPdfText = async (arrayBuffer: ArrayBuffer): Promise<string> => {
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
@@ -318,6 +335,8 @@ export function useImports(domain?: AppDomain) {
     autoDeleteFailedImport,
     isProcessing: processImport.isPending,
     isDeleting: deleteImport.isPending,
+    toggleLockImport: toggleLockImport.mutate,
+    isTogglingLock: toggleLockImport.isPending,
     getImportsByMonth
   };
 }
