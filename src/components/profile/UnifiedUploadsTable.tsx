@@ -201,8 +201,7 @@ export function UnifiedUploadsTable() {
               <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[160px] hidden lg:table-cell">Uploaded</TableHead>
               <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[110px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[150px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[100px] text-center">File actions</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[140px] text-center">Month actions</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[150px] text-center">Actions</TableHead>
             </TableRow>
             {/* Global totals row — pinned right after headers */}
             <TableRow className="bg-primary/5 hover:bg-primary/5 border-b-2 border-primary/20">
@@ -222,7 +221,6 @@ export function UnifiedUploadsTable() {
                 <span className="text-sm font-semibold text-foreground">{globalTotals.accounts}</span>{" "}
                 <span className="text-xs text-muted-foreground">account{globalTotals.accounts !== 1 ? "s" : ""}</span>
               </TableCell>
-              <TableCell className="py-2.5" />
               <TableCell className="py-2.5" />
             </TableRow>
           </TableHeader>
