@@ -121,21 +121,23 @@ export function AccountsStackCard({
   // Always render at least 4 real/placeholder slots + the "+" add card on top.
   const MIN_SLOTS = 4;
   const placeholdersNeeded = Math.max(0, MIN_SLOTS - orderedAccounts.length);
+  // The trailing cards (everything after the front) include placeholders +
+  // the "+" add card. We keep the strip height fixed so account names never
+  // get clipped, and let the trailing area scroll internally if it overflows.
+  const trailingRealCount = Math.max(0, orderedAccounts.length - 1);
   const totalCards = orderedAccounts.length + placeholdersNeeded + 1;
 
-  // Adaptive stacking: keep the front card full-height (160px) and progressively
-  // collapse the visible "strip" of trailing cards as more are added, so the
-  // overall stack never grows taller than ~ MIN_SLOTS cards worth of space.
   const FRONT_HEIGHT = 160;
-  const BASE_STRIP = 40; // visible strip per non-front card when few accounts
-  const MIN_STRIP = 32;  // floor: must always show the account name / "+" icon
-  const trailingCount = Math.max(0, totalCards - 1);
-  // Target total height ~= FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP
-  const targetTotalHeight = FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP;
-  const stripHeight = trailingCount > 0
-    ? Math.max(MIN_STRIP, Math.min(BASE_STRIP, (targetTotalHeight - FRONT_HEIGHT) / trailingCount))
-    : BASE_STRIP;
-  const overlap = -(FRONT_HEIGHT - stripHeight); // negative marginTop value
+  const STRIP = 40;            // fixed visible strip per non-front card
+  const overlap = -(FRONT_HEIGHT - STRIP);
+
+  // Threshold: once the natural stack would exceed this number of trailing
+  // cards, switch the trailing area to scroll mode (fixed height, internal
+  // scroll, "+" pinned at the bottom).
+  const MAX_VISIBLE_TRAILING = 5; // front + 5 strips ≈ 160 + 5*40 = 360px
+  const trailingTotal = trailingRealCount + placeholdersNeeded + 1; // +1 for "+"
+  const useScroll = trailingTotal > MAX_VISIBLE_TRAILING;
+  const scrollAreaHeight = MAX_VISIBLE_TRAILING * STRIP; // visible strips area
 
   const handleAdd = () => {
     const trimmed = newName.trim();
@@ -149,71 +151,94 @@ export function AccountsStackCard({
     <>
       <div className="h-full flex flex-col">
         <div className="relative">
-          {/* Real account cards */}
-          {orderedAccounts.map((acc, idx) => {
-            // Variant is fixed by account id position in original (creation) order,
-            // so colors don't shuffle when reordering.
+          {/* Front card (always full-height, outside scroll area) */}
+          {orderedAccounts.length > 0 && (() => {
+            const acc = orderedAccounts[0];
             const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
             const v = VARIANTS[originalIdx % VARIANTS.length];
-            const marginTop = idx === 0 ? 0 : overlap;
-            const isFront = idx === 0;
             return (
               <button
                 type="button"
                 key={acc.id}
                 onClick={() => setActiveId(acc.id)}
                 className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
-                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
+                style={{ zIndex: totalCards, minHeight: FRONT_HEIGHT }}
               >
-                {isFront && (
-                  <>
-                    <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} aria-hidden />
-                    <div className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`} aria-hidden />
-                  </>
-                )}
-
-                {isFront ? (
-                  <div className="relative flex flex-col h-full">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="min-w-0 flex-1 pr-3">
-                        <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
-                        {acc.institution && (
-                          <p className={`text-xs truncate ${v.sub}`}>{acc.institution}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
-                      {formatCurrency(acc.balance)}
-                    </p>
-
-                    <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
-                      <span>
-                        {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
-                      </span>
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDetail(acc);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setDetail(acc);
-                          }
-                        }}
-                        className={`inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline ${v.text}`}
-                      >
-                        {t("charts.viewDetails", { defaultValue: "View details" })}
-                        <ChevronRight className="w-3 h-3" />
-                      </span>
+                <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} aria-hidden />
+                <div className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`} aria-hidden />
+                <div className="relative flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="min-w-0 flex-1 pr-3">
+                      <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
+                      {acc.institution && (
+                        <p className={`text-xs truncate ${v.sub}`}>{acc.institution}</p>
+                      )}
                     </div>
                   </div>
+                  <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
+                    {formatCurrency(acc.balance)}
+                  </p>
+                  <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
+                    <span>
+                      {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetail(acc);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDetail(acc);
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline ${v.text}`}
+                    >
+                      {t("charts.viewDetails", { defaultValue: "View details" })}
+                      <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </div>
+              </button>
+            );
+          })()}
+
+          {/* Trailing area: scrollable when too many cards.
+              The "+" card is rendered AFTER the scroll area so it stays pinned
+              and always visible at the bottom of the stack. */}
+          <div
+            className={useScroll ? "relative overflow-y-auto pocket-stack-scroll" : "relative"}
+            style={useScroll ? { maxHeight: scrollAreaHeight } : undefined}
+          >
+            {/* Trailing real account cards (skip index 0, already rendered) */}
+            {orderedAccounts.slice(1).map((acc, i) => {
+            const idx = i + 1;
+            // Variant is fixed by account id position in original (creation) order,
+            // so colors don't shuffle when reordering.
+            const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
+            const v = VARIANTS[originalIdx % VARIANTS.length];
+            const marginTop = useScroll ? 0 : overlap;
+            return (
+              <button
+                type="button"
+                key={acc.id}
+                onClick={() => setActiveId(acc.id)}
+                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
+                style={
+                  useScroll
+                    ? { minHeight: STRIP, height: STRIP }
+                    : { marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }
+                }
+              >
+                {useScroll ? (
+                  <div className="absolute inset-0 px-5 flex items-center">
+                    <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
+                  </div>
                 ) : (
-                  // Hidden card: only show name in the visible bottom strip (~40px)
                   <div className="absolute bottom-0 left-0 right-0 px-5 pb-2">
                     <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
                   </div>
@@ -222,36 +247,47 @@ export function AccountsStackCard({
             );
           })}
 
-          {/* Empty placeholder slots (solid) */}
-          {Array.from({ length: placeholdersNeeded }).map((_, i) => {
-            const idx = orderedAccounts.length + i;
-            const marginTop = idx === 0 ? 0 : overlap;
-            return (
-              <div
-                key={`placeholder-${i}`}
-                className="relative block w-full rounded-2xl p-5 shadow-md overflow-hidden"
-                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT, backgroundColor: "#d2d2cb" }}
-                aria-hidden
-              >
-                {/* Empty slot — intentionally blank */}
-              </div>
-            );
-          })}
+            {/* Empty placeholder slots (solid) */}
+            {Array.from({ length: placeholdersNeeded }).map((_, i) => {
+              const idx = orderedAccounts.length + i;
+              const marginTop = useScroll ? 0 : (idx === 0 ? 0 : overlap);
+              return (
+                <div
+                  key={`placeholder-${i}`}
+                  className="relative block w-full rounded-2xl shadow-md overflow-hidden"
+                  style={
+                    useScroll
+                      ? { minHeight: STRIP, height: STRIP, backgroundColor: "#d2d2cb" }
+                      : { marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT, backgroundColor: "#d2d2cb", padding: "1.25rem" }
+                  }
+                  aria-hidden
+                />
+              );
+            })}
+          </div>
 
-          {/* "+" Add account button */}
+          {/* "+" Add account button — always pinned after the (scrollable) trailing area */}
           {(() => {
             const idx = orderedAccounts.length + placeholdersNeeded;
-            const marginTop = idx === 0 ? 0 : overlap;
+            const marginTop = useScroll ? 0 : (idx === 0 ? 0 : overlap);
             return (
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
-                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
+                className="relative block w-full rounded-2xl bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                style={
+                  useScroll
+                    ? { minHeight: STRIP, height: STRIP }
+                    : { marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT, padding: "1.25rem" }
+                }
               >
-                {/* Always show only the "+" aligned to the bottom strip,
-                    so it stays visible regardless of how many accounts exist. */}
-                <div className="absolute bottom-0 left-0 right-0 px-5 pb-2 flex justify-center">
+                <div
+                  className={
+                    useScroll
+                      ? "absolute inset-0 flex items-center justify-center"
+                      : "absolute bottom-0 left-0 right-0 px-5 pb-2 flex justify-center"
+                  }
+                >
                   <div className="w-8 h-8 rounded-full bg-[#1b76ff]/10 flex items-center justify-center transition-transform group-hover:scale-110">
                     <Plus className="w-5 h-5 text-[#1b76ff]" strokeWidth={2.5} />
                   </div>
