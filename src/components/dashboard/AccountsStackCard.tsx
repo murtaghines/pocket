@@ -205,7 +205,9 @@ export function AccountsStackCard({
           {/* Empty placeholder slots (solid) */}
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
             const idx = orderedAccounts.length + i;
-            const v = PLACEHOLDER_VARIANT;
+            // Continue the VARIANTS cycle from where real accounts left off,
+            // so placeholders keep the brand palette (blue, yellow, black, white).
+            const v = VARIANTS[(orderedAccounts.length + i) % VARIANTS.length];
             const marginTop = idx === 0 ? 0 : -120;
             return (
               <div
