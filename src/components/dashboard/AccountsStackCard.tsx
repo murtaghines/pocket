@@ -181,7 +181,7 @@ export function AccountsStackCard({
               <button
                 type="button"
                 key={acc.id}
-                onClick={() => setActiveId(acc.id)}
+                onClick={() => promoteAccount(acc.id)}
                 className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
               >
