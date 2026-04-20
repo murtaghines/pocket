@@ -219,7 +219,7 @@ export function AccountsStackCard({
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-[#1b76ff] focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
               >
                 <div className="relative flex flex-col items-center justify-center h-full text-center" style={{ minHeight: 120 }}>
