@@ -191,33 +191,33 @@ export function UnifiedUploadsTable() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[140px]">Month</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10">File</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[80px] hidden md:table-cell">Type</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[160px] hidden lg:table-cell">Uploaded</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[110px] hidden md:table-cell">Transactions</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[150px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[150px] text-center">Actions</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[140px]">Month</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11">File</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[90px] hidden md:table-cell">Type</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[170px] hidden lg:table-cell">Uploaded</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[120px] hidden md:table-cell">Transactions</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[160px] hidden md:table-cell">Account</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[180px] text-center">Actions</TableHead>
             </TableRow>
             {/* Global totals row — pinned right after headers */}
             <TableRow className="bg-primary/5 hover:bg-primary/5 border-b-2 border-primary/20">
-              <TableCell className="py-2.5 font-semibold text-xs text-foreground uppercase tracking-wide">
+              <TableCell className="py-3 font-semibold text-sm text-foreground uppercase tracking-wide">
                 Totals
               </TableCell>
-              <TableCell className="py-2.5 text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">{globalTotals.files}</span> file{globalTotals.files !== 1 ? "s" : ""} across{" "}
-                <span className="font-semibold text-foreground">{globalTotals.months}</span> month{globalTotals.months !== 1 ? "s" : ""}
+              <TableCell className="py-3 text-sm text-foreground font-semibold">
+                {globalTotals.files}
               </TableCell>
-              <TableCell className="py-2.5 hidden md:table-cell" />
-              <TableCell className="py-2.5 hidden lg:table-cell" />
-              <TableCell className="py-2.5 hidden md:table-cell">
+              <TableCell className="py-3 hidden md:table-cell" />
+              <TableCell className="py-3 text-sm text-foreground font-semibold hidden lg:table-cell">
+                {globalTotals.months}
+              </TableCell>
+              <TableCell className="py-3 hidden md:table-cell">
                 <span className="text-sm font-semibold text-foreground">{globalTotals.transactions}</span>
               </TableCell>
-              <TableCell className="py-2.5 hidden md:table-cell">
-                <span className="text-sm font-semibold text-foreground">{globalTotals.accounts}</span>{" "}
-                <span className="text-xs text-muted-foreground">account{globalTotals.accounts !== 1 ? "s" : ""}</span>
+              <TableCell className="py-3 hidden md:table-cell">
+                <span className="text-sm font-semibold text-foreground">{globalTotals.accounts}</span>
               </TableCell>
-              <TableCell className="py-2.5" />
+              <TableCell className="py-3" />
             </TableRow>
           </TableHeader>
           <TableBody>
