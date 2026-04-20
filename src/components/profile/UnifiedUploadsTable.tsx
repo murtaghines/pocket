@@ -415,7 +415,7 @@ export function UnifiedUploadsTable() {
         onOpenChange={setShowReviewModal}
         monthKey={reviewMonthKey}
         monthLabel={reviewTitle || reviewMonthKey}
-        isLocked={getPeriodByMonthKey(reviewMonthKey, "CASHFLOW")?.status === "CLOSED"}
+        isLocked={!!imports.find((i) => i.id === reviewImportId)?.locked}
         importId={reviewImportId}
       />
     </div>
