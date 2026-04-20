@@ -195,14 +195,35 @@ export function UnifiedUploadsTable() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[120px]">Month</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9">File</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[60px] hidden md:table-cell">Type</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[100px] hidden lg:table-cell">Date</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[70px] hidden lg:table-cell">Time</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[90px] hidden md:table-cell">Transactions</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[130px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-[11px] font-medium text-muted-foreground h-9 w-[120px] text-right">Actions</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[140px]">Month</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10">File</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[80px] hidden md:table-cell">Type</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[160px] hidden lg:table-cell">Uploaded</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[110px] hidden md:table-cell">Transactions</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[150px] hidden md:table-cell">Account</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[100px] text-center">File actions</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[140px] text-center">Month actions</TableHead>
+            </TableRow>
+            {/* Global totals row — pinned right after headers */}
+            <TableRow className="bg-primary/5 hover:bg-primary/5 border-b-2 border-primary/20">
+              <TableCell className="py-2.5 font-semibold text-xs text-foreground uppercase tracking-wide">
+                Totals
+              </TableCell>
+              <TableCell className="py-2.5 text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">{globalTotals.files}</span> file{globalTotals.files !== 1 ? "s" : ""} across{" "}
+                <span className="font-semibold text-foreground">{globalTotals.months}</span> month{globalTotals.months !== 1 ? "s" : ""}
+              </TableCell>
+              <TableCell className="py-2.5 hidden md:table-cell" />
+              <TableCell className="py-2.5 hidden lg:table-cell" />
+              <TableCell className="py-2.5 hidden md:table-cell">
+                <span className="text-sm font-semibold text-foreground">{globalTotals.transactions}</span>
+              </TableCell>
+              <TableCell className="py-2.5 hidden md:table-cell">
+                <span className="text-sm font-semibold text-foreground">{globalTotals.accounts}</span>{" "}
+                <span className="text-xs text-muted-foreground">account{globalTotals.accounts !== 1 ? "s" : ""}</span>
+              </TableCell>
+              <TableCell className="py-2.5" />
+              <TableCell className="py-2.5" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -213,6 +234,37 @@ export function UnifiedUploadsTable() {
               const totalTx = mi.reduce((s, i) => s + (i.transactions_count || 0), 0);
               const uniqAccts = [...new Set(mi.map((i) => acctName(i.account_id)).filter((n) => n !== "—"))];
               const empty = mi.length === 0;
+              // Total rows for this month group (file rows + add-new-file row)
+              const groupRowCount = empty ? 1 : mi.length + (closed ? 0 : 1);
+
+              const monthCell = (
+                <TableCell rowSpan={groupRowCount} className="py-3 align-middle border-r border-border/50 bg-muted/10 font-semibold text-sm text-foreground capitalize">
+                  <div className="flex items-center gap-1.5">
+                    <span>{slot.label}</span>
+                    {closed && <Lock className="w-3 h-3 text-muted-foreground" />}
+                  </div>
+                </TableCell>
+              );
+
+              const monthActionsCell = (
+                <TableCell rowSpan={groupRowCount} className="py-3 align-middle border-l border-border/50 bg-muted/10 text-center">
+                  {period && !closed && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-2.5"
+                      onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowCloseDialog(true); }}
+                      disabled={isClosing}>
+                      {isClosing ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Lock className="w-3.5 h-3.5 mr-1" />}Close
+                    </Button>
+                  )}
+                  {period && closed && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-2.5"
+                      onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowReopenDialog(true); }}
+                      disabled={isReopening}>
+                      {isReopening ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Unlock className="w-3.5 h-3.5 mr-1" />}Reopen
+                    </Button>
+                  )}
+                  {!period && <span className="text-xs text-muted-foreground">—</span>}
+                </TableCell>
+              );
 
               return (
                 <React.Fragment key={slot.key}>
@@ -223,15 +275,7 @@ export function UnifiedUploadsTable() {
                     const err = stale ? "Processing interrupted. Please re-upload." : imp.error_message;
                     return (
                       <TableRow key={imp.id} className="group" id={idx === 0 ? `upload-bank-${slot.key}` : undefined}>
-                        {/* Month — only first row */}
-                        <TableCell className={cn("py-2 border-r border-border/50", idx === 0 ? "font-semibold text-sm text-foreground capitalize align-top" : "text-transparent select-none")}>
-                          {idx === 0 && (
-                            <div className="flex items-center gap-1.5">
-                              <span>{slot.label}</span>
-                              {closed && <Lock className="w-3 h-3 text-muted-foreground" />}
-                            </div>
-                          )}
-                        </TableCell>
+                        {idx === 0 && monthCell}
                         <TableCell className="py-2">
                           <div className="flex items-center gap-2 min-w-0">
                             {statusIcon(st)}
@@ -270,9 +314,11 @@ export function UnifiedUploadsTable() {
                         <TableCell className="py-2 hidden md:table-cell">
                           <Badge variant="outline" className="text-[10px] font-medium uppercase px-1.5 py-0">{imp.file_name.split(".").pop() || "—"}</Badge>
                         </TableCell>
-                        <TableCell className="py-2 hidden lg:table-cell"><span className="text-xs text-foreground">{formatDatePref(imp.uploaded_at)}</span></TableCell>
                         <TableCell className="py-2 hidden lg:table-cell">
-                          <span className="text-xs text-muted-foreground">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>
+                          <div className="flex flex-col leading-tight">
+                            <span className="text-xs text-foreground">{formatDatePref(imp.uploaded_at)}</span>
+                            <span className="text-[11px] text-muted-foreground">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>
+                          </div>
                         </TableCell>
                         <TableCell className="py-2 hidden md:table-cell">
                           {st === "NORMALIZED" && imp.transactions_count ? <span className="text-sm text-foreground">{imp.transactions_count}</span> : st === "FAILED" ? <span className="text-sm text-destructive">—</span> : <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
@@ -287,8 +333,8 @@ export function UnifiedUploadsTable() {
                             </Select>
                           ) : <span className="text-xs text-muted-foreground">{acctName(imp.account_id)}</span>}
                         </TableCell>
-                        <TableCell className="py-2 text-right">
-                          <div className="flex items-center justify-end gap-1">
+                        <TableCell className="py-2 text-center">
+                          <div className="flex items-center justify-center gap-1">
                             {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 && (
                               <Button variant="secondary" size="sm" className={cn("h-7 px-2.5 text-xs border-0", closed ? "bg-success/10 text-success hover:bg-success/20" : "bg-primary/10 text-primary hover:bg-primary/20")} onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}>
                                 {closed ? <><Eye className="w-3 h-3 mr-1" />View</> : <><Pencil className="w-3 h-3 mr-1" />Edit</>}
@@ -313,6 +359,7 @@ export function UnifiedUploadsTable() {
                             </AlertDialog>
                           </div>
                         </TableCell>
+                        {idx === 0 && monthActionsCell}
                       </TableRow>
                     );
                   })}
@@ -320,19 +367,11 @@ export function UnifiedUploadsTable() {
                   {/* Empty month — single row */}
                   {empty && (
                     <TableRow id={`upload-bank-${slot.key}`}>
-                      <TableCell className="py-2 font-semibold text-sm text-foreground capitalize align-top border-r border-border/50">
-                        <div className="flex items-center gap-1.5">
-                          <span>{slot.label}</span>
-                          {closed && <Lock className="w-3 h-3 text-muted-foreground" />}
-                        </div>
-                      </TableCell>
-                      <TableCell colSpan={7} className="py-2">
+                      {monthCell}
+                      <TableCell colSpan={6} className="py-2">
                         {closed ? (
                           <div className="flex items-center gap-3">
                             <span className="text-sm text-muted-foreground">Closed — no files</span>
-                            <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => { if (period) { setDialogPeriod(period); setDialogLabel(slot.label); setShowReopenDialog(true); }}} disabled={isReopening}>
-                              <Unlock className="w-3 h-3 mr-1" />Reopen
-                            </Button>
                           </div>
                         ) : (
                           <div className="relative">
@@ -341,14 +380,14 @@ export function UnifiedUploadsTable() {
                           </div>
                         )}
                       </TableCell>
+                      {monthActionsCell}
                     </TableRow>
                   )}
 
                   {/* Add file row for non-empty open months */}
                   {!empty && !closed && (
                     <TableRow className="hover:bg-muted/30">
-                      <TableCell className="py-2 border-r border-border/50" />
-                      <TableCell colSpan={7} className="py-2">
+                      <TableCell colSpan={6} className="py-2">
                         <div className="relative">
                           <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={onFileInput(slot.date, slot.key)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                           <div className="flex items-center gap-2 text-primary hover:text-primary/80 cursor-pointer"><Plus className="w-4 h-4" /><span className="text-sm font-medium">Add new file</span></div>
@@ -357,39 +396,6 @@ export function UnifiedUploadsTable() {
                     </TableRow>
                   )}
 
-                  {/* Subtotal row */}
-                  {!empty && (
-                    <TableRow className="bg-muted/30 hover:bg-muted/40">
-                      <TableCell className="py-2 border-r border-border/50 bg-muted/20" />
-                      <TableCell className="py-2">
-                        <div className="flex items-center gap-3">
-                          {period && !closed && (
-                            <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-3" onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowCloseDialog(true); }} disabled={isClosing}>
-                              {isClosing ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Lock className="w-3.5 h-3.5 mr-1.5" />}Close month
-                            </Button>
-                          )}
-                          {period && closed && (
-                            <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-3" onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowReopenDialog(true); }} disabled={isReopening}>
-                              {isReopening ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Unlock className="w-3.5 h-3.5 mr-1.5" />}Reopen month
-                            </Button>
-                          )}
-                          <span className="text-xs font-semibold text-foreground">{mi.length} file{mi.length !== 1 ? "s" : ""}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2 hidden md:table-cell" />
-                      <TableCell className="py-2 hidden lg:table-cell" />
-                      <TableCell className="py-2 hidden lg:table-cell" />
-                      <TableCell className="py-2 hidden md:table-cell"><span className="text-sm font-semibold text-foreground">{totalTx}</span></TableCell>
-                      <TableCell className="py-2 hidden md:table-cell"><span className="text-sm font-semibold text-foreground">{uniqAccts.length}</span></TableCell>
-                      <TableCell className="py-2 text-right">
-                        {totalTx > 0 && (
-                          <Button variant="secondary" size="sm" className={cn("h-7 px-3 text-xs border-0 font-medium rounded-full", closed ? "bg-success/10 text-success hover:bg-success/20" : "bg-primary/10 text-primary hover:bg-primary/20")} onClick={() => { setReviewImportId(undefined); setReviewMonthKey(slot.key); setReviewTitle(""); setShowReviewModal(true); }}>
-                            {closed ? <><Eye className="w-3 h-3 mr-1" />View all</> : <><Pencil className="w-3 h-3 mr-1" />Edit all</>}
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </React.Fragment>
               );
             })}
