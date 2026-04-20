@@ -101,6 +101,22 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
   const incomeLabel = t("stats.income", "Income");
   const expenseLabel = t("stats.expenses", "Expenses");
 
+  // For log scale, recharts can't handle 0/negative. Compute a sensible min and
+  // remap zeros to it so bars render small but visible without distorting reads.
+  const allValues = data.flatMap((d) => [d.income, d.expense]).filter((v) => v > 0);
+  const minPositive = allValues.length ? Math.min(...allValues) : 1;
+  const logMin = Math.max(1, Math.floor(minPositive / 2));
+  const maxValue = allValues.length ? Math.max(...allValues) : 1;
+
+  const chartData =
+    scale === "log"
+      ? data.map((d) => ({
+          ...d,
+          income: d.income > 0 ? d.income : logMin,
+          expense: d.expense > 0 ? d.expense : logMin,
+        }))
+      : data;
+
   const titleText =
     view === "week"
       ? t("charts.weeklyFlow", "Weekly Flow")
@@ -226,7 +242,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
         <div className="w-full h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data}
+              data={chartData}
               margin={{ top: 12, right: 12, bottom: 8, left: 0 }}
               barCategoryGap="20%"
               barGap={4}
@@ -243,10 +259,23 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => {
-                  if (v >= 1000) return `${(v / 1000).toFixed(0)}k`;
-                  return `${v}`;
+                  if (v >= 1000) return `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k`;
+                  return `${Math.round(v)}`;
                 }}
-                width={40}
+                width={44}
+                scale={scale === "log" ? "log" : "auto"}
+                domain={
+                  scale === "log" ? [logMin, Math.ceil(maxValue * 1.2)] : [0, "auto"]
+                }
+                allowDataOverflow={scale === "log"}
+                ticks={
+                  scale === "log"
+                    ? Array.from(
+                        { length: Math.ceil(Math.log10(maxValue / logMin)) + 1 },
+                        (_, i) => logMin * Math.pow(10, i),
+                      )
+                    : undefined
+                }
               />
               <Tooltip
                 content={<CustomTooltip />}
