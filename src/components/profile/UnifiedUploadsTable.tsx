@@ -187,7 +187,9 @@ export function UnifiedUploadsTable() {
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[170px] hidden lg:table-cell">Uploaded</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[120px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[160px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[180px] text-center">Actions</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Edit</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[70px]">Lock</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Delete</TableHead>
             </TableRow>
             {/* Global totals row — pinned right after headers */}
             <TableRow className="bg-primary/5 hover:bg-primary/5 border-b-2 border-primary/20">
@@ -207,6 +209,8 @@ export function UnifiedUploadsTable() {
               <TableCell className="py-3 hidden md:table-cell">
                 <span className="text-sm font-semibold text-foreground">{globalTotals.accounts}</span>
               </TableCell>
+              <TableCell className="py-3" />
+              <TableCell className="py-3" />
               <TableCell className="py-3" />
             </TableRow>
           </TableHeader>
