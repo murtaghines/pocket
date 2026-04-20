@@ -132,10 +132,15 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         // If amount is positive and movement says EXPENSE, override to INCOME
         // If amount is negative and movement says INCOME, override to EXPENSE
         let movement = t.movement;
+        let categoryOverride: string | null = null;
         if (t.amount > 0 && movement === 'EXPENSE') {
           movement = 'INCOME';
+          // Original category was an expense category; reset to a sensible income default
+          categoryOverride = 'other_income';
         } else if (t.amount < 0 && movement === 'INCOME') {
           movement = 'EXPENSE';
+          // Original category was an income category; reset to a sensible expense default
+          categoryOverride = 'other_expense';
         }
 
         // Map movement to legacy type for backward compatibility
@@ -149,6 +154,8 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           ? movementToType[movement] || t.type
           : t.type;
 
+        const finalCategory = categoryOverride || t.category;
+
         return {
           id: t.id,
           date: t.date,
@@ -157,8 +164,8 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           currency: t.currency || "EUR",
           type,
           movement,
-          category: t.category as Category,
-          categorySlug: t.category,
+          category: finalCategory as Category,
+          categorySlug: finalCategory,
           account: t.account_id ? (accountMap[t.account_id] || t.bank || "Unknown") : (t.bank || "Unknown"),
           bank: t.account_id ? (accountMap[t.account_id] || t.bank || "Unknown") : (t.bank || "Unknown"),
           runningBalance: t.running_balance,
