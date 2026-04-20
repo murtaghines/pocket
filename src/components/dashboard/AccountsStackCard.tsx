@@ -68,7 +68,7 @@ export function AccountsStackCard({
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
 
   const accountsData = useMemo<AccountDisplay[]>(() => {
-    if (!monthKey || cashAccounts.length === 0) return [];
+    if (!monthKey) return [];
 
     return cashAccounts.map((acc) => {
       const monthTxs = transactions.filter(
