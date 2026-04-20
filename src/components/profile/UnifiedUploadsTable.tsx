@@ -152,14 +152,8 @@ export function UnifiedUploadsTable() {
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
   };
 
-  const onFileInput = (monthDate: Date, monthKey: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileInput = (monthDate: Date, _monthKey: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    const period = getPeriodByMonthKey(monthKey, "CASHFLOW");
-    if (period?.status === "CLOSED") {
-      toast({ title: "Month closed", description: "Reopen this month first.", variant: "destructive" });
-      e.target.value = "";
-      return;
-    }
     const valid = Array.from(e.target.files).filter((f) => VALID_EXTS.includes("." + f.name.split(".").pop()?.toLowerCase()));
     if (valid.length) { setPendingFiles(valid); setPendingMonthDate(monthDate); setShowAccountDialog(true); }
     e.target.value = "";
@@ -223,8 +217,6 @@ export function UnifiedUploadsTable() {
           <TableBody>
             {monthSlots.map((slot) => {
               const mi = importsByMonth[slot.key] || [];
-              const period = getPeriodByMonthKey(slot.key, "CASHFLOW");
-              const closed = period?.status === "CLOSED";
               const empty = mi.length === 0;
               // Total rows for this month group (file rows + always one add-new-file row)
               const groupRowCount = empty ? 1 : mi.length + 1;
