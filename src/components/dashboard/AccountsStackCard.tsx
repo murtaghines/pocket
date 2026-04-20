@@ -205,15 +205,12 @@ export function AccountsStackCard({
           {/* Empty placeholder slots (solid) */}
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
             const idx = orderedAccounts.length + i;
-            // Continue the VARIANTS cycle from where real accounts left off,
-            // so placeholders keep the brand palette (blue, yellow, black, white).
-            const v = VARIANTS[(orderedAccounts.length + i) % VARIANTS.length];
             const marginTop = idx === 0 ? 0 : -120;
             return (
               <div
                 key={`placeholder-${i}`}
-                className={`relative block w-full rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden`}
-                style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
+                className="relative block w-full rounded-2xl p-5 shadow-md overflow-hidden"
+                style={{ marginTop, zIndex: totalCards - idx, minHeight: 160, backgroundColor: "#d2d2cb" }}
                 aria-hidden
               >
                 {/* Empty slot — intentionally blank */}
