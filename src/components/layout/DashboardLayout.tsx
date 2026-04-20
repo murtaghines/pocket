@@ -51,12 +51,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-5">
           <nav className="flex items-center justify-between gap-4">
             {/* Left: Logo + inline navigation */}
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-12">
               <Link to="/dashboard" className="flex items-center flex-shrink-0">
-                <img src={walletIconBlue} alt="pocket" className="h-12 w-auto" />
+                <img src={walletIconBlue} alt="pocket" className="h-14 w-auto" />
               </Link>
 
-              <div className="hidden md:flex items-center gap-7">
+              <div className="hidden md:flex items-center gap-10">
                 {navItems.map((item) => {
                   const active = isActive(item.path);
                   return (
@@ -64,15 +64,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       key={item.path}
                       to={item.path}
                       className={cn(
-                        "relative text-[17px] transition-colors py-1",
+                        "relative font-nav text-[18px] tracking-tight transition-colors py-1",
                         active
                           ? "text-foreground font-semibold"
-                          : "text-muted-foreground hover:text-foreground font-normal"
+                          : "text-muted-foreground hover:text-foreground font-medium"
                       )}
                     >
                       {item.label}
                       {active && (
-                        <span className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-foreground rounded-full" />
+                        <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-foreground rounded-full" />
                       )}
                     </Link>
                   );
