@@ -187,7 +187,9 @@ export function UnifiedUploadsTable() {
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[170px] hidden lg:table-cell">Uploaded</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[120px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[160px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[180px] text-center">Actions</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Edit</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[70px]">Lock</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Delete</TableHead>
             </TableRow>
             {/* Global totals row — pinned right after headers */}
             <TableRow className="bg-primary/5 hover:bg-primary/5 border-b-2 border-primary/20">
@@ -207,6 +209,8 @@ export function UnifiedUploadsTable() {
               <TableCell className="py-3 hidden md:table-cell">
                 <span className="text-sm font-semibold text-foreground">{globalTotals.accounts}</span>
               </TableCell>
+              <TableCell className="py-3" />
+              <TableCell className="py-3" />
               <TableCell className="py-3" />
             </TableRow>
           </TableHeader>
@@ -274,7 +278,7 @@ export function UnifiedUploadsTable() {
                         </TableCell>
                         <TableCell className="py-2 hidden lg:table-cell">
                           <div className="flex flex-col leading-tight">
-                            <span className="text-sm text-foreground">{formatDatePref(imp.uploaded_at)}</span>
+                            <span className="text-sm text-foreground">{new Date(imp.uploaded_at).toLocaleDateString(undefined, { day: "2-digit", month: "short" })}</span>
                             <span className="text-xs text-muted-foreground">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>
                           </div>
                         </TableCell>
@@ -291,66 +295,68 @@ export function UnifiedUploadsTable() {
                             </Select>
                           ) : <span className="text-sm text-muted-foreground">{acctName(imp.account_id)}</span>}
                         </TableCell>
-                        <TableCell className="py-2 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            {/* Edit / View */}
-                            {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 && (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className={cn(
-                                  "h-8 px-3 text-sm border-0",
-                                  imp.locked
-                                    ? "bg-success/10 text-success hover:bg-success/20"
-                                    : "bg-primary/10 text-primary hover:bg-primary/20"
-                                )}
-                                onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
-                              >
-                                {imp.locked ? (
-                                  <><Eye className="w-3.5 h-3.5 mr-1.5" />View</>
-                                ) : (
-                                  <><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</>
-                                )}
-                              </Button>
-                            )}
-                            {/* Lock / Unlock this file */}
+                        {/* Edit / View */}
+                        <TableCell className="py-2">
+                          {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 ? (
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground/60 hover:text-foreground transition-colors"
-                              disabled={isTogglingLock}
-                              title={imp.locked ? "Unlock file (allow editing)" : "Lock file (prevent editing)"}
-                              onClick={() => toggleLockImport({ importId: imp.id, locked: !imp.locked })}
+                              variant="secondary"
+                              size="sm"
+                              className={cn(
+                                "h-8 px-3 text-sm border-0",
+                                imp.locked
+                                  ? "bg-success/10 text-success hover:bg-success/20"
+                                  : "bg-primary/10 text-primary hover:bg-primary/20"
+                              )}
+                              onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
                             >
-                              {isTogglingLock ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : imp.locked ? (
-                                <Unlock className="w-4 h-4" />
+                              {imp.locked ? (
+                                <><Eye className="w-3.5 h-3.5 mr-1.5" />View</>
                               ) : (
-                                <Lock className="w-4 h-4" />
+                                <><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</>
                               )}
                             </Button>
-                            {/* Spacer to separate destructive action */}
-                            <div className="w-3" />
-                            {/* Delete */}
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 hover:text-destructive transition-colors" disabled={isDeleting || !!imp.locked} title={imp.locked ? "Unlock the file before deleting" : "Delete file"}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete file?</AlertDialogTitle>
-                                  <AlertDialogDescription>All transactions associated with "{imp.file_name}" will be deleted. This cannot be undone.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteImport(imp.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        {/* Lock / Unlock this file */}
+                        <TableCell className="py-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground/60 hover:text-foreground transition-colors"
+                            disabled={isTogglingLock}
+                            title={imp.locked ? "Unlock file (allow editing)" : "Lock file (prevent editing)"}
+                            onClick={() => toggleLockImport({ importId: imp.id, locked: !imp.locked })}
+                          >
+                            {isTogglingLock ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : imp.locked ? (
+                              <Unlock className="w-4 h-4" />
+                            ) : (
+                              <Lock className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        {/* Delete */}
+                        <TableCell className="py-2">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 hover:text-destructive transition-colors" disabled={isDeleting || !!imp.locked} title={imp.locked ? "Unlock the file before deleting" : "Delete file"}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete file?</AlertDialogTitle>
+                                <AlertDialogDescription>All transactions associated with "{imp.file_name}" will be deleted. This cannot be undone.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteImport(imp.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                       </TableRow>
                     );
@@ -360,7 +366,7 @@ export function UnifiedUploadsTable() {
                   {empty && (
                     <TableRow id={`upload-bank-${slot.key}`}>
                       {monthCell}
-                      <TableCell colSpan={6} className="py-2">
+                      <TableCell colSpan={8} className="py-2">
                         <div className="relative">
                           <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={onFileInput(slot.date, slot.key)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                           <div className="flex items-center gap-2 text-primary hover:text-primary/80 cursor-pointer"><Plus className="w-4 h-4" /><span className="text-sm font-medium">Add new file</span></div>
@@ -372,7 +378,7 @@ export function UnifiedUploadsTable() {
                   {/* Add file row for non-empty open months */}
                   {!empty && (
                     <TableRow className="hover:bg-muted/30">
-                      <TableCell colSpan={6} className="py-2">
+                      <TableCell colSpan={8} className="py-2">
                         <div className="relative">
                           <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={onFileInput(slot.date, slot.key)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                           <div className="flex items-center gap-2 text-primary hover:text-primary/80 cursor-pointer"><Plus className="w-4 h-4" /><span className="text-sm font-medium">Add new file</span></div>
