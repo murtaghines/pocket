@@ -1,88 +1,59 @@
 
 
-## Análisis honesto de qué se puede y qué no
+## Plan: Color personalizable + Cuenta Principal
 
-**Lo que SÍ tenemos en datos** (tablas `accounts` + `transactions`):
-- `accounts.name` → nombre que el usuario le puso a la cuenta (ej: "BBVA Principal")
-- `accounts.institution` → banco (ej: "BBVA", "Santander") — opcional
-- `accounts.currency_base` → moneda
-- `transactions.account_id` → cada transacción está ligada a una cuenta
-- `transactions.running_balance` → saldo después de cada movimiento (cuando el resumen lo trae)
-- Lógica de **opening balance** ya implementada en `useTransactions` que calcula saldo del mes por banco/cuenta
+### Resumen
+Permitir que cada cuenta tenga un **color asignado** (editable por el usuario desde una paleta curada) y marcar una **cuenta principal** que se posicione siempre primera en el stack del dashboard.
 
-**Lo que NO tenemos y NO se puede inferir de los resúmenes**:
-- ❌ Marca de tarjeta (VISA / Mastercard / Amex)
-- ❌ Fecha de vencimiento (04/24, 09/26, etc.)
-- ❌ Últimos 4 dígitos `**** 9090` — los resúmenes a veces lo traen en la descripción de la transacción, pero no de forma estructurada por cuenta
-- ❌ Una cuenta puede tener N tarjetas o todo puede ser por transferencia → no hay forma fiable de mapear "tarjeta → balance"
+### Cambios
 
-**Conclusión**: hacer "tarjetas tipo VISA" como las imágenes de referencia sería **inventar datos**. No lo recomiendo. Pero sí podemos hacer algo que **se inspire en esa estética** y muestre información real: el **balance actual por cuenta bancaria**, no por tarjeta.
+**1. Base de datos (`accounts`)**
+Migración para agregar dos columnas:
+- `color` (text, nullable) — guarda el código hex del color elegido (ej. `#1b76ff`).
+- `is_primary` (boolean, default `false`) — marca la cuenta predeterminada. Trigger que garantice **una sola cuenta principal por usuario** (al marcar una nueva, se desmarcan las demás).
 
-## Propuesta: "Accounts Stack" al lado del Weekly Flow
-
-Una columna a la derecha del Weekly Flow con **mini-cards apiladas**, una por cuenta CASH, mostrando el balance actual del último mes (saldo final = opening balance del mes + flujo neto del mes para esa cuenta, usando la lógica de `running_balance` que ya existe).
-
-### Diseño visual (inspirado en las imágenes pero honesto)
-
+**2. Paleta centralizada (`src/lib/accountColors.ts`)**
+Nuevo archivo que exporta la paleta organizada en dos filas (degradado azules + degradado amarillos/mostazas), respetando estrictamente la gama actual aprobada:
 ```text
-┌──────────────────────────────────────┬─────────────────────┐
-│  Weekly Flow                         │  Accounts           │
-│  ┌────────────────────────────────┐  │  ┌───────────────┐  │
-│  │     gráfico W1 W2 W3 W4        │  │  │ ● BBVA        │  │
-│  │                                │  │  │ Principal     │  │
-│  │                                │  │  │ €12.430,55    │  │
-│  └────────────────────────────────┘  │  │ EUR · current │  │
-│                                       │  └───────────────┘  │
-│                                       │  ┌───────────────┐  │
-│                                       │  │ ● Santander   │  │
-│                                       │  │ €3.210,00     │  │
-│                                       │  └───────────────┘  │
-│                                       │  + Add account     │
-└──────────────────────────────────────┴─────────────────────┘
+Azules   → #cde7f7 · #a9d4f5 · #1b76ff · #155fd6 · #0a2a5e
+Neutros  → #b8c4d6 · #7a8499
+Amarillos→ #fff1a8 · #f5d76e · #ffd027 · #cfa83a
 ```
+Incluye helpers: `getAccountColorStyle(hex)` que devuelve `{ bg, text, sub, circle }` calculando contraste automático (texto blanco si el color es oscuro, oscuro si es claro), y `getDefaultAccountColor(index)` para asignar uno cuando la cuenta aún no tiene color guardado.
 
-Cada mini-card:
-- **Color de marca**: usamos el azul brand `#1b76ff` para una, amarillo brand `#ffd027` para otra, alternando — coherente con la identidad Pocket. NO inventamos VISA/Mastercard.
-- **Header**: nombre de la cuenta + institución (si existe)
-- **Balance grande**: saldo calculado al final del último mes con datos
-- **Footer sutil**: moneda y "current balance" — sin fecha falsa de vencimiento, sin **** 1234 inventado
-- **Esquina decorativa**: un círculo translúcido tipo las imágenes para mantener la estética
-- Si hay más de 3 cuentas → scroll vertical interno
+**3. Hook `useAccounts.tsx`**
+- Extender la interfaz `Account` con `color: string | null` e `is_primary: boolean`.
+- Agregar mutaciones `updateAccountColor({ id, color })` y `setPrimaryAccount(id)`.
 
-### Estructura técnica
+**4. AccountsManager (Profile/Settings)**
+Cada fila de cuenta gana dos controles nuevos:
+- **Swatch de color** clicable (círculo del color actual) → abre un Popover con la paleta organizada en dos filas (azules arriba, amarillos abajo). Click en un swatch guarda el color.
+- **Estrella ⭐ (Star/StarOff de lucide)** → toggle "Cuenta principal". Solo una puede estar activa; al marcar una nueva, la anterior se desmarca automáticamente vía trigger DB.
+- Badge "Principal" junto al nombre cuando aplica.
 
-**1. Nuevo componente** `src/components/dashboard/AccountsStackCard.tsx`
-- Props: `transactions`, `monthKey`, `convert`, `formatCurrency`
-- Usa `useAccounts()` para listar cuentas CASH
-- Para cada cuenta calcula: `opening_balance(mes) + Σ(transacciones del mes en esa cuenta)`
-- Si no hay `running_balance` para una cuenta → muestra solo el flujo neto del mes con label "Net flow" en vez de "Balance" (transparencia con el usuario)
-- Empty state limpio si no hay cuentas
+**5. AccountsStackCard (Dashboard)**
+- Reemplazar el array `VARIANTS` indexado por posición por `getAccountColorStyle(account.color ?? defaultColor)`.
+- En el ordenamiento `accountsData`: la cuenta `is_primary` siempre va **primera**, después se aplica el orden por selectionOrder (LRU) para el resto.
+- En el sheet "View all", cada item muestra también su color real.
 
-**2. Layout en `src/pages/Index.tsx`**
-- Cambiar la sección "Weekly Flow" de `mb-4` simple a un grid:
-```tsx
-<div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 mb-4">
-  <DailyFlowChart ... />
-  <AccountsStackCard ... />
-</div>
-```
-- En mobile se apilan; en desktop la columna de cuentas es fija ~320px.
+**6. i18n (en/es/pt — `profile.json`)**
+Nuevas claves: `accounts.color`, `accounts.changeColor`, `accounts.setPrimary`, `accounts.primary`, `accounts.primaryBadge`.
 
-**3. Estilo de mini-cards**
-- Border radius `rounded-2xl`, sombra suave consistente con el resto del dashboard
-- Alternancia de colores brand (azul → amarillo → blanco con border azul) para diferenciar visualmente cuentas sin inventar marcas
-- Tipografía: nombre `text-sm font-medium`, balance `text-2xl font-bold tabular-nums`
+### Detalles técnicos
 
-### Lo que NO vamos a hacer (para ser honestos contigo)
+**Cuenta principal en el stack**: cuando hay una `is_primary = true`, se inserta al inicio de `orderedAccounts` antes del LRU. Si el usuario hace click en otra cuenta, esa va a posición 2 (no desplaza a la principal). Esto da una "ancla" estable.
 
-- ❌ Mostrar logos de VISA/Mastercard
-- ❌ Mostrar `**** 1234` salvo que el usuario lo haya escrito en el nombre de la cuenta
-- ❌ Mostrar fechas de vencimiento
-- ❌ Pretender que las cuentas son tarjetas físicas
+**Contraste automático**: función `isLightColor(hex)` calcula luminancia relativa; colores con luminancia > 0.6 usan texto oscuro (`#1a1a1a`), el resto texto blanco. Evita hardcodear text/sub/circle por color.
 
-### Alcance
+**Migración de cuentas existentes**: las que no tengan `color` seguirán usando el color por defecto basado en su orden de creación (mismo comportamiento actual hasta que el usuario edite).
 
-- 1 archivo nuevo (`AccountsStackCard.tsx`)
-- 1 archivo editado (`Index.tsx` — solo el wrapper del grid)
-- Sin cambios de DB, sin migraciones
+**Constraint de única principal**: trigger `BEFORE INSERT OR UPDATE` en `accounts` que, si `NEW.is_primary = true`, ejecuta `UPDATE accounts SET is_primary = false WHERE user_id = NEW.user_id AND id != NEW.id`.
+
+### Archivos
+- **Nuevo**: `supabase/migrations/<timestamp>_account_color_primary.sql`
+- **Nuevo**: `src/lib/accountColors.ts`
+- **Editado**: `src/hooks/useAccounts.tsx`
+- **Editado**: `src/components/settings/AccountsManager.tsx`
+- **Editado**: `src/components/dashboard/AccountsStackCard.tsx`
+- **Editados**: `src/i18n/locales/{en,es,pt}/profile.json`
 
