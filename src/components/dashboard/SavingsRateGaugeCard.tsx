@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 interface SavingsRateGaugeCardProps {
   income: number;
@@ -60,18 +60,24 @@ export function SavingsRateGaugeCard({
       })
     : null;
 
-  const radius = 148;
+  // Elliptical gauge: wider than tall to better fit the card
+  const rx = 150;
+  const ry = 90;
   const cx = 160;
-  const cy = 176;
-  const arcLength = Math.PI * radius;
-  const arcPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
+  const cy = 110;
+  // Approximate ellipse half-perimeter (Ramanujan)
+  const h = ((rx - ry) ** 2) / ((rx + ry) ** 2);
+  const ellipsePerimeter =
+    Math.PI * (rx + ry) * (1 + (3 * h) / (10 + Math.sqrt(4 - 3 * h)));
+  const arcLength = ellipsePerimeter / 2;
+  const arcPath = `M ${cx - rx} ${cy} A ${rx} ${ry} 0 0 1 ${cx + rx} ${cy}`;
 
   const angleFor = (pct: number) => 180 - (pct / 100) * 180;
   const pointAt = (pct: number) => {
     const rad = (angleFor(pct) * Math.PI) / 180;
     return {
-      x: cx + radius * Math.cos(rad),
-      y: cy - radius * Math.sin(rad),
+      x: cx + rx * Math.cos(rad),
+      y: cy - ry * Math.sin(rad),
     };
   };
 
@@ -91,53 +97,49 @@ export function SavingsRateGaugeCard({
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="relative flex h-full flex-col p-4 md:p-5">
-        <div className="mb-2 flex items-start justify-between">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("stats.savingsRate")}
-          </p>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-            <ArrowUpRight className="h-4 w-4 text-foreground" strokeWidth={2.5} />
-          </div>
-        </div>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t("stats.savingsRate")}
+        </p>
 
-        <div className="flex items-baseline gap-1">
-          <span className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-            {currentRate}
-          </span>
-          <span className="text-lg font-semibold text-muted-foreground/60 md:text-xl">
-            %
-          </span>
-        </div>
-
-        {hasPrevious && (
-          <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-            <span className="text-muted-foreground">
-              {t("stats.previousMonthShort", {
-                defaultValue: "Previous: {{rate}}%",
-                rate: previousRate,
-              })}
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <div className="flex items-baseline gap-1">
+            <span className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              {currentRate}
             </span>
-            <span
-              className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold ${
-                delta >= 0
-                  ? "bg-primary/10 text-primary"
-                  : "bg-destructive/10 text-destructive"
-              }`}
-            >
-              {delta >= 0 ? (
-                <ArrowUp className="h-3 w-3" strokeWidth={2.5} />
-              ) : (
-                <ArrowDown className="h-3 w-3" strokeWidth={2.5} />
-              )}
-              {Math.abs(delta)} pp
+            <span className="text-lg font-semibold text-muted-foreground/60 md:text-xl">
+              %
             </span>
           </div>
-        )}
+          {hasPrevious && (
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="text-muted-foreground">
+                {t("stats.previousMonthShort", {
+                  defaultValue: "Previous: {{rate}}%",
+                  rate: previousRate,
+                })}
+              </span>
+              <span
+                className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold ${
+                  delta >= 0
+                    ? "bg-primary/10 text-primary"
+                    : "bg-destructive/10 text-destructive"
+                }`}
+              >
+                {delta >= 0 ? (
+                  <ArrowUp className="h-3 w-3" strokeWidth={2.5} />
+                ) : (
+                  <ArrowDown className="h-3 w-3" strokeWidth={2.5} />
+                )}
+                {Math.abs(delta)} pp
+              </span>
+            </div>
+          )}
+        </div>
 
         <div className="relative mt-1 flex flex-1 flex-col justify-end overflow-hidden">
-          <div className="mx-[-18%] w-[136%] overflow-hidden">
+          <div className="mx-[-10%] w-[120%] overflow-hidden">
             <svg
-              viewBox="0 0 320 180"
+              viewBox="0 0 320 120"
               className="block h-full w-full"
               preserveAspectRatio="xMidYMax meet"
             >
