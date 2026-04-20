@@ -141,7 +141,7 @@ export function AccountsStackCard({
   // - When there are few accounts, fill remaining slots with placeholders so
   //   the stack height stays consistent (matches MIN_SLOTS).
   const MIN_SLOTS = 4;
-  const MAX_VISIBLE = 6;
+  const MAX_VISIBLE = 4;
   const FRONT_HEIGHT = 160;
   const STRIP_HEIGHT = 40; // fixed visible strip per non-front card
   const overlap = -(FRONT_HEIGHT - STRIP_HEIGHT);
@@ -251,15 +251,15 @@ export function AccountsStackCard({
               <button
                 type="button"
                 onClick={() => setAllOpen(true)}
-                className="relative block w-full text-left rounded-2xl p-5 bg-[#1a1a1a] shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                className="relative block w-full text-left rounded-2xl p-5 bg-[#e5e5e0] shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
               >
                 <div className="absolute bottom-0 left-0 right-0 px-5 pb-2 flex items-center justify-between">
-                  <span className="text-sm font-medium text-white inline-flex items-center gap-2">
+                  <span className="text-sm font-medium text-[#1a1a1a] inline-flex items-center gap-2">
                     <LayoutList className="w-4 h-4" />
                     {t("charts.viewAllAccounts", { defaultValue: "View all" })} ({orderedAccounts.length})
                   </span>
-                  <span className="text-xs text-white/60">+{remaining}</span>
+                  <span className="text-xs text-[#1a1a1a]/60">+{remaining}</span>
                 </div>
               </button>
             );
