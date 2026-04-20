@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/lib/mockData";
-import { Plus, Loader2, ChevronRight, LayoutList } from "lucide-react";
+import { Plus, Loader2, ChevronRight, LayoutList, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { getAccountColorStyle, getDefaultAccountColor } from "@/lib/accountColors";
 
 interface AccountsStackCardProps {
   transactions: Transaction[];
@@ -25,27 +26,8 @@ type AccountDisplay = {
   transactionCount: number;
   monthTxs: Transaction[];
   createdAt: string;
-};
-
-const VARIANTS = [
-  { bg: "bg-[#1b76ff]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#ffd027]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#7a8499]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#b8c4d6]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#0a2a5e]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#a9d4f5]", text: "text-[#0a2a5e]", sub: "text-[#0a2a5e]/70", circle: "bg-[#0a2a5e]/5" },
-  { bg: "bg-[#fff1a8]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#cfa83a]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#cde7f7]", text: "text-[#0a2a5e]", sub: "text-[#0a2a5e]/70", circle: "bg-[#0a2a5e]/5" },
-  { bg: "bg-[#155fd6]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#f5d76e]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-];
-
-const PLACEHOLDER_VARIANT = {
-  bg: "bg-muted",
-  text: "text-muted-foreground",
-  sub: "text-muted-foreground",
-  circle: "bg-foreground/5",
+  color: string;
+  isPrimary: boolean;
 };
 
 export function AccountsStackCard({
