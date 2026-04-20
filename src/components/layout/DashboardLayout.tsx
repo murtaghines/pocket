@@ -53,7 +53,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Left: Logo + inline navigation */}
             <div className="flex items-center gap-8">
               <Link to="/dashboard" className="flex items-center flex-shrink-0">
-                <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
+                <img src={walletIconBlue} alt="pocket" className="h-10 w-auto" />
               </Link>
 
               <div className="hidden md:flex items-center gap-7">
