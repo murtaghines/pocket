@@ -45,7 +45,8 @@ import {
   Loader2,
   Pencil,
   Lock,
-  Brain
+  Brain,
+  AlertTriangle
 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
@@ -142,6 +143,54 @@ export function MonthReviewModal({
   const [createdRules, setCreatedRules] = useState<CreatedRule[]>([]);
   const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
   const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
+
+  // Detect sign↔movement mismatches
+  const mismatchedIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const tx of transactions) {
+      if (tx.amount > 0 && tx.movement === 'EXPENSE') ids.add(tx.id);
+      else if (tx.amount < 0 && tx.movement === 'INCOME') ids.add(tx.id);
+    }
+    return ids;
+  }, [transactions]);
+
+  // Auto-populate edits for mismatched transactions (only once when data loads)
+  const [mismatchAutoApplied, setMismatchAutoApplied] = useState(false);
+  useMemo(() => {
+    if (mismatchedIds.size > 0 && !mismatchAutoApplied && transactions.length > 0 && !isLocked) {
+      const autoEdits: Record<string, TransactionEdits> = {};
+      for (const tx of transactions) {
+        if (!mismatchedIds.has(tx.id)) continue;
+        if (tx.amount > 0 && tx.movement === 'EXPENSE') {
+          // Positive amount should be INCOME
+          const currentCat = normalizeCategory(tx.category || 'other_income');
+          const isExpenseCat = EXPENSE_CATEGORIES.includes(currentCat);
+          autoEdits[tx.id] = {
+            movement: 'INCOME',
+            category: isExpenseCat ? 'other_income' : currentCat,
+          };
+        } else if (tx.amount < 0 && tx.movement === 'INCOME') {
+          // Negative amount should be EXPENSE
+          const currentCat = normalizeCategory(tx.category || 'other_expense');
+          const isIncomeCat = INCOME_CATEGORIES.includes(currentCat);
+          autoEdits[tx.id] = {
+            movement: 'EXPENSE',
+            category: isIncomeCat ? 'other_expense' : currentCat,
+          };
+        }
+      }
+      if (Object.keys(autoEdits).length > 0) {
+        setEdits(prev => ({ ...autoEdits, ...prev }));
+        setMismatchAutoApplied(true);
+      }
+    }
+  }, [mismatchedIds, transactions, mismatchAutoApplied, isLocked]);
+
+  // Reset auto-applied flag when modal closes
+  useMemo(() => {
+    if (!open) setMismatchAutoApplied(false);
+  }, [open]);
+
   // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["month-transactions", monthKey, user?.id, importId],
@@ -630,6 +679,16 @@ export function MonthReviewModal({
                 </div>
               )}
 
+              {/* Mismatch Warning Banner */}
+              {mismatchedIds.size > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-300 dark:border-amber-700">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="text-sm text-amber-800 dark:text-amber-300">
+                    <strong>{mismatchedIds.size}</strong> transaction{mismatchedIds.size !== 1 ? 's have' : ' has'} sign-movement mismatches (positive amount marked as Expense or vice versa). {isLocked ? 'Reopen the month to fix them.' : 'Review the highlighted rows — corrections have been pre-applied.'}
+                  </span>
+                </div>
+              )}
+
               {/* Stats Summary */}
               <div className="flex gap-4 flex-wrap text-sm">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
@@ -680,7 +739,10 @@ export function MonthReviewModal({
                       return (
                         <TableRow 
                           key={tx.id}
-                          className={cn(isEdited && "bg-primary/5")}
+                          className={cn(
+                            isEdited && "bg-primary/5",
+                            mismatchedIds.has(tx.id) && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400"
+                          )}
                         >
                           <TableCell className="text-sm">
                             {formatDate(new Date(tx.date))}
@@ -696,12 +758,15 @@ export function MonthReviewModal({
                           <TableCell className="text-sm">
                             {isLocked ? (
                               <div className="flex items-center gap-1.5">
+                                {mismatchedIds.has(tx.id) && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
                                 {getMovementIcon(effectiveMovement)}
                                 <span className={cn("font-medium", getMovementColor(effectiveMovement))}>
                                   {translateMovement(effectiveMovement)}
                                 </span>
                               </div>
                             ) : (
+                              <div className="flex items-center gap-1">
+                              {mismatchedIds.has(tx.id) && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
                               <Select
                                 value={effectiveMovement}
                                 onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
@@ -746,6 +811,7 @@ export function MonthReviewModal({
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
+                              </div>
                             )}
                           </TableCell>
                           <TableCell className="text-sm">

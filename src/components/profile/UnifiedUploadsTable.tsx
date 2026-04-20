@@ -14,6 +14,7 @@ import {
   Plus, FileSpreadsheet, CheckCircle2, Loader2, AlertCircle, Trash2,
   Lock, Unlock, Pencil, Eye, Info, ChevronDown, ChevronUp,
 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Import, useImports } from "@/hooks/useImports";
@@ -29,6 +30,8 @@ import { AccountSelectDialog } from "./AccountSelectDialog";
 import { usePeriods, Period } from "@/hooks/usePeriods";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 
 const DEFAULT_MONTHS = 3;
 const INCREMENT = 3;
@@ -43,8 +46,33 @@ export function UnifiedUploadsTable() {
   const { accounts } = useAccounts();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
+
+  // Fetch mismatched transaction counts per import
+  const { data: mismatchByImport = {} } = useQuery({
+    queryKey: ["mismatch-counts", user?.id],
+    queryFn: async () => {
+      if (!user) return {};
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("id, import_id, amount, movement")
+        .eq("user_id", user.id)
+        .eq("domain", "CASHFLOW");
+      if (error || !data) return {};
+      const counts: Record<string, number> = {};
+      for (const tx of data) {
+        const isMismatch = (tx.amount > 0 && tx.movement === 'EXPENSE') || (tx.amount < 0 && tx.movement === 'INCOME');
+        if (isMismatch && tx.import_id) {
+          counts[tx.import_id] = (counts[tx.import_id] || 0) + 1;
+        }
+      }
+      return counts;
+    },
+    enabled: !!user,
+  });
+
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewImportId, setReviewImportId] = useState<string | undefined>();
@@ -189,6 +217,22 @@ export function UnifiedUploadsTable() {
                           <div className="flex items-center gap-2 min-w-0">
                             {statusIcon(st)}
                             <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[250px]">{imp.file_name}</span>
+                            {(mismatchByImport[imp.id] || 0) > 0 && (
+                              <HoverCard>
+                                <HoverCardTrigger asChild>
+                                  <div className="flex items-center gap-1 shrink-0 cursor-help">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                    <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">{mismatchByImport[imp.id]}</span>
+                                  </div>
+                                </HoverCardTrigger>
+                                <HoverCardContent className="w-64" align="start">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /><h4 className="text-sm font-semibold">Sign-category mismatch</h4></div>
+                                    <p className="text-xs text-muted-foreground">This file contains {mismatchByImport[imp.id]} transaction{mismatchByImport[imp.id] !== 1 ? 's' : ''} with sign-movement mismatches. Open Edit to review.</p>
+                                  </div>
+                                </HoverCardContent>
+                              </HoverCard>
+                            )}
                             {st === "FAILED" && err && (
                               <HoverCard>
                                 <HoverCardTrigger asChild>
