@@ -106,6 +106,25 @@ export function UnifiedUploadsTable() {
     return g;
   }, [imports]);
 
+  // Global totals across ALL imports (not just visible months)
+  const globalTotals = useMemo(() => {
+    const monthsWithData = new Set<string>();
+    const accountsWithData = new Set<string>();
+    let totalTransactions = 0;
+    imports.forEach((imp) => {
+      const k = (imp.target_month || imp.uploaded_at.substring(0, 7)).substring(0, 7);
+      monthsWithData.add(k);
+      if (imp.account_id) accountsWithData.add(imp.account_id);
+      totalTransactions += imp.transactions_count || 0;
+    });
+    return {
+      months: monthsWithData.size,
+      accounts: accountsWithData.size,
+      files: imports.length,
+      transactions: totalTransactions,
+    };
+  }, [imports]);
+
   // Progress animation
   const anyProcessing = monthSlots.some((s) => isProcessingMonth(s.key));
   useEffect(() => {
