@@ -122,13 +122,13 @@ export function SavingsRateGauge({
             <circle
               cx={previousPoint.x}
               cy={previousPoint.y}
-              r="16"
+              r="11"
               fill="hsl(var(--muted-foreground) / 0.88)"
             />
             <circle
               cx={previousPoint.x}
               cy={previousPoint.y}
-              r="7"
+              r="5"
               fill="hsl(var(--card))"
             />
           </>
@@ -138,7 +138,7 @@ export function SavingsRateGauge({
           <>
             <line
               x1={currentPoint.x}
-              y1={currentPoint.y + 16}
+              y1={currentPoint.y + 11}
               x2={currentPoint.x}
               y2={VIEWBOX_HEIGHT}
               stroke="hsl(var(--primary) / 0.22)"
@@ -147,19 +147,19 @@ export function SavingsRateGauge({
             <circle
               cx={currentPoint.x}
               cy={currentPoint.y}
-              r="22"
+              r="15"
               fill="hsl(var(--primary) / 0.16)"
             />
             <circle
               cx={currentPoint.x}
               cy={currentPoint.y}
-              r="16"
+              r="11"
               fill="hsl(var(--primary))"
             />
             <circle
               cx={currentPoint.x}
               cy={currentPoint.y}
-              r="7"
+              r="5"
               fill="hsl(var(--card))"
             />
           </>
