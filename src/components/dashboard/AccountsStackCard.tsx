@@ -235,42 +235,51 @@ export function AccountsStackCard({
         </div>
       </div>
 
-      {/* Account detail dialog */}
-      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DialogContent className="max-w-2xl">
+      {/* Account detail side sheet */}
+      <Sheet open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-lg p-0 flex flex-col text-foreground"
+        >
           {detail && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-xl font-semibold">{detail.name}</DialogTitle>
+              <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
+                <SheetTitle className="text-xl font-semibold text-foreground">
+                  {detail.name}
+                </SheetTitle>
                 {detail.institution && (
                   <p className="text-sm text-muted-foreground">{detail.institution}</p>
                 )}
-              </DialogHeader>
+              </SheetHeader>
 
-              <div className="grid grid-cols-3 gap-4 py-4 border-y border-border">
+              <div className="grid grid-cols-3 gap-4 px-6 py-4 border-b border-border">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     {detail.hasRunningBalance
                       ? t("charts.currentBalance", { defaultValue: "Current balance" })
                       : t("charts.netFlow", { defaultValue: "Net flow" })}
                   </p>
-                  <p className="text-xl font-bold tabular-nums">{formatCurrency(detail.balance)}</p>
+                  <p className="text-lg font-bold tabular-nums text-foreground">
+                    {formatCurrency(detail.balance)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     {t("charts.txCount", { defaultValue: "Transactions" })}
                   </p>
-                  <p className="text-xl font-bold tabular-nums">{detail.transactionCount}</p>
+                  <p className="text-lg font-bold tabular-nums text-foreground">
+                    {detail.transactionCount}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     {t("charts.currency", { defaultValue: "Currency" })}
                   </p>
-                  <p className="text-xl font-bold">{detail.currency}</p>
+                  <p className="text-lg font-bold text-foreground">{detail.currency}</p>
                 </div>
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto -mx-1 px-1">
+              <div className="flex-1 overflow-y-auto px-6 py-4">
                 {detail.monthTxs.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     {t("charts.noTransactions", { defaultValue: "No transactions this month" })}
@@ -282,18 +291,12 @@ export function AccountsStackCard({
                       .map((tx) => (
                         <li key={tx.id} className="flex items-center justify-between py-2.5 gap-3">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium truncate">{tx.description}</p>
+                            <p className="text-sm font-medium truncate text-foreground">
+                              {tx.description}
+                            </p>
                             <p className="text-xs text-muted-foreground">{tx.date}</p>
                           </div>
-                          <span
-                            className={`text-sm font-semibold tabular-nums shrink-0 ${
-                              tx.type === "expense"
-                                ? "text-destructive"
-                                : tx.type === "income"
-                                ? "text-success"
-                                : "text-muted-foreground"
-                            }`}
-                          >
+                          <span className="text-sm font-semibold tabular-nums shrink-0 text-foreground">
                             {tx.type === "expense" ? "-" : tx.type === "income" ? "+" : ""}
                             {formatCurrency(convert(Math.abs(tx.amount)))}
                           </span>
@@ -304,8 +307,8 @@ export function AccountsStackCard({
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Add account dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
