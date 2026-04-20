@@ -318,6 +318,29 @@ export function UnifiedUploadsTable() {
                                 {closed ? <><Eye className="w-3 h-3 mr-1" />View</> : <><Pencil className="w-3 h-3 mr-1" />Edit</>}
                               </Button>
                             )}
+                            {period && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground/60 hover:text-foreground transition-colors"
+                                disabled={isClosing || isReopening}
+                                title={closed ? "Reopen month" : "Close month"}
+                                onClick={() => {
+                                  setDialogPeriod(period);
+                                  setDialogLabel(slot.label);
+                                  if (closed) setShowReopenDialog(true);
+                                  else setShowCloseDialog(true);
+                                }}
+                              >
+                                {(isClosing || isReopening) ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : closed ? (
+                                  <Unlock className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Lock className="w-3.5 h-3.5" />
+                                )}
+                              </Button>
+                            )}
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/40 hover:text-destructive transition-colors" disabled={isDeleting}>
@@ -337,7 +360,6 @@ export function UnifiedUploadsTable() {
                             </AlertDialog>
                           </div>
                         </TableCell>
-                        {idx === 0 && monthActionsCell}
                       </TableRow>
                     );
                   })}
@@ -350,6 +372,11 @@ export function UnifiedUploadsTable() {
                         {closed ? (
                           <div className="flex items-center gap-3">
                             <span className="text-sm text-muted-foreground">Closed — no files</span>
+                            {period && (
+                              <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowReopenDialog(true); }} disabled={isReopening}>
+                                <Unlock className="w-3 h-3 mr-1" />Reopen
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           <div className="relative">
@@ -358,7 +385,6 @@ export function UnifiedUploadsTable() {
                           </div>
                         )}
                       </TableCell>
-                      {monthActionsCell}
                     </TableRow>
                   )}
 
