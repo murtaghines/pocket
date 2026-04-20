@@ -6,13 +6,13 @@ interface SavingsRateGaugeProps {
 
 const clampRate = (value: number) => Math.max(0, Math.min(100, value));
 
-const VIEWBOX_WIDTH = 320;
-const VIEWBOX_HEIGHT = 120;
-const STROKE_WIDTH = 36;
+const VIEWBOX_WIDTH = 400;
+const VIEWBOX_HEIGHT = 90;
+const STROKE_WIDTH = 22;
 
-const start = { x: -10, y: 96 };
-const control = { x: VIEWBOX_WIDTH / 2, y: 18 };
-const end = { x: VIEWBOX_WIDTH + 10, y: 96 };
+const start = { x: 14, y: 74 };
+const control = { x: VIEWBOX_WIDTH / 2, y: 4 };
+const end = { x: VIEWBOX_WIDTH - 14, y: 74 };
 
 const gaugePath = `M ${start.x} ${start.y} Q ${control.x} ${control.y} ${end.x} ${end.y}`;
 
@@ -46,11 +46,11 @@ export function SavingsRateGauge({
   const currentPoint = pointAt(currentClamped);
 
   return (
-    <div className="-mx-4 -mb-4 overflow-hidden md:-mx-5 md:-mb-5">
+    <div className="-mx-2 -mb-2 md:-mx-3 md:-mb-3">
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
-        className="block h-full w-full"
-        preserveAspectRatio="none"
+        className="block h-auto w-full"
+        preserveAspectRatio="xMidYMax meet"
       >
         <defs>
           <pattern
