@@ -18,8 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Plus, Trash2, Building2, Loader2, Pencil, Check, X, Star } from "lucide-react";
+import { Plus, Trash2, Building2, Loader2, Pencil, Check, X } from "lucide-react";
 import { ACCOUNT_COLOR_PALETTE, getDefaultAccountColor } from "@/lib/accountColors";
 
 export function AccountsManager({ className }: { className?: string }) {
@@ -43,6 +42,8 @@ export function AccountsManager({ className }: { className?: string }) {
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editColor, setEditColor] = useState<string>("");
+  const [editIsPrimary, setEditIsPrimary] = useState<boolean>(false);
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -57,18 +58,36 @@ export function AccountsManager({ className }: { className?: string }) {
     setNewName("");
   };
 
-  const handleStartEdit = (id: string, currentName: string) => {
+  const handleStartEdit = (id: string, currentName: string, currentColor: string, isPrimary: boolean) => {
     setEditingId(id);
     setEditName(currentName);
+    setEditColor(currentColor);
+    setEditIsPrimary(isPrimary);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+    setEditColor("");
+    setEditIsPrimary(false);
   };
 
   const handleSaveEdit = (id: string) => {
+    const account = accounts.find(a => a.id === id);
+    if (!account) { handleCancelEdit(); return; }
     const trimmed = editName.trim();
-    if (trimmed && trimmed !== accounts.find(a => a.id === id)?.name) {
+    if (trimmed && trimmed !== account.name) {
       updateAccount({ id, name: trimmed });
     }
-    setEditingId(null);
-    setEditName("");
+    if (editColor && editColor.toLowerCase() !== (account.color || '').toLowerCase()) {
+      updateAccountColor({ id, color: editColor });
+    }
+    if (editIsPrimary && !account.is_primary) {
+      setPrimaryAccount(id);
+    } else if (!editIsPrimary && account.is_primary) {
+      unsetPrimaryAccount(id);
+    }
+    handleCancelEdit();
   };
 
   const handleDeleteClick = async (account: { id: string; name: string }) => {
