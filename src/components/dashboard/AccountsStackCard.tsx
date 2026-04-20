@@ -366,6 +366,55 @@ export function AccountsStackCard({
         </SheetContent>
       </Sheet>
 
+      {/* All accounts sheet — full list when stack overflows */}
+      <Sheet open={allOpen} onOpenChange={setAllOpen}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-lg p-0 flex flex-col text-foreground"
+        >
+          <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <SheetTitle className="text-xl font-semibold text-foreground inline-flex items-center gap-2">
+              <LayoutList className="w-5 h-5 text-[#1b76ff]" />
+              {t("charts.allAccounts", { defaultValue: "All accounts" })} ({orderedAccounts.length})
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+            {orderedAccounts.map((acc) => {
+              const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
+              const v = VARIANTS[originalIdx % VARIANTS.length];
+              return (
+                <button
+                  key={acc.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveId(acc.id);
+                    setAllOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-accent text-left transition-colors"
+                >
+                  <span className={`w-10 h-10 rounded-lg ${v.bg} shrink-0`} aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate text-foreground">{acc.name}</p>
+                    {acc.institution && (
+                      <p className="text-xs text-muted-foreground truncate">{acc.institution}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-semibold tabular-nums text-foreground">
+                      {formatCurrency(acc.balance)}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Add account dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="sm:max-w-md">
