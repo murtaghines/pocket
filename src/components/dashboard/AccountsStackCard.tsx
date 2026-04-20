@@ -127,55 +127,64 @@ export function AccountsStackCard({
             const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
             const v = VARIANTS[originalIdx % VARIANTS.length];
             const marginTop = idx === 0 ? 0 : -120;
+            const isFront = idx === 0;
             return (
               <button
                 type="button"
                 key={acc.id}
                 onClick={() => setActiveId(acc.id)}
-                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
+                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
               >
-                <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} aria-hidden />
-                <div className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`} aria-hidden />
+                {isFront && (
+                  <>
+                    <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} aria-hidden />
+                    <div className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`} aria-hidden />
+                  </>
+                )}
 
                 <div className="relative flex flex-col h-full">
                   <div className="flex items-start justify-between mb-4">
                     <div className="min-w-0 flex-1 pr-3">
                       <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
-                      {acc.institution && (
+                      {isFront && acc.institution && (
                         <p className={`text-xs truncate ${v.sub}`}>{acc.institution}</p>
                       )}
                     </div>
                   </div>
 
-                  <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
-                    {formatCurrency(acc.balance)}
-                  </p>
+                  {isFront && (
+                    <>
+                      <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
+                        {formatCurrency(acc.balance)}
+                      </p>
 
-                  <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
-                    <span>
-                      {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
-                    </span>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDetail(acc);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDetail(acc);
-                        }
-                      }}
-                      className={`inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline ${v.text}`}
-                    >
-                      {t("charts.viewDetails", { defaultValue: "View details" })}
-                      <ChevronRight className="w-3 h-3" />
-                    </span>
-                  </div>
+                      <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
+                        <span>
+                          {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
+                        </span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDetail(acc);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDetail(acc);
+                            }
+                          }}
+                          className={`inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline ${v.text}`}
+                        >
+                          {t("charts.viewDetails", { defaultValue: "View details" })}
+                          <ChevronRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </button>
             );
@@ -189,26 +198,14 @@ export function AccountsStackCard({
             return (
               <div
                 key={`placeholder-${i}`}
-                className={`relative block w-full rounded-2xl p-5 ${v.bg} shadow-md`}
+                className={`relative block w-full rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden`}
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
                 aria-hidden
               >
-                <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} />
-                <div className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`} />
                 <div className="relative flex flex-col h-full">
-                  <div className="min-w-0 flex-1 pr-3 mb-4">
-                    <p className={`text-sm font-semibold ${v.text}`}>
-                      {t("charts.emptySlot", { defaultValue: "Empty slot" })}
-                    </p>
-                    <p className={`text-xs ${v.sub}`}>
-                      {t("charts.addAccountHint", { defaultValue: "Add an account to fill this card" })}
-                    </p>
-                  </div>
-                  <p className={`text-2xl font-bold tabular-nums leading-tight ${v.sub}`}>—</p>
-                  <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
-                    <span>0 {t("charts.txCount", { defaultValue: "tx" })}</span>
-                    <span>—</span>
-                  </div>
+                  <p className={`text-sm font-medium ${v.text}`}>
+                    {t("charts.emptySlot", { defaultValue: "Empty slot" })}
+                  </p>
                 </div>
               </div>
             );
@@ -222,7 +219,7 @@ export function AccountsStackCard({
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-[#1b76ff] focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
               >
                 <div className="relative flex flex-col items-center justify-center h-full text-center" style={{ minHeight: 120 }}>
