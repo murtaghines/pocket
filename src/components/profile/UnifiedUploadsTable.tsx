@@ -244,26 +244,6 @@ export function UnifiedUploadsTable() {
                 </TableCell>
               );
 
-              const monthActionsCell = (
-                <TableCell rowSpan={groupRowCount} className="py-3 align-middle border-l border-border/50 bg-muted/10 text-center">
-                  {period && !closed && (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-2.5"
-                      onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowCloseDialog(true); }}
-                      disabled={isClosing}>
-                      {isClosing ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Lock className="w-3.5 h-3.5 mr-1" />}Close
-                    </Button>
-                  )}
-                  {period && closed && (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-2.5"
-                      onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowReopenDialog(true); }}
-                      disabled={isReopening}>
-                      {isReopening ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Unlock className="w-3.5 h-3.5 mr-1" />}Reopen
-                    </Button>
-                  )}
-                  {!period && <span className="text-xs text-muted-foreground">—</span>}
-                </TableCell>
-              );
-
               return (
                 <React.Fragment key={slot.key}>
                   {/* File rows */}
