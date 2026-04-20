@@ -128,7 +128,7 @@ export function AccountsStackCard({
   // overall stack never grows taller than ~ MIN_SLOTS cards worth of space.
   const FRONT_HEIGHT = 160;
   const BASE_STRIP = 40; // visible strip per non-front card when few accounts
-  const MIN_STRIP = 18;  // floor for the strip when many accounts are stacked
+  const MIN_STRIP = 32;  // floor: must always show the account name / "+" icon
   const trailingCount = Math.max(0, totalCards - 1);
   // Target total height ~= FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP
   const targetTotalHeight = FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP;
