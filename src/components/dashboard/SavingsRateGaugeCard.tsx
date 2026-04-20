@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 interface SavingsRateGaugeCardProps {
   income: number;
@@ -60,18 +60,24 @@ export function SavingsRateGaugeCard({
       })
     : null;
 
-  const radius = 148;
+  // Elliptical gauge: wider than tall to better fit the card
+  const rx = 150;
+  const ry = 90;
   const cx = 160;
-  const cy = 176;
-  const arcLength = Math.PI * radius;
-  const arcPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
+  const cy = 110;
+  // Approximate ellipse half-perimeter (Ramanujan)
+  const h = ((rx - ry) ** 2) / ((rx + ry) ** 2);
+  const ellipsePerimeter =
+    Math.PI * (rx + ry) * (1 + (3 * h) / (10 + Math.sqrt(4 - 3 * h)));
+  const arcLength = ellipsePerimeter / 2;
+  const arcPath = `M ${cx - rx} ${cy} A ${rx} ${ry} 0 0 1 ${cx + rx} ${cy}`;
 
   const angleFor = (pct: number) => 180 - (pct / 100) * 180;
   const pointAt = (pct: number) => {
     const rad = (angleFor(pct) * Math.PI) / 180;
     return {
-      x: cx + radius * Math.cos(rad),
-      y: cy - radius * Math.sin(rad),
+      x: cx + rx * Math.cos(rad),
+      y: cy - ry * Math.sin(rad),
     };
   };
 
