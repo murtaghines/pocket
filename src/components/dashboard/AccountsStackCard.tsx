@@ -156,7 +156,7 @@ export function AccountsStackCard({
       <div className="h-full flex flex-col">
         <div className="relative">
           {/* Real account cards */}
-          {orderedAccounts.map((acc, idx) => {
+          {visibleAccounts.map((acc, idx) => {
             // Variant is fixed by account id position in original (creation) order,
             // so colors don't shuffle when reordering.
             const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
