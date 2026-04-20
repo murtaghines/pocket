@@ -35,10 +35,10 @@ const VARIANTS = [
   { bg: "bg-[#0a2a5e]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
   { bg: "bg-[#a9d4f5]", text: "text-[#0a2a5e]", sub: "text-[#0a2a5e]/70", circle: "bg-[#0a2a5e]/5" },
   { bg: "bg-[#fff1a8]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#ffb8a8]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
   { bg: "bg-[#c8b6ff]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#a8e6cf]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
   { bg: "bg-[#ffc9de]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
+  { bg: "bg-[#3d5afe]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
+  { bg: "bg-[#f5d76e]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
 ];
 
 const PLACEHOLDER_VARIANT = {
