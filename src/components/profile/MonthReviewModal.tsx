@@ -144,53 +144,6 @@ export function MonthReviewModal({
   const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
   const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
 
-  // Detect sign↔movement mismatches
-  const mismatchedIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const tx of transactions) {
-      if (tx.amount > 0 && tx.movement === 'EXPENSE') ids.add(tx.id);
-      else if (tx.amount < 0 && tx.movement === 'INCOME') ids.add(tx.id);
-    }
-    return ids;
-  }, [transactions]);
-
-  // Auto-populate edits for mismatched transactions (only once when data loads)
-  const [mismatchAutoApplied, setMismatchAutoApplied] = useState(false);
-  useMemo(() => {
-    if (mismatchedIds.size > 0 && !mismatchAutoApplied && transactions.length > 0 && !isLocked) {
-      const autoEdits: Record<string, TransactionEdits> = {};
-      for (const tx of transactions) {
-        if (!mismatchedIds.has(tx.id)) continue;
-        if (tx.amount > 0 && tx.movement === 'EXPENSE') {
-          // Positive amount should be INCOME
-          const currentCat = normalizeCategory(tx.category || 'other_income');
-          const isExpenseCat = EXPENSE_CATEGORIES.includes(currentCat);
-          autoEdits[tx.id] = {
-            movement: 'INCOME',
-            category: isExpenseCat ? 'other_income' : currentCat,
-          };
-        } else if (tx.amount < 0 && tx.movement === 'INCOME') {
-          // Negative amount should be EXPENSE
-          const currentCat = normalizeCategory(tx.category || 'other_expense');
-          const isIncomeCat = INCOME_CATEGORIES.includes(currentCat);
-          autoEdits[tx.id] = {
-            movement: 'EXPENSE',
-            category: isIncomeCat ? 'other_expense' : currentCat,
-          };
-        }
-      }
-      if (Object.keys(autoEdits).length > 0) {
-        setEdits(prev => ({ ...autoEdits, ...prev }));
-        setMismatchAutoApplied(true);
-      }
-    }
-  }, [mismatchedIds, transactions, mismatchAutoApplied, isLocked]);
-
-  // Reset auto-applied flag when modal closes
-  useMemo(() => {
-    if (!open) setMismatchAutoApplied(false);
-  }, [open]);
-
   // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["month-transactions", monthKey, user?.id, importId],
@@ -223,6 +176,51 @@ export function MonthReviewModal({
     },
     enabled: open && !!user,
   });
+
+  // Detect sign↔movement mismatches
+  const mismatchedIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const tx of transactions) {
+      if (tx.amount > 0 && tx.movement === 'EXPENSE') ids.add(tx.id);
+      else if (tx.amount < 0 && tx.movement === 'INCOME') ids.add(tx.id);
+    }
+    return ids;
+  }, [transactions]);
+
+  // Auto-populate edits for mismatched transactions (only once when data loads)
+  const [mismatchAutoApplied, setMismatchAutoApplied] = useState(false);
+  useMemo(() => {
+    if (mismatchedIds.size > 0 && !mismatchAutoApplied && transactions.length > 0 && !isLocked) {
+      const autoEdits: Record<string, TransactionEdits> = {};
+      for (const tx of transactions) {
+        if (!mismatchedIds.has(tx.id)) continue;
+        if (tx.amount > 0 && tx.movement === 'EXPENSE') {
+          const currentCat = normalizeCategory(tx.category || 'other_income');
+          const isExpenseCat = EXPENSE_CATEGORIES.includes(currentCat);
+          autoEdits[tx.id] = {
+            movement: 'INCOME',
+            category: isExpenseCat ? 'other_income' : currentCat,
+          };
+        } else if (tx.amount < 0 && tx.movement === 'INCOME') {
+          const currentCat = normalizeCategory(tx.category || 'other_expense');
+          const isIncomeCat = INCOME_CATEGORIES.includes(currentCat);
+          autoEdits[tx.id] = {
+            movement: 'EXPENSE',
+            category: isIncomeCat ? 'other_expense' : currentCat,
+          };
+        }
+      }
+      if (Object.keys(autoEdits).length > 0) {
+        setEdits(prev => ({ ...autoEdits, ...prev }));
+        setMismatchAutoApplied(true);
+      }
+    }
+  }, [mismatchedIds, transactions, mismatchAutoApplied, isLocked]);
+
+  // Reset auto-applied flag when modal closes
+  useMemo(() => {
+    if (!open) setMismatchAutoApplied(false);
+  }, [open]);
 
   const [isSaving, setIsSaving] = useState(false);
 
