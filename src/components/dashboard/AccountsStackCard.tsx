@@ -198,26 +198,14 @@ export function AccountsStackCard({
             return (
               <div
                 key={`placeholder-${i}`}
-                className={`relative block w-full rounded-2xl p-5 ${v.bg} shadow-md`}
+                className={`relative block w-full rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden`}
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
                 aria-hidden
               >
-                <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} />
-                <div className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`} />
                 <div className="relative flex flex-col h-full">
-                  <div className="min-w-0 flex-1 pr-3 mb-4">
-                    <p className={`text-sm font-semibold ${v.text}`}>
-                      {t("charts.emptySlot", { defaultValue: "Empty slot" })}
-                    </p>
-                    <p className={`text-xs ${v.sub}`}>
-                      {t("charts.addAccountHint", { defaultValue: "Add an account to fill this card" })}
-                    </p>
-                  </div>
-                  <p className={`text-2xl font-bold tabular-nums leading-tight ${v.sub}`}>—</p>
-                  <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
-                    <span>0 {t("charts.txCount", { defaultValue: "tx" })}</span>
-                    <span>—</span>
-                  </div>
+                  <p className={`text-sm font-medium ${v.text}`}>
+                    {t("charts.emptySlot", { defaultValue: "Empty slot" })}
+                  </p>
                 </div>
               </div>
             );
