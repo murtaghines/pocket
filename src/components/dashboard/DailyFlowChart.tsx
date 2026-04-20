@@ -163,7 +163,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
           </div>
         </CardHeader>
         <CardContent>
-          <EmptyState height="h-[380px]" />
+          <EmptyState height="h-[260px]" />
         </CardContent>
       </Card>
     );
@@ -215,7 +215,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
         </div>
       </CardHeader>
       <CardContent>
-        <div className="w-full h-[380px]">
+        <div className="w-full h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
