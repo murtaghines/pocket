@@ -4,7 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
-import { FileText, TrendingUp } from "lucide-react";
+import { AccountsManager } from "@/components/settings/AccountsManager";
+import { FileText, TrendingUp, Landmark } from "lucide-react";
 
 export default function MyData() {
   const { t } = useTranslation('profile');
@@ -35,33 +36,57 @@ export default function MyData() {
 
   return (
     <DashboardLayout>
-      <main className="max-w-[1400px] mx-auto space-y-4">
-        {/* Bank Statements - Full width */}
-        <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
-          <div className="flex items-center gap-2 mb-1">
-            <FileText className="w-5 h-5 text-primary" />
-            <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
-              Upload your bank statements, credit card bills, or expense reports
-            </h2>
-          </div>
-          <p className="text-sm text-muted-foreground mb-6">
-            Accepted formats: Excel (.xlsx, .xls), CSV, PDF
-          </p>
-          <MonthlyUploadsOrganizer />
-        </div>
+      <main className="max-w-[1400px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 lg:gap-6 items-start">
+          {/* Left column: upload tables */}
+          <div className="space-y-4 min-w-0">
+            {/* Bank Statements */}
+            <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
+              <div className="flex items-center gap-2 mb-1">
+                <FileText className="w-5 h-5 text-primary" />
+                <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
+                  Upload your bank statements, credit card bills, or expense reports
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">
+                Accepted formats: Excel (.xlsx, .xls), CSV, PDF
+              </p>
+              <MonthlyUploadsOrganizer />
+            </div>
 
-        {/* Investment Uploads - Full width */}
-        <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
-              Upload your investment statements or portfolio reports
-            </h2>
+            {/* Investment Uploads */}
+            <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
+                  Upload your investment statements or portfolio reports
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">
+                Accepted formats: Excel (.xlsx, .xls), CSV, PDF
+              </p>
+              <InvestmentUploadsOrganizer />
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground mb-6">
-            Accepted formats: Excel (.xlsx, .xls), CSV, PDF
-          </p>
-          <InvestmentUploadsOrganizer />
+
+          {/* Right column: floating accounts panel */}
+          <aside className="lg:sticky lg:top-24">
+            <div
+              className="bg-card rounded-xl md:rounded-2xl p-4 md:p-6"
+              style={{ boxShadow: 'var(--shadow-section)' }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Landmark className="w-5 h-5 text-primary" />
+                <h2 className="font-display text-lg font-bold tracking-tight text-foreground">
+                  {t('accounts.title', 'Banking Accounts')}
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('accounts.managerDescription', 'Manage your bank accounts and cards. These appear when uploading files.')}
+              </p>
+              <AccountsManager className="!shadow-none !p-0 !border-0 !bg-transparent" />
+            </div>
+          </aside>
         </div>
       </main>
 
