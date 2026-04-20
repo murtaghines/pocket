@@ -402,7 +402,7 @@ export function AccountsStackCard({
                   key={acc.id}
                   type="button"
                   onClick={() => {
-                    setActiveId(acc.id);
+                    promoteAccount(acc.id);
                     setAllOpen(false);
                   }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-accent text-left transition-colors"
