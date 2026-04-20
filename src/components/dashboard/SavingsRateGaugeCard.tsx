@@ -114,7 +114,7 @@ export function SavingsRateGaugeCard({
             <div className="flex flex-col items-start justify-center gap-0.5 text-[11px] leading-tight">
               <span className="text-muted-foreground">
                 {t("stats.previousMonthShort", {
-                  defaultValue: "Previous: {{rate}}%",
+                  defaultValue: "prev: {{rate}}%",
                   rate: previousRate,
                 })}
               </span>
@@ -136,12 +136,12 @@ export function SavingsRateGaugeCard({
           )}
         </div>
 
-        <div className="relative mt-1 flex flex-1 flex-col justify-end overflow-hidden">
-          <div className="-mx-4 md:-mx-5 overflow-visible">
+        <div className="relative mt-3 flex flex-1 flex-col justify-end overflow-hidden">
+          <div className="-mx-4 md:-mx-5 -mb-4 md:-mb-5 overflow-visible">
             <svg
-              viewBox="0 0 320 120"
+              viewBox="0 0 320 110"
               className="block h-full w-full overflow-visible"
-              preserveAspectRatio="xMidYMax meet"
+              preserveAspectRatio="xMidYMax slice"
             >
               <defs>
                 <pattern
