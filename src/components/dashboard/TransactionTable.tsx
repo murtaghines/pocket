@@ -48,7 +48,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatDate } = useLocalization();
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
   const movementOptions: { value: MovementType; label: string }[] = [
