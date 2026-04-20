@@ -91,7 +91,7 @@ export function SavingsRateGaugeCard({
           )}
         </div>
 
-        <div className="relative mt-4 flex flex-1 flex-col justify-end overflow-hidden">
+        <div className="relative -mt-2 flex flex-1 flex-col justify-end overflow-hidden">
           <SavingsRateGauge
             currentRate={currentRate}
             previousRate={previousRate}
