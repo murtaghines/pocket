@@ -341,7 +341,7 @@ export function MonthUploadSlot({
                   {/* Date uploaded */}
                   <TableCell className="py-2 hidden lg:table-cell">
                     <span className="text-xs text-foreground">
-                      {new Date(imp.uploaded_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {formatDatePref(imp.uploaded_at)}
                     </span>
                   </TableCell>
 
