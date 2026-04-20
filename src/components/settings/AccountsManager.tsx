@@ -127,78 +127,90 @@ export function AccountsManager({ className }: { className?: string }) {
             {cashAccounts.map((account, idx) => {
               const resolvedColor = account.color || getDefaultAccountColor(idx);
               return (
-              <li key={account.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <li key={account.id} className={`p-3 bg-muted/50 rounded-lg ${editingId === account.id ? 'space-y-3' : ''}`}>
                 {editingId === account.id ? (
-                  <div className="flex items-center gap-2 flex-1 mr-2">
-                    <Input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveEdit(account.id);
-                        if (e.key === 'Escape') { setEditingId(null); setEditName(""); }
-                      }}
-                      className="h-8 text-sm"
-                      autoFocus
-                    />
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-primary" onClick={() => handleSaveEdit(account.id)}>
-                      <Check className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => { setEditingId(null); setEditName(""); }}>
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                ) : (
                   <>
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <Popover>
-                        <PopoverTrigger asChild>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-6 h-6 rounded-full border border-border shrink-0"
+                        style={{ backgroundColor: editColor || resolvedColor }}
+                      />
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(account.id);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        className="h-8 text-sm flex-1"
+                        autoFocus
+                      />
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-primary" onClick={() => handleSaveEdit(account.id)}>
+                        <Check className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCancelEdit}>
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2 pl-1">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {t('accounts.color', 'Color')}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ACCOUNT_COLOR_PALETTE.blues.map((c) => (
                           <button
+                            key={c}
                             type="button"
-                            aria-label={t('accounts.changeColor', 'Change color')}
-                            className="w-6 h-6 rounded-full border border-border shrink-0 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring"
-                            style={{ backgroundColor: resolvedColor }}
+                            onClick={() => setEditColor(c)}
+                            className={`w-7 h-7 rounded-full border transition-transform hover:scale-110 ${
+                              (editColor || resolvedColor).toLowerCase() === c.toLowerCase()
+                                ? 'ring-2 ring-offset-2 ring-foreground'
+                                : 'border-border'
+                            }`}
+                            style={{ backgroundColor: c }}
+                            aria-label={c}
                           />
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-3" align="start">
-                          <div className="space-y-2">
-                            <p className="text-xs font-medium text-muted-foreground">
-                              {t('accounts.color', 'Color')}
-                            </p>
-                            <div className="flex gap-1.5">
-                              {ACCOUNT_COLOR_PALETTE.blues.map((c) => (
-                                <button
-                                  key={c}
-                                  type="button"
-                                  onClick={() => updateAccountColor({ id: account.id, color: c })}
-                                  className={`w-7 h-7 rounded-full border transition-transform hover:scale-110 ${
-                                    resolvedColor.toLowerCase() === c.toLowerCase()
-                                      ? 'ring-2 ring-offset-2 ring-foreground'
-                                      : 'border-border'
-                                  }`}
-                                  style={{ backgroundColor: c }}
-                                  aria-label={c}
-                                />
-                              ))}
-                            </div>
-                            <div className="flex gap-1.5">
-                              {ACCOUNT_COLOR_PALETTE.yellows.map((c) => (
-                                <button
-                                  key={c}
-                                  type="button"
-                                  onClick={() => updateAccountColor({ id: account.id, color: c })}
-                                  className={`w-7 h-7 rounded-full border transition-transform hover:scale-110 ${
-                                    resolvedColor.toLowerCase() === c.toLowerCase()
-                                      ? 'ring-2 ring-offset-2 ring-foreground'
-                                      : 'border-border'
-                                  }`}
-                                  style={{ backgroundColor: c }}
-                                  aria-label={c}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ACCOUNT_COLOR_PALETTE.yellows.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setEditColor(c)}
+                            className={`w-7 h-7 rounded-full border transition-transform hover:scale-110 ${
+                              (editColor || resolvedColor).toLowerCase() === c.toLowerCase()
+                                ? 'ring-2 ring-offset-2 ring-foreground'
+                                : 'border-border'
+                            }`}
+                            style={{ backgroundColor: c }}
+                            aria-label={c}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-2 pl-1 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editIsPrimary}
+                        onChange={(e) => setEditIsPrimary(e.target.checked)}
+                        className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                      />
+                      <span className="text-xs text-foreground">
+                        {t('accounts.setPrimary', 'Set as primary account')}
+                      </span>
+                    </label>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span
+                        className="w-6 h-6 rounded-full border border-border shrink-0"
+                        style={{ backgroundColor: resolvedColor }}
+                        aria-hidden
+                      />
                       <span className="text-sm font-medium truncate">{account.name}</span>
                       {account.is_primary && (
                         <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#ffd027]/20 text-[#7a5c00] font-semibold shrink-0">
@@ -210,18 +222,9 @@ export function AccountsManager({ className }: { className?: string }) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className={`h-8 w-8 p-0 ${account.is_primary ? 'text-[#ffd027]' : 'text-muted-foreground hover:text-foreground'}`}
-                        onClick={() => account.is_primary ? unsetPrimaryAccount(account.id) : setPrimaryAccount(account.id)}
-                        aria-label={t('accounts.setPrimary', 'Set as primary')}
-                        title={t('accounts.setPrimary', 'Set as primary')}
-                      >
-                        <Star className={`w-3.5 h-3.5 ${account.is_primary ? 'fill-current' : ''}`} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleStartEdit(account.id, account.name)}
+                        onClick={() => handleStartEdit(account.id, account.name, resolvedColor, account.is_primary)}
+                        aria-label="Edit"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
@@ -235,7 +238,7 @@ export function AccountsManager({ className }: { className?: string }) {
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
-                  </>
+                  </div>
                 )}
               </li>
               );
