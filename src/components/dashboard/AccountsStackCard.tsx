@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/lib/mockData";
-import { Plus, Loader2, ChevronRight } from "lucide-react";
+import { Plus, Loader2, ChevronRight, LayoutList } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -59,6 +59,7 @@ export function AccountsStackCard({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [allOpen, setAllOpen] = useState(false);
 
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
 
@@ -118,24 +119,29 @@ export function AccountsStackCard({
     return copy;
   }, [accountsData, activeId]);
 
-  // Always render at least 4 real/placeholder slots + the "+" add card on top.
+  // Stack design: keep the visual stack at a fixed, predictable height.
+  // - Show up to MAX_VISIBLE real accounts in the stack.
+  // - If there are more, replace the last visible slot with a "View all (N)"
+  //   card that opens a sheet with the complete list.
+  // - The "+" add card always renders at the very bottom of the stack.
+  // - When there are few accounts, fill remaining slots with placeholders so
+  //   the stack height stays consistent (matches MIN_SLOTS).
   const MIN_SLOTS = 4;
-  const placeholdersNeeded = Math.max(0, MIN_SLOTS - orderedAccounts.length);
-  const totalCards = orderedAccounts.length + placeholdersNeeded + 1;
-
-  // Adaptive stacking: keep the front card full-height (160px) and progressively
-  // collapse the visible "strip" of trailing cards as more are added, so the
-  // overall stack never grows taller than ~ MIN_SLOTS cards worth of space.
+  const MAX_VISIBLE = 6;
   const FRONT_HEIGHT = 160;
-  const BASE_STRIP = 40; // visible strip per non-front card when few accounts
-  const MIN_STRIP = 32;  // floor: must always show the account name / "+" icon
-  const trailingCount = Math.max(0, totalCards - 1);
-  // Target total height ~= FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP
-  const targetTotalHeight = FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP;
-  const stripHeight = trailingCount > 0
-    ? Math.max(MIN_STRIP, Math.min(BASE_STRIP, (targetTotalHeight - FRONT_HEIGHT) / trailingCount))
-    : BASE_STRIP;
-  const overlap = -(FRONT_HEIGHT - stripHeight); // negative marginTop value
+  const STRIP_HEIGHT = 40; // fixed visible strip per non-front card
+  const overlap = -(FRONT_HEIGHT - STRIP_HEIGHT);
+
+  const overflow = orderedAccounts.length > MAX_VISIBLE;
+  // When overflowing, last slot becomes the "View all" card → keep MAX_VISIBLE - 1 real
+  const visibleAccounts = overflow
+    ? orderedAccounts.slice(0, MAX_VISIBLE - 1)
+    : orderedAccounts;
+  const placeholdersNeeded = Math.max(0, MIN_SLOTS - visibleAccounts.length - (overflow ? 1 : 0));
+  // total cards = visible accounts + (view-all if overflow) + placeholders + add button
+  const totalCards =
+    visibleAccounts.length + (overflow ? 1 : 0) + placeholdersNeeded + 1;
+  let renderIdx = 0;
 
   const handleAdd = () => {
     const trimmed = newName.trim();
@@ -150,7 +156,7 @@ export function AccountsStackCard({
       <div className="h-full flex flex-col">
         <div className="relative">
           {/* Real account cards */}
-          {orderedAccounts.map((acc, idx) => {
+          {visibleAccounts.map((acc, idx) => {
             // Variant is fixed by account id position in original (creation) order,
             // so colors don't shuffle when reordering.
             const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
@@ -222,9 +228,32 @@ export function AccountsStackCard({
             );
           })}
 
+          {/* "View all" card — only when accounts exceed visible capacity */}
+          {overflow && (() => {
+            const idx = visibleAccounts.length;
+            const marginTop = idx === 0 ? 0 : overlap;
+            const remaining = orderedAccounts.length - visibleAccounts.length;
+            return (
+              <button
+                type="button"
+                onClick={() => setAllOpen(true)}
+                className="relative block w-full text-left rounded-2xl p-5 bg-[#1a1a1a] shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
+              >
+                <div className="absolute bottom-0 left-0 right-0 px-5 pb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-white inline-flex items-center gap-2">
+                    <LayoutList className="w-4 h-4" />
+                    {t("charts.viewAllAccounts", { defaultValue: "View all" })} ({orderedAccounts.length})
+                  </span>
+                  <span className="text-xs text-white/60">+{remaining}</span>
+                </div>
+              </button>
+            );
+          })()}
+
           {/* Empty placeholder slots (solid) */}
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
-            const idx = orderedAccounts.length + i;
+            const idx = visibleAccounts.length + (overflow ? 1 : 0) + i;
             const marginTop = idx === 0 ? 0 : overlap;
             return (
               <div
@@ -240,7 +269,7 @@ export function AccountsStackCard({
 
           {/* "+" Add account button */}
           {(() => {
-            const idx = orderedAccounts.length + placeholdersNeeded;
+            const idx = visibleAccounts.length + (overflow ? 1 : 0) + placeholdersNeeded;
             const marginTop = idx === 0 ? 0 : overlap;
             return (
               <button
@@ -334,6 +363,55 @@ export function AccountsStackCard({
               </div>
             </>
           )}
+        </SheetContent>
+      </Sheet>
+
+      {/* All accounts sheet — full list when stack overflows */}
+      <Sheet open={allOpen} onOpenChange={setAllOpen}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-lg p-0 flex flex-col text-foreground"
+        >
+          <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <SheetTitle className="text-xl font-semibold text-foreground inline-flex items-center gap-2">
+              <LayoutList className="w-5 h-5 text-[#1b76ff]" />
+              {t("charts.allAccounts", { defaultValue: "All accounts" })} ({orderedAccounts.length})
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+            {orderedAccounts.map((acc) => {
+              const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
+              const v = VARIANTS[originalIdx % VARIANTS.length];
+              return (
+                <button
+                  key={acc.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveId(acc.id);
+                    setAllOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-accent text-left transition-colors"
+                >
+                  <span className={`w-10 h-10 rounded-lg ${v.bg} shrink-0`} aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate text-foreground">{acc.name}</p>
+                    {acc.institution && (
+                      <p className="text-xs text-muted-foreground truncate">{acc.institution}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-semibold tabular-nums text-foreground">
+                      {formatCurrency(acc.balance)}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </SheetContent>
       </Sheet>
 
