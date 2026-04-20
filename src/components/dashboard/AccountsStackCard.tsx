@@ -34,6 +34,13 @@ const VARIANTS = [
   { bg: "bg-white border-2 border-[#1b76ff]/20", text: "text-foreground", sub: "text-muted-foreground", circle: "bg-[#1b76ff]/5" },
 ];
 
+const PLACEHOLDER_VARIANT = {
+  bg: "bg-muted",
+  text: "text-muted-foreground",
+  sub: "text-muted-foreground",
+  circle: "bg-foreground/5",
+};
+
 export function AccountsStackCard({
   transactions,
   monthKey,
@@ -198,7 +205,7 @@ export function AccountsStackCard({
           {/* Empty placeholder slots (solid) */}
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
             const idx = orderedAccounts.length + i;
-            const v = VARIANTS[idx % VARIANTS.length];
+            const v = PLACEHOLDER_VARIANT;
             const marginTop = idx === 0 ? 0 : -120;
             return (
               <div
