@@ -108,101 +108,83 @@ export function AccountsStackCard({
 
   return (
     <>
-      <Card className="h-full flex flex-col">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold">
-            {t("charts.accounts", { defaultValue: "Accounts" })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-hidden">
-          {accountsData.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground py-8">
-              <Wallet className="w-8 h-8 mb-2 opacity-40" />
-              <p className="text-sm">
-                {t("charts.noAccounts", { defaultValue: "No accounts yet" })}
-              </p>
-            </div>
-          ) : (
-            <div
-              className="relative max-h-[420px] overflow-y-auto pr-1"
-              style={{ paddingBottom: 8 }}
-            >
-              <div className="relative">
-                {accountsData.map((acc, idx) => {
-                  const v = VARIANTS[idx % VARIANTS.length];
-                  // Vertical overlap: each subsequent card pulls up
-                  const marginTop = idx === 0 ? 0 : -56;
-                  return (
-                    <button
-                      type="button"
-                      key={acc.id}
-                      onClick={() => setSelected(acc)}
-                      className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
-                      style={{
-                        marginTop,
-                        zIndex: idx + 1,
-                        minHeight: 160,
-                      }}
-                    >
-                      {/* Decorative circles */}
-                      <div
-                        className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`}
-                        aria-hidden
-                      />
-                      <div
-                        className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`}
-                        aria-hidden
-                      />
+      <div className="h-full flex flex-col">
+        {accountsData.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground py-8">
+            <Wallet className="w-8 h-8 mb-2 opacity-40" />
+            <p className="text-sm">
+              {t("charts.noAccounts", { defaultValue: "No accounts yet" })}
+            </p>
+          </div>
+        ) : (
+          <div className="relative">
+            {accountsData.map((acc, idx) => {
+              const v = VARIANTS[idx % VARIANTS.length];
+              const marginTop = idx === 0 ? 0 : -56;
+              return (
+                <button
+                  type="button"
+                  key={acc.id}
+                  onClick={() => setSelected(acc)}
+                  className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
+                  style={{
+                    marginTop,
+                    zIndex: idx + 1,
+                    minHeight: 160,
+                  }}
+                >
+                  <div
+                    className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`}
+                    aria-hidden
+                  />
+                  <div
+                    className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`}
+                    aria-hidden
+                  />
 
-                      <div className="relative flex flex-col h-full">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="min-w-0 flex-1 pr-3">
-                            <p
-                              className={`text-sm font-semibold truncate ${v.text}`}
-                            >
-                              {acc.name}
-                            </p>
-                            {acc.institution && (
-                              <p className={`text-xs truncate ${v.sub}`}>
-                                {acc.institution}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <p
-                          className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}
-                        >
-                          {formatCurrency(acc.balance)}
+                  <div className="relative flex flex-col h-full">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="min-w-0 flex-1 pr-3">
+                        <p className={`text-sm font-semibold truncate ${v.text}`}>
+                          {acc.name}
                         </p>
-
-                        <div
-                          className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}
-                        >
-                          <span>
-                            {acc.transactionCount}{" "}
-                            {t("charts.txCount", { defaultValue: "tx" })}
-                          </span>
-                          <span>
-                            {acc.currency} ·{" "}
-                            {acc.hasRunningBalance
-                              ? t("charts.currentBalance", {
-                                  defaultValue: "Current balance",
-                                })
-                              : t("charts.netFlow", {
-                                  defaultValue: "Net flow",
-                                })}
-                          </span>
-                        </div>
+                        {acc.institution && (
+                          <p className={`text-xs truncate ${v.sub}`}>
+                            {acc.institution}
+                          </p>
+                        )}
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    </div>
+
+                    <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
+                      {formatCurrency(acc.balance)}
+                    </p>
+
+                    <div
+                      className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}
+                    >
+                      <span>
+                        {acc.transactionCount}{" "}
+                        {t("charts.txCount", { defaultValue: "tx" })}
+                      </span>
+                      <span>
+                        {acc.currency} ·{" "}
+                        {acc.hasRunningBalance
+                          ? t("charts.currentBalance", {
+                              defaultValue: "Current balance",
+                            })
+                          : t("charts.netFlow", {
+                              defaultValue: "Net flow",
+                            })}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-2xl">
