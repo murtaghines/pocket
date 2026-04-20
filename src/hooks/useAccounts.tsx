@@ -15,6 +15,8 @@ export interface Account {
   domain_default: AppDomain | null;
   currency_base: string;
   created_at: string;
+  color: string | null;
+  is_primary: boolean;
 }
 
 interface CreateAccountParams {
@@ -122,6 +124,59 @@ export function useAccounts() {
     }
   });
 
+  const updateAccountColor = useMutation({
+    mutationFn: async ({ id, color }: { id: string; color: string }) => {
+      const { error } = await supabase
+        .from('accounts')
+        .update({ color })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+    onError: (error) => {
+      console.error('Error updating account color:', error);
+      toast.error('Error updating color');
+    }
+  });
+
+  const setPrimaryAccount = useMutation({
+    mutationFn: async (id: string) => {
+      // The DB trigger ensures only one primary per user; just set this one to true.
+      const { error } = await supabase
+        .from('accounts')
+        .update({ is_primary: true })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      toast.success('Primary account updated');
+    },
+    onError: (error) => {
+      console.error('Error setting primary account:', error);
+      toast.error('Error setting primary account');
+    }
+  });
+
+  const unsetPrimaryAccount = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('accounts')
+        .update({ is_primary: false })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
+    onError: (error) => {
+      console.error('Error unsetting primary account:', error);
+      toast.error('Error updating primary account');
+    }
+  });
+
   const reassignAndDelete = useMutation({
     mutationFn: async ({ deleteId, reassignToId }: { deleteId: string; reassignToId: string }) => {
       // Reassign imports
@@ -188,6 +243,9 @@ export function useAccounts() {
     updateAccount: updateAccount.mutate,
     deleteAccount: deleteAccount.mutate,
     reassignAndDelete: reassignAndDelete.mutate,
+    updateAccountColor: updateAccountColor.mutate,
+    setPrimaryAccount: setPrimaryAccount.mutate,
+    unsetPrimaryAccount: unsetPrimaryAccount.mutate,
     isCreating: createAccount.isPending,
     isUpdating: updateAccount.isPending,
     isDeleting: deleteAccount.isPending || reassignAndDelete.isPending,

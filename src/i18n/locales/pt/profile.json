@@ -82,5 +82,12 @@
     "closeDescription": "As transações de {{month}} serão bloqueadas e você não poderá editar as categorias. Você pode reabrir o mês se precisar.",
     "reopenMonth": "Reabrir mês?",
     "reopenDescription": "Você poderá editar as transações de {{month}} novamente."
+  },
+  "accounts": {
+    "color": "Cor",
+    "changeColor": "Mudar cor",
+    "setPrimary": "Definir como conta principal",
+    "primary": "Principal",
+    "primaryBadge": "Principal"
   }
 }

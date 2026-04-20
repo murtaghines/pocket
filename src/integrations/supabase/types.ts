@@ -17,31 +17,37 @@ export type Database = {
       accounts: {
         Row: {
           account_role: Database["public"]["Enums"]["account_role"]
+          color: string | null
           created_at: string | null
           currency_base: string
           domain_default: Database["public"]["Enums"]["app_domain"] | null
           id: string
           institution: string | null
+          is_primary: boolean
           name: string
           user_id: string
         }
         Insert: {
           account_role?: Database["public"]["Enums"]["account_role"]
+          color?: string | null
           created_at?: string | null
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
           id?: string
           institution?: string | null
+          is_primary?: boolean
           name: string
           user_id: string
         }
         Update: {
           account_role?: Database["public"]["Enums"]["account_role"]
+          color?: string | null
           created_at?: string | null
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
           id?: string
           institution?: string | null
+          is_primary?: boolean
           name?: string
           user_id?: string
         }

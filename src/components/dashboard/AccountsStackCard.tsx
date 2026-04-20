@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/lib/mockData";
-import { Plus, Loader2, ChevronRight, LayoutList } from "lucide-react";
+import { Plus, Loader2, ChevronRight, LayoutList, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { getAccountColorStyle, getDefaultAccountColor } from "@/lib/accountColors";
 
 interface AccountsStackCardProps {
   transactions: Transaction[];
@@ -25,27 +26,8 @@ type AccountDisplay = {
   transactionCount: number;
   monthTxs: Transaction[];
   createdAt: string;
-};
-
-const VARIANTS = [
-  { bg: "bg-[#1b76ff]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#ffd027]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#7a8499]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#b8c4d6]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#0a2a5e]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#a9d4f5]", text: "text-[#0a2a5e]", sub: "text-[#0a2a5e]/70", circle: "bg-[#0a2a5e]/5" },
-  { bg: "bg-[#fff1a8]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#cfa83a]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#cde7f7]", text: "text-[#0a2a5e]", sub: "text-[#0a2a5e]/70", circle: "bg-[#0a2a5e]/5" },
-  { bg: "bg-[#155fd6]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
-  { bg: "bg-[#f5d76e]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-];
-
-const PLACEHOLDER_VARIANT = {
-  bg: "bg-muted",
-  text: "text-muted-foreground",
-  sub: "text-muted-foreground",
-  circle: "bg-foreground/5",
+  color: string;
+  isPrimary: boolean;
 };
 
 export function AccountsStackCard({
@@ -106,32 +88,46 @@ export function AccountsStackCard({
         transactionCount: monthTxs.length,
         monthTxs,
         createdAt: acc.created_at,
+        color: acc.color || "",
+        isPrimary: !!acc.is_primary,
       };
     });
 
-    // Sort by creation date — first added stays first (top of stack by default)
-    return mapped.sort((a, b) =>
+    // Sort by creation date so default colors (by index) stay stable.
+    const sorted = mapped.sort((a, b) =>
       a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0
     );
+    // Resolve color: stored color wins, otherwise default rotation by creation index.
+    return sorted.map((acc, i) => ({
+      ...acc,
+      color: acc.color || getDefaultAccountColor(i),
+    }));
   }, [cashAccounts, transactions, monthKey, convert]);
 
   // Reorder by selection history (LRU): every selected account is moved
   // to the front in the order it was picked. Unselected accounts keep
   // their original creation order behind them.
   const orderedAccounts = useMemo(() => {
-    if (selectionOrder.length === 0) return accountsData;
-    const byId = new Map(accountsData.map((a) => [a.id, a]));
-    const promoted: AccountDisplay[] = [];
-    for (const id of selectionOrder) {
-      const acc = byId.get(id);
-      if (acc) {
-        promoted.push(acc);
-        byId.delete(id);
+    // Primary account is always pinned at the top.
+    const primary = accountsData.find((a) => a.isPrimary);
+    const rest = accountsData.filter((a) => !a.isPrimary);
+
+    let ordered = rest;
+    if (selectionOrder.length > 0) {
+      const byId = new Map(rest.map((a) => [a.id, a]));
+      const promoted: AccountDisplay[] = [];
+      for (const id of selectionOrder) {
+        const acc = byId.get(id);
+        if (acc) {
+          promoted.push(acc);
+          byId.delete(id);
+        }
       }
+      const remaining = rest.filter((a) => byId.has(a.id));
+      ordered = [...promoted, ...remaining];
     }
-    // Remaining accounts keep their default (creation) order
-    const rest = accountsData.filter((a) => byId.has(a.id));
-    return [...promoted, ...rest];
+
+    return primary ? [primary, ...ordered] : ordered;
   }, [accountsData, selectionOrder]);
 
   // Stack design: keep the visual stack at a fixed, predictable height.
@@ -172,10 +168,7 @@ export function AccountsStackCard({
         <div className="relative">
           {/* Real account cards */}
           {visibleAccounts.map((acc, idx) => {
-            // Variant is fixed by account id position in original (creation) order,
-            // so colors don't shuffle when reordering.
-            const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
-            const v = VARIANTS[originalIdx % VARIANTS.length];
+            const v = getAccountColorStyle(acc.color);
             const marginTop = idx === 0 ? 0 : overlap;
             const isFront = idx === 0;
             return (
@@ -183,13 +176,13 @@ export function AccountsStackCard({
                 type="button"
                 key={acc.id}
                 onClick={() => promoteAccount(acc.id)}
-                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
-                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
+                className="relative block w-full text-left rounded-2xl p-5 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40"
+                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT, backgroundColor: v.bg }}
               >
                 {isFront && (
                   <>
-                    <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} aria-hidden />
-                    <div className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`} aria-hidden />
+                    <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full" style={{ backgroundColor: v.circleBg }} aria-hidden />
+                    <div className="absolute right-2 top-6 w-12 h-12 rounded-full" style={{ backgroundColor: v.circleBg }} aria-hidden />
                   </>
                 )}
 
@@ -197,18 +190,21 @@ export function AccountsStackCard({
                   <div className="relative flex flex-col h-full">
                     <div className="flex items-start justify-between mb-4">
                       <div className="min-w-0 flex-1 pr-3">
-                        <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
+                        <p className="text-sm font-medium truncate flex items-center gap-1.5" style={{ color: v.text }}>
+                          {acc.isPrimary && <Star className="w-3 h-3 shrink-0 fill-current" aria-label="Primary" />}
+                          <span className="truncate">{acc.name}</span>
+                        </p>
                         {acc.institution && (
-                          <p className={`text-xs truncate ${v.sub}`}>{acc.institution}</p>
+                          <p className="text-xs truncate" style={{ color: v.sub }}>{acc.institution}</p>
                         )}
                       </div>
                     </div>
 
-                    <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
+                    <p className="text-2xl font-bold tabular-nums leading-tight" style={{ color: v.text }}>
                       {formatCurrency(acc.balance)}
                     </p>
 
-                    <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
+                    <div className="mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider" style={{ color: v.sub }}>
                       <span>
                         {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
                       </span>
@@ -226,7 +222,8 @@ export function AccountsStackCard({
                             setDetail(acc);
                           }
                         }}
-                        className={`inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline ${v.text}`}
+                        className="inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline"
+                        style={{ color: v.text }}
                       >
                         {t("charts.viewDetails", { defaultValue: "View details" })}
                         <ChevronRight className="w-3 h-3" />
@@ -236,7 +233,10 @@ export function AccountsStackCard({
                 ) : (
                   // Hidden card: only show name in the visible bottom strip (~40px)
                   <div className="absolute bottom-0 left-0 right-0 px-5 pb-2">
-                    <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
+                    <p className="text-sm font-medium truncate flex items-center gap-1.5" style={{ color: v.text }}>
+                      {acc.isPrimary && <Star className="w-3 h-3 shrink-0 fill-current" aria-label="Primary" />}
+                      <span className="truncate">{acc.name}</span>
+                    </p>
                   </div>
                 )}
               </button>
@@ -396,8 +396,7 @@ export function AccountsStackCard({
 
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
             {orderedAccounts.map((acc) => {
-              const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
-              const v = VARIANTS[originalIdx % VARIANTS.length];
+              const v = getAccountColorStyle(acc.color);
               return (
                 <button
                   key={acc.id}
@@ -408,9 +407,12 @@ export function AccountsStackCard({
                   }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-accent text-left transition-colors"
                 >
-                  <span className={`w-10 h-10 rounded-lg ${v.bg} shrink-0`} aria-hidden />
+                  <span className="w-10 h-10 rounded-lg shrink-0" style={{ backgroundColor: v.bg }} aria-hidden />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate text-foreground">{acc.name}</p>
+                    <p className="text-sm font-medium truncate text-foreground flex items-center gap-1.5">
+                      {acc.isPrimary && <Star className="w-3 h-3 shrink-0 fill-current text-[#ffd027]" aria-label="Primary" />}
+                      <span className="truncate">{acc.name}</span>
+                    </p>
                     {acc.institution && (
                       <p className="text-xs text-muted-foreground truncate">{acc.institution}</p>
                     )}

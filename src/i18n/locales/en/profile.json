@@ -82,5 +82,12 @@
     "closeDescription": "Transactions for {{month}} will be locked and you won't be able to edit categories. You can reopen the month if needed.",
     "reopenMonth": "Reopen month?",
     "reopenDescription": "You will be able to edit transactions for {{month}} again."
+  },
+  "accounts": {
+    "color": "Color",
+    "changeColor": "Change color",
+    "setPrimary": "Set as primary account",
+    "primary": "Primary",
+    "primaryBadge": "Primary"
   }
 }
