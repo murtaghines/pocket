@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocalization } from "@/hooks/useLocalization";
 
 function formatFileSize(bytes: number | null): string {
   if (!bytes) return "—";
@@ -171,6 +172,7 @@ export function UploadsManager() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { formatDate } = useLocalization();
   const [isCheckingIntegrity, setIsCheckingIntegrity] = useState(false);
 
   const runIntegrityCheck = async () => {
@@ -257,6 +259,7 @@ export function UploadsManager() {
                   uploads={uploadsByMonth[monthKey].uploads}
                   onDelete={deleteUpload}
                   isDeleting={isDeleting}
+                  formatDate={formatDate}
                 />
               ))}
             </div>
