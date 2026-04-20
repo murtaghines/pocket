@@ -280,6 +280,7 @@ export type Database = {
           file_size: number | null
           file_storage_url: string | null
           id: string
+          locked: boolean
           period_id: string | null
           source_type: Database["public"]["Enums"]["source_type"]
           status: Database["public"]["Enums"]["import_status"]
@@ -297,6 +298,7 @@ export type Database = {
           file_size?: number | null
           file_storage_url?: string | null
           id?: string
+          locked?: boolean
           period_id?: string | null
           source_type?: Database["public"]["Enums"]["source_type"]
           status?: Database["public"]["Enums"]["import_status"]
@@ -314,6 +316,7 @@ export type Database = {
           file_size?: number | null
           file_storage_url?: string | null
           id?: string
+          locked?: boolean
           period_id?: string | null
           source_type?: Database["public"]["Enums"]["source_type"]
           status?: Database["public"]["Enums"]["import_status"]
