@@ -78,10 +78,6 @@ export function UnifiedUploadsTable() {
   const [reviewImportId, setReviewImportId] = useState<string | undefined>();
   const [reviewMonthKey, setReviewMonthKey] = useState("");
   const [reviewTitle, setReviewTitle] = useState("");
-  const [showCloseDialog, setShowCloseDialog] = useState(false);
-  const [showReopenDialog, setShowReopenDialog] = useState(false);
-  const [dialogPeriod, setDialogPeriod] = useState<Period | undefined>();
-  const [dialogLabel, setDialogLabel] = useState("");
   const [showAccountDialog, setShowAccountDialog] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingMonthDate, setPendingMonthDate] = useState<Date>(new Date());
