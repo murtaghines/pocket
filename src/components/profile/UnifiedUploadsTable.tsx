@@ -278,7 +278,7 @@ export function UnifiedUploadsTable() {
                         </TableCell>
                         <TableCell className="py-2 hidden lg:table-cell">
                           <div className="flex flex-col leading-tight">
-                            <span className="text-sm text-foreground">{formatDatePref(imp.uploaded_at)}</span>
+                            <span className="text-sm text-foreground">{new Date(imp.uploaded_at).toLocaleDateString(undefined, { day: "2-digit", month: "short" })}</span>
                             <span className="text-xs text-muted-foreground">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>
                           </div>
                         </TableCell>
