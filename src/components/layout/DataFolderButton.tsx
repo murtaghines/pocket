@@ -13,14 +13,14 @@ export function DataFolderButton() {
         variant="ghost"
         size="icon"
         className={cn(
-          "rounded-full w-11 h-11",
+          "rounded-full w-12 h-12",
           active
             ? "bg-primary text-primary-foreground hover:bg-primary/90"
-            : "bg-muted text-foreground hover:bg-muted/70"
+            : "bg-[hsl(0_0%_88%)] dark:bg-muted text-foreground hover:bg-[hsl(0_0%_82%)] dark:hover:bg-muted/70"
         )}
         aria-label="My data"
       >
-        <Folder className="w-5 h-5" />
+        <Folder className="w-[22px] h-[22px]" />
       </Button>
     </Link>
   );
