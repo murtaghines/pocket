@@ -68,7 +68,7 @@ export function AccountsStackCard({
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
 
   const accountsData = useMemo<AccountDisplay[]>(() => {
-    if (!monthKey || cashAccounts.length === 0) return [];
+    if (!monthKey) return [];
 
     return cashAccounts.map((acc) => {
       const monthTxs = transactions.filter(
@@ -106,84 +106,124 @@ export function AccountsStackCard({
     });
   }, [cashAccounts, transactions, monthKey, convert]);
 
+  const TOTAL_SLOTS = 4;
+  const placeholdersNeeded = Math.max(0, TOTAL_SLOTS - accountsData.length);
+
   return (
     <>
       <div className="h-full flex flex-col">
-        {accountsData.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground py-8">
-            <Wallet className="w-8 h-8 mb-2 opacity-40" />
-            <p className="text-sm">
-              {t("charts.noAccounts", { defaultValue: "No accounts yet" })}
-            </p>
-          </div>
-        ) : (
-          <div className="relative">
-            {accountsData.map((acc, idx) => {
-              const v = VARIANTS[idx % VARIANTS.length];
-              const marginTop = idx === 0 ? 0 : -56;
-              return (
-                <button
-                  type="button"
-                  key={acc.id}
-                  onClick={() => setSelected(acc)}
-                  className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
-                  style={{
-                    marginTop,
-                    zIndex: idx + 1,
-                    minHeight: 160,
-                  }}
-                >
-                  <div
-                    className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`}
-                    aria-hidden
-                  />
-                  <div
-                    className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`}
-                    aria-hidden
-                  />
+        <div className="relative">
+          {accountsData.map((acc, idx) => {
+            const v = VARIANTS[idx % VARIANTS.length];
+            const marginTop = idx === 0 ? 0 : -56;
+            return (
+              <button
+                type="button"
+                key={acc.id}
+                onClick={() => setSelected(acc)}
+                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
+                style={{
+                  marginTop,
+                  zIndex: idx + 1,
+                  minHeight: 160,
+                }}
+              >
+                <div
+                  className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`}
+                  aria-hidden
+                />
+                <div
+                  className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`}
+                  aria-hidden
+                />
 
-                  <div className="relative flex flex-col h-full">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="min-w-0 flex-1 pr-3">
-                        <p className={`text-sm font-semibold truncate ${v.text}`}>
-                          {acc.name}
+                <div className="relative flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="min-w-0 flex-1 pr-3">
+                      <p className={`text-sm font-semibold truncate ${v.text}`}>
+                        {acc.name}
+                      </p>
+                      {acc.institution && (
+                        <p className={`text-xs truncate ${v.sub}`}>
+                          {acc.institution}
                         </p>
-                        {acc.institution && (
-                          <p className={`text-xs truncate ${v.sub}`}>
-                            {acc.institution}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
-                      {formatCurrency(acc.balance)}
-                    </p>
-
-                    <div
-                      className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}
-                    >
-                      <span>
-                        {acc.transactionCount}{" "}
-                        {t("charts.txCount", { defaultValue: "tx" })}
-                      </span>
-                      <span>
-                        {acc.currency} ·{" "}
-                        {acc.hasRunningBalance
-                          ? t("charts.currentBalance", {
-                              defaultValue: "Current balance",
-                            })
-                          : t("charts.netFlow", {
-                              defaultValue: "Net flow",
-                            })}
-                      </span>
+                      )}
                     </div>
                   </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+
+                  <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
+                    {formatCurrency(acc.balance)}
+                  </p>
+
+                  <div
+                    className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}
+                  >
+                    <span>
+                      {acc.transactionCount}{" "}
+                      {t("charts.txCount", { defaultValue: "tx" })}
+                    </span>
+                    <span>
+                      {acc.currency} ·{" "}
+                      {acc.hasRunningBalance
+                        ? t("charts.currentBalance", {
+                            defaultValue: "Current balance",
+                          })
+                        : t("charts.netFlow", {
+                            defaultValue: "Net flow",
+                          })}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+
+          {Array.from({ length: placeholdersNeeded }).map((_, i) => {
+            const idx = accountsData.length + i;
+            const v = VARIANTS[idx % VARIANTS.length];
+            const marginTop = idx === 0 ? 0 : -56;
+            return (
+              <div
+                key={`placeholder-${i}`}
+                className={`relative block w-full rounded-2xl p-5 ${v.bg} shadow-md opacity-60`}
+                style={{
+                  marginTop,
+                  zIndex: idx + 1,
+                  minHeight: 160,
+                }}
+                aria-hidden
+              >
+                <div
+                  className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`}
+                />
+                <div
+                  className={`absolute right-2 top-6 w-12 h-12 rounded-full ${v.circle}`}
+                />
+                <div className="relative flex flex-col h-full">
+                  <div className="min-w-0 flex-1 pr-3 mb-4">
+                    <p className={`text-sm font-semibold ${v.sub}`}>
+                      {t("charts.emptySlot", { defaultValue: "Empty slot" })}
+                    </p>
+                    <p className={`text-xs ${v.sub}`}>
+                      {t("charts.addAccountHint", {
+                        defaultValue: "Add an account to fill this card",
+                      })}
+                    </p>
+                  </div>
+                  <p className={`text-2xl font-bold tabular-nums leading-tight ${v.sub}`}>
+                    —
+                  </p>
+                  <div
+                    className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}
+                  >
+                    <span>0 {t("charts.txCount", { defaultValue: "tx" })}</span>
+                    <span>—</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
