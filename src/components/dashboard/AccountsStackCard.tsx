@@ -132,7 +132,7 @@ export function AccountsStackCard({
                 type="button"
                 key={acc.id}
                 onClick={() => setActiveId(acc.id)}
-                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
+                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
               >
                 <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} aria-hidden />
