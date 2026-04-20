@@ -141,7 +141,7 @@ export function AccountsStackCard({
   // - When there are few accounts, fill remaining slots with placeholders so
   //   the stack height stays consistent (matches MIN_SLOTS).
   const MIN_SLOTS = 4;
-  const MAX_VISIBLE = 6;
+  const MAX_VISIBLE = 4;
   const FRONT_HEIGHT = 160;
   const STRIP_HEIGHT = 40; // fixed visible strip per non-front card
   const overlap = -(FRONT_HEIGHT - STRIP_HEIGHT);
