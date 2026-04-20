@@ -35,6 +35,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const [view, setView] = useState<ViewMode>("week");
+  const [scale, setScale] = useState<"linear" | "log">("log");
 
   const data: FlowPoint[] = useMemo(() => {
     if (!monthKey) return [];
@@ -106,29 +107,57 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
       : t("charts.weekdayFlow", "Weekday Flow");
 
   const ToggleButtons = (
-    <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
-      <button
-        type="button"
-        onClick={() => setView("week")}
-        className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-          view === "week"
-            ? "bg-card text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        {t("charts.toggleWeek", { defaultValue: "Week" })}
-      </button>
-      <button
-        type="button"
-        onClick={() => setView("weekday")}
-        className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-          view === "weekday"
-            ? "bg-card text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        {t("charts.toggleWeekday", { defaultValue: "Weekday" })}
-      </button>
+    <div className="flex items-center gap-2">
+      <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
+        <button
+          type="button"
+          onClick={() => setScale("linear")}
+          className={`px-2.5 py-1.5 rounded-md font-medium transition-colors ${
+            scale === "linear"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          title={t("charts.scaleLinearTooltip", { defaultValue: "Linear scale" })}
+        >
+          {t("charts.scaleLinear", { defaultValue: "Linear" })}
+        </button>
+        <button
+          type="button"
+          onClick={() => setScale("log")}
+          className={`px-2.5 py-1.5 rounded-md font-medium transition-colors ${
+            scale === "log"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          title={t("charts.scaleLogTooltip", { defaultValue: "Logarithmic scale — better for large value differences" })}
+        >
+          {t("charts.scaleLog", { defaultValue: "Log" })}
+        </button>
+      </div>
+      <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
+        <button
+          type="button"
+          onClick={() => setView("week")}
+          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+            view === "week"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("charts.toggleWeek", { defaultValue: "Week" })}
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("weekday")}
+          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+            view === "weekday"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("charts.toggleWeekday", { defaultValue: "Weekday" })}
+        </button>
+      </div>
     </div>
   );
 
