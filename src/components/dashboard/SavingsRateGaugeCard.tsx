@@ -101,7 +101,7 @@ export function SavingsRateGaugeCard({
           {t("stats.savingsRate")}
         </p>
 
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-1">
             <span className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
               {currentRate}
@@ -111,7 +111,7 @@ export function SavingsRateGaugeCard({
             </span>
           </div>
           {hasPrevious && (
-            <div className="flex flex-col items-start gap-0.5 text-[11px]">
+            <div className="flex flex-col items-start justify-center gap-0.5 text-[11px] leading-tight">
               <span className="text-muted-foreground">
                 {t("stats.previousMonthShort", {
                   defaultValue: "Previous: {{rate}}%",
