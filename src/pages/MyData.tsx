@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { MonthlyUploadsOrganizer } from "@/components/profile/MonthlyUploadsOrganizer";
+import { UnifiedUploadsTable } from "@/components/profile/UnifiedUploadsTable";
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { AccountsManager } from "@/components/settings/AccountsManager";
 import { FileText, TrendingUp, Landmark } from "lucide-react";
@@ -51,7 +51,7 @@ export default function MyData() {
               <p className="text-sm text-muted-foreground mb-6">
                 Accepted formats: Excel (.xlsx, .xls), CSV, PDF
               </p>
-              <MonthlyUploadsOrganizer />
+              <UnifiedUploadsTable />
             </div>
 
             {/* Investment Uploads */}
