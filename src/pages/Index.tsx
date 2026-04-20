@@ -131,7 +131,7 @@ export default function Index() {
         />
       )}
       
-      <main className="max-w-[1400px] mx-auto">
+      <main className="max-w-[1800px] mx-auto w-full">
 
         {(isLoading || prefsLoading) && (
           <div className="flex items-center justify-center py-12">
@@ -209,7 +209,7 @@ export default function Index() {
             </div>
 
             {/* Weekly Flow + Accounts Stack */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 mb-4">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_400px] gap-4 mb-4">
               <DailyFlowChart
                 transactions={transactions}
                 monthKey={latestMonthLabel}
