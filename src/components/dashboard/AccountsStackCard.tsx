@@ -105,8 +105,9 @@ export function AccountsStackCard({
     return copy;
   }, [accountsData, activeId]);
 
-  const TOTAL_SLOTS = 4;
-  const placeholdersNeeded = Math.max(0, TOTAL_SLOTS - orderedAccounts.length - 1);
+  // Always render at least 4 real/placeholder slots + the "+" add card on top.
+  const MIN_SLOTS = 4;
+  const placeholdersNeeded = Math.max(0, MIN_SLOTS - orderedAccounts.length);
   const totalCards = orderedAccounts.length + placeholdersNeeded + 1;
 
   const handleAdd = () => {
