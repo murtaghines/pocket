@@ -143,49 +143,52 @@ export function AccountsStackCard({
                   </>
                 )}
 
-                <div className="relative flex flex-col h-full">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="min-w-0 flex-1 pr-3">
-                      <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
-                      {isFront && acc.institution && (
-                        <p className={`text-xs truncate ${v.sub}`}>{acc.institution}</p>
-                      )}
+                {isFront ? (
+                  <div className="relative flex flex-col h-full">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="min-w-0 flex-1 pr-3">
+                        <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
+                        {acc.institution && (
+                          <p className={`text-xs truncate ${v.sub}`}>{acc.institution}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {isFront && (
-                    <>
-                      <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
-                        {formatCurrency(acc.balance)}
-                      </p>
+                    <p className={`text-2xl font-bold tabular-nums leading-tight ${v.text}`}>
+                      {formatCurrency(acc.balance)}
+                    </p>
 
-                      <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
-                        <span>
-                          {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
-                        </span>
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          onClick={(e) => {
+                    <div className={`mt-auto pt-3 flex items-center justify-between text-[11px] uppercase tracking-wider ${v.sub}`}>
+                      <span>
+                        {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDetail(acc);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
                             e.stopPropagation();
                             setDetail(acc);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setDetail(acc);
-                            }
-                          }}
-                          className={`inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline ${v.text}`}
-                        >
-                          {t("charts.viewDetails", { defaultValue: "View details" })}
-                          <ChevronRight className="w-3 h-3" />
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
+                          }
+                        }}
+                        className={`inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline ${v.text}`}
+                      >
+                        {t("charts.viewDetails", { defaultValue: "View details" })}
+                        <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  // Hidden card: only show name in the visible bottom strip (~40px)
+                  <div className="absolute bottom-0 left-0 right-0 px-5 pb-3">
+                    <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
+                  </div>
+                )}
               </button>
             );
           })}
