@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocalization } from "@/hooks/useLocalization";
 
 function formatFileSize(bytes: number | null): string {
   if (!bytes) return "—";
@@ -28,19 +29,11 @@ function formatFileSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function UploadItem({ upload, onDelete, isDeleting }: { 
+function UploadItem({ upload, onDelete, isDeleting, formatDate }: { 
   upload: Upload; 
   onDelete: (id: string) => void;
   isDeleting: boolean;
+  formatDate: (d: string) => string;
 }) {
   const statusColors: Record<string, string> = {
     pending: "bg-yellow-500/20 text-yellow-600",
@@ -128,13 +121,15 @@ function MonthGroup({
   label, 
   uploads, 
   onDelete, 
-  isDeleting 
+  isDeleting,
+  formatDate,
 }: { 
   monthKey: string;
   label: string;
   uploads: Upload[];
   onDelete: (id: string) => void;
   isDeleting: boolean;
+  formatDate: (d: string) => string;
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -163,6 +158,7 @@ function MonthGroup({
               upload={upload}
               onDelete={onDelete}
               isDeleting={isDeleting}
+              formatDate={formatDate}
             />
           ))}
         </div>
@@ -176,6 +172,7 @@ export function UploadsManager() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { formatDate } = useLocalization();
   const [isCheckingIntegrity, setIsCheckingIntegrity] = useState(false);
 
   const runIntegrityCheck = async () => {
@@ -262,6 +259,7 @@ export function UploadsManager() {
                   uploads={uploadsByMonth[monthKey].uploads}
                   onDelete={deleteUpload}
                   isDeleting={isDeleting}
+                  formatDate={formatDate}
                 />
               ))}
             </div>

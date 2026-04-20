@@ -12,7 +12,7 @@ interface TopExpensesCardProps {
 }
 
 export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatDayMonth } = useLocalization();
   const { t } = useTranslation('dashboard');
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
@@ -21,10 +21,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
     .slice(0, 5);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-  };
+  const formatDate = (dateStr: string) => formatDayMonth(dateStr);
 
   const hasData = topExpenses.length > 0;
 

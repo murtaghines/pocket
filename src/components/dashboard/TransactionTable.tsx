@@ -48,7 +48,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatDate } = useLocalization();
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
   const movementOptions: { value: MovementType; label: string }[] = [
@@ -159,13 +159,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     return matchesSearch && matchesCategory && matchesMovement;
   });
 
-  const formatTransactionDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const dd = String(date.getDate()).padStart(2, '0');
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const yyyy = date.getFullYear();
-    return `${dd}-${mm}-${yyyy}`;
-  };
+  const formatTransactionDate = (dateStr: string) => formatDate(dateStr);
 
   const formatMonth = (dateStr: string) => {
     const date = new Date(dateStr);

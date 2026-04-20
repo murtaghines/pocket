@@ -10,6 +10,7 @@ export interface UserPreferences {
   locale: string;
   language: string;
   country?: string;
+  date_format?: string | null;
   selected_categories?: string[];
   onboarding_completed?: boolean;
   joint_account_split?: number;

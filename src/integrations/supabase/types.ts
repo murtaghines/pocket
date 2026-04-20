@@ -735,6 +735,7 @@ export type Database = {
           base_currency: string
           country: string | null
           created_at: string | null
+          date_format: string | null
           id: string
           investment_platforms: string[] | null
           joint_account_names: string[] | null
@@ -750,6 +751,7 @@ export type Database = {
           base_currency?: string
           country?: string | null
           created_at?: string | null
+          date_format?: string | null
           id?: string
           investment_platforms?: string[] | null
           joint_account_names?: string[] | null
@@ -765,6 +767,7 @@ export type Database = {
           base_currency?: string
           country?: string | null
           created_at?: string | null
+          date_format?: string | null
           id?: string
           investment_platforms?: string[] | null
           joint_account_names?: string[] | null

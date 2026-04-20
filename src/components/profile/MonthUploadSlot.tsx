@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useLocalization } from "@/hooks/useLocalization";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -109,6 +110,7 @@ export function MonthUploadSlot({
   const { toast } = useToast();
   const { accounts } = useAccounts();
   const queryClient = useQueryClient();
+  const { formatDate: formatDatePref } = useLocalization();
   const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
 
   const isClosed = period?.status === 'CLOSED';
@@ -339,7 +341,7 @@ export function MonthUploadSlot({
                   {/* Date uploaded */}
                   <TableCell className="py-2 hidden lg:table-cell">
                     <span className="text-xs text-foreground">
-                      {new Date(imp.uploaded_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {formatDatePref(imp.uploaded_at)}
                     </span>
                   </TableCell>
 
