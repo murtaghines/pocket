@@ -40,9 +40,9 @@ const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"];
 export function UnifiedUploadsTable() {
   const { t } = useTranslation("profile");
   const { formatMonth, formatDate: formatDatePref } = useLocalization();
-  const { imports, isLoading, deleteImport, isDeleting } = useImports("CASHFLOW");
+  const { imports, isLoading, deleteImport, isDeleting, toggleLockImport, isTogglingLock } = useImports("CASHFLOW");
   const { addFilesForMonth, isProcessingMonth, getPendingCountForMonth } = useMonthlyFileUpload();
-  const { closePeriod, reopenPeriod, isClosing, isReopening, getPeriodByMonthKey } = usePeriods("CASHFLOW");
+  const { getPeriodByMonthKey } = usePeriods("CASHFLOW");
   const { accounts } = useAccounts();
   const queryClient = useQueryClient();
   const { toast } = useToast();
