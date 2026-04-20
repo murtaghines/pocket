@@ -31,7 +31,13 @@ const VARIANTS = [
   { bg: "bg-[#1b76ff]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
   { bg: "bg-[#ffd027]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
   { bg: "bg-[#545d6d]", text: "text-white", sub: "text-white/60", circle: "bg-white/5" },
-  { bg: "bg-white border-2 border-[#1b76ff]/20", text: "text-foreground", sub: "text-muted-foreground", circle: "bg-[#1b76ff]/5" },
+  { bg: "bg-[#d2d2cb]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
+  { bg: "bg-[#0a2a5e]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
+  { bg: "bg-[#a9d4f5]", text: "text-[#0a2a5e]", sub: "text-[#0a2a5e]/70", circle: "bg-[#0a2a5e]/5" },
+  { bg: "bg-[#c89b3c]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
+  { bg: "bg-[#fff1a8]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
+  { bg: "bg-[#1a1a1a]", text: "text-white", sub: "text-white/60", circle: "bg-white/5" },
+  { bg: "bg-[#6b4a2b]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
 ];
 
 const PLACEHOLDER_VARIANT = {
@@ -117,6 +123,20 @@ export function AccountsStackCard({
   const placeholdersNeeded = Math.max(0, MIN_SLOTS - orderedAccounts.length);
   const totalCards = orderedAccounts.length + placeholdersNeeded + 1;
 
+  // Adaptive stacking: keep the front card full-height (160px) and progressively
+  // collapse the visible "strip" of trailing cards as more are added, so the
+  // overall stack never grows taller than ~ MIN_SLOTS cards worth of space.
+  const FRONT_HEIGHT = 160;
+  const BASE_STRIP = 40; // visible strip per non-front card when few accounts
+  const MIN_STRIP = 18;  // floor for the strip when many accounts are stacked
+  const trailingCount = Math.max(0, totalCards - 1);
+  // Target total height ~= FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP
+  const targetTotalHeight = FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP;
+  const stripHeight = trailingCount > 0
+    ? Math.max(MIN_STRIP, Math.min(BASE_STRIP, (targetTotalHeight - FRONT_HEIGHT) / trailingCount))
+    : BASE_STRIP;
+  const overlap = -(FRONT_HEIGHT - stripHeight); // negative marginTop value
+
   const handleAdd = () => {
     const trimmed = newName.trim();
     if (!trimmed) return;
@@ -135,7 +155,7 @@ export function AccountsStackCard({
             // so colors don't shuffle when reordering.
             const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
             const v = VARIANTS[originalIdx % VARIANTS.length];
-            const marginTop = idx === 0 ? 0 : -120;
+            const marginTop = idx === 0 ? 0 : overlap;
             const isFront = idx === 0;
             return (
               <button
@@ -143,7 +163,7 @@ export function AccountsStackCard({
                 key={acc.id}
                 onClick={() => setActiveId(acc.id)}
                 className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
-                style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
+                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
               >
                 {isFront && (
                   <>
@@ -194,7 +214,7 @@ export function AccountsStackCard({
                   </div>
                 ) : (
                   // Hidden card: only show name in the visible bottom strip (~40px)
-                  <div className="absolute bottom-0 left-0 right-0 px-5 pb-3">
+                  <div className="absolute bottom-0 left-0 right-0 px-5 pb-2">
                     <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
                   </div>
                 )}
@@ -205,12 +225,12 @@ export function AccountsStackCard({
           {/* Empty placeholder slots (solid) */}
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
             const idx = orderedAccounts.length + i;
-            const marginTop = idx === 0 ? 0 : -120;
+            const marginTop = idx === 0 ? 0 : overlap;
             return (
               <div
                 key={`placeholder-${i}`}
                 className="relative block w-full rounded-2xl p-5 shadow-md overflow-hidden"
-                style={{ marginTop, zIndex: totalCards - idx, minHeight: 160, backgroundColor: "#d2d2cb" }}
+                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT, backgroundColor: "#d2d2cb" }}
                 aria-hidden
               >
                 {/* Empty slot — intentionally blank */}
@@ -221,17 +241,17 @@ export function AccountsStackCard({
           {/* "+" Add account button */}
           {(() => {
             const idx = orderedAccounts.length + placeholdersNeeded;
-            const marginTop = idx === 0 ? 0 : -120;
+            const marginTop = idx === 0 ? 0 : overlap;
             return (
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
                 className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
-                style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
+                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
               >
                 {/* Always show only the "+" aligned to the bottom strip,
                     so it stays visible regardless of how many accounts exist. */}
-                <div className="absolute bottom-0 left-0 right-0 px-5 pb-3 flex justify-center">
+                <div className="absolute bottom-0 left-0 right-0 px-5 pb-2 flex justify-center">
                   <div className="w-8 h-8 rounded-full bg-[#1b76ff]/10 flex items-center justify-center transition-transform group-hover:scale-110">
                     <Plus className="w-5 h-5 text-[#1b76ff]" strokeWidth={2.5} />
                   </div>
