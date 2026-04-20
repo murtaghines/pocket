@@ -108,7 +108,10 @@ export function AccountsStackCard({
   // Minimum 4 account slots (real or empty placeholder) + 1 "add" card = 5 total.
   const MIN_ACCOUNT_SLOTS = 4;
   const placeholdersNeeded = Math.max(0, MIN_ACCOUNT_SLOTS - orderedAccounts.length);
-  const totalCards = orderedAccounts.length + placeholdersNeeded + 1;
+  const totalCards = orderedAccounts.length + placeholdersNeeded + 1; // includes add button
+  // Stacked (non-front) cards each show a ~56px visible strip at the bottom.
+  const STRIP_HEIGHT = 56;
+  const stackedCount = totalCards - 1;
 
   const handleAdd = () => {
     const trimmed = newName.trim();
@@ -122,8 +125,8 @@ export function AccountsStackCard({
     <>
       <div className="h-full flex flex-col">
         <div
-          className="relative flex-1 flex flex-col"
-          style={{ minHeight: 160 + (totalCards - 1) * 56 }}
+          className="relative flex-1"
+          style={{ minHeight: 160 + stackedCount * STRIP_HEIGHT }}
         >
           {/* Real account cards */}
           {orderedAccounts.map((acc, idx) => {
@@ -132,18 +135,24 @@ export function AccountsStackCard({
             const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
             const v = VARIANTS[originalIdx % VARIANTS.length];
             const isFront = idx === 0;
+            // Front card fills entire container; stacked cards anchor to bottom.
+            const stackedFromBottom = stackedCount - idx; // 0 = bottom-most
+            const positionStyle: React.CSSProperties = isFront
+              ? { position: 'absolute', inset: 0 }
+              : {
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: stackedFromBottom * STRIP_HEIGHT,
+                  height: 160,
+                };
             return (
               <button
                 type="button"
                 key={acc.id}
                 onClick={() => setActiveId(acc.id)}
-                className={`${idx === 0 ? 'relative flex-1' : 'relative'} block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
-                style={{
-                  marginTop: idx === 0 ? 0 : -104,
-                  zIndex: totalCards - idx,
-                  minHeight: idx === 0 ? 160 : 160,
-                  height: idx === 0 ? undefined : 160,
-                }}
+                className={`block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
+                style={{ ...positionStyle, zIndex: totalCards - idx }}
               >
                 {isFront && (
                   <>
@@ -206,16 +215,22 @@ export function AccountsStackCard({
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
             const idx = orderedAccounts.length + i;
             const v = VARIANTS[idx % VARIANTS.length];
+            const isFront = idx === 0;
+            const stackedFromBottom = stackedCount - idx;
+            const positionStyle: React.CSSProperties = isFront
+              ? { position: 'absolute', inset: 0 }
+              : {
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: stackedFromBottom * STRIP_HEIGHT,
+                  height: 160,
+                };
             return (
               <div
                 key={`placeholder-${i}`}
-                className={`${idx === 0 ? 'relative flex-1' : 'relative'} block w-full rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden`}
-                style={{
-                  marginTop: idx === 0 ? 0 : -104,
-                  zIndex: totalCards - idx,
-                  minHeight: 160,
-                  height: idx === 0 ? undefined : 160,
-                }}
+                className={`block w-full rounded-2xl p-5 ${v.bg} shadow-md overflow-hidden`}
+                style={{ ...positionStyle, zIndex: totalCards - idx }}
                 aria-hidden
               >
                 {/* Empty slot — intentionally blank */}
@@ -223,20 +238,25 @@ export function AccountsStackCard({
             );
           })}
 
-          {/* "+" Add account button */}
+          {/* "+" Add account button — always last, anchored at the bottom */}
           {(() => {
             const idx = orderedAccounts.length + placeholdersNeeded;
+            const isFront = idx === 0;
+            const positionStyle: React.CSSProperties = isFront
+              ? { position: 'absolute', inset: 0 }
+              : {
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 160,
+                };
             return (
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className={`${idx === 0 ? 'relative flex-1' : 'relative'} block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group`}
-                style={{
-                  marginTop: idx === 0 ? 0 : -104,
-                  zIndex: totalCards - idx,
-                  minHeight: 160,
-                  height: idx === 0 ? undefined : 160,
-                }}
+                className="block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                style={{ ...positionStyle, zIndex: totalCards - idx }}
               >
                 {/* Always show only the "+" aligned to the bottom strip,
                     so it stays visible regardless of how many accounts exist. */}
