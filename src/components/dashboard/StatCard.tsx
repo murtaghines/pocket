@@ -92,7 +92,7 @@ export function StatCard({
         
         {/* Value - larger and bolder */}
         <p className={cn(
-          "text-xl md:text-2xl font-bold tracking-tight font-display",
+          "text-xl md:text-2xl font-bold tracking-tight",
           isBalanceCard && "bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent",
           !isBalanceCard && getValueColor()
         )}>
