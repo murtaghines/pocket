@@ -9,7 +9,7 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useLanguage } from '@/hooks/useLanguage';
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies';
 import { toast } from 'sonner';
-import { DollarSign, Languages, Loader2, Users } from 'lucide-react';
+import { DollarSign, Languages, Loader2, Users, Calendar } from 'lucide-react';
 
 interface PreferencesFormProps {
   className?: string;
@@ -23,6 +23,7 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
   const [currency, setCurrency] = useState(preferences.base_currency);
   const [language, setLanguage] = useState<string>(currentLanguage);
   const [jointSplit, setJointSplit] = useState<number>(preferences.joint_account_split ?? 50);
+  const [dateFormat, setDateFormat] = useState<string>(preferences.date_format ?? 'AUTO');
 
   useEffect(() => {
     setCurrency(preferences.base_currency);
@@ -36,10 +37,15 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
     setJointSplit(preferences.joint_account_split ?? 50);
   }, [preferences.joint_account_split]);
 
+  useEffect(() => {
+    setDateFormat(preferences.date_format ?? 'AUTO');
+  }, [preferences.date_format]);
+
   const handleSave = () => {
     const languageChanged = language !== currentLanguage;
     const currencyChanged = currency !== preferences.base_currency;
     const splitChanged = jointSplit !== (preferences.joint_account_split ?? 50);
+    const dateFormatChanged = dateFormat !== (preferences.date_format ?? 'AUTO');
 
     if (languageChanged) {
       changeLanguage(language as 'en' | 'es' | 'pt');
@@ -49,6 +55,9 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
     if (currencyChanged) updates.base_currency = currency;
     if (languageChanged) updates.language = language;
     if (splitChanged) updates.joint_account_split = jointSplit;
+    if (dateFormatChanged) {
+      (updates as any).date_format = dateFormat === 'AUTO' ? null : dateFormat;
+    }
 
     if (Object.keys(updates).length === 0) return;
 
