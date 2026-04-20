@@ -201,8 +201,7 @@ export function UnifiedUploadsTable() {
               <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[160px] hidden lg:table-cell">Uploaded</TableHead>
               <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[110px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[150px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[100px] text-center">File actions</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[140px] text-center">Month actions</TableHead>
+              <TableHead className="text-xs font-semibold text-muted-foreground h-10 w-[150px] text-center">Actions</TableHead>
             </TableRow>
             {/* Global totals row — pinned right after headers */}
             <TableRow className="bg-primary/5 hover:bg-primary/5 border-b-2 border-primary/20">
@@ -223,7 +222,6 @@ export function UnifiedUploadsTable() {
                 <span className="text-xs text-muted-foreground">account{globalTotals.accounts !== 1 ? "s" : ""}</span>
               </TableCell>
               <TableCell className="py-2.5" />
-              <TableCell className="py-2.5" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -243,26 +241,6 @@ export function UnifiedUploadsTable() {
                     <span>{slot.label}</span>
                     {closed && <Lock className="w-3 h-3 text-muted-foreground" />}
                   </div>
-                </TableCell>
-              );
-
-              const monthActionsCell = (
-                <TableCell rowSpan={groupRowCount} className="py-3 align-middle border-l border-border/50 bg-muted/10 text-center">
-                  {period && !closed && (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-2.5"
-                      onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowCloseDialog(true); }}
-                      disabled={isClosing}>
-                      {isClosing ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Lock className="w-3.5 h-3.5 mr-1" />}Close
-                    </Button>
-                  )}
-                  {period && closed && (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground bg-muted-foreground/10 rounded-md px-2.5"
-                      onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowReopenDialog(true); }}
-                      disabled={isReopening}>
-                      {isReopening ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Unlock className="w-3.5 h-3.5 mr-1" />}Reopen
-                    </Button>
-                  )}
-                  {!period && <span className="text-xs text-muted-foreground">—</span>}
                 </TableCell>
               );
 
@@ -340,6 +318,29 @@ export function UnifiedUploadsTable() {
                                 {closed ? <><Eye className="w-3 h-3 mr-1" />View</> : <><Pencil className="w-3 h-3 mr-1" />Edit</>}
                               </Button>
                             )}
+                            {period && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground/60 hover:text-foreground transition-colors"
+                                disabled={isClosing || isReopening}
+                                title={closed ? "Reopen month" : "Close month"}
+                                onClick={() => {
+                                  setDialogPeriod(period);
+                                  setDialogLabel(slot.label);
+                                  if (closed) setShowReopenDialog(true);
+                                  else setShowCloseDialog(true);
+                                }}
+                              >
+                                {(isClosing || isReopening) ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : closed ? (
+                                  <Unlock className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Lock className="w-3.5 h-3.5" />
+                                )}
+                              </Button>
+                            )}
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/40 hover:text-destructive transition-colors" disabled={isDeleting}>
@@ -359,7 +360,6 @@ export function UnifiedUploadsTable() {
                             </AlertDialog>
                           </div>
                         </TableCell>
-                        {idx === 0 && monthActionsCell}
                       </TableRow>
                     );
                   })}
@@ -372,6 +372,11 @@ export function UnifiedUploadsTable() {
                         {closed ? (
                           <div className="flex items-center gap-3">
                             <span className="text-sm text-muted-foreground">Closed — no files</span>
+                            {period && (
+                              <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowReopenDialog(true); }} disabled={isReopening}>
+                                <Unlock className="w-3 h-3 mr-1" />Reopen
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           <div className="relative">
@@ -380,7 +385,6 @@ export function UnifiedUploadsTable() {
                           </div>
                         )}
                       </TableCell>
-                      {monthActionsCell}
                     </TableRow>
                   )}
 
