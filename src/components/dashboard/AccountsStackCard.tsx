@@ -30,14 +30,15 @@ type AccountDisplay = {
 const VARIANTS = [
   { bg: "bg-[#1b76ff]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
   { bg: "bg-[#ffd027]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#545d6d]", text: "text-white", sub: "text-white/60", circle: "bg-white/5" },
-  { bg: "bg-[#d2d2cb]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
+  { bg: "bg-[#7a8499]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
+  { bg: "bg-[#b8c4d6]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
   { bg: "bg-[#0a2a5e]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
   { bg: "bg-[#a9d4f5]", text: "text-[#0a2a5e]", sub: "text-[#0a2a5e]/70", circle: "bg-[#0a2a5e]/5" },
-  { bg: "bg-[#c89b3c]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
   { bg: "bg-[#fff1a8]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
-  { bg: "bg-[#1a1a1a]", text: "text-white", sub: "text-white/60", circle: "bg-white/5" },
-  { bg: "bg-[#6b4a2b]", text: "text-white", sub: "text-white/70", circle: "bg-white/10" },
+  { bg: "bg-[#ffb8a8]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
+  { bg: "bg-[#c8b6ff]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
+  { bg: "bg-[#a8e6cf]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
+  { bg: "bg-[#ffc9de]", text: "text-[#1a1a1a]", sub: "text-[#1a1a1a]/60", circle: "bg-black/5" },
 ];
 
 const PLACEHOLDER_VARIANT = {
