@@ -228,9 +228,32 @@ export function AccountsStackCard({
             );
           })}
 
+          {/* "View all" card — only when accounts exceed visible capacity */}
+          {overflow && (() => {
+            const idx = visibleAccounts.length;
+            const marginTop = idx === 0 ? 0 : overlap;
+            const remaining = orderedAccounts.length - visibleAccounts.length;
+            return (
+              <button
+                type="button"
+                onClick={() => setAllOpen(true)}
+                className="relative block w-full text-left rounded-2xl p-5 bg-[#1a1a1a] shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
+              >
+                <div className="absolute bottom-0 left-0 right-0 px-5 pb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-white inline-flex items-center gap-2">
+                    <LayoutList className="w-4 h-4" />
+                    {t("charts.viewAllAccounts", { defaultValue: "View all" })} ({orderedAccounts.length})
+                  </span>
+                  <span className="text-xs text-white/60">+{remaining}</span>
+                </div>
+              </button>
+            );
+          })()}
+
           {/* Empty placeholder slots (solid) */}
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
-            const idx = orderedAccounts.length + i;
+            const idx = visibleAccounts.length + (overflow ? 1 : 0) + i;
             const marginTop = idx === 0 ? 0 : overlap;
             return (
               <div
@@ -246,7 +269,7 @@ export function AccountsStackCard({
 
           {/* "+" Add account button */}
           {(() => {
-            const idx = orderedAccounts.length + placeholdersNeeded;
+            const idx = visibleAccounts.length + (overflow ? 1 : 0) + placeholdersNeeded;
             const marginTop = idx === 0 ? 0 : overlap;
             return (
               <button
