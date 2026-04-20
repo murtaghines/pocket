@@ -225,18 +225,13 @@ export function UnifiedUploadsTable() {
               const mi = importsByMonth[slot.key] || [];
               const period = getPeriodByMonthKey(slot.key, "CASHFLOW");
               const closed = period?.status === "CLOSED";
-              const totalTx = mi.reduce((s, i) => s + (i.transactions_count || 0), 0);
-              const uniqAccts = [...new Set(mi.map((i) => acctName(i.account_id)).filter((n) => n !== "—"))];
               const empty = mi.length === 0;
-              // Total rows for this month group (file rows + add-new-file row)
-              const groupRowCount = empty ? 1 : mi.length + (closed ? 0 : 1);
+              // Total rows for this month group (file rows + always one add-new-file row)
+              const groupRowCount = empty ? 1 : mi.length + 1;
 
               const monthCell = (
                 <TableCell rowSpan={groupRowCount} className="py-3 align-middle border-r border-border/50 bg-muted/10 font-semibold text-sm text-foreground capitalize">
-                  <div className="flex items-center gap-1.5">
-                    <span>{slot.label}</span>
-                    {closed && <Lock className="w-3 h-3 text-muted-foreground" />}
-                  </div>
+                  <span>{slot.label}</span>
                 </TableCell>
               );
 
