@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useLocalization } from "@/hooks/useLocalization";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
