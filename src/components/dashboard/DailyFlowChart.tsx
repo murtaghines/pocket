@@ -35,7 +35,9 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const [view, setView] = useState<ViewMode>("week");
-  const [scale, setScale] = useState<"linear" | "log">("log");
+  // Always use logarithmic scale — visually nicer for comparing weeks with very
+  // different magnitudes. Tooltip still shows the real (non-log) value.
+  const scale: "log" = "log";
 
   const data: FlowPoint[] = useMemo(() => {
     if (!monthKey) return [];
@@ -127,32 +129,6 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
       <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
         <button
           type="button"
-          onClick={() => setScale("linear")}
-          className={`px-2.5 py-1.5 rounded-md font-medium transition-colors ${
-            scale === "linear"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-          title={t("charts.scaleLinearTooltip", { defaultValue: "Linear scale" })}
-        >
-          {t("charts.scaleLinear", { defaultValue: "Linear" })}
-        </button>
-        <button
-          type="button"
-          onClick={() => setScale("log")}
-          className={`px-2.5 py-1.5 rounded-md font-medium transition-colors ${
-            scale === "log"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-          title={t("charts.scaleLogTooltip", { defaultValue: "Logarithmic scale — better for large value differences" })}
-        >
-          {t("charts.scaleLog", { defaultValue: "Log" })}
-        </button>
-      </div>
-      <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
-        <button
-          type="button"
           onClick={() => setView("week")}
           className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
             view === "week"
@@ -187,7 +163,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
           </div>
         </CardHeader>
         <CardContent>
-          <EmptyState height="h-[260px]" />
+          <EmptyState height="h-[380px]" />
         </CardContent>
       </Card>
     );
@@ -239,7 +215,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
         </div>
       </CardHeader>
       <CardContent>
-        <div className="w-full h-[260px]">
+        <div className="w-full h-[380px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
