@@ -221,16 +221,12 @@ export function AccountsStackCard({
                 className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
               >
-                <div className="relative flex flex-col items-center justify-center h-full text-center" style={{ minHeight: 120 }}>
-                  <div className="w-12 h-12 rounded-full bg-[#1b76ff]/10 flex items-center justify-center mb-2 transition-transform group-hover:scale-110">
-                    <Plus className="w-6 h-6 text-[#1b76ff]" strokeWidth={2.5} />
+                {/* Always show only the "+" aligned to the bottom strip,
+                    so it stays visible regardless of how many accounts exist. */}
+                <div className="absolute bottom-0 left-0 right-0 px-5 pb-3 flex justify-center">
+                  <div className="w-8 h-8 rounded-full bg-[#1b76ff]/10 flex items-center justify-center transition-transform group-hover:scale-110">
+                    <Plus className="w-5 h-5 text-[#1b76ff]" strokeWidth={2.5} />
                   </div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {t("charts.addAccount", { defaultValue: "Add account" })}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("charts.addAccountSub", { defaultValue: "Create a new bank account" })}
-                  </p>
                 </div>
               </button>
             );
