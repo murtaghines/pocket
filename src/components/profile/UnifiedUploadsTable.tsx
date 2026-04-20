@@ -299,48 +299,60 @@ export function UnifiedUploadsTable() {
                         </TableCell>
                         <TableCell className="py-2 hidden md:table-cell">
                           {cashAccounts.length > 0 ? (
-                            <Select value={imp.account_id || ""} onValueChange={(v) => changeAcct(imp.id, v)}>
-                              <SelectTrigger className="h-7 w-full text-xs border-border bg-transparent hover:bg-muted/50 px-2 gap-1">
+                            <Select value={imp.account_id || ""} onValueChange={(v) => changeAcct(imp.id, v)} disabled={!!imp.locked}>
+                              <SelectTrigger className="h-8 w-full text-sm border-border bg-transparent hover:bg-muted/50 px-2 gap-1">
                                 <span className="truncate text-foreground">{acctName(imp.account_id)}</span>
                               </SelectTrigger>
-                              <SelectContent>{cashAccounts.map((a) => <SelectItem key={a.id} value={a.id} className="text-xs">{a.name}</SelectItem>)}</SelectContent>
+                              <SelectContent>{cashAccounts.map((a) => <SelectItem key={a.id} value={a.id} className="text-sm">{a.name}</SelectItem>)}</SelectContent>
                             </Select>
-                          ) : <span className="text-xs text-muted-foreground">{acctName(imp.account_id)}</span>}
+                          ) : <span className="text-sm text-muted-foreground">{acctName(imp.account_id)}</span>}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center gap-2">
+                            {/* Edit / View */}
                             {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 && (
-                              <Button variant="secondary" size="sm" className={cn("h-7 px-2.5 text-xs border-0", closed ? "bg-success/10 text-success hover:bg-success/20" : "bg-primary/10 text-primary hover:bg-primary/20")} onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}>
-                                {closed ? <><Eye className="w-3 h-3 mr-1" />View</> : <><Pencil className="w-3 h-3 mr-1" />Edit</>}
-                              </Button>
-                            )}
-                            {period && (
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-muted-foreground/60 hover:text-foreground transition-colors"
-                                disabled={isClosing || isReopening}
-                                title={closed ? "Reopen month" : "Close month"}
-                                onClick={() => {
-                                  setDialogPeriod(period);
-                                  setDialogLabel(slot.label);
-                                  if (closed) setShowReopenDialog(true);
-                                  else setShowCloseDialog(true);
-                                }}
+                                variant="secondary"
+                                size="sm"
+                                className={cn(
+                                  "h-8 px-3 text-sm border-0",
+                                  imp.locked
+                                    ? "bg-success/10 text-success hover:bg-success/20"
+                                    : "bg-primary/10 text-primary hover:bg-primary/20"
+                                )}
+                                onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
                               >
-                                {(isClosing || isReopening) ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : closed ? (
-                                  <Unlock className="w-3.5 h-3.5" />
+                                {imp.locked ? (
+                                  <><Eye className="w-3.5 h-3.5 mr-1.5" />View</>
                                 ) : (
-                                  <Lock className="w-3.5 h-3.5" />
+                                  <><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</>
                                 )}
                               </Button>
                             )}
+                            {/* Lock / Unlock this file */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground/60 hover:text-foreground transition-colors"
+                              disabled={isTogglingLock}
+                              title={imp.locked ? "Unlock file (allow editing)" : "Lock file (prevent editing)"}
+                              onClick={() => toggleLockImport({ importId: imp.id, locked: !imp.locked })}
+                            >
+                              {isTogglingLock ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : imp.locked ? (
+                                <Unlock className="w-4 h-4" />
+                              ) : (
+                                <Lock className="w-4 h-4" />
+                              )}
+                            </Button>
+                            {/* Spacer to separate destructive action */}
+                            <div className="w-3" />
+                            {/* Delete */}
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/40 hover:text-destructive transition-colors" disabled={isDeleting}>
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 hover:text-destructive transition-colors" disabled={isDeleting || !!imp.locked} title={imp.locked ? "Unlock the file before deleting" : "Delete file"}>
+                                  <Trash2 className="w-4 h-4" />
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
