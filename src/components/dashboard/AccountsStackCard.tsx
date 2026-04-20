@@ -4,6 +4,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/lib/mockData";
 import { Plus, Loader2, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
