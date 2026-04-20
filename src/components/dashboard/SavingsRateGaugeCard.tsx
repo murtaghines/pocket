@@ -111,7 +111,7 @@ export function SavingsRateGaugeCard({
             </span>
           </div>
           {hasPrevious && (
-            <div className="flex items-center gap-2 text-[11px]">
+            <div className="flex flex-col items-start gap-0.5 text-[11px]">
               <span className="text-muted-foreground">
                 {t("stats.previousMonthShort", {
                   defaultValue: "Previous: {{rate}}%",
@@ -137,10 +137,10 @@ export function SavingsRateGaugeCard({
         </div>
 
         <div className="relative mt-1 flex flex-1 flex-col justify-end overflow-hidden">
-          <div className="mx-[-10%] w-[120%] overflow-hidden">
+          <div className="-mx-4 md:-mx-5 overflow-visible">
             <svg
               viewBox="0 0 320 120"
-              className="block h-full w-full"
+              className="block h-full w-full overflow-visible"
               preserveAspectRatio="xMidYMax meet"
             >
               <defs>
