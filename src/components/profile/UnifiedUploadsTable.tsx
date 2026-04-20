@@ -377,27 +377,16 @@ export function UnifiedUploadsTable() {
                     <TableRow id={`upload-bank-${slot.key}`}>
                       {monthCell}
                       <TableCell colSpan={6} className="py-2">
-                        {closed ? (
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground">Closed — no files</span>
-                            {period && (
-                              <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => { setDialogPeriod(period); setDialogLabel(slot.label); setShowReopenDialog(true); }} disabled={isReopening}>
-                                <Unlock className="w-3 h-3 mr-1" />Reopen
-                              </Button>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="relative">
-                            <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={onFileInput(slot.date, slot.key)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                            <div className="flex items-center gap-2 text-primary hover:text-primary/80 cursor-pointer"><Plus className="w-4 h-4" /><span className="text-sm font-medium">Add new file</span></div>
-                          </div>
-                        )}
+                        <div className="relative">
+                          <input type="file" accept=".xlsx,.xls,.csv,.pdf" multiple onChange={onFileInput(slot.date, slot.key)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                          <div className="flex items-center gap-2 text-primary hover:text-primary/80 cursor-pointer"><Plus className="w-4 h-4" /><span className="text-sm font-medium">Add new file</span></div>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
 
                   {/* Add file row for non-empty open months */}
-                  {!empty && !closed && (
+                  {!empty && (
                     <TableRow className="hover:bg-muted/30">
                       <TableCell colSpan={6} className="py-2">
                         <div className="relative">
