@@ -35,6 +35,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const [view, setView] = useState<ViewMode>("week");
+  const [scale, setScale] = useState<"linear" | "log">("log");
 
   const data: FlowPoint[] = useMemo(() => {
     if (!monthKey) return [];
@@ -100,35 +101,79 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
   const incomeLabel = t("stats.income", "Income");
   const expenseLabel = t("stats.expenses", "Expenses");
 
+  // For log scale, recharts can't handle 0/negative. Compute a sensible min and
+  // remap zeros to it so bars render small but visible without distorting reads.
+  const allValues = data.flatMap((d) => [d.income, d.expense]).filter((v) => v > 0);
+  const minPositive = allValues.length ? Math.min(...allValues) : 1;
+  const logMin = Math.max(1, Math.floor(minPositive / 2));
+  const maxValue = allValues.length ? Math.max(...allValues) : 1;
+
+  const chartData =
+    scale === "log"
+      ? data.map((d) => ({
+          ...d,
+          income: d.income > 0 ? d.income : logMin,
+          expense: d.expense > 0 ? d.expense : logMin,
+        }))
+      : data;
+
   const titleText =
     view === "week"
       ? t("charts.weeklyFlow", "Weekly Flow")
       : t("charts.weekdayFlow", "Weekday Flow");
 
   const ToggleButtons = (
-    <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
-      <button
-        type="button"
-        onClick={() => setView("week")}
-        className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-          view === "week"
-            ? "bg-card text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        {t("charts.toggleWeek", { defaultValue: "Week" })}
-      </button>
-      <button
-        type="button"
-        onClick={() => setView("weekday")}
-        className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-          view === "weekday"
-            ? "bg-card text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        {t("charts.toggleWeekday", { defaultValue: "Weekday" })}
-      </button>
+    <div className="flex items-center gap-2">
+      <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
+        <button
+          type="button"
+          onClick={() => setScale("linear")}
+          className={`px-2.5 py-1.5 rounded-md font-medium transition-colors ${
+            scale === "linear"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          title={t("charts.scaleLinearTooltip", { defaultValue: "Linear scale" })}
+        >
+          {t("charts.scaleLinear", { defaultValue: "Linear" })}
+        </button>
+        <button
+          type="button"
+          onClick={() => setScale("log")}
+          className={`px-2.5 py-1.5 rounded-md font-medium transition-colors ${
+            scale === "log"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          title={t("charts.scaleLogTooltip", { defaultValue: "Logarithmic scale — better for large value differences" })}
+        >
+          {t("charts.scaleLog", { defaultValue: "Log" })}
+        </button>
+      </div>
+      <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
+        <button
+          type="button"
+          onClick={() => setView("week")}
+          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+            view === "week"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("charts.toggleWeek", { defaultValue: "Week" })}
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("weekday")}
+          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+            view === "weekday"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("charts.toggleWeekday", { defaultValue: "Weekday" })}
+        </button>
+      </div>
     </div>
   );
 
@@ -150,9 +195,9 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
-    const incomeVal = payload.find((p: any) => p.dataKey === "income")?.value ?? 0;
-    const expenseVal = payload.find((p: any) => p.dataKey === "expense")?.value ?? 0;
     const point = data.find((d) => d.label === label);
+    const incomeVal = point?.income ?? 0;
+    const expenseVal = point?.expense ?? 0;
     return (
       <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[180px]">
         <p className="text-xs font-medium text-foreground">{point?.label}</p>
@@ -197,7 +242,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
         <div className="w-full h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data}
+              data={chartData}
               margin={{ top: 12, right: 12, bottom: 8, left: 0 }}
               barCategoryGap="20%"
               barGap={4}
@@ -214,10 +259,23 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => {
-                  if (v >= 1000) return `${(v / 1000).toFixed(0)}k`;
-                  return `${v}`;
+                  if (v >= 1000) return `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k`;
+                  return `${Math.round(v)}`;
                 }}
-                width={40}
+                width={44}
+                scale={scale === "log" ? "log" : "auto"}
+                domain={
+                  scale === "log" ? [logMin, Math.ceil(maxValue * 1.2)] : [0, "auto"]
+                }
+                allowDataOverflow={scale === "log"}
+                ticks={
+                  scale === "log"
+                    ? Array.from(
+                        { length: Math.ceil(Math.log10(maxValue / logMin)) + 1 },
+                        (_, i) => logMin * Math.pow(10, i),
+                      )
+                    : undefined
+                }
               />
               <Tooltip
                 content={<CustomTooltip />}
