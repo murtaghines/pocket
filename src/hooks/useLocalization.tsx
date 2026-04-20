@@ -11,6 +11,38 @@ const dateFnsLocales: Record<string, Locale> = {
   pt: ptBR,
 };
 
+// Detect the canonical date pattern for a given BCP47 locale by inspecting
+// what Intl produces for a known reference date (Jan 2, 2003).
+function detectLocalePattern(locale: string): 'DMY' | 'MDY' | 'YMD' {
+  try {
+    const parts = new Intl.DateTimeFormat(locale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).formatToParts(new Date(2003, 0, 2));
+    const order = parts
+      .filter((p) => p.type === 'day' || p.type === 'month' || p.type === 'year')
+      .map((p) => p.type[0].toUpperCase())
+      .join('');
+    if (order === 'DMY' || order === 'MDY' || order === 'YMD') return order;
+  } catch {
+    // ignore
+  }
+  return 'DMY';
+}
+
+function patternToFullFormat(p: 'DMY' | 'MDY' | 'YMD'): string {
+  if (p === 'MDY') return 'MM/dd/yyyy';
+  if (p === 'YMD') return 'yyyy-MM-dd';
+  return 'dd/MM/yyyy';
+}
+
+function patternToShortFormat(p: 'DMY' | 'MDY' | 'YMD'): string {
+  if (p === 'MDY') return 'MM/dd';
+  if (p === 'YMD') return 'MM-dd';
+  return 'dd/MM';
+}
+
 export function useLocalization() {
   const { i18n } = useTranslation();
   const { preferences, isLoading, updatePreferences, isUpdating } = useUserPreferences();
@@ -18,6 +50,17 @@ export function useLocalization() {
   const baseCurrency = preferences.base_currency;
   const locale = getLocaleForRegion(preferences.country);
   const dateFnsLocale: Locale = dateFnsLocales[i18n.language] || enUS;
+
+  // Resolve effective date pattern: explicit user preference wins, else infer
+  // from locale (country-driven). Stored as 'DMY' | 'MDY' | 'YMD'.
+  const effectivePattern: 'DMY' | 'MDY' | 'YMD' = useMemo(() => {
+    const raw = preferences.date_format;
+    if (raw === 'DMY' || raw === 'MDY' || raw === 'YMD') return raw;
+    return detectLocalePattern(locale);
+  }, [preferences.date_format, locale]);
+
+  const fullDateFormat = patternToFullFormat(effectivePattern);
+  const shortDateFormat = patternToShortFormat(effectivePattern);
 
   // Format currency according to user preferences
   const formatCurrency = useCallback((amount: number, currency?: string) => {
@@ -80,11 +123,32 @@ export function useLocalization() {
   const formatDate = useCallback((date: string | Date) => {
     try {
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
-      return format(dateObj, 'MM/dd/yyyy', { locale: dateFnsLocale });
+      return format(dateObj, fullDateFormat, { locale: dateFnsLocale });
     } catch {
       return String(date);
     }
-  }, [dateFnsLocale]);
+  }, [dateFnsLocale, fullDateFormat]);
+
+  // Format short date (no year), respecting day/month order from preferences
+  const formatDateShort = useCallback((date: string | Date) => {
+    try {
+      const dateObj = typeof date === 'string' ? parseISO(date) : date;
+      return format(dateObj, shortDateFormat, { locale: dateFnsLocale });
+    } catch {
+      return String(date);
+    }
+  }, [dateFnsLocale, shortDateFormat]);
+
+  // Format day + short month name in user's order (e.g. "28 Feb" or "Feb 28")
+  const formatDayMonth = useCallback((date: string | Date) => {
+    try {
+      const dateObj = typeof date === 'string' ? parseISO(date) : date;
+      const pattern = effectivePattern === 'MDY' ? 'MMM d' : 'd MMM';
+      return format(dateObj, pattern, { locale: dateFnsLocale });
+    } catch {
+      return String(date);
+    }
+  }, [dateFnsLocale, effectivePattern]);
 
   // Format date with time
   const formatDateTime = useCallback((date: string | Date) => {
@@ -146,6 +210,7 @@ export function useLocalization() {
     // Preferences
     locale,
     baseCurrency,
+    datePattern: effectivePattern,
     isLoading,
     isUpdating,
     updatePreferences,
@@ -156,13 +221,16 @@ export function useLocalization() {
     formatNumber,
     formatPercent,
     formatDate,
+    formatDateShort,
+    formatDayMonth,
     formatDateTime,
     formatRelativeDate,
     formatMonth,
     formatMonthShort,
   }), [
-    locale, baseCurrency, isLoading, isUpdating, updatePreferences,
+    locale, baseCurrency, effectivePattern, isLoading, isUpdating, updatePreferences,
     formatCurrency, formatCurrencyCompact, formatNumber, formatPercent,
-    formatDate, formatDateTime, formatRelativeDate, formatMonth, formatMonthShort
+    formatDate, formatDateShort, formatDayMonth, formatDateTime,
+    formatRelativeDate, formatMonth, formatMonthShort
   ]);
 }
