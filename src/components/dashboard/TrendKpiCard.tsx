@@ -177,7 +177,7 @@ export function TrendKpiCard({
         </div>
 
         {/* Big value */}
-        <p className={`text-2xl md:text-3xl font-bold tracking-tight font-display ${valueClass}`}>
+        <p className={`text-2xl md:text-3xl font-bold tracking-tight ${valueClass}`}>
           {formatCurrency(total)}
         </p>
 
