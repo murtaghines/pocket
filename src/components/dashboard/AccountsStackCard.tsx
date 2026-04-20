@@ -115,7 +115,8 @@ export function AccountsStackCard({
         <div className="relative">
           {accountsData.map((acc, idx) => {
             const v = VARIANTS[idx % VARIANTS.length];
-            const marginTop = idx === 0 ? 0 : -56;
+            const marginTop = idx === 0 ? 0 : -120;
+            const totalCards = accountsData.length + placeholdersNeeded;
             return (
               <button
                 type="button"
@@ -124,7 +125,7 @@ export function AccountsStackCard({
                 className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
                 style={{
                   marginTop,
-                  zIndex: idx + 1,
+                  zIndex: totalCards - idx,
                   minHeight: 160,
                 }}
               >
@@ -181,14 +182,15 @@ export function AccountsStackCard({
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
             const idx = accountsData.length + i;
             const v = VARIANTS[idx % VARIANTS.length];
-            const marginTop = idx === 0 ? 0 : -56;
+            const marginTop = idx === 0 ? 0 : -120;
+            const totalCards = accountsData.length + placeholdersNeeded;
             return (
               <div
                 key={`placeholder-${i}`}
                 className={`relative block w-full rounded-2xl p-5 ${v.bg} shadow-md opacity-60`}
                 style={{
                   marginTop,
-                  zIndex: idx + 1,
+                  zIndex: totalCards - idx,
                   minHeight: 160,
                 }}
                 aria-hidden
