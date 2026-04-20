@@ -137,7 +137,7 @@ export function AccountsStackCard({
             const isFront = idx === 0;
             // Front card fills entire container; stacked cards anchor to bottom.
             const stackedFromBottom = stackedCount - idx; // 0 = bottom-most
-            const positionStyle: React.CSSProperties = isFront
+            const positionStyle: CSSProperties = isFront
               ? { position: 'absolute', inset: 0 }
               : {
                   position: 'absolute',
@@ -217,7 +217,7 @@ export function AccountsStackCard({
             const v = VARIANTS[idx % VARIANTS.length];
             const isFront = idx === 0;
             const stackedFromBottom = stackedCount - idx;
-            const positionStyle: React.CSSProperties = isFront
+            const positionStyle: CSSProperties = isFront
               ? { position: 'absolute', inset: 0 }
               : {
                   position: 'absolute',
@@ -242,7 +242,7 @@ export function AccountsStackCard({
           {(() => {
             const idx = orderedAccounts.length + placeholdersNeeded;
             const isFront = idx === 0;
-            const positionStyle: React.CSSProperties = isFront
+            const positionStyle: CSSProperties = isFront
               ? { position: 'absolute', inset: 0 }
               : {
                   position: 'absolute',
