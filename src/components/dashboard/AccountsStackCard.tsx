@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/lib/mockData";
