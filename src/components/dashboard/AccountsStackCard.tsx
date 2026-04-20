@@ -205,11 +205,7 @@ export function AccountsStackCard({
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
                 aria-hidden
               >
-                <div className="absolute bottom-0 left-0 right-0 px-5 pb-3">
-                  <p className={`text-sm font-medium truncate ${v.text}`}>
-                    {t("charts.emptySlot", { defaultValue: "Empty slot" })}
-                  </p>
-                </div>
+                {/* Empty slot — intentionally blank */}
               </div>
             );
           })}
