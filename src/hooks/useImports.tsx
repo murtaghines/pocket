@@ -27,6 +27,7 @@ export interface Import {
   status: ImportStatus;
   error_message: string | null;
   transactions_count: number | null;
+  locked?: boolean;
   target_month?: string; // YYYY-MM from period
 }
 
