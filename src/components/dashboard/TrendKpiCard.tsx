@@ -162,41 +162,41 @@ export function TrendKpiCard({
   return (
     <Card
       variant="bento"
-      className={`animate-slide-up overflow-hidden ${cardClasses} h-[260px] flex flex-col relative`}
+      className={`animate-slide-up overflow-hidden ${cardClasses} h-[200px] flex flex-col relative`}
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="p-5 md:p-6 relative flex flex-col h-full">
+      <div className="p-4 md:p-5 relative flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-2">
           <p className={`text-xs font-medium uppercase tracking-wide ${labelClass}`}>
             {label}
           </p>
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBgClass} ${iconColorClass}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconBgClass} ${iconColorClass}`}>
             {icon}
           </div>
         </div>
 
         {/* Big value */}
-        <p className={`text-3xl md:text-4xl font-bold tracking-tight font-display ${valueClass}`}>
+        <p className={`text-2xl md:text-3xl font-bold tracking-tight font-display ${valueClass}`}>
           {formatCurrency(total)}
         </p>
 
         {/* Comparison vs last month */}
         {change !== undefined && (
-          <div className="flex items-center gap-2 mt-2">
-            <div className={`flex items-center gap-0.5 px-2.5 py-1 rounded-full text-sm font-semibold ${chipClass}`}>
-              {isUp && <ArrowUp className="w-3.5 h-3.5" />}
-              {isDown && <ArrowDown className="w-3.5 h-3.5" />}
+          <div className="flex items-center gap-2 mt-1.5">
+            <div className={`flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-semibold ${chipClass}`}>
+              {isUp && <ArrowUp className="w-3 h-3" />}
+              {isDown && <ArrowDown className="w-3 h-3" />}
               <span>{Math.abs(change)}%</span>
             </div>
-            <span className={`text-sm ${chipMutedClass}`}>
+            <span className={`text-xs ${chipMutedClass}`}>
               {t("stats.vsLastMonth")}
             </span>
           </div>
         )}
 
         {/* Hover info line (reserved space, no layout shift) */}
-        <p className={`text-xs mt-2 h-4 ${hoverTextClass}`}>
+        <p className={`text-[11px] mt-1 h-3.5 ${hoverTextClass}`}>
           {hoverPoint
             ? `${formatHoverDate(hoverPoint.date)}: ${formatCurrency(hoverPoint.daily)}`
             : ""}
@@ -204,7 +204,7 @@ export function TrendKpiCard({
       </div>
 
       {/* Trend chart — curve sits higher, gradient extends to card bottom */}
-      <div className="absolute left-0 right-0 bottom-0 h-20 pointer-events-auto">
+      <div className="absolute left-0 right-0 bottom-0 h-14 pointer-events-auto">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={daily}
