@@ -126,6 +126,27 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
           </Select>
         </div>
 
+        {/* Date Format */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            {t('regional.dateFormat', { defaultValue: 'Date format' })}
+          </Label>
+          <Select value={dateFormat} onValueChange={setDateFormat}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="AUTO">
+                {t('regional.dateFormatAuto', { defaultValue: 'Auto (based on country)' })}
+              </SelectItem>
+              <SelectItem value="DMY">DD/MM/YYYY · 28/02/2026</SelectItem>
+              <SelectItem value="MDY">MM/DD/YYYY · 02/28/2026</SelectItem>
+              <SelectItem value="YMD">YYYY-MM-DD · 2026-02-28</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Joint Account Split */}
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
