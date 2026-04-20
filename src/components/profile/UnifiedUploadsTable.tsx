@@ -295,66 +295,68 @@ export function UnifiedUploadsTable() {
                             </Select>
                           ) : <span className="text-sm text-muted-foreground">{acctName(imp.account_id)}</span>}
                         </TableCell>
-                        <TableCell className="py-2 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            {/* Edit / View */}
-                            {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 && (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className={cn(
-                                  "h-8 px-3 text-sm border-0",
-                                  imp.locked
-                                    ? "bg-success/10 text-success hover:bg-success/20"
-                                    : "bg-primary/10 text-primary hover:bg-primary/20"
-                                )}
-                                onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
-                              >
-                                {imp.locked ? (
-                                  <><Eye className="w-3.5 h-3.5 mr-1.5" />View</>
-                                ) : (
-                                  <><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</>
-                                )}
-                              </Button>
-                            )}
-                            {/* Lock / Unlock this file */}
+                        {/* Edit / View */}
+                        <TableCell className="py-2">
+                          {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 ? (
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground/60 hover:text-foreground transition-colors"
-                              disabled={isTogglingLock}
-                              title={imp.locked ? "Unlock file (allow editing)" : "Lock file (prevent editing)"}
-                              onClick={() => toggleLockImport({ importId: imp.id, locked: !imp.locked })}
+                              variant="secondary"
+                              size="sm"
+                              className={cn(
+                                "h-8 px-3 text-sm border-0",
+                                imp.locked
+                                  ? "bg-success/10 text-success hover:bg-success/20"
+                                  : "bg-primary/10 text-primary hover:bg-primary/20"
+                              )}
+                              onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
                             >
-                              {isTogglingLock ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : imp.locked ? (
-                                <Unlock className="w-4 h-4" />
+                              {imp.locked ? (
+                                <><Eye className="w-3.5 h-3.5 mr-1.5" />View</>
                               ) : (
-                                <Lock className="w-4 h-4" />
+                                <><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</>
                               )}
                             </Button>
-                            {/* Spacer to separate destructive action */}
-                            <div className="w-3" />
-                            {/* Delete */}
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 hover:text-destructive transition-colors" disabled={isDeleting || !!imp.locked} title={imp.locked ? "Unlock the file before deleting" : "Delete file"}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete file?</AlertDialogTitle>
-                                  <AlertDialogDescription>All transactions associated with "{imp.file_name}" will be deleted. This cannot be undone.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteImport(imp.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        {/* Lock / Unlock this file */}
+                        <TableCell className="py-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground/60 hover:text-foreground transition-colors"
+                            disabled={isTogglingLock}
+                            title={imp.locked ? "Unlock file (allow editing)" : "Lock file (prevent editing)"}
+                            onClick={() => toggleLockImport({ importId: imp.id, locked: !imp.locked })}
+                          >
+                            {isTogglingLock ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : imp.locked ? (
+                              <Unlock className="w-4 h-4" />
+                            ) : (
+                              <Lock className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        {/* Delete */}
+                        <TableCell className="py-2">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 hover:text-destructive transition-colors" disabled={isDeleting || !!imp.locked} title={imp.locked ? "Unlock the file before deleting" : "Delete file"}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete file?</AlertDialogTitle>
+                                <AlertDialogDescription>All transactions associated with "{imp.file_name}" will be deleted. This cannot be undone.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteImport(imp.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                       </TableRow>
                     );
