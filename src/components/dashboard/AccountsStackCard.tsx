@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/lib/mockData";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ type AccountDisplay = {
   hasRunningBalance: boolean;
   transactionCount: number;
   monthTxs: Transaction[];
+  createdAt: string;
 };
 
 const VARIANTS = [
@@ -40,7 +41,8 @@ export function AccountsStackCard({
 }: AccountsStackCardProps) {
   const { t } = useTranslation("dashboard");
   const { accounts, getCashAccounts, createAccount, isCreating } = useAccounts();
-  const [selected, setSelected] = useState<AccountDisplay | null>(null);
+  const [detail, setDetail] = useState<AccountDisplay | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
 
@@ -49,7 +51,7 @@ export function AccountsStackCard({
   const accountsData = useMemo<AccountDisplay[]>(() => {
     if (!monthKey) return [];
 
-    return cashAccounts.map((acc) => {
+    const mapped = cashAccounts.map((acc) => {
       const monthTxs = transactions.filter(
         (tx) => tx.bank === acc.name && tx.date.startsWith(monthKey)
       );
@@ -81,14 +83,30 @@ export function AccountsStackCard({
         hasRunningBalance,
         transactionCount: monthTxs.length,
         monthTxs,
+        createdAt: acc.created_at,
       };
     });
+
+    // Sort by creation date — first added stays first (top of stack by default)
+    return mapped.sort((a, b) =>
+      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0
+    );
   }, [cashAccounts, transactions, monthKey, convert]);
 
+  // Reorder: if user clicked an account, bring it to the front; else default order.
+  const orderedAccounts = useMemo(() => {
+    if (!activeId) return accountsData;
+    const idx = accountsData.findIndex((a) => a.id === activeId);
+    if (idx <= 0) return accountsData;
+    const copy = [...accountsData];
+    const [picked] = copy.splice(idx, 1);
+    copy.unshift(picked);
+    return copy;
+  }, [accountsData, activeId]);
+
   const TOTAL_SLOTS = 4;
-  // We always reserve the last slot for the "+" add button.
-  const placeholdersNeeded = Math.max(0, TOTAL_SLOTS - accountsData.length - 1);
-  const totalCards = accountsData.length + placeholdersNeeded + 1; // +1 for the add button
+  const placeholdersNeeded = Math.max(0, TOTAL_SLOTS - orderedAccounts.length - 1);
+  const totalCards = orderedAccounts.length + placeholdersNeeded + 1;
 
   const handleAdd = () => {
     const trimmed = newName.trim();
@@ -103,15 +121,18 @@ export function AccountsStackCard({
       <div className="h-full flex flex-col">
         <div className="relative">
           {/* Real account cards */}
-          {accountsData.map((acc, idx) => {
-            const v = VARIANTS[idx % VARIANTS.length];
+          {orderedAccounts.map((acc, idx) => {
+            // Variant is fixed by account id position in original (creation) order,
+            // so colors don't shuffle when reordering.
+            const originalIdx = accountsData.findIndex((a) => a.id === acc.id);
+            const v = VARIANTS[originalIdx % VARIANTS.length];
             const marginTop = idx === 0 ? 0 : -120;
             return (
               <button
                 type="button"
                 key={acc.id}
-                onClick={() => setSelected(acc)}
-                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
+                onClick={() => setActiveId(acc.id)}
+                className={`relative block w-full text-left rounded-2xl p-5 ${v.bg} shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40`}
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
               >
                 <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full ${v.circle}`} aria-hidden />
@@ -135,11 +156,24 @@ export function AccountsStackCard({
                     <span>
                       {acc.transactionCount} {t("charts.txCount", { defaultValue: "tx" })}
                     </span>
-                    <span>
-                      {acc.currency} ·{" "}
-                      {acc.hasRunningBalance
-                        ? t("charts.currentBalance", { defaultValue: "Current balance" })
-                        : t("charts.netFlow", { defaultValue: "Net flow" })}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetail(acc);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDetail(acc);
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1 font-semibold cursor-pointer hover:underline ${v.text}`}
+                    >
+                      {t("charts.viewDetails", { defaultValue: "View details" })}
+                      <ChevronRight className="w-3 h-3" />
                     </span>
                   </div>
                 </div>
@@ -147,9 +181,9 @@ export function AccountsStackCard({
             );
           })}
 
-          {/* Empty placeholder slots (solid, no transparency) */}
+          {/* Empty placeholder slots (solid) */}
           {Array.from({ length: placeholdersNeeded }).map((_, i) => {
-            const idx = accountsData.length + i;
+            const idx = orderedAccounts.length + i;
             const v = VARIANTS[idx % VARIANTS.length];
             const marginTop = idx === 0 ? 0 : -120;
             return (
@@ -180,15 +214,15 @@ export function AccountsStackCard({
             );
           })}
 
-          {/* "+" Add account button — always last, on top */}
+          {/* "+" Add account button */}
           {(() => {
-            const idx = accountsData.length + placeholdersNeeded;
+            const idx = orderedAccounts.length + placeholdersNeeded;
             const marginTop = idx === 0 ? 0 : -120;
             return (
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#1b76ff] focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-[#1b76ff] focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: 160 }}
               >
                 <div className="relative flex flex-col items-center justify-center h-full text-center" style={{ minHeight: 120 }}>
@@ -209,48 +243,48 @@ export function AccountsStackCard({
       </div>
 
       {/* Account detail dialog */}
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-2xl">
-          {selected && (
+          {detail && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-xl font-semibold">{selected.name}</DialogTitle>
-                {selected.institution && (
-                  <p className="text-sm text-muted-foreground">{selected.institution}</p>
+                <DialogTitle className="text-xl font-semibold">{detail.name}</DialogTitle>
+                {detail.institution && (
+                  <p className="text-sm text-muted-foreground">{detail.institution}</p>
                 )}
               </DialogHeader>
 
               <div className="grid grid-cols-3 gap-4 py-4 border-y border-border">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                    {selected.hasRunningBalance
+                    {detail.hasRunningBalance
                       ? t("charts.currentBalance", { defaultValue: "Current balance" })
                       : t("charts.netFlow", { defaultValue: "Net flow" })}
                   </p>
-                  <p className="text-xl font-bold tabular-nums">{formatCurrency(selected.balance)}</p>
+                  <p className="text-xl font-bold tabular-nums">{formatCurrency(detail.balance)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     {t("charts.txCount", { defaultValue: "Transactions" })}
                   </p>
-                  <p className="text-xl font-bold tabular-nums">{selected.transactionCount}</p>
+                  <p className="text-xl font-bold tabular-nums">{detail.transactionCount}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     {t("charts.currency", { defaultValue: "Currency" })}
                   </p>
-                  <p className="text-xl font-bold">{selected.currency}</p>
+                  <p className="text-xl font-bold">{detail.currency}</p>
                 </div>
               </div>
 
               <div className="max-h-[400px] overflow-y-auto -mx-1 px-1">
-                {selected.monthTxs.length === 0 ? (
+                {detail.monthTxs.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     {t("charts.noTransactions", { defaultValue: "No transactions this month" })}
                   </p>
                 ) : (
                   <ul className="divide-y divide-border">
-                    {[...selected.monthTxs]
+                    {[...detail.monthTxs]
                       .sort((a, b) => (a.date < b.date ? 1 : -1))
                       .map((tx) => (
                         <li key={tx.id} className="flex items-center justify-between py-2.5 gap-3">
