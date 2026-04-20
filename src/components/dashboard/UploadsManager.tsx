@@ -120,13 +120,15 @@ function MonthGroup({
   label, 
   uploads, 
   onDelete, 
-  isDeleting 
+  isDeleting,
+  formatDate,
 }: { 
   monthKey: string;
   label: string;
   uploads: Upload[];
   onDelete: (id: string) => void;
   isDeleting: boolean;
+  formatDate: (d: string) => string;
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -155,6 +157,7 @@ function MonthGroup({
               upload={upload}
               onDelete={onDelete}
               isDeleting={isDeleting}
+              formatDate={formatDate}
             />
           ))}
         </div>
