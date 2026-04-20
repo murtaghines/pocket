@@ -141,7 +141,7 @@ export function AccountsStackCard({
                 <div className="relative flex flex-col h-full">
                   <div className="flex items-start justify-between mb-4">
                     <div className="min-w-0 flex-1 pr-3">
-                      <p className={`text-sm font-semibold truncate ${v.text}`}>{acc.name}</p>
+                      <p className={`text-sm font-medium truncate ${v.text}`}>{acc.name}</p>
                       {acc.institution && (
                         <p className={`text-xs truncate ${v.sub}`}>{acc.institution}</p>
                       )}
