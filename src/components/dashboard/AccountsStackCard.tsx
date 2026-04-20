@@ -56,10 +56,16 @@ export function AccountsStackCard({
   const { t } = useTranslation("dashboard");
   const { accounts, getCashAccounts, createAccount, isCreating } = useAccounts();
   const [detail, setDetail] = useState<AccountDisplay | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  // History of selections (most-recent first). Bringing an account to the
+  // front pushes it to the head; subsequent picks shift older ones down.
+  const [selectionOrder, setSelectionOrder] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [allOpen, setAllOpen] = useState(false);
+
+  const promoteAccount = (id: string) => {
+    setSelectionOrder((prev) => [id, ...prev.filter((x) => x !== id)]);
+  };
 
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
 
@@ -108,16 +114,24 @@ export function AccountsStackCard({
     );
   }, [cashAccounts, transactions, monthKey, convert]);
 
-  // Reorder: if user clicked an account, bring it to the front; else default order.
+  // Reorder by selection history (LRU): every selected account is moved
+  // to the front in the order it was picked. Unselected accounts keep
+  // their original creation order behind them.
   const orderedAccounts = useMemo(() => {
-    if (!activeId) return accountsData;
-    const idx = accountsData.findIndex((a) => a.id === activeId);
-    if (idx <= 0) return accountsData;
-    const copy = [...accountsData];
-    const [picked] = copy.splice(idx, 1);
-    copy.unshift(picked);
-    return copy;
-  }, [accountsData, activeId]);
+    if (selectionOrder.length === 0) return accountsData;
+    const byId = new Map(accountsData.map((a) => [a.id, a]));
+    const promoted: AccountDisplay[] = [];
+    for (const id of selectionOrder) {
+      const acc = byId.get(id);
+      if (acc) {
+        promoted.push(acc);
+        byId.delete(id);
+      }
+    }
+    // Remaining accounts keep their default (creation) order
+    const rest = accountsData.filter((a) => byId.has(a.id));
+    return [...promoted, ...rest];
+  }, [accountsData, selectionOrder]);
 
   // Stack design: keep the visual stack at a fixed, predictable height.
   // - Show up to MAX_VISIBLE real accounts in the stack.
