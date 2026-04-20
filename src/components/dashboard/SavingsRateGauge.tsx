@@ -7,12 +7,12 @@ interface SavingsRateGaugeProps {
 const clampRate = (value: number) => Math.max(0, Math.min(100, value));
 
 const VIEWBOX_WIDTH = 320;
-const VIEWBOX_HEIGHT = 120;
-const STROKE_WIDTH = 36;
+const VIEWBOX_HEIGHT = 110;
+const STROKE_WIDTH = 30;
 
-const start = { x: -10, y: 96 };
-const control = { x: VIEWBOX_WIDTH / 2, y: 18 };
-const end = { x: VIEWBOX_WIDTH + 10, y: 96 };
+const start = { x: 18, y: 92 };
+const control = { x: VIEWBOX_WIDTH / 2, y: 8 };
+const end = { x: VIEWBOX_WIDTH - 18, y: 92 };
 
 const gaugePath = `M ${start.x} ${start.y} Q ${control.x} ${control.y} ${end.x} ${end.y}`;
 
@@ -46,11 +46,11 @@ export function SavingsRateGauge({
   const currentPoint = pointAt(currentClamped);
 
   return (
-    <div className="-mx-4 -mb-4 overflow-hidden md:-mx-5 md:-mb-5">
+    <div className="-mb-2 md:-mb-3">
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
-        className="block h-full w-full"
-        preserveAspectRatio="none"
+        className="block h-auto w-full"
+        preserveAspectRatio="xMidYMax meet"
       >
         <defs>
           <pattern
@@ -122,13 +122,13 @@ export function SavingsRateGauge({
             <circle
               cx={previousPoint.x}
               cy={previousPoint.y}
-              r="16"
+              r="14"
               fill="hsl(var(--muted-foreground) / 0.88)"
             />
             <circle
               cx={previousPoint.x}
               cy={previousPoint.y}
-              r="7"
+              r="6"
               fill="hsl(var(--card))"
             />
           </>
@@ -138,7 +138,7 @@ export function SavingsRateGauge({
           <>
             <line
               x1={currentPoint.x}
-              y1={currentPoint.y + 16}
+              y1={currentPoint.y + 14}
               x2={currentPoint.x}
               y2={VIEWBOX_HEIGHT}
               stroke="hsl(var(--primary) / 0.22)"
@@ -147,19 +147,19 @@ export function SavingsRateGauge({
             <circle
               cx={currentPoint.x}
               cy={currentPoint.y}
-              r="22"
+              r="20"
               fill="hsl(var(--primary) / 0.16)"
             />
             <circle
               cx={currentPoint.x}
               cy={currentPoint.y}
-              r="16"
+              r="14"
               fill="hsl(var(--primary))"
             />
             <circle
               cx={currentPoint.x}
               cy={currentPoint.y}
-              r="7"
+              r="6"
               fill="hsl(var(--card))"
             />
           </>
