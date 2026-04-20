@@ -415,33 +415,6 @@ export function UnifiedUploadsTable() {
         </Button>
       </div>
 
-      {/* Dialogs */}
-      <AlertDialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2"><Lock className="w-5 h-5" />Close month?</AlertDialogTitle>
-            <AlertDialogDescription>Transactions for {dialogLabel} will be locked. You can reopen later if needed.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (dialogPeriod) closePeriod(dialogPeriod.id); setShowCloseDialog(false); }}><Lock className="w-4 h-4 mr-2" />Close month</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2"><Unlock className="w-5 h-5" />Reopen month?</AlertDialogTitle>
-            <AlertDialogDescription>This will allow uploading files and editing categories for {dialogLabel}.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (dialogPeriod) reopenPeriod(dialogPeriod.id); setShowReopenDialog(false); }}><Unlock className="w-4 h-4 mr-2" />Reopen month</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <AccountSelectDialog
         open={showAccountDialog}
         onOpenChange={(o) => { setShowAccountDialog(o); if (!o) setPendingFiles([]); }}
