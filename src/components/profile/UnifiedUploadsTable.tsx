@@ -248,19 +248,20 @@ export function UnifiedUploadsTable() {
                         <TableCell className="py-2">
                           <div className="flex items-center gap-2 min-w-0">
                             {statusIcon(st)}
-                            <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[250px]">{imp.file_name}</span>
+                            <span className="text-sm text-foreground font-medium truncate max-w-[180px] md:max-w-[280px]">{imp.file_name}</span>
+                            {imp.locked && <Lock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
                             {(mismatchByImport[imp.id] || 0) > 0 && (
                               <HoverCard>
                                 <HoverCardTrigger asChild>
                                   <div className="flex items-center gap-1 shrink-0 cursor-help">
                                     <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                                    <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">{mismatchByImport[imp.id]}</span>
+                                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{mismatchByImport[imp.id]}</span>
                                   </div>
                                 </HoverCardTrigger>
                                 <HoverCardContent className="w-64" align="start">
                                   <div className="space-y-1">
                                     <div className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /><h4 className="text-sm font-semibold">Sign-category mismatch</h4></div>
-                                    <p className="text-xs text-muted-foreground">This file contains {mismatchByImport[imp.id]} transaction{mismatchByImport[imp.id] !== 1 ? 's' : ''} with sign-movement mismatches. Open Edit to review.</p>
+                                    <p className="text-sm text-muted-foreground">This file contains {mismatchByImport[imp.id]} transaction{mismatchByImport[imp.id] !== 1 ? 's' : ''} with sign-movement mismatches. Open Edit to review.</p>
                                   </div>
                                 </HoverCardContent>
                               </HoverCard>
@@ -273,7 +274,7 @@ export function UnifiedUploadsTable() {
                                 <HoverCardContent className="w-80" align="start">
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-destructive" /><h4 className="text-sm font-semibold">Processing error</h4></div>
-                                    <p className="text-xs text-muted-foreground">{err}</p>
+                                    <p className="text-sm text-muted-foreground">{err}</p>
                                   </div>
                                 </HoverCardContent>
                               </HoverCard>
@@ -281,12 +282,12 @@ export function UnifiedUploadsTable() {
                           </div>
                         </TableCell>
                         <TableCell className="py-2 hidden md:table-cell">
-                          <Badge variant="outline" className="text-[10px] font-medium uppercase px-1.5 py-0">{imp.file_name.split(".").pop() || "—"}</Badge>
+                          <Badge variant="outline" className="text-xs font-medium uppercase px-2 py-0.5">{imp.file_name.split(".").pop() || "—"}</Badge>
                         </TableCell>
                         <TableCell className="py-2 hidden lg:table-cell">
                           <div className="flex flex-col leading-tight">
-                            <span className="text-xs text-foreground">{formatDatePref(imp.uploaded_at)}</span>
-                            <span className="text-[11px] text-muted-foreground">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>
+                            <span className="text-sm text-foreground">{formatDatePref(imp.uploaded_at)}</span>
+                            <span className="text-xs text-muted-foreground">{new Date(imp.uploaded_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>
                           </div>
                         </TableCell>
                         <TableCell className="py-2 hidden md:table-cell">
