@@ -145,7 +145,7 @@ export default function Index() {
 
             {/* Section header */}
             <div className="mb-6">
-              <h3 className="text-2xl md:text-3xl font-semibold capitalize text-foreground">
+              <h3 className="font-nav text-2xl md:text-3xl font-semibold capitalize text-foreground">
                 {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
               </h3>
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
