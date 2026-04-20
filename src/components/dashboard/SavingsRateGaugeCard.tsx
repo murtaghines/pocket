@@ -87,30 +87,30 @@ export function SavingsRateGaugeCard({
   return (
     <Card
       variant="bento"
-      className="animate-slide-up relative flex h-[260px] flex-col overflow-hidden border border-border/70 bg-card text-foreground shadow-sm"
+      className="animate-slide-up relative flex h-[200px] flex-col overflow-hidden border border-border/70 bg-card text-foreground shadow-sm"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="relative flex h-full flex-col p-5 md:p-6">
-        <div className="mb-3 flex items-start justify-between">
+      <div className="relative flex h-full flex-col p-4 md:p-5">
+        <div className="mb-2 flex items-start justify-between">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("stats.savingsRate")}
           </p>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-            <ArrowUpRight className="h-5 w-5 text-foreground" strokeWidth={2.5} />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+            <ArrowUpRight className="h-4 w-4 text-foreground" strokeWidth={2.5} />
           </div>
         </div>
 
         <div className="flex items-baseline gap-1">
-          <span className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+          <span className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             {currentRate}
           </span>
-          <span className="text-xl font-semibold text-muted-foreground/60 md:text-2xl">
+          <span className="text-lg font-semibold text-muted-foreground/60 md:text-xl">
             %
           </span>
         </div>
 
         {hasPrevious && (
-          <div className="mt-0.5 flex items-center gap-2 text-xs">
+          <div className="mt-0.5 flex items-center gap-2 text-[11px]">
             <span className="text-muted-foreground">
               {t("stats.previousMonthShort", {
                 defaultValue: "Previous: {{rate}}%",
@@ -134,11 +134,11 @@ export function SavingsRateGaugeCard({
           </div>
         )}
 
-        <div className="relative mt-2 flex flex-1 flex-col justify-end overflow-hidden">
+        <div className="relative mt-1 flex flex-1 flex-col justify-end overflow-hidden">
           <div className="mx-[-14%] w-[128%] overflow-hidden">
             <svg
               viewBox="0 0 320 196"
-              className="block h-[156px] w-full"
+              className="block h-[110px] w-full"
               preserveAspectRatio="xMidYMax meet"
             >
               <defs>
