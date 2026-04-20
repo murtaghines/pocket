@@ -59,6 +59,7 @@ export function AccountsStackCard({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [allOpen, setAllOpen] = useState(false);
 
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
 
@@ -118,24 +119,29 @@ export function AccountsStackCard({
     return copy;
   }, [accountsData, activeId]);
 
-  // Always render at least 4 real/placeholder slots + the "+" add card on top.
+  // Stack design: keep the visual stack at a fixed, predictable height.
+  // - Show up to MAX_VISIBLE real accounts in the stack.
+  // - If there are more, replace the last visible slot with a "View all (N)"
+  //   card that opens a sheet with the complete list.
+  // - The "+" add card always renders at the very bottom of the stack.
+  // - When there are few accounts, fill remaining slots with placeholders so
+  //   the stack height stays consistent (matches MIN_SLOTS).
   const MIN_SLOTS = 4;
-  const placeholdersNeeded = Math.max(0, MIN_SLOTS - orderedAccounts.length);
-  const totalCards = orderedAccounts.length + placeholdersNeeded + 1;
-
-  // Adaptive stacking: keep the front card full-height (160px) and progressively
-  // collapse the visible "strip" of trailing cards as more are added, so the
-  // overall stack never grows taller than ~ MIN_SLOTS cards worth of space.
+  const MAX_VISIBLE = 6;
   const FRONT_HEIGHT = 160;
-  const BASE_STRIP = 40; // visible strip per non-front card when few accounts
-  const MIN_STRIP = 32;  // floor: must always show the account name / "+" icon
-  const trailingCount = Math.max(0, totalCards - 1);
-  // Target total height ~= FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP
-  const targetTotalHeight = FRONT_HEIGHT + (MIN_SLOTS - 1) * BASE_STRIP;
-  const stripHeight = trailingCount > 0
-    ? Math.max(MIN_STRIP, Math.min(BASE_STRIP, (targetTotalHeight - FRONT_HEIGHT) / trailingCount))
-    : BASE_STRIP;
-  const overlap = -(FRONT_HEIGHT - stripHeight); // negative marginTop value
+  const STRIP_HEIGHT = 40; // fixed visible strip per non-front card
+  const overlap = -(FRONT_HEIGHT - STRIP_HEIGHT);
+
+  const overflow = orderedAccounts.length > MAX_VISIBLE;
+  // When overflowing, last slot becomes the "View all" card → keep MAX_VISIBLE - 1 real
+  const visibleAccounts = overflow
+    ? orderedAccounts.slice(0, MAX_VISIBLE - 1)
+    : orderedAccounts;
+  const placeholdersNeeded = Math.max(0, MIN_SLOTS - visibleAccounts.length - (overflow ? 1 : 0));
+  // total cards = visible accounts + (view-all if overflow) + placeholders + add button
+  const totalCards =
+    visibleAccounts.length + (overflow ? 1 : 0) + placeholdersNeeded + 1;
+  let renderIdx = 0;
 
   const handleAdd = () => {
     const trimmed = newName.trim();
