@@ -48,7 +48,7 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
     const dateFormatChanged = dateFormat !== (preferences.date_format ?? 'AUTO');
 
     if (languageChanged) {
-      changeLanguage(language as 'en' | 'es' | 'pt');
+      changeLanguage(language as 'en' | 'es');
     }
 
     const updates: Record<string, string | number> = {};

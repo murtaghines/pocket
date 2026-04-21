@@ -40,7 +40,7 @@ function detectBrowserLanguage(): string {
   const browserLang = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'en';
   const baseLang = browserLang.split('-')[0];
   // Only return if it's a supported language
-  if (['en', 'es', 'pt'].includes(baseLang)) {
+  if (['en', 'es'].includes(baseLang)) {
     return baseLang;
   }
   return 'en';
@@ -83,7 +83,7 @@ export function useUserPreferences() {
           const newPrefs = {
             user_id: user.id,
             base_currency: browserDefaults.currency,
-            locale: browserDefaults.language === 'es' ? 'es-ES' : browserDefaults.language === 'pt' ? 'pt-BR' : 'en-US',
+            locale: browserDefaults.language === 'es' ? 'es-ES' : 'en-US',
             language: browserDefaults.language,
           };
           
@@ -140,7 +140,7 @@ export function useUserPreferences() {
         const newPrefs = {
           user_id: user.id,
           base_currency: updates.base_currency || browserDefaults.currency,
-          locale: browserDefaults.language === 'es' ? 'es-ES' : browserDefaults.language === 'pt' ? 'pt-BR' : 'en-US',
+          locale: browserDefaults.language === 'es' ? 'es-ES' : 'en-US',
           language: updates.language || browserDefaults.language,
           country: updates.country,
           selected_categories: updates.selected_categories,
@@ -170,7 +170,7 @@ export function useUserPreferences() {
     id: '',
     user_id: user?.id || '',
     base_currency: browserDefaults.currency,
-    locale: browserDefaults.language === 'es' ? 'es-ES' : browserDefaults.language === 'pt' ? 'pt-BR' : 'en-US',
+    locale: browserDefaults.language === 'es' ? 'es-ES' : 'en-US',
     language: browserDefaults.language,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
