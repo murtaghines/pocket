@@ -13,10 +13,15 @@ interface IncomeCategoryReferenceCardProps {
 }
 
 const SVG_SIZE = 360;
-const START_DEG = 210;
-const SWEEP_DEG = 240;
-const OUTER_RADIUS = 150;
-const INNER_RADIUS = 60;
+// Arcs open toward the LEFT (so the moving end points at the legend on the left).
+// 0° = right, 90° = up, 180° = left, 270° = down.
+// Start at the top (90°) and sweep clockwise down to the bottom (270° == -90°),
+// passing through the right side. The "end" of the arc lands near the bottom-left,
+// pointing toward the labels.
+const START_DEG = 70;
+const SWEEP_DEG = 260;
+const OUTER_RADIUS = 165;
+const INNER_RADIUS = 55;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
@@ -37,9 +42,10 @@ const buildArcPath = (
 ) => {
   const start = polar(cx, cy, radius, START_DEG);
   const end = polar(cx, cy, radius, endDegrees);
-  const largeArcFlag = Math.abs(START_DEG - endDegrees) > 180 ? 1 : 0;
-
-  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+  // Sweep clockwise (in screen coords that means sweep-flag = 0 because our Y is inverted).
+  const sweepDelta = Math.abs(START_DEG - endDegrees);
+  const largeArcFlag = sweepDelta > 180 ? 1 : 0;
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
 };
 
 const getRingStroke = (style: RingStyle) => {
@@ -88,14 +94,37 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
   const ringCount = sorted.length;
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
-  const strokeWidth = ringCount > 1 ? Math.max(12, Math.min(32, ringSpacing * 0.78)) : 30;
+  const strokeWidth = ringCount > 1 ? Math.max(14, Math.min(34, ringSpacing * 0.82)) : 32;
   const cx = SVG_SIZE / 2;
   const cy = SVG_SIZE / 2;
+
+  // Arrow tip at the end of the OUTER ring (top category)
+  const topPct = sorted[0].value / total;
+  const topEndDeg = START_DEG - SWEEP_DEG * topPct;
+  const arrowTip = polar(cx, cy, OUTER_RADIUS, topEndDeg);
+  // Tangent direction at arc end (clockwise sweep => tangent rotated -90° from radial)
+  const tangentRad = ((topEndDeg - 90) * Math.PI) / 180;
+  const arrowSize = Math.max(strokeWidth * 0.95, 16);
+  const tipAhead = {
+    x: arrowTip.x + Math.cos(tangentRad) * arrowSize * 0.55,
+    y: arrowTip.y - Math.sin(tangentRad) * arrowSize * 0.55,
+  };
+  // Two base points perpendicular to the tangent
+  const perpRad = tangentRad + Math.PI / 2;
+  const baseHalf = arrowSize * 0.7;
+  const baseA = {
+    x: arrowTip.x + Math.cos(perpRad) * baseHalf,
+    y: arrowTip.y - Math.sin(perpRad) * baseHalf,
+  };
+  const baseB = {
+    x: arrowTip.x - Math.cos(perpRad) * baseHalf,
+    y: arrowTip.y + Math.sin(perpRad) * baseHalf,
+  };
 
   return (
     <Card
       variant="bento"
-      className="animate-slide-up relative flex aspect-square w-full max-w-[420px] justify-self-start overflow-hidden border-0 text-primary-foreground"
+      className="animate-slide-up relative flex aspect-square w-full max-w-[420px] justify-self-end overflow-hidden border-0 text-primary-foreground"
       style={{ animationDelay: "200ms", backgroundColor: "hsl(var(--primary))" }}
     >
       <CardHeader className="relative z-10 p-5 pb-0">
@@ -104,9 +133,14 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="relative flex-1 p-5 pt-2">
-        <div className="pointer-events-none absolute inset-x-4 top-[14%] bottom-[28%] flex items-center justify-center">
-          <svg viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`} className="h-full w-full" aria-hidden>
+      <CardContent className="relative flex-1 p-0">
+        <div className="pointer-events-none absolute inset-0">
+          <svg
+            viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
+            preserveAspectRatio="xMidYMid meet"
+            className="h-full w-full"
+            aria-hidden
+          >
             <defs>
               <pattern
                 id="income-category-stripes"
@@ -145,10 +179,16 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
                 </g>
               );
             })}
+
+            {/* Arrow at the end of the outer (top category) ring, pointing toward the legend */}
+            <polygon
+              points={`${tipAhead.x},${tipAhead.y} ${baseA.x},${baseA.y} ${baseB.x},${baseB.y}`}
+              fill="hsl(var(--primary-foreground))"
+            />
           </svg>
         </div>
 
-        <div className="absolute inset-x-5 bottom-5 z-10 space-y-1.5">
+        <div className="absolute inset-x-5 bottom-5 z-10 max-w-[55%] space-y-1.5">
           {sorted.map((category, index) => {
             const pct = (category.value / total) * 100;
 
