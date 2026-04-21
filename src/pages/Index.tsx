@@ -209,18 +209,17 @@ export default function Index() {
               />
             </div>
 
-            {/* Weekly Flow + Accounts Stack */}
+            {/* Weekly Flow + Daily Heatmap */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_400px] gap-4 mb-4">
               <DailyFlowChart
                 transactions={transactions}
                 monthKey={latestMonthLabel}
                 convert={convertToUserCurrency}
               />
-              <AccountsStackCard
+              <DailyHeatmapCard
                 transactions={transactions}
                 monthKey={latestMonthLabel}
                 convert={convertToUserCurrency}
-                formatCurrency={formatCurrency}
               />
             </div>
 
@@ -230,19 +229,20 @@ export default function Index() {
               <CategoryChart data={convertedIncomeCategoryData} />
             </div>
 
-            {/* Daily heatmap */}
-            <div className="mb-4">
-              <DailyHeatmapCard
-                transactions={transactions}
-                monthKey={latestMonthLabel}
-                convert={convertToUserCurrency}
-              />
-            </div>
-
             {/* Expense Charts Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <SpendingByCategoryChart data={convertedCategoryData} />
               <TopExpensesCard transactions={transactions} />
+            </div>
+
+            {/* Accounts stack (moved below) */}
+            <div className="mb-4">
+              <AccountsStackCard
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                convert={convertToUserCurrency}
+                formatCurrency={formatCurrency}
+              />
             </div>
 
             {/* Transactions */}
