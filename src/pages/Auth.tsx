@@ -339,7 +339,6 @@ export default function Auth() {
     const localeMap: Record<string, string> = {
       en: 'en-US',
       es: 'es-ES',
-      pt: 'pt-BR',
     };
 
     const { error, data } = await supabase.auth.signUp({

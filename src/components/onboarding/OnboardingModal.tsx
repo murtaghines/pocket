@@ -77,7 +77,6 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
       const localeMap: Record<string, string> = {
         en: 'en-US',
         es: 'es-ES',
-        pt: 'pt-BR',
       };
 
       await updatePreferences({
