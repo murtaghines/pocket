@@ -15,8 +15,8 @@ interface IncomeCategoryReferenceCardProps {
 const SVG_SIZE = 360;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
-const OUTER_RADIUS = 112;
-const INNER_RADIUS = 56;
+const OUTER_RADIUS = 168;
+const INNER_RADIUS = 78;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
@@ -75,14 +75,14 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
   const ringCount = sorted.length;
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
-  const strokeWidth = ringCount > 1 ? Math.max(16, Math.min(26, ringSpacing * 0.9)) : 24;
-  const cx = SVG_SIZE * 0.82;
+  const strokeWidth = ringCount > 1 ? Math.max(20, Math.min(34, ringSpacing * 0.92)) : 32;
+  const cx = SVG_SIZE * 0.78;
   const cy = SVG_SIZE * 0.47;
 
   return (
     <Card
       variant="bento"
-      className="animate-slide-up relative flex aspect-square w-full max-w-[360px] justify-self-end overflow-hidden border-0 text-primary-foreground"
+      className="animate-slide-up relative flex aspect-square w-full overflow-hidden border-0 text-primary-foreground"
       style={{ animationDelay: "200ms", backgroundColor: "hsl(var(--primary))" }}
     >
       <CardHeader className="relative z-10 p-5 pb-0">
@@ -148,7 +148,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
           </svg>
         </div>
 
-        <div className="absolute bottom-5 left-5 z-10 w-[45%] space-y-2.5">
+        <div className="absolute bottom-6 left-6 z-10 w-[52%] space-y-2.5">
           {sorted.map((category, index) => {
             const pct = (category.value / total) * 100;
 
