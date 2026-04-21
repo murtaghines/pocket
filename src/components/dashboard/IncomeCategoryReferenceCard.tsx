@@ -35,7 +35,7 @@ const buildArcPath = (cx: number, cy: number, radius: number, startDegrees: numb
   const end = polar(cx, cy, radius, endDegrees);
   const sweepDelta = Math.abs(startDegrees - endDegrees);
   const largeArcFlag = sweepDelta > 180 ? 1 : 0;
-  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
 };
 
 const getRingStroke = (style: RingStyle) => {
@@ -85,8 +85,8 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
   const ringCount = sorted.length;
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
   const strokeWidth = ringCount > 1 ? Math.max(14, Math.min(24, ringSpacing * 1.02)) : 22;
-  const cx = SVG_SIZE * 0.72;
-  const cy = SVG_SIZE * 0.43;
+  const cx = SVG_SIZE * 0.68;
+  const cy = SVG_SIZE * 0.47;
   const legendStartY = 286;
   const legendGap = 24;
   const labelX = 38;
