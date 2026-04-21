@@ -102,7 +102,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
       </CardHeader>
       <CardContent>
         {!monthKey || daysInMonth === 0 ? (
-          <EmptyState icon={CalendarDays} title={t("transactions.noTransactions")} />
+          <EmptyState icon={CalendarDays} message={t("transactions.noTransactions")} />
         ) : (
           <div className="space-y-4">
             {/* Weekday header */}
