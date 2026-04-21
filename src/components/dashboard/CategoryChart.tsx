@@ -57,20 +57,19 @@ export function CategoryChart({ data }: CategoryChartProps) {
     "white", // innermost — solid white
   ] as const;
 
-  // SVG geometry — square viewbox, arcs sweep ~210° and open toward the left,
-  // centered vertically. Center sits past the right edge so the arcs cup the
-  // card from the right side, exactly like the reference.
-  const VB = 360;
-  const cx = 360; // anchored to the right edge of the SVG viewbox
-  const cy = 180;
-  const innerRadius = 38;
-  const ringGap = 26;
-  const strokeWidth = 22;
+  // SVG geometry — fixed-pixel square so it never gets squashed by the card.
+  // Center is OUTSIDE the right edge so the arcs cup the card from the right.
+  const SIZE = 360;
+  const cx = SIZE * 0.78; // center pushed toward (and past) the right edge
+  const cy = SIZE / 2;
+  const innerRadius = 34;
+  const ringGap = 22;
+  const strokeWidth = 20;
 
-  // Arc spans 220°: from the top-left, sweeping counter-clockwise across the
-  // top, around the right, and down to the bottom-left.
+  // Arc spans 220°: from top-left, sweeping clockwise across the top,
+  // around the right, and down to the bottom-left — opening to the LEFT.
   const SWEEP_DEG = 220;
-  const startAngleDeg = -110; // -90° = straight up; -110° leans slightly left
+  const startAngleDeg = -90 - SWEEP_DEG / 2; // symmetric around straight-up
   const endAngleDeg = startAngleDeg + SWEEP_DEG;
 
   const polar = (radius: number, angleDeg: number) => {
@@ -91,11 +90,13 @@ export function CategoryChart({ data }: CategoryChartProps) {
       className="animate-slide-up overflow-hidden border-0 text-white relative min-h-[340px]"
       style={{ animationDelay: "200ms", backgroundColor: "hsl(var(--primary))" }}
     >
-      {/* Concentric arcs — anchored to the right side, vertically centered */}
+      {/* Concentric arcs — fixed-size SVG, vertically centered, anchored to right */}
       <svg
-        viewBox={`0 0 ${VB} ${VB}`}
-        preserveAspectRatio="xMaxYMid meet"
-        className="absolute inset-y-0 right-0 h-full w-auto pointer-events-none"
+        width={SIZE}
+        height={SIZE}
+        viewBox={`0 0 ${SIZE} ${SIZE}`}
+        className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"
+        style={{ width: SIZE, height: SIZE }}
         aria-hidden
       >
         <defs>
