@@ -13,10 +13,11 @@ export const ACCOUNT_COLOR_PALETTE = {
   ],
   yellows: [
     "#fff1a8",
+    "#ffe57a",
     "#f5d76e",
-    "#e8b923",
     "#ffd027",
     "#cfa83a",
+    "#8a6d1f",
   ],
 } as const;
 
@@ -38,7 +39,8 @@ const DEFAULT_ROTATION = [
   "#cde7f7",
   "#155fd6",
   "#f5d76e",
-  "#e8b923",
+  "#ffe57a",
+  "#8a6d1f",
 ];
 
 export function getDefaultAccountColor(index: number): string {
