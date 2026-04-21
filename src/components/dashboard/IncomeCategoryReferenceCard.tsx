@@ -15,8 +15,8 @@ interface IncomeCategoryReferenceCardProps {
 const SVG_SIZE = 360;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
-const OUTER_RADIUS = 124;
-const INNER_RADIUS = 56;
+const OUTER_RADIUS = 150;
+const INNER_RADIUS = 70;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
