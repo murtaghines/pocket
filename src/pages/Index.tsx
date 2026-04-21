@@ -10,6 +10,7 @@ import { SavingsRateGaugeCard } from "@/components/dashboard/SavingsRateGaugeCar
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
+import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
 
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
@@ -227,6 +228,15 @@ export default function Index() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               <InvestmentSummaryCard />
               <CategoryChart data={convertedIncomeCategoryData} />
+            </div>
+
+            {/* Daily heatmap */}
+            <div className="mb-4">
+              <DailyHeatmapCard
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                convert={convertToUserCurrency}
+              />
             </div>
 
             {/* Expense Charts Row */}

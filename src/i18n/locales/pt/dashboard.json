@@ -132,5 +132,25 @@
     "uploadDescription": "Complete seus dados financeiros do mês passado para manter sua análise atualizada.",
     "new": "Novo",
     "empty": "Sem notificações"
+  },
+  "heatmap": {
+    "title": "Atividade diária",
+    "expense": "Despesas",
+    "income": "Receitas",
+    "count": "Atividade",
+    "total": "Total",
+    "less": "Menos",
+    "more": "Mais",
+    "transaction": "transação",
+    "transactions": "transações",
+    "weekdays": {
+      "mon": "Seg",
+      "tue": "Ter",
+      "wed": "Qua",
+      "thu": "Qui",
+      "fri": "Sex",
+      "sat": "Sáb",
+      "sun": "Dom"
+    }
   }
 }

@@ -163,5 +163,25 @@
     "uploadDescription": "Complete your financial data for last month to keep your analysis up to date.",
     "new": "New",
     "empty": "No notifications"
+  },
+  "heatmap": {
+    "title": "Daily activity",
+    "expense": "Expenses",
+    "income": "Income",
+    "count": "Activity",
+    "total": "Total",
+    "less": "Less",
+    "more": "More",
+    "transaction": "transaction",
+    "transactions": "transactions",
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   }
 }
