@@ -24,7 +24,6 @@ export const COUNTRIES = [
   { code: 'PE', name: 'Peru' },
   { code: 'ES', name: 'Spain' },
   { code: 'US', name: 'United States' },
-  { code: 'PT', name: 'Portugal' },
   { code: 'UK', name: 'United Kingdom' },
   { code: 'DE', name: 'Germany' },
   { code: 'FR', name: 'France' },
