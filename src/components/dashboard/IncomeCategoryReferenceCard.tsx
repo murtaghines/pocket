@@ -15,8 +15,8 @@ interface IncomeCategoryReferenceCardProps {
 const SVG_SIZE = 360;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
-const OUTER_RADIUS = 124;
-const INNER_RADIUS = 56;
+const OUTER_RADIUS = 150;
+const INNER_RADIUS = 70;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
@@ -75,9 +75,13 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
   const ringCount = sorted.length;
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
-  const strokeWidth = ringCount > 1 ? Math.max(18, Math.min(30, ringSpacing * 0.92)) : 28;
+  const strokeWidth = ringCount > 1 ? Math.max(20, Math.min(32, ringSpacing * 0.9)) : 30;
   const cx = SVG_SIZE * 0.5;
   const cy = SVG_SIZE * 0.5;
+  // Radii used to align legend rows with each ring on the right side
+  const radiiByIndex = sorted.map((_, index) =>
+    ringCount === 1 ? OUTER_RADIUS : OUTER_RADIUS - ringSpacing * index,
+  );
 
   return (
     <Card
@@ -91,7 +95,47 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="relative flex h-full w-full items-center gap-4 p-5 pt-14">
+      <CardContent className="relative flex h-full w-full items-center gap-3 p-5 pt-14">
+        <div className="z-10 flex h-full w-[44%] flex-col justify-center pr-1">
+          <div className="relative h-[200px] w-full">
+            {sorted.map((category, index) => {
+              const ringStyle = RING_STYLES[index % RING_STYLES.length];
+              const pct = (category.value / total) * 100;
+              // Map ring radius to vertical position (largest ring = top row)
+              const radius = radiiByIndex[index];
+              const topPct = ringCount === 1
+                ? 50
+                : ((OUTER_RADIUS - radius) / (OUTER_RADIUS - INNER_RADIUS)) * 100;
+
+              return (
+                <div
+                  key={`${category.name}-legend-${index}`}
+                  className="absolute left-0 right-0 flex items-center gap-2.5 text-primary-foreground"
+                  style={{ top: `${topPct}%`, transform: "translateY(-50%)" }}
+                >
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full border border-primary-foreground/80"
+                    style={{
+                      backgroundColor:
+                        ringStyle === "white"
+                          ? "hsl(var(--primary-foreground))"
+                          : ringStyle === "black"
+                            ? "hsl(var(--sidebar-background))"
+                            : "transparent",
+                    }}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium md:text-sm">
+                    {category.name}
+                  </span>
+                  <span className="shrink-0 text-[13px] font-semibold tabular-nums md:text-sm">
+                    {pct.toFixed(0)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="pointer-events-none relative h-full flex-1">
           <svg
             viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
@@ -113,7 +157,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
             </defs>
 
             {sorted.map((category, index) => {
-              const radius = ringCount === 1 ? OUTER_RADIUS : OUTER_RADIUS - ringSpacing * index;
+              const radius = radiiByIndex[index];
               const pct = category.value / total;
               const ringStyle = RING_STYLES[index % RING_STYLES.length];
               const circumference = 2 * Math.PI * radius;
@@ -146,38 +190,6 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
               );
             })}
           </svg>
-        </div>
-
-        <div className="z-10 flex h-full w-[42%] flex-col justify-center gap-2 pr-1">
-          {sorted.map((category, index) => {
-            const pct = (category.value / total) * 100;
-            const ringStyle = RING_STYLES[index % RING_STYLES.length];
-
-            return (
-              <div
-                key={`${category.name}-legend-${index}`}
-                className="flex items-center gap-2.5 text-primary-foreground"
-              >
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full border border-primary-foreground/80"
-                  style={{
-                    backgroundColor:
-                      ringStyle === "white"
-                        ? "hsl(var(--primary-foreground))"
-                        : ringStyle === "black"
-                          ? "hsl(var(--sidebar-background))"
-                          : "transparent",
-                  }}
-                />
-                <span className="min-w-0 flex-1 truncate text-[13px] font-medium md:text-sm">
-                  {category.name}
-                </span>
-                <span className="shrink-0 text-[13px] font-semibold tabular-nums md:text-sm">
-                  {pct.toFixed(0)}%
-                </span>
-              </div>
-            );
-          })}
         </div>
       </CardContent>
     </Card>
