@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useLocalization } from "@/hooks/useLocalization";
 
 interface CategoryData {
   name: string;
@@ -14,10 +13,10 @@ interface IncomeCategoryReferenceCardProps {
 }
 
 const SVG_SIZE = 360;
-const START_DEG = 200;
-const SWEEP_DEG = 220;
-const OUTER_RADIUS = 156;
-const INNER_RADIUS = 74;
+const START_DEG = 210;
+const SWEEP_DEG = 240;
+const OUTER_RADIUS = 150;
+const INNER_RADIUS = 60;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
