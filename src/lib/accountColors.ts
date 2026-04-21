@@ -6,7 +6,6 @@ export const ACCOUNT_COLOR_PALETTE = {
   blues: [
     "#cde7f7",
     "#a9d4f5",
-    "#1b76ff",
     "#155fd6",
     "#0a2a5e",
     "#b8c4d6",
@@ -28,7 +27,6 @@ export const ALL_ACCOUNT_COLORS: string[] = [
 // Default rotation when an account doesn't have a color set yet.
 // Mirrors the previous VARIANTS order so existing accounts keep their look.
 const DEFAULT_ROTATION = [
-  "#1b76ff",
   "#ffd027",
   "#7a8499",
   "#b8c4d6",
