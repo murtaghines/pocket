@@ -148,7 +148,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
           </svg>
         </div>
 
-        <div className="absolute bottom-5 left-5 z-10 w-[45%] space-y-2.5">
+        <div className="absolute bottom-6 left-6 z-10 w-[52%] space-y-2.5">
           {sorted.map((category, index) => {
             const pct = (category.value / total) * 100;
 
