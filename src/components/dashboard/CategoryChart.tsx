@@ -13,6 +13,15 @@ interface CategoryChartProps {
   data: CategoryData[];
 }
 
+/**
+ * Income by Category — replicates the "Portfolio Health" reference card:
+ *  - Square card with primary-blue background.
+ *  - One semicircular ring per category, ordered LARGEST (outer) → SMALLEST (inner).
+ *  - Each ring shows a faint background track + a foreground arc filled to the
+ *    category's percentage of total income.
+ *  - Visual styles cycle: white / black / striped / light-blue / lighter-blue.
+ *  - Legend at the bottom: name — line — open circle — %.
+ */
 export function CategoryChart({ data }: CategoryChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
@@ -21,7 +30,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: "200ms" }}>
+      <Card variant="bento" className="animate-slide-up aspect-square" style={{ animationDelay: "200ms" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold">
             {t("charts.incomeByCategory", "Income by Category")}
@@ -34,116 +43,60 @@ export function CategoryChart({ data }: CategoryChartProps) {
     );
   }
 
-  // Sort categories from largest to smallest income.
-  const sorted = [...data].sort((a, b) => b.value - a.value);
+  // Sort largest → smallest and cap at 5 rings (matches the reference visually).
+  const sorted = [...data].sort((a, b) => b.value - a.value).slice(0, 5);
   const topCategory = sorted[0];
   const topPercentage = (topCategory.value / total) * 100;
 
-  // Legend mirrors the reference (3 entries). If fewer categories exist we still
-  // render whatever we have.
-  const legendCategories = sorted.slice(0, 3);
+  // Visual style per ring index (0 = OUTERMOST = largest category).
+  // Cycles: white → black → striped → light-blue → lighter-blue
+  type RingStyle = "white" | "black" | "striped" | "lightBlue" | "lighterBlue";
+  const STYLE_CYCLE: RingStyle[] = ["white", "black", "striped", "lightBlue", "lighterBlue"];
 
-  // Reference image has 5 concentric rings. Order from OUTSIDE to INSIDE:
-  //   white  ->  black  ->  striped  ->  light blue  ->  lighter blue
-  // We anchor the visual sequence to the largest category being innermost
-  // (the striped one in the reference is in the middle); to faithfully copy
-  // the artwork we always render the same 5 visual layers regardless of the
-  // number of categories.
-  const RING_STYLES = [
-    "soft", // outermost — very translucent white
-    "light", // translucent white
-    "striped", // diagonal stripes
-    "dark", // black
-    "white", // innermost — solid white
-  ] as const;
+  // SVG geometry — square viewbox. Semicircles open downward.
+  const SIZE = 400;
+  const cx = SIZE / 2;
+  const cy = SIZE * 0.62; // pivot slightly below center so the semicircles read well
+  const outerRadius = SIZE * 0.42;
+  const ringGap = 26;
+  const strokeWidth = 22;
 
-  // SVG geometry — fixed-pixel square so it never gets squashed by the card.
-  // Center is OUTSIDE the right edge so the arcs cup the card from the right.
-  const SIZE = 360;
-  const cx = SIZE * 0.78; // center pushed toward (and past) the right edge
-  const cy = SIZE / 2;
-  const innerRadius = 34;
-  const ringGap = 22;
-  const strokeWidth = 20;
-
-  // Arc spans 220°: from top-left, sweeping clockwise across the top,
-  // around the right, and down to the bottom-left — opening to the LEFT.
-  const SWEEP_DEG = 220;
-  const startAngleDeg = -90 - SWEEP_DEG / 2; // symmetric around straight-up
-  const endAngleDeg = startAngleDeg + SWEEP_DEG;
-
-  const polar = (radius: number, angleDeg: number) => {
-    const a = (angleDeg * Math.PI) / 180;
-    return { x: cx + radius * Math.cos(a), y: cy + radius * Math.sin(a) };
+  // Build a top-half semicircle path of given radius (sweeps from left to right
+  // along the top), and a partial fill arc from the left up to `pct` of the way.
+  const fullArc = (radius: number) => {
+    const startX = cx - radius;
+    const startY = cy;
+    const endX = cx + radius;
+    const endY = cy;
+    return `M ${startX} ${startY} A ${radius} ${radius} 0 0 1 ${endX} ${endY}`;
   };
-
-  const buildArc = (radius: number) => {
-    const start = polar(radius, startAngleDeg);
-    const end = polar(radius, endAngleDeg);
-    const largeArc = SWEEP_DEG > 180 ? 1 : 0;
-    return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`;
+  const fillArc = (radius: number, pct: number) => {
+    const clamped = Math.max(0, Math.min(1, pct));
+    if (clamped <= 0) return "";
+    const startX = cx - radius;
+    const startY = cy;
+    // angle measured clockwise from the left endpoint. 0 = left, π = right.
+    const angle = Math.PI - Math.PI * clamped; // remaining angle from +x axis
+    const endX = cx + radius * Math.cos(angle);
+    const endY = cy - radius * Math.sin(angle);
+    const largeArc = clamped > 0.5 ? 1 : 0;
+    return `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY}`;
   };
 
   return (
     <Card
       variant="bento"
-      className="animate-slide-up overflow-hidden border-0 text-white relative min-h-[340px]"
+      className="animate-slide-up overflow-hidden border-0 text-white relative aspect-square"
       style={{ animationDelay: "200ms", backgroundColor: "hsl(var(--primary))" }}
     >
-      {/* Concentric arcs — fixed-size SVG, vertically centered, anchored to right */}
-      <svg
-        width={SIZE}
-        height={SIZE}
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
-        className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"
-        style={{ width: SIZE, height: SIZE }}
-        aria-hidden
-      >
-        <defs>
-          <pattern
-            id="cat-stripes"
-            patternUnits="userSpaceOnUse"
-            width="8"
-            height="8"
-            patternTransform="rotate(60)"
-          >
-            <rect width="8" height="8" fill="hsl(var(--primary))" />
-            <rect width="3.6" height="8" fill="#ffffff" />
-          </pattern>
-        </defs>
-
-        {RING_STYLES.map((style, i) => {
-          // i = 0 is outermost (largest radius), i = 4 is innermost.
-          const radius = innerRadius + (RING_STYLES.length - 1 - i) * ringGap;
-          let stroke = "#ffffff";
-          let opacity = 1;
-          if (style === "soft") opacity = 0.28;
-          else if (style === "light") opacity = 0.55;
-          else if (style === "striped") stroke = "url(#cat-stripes)";
-          else if (style === "dark") stroke = "#0b1220";
-          // "white" stays solid white at full opacity
-          return (
-            <path
-              key={i}
-              d={buildArc(radius)}
-              fill="none"
-              stroke={stroke}
-              strokeOpacity={opacity}
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-            />
-          );
-        })}
-      </svg>
-
       <CardHeader className="pb-0 relative z-10">
         <CardTitle className="text-base font-semibold text-white">
           {t("charts.incomeByCategory", "Income by Category")}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="relative z-10 flex flex-col h-full pt-2">
-        {/* Big featured number — largest income category */}
+      <CardContent className="relative z-10 flex flex-col h-full pt-2 pb-4">
+        {/* Featured number — largest income category */}
         <div>
           <div className="flex items-start gap-1">
             <span className="text-6xl md:text-7xl font-light leading-none tracking-tight">
@@ -153,14 +106,82 @@ export function CategoryChart({ data }: CategoryChartProps) {
               %
             </span>
           </div>
-          <div className="mt-3 text-sm text-white/85">
+          <div className="mt-2 text-sm text-white/85">
             {topCategory.name} · {formatCurrency(topCategory.value)}
           </div>
         </div>
 
-        {/* Legend — bottom left, with connector line + open circle, like reference */}
-        <div className="mt-auto pt-10 space-y-3 max-w-[58%]">
-          {legendCategories.map((cat) => {
+        {/* Concentric semicircles — fills card horizontally, sits below header */}
+        <div className="absolute inset-x-0 top-[42%] flex justify-center pointer-events-none">
+          <svg
+            viewBox={`0 0 ${SIZE} ${SIZE * 0.7}`}
+            className="w-[88%] h-auto"
+            aria-hidden
+          >
+            <defs>
+              <pattern
+                id="cat-stripes"
+                patternUnits="userSpaceOnUse"
+                width="8"
+                height="8"
+                patternTransform="rotate(60)"
+              >
+                <rect width="8" height="8" fill="hsl(var(--primary))" />
+                <rect width="3.6" height="8" fill="#ffffff" />
+              </pattern>
+            </defs>
+
+            {sorted.map((cat, i) => {
+              // i = 0 outermost → largest. Shrink inward.
+              const radius = outerRadius - i * ringGap;
+              if (radius <= 0) return null;
+              const pct = cat.value / total;
+              const style = STYLE_CYCLE[i % STYLE_CYCLE.length];
+
+              let stroke = "#ffffff";
+              let opacity = 1;
+              if (style === "white") stroke = "#ffffff";
+              else if (style === "black") stroke = "#0b1220";
+              else if (style === "striped") stroke = "url(#cat-stripes)";
+              else if (style === "lightBlue") {
+                stroke = "#ffffff";
+                opacity = 0.55;
+              } else if (style === "lighterBlue") {
+                stroke = "#ffffff";
+                opacity = 0.3;
+              }
+
+              return (
+                <g key={cat.name}>
+                  {/* Background track (faint) */}
+                  <path
+                    d={fullArc(radius)}
+                    fill="none"
+                    stroke="#ffffff"
+                    strokeOpacity={0.12}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                  />
+                  {/* Filled portion */}
+                  {pct > 0 && (
+                    <path
+                      d={fillArc(radius, pct)}
+                      fill="none"
+                      stroke={stroke}
+                      strokeOpacity={opacity}
+                      strokeWidth={strokeWidth}
+                      strokeLinecap="round"
+                    />
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Legend pinned to the bottom — one row per category */}
+        <div className="mt-auto space-y-2.5 relative z-10">
+          {sorted.map((cat) => {
             const pct = (cat.value / total) * 100;
             return (
               <div
@@ -170,7 +191,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
                 <span className="font-medium whitespace-nowrap">{cat.name}</span>
                 <span className="flex-1 h-px bg-white/55 min-w-[40px]" />
                 <span className="h-2.5 w-2.5 rounded-full border border-white/80 flex-shrink-0" />
-                <span className="text-xs text-white/80 tabular-nums w-10 text-right">
+                <span className="text-xs text-white/85 tabular-nums w-10 text-right">
                   {pct.toFixed(0)}%
                 </span>
               </div>
