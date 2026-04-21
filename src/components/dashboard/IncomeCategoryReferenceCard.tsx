@@ -15,14 +15,13 @@ interface IncomeCategoryReferenceCardProps {
 const SVG_SIZE = 360;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
-const LABEL_ANCHOR_DEG = ((TRACK_START_DEG - TRACK_SWEEP_DEG) % 360 + 360) % 360;
 const OUTER_RADIUS = 150;
 const INNER_RADIUS = 70;
-const VISUAL_BOX_WIDTH = 420;
+const VISUAL_BOX_WIDTH = 460;
 const VISUAL_BOX_HEIGHT = 220;
 const VISUAL_CHART_SIZE = 220;
-const VISUAL_CHART_LEFT = 28;
-const LABEL_OFFSET_X = 16;
+const VISUAL_CHART_LEFT = 8;
+const LABEL_COLUMN_LEFT = VISUAL_CHART_LEFT + VISUAL_CHART_SIZE + 24;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
