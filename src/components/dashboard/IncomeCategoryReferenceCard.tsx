@@ -15,14 +15,13 @@ interface IncomeCategoryReferenceCardProps {
 const SVG_SIZE = 360;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
-const LABEL_ANCHOR_DEG = ((TRACK_START_DEG - TRACK_SWEEP_DEG) % 360 + 360) % 360;
 const OUTER_RADIUS = 150;
 const INNER_RADIUS = 70;
-const VISUAL_BOX_WIDTH = 420;
+const VISUAL_BOX_WIDTH = 460;
 const VISUAL_BOX_HEIGHT = 220;
 const VISUAL_CHART_SIZE = 220;
-const VISUAL_CHART_LEFT = 28;
-const LABEL_OFFSET_X = 16;
+const VISUAL_CHART_LEFT = 8;
+const LABEL_COLUMN_LEFT = VISUAL_CHART_LEFT + VISUAL_CHART_SIZE + 24;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
@@ -177,15 +176,19 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
               const ringStyle = RING_STYLES[index % RING_STYLES.length];
               const radius = radiiByIndex[index];
               const scaledRadius = (radius / SVG_SIZE) * VISUAL_CHART_SIZE;
-              const anchor = polar(chartCenterX, chartCenterY, scaledRadius, LABEL_ANCHOR_DEG);
+              // Stack labels vertically at the right side, ordered by ring (outer ring on top)
+              const lineHeight = 26;
+              const totalHeight = (sorted.length - 1) * lineHeight;
+              const startY = chartCenterY - totalHeight / 2;
+              const topY = startY + index * lineHeight;
 
               return (
                 <div
                   key={`${category.name}-legend-${index}`}
                   className="absolute flex items-center gap-2.5 whitespace-nowrap text-primary-foreground"
                   style={{
-                    left: `${anchor.x + LABEL_OFFSET_X}px`,
-                    top: `${anchor.y}px`,
+                    left: `${LABEL_COLUMN_LEFT}px`,
+                    top: `${topY}px`,
                     transform: "translateY(-50%)",
                   }}
                 >
