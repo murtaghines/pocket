@@ -78,7 +78,7 @@ export type AccountColorStyle = {
 };
 
 export function getAccountColorStyle(hex: string | null | undefined): AccountColorStyle {
-  const safe = hex && /^#?[0-9a-fA-F]{3,8}$/.test(hex) ? (hex.startsWith("#") ? hex : `#${hex}`) : "#1b76ff";
+  const safe = hex && /^#?[0-9a-fA-F]{3,8}$/.test(hex) ? (hex.startsWith("#") ? hex : `#${hex}`) : "#155fd6";
   const light = isLightColor(safe);
   if (light) {
     // Dark text on light background
