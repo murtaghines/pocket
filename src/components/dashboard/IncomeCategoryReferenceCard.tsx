@@ -13,15 +13,11 @@ interface IncomeCategoryReferenceCardProps {
 }
 
 const SVG_SIZE = 360;
-// Polar angles: 0° = right, 90° = up, 180° = left, 270° = down.
-// Arcs open toward the LEFT: start at top (90°), sweep COUNTER-clockwise
-// through the right side down to the bottom (-90° == 270°). The moving "end"
-// of each arc travels from the top toward the bottom on the LEFT side,
-// finishing pointing at the legend.
-const START_DEG = 90;
-const SWEEP_DEG = 270;
-const OUTER_RADIUS = 150;
-const INNER_RADIUS = 50;
+const TRACK_START_DEG = 140;
+const TRACK_END_DEG = -120;
+const TRACK_SWEEP_DEG = TRACK_START_DEG - TRACK_END_DEG;
+const OUTER_RADIUS = 138;
+const INNER_RADIUS = 64;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
@@ -34,17 +30,10 @@ const polar = (cx: number, cy: number, radius: number, degrees: number) => {
   };
 };
 
-const buildArcPath = (
-  cx: number,
-  cy: number,
-  radius: number,
-  endDegrees: number,
-) => {
-  const start = polar(cx, cy, radius, START_DEG);
+const buildArcPath = (cx: number, cy: number, radius: number, startDegrees: number, endDegrees: number) => {
+  const start = polar(cx, cy, radius, startDegrees);
   const end = polar(cx, cy, radius, endDegrees);
-  // We sweep from START_DEG decreasing toward (START_DEG - SWEEP_DEG).
-  // In math angles that's clockwise; with SVG's y-down screen, that is sweep-flag = 0.
-  const sweepDelta = Math.abs(START_DEG - endDegrees);
+  const sweepDelta = Math.abs(startDegrees - endDegrees);
   const largeArcFlag = sweepDelta > 180 ? 1 : 0;
   return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
 };
@@ -95,15 +84,16 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
   const ringCount = sorted.length;
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
-  const strokeWidth = ringCount > 1 ? Math.max(16, Math.min(32, ringSpacing * 0.78)) : 30;
-  // Center pushed to the right so the arcs (opening left) fill the card nicely.
-  const cx = SVG_SIZE * 0.62;
-  const cy = SVG_SIZE * 0.5;
+  const strokeWidth = ringCount > 1 ? Math.max(14, Math.min(28, ringSpacing * 0.82)) : 28;
+  const cx = SVG_SIZE * 0.69;
+  const cy = SVG_SIZE * 0.44;
+  const legendStartY = SVG_SIZE - 56 - (ringCount - 1) * 22;
+  const legendGap = 22;
 
   return (
     <Card
       variant="bento"
-      className="animate-slide-up relative flex aspect-square w-full max-w-[420px] justify-self-end overflow-hidden border-0 text-primary-foreground"
+      className="animate-slide-up relative flex aspect-square w-full max-w-[380px] justify-self-end overflow-hidden border-0 text-primary-foreground"
       style={{ animationDelay: "200ms", backgroundColor: "hsl(var(--primary))" }}
     >
       <CardHeader className="relative z-10 p-5 pb-0">
@@ -136,47 +126,75 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
             {sorted.map((category, index) => {
               const radius = ringCount === 1 ? OUTER_RADIUS : OUTER_RADIUS - ringSpacing * index;
               const pct = category.value / total;
-              const endDeg = START_DEG - SWEEP_DEG * pct;
+              const fillStartDeg = TRACK_END_DEG + TRACK_SWEEP_DEG * pct;
               const ringStyle = RING_STYLES[index % RING_STYLES.length];
+              const legendY = legendStartY + index * legendGap;
+              const ringEnd = polar(cx, cy, radius, TRACK_END_DEG);
 
               return (
                 <g key={`${category.name}-${index}`}>
                   <path
-                    d={buildArcPath(cx, cy, radius, START_DEG - SWEEP_DEG)}
+                    d={buildArcPath(cx, cy, radius, TRACK_START_DEG, TRACK_END_DEG)}
                     fill="none"
                     stroke="hsl(var(--primary-foreground) / 0.15)"
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                   />
                   <path
-                    d={buildArcPath(cx, cy, radius, endDeg)}
+                    d={buildArcPath(cx, cy, radius, fillStartDeg, TRACK_END_DEG)}
                     fill="none"
                     stroke={getRingStroke(ringStyle)}
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                   />
+
+                  <path
+                    d={`M 146 ${legendY} H 186 Q 200 ${legendY} ${ringEnd.x - 10} ${ringEnd.y}`}
+                    fill="none"
+                    stroke="hsl(var(--primary-foreground) / 0.28)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    cx="190"
+                    cy={legendY}
+                    r="5.5"
+                    fill="hsl(var(--primary))"
+                    stroke="hsl(var(--primary-foreground) / 0.9)"
+                    strokeWidth="1.5"
+                  />
+                </g>
+              );
+            })}
+
+            {sorted.map((category, index) => {
+              const pct = (category.value / total) * 100;
+              const legendY = legendStartY + index * legendGap;
+
+              return (
+                <g key={`${category.name}-label-${index}`}>
+                  <text
+                    x="28"
+                    y={legendY + 4}
+                    fill="hsl(var(--primary-foreground))"
+                    fontSize="13"
+                    fontWeight="500"
+                  >
+                    {category.name}
+                  </text>
+                  <text
+                    x="104"
+                    y={legendY + 4}
+                    fill="hsl(var(--primary-foreground) / 0.88)"
+                    fontSize="13"
+                    fontWeight="500"
+                  >
+                    {pct.toFixed(0)}%
+                  </text>
                 </g>
               );
             })}
           </svg>
-        </div>
-
-        <div className="absolute inset-x-5 bottom-5 z-10 max-w-[55%] space-y-1.5">
-          {sorted.map((category, index) => {
-            const pct = (category.value / total) * 100;
-
-            return (
-              <div
-                key={`${category.name}-legend-${index}`}
-                className="flex items-center justify-between gap-3 text-primary-foreground"
-              >
-                <span className="truncate text-[13px] font-medium md:text-sm">{category.name}</span>
-                <span className="text-[13px] font-medium tabular-nums text-primary-foreground/85 md:text-sm">
-                  {pct.toFixed(0)}%
-                </span>
-              </div>
-            );
-          })}
         </div>
       </CardContent>
     </Card>
