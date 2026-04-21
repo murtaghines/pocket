@@ -59,7 +59,6 @@ const getRingStroke = (style: RingStyle) => {
 
 export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCardProps) {
   const { t } = useTranslation("dashboard");
-  const { formatCurrency } = useLocalization();
 
   const sorted = [...data]
     .filter((item) => item.value > 0)
@@ -87,13 +86,11 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     );
   }
 
-  const topCategory = sorted[0];
-  const topPercentage = (topCategory.value / total) * 100;
   const ringCount = sorted.length;
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
-  const strokeWidth = ringCount > 1 ? Math.max(10, Math.min(28, ringSpacing * 0.74)) : 28;
-  const cx = SVG_SIZE * 0.68;
-  const cy = SVG_SIZE * 0.64;
+  const strokeWidth = ringCount > 1 ? Math.max(12, Math.min(32, ringSpacing * 0.78)) : 30;
+  const cx = SVG_SIZE / 2;
+  const cy = SVG_SIZE / 2;
 
   return (
     <Card
@@ -101,28 +98,14 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
       className="animate-slide-up relative flex aspect-square w-full max-w-[420px] justify-self-start overflow-hidden border-0 text-primary-foreground"
       style={{ animationDelay: "200ms", backgroundColor: "hsl(var(--primary))" }}
     >
-      <CardHeader className="relative z-10 p-4 pb-0">
-        <CardTitle className="text-[15px] font-medium text-primary-foreground md:text-base">
+      <CardHeader className="relative z-10 p-5 pb-0">
+        <CardTitle className="text-[15px] font-semibold text-primary-foreground md:text-base">
           {t("charts.incomeByCategory", "Income by Category")}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="relative flex-1 p-4 pt-1">
-        <div className="relative z-10 max-w-[34%] pt-3">
-          <div className="flex items-start gap-1 leading-none">
-            <span className="text-[4.4rem] font-light tracking-normal md:text-[5rem]">
-              {Math.round(topPercentage)}
-            </span>
-            <span className="pt-2 text-xl font-light text-primary-foreground/80 md:text-2xl">%</span>
-          </div>
-
-          <div className="mt-2 space-y-1 text-primary-foreground/84">
-            <p className="truncate text-[13px] font-medium md:text-sm">{topCategory.name}</p>
-            <p className="text-xs md:text-[13px]">{formatCurrency(topCategory.value)}</p>
-          </div>
-        </div>
-
-        <div className="pointer-events-none absolute right-[-7%] top-[11%] h-[66%] w-[82%]">
+      <CardContent className="relative flex-1 p-5 pt-2">
+        <div className="pointer-events-none absolute inset-x-4 top-[14%] bottom-[28%] flex items-center justify-center">
           <svg viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`} className="h-full w-full" aria-hidden>
             <defs>
               <pattern
@@ -165,16 +148,17 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
           </svg>
         </div>
 
-        <div className="absolute inset-x-4 bottom-4 z-10 space-y-2">
+        <div className="absolute inset-x-5 bottom-5 z-10 space-y-1.5">
           {sorted.map((category, index) => {
             const pct = (category.value / total) * 100;
 
             return (
-              <div key={`${category.name}-legend-${index}`} className="flex items-center gap-2.5 text-primary-foreground">
-                <span className="max-w-[34%] truncate text-[12px] font-medium md:text-[13px]">{category.name}</span>
-                <span className="h-px flex-1 bg-primary-foreground/22" />
-                <span className="h-2.5 w-2.5 rounded-full border border-primary-foreground/80 bg-transparent" />
-                <span className="w-9 text-right text-[11px] text-primary-foreground/82 md:text-xs">
+              <div
+                key={`${category.name}-legend-${index}`}
+                className="flex items-center justify-between gap-3 text-primary-foreground"
+              >
+                <span className="truncate text-[13px] font-medium md:text-sm">{category.name}</span>
+                <span className="text-[13px] font-medium tabular-nums text-primary-foreground/85 md:text-sm">
                   {pct.toFixed(0)}%
                 </span>
               </div>
