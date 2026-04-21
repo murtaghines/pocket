@@ -79,110 +79,92 @@ export function CategoryChart({ data }: CategoryChartProps) {
   return (
     <Card
       variant="bento"
-      className="animate-slide-up overflow-hidden border-0 text-white"
+      className="animate-slide-up overflow-hidden border-0 text-white relative"
       style={{ animationDelay: '200ms', backgroundColor: 'hsl(var(--primary))' }}
     >
-      <CardHeader className="pb-2">
+      {/* Concentric arcs absolutely positioned on the right side */}
+      <svg
+        viewBox={`0 0 ${VB_W} ${VB_H}`}
+        preserveAspectRatio="xMaxYMid meet"
+        className="absolute inset-y-0 right-0 h-full w-auto pointer-events-none"
+        aria-hidden
+      >
+        <defs>
+          <pattern
+            id="cat-stripes"
+            patternUnits="userSpaceOnUse"
+            width="7"
+            height="7"
+            patternTransform="rotate(60)"
+          >
+            <rect width="7" height="7" fill="hsl(var(--primary))" />
+            <rect width="3.2" height="7" fill="#ffffff" />
+          </pattern>
+        </defs>
+        {ringCategories.map((_, i) => {
+          const radius = baseRadius + i * ringGap;
+          const style = ringStyle(i, ringCategories.length);
+          let stroke = '';
+          let opacity = 1;
+          if (style.type === 'striped') stroke = 'url(#cat-stripes)';
+          else if (style.type === 'dark') stroke = '#0b1220';
+          else if (style.type === 'solid') stroke = '#ffffff';
+          else {
+            stroke = '#ffffff';
+            opacity = style.opacity;
+          }
+          return (
+            <path
+              key={i}
+              d={buildHalfArc(radius)}
+              fill="none"
+              stroke={stroke}
+              strokeOpacity={opacity}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+            />
+          );
+        })}
+      </svg>
+
+      <CardHeader className="pb-0 relative z-10">
         <CardTitle className="text-lg font-semibold text-white">
           {t('charts.incomeByCategory', 'Income by Category')}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col">
-          {/* Featured (top) category */}
-          <div className="mb-2">
-            <div className="text-xs uppercase tracking-wide text-white/60">
-              {topCategory.name}
-            </div>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-4xl font-bold leading-none">
-                {Math.round(topPercentage)}
-                <span className="text-2xl font-medium text-white/70">%</span>
-              </span>
-              <span className="text-sm text-white/70">
-                · {formatCurrency(topCategory.value)}
-              </span>
-            </div>
-          </div>
 
-          {/* Concentric arcs */}
-          <div className="relative w-full flex justify-center">
-            <svg
-              viewBox="0 0 300 170"
-              className="w-full max-w-[320px] h-auto"
-              aria-hidden
-            >
-              {restCategories.map((cat, i) => {
-                const radius = baseRadius + i * ringGap;
-                const pct = cat.value / total;
-                const isWhite = i === 0;
-                const isStriped = i === 1;
-                const stripeId = `stripes-${i}`;
-                const arcColor = isWhite
-                  ? '#ffffff'
-                  : isStriped
-                  ? `url(#${stripeId})`
-                  : `rgba(255,255,255,${Math.max(0.18, 0.55 - i * 0.08)})`;
-                return (
-                  <g key={i}>
-                    {isStriped && (
-                      <defs>
-                        <pattern
-                          id={stripeId}
-                          patternUnits="userSpaceOnUse"
-                          width="6"
-                          height="6"
-                          patternTransform="rotate(45)"
-                        >
-                          <rect width="6" height="6" fill="rgba(255,255,255,0.15)" />
-                          <rect width="3" height="6" fill="#ffffff" />
-                        </pattern>
-                      </defs>
-                    )}
-                    {/* Background track */}
-                    <path
-                      d={buildBackgroundArc(radius)}
-                      fill="none"
-                      stroke="rgba(255,255,255,0.12)"
-                      strokeWidth={strokeWidth}
-                      strokeLinecap="round"
-                    />
-                    {/* Filled arc */}
-                    {pct > 0 && (
-                      <path
-                        d={buildArc(radius, pct)}
-                        fill="none"
-                        stroke={arcColor}
-                        strokeWidth={strokeWidth}
-                        strokeLinecap="round"
-                      />
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
+      <CardContent className="relative z-10 flex flex-col h-full">
+        {/* Big featured number — largest income category */}
+        <div className="mt-1">
+          <div className="flex items-baseline gap-2">
+            <span className="text-6xl md:text-7xl font-light leading-none tracking-tight">
+              {Math.round(topPercentage)}
+              <span className="text-3xl md:text-4xl font-light text-white/80">%</span>
+            </span>
           </div>
+          <div className="mt-2 text-sm text-white/80">
+            {topCategory.name} · {formatCurrency(topCategory.value)}
+          </div>
+        </div>
 
-          {/* Legend for the arcs */}
-          <div className="mt-3 space-y-1.5">
-            {restCategories.map((cat, i) => {
-              const pct = (cat.value / total) * 100;
-              return (
-                <div
-                  key={cat.name}
-                  className="flex items-center justify-between text-sm text-white/85"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="h-px w-6 bg-white/30 flex-shrink-0" />
-                    <span className="truncate">{cat.name}</span>
-                  </div>
-                  <span className="text-white/70 text-xs tabular-nums">
-                    {pct.toFixed(0)}%
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+        {/* Legend with connector lines, anchored to the bottom-left */}
+        <div className="mt-auto pt-10 space-y-3">
+          {legendCategories.map((cat) => {
+            const pct = (cat.value / total) * 100;
+            return (
+              <div
+                key={cat.name}
+                className="flex items-center gap-2 text-sm text-white/90"
+              >
+                <span className="font-medium">{cat.name}</span>
+                <span className="flex-1 h-px bg-white/40 min-w-[24px] max-w-[140px]" />
+                <span className="h-2.5 w-2.5 rounded-full border border-white/70" />
+                <span className="text-xs text-white/70 tabular-nums w-10 text-right">
+                  {pct.toFixed(0)}%
+                </span>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
