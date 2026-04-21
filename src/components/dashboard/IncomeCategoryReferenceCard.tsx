@@ -13,11 +13,11 @@ interface IncomeCategoryReferenceCardProps {
 }
 
 const SVG_SIZE = 360;
-const TRACK_START_DEG = 140;
-const TRACK_END_DEG = -120;
+const TRACK_START_DEG = 152;
+const TRACK_END_DEG = -138;
 const TRACK_SWEEP_DEG = TRACK_START_DEG - TRACK_END_DEG;
-const OUTER_RADIUS = 138;
-const INNER_RADIUS = 64;
+const OUTER_RADIUS = 120;
+const INNER_RADIUS = 54;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
@@ -84,11 +84,14 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
   const ringCount = sorted.length;
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
-  const strokeWidth = ringCount > 1 ? Math.max(14, Math.min(28, ringSpacing * 0.82)) : 28;
-  const cx = SVG_SIZE * 0.69;
-  const cy = SVG_SIZE * 0.44;
-  const legendStartY = SVG_SIZE - 56 - (ringCount - 1) * 22;
-  const legendGap = 22;
+  const strokeWidth = ringCount > 1 ? Math.max(14, Math.min(24, ringSpacing * 1.02)) : 22;
+  const cx = SVG_SIZE * 0.72;
+  const cy = SVG_SIZE * 0.43;
+  const legendStartY = 286;
+  const legendGap = 24;
+  const labelX = 38;
+  const percentageX = 124;
+  const dotX = 194;
 
   return (
     <Card
@@ -149,19 +152,19 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
                   />
 
                   <path
-                    d={`M 146 ${legendY} H 186 Q 200 ${legendY} ${ringEnd.x - 10} ${ringEnd.y}`}
+                    d={`M ${percentageX + 18} ${legendY} H ${dotX - 9} Q ${dotX + 6} ${legendY} ${ringEnd.x - 10} ${ringEnd.y}`}
                     fill="none"
                     stroke="hsl(var(--primary-foreground) / 0.28)"
-                    strokeWidth="1.5"
+                    strokeWidth="1.35"
                     strokeLinecap="round"
                   />
                   <circle
-                    cx="190"
+                    cx={dotX}
                     cy={legendY}
-                    r="5.5"
+                    r="4.75"
                     fill="hsl(var(--primary))"
                     stroke="hsl(var(--primary-foreground) / 0.9)"
-                    strokeWidth="1.5"
+                    strokeWidth="1.35"
                   />
                 </g>
               );
@@ -174,7 +177,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
               return (
                 <g key={`${category.name}-label-${index}`}>
                   <text
-                    x="28"
+                    x={labelX}
                     y={legendY + 4}
                     fill="hsl(var(--primary-foreground))"
                     fontSize="13"
@@ -183,7 +186,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
                     {category.name}
                   </text>
                   <text
-                    x="104"
+                    x={percentageX}
                     y={legendY + 4}
                     fill="hsl(var(--primary-foreground) / 0.88)"
                     fontSize="13"
