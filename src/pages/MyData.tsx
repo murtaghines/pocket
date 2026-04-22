@@ -69,8 +69,8 @@ export default function MyData() {
             </div>
           </div>
 
-          {/* Right column: floating accounts panel */}
-          <aside className="lg:sticky lg:top-24">
+          {/* Right column: accounts panel */}
+          <aside>
             <div
               className="bg-card rounded-xl md:rounded-2xl p-4 md:p-6"
               style={{ boxShadow: 'var(--shadow-section)' }}
