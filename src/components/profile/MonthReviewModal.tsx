@@ -1190,8 +1190,18 @@ export function MonthReviewModal({
                                 splitCount={editedFields.splitCount}
                                 disabled={hidden}
                                 onChange={(v) => handleAmountChange(tx.id, v)}
-                                onApplySplit={(n) => handleApplySplit(tx.id, n)}
                                 onRevert={() => handleRevertField(tx.id, "amount")}
+                                formatCurrency={formatCurrency}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {!isLocked && (
+                              <SplitButton
+                                originalAmount={tx.amount}
+                                splitCount={editedFields.splitCount}
+                                disabled={hidden}
+                                onApplySplit={(n) => handleApplySplit(tx.id, n)}
                                 formatCurrency={formatCurrency}
                               />
                             )}
