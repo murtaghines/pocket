@@ -159,6 +159,66 @@ export function MonthReviewModal({
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
 
+  // ============= Undo / Redo history (spreadsheet-like) =============
+  const editsHistory = useRef<Record<string, TransactionEdits>[]>([{}]);
+  const historyIndex = useRef<number>(0);
+  const isReplaying = useRef<boolean>(false);
+
+  // Push a new edits snapshot whenever edits change (but skip undo/redo replays)
+  useEffect(() => {
+    if (isReplaying.current) {
+      isReplaying.current = false;
+      return;
+    }
+    // Drop any "redo" tail when a new change is made
+    editsHistory.current = editsHistory.current.slice(0, historyIndex.current + 1);
+    editsHistory.current.push(edits);
+    historyIndex.current = editsHistory.current.length - 1;
+    // Cap history to prevent memory bloat
+    if (editsHistory.current.length > 100) {
+      editsHistory.current.shift();
+      historyIndex.current--;
+    }
+  }, [edits]);
+
+  // Reset history when modal closes/opens
+  useEffect(() => {
+    if (!open) {
+      editsHistory.current = [{}];
+      historyIndex.current = 0;
+    }
+  }, [open]);
+
+  const canUndo = historyIndex.current > 0;
+  const canRedo = historyIndex.current < editsHistory.current.length - 1;
+
+  const handleUndo = () => {
+    if (historyIndex.current <= 0) return;
+    historyIndex.current--;
+    isReplaying.current = true;
+    setEdits(editsHistory.current[historyIndex.current]);
+  };
+
+  const handleRedo = () => {
+    if (historyIndex.current >= editsHistory.current.length - 1) return;
+    historyIndex.current++;
+    isReplaying.current = true;
+    setEdits(editsHistory.current[historyIndex.current]);
+  };
+
+  // Keyboard shortcuts: Cmd/Ctrl+Z (undo), Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y (redo)
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (!meta) return;
+      if (e.key === "z" && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      else if ((e.key === "z" && e.shiftKey) || e.key === "y") { e.preventDefault(); handleRedo(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open]);
+
   // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["month-transactions", monthKey, user?.id, importId],
