@@ -1070,9 +1070,17 @@ export function MonthReviewModal({
                                 </SelectContent>
                               </Select>
                               {categoryChanged && (
-                                <span className="text-[10px] text-muted-foreground line-through pl-1">
-                                  {translateCategory(normalizeCategory(tx.category))}
-                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevertField(tx.id, "category")}
+                                  className="group/rv inline-flex items-center gap-1 pl-1 text-[10px] text-muted-foreground hover:text-primary transition-colors w-fit"
+                                  title={`Revert to ${translateCategory(normalizeCategory(tx.category))}`}
+                                >
+                                  <Undo2 className="w-2.5 h-2.5 opacity-60 group-hover/rv:opacity-100" />
+                                  <span className="line-through group-hover/rv:no-underline">
+                                    {translateCategory(normalizeCategory(tx.category))}
+                                  </span>
+                                </button>
                               )}
                               </div>
                             )}
