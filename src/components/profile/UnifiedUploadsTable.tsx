@@ -8,8 +8,15 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+  DataTableAddRow,
+} from "@/components/ui/data-table";
+import { PillBadge } from "@/components/ui/pill-badge";
 import {
   Plus, FileSpreadsheet, CheckCircle2, Loader2, AlertCircle, Trash2,
   Lock, Unlock, Pencil, Eye, Info, ChevronDown, ChevronUp,
