@@ -123,25 +123,13 @@ export function AccountsManager({ className }: { className?: string }) {
         </p>
 
         {cashAccounts.length > 0 ? (
-          <DataTable>
-            <DataTableHeader>
-              <DataTableRow className="hover:bg-transparent">
-                <DataTableHead rowNumber />
-                <DataTableHead type="account">{t('accounts.name', 'Account')}</DataTableHead>
-                <DataTableHead type="tag" className="w-[110px]">{t('accounts.status', 'Status')}</DataTableHead>
-                <DataTableHead className="w-[88px] text-right">{t('accounts.actions', 'Actions')}</DataTableHead>
-              </DataTableRow>
-            </DataTableHeader>
-            <DataTableBody>
-              {cashAccounts.map((account, idx) => {
-                const resolvedColor = account.color || getDefaultAccountColor(idx);
-                if (editingId === account.id) {
-                  return (
-                    <DataTableRow key={account.id}>
-                      <DataTableCell colSpan={4} className="p-3">
-                        <div className="space-y-3">
-                {editingId === account.id ? (
-                  <>
+          <ul className="space-y-1.5">
+            {cashAccounts.map((account, idx) => {
+              const resolvedColor = account.color || getDefaultAccountColor(idx);
+              if (editingId === account.id) {
+                return (
+                  <li key={account.id} className="rounded-lg border border-border bg-background/40 p-3">
+                    <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span
                         className="w-6 h-6 rounded-full border border-border shrink-0"
@@ -214,60 +202,52 @@ export function AccountsManager({ className }: { className?: string }) {
                         {t('accounts.setPrimary', 'Set as primary account')}
                       </span>
                     </label>
-                  </>
-                ) : null}
-                        </div>
-                      </DataTableCell>
-                    </DataTableRow>
-                  );
-                }
-                return (
-                  <DataTableRow key={account.id}>
-                    <DataTableCell rowNumber={idx + 1} />
-                    <DataTableCell>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className="w-5 h-5 rounded-full border border-border shrink-0"
-                          style={{ backgroundColor: resolvedColor }}
-                          aria-hidden
-                        />
-                        <span className="text-sm font-medium truncate text-foreground">{account.name}</span>
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell>
-                      {account.is_primary ? (
-                        <PillBadge tone="yellow">{t('accounts.primaryBadge', 'Primary')}</PillBadge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </DataTableCell>
-                    <DataTableCell className="text-right">
-                      <div className="inline-flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                          onClick={() => handleStartEdit(account.id, account.name, resolvedColor, account.is_primary)}
-                          aria-label="Edit"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDeleteClick(account)}
-                          disabled={isDeleting}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </DataTableCell>
-                  </DataTableRow>
+                    </div>
+                  </li>
                 );
-              })}
-            </DataTableBody>
-          </DataTable>
+              }
+              return (
+                <li
+                  key={account.id}
+                  className="group flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/50 transition-colors"
+                >
+                  <span
+                    className="w-4 h-4 rounded-full border border-border shrink-0"
+                    style={{ backgroundColor: resolvedColor }}
+                    aria-hidden
+                  />
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-sm font-medium truncate text-foreground">{account.name}</span>
+                    {account.is_primary && (
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium shrink-0">
+                        {t('accounts.primaryBadge', 'Primary')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      onClick={() => handleStartEdit(account.id, account.name, resolvedColor, account.is_primary)}
+                      aria-label="Edit"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDeleteClick(account)}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         ) : (
           <p className="text-sm text-muted-foreground/70 text-center py-4">
             {t('accounts.noAccountsYet', 'No accounts yet. Create one to get started.')}
