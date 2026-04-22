@@ -134,7 +134,8 @@
     "empty": "Sin notificaciones"
   },
   "heatmap": {
-    "title": "Actividad diaria",
+    "title": "Vista diaria",
+    "view": "Vista",
     "expense": "Gastos",
     "income": "Ingresos",
     "count": "Actividad",
