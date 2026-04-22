@@ -184,19 +184,19 @@ export function UnifiedUploadsTable() {
         </div>
       )}
 
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div>
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[140px]">Month</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[60px]">Edit</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11">File</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[90px] hidden md:table-cell">Type</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[170px] hidden lg:table-cell">Uploaded</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[120px] hidden md:table-cell">Transactions</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[160px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[70px]">Lock</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Delete</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead type="date" className="w-[140px]">Month</TableHead>
+              <TableHead className="w-[56px]">Edit</TableHead>
+              <TableHead type="file">File</TableHead>
+              <TableHead type="tag" className="w-[90px] hidden md:table-cell">Type</TableHead>
+              <TableHead type="date" className="w-[160px] hidden lg:table-cell">Uploaded</TableHead>
+              <TableHead type="number" numeric className="w-[110px] hidden md:table-cell">Transactions</TableHead>
+              <TableHead type="account" className="w-[160px] hidden md:table-cell">Account</TableHead>
+              <TableHead type="lock" className="w-[60px]">Lock</TableHead>
+              <TableHead className="w-[60px]">Delete</TableHead>
             </TableRow>
             {/* Global totals row — pinned right after headers */}
             <TableRow className="bg-primary/5 hover:bg-primary/5 border-b-2 border-primary/20">
