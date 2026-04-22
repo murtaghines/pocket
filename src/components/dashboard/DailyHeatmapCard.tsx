@@ -2,9 +2,15 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLocalization } from "@/hooks/useLocalization";
 import { cn } from "@/lib/utils";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 
 type Metric = "expense" | "income" | "count";
 
@@ -21,9 +27,16 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
   const { formatCurrency } = useLocalization();
   const [metric, setMetric] = useState<Metric>("expense");
 
-  const { cells, maxValue, daysInMonth, leadingBlanks, total } = useMemo(() => {
+  const { cells, maxValue, minNonZero, daysInMonth, leadingBlanks, total } = useMemo(() => {
     if (!monthKey) {
-      return { cells: [] as Array<{ day: number; value: number }>, maxValue: 0, daysInMonth: 0, leadingBlanks: 0, total: 0 };
+      return {
+        cells: [] as Array<{ day: number; value: number }>,
+        maxValue: 0,
+        minNonZero: 0,
+        daysInMonth: 0,
+        leadingBlanks: 0,
+        total: 0,
+      };
     }
     const [y, m] = monthKey.split("-").map(Number);
     const days = new Date(y, m, 0).getDate();
@@ -47,8 +60,10 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
 
     const cells = buckets.map((value, i) => ({ day: i + 1, value }));
     const maxValue = Math.max(0, ...buckets);
+    const nonZero = buckets.filter((v) => v > 0);
+    const minNonZero = nonZero.length > 0 ? Math.min(...nonZero) : 0;
     const total = buckets.reduce((s, v) => s + v, 0);
-    return { cells, maxValue, daysInMonth: days, leadingBlanks: firstWeekday, total };
+    return { cells, maxValue, minNonZero, daysInMonth: days, leadingBlanks: firstWeekday, total };
   }, [transactions, monthKey, metric, convert]);
 
   const getIntensity = (value: number) => {
@@ -63,11 +78,17 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
     return formatCurrency(value);
   };
 
+  const formatLegendValue = (value: number) => {
+    if (metric === "count") return `${value}`;
+    return formatCurrency(value);
+  };
+
   const metricOptions: Array<{ key: Metric; label: string }> = [
     { key: "expense", label: t("heatmap.expense", "Expenses") },
     { key: "income", label: t("heatmap.income", "Income") },
     { key: "count", label: t("heatmap.count", "Activity") },
   ];
+  const activeMetricLabel = metricOptions.find((o) => o.key === metric)?.label ?? "";
 
   // Build a flat grid: leading blanks + days (always start Monday)
   const totalCells = leadingBlanks + daysInMonth;
@@ -80,24 +101,33 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <CardTitle className="flex items-center gap-2 text-base">
             <CalendarDays className="w-4 h-4 text-muted-foreground" />
-            {t("heatmap.title", "Daily activity")}
+            {t("heatmap.title", "Daily view")}
           </CardTitle>
-          <div className="flex bg-muted/40 rounded-full p-1 text-xs">
-            {metricOptions.map((opt) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
-                key={opt.key}
-                onClick={() => setMetric(opt.key)}
                 className={cn(
-                  "px-3 py-1 rounded-full font-medium transition-colors",
-                  metric === opt.key
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
+                  "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium",
+                  "border border-border bg-card text-foreground hover:bg-muted/40 transition-colors",
                 )}
               >
-                {opt.label}
+                <span className="text-muted-foreground">{t("heatmap.view", "View")}:</span>
+                <span>{activeMetricLabel}</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
-            ))}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[140px]">
+              {metricOptions.map((opt) => (
+                <DropdownMenuItem
+                  key={opt.key}
+                  onSelect={() => setMetric(opt.key)}
+                  className={cn("text-xs", metric === opt.key && "font-semibold")}
+                >
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       <CardContent>
@@ -150,7 +180,9 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
                 {t("heatmap.total", "Total")}: <span className="text-foreground font-semibold">{formatValue(total)}</span>
               </span>
               <div className="flex items-center gap-1.5">
-                <span>{t("heatmap.less", "Less")}</span>
+                <span className="text-foreground/70 tabular-nums">
+                  {minNonZero > 0 ? formatLegendValue(minNonZero) : "—"}
+                </span>
                 {[0.12, 0.3, 0.55, 0.8, 1].map((a) => (
                   <div
                     key={a}
@@ -158,7 +190,9 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
                     style={{ backgroundColor: `hsl(var(--primary) / ${a})` }}
                   />
                 ))}
-                <span>{t("heatmap.more", "More")}</span>
+                <span className="text-foreground/70 tabular-nums">
+                  {maxValue > 0 ? formatLegendValue(maxValue) : "—"}
+                </span>
               </div>
             </div>
           </div>
