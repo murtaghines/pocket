@@ -34,6 +34,8 @@ export interface PillBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   tone?: PillTone;
   /** When provided, overrides tone with a custom HSL color (background + foreground). */
   hsl?: string;
+  /** When provided, overrides tone using a CSS variable name (e.g. "category-salary"). */
+  colorVar?: string;
   size?: "sm" | "md";
   icon?: React.ReactNode;
 }
@@ -42,13 +44,20 @@ export function PillBadge({
   className,
   tone = "neutral",
   hsl,
+  colorVar,
   size = "sm",
   icon,
   children,
   style,
   ...props
 }: PillBadgeProps) {
-  const customStyle = hsl
+  const customStyle = colorVar
+    ? {
+        backgroundColor: `hsl(var(--${colorVar}) / 0.14)`,
+        color: `hsl(var(--${colorVar}))`,
+        ...style,
+      }
+    : hsl
     ? {
         backgroundColor: `hsl(${hsl} / 0.14)`,
         color: `hsl(${hsl})`,
@@ -56,12 +65,14 @@ export function PillBadge({
       }
     : style;
 
+  const useCustom = !!(colorVar || hsl);
+
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full font-medium leading-none whitespace-nowrap",
         size === "sm" ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-sm",
-        !hsl && TONE_CLASSES[tone],
+        !useCustom && TONE_CLASSES[tone],
         className,
       )}
       style={customStyle}

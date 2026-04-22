@@ -327,11 +327,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       </span>
                     </DataTableCell>
                     <DataTableCell className="hidden md:table-cell">
-                      <PillBadge
-                        hsl={getCategoryColor(transaction.category)?.replace(/^var\(--|\)$/g, '')
-                          ? undefined
-                          : undefined}
-                      >
+                      <PillBadge colorVar={getCategoryColor(transaction.category)}>
                         <CategoryIcon
                           iconName={getCategoryIcon(transaction.category)}
                           colorVar={getCategoryColor(transaction.category)}
