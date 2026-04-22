@@ -1393,10 +1393,18 @@ function AmountEditor({
         />
       </div>
       {amountChanged && (
-        <span className="text-[10px] text-muted-foreground line-through pr-1 tabular-nums">
-          {formatCurrency(Math.abs(originalAmount))}
-          {splitCount && splitCount > 1 ? ` (÷${splitCount})` : ""}
-        </span>
+        <button
+          type="button"
+          onClick={onRevert}
+          className="group/rv inline-flex items-center gap-1 pr-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+          title="Revert amount"
+        >
+          <Undo2 className="w-2.5 h-2.5 opacity-60 group-hover/rv:opacity-100" />
+          <span className="line-through group-hover/rv:no-underline tabular-nums">
+            {formatCurrency(Math.abs(originalAmount))}
+            {splitCount && splitCount > 1 ? ` (÷${splitCount})` : ""}
+          </span>
+        </button>
       )}
     </div>
   );
