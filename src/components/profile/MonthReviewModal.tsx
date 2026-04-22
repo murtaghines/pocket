@@ -883,17 +883,18 @@ export function MonthReviewModal({
               </div>
 
               {/* Transaction Table */}
-              <div ref={tableScrollRef} className="flex-1 min-h-0 border rounded-lg overflow-auto">
+              <div ref={tableScrollRef} className="flex-1 min-h-0 border rounded-lg overflow-auto bg-white">
                 <Table className="w-full table-fixed">
-                  <TableHeader>
-                   <TableRow>
-                       <TableHead className="w-[9%]">Date</TableHead>
-                       <TableHead className="w-[33%]">Description</TableHead>
+                  <TableHeader className="sticky top-0 z-10 bg-white">
+                   <TableRow className="hover:bg-transparent">
+                       <TableHead className="w-[8%]">Date</TableHead>
+                       <TableHead className="w-[28%]">Description</TableHead>
                        <TableHead className="w-[10%]">Account</TableHead>
                        <TableHead className="w-[12%]">Movement</TableHead>
                        <TableHead className="w-[16%]">Category</TableHead>
                        <TableHead className="text-right w-[14%]">Amount</TableHead>
-                       <TableHead className="text-center w-[6%]">Hide</TableHead>
+                       <TableHead className="text-center w-[6%]">Show</TableHead>
+                       <TableHead className="text-center w-[6%]">Revert</TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
