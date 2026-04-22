@@ -2,12 +2,19 @@ import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/ui/data-table";
 import { Transaction, Category } from "@/lib/mockData";
-import { Search, Plus, Minus, List, ChevronDown } from "lucide-react";
+import { Search, Plus, Minus, ArrowRightLeft, TrendingUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
@@ -21,11 +28,11 @@ interface TransactionTableProps {
 
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
 
-const movementBadgeColors: Record<MovementType, string> = {
-  income: 'bg-success/10 text-success border-0',
-  expense: 'bg-destructive/10 text-destructive border-0',
-  transfer: 'bg-muted text-muted-foreground border-0',
-  investment: 'bg-purple-100 text-purple-600 border-0',
+const movementBadgeTone: Record<MovementType, PillTone> = {
+  income: 'green',
+  expense: 'red',
+  transfer: 'neutral',
+  investment: 'purple',
 };
 
 const categoriesByMovement: Record<MovementType, string[]> = {
