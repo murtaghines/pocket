@@ -1404,10 +1404,7 @@ function AmountEditor({
           onBlur={handleBlur}
           disabled={disabled}
           title="Tip: you can type expressions like 20/4 or 10+5"
-          className={cn(
-            "h-8 w-28 text-right tabular-nums text-sm font-medium",
-            isNegative && "text-destructive",
-          )}
+          className="h-8 w-28 text-right tabular-nums text-sm font-medium text-foreground"
         />
       </div>
       {amountChanged && (
