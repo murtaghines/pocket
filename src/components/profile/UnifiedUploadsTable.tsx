@@ -183,12 +183,12 @@ export function UnifiedUploadsTable() {
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[140px]">Month</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[60px]">Edit</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11">File</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[90px] hidden md:table-cell">Type</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[170px] hidden lg:table-cell">Uploaded</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[120px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[160px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Edit</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[70px]">Lock</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Delete</TableHead>
             </TableRow>
@@ -197,6 +197,7 @@ export function UnifiedUploadsTable() {
               <TableCell className="py-3 font-semibold text-sm text-foreground uppercase tracking-wide">
                 Totals
               </TableCell>
+              <TableCell className="py-3" />
               <TableCell className="py-3 text-sm text-foreground font-semibold">
                 {globalTotals.files}
               </TableCell>
@@ -210,7 +211,6 @@ export function UnifiedUploadsTable() {
               <TableCell className="py-3 hidden md:table-cell">
                 <span className="text-sm font-semibold text-foreground">{globalTotals.accounts}</span>
               </TableCell>
-              <TableCell className="py-3" />
               <TableCell className="py-3" />
               <TableCell className="py-3" />
             </TableRow>
