@@ -1198,3 +1198,117 @@ export function MonthReviewModal({
     </>
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// AmountEditor: editable amount with Split popover
+// ─────────────────────────────────────────────────────────────
+interface AmountEditorProps {
+  tx: MonthTransaction;
+  effectiveAmount: number;
+  originalAmount: number;
+  amountChanged: boolean;
+  splitCount?: number;
+  disabled: boolean;
+  onChange: (rawValue: string) => void;
+  onApplySplit: (n: number) => void;
+  formatCurrency: (n: number) => string;
+}
+
+function AmountEditor({
+  effectiveAmount,
+  originalAmount,
+  amountChanged,
+  splitCount,
+  disabled,
+  onChange,
+  onApplySplit,
+  formatCurrency,
+}: AmountEditorProps) {
+  const [localValue, setLocalValue] = useState<string>(Math.abs(effectiveAmount).toString());
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [splitN, setSplitN] = useState<number>(splitCount || 2);
+
+  // Sync local value when external amount changes (e.g., split applied)
+  useEffect(() => {
+    setLocalValue(Math.abs(effectiveAmount).toFixed(2));
+  }, [effectiveAmount]);
+
+  const handleBlur = () => {
+    if (localValue === "" || localValue === "-") {
+      setLocalValue(Math.abs(effectiveAmount).toFixed(2));
+      return;
+    }
+    const parsed = parseFloat(localValue.replace(",", "."));
+    if (!isNaN(parsed) && parsed !== Math.abs(effectiveAmount)) {
+      onChange(localValue);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-end gap-0.5 group">
+      <div className="flex items-center gap-1 justify-end">
+        <Popover open={splitOpen} onOpenChange={setSplitOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+              title="Split amount"
+              disabled={disabled}
+            >
+              <SplitIcon className="w-3.5 h-3.5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-3" align="end">
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Split between N people
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={splitN}
+                  onChange={(e) => setSplitN(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="h-8 mt-1"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Original: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount))}</span>
+              </div>
+              <div className="text-sm font-medium">
+                Your share: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount) / splitN)}</span>
+              </div>
+              <Button
+                size="sm"
+                className="w-full h-8"
+                onClick={() => {
+                  onApplySplit(splitN);
+                  setSplitOpen(false);
+                }}
+              >
+                Apply ÷ {splitN}
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
+          onBlur={handleBlur}
+          disabled={disabled}
+          className="h-8 w-24 text-right tabular-nums text-sm font-medium"
+        />
+      </div>
+      {amountChanged && (
+        <span className="text-[10px] text-muted-foreground line-through pr-1 tabular-nums">
+          {formatCurrency(Math.abs(originalAmount))}
+          {splitCount && splitCount > 1 ? ` (÷${splitCount})` : ""}
+        </span>
+      )}
+    </div>
+  );
+}
