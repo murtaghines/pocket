@@ -238,6 +238,27 @@ export function UnifiedUploadsTable() {
                     return (
                       <TableRow key={imp.id} className="group" id={idx === 0 ? `upload-bank-${slot.key}` : undefined}>
                         {idx === 0 && monthCell}
+                        {/* Edit / View — placed right after Month for easy association */}
+                        <TableCell className="py-2">
+                          {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={cn(
+                                "h-8 w-8",
+                                imp.locked
+                                  ? "text-success hover:bg-success/10"
+                                  : "text-primary hover:bg-primary/10"
+                              )}
+                              title={imp.locked ? "View transactions" : "Edit transactions"}
+                              onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
+                            >
+                              {imp.locked ? <Eye className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                            </Button>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="py-2">
                           <div className="flex items-center gap-2 min-w-0">
                             {statusIcon(st)}
