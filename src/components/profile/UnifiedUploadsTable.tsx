@@ -302,7 +302,9 @@ export function UnifiedUploadsTable() {
                           </div>
                         </TableCell>
                         <TableCell className="py-2 hidden md:table-cell">
-                          <Badge variant="outline" className="text-xs font-medium uppercase px-2 py-0.5">{imp.file_name.split(".").pop() || "—"}</Badge>
+                          <PillBadge tone="neutral" className="uppercase">
+                            {imp.file_name.split(".").pop() || "—"}
+                          </PillBadge>
                         </TableCell>
                         <TableCell className="py-2 hidden lg:table-cell">
                           <div className="flex flex-col leading-tight">
