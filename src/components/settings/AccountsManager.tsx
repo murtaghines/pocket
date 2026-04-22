@@ -20,15 +20,6 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, Building2, Loader2, Pencil, Check, X } from "lucide-react";
 import { ACCOUNT_COLOR_PALETTE, getDefaultAccountColor } from "@/lib/accountColors";
-import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-} from "@/components/ui/data-table";
-import { PillBadge } from "@/components/ui/pill-badge";
 
 export function AccountsManager({ className }: { className?: string }) {
   const { t } = useTranslation('profile');
