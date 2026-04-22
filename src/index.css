@@ -126,6 +126,11 @@
     --warning: 45 100% 58%;
     --warning-foreground: 0 0% 3%;
 
+    /* Muted variants — match Airtable-style pill colors used in tables.
+       Less saturated than --success/--destructive, used for KPIs & charts. */
+    --success-muted: 150 70% 28%;
+    --destructive-muted: 0 70% 42%;
+
     --border: 0 0% 88%;
     --input: 0 0% 88%;
     --ring: 216 100% 55%;
