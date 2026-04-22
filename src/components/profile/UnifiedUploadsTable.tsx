@@ -183,12 +183,12 @@ export function UnifiedUploadsTable() {
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[140px]">Month</TableHead>
+              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[60px]">Edit</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11">File</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[90px] hidden md:table-cell">Type</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[170px] hidden lg:table-cell">Uploaded</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[120px] hidden md:table-cell">Transactions</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[160px] hidden md:table-cell">Account</TableHead>
-              <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Edit</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[70px]">Lock</TableHead>
               <TableHead className="text-sm font-semibold text-muted-foreground h-11 w-[80px]">Delete</TableHead>
             </TableRow>
@@ -197,6 +197,7 @@ export function UnifiedUploadsTable() {
               <TableCell className="py-3 font-semibold text-sm text-foreground uppercase tracking-wide">
                 Totals
               </TableCell>
+              <TableCell className="py-3" />
               <TableCell className="py-3 text-sm text-foreground font-semibold">
                 {globalTotals.files}
               </TableCell>
@@ -210,7 +211,6 @@ export function UnifiedUploadsTable() {
               <TableCell className="py-3 hidden md:table-cell">
                 <span className="text-sm font-semibold text-foreground">{globalTotals.accounts}</span>
               </TableCell>
-              <TableCell className="py-3" />
               <TableCell className="py-3" />
               <TableCell className="py-3" />
             </TableRow>
@@ -238,6 +238,27 @@ export function UnifiedUploadsTable() {
                     return (
                       <TableRow key={imp.id} className="group" id={idx === 0 ? `upload-bank-${slot.key}` : undefined}>
                         {idx === 0 && monthCell}
+                        {/* Edit / View — placed right after Month for easy association */}
+                        <TableCell className="py-2">
+                          {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={cn(
+                                "h-8 w-8",
+                                imp.locked
+                                  ? "text-success hover:bg-success/10"
+                                  : "text-primary hover:bg-primary/10"
+                              )}
+                              title={imp.locked ? "View transactions" : "Edit transactions"}
+                              onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
+                            >
+                              {imp.locked ? <Eye className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                            </Button>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="py-2">
                           <div className="flex items-center gap-2 min-w-0">
                             {statusIcon(st)}
@@ -295,30 +316,6 @@ export function UnifiedUploadsTable() {
                               <SelectContent>{cashAccounts.map((a) => <SelectItem key={a.id} value={a.id} className="text-sm">{a.name}</SelectItem>)}</SelectContent>
                             </Select>
                           ) : <span className="text-sm text-muted-foreground">{acctName(imp.account_id)}</span>}
-                        </TableCell>
-                        {/* Edit / View */}
-                        <TableCell className="py-2">
-                          {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 ? (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className={cn(
-                                "h-8 px-3 text-sm border-0",
-                                imp.locked
-                                  ? "bg-success/10 text-success hover:bg-success/20"
-                                  : "bg-primary/10 text-primary hover:bg-primary/20"
-                              )}
-                              onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
-                            >
-                              {imp.locked ? (
-                                <><Eye className="w-3.5 h-3.5 mr-1.5" />View</>
-                              ) : (
-                                <><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</>
-                              )}
-                            </Button>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">—</span>
-                          )}
                         </TableCell>
                         {/* Lock / Unlock this file */}
                         <TableCell className="py-2">
