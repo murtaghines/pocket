@@ -275,95 +275,92 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         </div>
       </CardHeader>
       <CardContent className="px-0 pb-0">
-        <div className="rounded-2xl border border-border/50 overflow-hidden">
-          <Table className="table-fixed w-full">
-             <TableHeader>
-              <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="hidden sm:table-cell whitespace-nowrap w-[50px]">{t('transactions.month', { defaultValue: 'Month' })}</TableHead>
-                <TableHead className="hidden sm:table-cell whitespace-nowrap w-[82px]">{t('transactions.date')}</TableHead>
-                <TableHead className="hidden md:table-cell whitespace-nowrap w-[110px]">{t('transactions.movement', { defaultValue: 'Movement' })}</TableHead>
-                <TableHead>{t('transactions.description')}</TableHead>
-                <TableHead className="hidden md:table-cell whitespace-nowrap w-[170px]">{t('transactions.category')}</TableHead>
-                <TableHead className="hidden lg:table-cell whitespace-nowrap w-[120px]">Account</TableHead>
-                <TableHead className="text-right whitespace-nowrap w-[95px]">{t('transactions.amount')}</TableHead>
-                <TableHead className="text-right hidden lg:table-cell whitespace-nowrap w-[80px]">{t('transactions.balance', { defaultValue: 'Balance' })}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-               {filteredTransactions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    {t('transactions.noTransactions')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredTransactions.map((transaction) => {
-                  const movementType = getMovementType(transaction);
-                  return (
-                    <TableRow 
-                      key={transaction.id}
-                      className="hover:bg-muted/30 transition-colors"
-                    >
-                      <TableCell className="text-xs text-muted-foreground hidden sm:table-cell whitespace-nowrap">
-                        <div className="leading-tight">
-                          <div className="font-medium">{formatMonth(transaction.date).month}</div>
-                          <div className="opacity-70">{formatMonth(transaction.date).year}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium text-muted-foreground hidden sm:table-cell whitespace-nowrap">
-                        {formatTransactionDate(transaction.date)}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge 
-                          className={cn("font-normal rounded-full gap-1", movementBadgeColors[movementType])}
-                        >
-                          {movementType === 'income' ? <Plus className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                          {movementLabels[movementType]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="break-words line-clamp-2">{transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}</span>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <CategoryIcon 
-                            iconName={getCategoryIcon(transaction.category)} 
-                            colorVar={getCategoryColor(transaction.category)} 
-                            size="sm"
-                          />
-                          <span
-                            className="text-sm text-muted-foreground truncate"
-                            title={getCategoryLabel(transaction.category)}
-                          >
-                            {getCategoryLabel(transaction.category)}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <span className="text-sm text-muted-foreground truncate block">{transaction.account}</span>
-                      </TableCell>
-                      <TableCell className={cn(
-                        "text-right font-semibold tabular-nums",
-                        movementType === 'income' ? "text-success"
-                          : movementType === 'investment' ? "text-purple-600"
-                          : movementType === 'transfer' ? "text-muted-foreground"
-                          : "text-destructive"
-                      )}>
-                       {transaction.amount >= 0 ? '+' : ''}
-                        {formatCurrency(transaction.amount)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground hidden lg:table-cell">
-                        {computedBalanceMap.has(transaction.id)
-                          ? formatCurrency(computedBalanceMap.get(transaction.id)!)
-                          : '—'}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable>
+          <DataTableHeader>
+            <DataTableRow className="hover:bg-transparent">
+              <DataTableHead rowNumber />
+              <DataTableHead type="date" className="hidden sm:table-cell w-[60px]">{t('transactions.month', { defaultValue: 'Month' })}</DataTableHead>
+              <DataTableHead type="date" className="hidden sm:table-cell w-[100px]">{t('transactions.date')}</DataTableHead>
+              <DataTableHead type="movement" className="hidden md:table-cell w-[120px]">{t('transactions.movement', { defaultValue: 'Movement' })}</DataTableHead>
+              <DataTableHead type="text">{t('transactions.description')}</DataTableHead>
+              <DataTableHead type="select" className="hidden md:table-cell w-[180px]">{t('transactions.category')}</DataTableHead>
+              <DataTableHead type="account" className="hidden lg:table-cell w-[140px]">Account</DataTableHead>
+              <DataTableHead type="currency" numeric className="w-[110px]">{t('transactions.amount')}</DataTableHead>
+              <DataTableHead type="number" numeric className="hidden lg:table-cell w-[100px]">{t('transactions.balance', { defaultValue: 'Balance' })}</DataTableHead>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBody>
+            {filteredTransactions.length === 0 ? (
+              <DataTableRow className="hover:bg-transparent">
+                <DataTableCell colSpan={9} className="text-center py-10 text-muted-foreground">
+                  {t('transactions.noTransactions')}
+                </DataTableCell>
+              </DataTableRow>
+            ) : (
+              filteredTransactions.map((transaction, idx) => {
+                const movementType = getMovementType(transaction);
+                const movementIcon =
+                  movementType === 'income' ? <Plus className="w-3 h-3" /> :
+                  movementType === 'transfer' ? <ArrowRightLeft className="w-3 h-3" /> :
+                  movementType === 'investment' ? <TrendingUp className="w-3 h-3" /> :
+                  <Minus className="w-3 h-3" />;
+                return (
+                  <DataTableRow key={transaction.id}>
+                    <DataTableCell rowNumber={idx + 1} />
+                    <DataTableCell muted className="hidden sm:table-cell text-xs whitespace-nowrap">
+                      <div className="leading-tight">
+                        <div className="font-medium text-foreground/80">{formatMonth(transaction.date).month}</div>
+                        <div className="opacity-70">{formatMonth(transaction.date).year}</div>
+                      </div>
+                    </DataTableCell>
+                    <DataTableCell muted className="hidden sm:table-cell whitespace-nowrap">
+                      {formatTransactionDate(transaction.date)}
+                    </DataTableCell>
+                    <DataTableCell className="hidden md:table-cell">
+                      <PillBadge tone={movementBadgeTone[movementType]} icon={movementIcon}>
+                        {movementLabels[movementType]}
+                      </PillBadge>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <span className="break-words line-clamp-2 text-foreground/90">
+                        {transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell className="hidden md:table-cell">
+                      <PillBadge
+                        hsl={getCategoryColor(transaction.category)?.replace(/^var\(--|\)$/g, '')
+                          ? undefined
+                          : undefined}
+                      >
+                        <CategoryIcon
+                          iconName={getCategoryIcon(transaction.category)}
+                          colorVar={getCategoryColor(transaction.category)}
+                          size="sm"
+                          showBackground={false}
+                        />
+                        <span className="truncate max-w-[120px]" title={getCategoryLabel(transaction.category)}>
+                          {getCategoryLabel(transaction.category)}
+                        </span>
+                      </PillBadge>
+                    </DataTableCell>
+                    <DataTableCell muted className="hidden lg:table-cell">
+                      <span className="truncate block">{transaction.account}</span>
+                    </DataTableCell>
+                    <DataTableCell numeric className="font-semibold text-foreground">
+                      {transaction.amount >= 0 ? '+' : ''}
+                      {formatCurrency(transaction.amount)}
+                    </DataTableCell>
+                    <DataTableCell numeric muted className="hidden lg:table-cell">
+                      {computedBalanceMap.has(transaction.id)
+                        ? formatCurrency(computedBalanceMap.get(transaction.id)!)
+                        : '—'}
+                    </DataTableCell>
+                  </DataTableRow>
+                );
+              })
+            )}
+          </DataTableBody>
+        </DataTable>
         <p className="text-sm text-muted-foreground mt-3">
           {filteredTransactions.length} / {transactions.length}
         </p>
