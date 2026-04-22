@@ -1298,6 +1298,7 @@ interface AmountEditorProps {
   disabled: boolean;
   onChange: (rawValue: string) => void;
   onApplySplit: (n: number) => void;
+  onRevert: () => void;
   formatCurrency: (n: number) => string;
 }
 
@@ -1309,6 +1310,7 @@ function AmountEditor({
   disabled,
   onChange,
   onApplySplit,
+  onRevert,
   formatCurrency,
 }: AmountEditorProps) {
   const [localValue, setLocalValue] = useState<string>(Math.abs(effectiveAmount).toString());
