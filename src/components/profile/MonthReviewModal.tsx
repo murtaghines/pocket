@@ -52,6 +52,8 @@ import {
   Split as SplitIcon,
   Undo2,
   RotateCcw,
+  Undo,
+  Redo,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -158,6 +160,66 @@ export function MonthReviewModal({
   const [showHidden, setShowHidden] = useState(false);
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // ============= Undo / Redo history (spreadsheet-like) =============
+  const editsHistory = useRef<Record<string, TransactionEdits>[]>([{}]);
+  const historyIndex = useRef<number>(0);
+  const isReplaying = useRef<boolean>(false);
+
+  // Push a new edits snapshot whenever edits change (but skip undo/redo replays)
+  useEffect(() => {
+    if (isReplaying.current) {
+      isReplaying.current = false;
+      return;
+    }
+    // Drop any "redo" tail when a new change is made
+    editsHistory.current = editsHistory.current.slice(0, historyIndex.current + 1);
+    editsHistory.current.push(edits);
+    historyIndex.current = editsHistory.current.length - 1;
+    // Cap history to prevent memory bloat
+    if (editsHistory.current.length > 100) {
+      editsHistory.current.shift();
+      historyIndex.current--;
+    }
+  }, [edits]);
+
+  // Reset history when modal closes/opens
+  useEffect(() => {
+    if (!open) {
+      editsHistory.current = [{}];
+      historyIndex.current = 0;
+    }
+  }, [open]);
+
+  const canUndo = historyIndex.current > 0;
+  const canRedo = historyIndex.current < editsHistory.current.length - 1;
+
+  const handleUndo = () => {
+    if (historyIndex.current <= 0) return;
+    historyIndex.current--;
+    isReplaying.current = true;
+    setEdits(editsHistory.current[historyIndex.current]);
+  };
+
+  const handleRedo = () => {
+    if (historyIndex.current >= editsHistory.current.length - 1) return;
+    historyIndex.current++;
+    isReplaying.current = true;
+    setEdits(editsHistory.current[historyIndex.current]);
+  };
+
+  // Keyboard shortcuts: Cmd/Ctrl+Z (undo), Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y (redo)
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (!meta) return;
+      if (e.key === "z" && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      else if ((e.key === "z" && e.shiftKey) || e.key === "y") { e.preventDefault(); handleRedo(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open]);
 
   // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
@@ -848,6 +910,30 @@ export function MonthReviewModal({
 
               {/* Stats Summary */}
               <div className="flex gap-2 flex-wrap items-center text-sm">
+                {!isLocked && (
+                  <div className="inline-flex items-center gap-0.5 mr-1 bg-muted/50 rounded-md p-0.5 border border-border">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      onClick={handleUndo}
+                      disabled={!canUndo}
+                      title="Undo (⌘Z)"
+                    >
+                      <Undo className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      onClick={handleRedo}
+                      disabled={!canRedo}
+                      title="Redo (⌘⇧Z)"
+                    >
+                      <Redo className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
                   <PlusCircle className="w-4 h-4 text-success" />
                   <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
@@ -903,12 +989,13 @@ export function MonthReviewModal({
                   <TableHeader className="sticky top-0 z-10 bg-white">
                    <TableRow className="hover:bg-transparent">
                        <TableHead className="w-[8%]">Date</TableHead>
-                       <TableHead className="w-[28%]">Description</TableHead>
+                       <TableHead className="w-[26%]">Description</TableHead>
                        <TableHead className="w-[10%]">Account</TableHead>
-                       <TableHead className="w-[12%]">Movement</TableHead>
-                       <TableHead className="w-[16%]">Category</TableHead>
-                       <TableHead className="text-right w-[14%]">Amount</TableHead>
-                       <TableHead className="text-center w-[6%]">Show</TableHead>
+                       <TableHead className="w-[11%]">Movement</TableHead>
+                       <TableHead className="w-[15%]">Category</TableHead>
+                       <TableHead className="text-right w-[13%]">Amount</TableHead>
+                       <TableHead className="text-center w-[6%]">Split</TableHead>
+                       <TableHead className="text-center w-[5%]">Show</TableHead>
                        <TableHead className="text-center w-[6%]">Revert</TableHead>
                      </TableRow>
                   </TableHeader>
@@ -978,20 +1065,11 @@ export function MonthReviewModal({
                                 onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
                                 disabled={hidden}
                               >
-                                <SelectTrigger 
-                                  className="h-8 text-sm border-0"
-                                  style={{ 
-                                    backgroundColor: effectiveMovement === 'INCOME' 
-                                      ? 'hsl(var(--success) / 0.12)' 
-                                      : effectiveMovement === 'TRANSFER' 
-                                      ? 'hsl(var(--warning) / 0.12)' 
-                                      : 'hsl(var(--destructive) / 0.12)' 
-                                  }}
-                                >
+                                <SelectTrigger className="h-8 text-sm border border-border bg-transparent hover:bg-muted/50">
                                   <SelectValue>
                                     <div className="flex items-center gap-1.5">
                                       {getMovementIcon(effectiveMovement)}
-                                      <span className={getMovementColor(effectiveMovement)}>
+                                      <span className="text-foreground">
                                         {translateMovement(effectiveMovement)}
                                       </span>
                                     </div>
@@ -1112,8 +1190,18 @@ export function MonthReviewModal({
                                 splitCount={editedFields.splitCount}
                                 disabled={hidden}
                                 onChange={(v) => handleAmountChange(tx.id, v)}
-                                onApplySplit={(n) => handleApplySplit(tx.id, n)}
                                 onRevert={() => handleRevertField(tx.id, "amount")}
+                                formatCurrency={formatCurrency}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {!isLocked && (
+                              <SplitButton
+                                originalAmount={tx.amount}
+                                splitCount={editedFields.splitCount}
+                                disabled={hidden}
+                                onApplySplit={(n) => handleApplySplit(tx.id, n)}
                                 formatCurrency={formatCurrency}
                               />
                             )}
@@ -1302,7 +1390,7 @@ export function MonthReviewModal({
 }
 
 // ─────────────────────────────────────────────────────────────
-// AmountEditor: editable amount with Split popover
+// AmountEditor: editable amount input (sign preserved, math expressions allowed)
 // ─────────────────────────────────────────────────────────────
 interface AmountEditorProps {
   tx: MonthTransaction;
@@ -1312,7 +1400,6 @@ interface AmountEditorProps {
   splitCount?: number;
   disabled: boolean;
   onChange: (rawValue: string) => void;
-  onApplySplit: (n: number) => void;
   onRevert: () => void;
   formatCurrency: (n: number) => string;
 }
@@ -1324,7 +1411,6 @@ function AmountEditor({
   splitCount,
   disabled,
   onChange,
-  onApplySplit,
   onRevert,
   formatCurrency,
 }: AmountEditorProps) {
@@ -1333,8 +1419,6 @@ function AmountEditor({
     return `${sign}${Math.abs(n).toFixed(2)}`;
   };
   const [localValue, setLocalValue] = useState<string>(formatSigned(effectiveAmount));
-  const [splitOpen, setSplitOpen] = useState(false);
-  const [splitN, setSplitN] = useState<number>(splitCount || 2);
   const [isFocused, setIsFocused] = useState(false);
 
   // Sync local value when external amount changes (e.g., split applied) — but not while editing
@@ -1353,58 +1437,9 @@ function AmountEditor({
     onChange(localValue);
   };
 
-  const isNegative = effectiveAmount < 0;
-
   return (
     <div className="flex flex-col items-end gap-0.5 group">
-      <div className="flex items-center gap-1 justify-end">
-        <Popover open={splitOpen} onOpenChange={setSplitOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
-              title="Split amount"
-              disabled={disabled}
-            >
-              <SplitIcon className="w-3.5 h-3.5" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-56 p-3" align="end">
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Split between N people
-                </label>
-                <Input
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={splitN}
-                  onChange={(e) => setSplitN(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="h-8 mt-1"
-                />
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Original: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount))}</span>
-              </div>
-              <div className="text-sm font-medium">
-                Your share: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount) / splitN)}</span>
-              </div>
-              <Button
-                size="sm"
-                className="w-full h-8"
-                onClick={() => {
-                  onApplySplit(splitN);
-                  setSplitOpen(false);
-                }}
-              >
-                Apply ÷ {splitN}
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-        <Input
+      <Input
           type="text"
           inputMode="decimal"
           value={localValue}
@@ -1413,12 +1448,8 @@ function AmountEditor({
           onBlur={handleBlur}
           disabled={disabled}
           title="Tip: you can type expressions like 20/4 or 10+5"
-          className={cn(
-            "h-8 w-28 text-right tabular-nums text-sm font-medium",
-            isNegative && "text-destructive",
-          )}
+          className="h-8 w-28 text-right tabular-nums text-sm font-medium text-foreground"
         />
-      </div>
       {amountChanged && (
         <button
           type="button"
@@ -1434,5 +1465,74 @@ function AmountEditor({
         </button>
       )}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// SplitButton: dedicated column for splitting an amount across N people
+// ─────────────────────────────────────────────────────────────
+interface SplitButtonProps {
+  originalAmount: number;
+  splitCount?: number;
+  disabled: boolean;
+  onApplySplit: (n: number) => void;
+  formatCurrency: (n: number) => string;
+}
+
+function SplitButton({ originalAmount, splitCount, disabled, onApplySplit, formatCurrency }: SplitButtonProps) {
+  const [open, setOpen] = useState(false);
+  const [splitN, setSplitN] = useState<number>(splitCount || 2);
+  const isActive = !!splitCount && splitCount > 1;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={disabled}
+          className={cn(
+            "h-7 px-2 gap-1 text-xs font-medium",
+            isActive
+              ? "text-primary bg-primary/10 hover:bg-primary/20"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted",
+          )}
+          title="Split amount across people"
+        >
+          <SplitIcon className="w-3.5 h-3.5" />
+          {isActive && <span className="tabular-nums">÷{splitCount}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3" align="end">
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">
+              Split between N people
+            </label>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              value={splitN}
+              onChange={(e) => setSplitN(Math.max(1, parseInt(e.target.value) || 1))}
+              className="h-8 mt-1"
+            />
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Original: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount))}</span>
+          </div>
+          <div className="text-sm font-medium">
+            Your share: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount) / splitN)}</span>
+          </div>
+          <Button
+            size="sm"
+            className="w-full h-8"
+            onClick={() => { onApplySplit(splitN); setOpen(false); }}
+          >
+            Apply ÷ {splitN}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
