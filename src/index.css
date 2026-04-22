@@ -126,10 +126,12 @@
     --warning: 45 100% 58%;
     --warning-foreground: 0 0% 3%;
 
-    /* Muted variants — match Airtable-style pill colors used in tables.
-       Less saturated than --success/--destructive, used for KPIs & charts. */
-    --success-muted: 150 70% 28%;
-    --destructive-muted: 0 70% 42%;
+    /* Muted variants — match the light pastel pill backgrounds used in tables
+       (Income / Expense badges). Used for KPIs & charts so they feel softer. */
+    --success-muted: 145 55% 88%;        /* light mint pill bg */
+    --success-muted-foreground: 150 60% 28%;  /* darker green text/ink on pill */
+    --destructive-muted: 0 70% 93%;      /* light pink pill bg */
+    --destructive-muted-foreground: 0 65% 45%; /* burgundy text/ink on pill */
 
     --border: 0 0% 88%;
     --input: 0 0% 88%;
