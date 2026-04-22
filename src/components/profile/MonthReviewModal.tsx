@@ -910,6 +910,30 @@ export function MonthReviewModal({
 
               {/* Stats Summary */}
               <div className="flex gap-2 flex-wrap items-center text-sm">
+                {!isLocked && (
+                  <div className="inline-flex items-center gap-0.5 mr-1 bg-muted/50 rounded-md p-0.5 border border-border">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      onClick={handleUndo}
+                      disabled={!canUndo}
+                      title="Undo (⌘Z)"
+                    >
+                      <Undo className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      onClick={handleRedo}
+                      disabled={!canRedo}
+                      title="Redo (⌘⇧Z)"
+                    >
+                      <Redo className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
                   <PlusCircle className="w-4 h-4 text-success" />
                   <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
