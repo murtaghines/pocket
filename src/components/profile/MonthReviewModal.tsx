@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,8 +46,14 @@ import {
   Pencil,
   Lock,
   Brain,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Split as SplitIcon,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
@@ -82,6 +88,7 @@ interface MonthTransaction {
   category_id: string | null;
   bank: string | null;
   account_id: string | null;
+  is_hidden: boolean;
 }
 
 interface MonthReviewModalProps {
@@ -113,6 +120,9 @@ interface CreatedRule extends PotentialRule {
 interface TransactionEdits {
   movement?: MovementType;
   category?: string;
+  amount?: number;
+  is_hidden?: boolean;
+  splitCount?: number;
 }
 
 export function MonthReviewModal({
