@@ -153,6 +153,9 @@ export function MonthReviewModal({
   const [createdRules, setCreatedRules] = useState<CreatedRule[]>([]);
   const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
   const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
@@ -168,7 +171,7 @@ export function MonthReviewModal({
       
       let query = supabase
         .from("transactions")
-        .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank, account_id")
+        .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank, account_id, is_hidden")
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
         .gte("date", startDate)
