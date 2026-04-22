@@ -165,7 +165,8 @@
     "empty": "No notifications"
   },
   "heatmap": {
-    "title": "Daily activity",
+    "title": "Daily view",
+    "view": "View",
     "expense": "Expenses",
     "income": "Income",
     "count": "Activity",
