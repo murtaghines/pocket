@@ -516,6 +516,7 @@ export type Database = {
           fx_rate: number | null
           id: string
           import_id: string | null
+          is_hidden: boolean
           linked_transaction_id: string | null
           merchant_norm: string | null
           movement: Database["public"]["Enums"]["movement_type"] | null
@@ -561,6 +562,7 @@ export type Database = {
           fx_rate?: number | null
           id?: string
           import_id?: string | null
+          is_hidden?: boolean
           linked_transaction_id?: string | null
           merchant_norm?: string | null
           movement?: Database["public"]["Enums"]["movement_type"] | null
@@ -606,6 +608,7 @@ export type Database = {
           fx_rate?: number | null
           id?: string
           import_id?: string | null
+          is_hidden?: boolean
           linked_transaction_id?: string | null
           merchant_norm?: string | null
           movement?: Database["public"]["Enums"]["movement_type"] | null
