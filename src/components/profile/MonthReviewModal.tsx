@@ -402,16 +402,18 @@ export function MonthReviewModal({
   };
 
   const summary = useMemo(() => {
-    const income = transactions
+    const visible = transactions.filter((t) => !isEffectivelyHidden(t));
+    const income = visible
       .filter((t) => getEffectiveMovement(t) === "INCOME")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const expenses = transactions
+      .reduce((sum, t) => sum + Math.abs(getEffectiveAmount(t)), 0);
+    const expenses = visible
       .filter((t) => getEffectiveMovement(t) === "EXPENSE")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const transfers = transactions
+      .reduce((sum, t) => sum + Math.abs(getEffectiveAmount(t)), 0);
+    const transfers = visible
       .filter((t) => getEffectiveMovement(t) === "TRANSFER").length;
     const edited = Object.keys(edits).length;
-    return { income, expenses, transfers, edited };
+    const hidden = transactions.filter((t) => isEffectivelyHidden(t)).length;
+    return { income, expenses, transfers, edited, hidden };
   }, [transactions, edits]);
 
   const getMovementIcon = (movement: MovementType) => {
@@ -465,20 +467,36 @@ export function MonthReviewModal({
         const effectiveCategory = edit.category || normalizeCategory(tx.category || "other_expense");
         const category = categories.find(c => c.slug === effectiveCategory);
 
+        const updatePayload: Record<string, unknown> = {};
+        // Only update movement/category if they actually changed
+        const movementChanged = edit.movement !== undefined && edit.movement !== tx.movement;
+        const categoryChanged = edit.category !== undefined && edit.category !== normalizeCategory(tx.category);
+        if (movementChanged || categoryChanged) {
+          updatePayload.movement = effectiveMovement;
+          updatePayload.category = effectiveCategory;
+          updatePayload.category_id = category?.id || null;
+          updatePayload.category_source = "MANUAL";
+          updatePayload.categorized_by = "user";
+          updatePayload.user_corrected = true;
+        }
+        if (edit.amount !== undefined && edit.amount !== tx.amount) {
+          updatePayload.amount = edit.amount;
+        }
+        if (edit.is_hidden !== undefined && edit.is_hidden !== tx.is_hidden) {
+          updatePayload.is_hidden = edit.is_hidden;
+        }
+        if (Object.keys(updatePayload).length === 0) return;
+
         const { error: updateError } = await supabase
           .from("transactions")
-          .update({
-            movement: effectiveMovement,
-            category: effectiveCategory,
-            category_id: category?.id || null,
-            category_source: "MANUAL",
-            categorized_by: "user",
-            user_corrected: true,
-          })
+          .update(updatePayload)
           .eq("id", txId);
 
         if (updateError) throw updateError;
         savedTxIds.push(txId);
+
+        // Only suggest a smart rule when category/movement actually changed
+        if (!movementChanged && !categoryChanged) return;
 
         const cleanDesc = (tx.description_norm || tx.description)
           .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
