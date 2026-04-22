@@ -978,20 +978,11 @@ export function MonthReviewModal({
                                 onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
                                 disabled={hidden}
                               >
-                                <SelectTrigger 
-                                  className="h-8 text-sm border-0"
-                                  style={{ 
-                                    backgroundColor: effectiveMovement === 'INCOME' 
-                                      ? 'hsl(var(--success) / 0.12)' 
-                                      : effectiveMovement === 'TRANSFER' 
-                                      ? 'hsl(var(--warning) / 0.12)' 
-                                      : 'hsl(var(--destructive) / 0.12)' 
-                                  }}
-                                >
+                                <SelectTrigger className="h-8 text-sm border border-border bg-transparent hover:bg-muted/50">
                                   <SelectValue>
                                     <div className="flex items-center gap-1.5">
                                       {getMovementIcon(effectiveMovement)}
-                                      <span className={getMovementColor(effectiveMovement)}>
+                                      <span className="text-foreground">
                                         {translateMovement(effectiveMovement)}
                                       </span>
                                     </div>
