@@ -317,30 +317,6 @@ export function UnifiedUploadsTable() {
                             </Select>
                           ) : <span className="text-sm text-muted-foreground">{acctName(imp.account_id)}</span>}
                         </TableCell>
-                        {/* Edit / View */}
-                        <TableCell className="py-2">
-                          {st === "NORMALIZED" && (imp.transactions_count ?? 0) > 0 ? (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className={cn(
-                                "h-8 px-3 text-sm border-0",
-                                imp.locked
-                                  ? "bg-success/10 text-success hover:bg-success/20"
-                                  : "bg-primary/10 text-primary hover:bg-primary/20"
-                              )}
-                              onClick={() => { setReviewImportId(imp.id); setReviewMonthKey(slot.key); setReviewTitle(imp.file_name); setShowReviewModal(true); }}
-                            >
-                              {imp.locked ? (
-                                <><Eye className="w-3.5 h-3.5 mr-1.5" />View</>
-                              ) : (
-                                <><Pencil className="w-3.5 h-3.5 mr-1.5" />Edit</>
-                              )}
-                            </Button>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
                         {/* Lock / Unlock this file */}
                         <TableCell className="py-2">
                           <Button
