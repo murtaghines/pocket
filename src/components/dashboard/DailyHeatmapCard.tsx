@@ -111,7 +111,6 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
                   "border border-border bg-card text-foreground hover:bg-muted/40 transition-colors",
                 )}
               >
-                <span className="text-muted-foreground">{t("heatmap.view", "View")}:</span>
                 <span>{activeMetricLabel}</span>
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
@@ -176,10 +175,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
 
             {/* Legend / total */}
             <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
-              <span>
-                {t("heatmap.total", "Total")}: <span className="text-foreground font-semibold">{formatValue(total)}</span>
-              </span>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 ml-auto">
                 <span className="text-foreground/70 tabular-nums">
                   {minNonZero > 0 ? formatLegendValue(minNonZero) : "—"}
                 </span>
