@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,8 +46,14 @@ import {
   Pencil,
   Lock,
   Brain,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Split as SplitIcon,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
@@ -82,6 +88,7 @@ interface MonthTransaction {
   category_id: string | null;
   bank: string | null;
   account_id: string | null;
+  is_hidden: boolean;
 }
 
 interface MonthReviewModalProps {
@@ -113,6 +120,9 @@ interface CreatedRule extends PotentialRule {
 interface TransactionEdits {
   movement?: MovementType;
   category?: string;
+  amount?: number;
+  is_hidden?: boolean;
+  splitCount?: number;
 }
 
 export function MonthReviewModal({
@@ -143,6 +153,9 @@ export function MonthReviewModal({
   const [createdRules, setCreatedRules] = useState<CreatedRule[]>([]);
   const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
   const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch transactions for this month (optionally filtered by import)
   const { data: transactions = [], isLoading } = useQuery({
@@ -158,7 +171,7 @@ export function MonthReviewModal({
       
       let query = supabase
         .from("transactions")
-        .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank, account_id")
+        .select("id, date, description, description_norm, amount, type, movement, category, category_id, bank, account_id, is_hidden")
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
         .gte("date", startDate)
@@ -266,6 +279,79 @@ export function MonthReviewModal({
     return normalizeCategory(tx.category || "other_expense");
   };
 
+  // Effective amount (considering edits) — preserves sign based on movement
+  const getEffectiveAmount = (tx: MonthTransaction): number => {
+    const edited = edits[tx.id]?.amount;
+    return edited !== undefined ? edited : tx.amount;
+  };
+
+  // Effective hidden flag
+  const isEffectivelyHidden = (tx: MonthTransaction): boolean => {
+    const edited = edits[tx.id]?.is_hidden;
+    return edited !== undefined ? edited : tx.is_hidden;
+  };
+
+  // Toggle hide/show
+  const handleToggleHidden = (transactionId: string) => {
+    const tx = transactions.find(t => t.id === transactionId);
+    if (!tx) return;
+    const current = isEffectivelyHidden(tx);
+    setEdits(prev => ({
+      ...prev,
+      [transactionId]: {
+        ...prev[transactionId],
+        is_hidden: !current,
+      },
+    }));
+  };
+
+  // Edit amount (preserve sign based on effective movement)
+  const handleAmountChange = (transactionId: string, rawValue: string) => {
+    const tx = transactions.find(t => t.id === transactionId);
+    if (!tx) return;
+    const parsed = parseFloat(rawValue.replace(",", "."));
+    if (isNaN(parsed)) return;
+    const movement = getEffectiveMovement(tx);
+    const sign = movement === "EXPENSE" ? -1 : 1;
+    const newAmount = sign * Math.abs(parsed);
+    setEdits(prev => ({
+      ...prev,
+      [transactionId]: {
+        ...prev[transactionId],
+        amount: newAmount,
+        splitCount: undefined,
+      },
+    }));
+  };
+
+  // Apply split: divide original amount by N people
+  const handleApplySplit = (transactionId: string, splitCount: number) => {
+    const tx = transactions.find(t => t.id === transactionId);
+    if (!tx || splitCount < 1) return;
+    const original = tx.amount; // always split from original DB amount
+    const newAmount = Math.sign(original || 1) * (Math.abs(original) / splitCount);
+    setEdits(prev => ({
+      ...prev,
+      [transactionId]: {
+        ...prev[transactionId],
+        amount: newAmount,
+        splitCount,
+      },
+    }));
+  };
+
+  // Scroll to first edited row
+  const scrollToFirstEdit = () => {
+    const firstEditedId = Object.keys(edits)[0];
+    if (!firstEditedId) return;
+    const el = rowRefs.current[firstEditedId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-primary");
+      setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 1500);
+    }
+  };
+
   // Handle movement change
   const handleMovementChange = (transactionId: string, newMovement: MovementType) => {
     const tx = transactions.find(t => t.id === transactionId);
@@ -316,16 +402,18 @@ export function MonthReviewModal({
   };
 
   const summary = useMemo(() => {
-    const income = transactions
+    const visible = transactions.filter((t) => !isEffectivelyHidden(t));
+    const income = visible
       .filter((t) => getEffectiveMovement(t) === "INCOME")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const expenses = transactions
+      .reduce((sum, t) => sum + Math.abs(getEffectiveAmount(t)), 0);
+    const expenses = visible
       .filter((t) => getEffectiveMovement(t) === "EXPENSE")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const transfers = transactions
+      .reduce((sum, t) => sum + Math.abs(getEffectiveAmount(t)), 0);
+    const transfers = visible
       .filter((t) => getEffectiveMovement(t) === "TRANSFER").length;
     const edited = Object.keys(edits).length;
-    return { income, expenses, transfers, edited };
+    const hidden = transactions.filter((t) => isEffectivelyHidden(t)).length;
+    return { income, expenses, transfers, edited, hidden };
   }, [transactions, edits]);
 
   const getMovementIcon = (movement: MovementType) => {
@@ -379,20 +467,36 @@ export function MonthReviewModal({
         const effectiveCategory = edit.category || normalizeCategory(tx.category || "other_expense");
         const category = categories.find(c => c.slug === effectiveCategory);
 
+        const updatePayload: Record<string, unknown> = {};
+        // Only update movement/category if they actually changed
+        const movementChanged = edit.movement !== undefined && edit.movement !== tx.movement;
+        const categoryChanged = edit.category !== undefined && edit.category !== normalizeCategory(tx.category);
+        if (movementChanged || categoryChanged) {
+          updatePayload.movement = effectiveMovement;
+          updatePayload.category = effectiveCategory;
+          updatePayload.category_id = category?.id || null;
+          updatePayload.category_source = "MANUAL";
+          updatePayload.categorized_by = "user";
+          updatePayload.user_corrected = true;
+        }
+        if (edit.amount !== undefined && edit.amount !== tx.amount) {
+          updatePayload.amount = edit.amount;
+        }
+        if (edit.is_hidden !== undefined && edit.is_hidden !== tx.is_hidden) {
+          updatePayload.is_hidden = edit.is_hidden;
+        }
+        if (Object.keys(updatePayload).length === 0) return;
+
         const { error: updateError } = await supabase
           .from("transactions")
-          .update({
-            movement: effectiveMovement,
-            category: effectiveCategory,
-            category_id: category?.id || null,
-            category_source: "MANUAL",
-            categorized_by: "user",
-            user_corrected: true,
-          })
+          .update(updatePayload)
           .eq("id", txId);
 
         if (updateError) throw updateError;
         savedTxIds.push(txId);
+
+        // Only suggest a smart rule when category/movement actually changed
+        if (!movementChanged && !categoryChanged) return;
 
         const cleanDesc = (tx.description_norm || tx.description)
           .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
@@ -704,31 +808,57 @@ export function MonthReviewModal({
                   </div>
                 )}
                 {summary.edited > 0 && !isLocked && (
-                  <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  <button
+                    type="button"
+                    onClick={scrollToFirstEdit}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                    title="Jump to first edited row"
+                  >
+                    <Pencil className="w-3 h-3" />
                     {summary.edited} edited
-                  </Badge>
+                  </button>
+                )}
+                {summary.hidden > 0 && (
+                  <label className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-muted text-muted-foreground text-xs cursor-pointer">
+                    <Switch
+                      checked={showHidden}
+                      onCheckedChange={setShowHidden}
+                      className="scale-75"
+                    />
+                    <EyeOff className="w-3.5 h-3.5" />
+                    Show hidden ({summary.hidden})
+                  </label>
                 )}
               </div>
 
               {/* Transaction Table */}
-              <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
+              <div ref={tableScrollRef} className="flex-1 min-h-0 border rounded-lg overflow-auto">
                 <Table className="w-full table-fixed">
                   <TableHeader>
                    <TableRow>
-                       <TableHead className="w-[10%]">Date</TableHead>
-                       <TableHead className="w-[40%]">Description</TableHead>
+                       <TableHead className="w-[9%]">Date</TableHead>
+                       <TableHead className="w-[33%]">Description</TableHead>
                        <TableHead className="w-[10%]">Account</TableHead>
-                       <TableHead className="w-[13%]">Movement</TableHead>
-                       <TableHead className="w-[17%]">Category</TableHead>
-                       <TableHead className="text-right w-[10%]">Amount</TableHead>
+                       <TableHead className="w-[12%]">Movement</TableHead>
+                       <TableHead className="w-[16%]">Category</TableHead>
+                       <TableHead className="text-right w-[14%]">Amount</TableHead>
+                       <TableHead className="text-center w-[6%]">Hide</TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((tx) => {
+                    {transactions
+                      .filter((tx) => showHidden || !isEffectivelyHidden(tx))
+                      .map((tx) => {
                       const effectiveMovement = getEffectiveMovement(tx);
                       const effectiveCategory = getEffectiveCategory(tx);
                       const availableCategories = getCategoriesForMovement(effectiveMovement);
                       const isEdited = !!edits[tx.id];
+                      const editedFields = edits[tx.id] || {};
+                      const movementChanged = editedFields.movement !== undefined && editedFields.movement !== tx.movement;
+                      const categoryChanged = editedFields.category !== undefined && editedFields.category !== normalizeCategory(tx.category);
+                      const amountChanged = editedFields.amount !== undefined && editedFields.amount !== tx.amount;
+                      const hidden = isEffectivelyHidden(tx);
+                      const effectiveAmount = getEffectiveAmount(tx);
                       
                       const cleanDescription = (tx.description_norm || tx.description)
                         .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
@@ -737,18 +867,28 @@ export function MonthReviewModal({
                       return (
                         <TableRow 
                           key={tx.id}
+                          ref={(el) => { rowRefs.current[tx.id] = el; }}
                           className={cn(
-                            isEdited && "bg-primary/5",
-                            mismatchedIds.has(tx.id) && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400"
+                            "transition-all",
+                            isEdited && !mismatchedIds.has(tx.id) && "bg-primary/5 border-l-2 border-l-primary",
+                            mismatchedIds.has(tx.id) && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                            hidden && "opacity-40"
                           )}
                         >
                           <TableCell className="text-sm">
                             {formatDate(new Date(tx.date))}
                           </TableCell>
                           <TableCell className="text-sm">
-                            <span className="break-words" title={cleanDescription}>
-                              {cleanDescription}
-                            </span>
+                            <div className="flex items-start gap-2 min-w-0">
+                              <span className={cn("break-words flex-1", hidden && "line-through")} title={cleanDescription}>
+                                {cleanDescription}
+                              </span>
+                              {isEdited && (
+                                <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] h-4 px-1.5 shrink-0 mt-0.5">
+                                  Edited
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-sm">
                             {getAccountNameById(tx.account_id) || tx.bank || '—'}
@@ -763,11 +903,13 @@ export function MonthReviewModal({
                                 </span>
                               </div>
                             ) : (
+                              <div className="flex flex-col gap-0.5">
                               <div className="flex items-center gap-1">
                               {mismatchedIds.has(tx.id) && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
                               <Select
                                 value={effectiveMovement}
                                 onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
+                                disabled={hidden}
                               >
                                 <SelectTrigger 
                                   className="h-8 text-sm border-0"
@@ -810,6 +952,12 @@ export function MonthReviewModal({
                                 </SelectContent>
                               </Select>
                               </div>
+                              {movementChanged && tx.movement && (
+                                <span className="text-[10px] text-muted-foreground line-through pl-1">
+                                  {translateMovement(tx.movement)}
+                                </span>
+                              )}
+                              </div>
                             )}
                           </TableCell>
                           <TableCell className="text-sm">
@@ -823,9 +971,11 @@ export function MonthReviewModal({
                                 <span>{translateCategory(effectiveCategory)}</span>
                               </div>
                             ) : (
+                              <div className="flex flex-col gap-0.5">
                               <Select
                                 value={effectiveCategory}
                                 onValueChange={(value) => handleCategoryChange(tx.id, value)}
+                                disabled={hidden}
                               >
                                 <SelectTrigger 
                                   className="h-8 text-sm border-0"
@@ -859,10 +1009,43 @@ export function MonthReviewModal({
                                   ))}
                                 </SelectContent>
                               </Select>
+                              {categoryChanged && (
+                                <span className="text-[10px] text-muted-foreground line-through pl-1">
+                                  {translateCategory(normalizeCategory(tx.category))}
+                                </span>
+                              )}
+                              </div>
                             )}
                           </TableCell>
-                          <TableCell className="text-right font-medium tabular-nums text-sm">
-                            {formatCurrency(tx.amount)}
+                          <TableCell className="text-right text-sm">
+                            {isLocked ? (
+                              <span className="font-medium tabular-nums">{formatCurrency(effectiveAmount)}</span>
+                            ) : (
+                              <AmountEditor
+                                tx={tx}
+                                effectiveAmount={effectiveAmount}
+                                originalAmount={tx.amount}
+                                amountChanged={amountChanged}
+                                splitCount={editedFields.splitCount}
+                                disabled={hidden}
+                                onChange={(v) => handleAmountChange(tx.id, v)}
+                                onApplySplit={(n) => handleApplySplit(tx.id, n)}
+                                formatCurrency={formatCurrency}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {!isLocked && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleToggleHidden(tx.id)}
+                                title={hidden ? "Show in totals" : "Hide from totals"}
+                              >
+                                {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
@@ -1013,5 +1196,119 @@ export function MonthReviewModal({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// AmountEditor: editable amount with Split popover
+// ─────────────────────────────────────────────────────────────
+interface AmountEditorProps {
+  tx: MonthTransaction;
+  effectiveAmount: number;
+  originalAmount: number;
+  amountChanged: boolean;
+  splitCount?: number;
+  disabled: boolean;
+  onChange: (rawValue: string) => void;
+  onApplySplit: (n: number) => void;
+  formatCurrency: (n: number) => string;
+}
+
+function AmountEditor({
+  effectiveAmount,
+  originalAmount,
+  amountChanged,
+  splitCount,
+  disabled,
+  onChange,
+  onApplySplit,
+  formatCurrency,
+}: AmountEditorProps) {
+  const [localValue, setLocalValue] = useState<string>(Math.abs(effectiveAmount).toString());
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [splitN, setSplitN] = useState<number>(splitCount || 2);
+
+  // Sync local value when external amount changes (e.g., split applied)
+  useEffect(() => {
+    setLocalValue(Math.abs(effectiveAmount).toFixed(2));
+  }, [effectiveAmount]);
+
+  const handleBlur = () => {
+    if (localValue === "" || localValue === "-") {
+      setLocalValue(Math.abs(effectiveAmount).toFixed(2));
+      return;
+    }
+    const parsed = parseFloat(localValue.replace(",", "."));
+    if (!isNaN(parsed) && parsed !== Math.abs(effectiveAmount)) {
+      onChange(localValue);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-end gap-0.5 group">
+      <div className="flex items-center gap-1 justify-end">
+        <Popover open={splitOpen} onOpenChange={setSplitOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+              title="Split amount"
+              disabled={disabled}
+            >
+              <SplitIcon className="w-3.5 h-3.5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-3" align="end">
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Split between N people
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={splitN}
+                  onChange={(e) => setSplitN(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="h-8 mt-1"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Original: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount))}</span>
+              </div>
+              <div className="text-sm font-medium">
+                Your share: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount) / splitN)}</span>
+              </div>
+              <Button
+                size="sm"
+                className="w-full h-8"
+                onClick={() => {
+                  onApplySplit(splitN);
+                  setSplitOpen(false);
+                }}
+              >
+                Apply ÷ {splitN}
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
+          onBlur={handleBlur}
+          disabled={disabled}
+          className="h-8 w-24 text-right tabular-nums text-sm font-medium"
+        />
+      </div>
+      {amountChanged && (
+        <span className="text-[10px] text-muted-foreground line-through pr-1 tabular-nums">
+          {formatCurrency(Math.abs(originalAmount))}
+          {splitCount && splitCount > 1 ? ` (÷${splitCount})` : ""}
+        </span>
+      )}
+    </div>
   );
 }
