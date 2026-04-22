@@ -1098,6 +1098,7 @@ export function MonthReviewModal({
                                 disabled={hidden}
                                 onChange={(v) => handleAmountChange(tx.id, v)}
                                 onApplySplit={(n) => handleApplySplit(tx.id, n)}
+                                onRevert={() => handleRevertField(tx.id, "amount")}
                                 formatCurrency={formatCurrency}
                               />
                             )}
@@ -1107,11 +1108,29 @@ export function MonthReviewModal({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                className={cn(
+                                  "h-7 w-7",
+                                  hidden
+                                    ? "text-muted-foreground hover:text-foreground"
+                                    : "text-muted-foreground/60 hover:text-foreground"
+                                )}
                                 onClick={() => handleToggleHidden(tx.id)}
-                                title={hidden ? "Show in totals" : "Hide from totals"}
+                                title={hidden ? "Include in totals" : "Hide from totals"}
                               >
                                 {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </Button>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {!isLocked && isEdited && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleRevertRow(tx.id)}
+                                title="Revert all changes on this row"
+                              >
+                                <Undo2 className="w-4 h-4" />
                               </Button>
                             )}
                           </TableCell>
