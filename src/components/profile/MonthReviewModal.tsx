@@ -279,6 +279,79 @@ export function MonthReviewModal({
     return normalizeCategory(tx.category || "other_expense");
   };
 
+  // Effective amount (considering edits) — preserves sign based on movement
+  const getEffectiveAmount = (tx: MonthTransaction): number => {
+    const edited = edits[tx.id]?.amount;
+    return edited !== undefined ? edited : tx.amount;
+  };
+
+  // Effective hidden flag
+  const isEffectivelyHidden = (tx: MonthTransaction): boolean => {
+    const edited = edits[tx.id]?.is_hidden;
+    return edited !== undefined ? edited : tx.is_hidden;
+  };
+
+  // Toggle hide/show
+  const handleToggleHidden = (transactionId: string) => {
+    const tx = transactions.find(t => t.id === transactionId);
+    if (!tx) return;
+    const current = isEffectivelyHidden(tx);
+    setEdits(prev => ({
+      ...prev,
+      [transactionId]: {
+        ...prev[transactionId],
+        is_hidden: !current,
+      },
+    }));
+  };
+
+  // Edit amount (preserve sign based on effective movement)
+  const handleAmountChange = (transactionId: string, rawValue: string) => {
+    const tx = transactions.find(t => t.id === transactionId);
+    if (!tx) return;
+    const parsed = parseFloat(rawValue.replace(",", "."));
+    if (isNaN(parsed)) return;
+    const movement = getEffectiveMovement(tx);
+    const sign = movement === "EXPENSE" ? -1 : 1;
+    const newAmount = sign * Math.abs(parsed);
+    setEdits(prev => ({
+      ...prev,
+      [transactionId]: {
+        ...prev[transactionId],
+        amount: newAmount,
+        splitCount: undefined,
+      },
+    }));
+  };
+
+  // Apply split: divide original amount by N people
+  const handleApplySplit = (transactionId: string, splitCount: number) => {
+    const tx = transactions.find(t => t.id === transactionId);
+    if (!tx || splitCount < 1) return;
+    const original = tx.amount; // always split from original DB amount
+    const newAmount = Math.sign(original || 1) * (Math.abs(original) / splitCount);
+    setEdits(prev => ({
+      ...prev,
+      [transactionId]: {
+        ...prev[transactionId],
+        amount: newAmount,
+        splitCount,
+      },
+    }));
+  };
+
+  // Scroll to first edited row
+  const scrollToFirstEdit = () => {
+    const firstEditedId = Object.keys(edits)[0];
+    if (!firstEditedId) return;
+    const el = rowRefs.current[firstEditedId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-primary");
+      setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 1500);
+    }
+  };
+
   // Handle movement change
   const handleMovementChange = (transactionId: string, newMovement: MovementType) => {
     const tx = transactions.find(t => t.id === transactionId);
