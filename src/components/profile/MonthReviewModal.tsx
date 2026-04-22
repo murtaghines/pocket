@@ -50,6 +50,9 @@ import {
   Eye,
   EyeOff,
   Split as SplitIcon,
+  Undo2,
+  RotateCcw,
+  X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
