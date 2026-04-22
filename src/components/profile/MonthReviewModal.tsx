@@ -1005,9 +1005,17 @@ export function MonthReviewModal({
                               </Select>
                               </div>
                               {movementChanged && tx.movement && (
-                                <span className="text-[10px] text-muted-foreground line-through pl-1">
-                                  {translateMovement(tx.movement)}
-                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevertField(tx.id, "movement")}
+                                  className="group/rv inline-flex items-center gap-1 pl-1 text-[10px] text-muted-foreground hover:text-primary transition-colors w-fit"
+                                  title={`Revert to ${translateMovement(tx.movement)}`}
+                                >
+                                  <Undo2 className="w-2.5 h-2.5 opacity-60 group-hover/rv:opacity-100" />
+                                  <span className="line-through group-hover/rv:no-underline">
+                                    {translateMovement(tx.movement)}
+                                  </span>
+                                </button>
                               )}
                               </div>
                             )}
