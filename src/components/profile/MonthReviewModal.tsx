@@ -832,24 +832,33 @@ export function MonthReviewModal({
               </div>
 
               {/* Transaction Table */}
-              <div className="flex-1 min-h-0 border rounded-lg overflow-auto">
+              <div ref={tableScrollRef} className="flex-1 min-h-0 border rounded-lg overflow-auto">
                 <Table className="w-full table-fixed">
                   <TableHeader>
                    <TableRow>
-                       <TableHead className="w-[10%]">Date</TableHead>
-                       <TableHead className="w-[40%]">Description</TableHead>
+                       <TableHead className="w-[9%]">Date</TableHead>
+                       <TableHead className="w-[33%]">Description</TableHead>
                        <TableHead className="w-[10%]">Account</TableHead>
-                       <TableHead className="w-[13%]">Movement</TableHead>
-                       <TableHead className="w-[17%]">Category</TableHead>
-                       <TableHead className="text-right w-[10%]">Amount</TableHead>
+                       <TableHead className="w-[12%]">Movement</TableHead>
+                       <TableHead className="w-[16%]">Category</TableHead>
+                       <TableHead className="text-right w-[14%]">Amount</TableHead>
+                       <TableHead className="text-center w-[6%]">Hide</TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((tx) => {
+                    {transactions
+                      .filter((tx) => showHidden || !isEffectivelyHidden(tx))
+                      .map((tx) => {
                       const effectiveMovement = getEffectiveMovement(tx);
                       const effectiveCategory = getEffectiveCategory(tx);
                       const availableCategories = getCategoriesForMovement(effectiveMovement);
                       const isEdited = !!edits[tx.id];
+                      const editedFields = edits[tx.id] || {};
+                      const movementChanged = editedFields.movement !== undefined && editedFields.movement !== tx.movement;
+                      const categoryChanged = editedFields.category !== undefined && editedFields.category !== normalizeCategory(tx.category);
+                      const amountChanged = editedFields.amount !== undefined && editedFields.amount !== tx.amount;
+                      const hidden = isEffectivelyHidden(tx);
+                      const effectiveAmount = getEffectiveAmount(tx);
                       
                       const cleanDescription = (tx.description_norm || tx.description)
                         .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '')
@@ -858,18 +867,28 @@ export function MonthReviewModal({
                       return (
                         <TableRow 
                           key={tx.id}
+                          ref={(el) => { rowRefs.current[tx.id] = el; }}
                           className={cn(
-                            isEdited && "bg-primary/5",
-                            mismatchedIds.has(tx.id) && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400"
+                            "transition-all",
+                            isEdited && !mismatchedIds.has(tx.id) && "bg-primary/5 border-l-2 border-l-primary",
+                            mismatchedIds.has(tx.id) && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                            hidden && "opacity-40"
                           )}
                         >
                           <TableCell className="text-sm">
                             {formatDate(new Date(tx.date))}
                           </TableCell>
                           <TableCell className="text-sm">
-                            <span className="break-words" title={cleanDescription}>
-                              {cleanDescription}
-                            </span>
+                            <div className="flex items-start gap-2 min-w-0">
+                              <span className={cn("break-words flex-1", hidden && "line-through")} title={cleanDescription}>
+                                {cleanDescription}
+                              </span>
+                              {isEdited && (
+                                <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] h-4 px-1.5 shrink-0 mt-0.5">
+                                  Edited
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-sm">
                             {getAccountNameById(tx.account_id) || tx.bank || '—'}
@@ -884,11 +903,13 @@ export function MonthReviewModal({
                                 </span>
                               </div>
                             ) : (
+                              <div className="flex flex-col gap-0.5">
                               <div className="flex items-center gap-1">
                               {mismatchedIds.has(tx.id) && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
                               <Select
                                 value={effectiveMovement}
                                 onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
+                                disabled={hidden}
                               >
                                 <SelectTrigger 
                                   className="h-8 text-sm border-0"
@@ -931,6 +952,12 @@ export function MonthReviewModal({
                                 </SelectContent>
                               </Select>
                               </div>
+                              {movementChanged && tx.movement && (
+                                <span className="text-[10px] text-muted-foreground line-through pl-1">
+                                  {translateMovement(tx.movement)}
+                                </span>
+                              )}
+                              </div>
                             )}
                           </TableCell>
                           <TableCell className="text-sm">
@@ -944,9 +971,11 @@ export function MonthReviewModal({
                                 <span>{translateCategory(effectiveCategory)}</span>
                               </div>
                             ) : (
+                              <div className="flex flex-col gap-0.5">
                               <Select
                                 value={effectiveCategory}
                                 onValueChange={(value) => handleCategoryChange(tx.id, value)}
+                                disabled={hidden}
                               >
                                 <SelectTrigger 
                                   className="h-8 text-sm border-0"
@@ -980,10 +1009,43 @@ export function MonthReviewModal({
                                   ))}
                                 </SelectContent>
                               </Select>
+                              {categoryChanged && (
+                                <span className="text-[10px] text-muted-foreground line-through pl-1">
+                                  {translateCategory(normalizeCategory(tx.category))}
+                                </span>
+                              )}
+                              </div>
                             )}
                           </TableCell>
-                          <TableCell className="text-right font-medium tabular-nums text-sm">
-                            {formatCurrency(tx.amount)}
+                          <TableCell className="text-right text-sm">
+                            {isLocked ? (
+                              <span className="font-medium tabular-nums">{formatCurrency(effectiveAmount)}</span>
+                            ) : (
+                              <AmountEditor
+                                tx={tx}
+                                effectiveAmount={effectiveAmount}
+                                originalAmount={tx.amount}
+                                amountChanged={amountChanged}
+                                splitCount={editedFields.splitCount}
+                                disabled={hidden}
+                                onChange={(v) => handleAmountChange(tx.id, v)}
+                                onApplySplit={(n) => handleApplySplit(tx.id, n)}
+                                formatCurrency={formatCurrency}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {!isLocked && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleToggleHidden(tx.id)}
+                                title={hidden ? "Show in totals" : "Hide from totals"}
+                              >
+                                {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
