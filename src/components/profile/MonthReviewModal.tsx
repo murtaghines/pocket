@@ -989,12 +989,13 @@ export function MonthReviewModal({
                   <TableHeader className="sticky top-0 z-10 bg-white">
                    <TableRow className="hover:bg-transparent">
                        <TableHead className="w-[8%]">Date</TableHead>
-                       <TableHead className="w-[28%]">Description</TableHead>
+                       <TableHead className="w-[26%]">Description</TableHead>
                        <TableHead className="w-[10%]">Account</TableHead>
-                       <TableHead className="w-[12%]">Movement</TableHead>
-                       <TableHead className="w-[16%]">Category</TableHead>
-                       <TableHead className="text-right w-[14%]">Amount</TableHead>
-                       <TableHead className="text-center w-[6%]">Show</TableHead>
+                       <TableHead className="w-[11%]">Movement</TableHead>
+                       <TableHead className="w-[15%]">Category</TableHead>
+                       <TableHead className="text-right w-[13%]">Amount</TableHead>
+                       <TableHead className="text-center w-[6%]">Split</TableHead>
+                       <TableHead className="text-center w-[5%]">Show</TableHead>
                        <TableHead className="text-center w-[6%]">Revert</TableHead>
                      </TableRow>
                   </TableHeader>
