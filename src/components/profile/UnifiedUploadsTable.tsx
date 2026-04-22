@@ -8,13 +8,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  DataTable,
-  DataTableBody,
-  DataTableCell,
-  DataTableHead,
-  DataTableHeader,
-  DataTableRow,
-  DataTableAddRow,
+  DataTable as Table,
+  DataTableBody as TableBody,
+  DataTableCell as TableCell,
+  DataTableHead as TableHead,
+  DataTableHeader as TableHeader,
+  DataTableRow as TableRow,
 } from "@/components/ui/data-table";
 import { PillBadge } from "@/components/ui/pill-badge";
 import {
