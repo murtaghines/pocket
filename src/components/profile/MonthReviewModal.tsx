@@ -50,6 +50,8 @@ import {
   Eye,
   EyeOff,
   Split as SplitIcon,
+  Undo2,
+  RotateCcw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -303,6 +305,43 @@ export function MonthReviewModal({
         is_hidden: !current,
       },
     }));
+  };
+
+  // Revert a single edited field on a transaction
+  const handleRevertField = (
+    transactionId: string,
+    field: "movement" | "category" | "amount" | "is_hidden",
+  ) => {
+    setEdits(prev => {
+      const current = prev[transactionId];
+      if (!current) return prev;
+      const next = { ...current };
+      delete next[field];
+      if (field === "amount") delete next.splitCount;
+      // If movement was reverted, also clear category if it was auto-set with the movement
+      const isEmpty = Object.keys(next).length === 0;
+      const newEdits = { ...prev };
+      if (isEmpty) {
+        delete newEdits[transactionId];
+      } else {
+        newEdits[transactionId] = next;
+      }
+      return newEdits;
+    });
+  };
+
+  // Revert all edits on a single transaction
+  const handleRevertRow = (transactionId: string) => {
+    setEdits(prev => {
+      const next = { ...prev };
+      delete next[transactionId];
+      return next;
+    });
+  };
+
+  // Discard all pending edits in the modal
+  const handleDiscardAllEdits = () => {
+    setEdits({});
   };
 
   // Edit amount (preserve sign based on effective movement)
@@ -746,14 +785,14 @@ export function MonthReviewModal({
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v && !showRetroactiveDialog) handleCancel(); else onOpenChange(v); }}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme bg-background text-foreground">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme !bg-white text-foreground">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="flex items-center gap-2 text-foreground">
               <Pencil className="w-5 h-5 text-primary" />
-              Edit - {monthLabel}
+              Edit · {monthLabel}
             </DialogTitle>
-            <DialogDescription>
-              {transactions.length} transactions in this month
+            <DialogDescription className="text-muted-foreground">
+              {transactions.length} transactions · changes are saved only when you click <span className="font-medium text-foreground">Save</span>.
             </DialogDescription>
           </DialogHeader>
 
@@ -792,14 +831,14 @@ export function MonthReviewModal({
               )}
 
               {/* Stats Summary */}
-              <div className="flex gap-4 flex-wrap text-sm">
+              <div className="flex gap-2 flex-wrap items-center text-sm">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
                   <PlusCircle className="w-4 h-4 text-success" />
-                  <span className="text-success font-medium">{formatCurrency(summary.income)}</span>
+                  <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
                   <MinusCircle className="w-4 h-4 text-destructive" />
-                  <span className="text-destructive font-medium">{formatCurrency(summary.expenses)}</span>
+                  <span className="text-destructive font-medium tabular-nums">{formatCurrency(summary.expenses)}</span>
                 </div>
                 {summary.transfers > 0 && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
@@ -808,18 +847,29 @@ export function MonthReviewModal({
                   </div>
                 )}
                 {summary.edited > 0 && !isLocked && (
-                  <button
-                    type="button"
-                    onClick={scrollToFirstEdit}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
-                    title="Jump to first edited row"
-                  >
-                    <Pencil className="w-3 h-3" />
-                    {summary.edited} edited
-                  </button>
+                  <div className="inline-flex items-center gap-1 ml-1">
+                    <button
+                      type="button"
+                      onClick={scrollToFirstEdit}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                      title="Jump to first edited row"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      {summary.edited} edited
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDiscardAllEdits}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs font-medium transition-colors"
+                      title="Discard all unsaved changes"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Discard
+                    </button>
+                  </div>
                 )}
                 {summary.hidden > 0 && (
-                  <label className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-muted text-muted-foreground text-xs cursor-pointer">
+                  <label className="inline-flex items-center gap-2 px-3 py-1 ml-auto rounded-lg bg-muted text-muted-foreground text-xs cursor-pointer">
                     <Switch
                       checked={showHidden}
                       onCheckedChange={setShowHidden}
@@ -832,17 +882,18 @@ export function MonthReviewModal({
               </div>
 
               {/* Transaction Table */}
-              <div ref={tableScrollRef} className="flex-1 min-h-0 border rounded-lg overflow-auto">
+              <div ref={tableScrollRef} className="flex-1 min-h-0 border rounded-lg overflow-auto bg-white">
                 <Table className="w-full table-fixed">
-                  <TableHeader>
-                   <TableRow>
-                       <TableHead className="w-[9%]">Date</TableHead>
-                       <TableHead className="w-[33%]">Description</TableHead>
+                  <TableHeader className="sticky top-0 z-10 bg-white">
+                   <TableRow className="hover:bg-transparent">
+                       <TableHead className="w-[8%]">Date</TableHead>
+                       <TableHead className="w-[28%]">Description</TableHead>
                        <TableHead className="w-[10%]">Account</TableHead>
                        <TableHead className="w-[12%]">Movement</TableHead>
                        <TableHead className="w-[16%]">Category</TableHead>
                        <TableHead className="text-right w-[14%]">Amount</TableHead>
-                       <TableHead className="text-center w-[6%]">Hide</TableHead>
+                       <TableHead className="text-center w-[6%]">Show</TableHead>
+                       <TableHead className="text-center w-[6%]">Revert</TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -953,9 +1004,17 @@ export function MonthReviewModal({
                               </Select>
                               </div>
                               {movementChanged && tx.movement && (
-                                <span className="text-[10px] text-muted-foreground line-through pl-1">
-                                  {translateMovement(tx.movement)}
-                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevertField(tx.id, "movement")}
+                                  className="group/rv inline-flex items-center gap-1 pl-1 text-[10px] text-muted-foreground hover:text-primary transition-colors w-fit"
+                                  title={`Revert to ${translateMovement(tx.movement)}`}
+                                >
+                                  <Undo2 className="w-2.5 h-2.5 opacity-60 group-hover/rv:opacity-100" />
+                                  <span className="line-through group-hover/rv:no-underline">
+                                    {translateMovement(tx.movement)}
+                                  </span>
+                                </button>
                               )}
                               </div>
                             )}
@@ -1010,9 +1069,17 @@ export function MonthReviewModal({
                                 </SelectContent>
                               </Select>
                               {categoryChanged && (
-                                <span className="text-[10px] text-muted-foreground line-through pl-1">
-                                  {translateCategory(normalizeCategory(tx.category))}
-                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevertField(tx.id, "category")}
+                                  className="group/rv inline-flex items-center gap-1 pl-1 text-[10px] text-muted-foreground hover:text-primary transition-colors w-fit"
+                                  title={`Revert to ${translateCategory(normalizeCategory(tx.category))}`}
+                                >
+                                  <Undo2 className="w-2.5 h-2.5 opacity-60 group-hover/rv:opacity-100" />
+                                  <span className="line-through group-hover/rv:no-underline">
+                                    {translateCategory(normalizeCategory(tx.category))}
+                                  </span>
+                                </button>
                               )}
                               </div>
                             )}
@@ -1030,6 +1097,7 @@ export function MonthReviewModal({
                                 disabled={hidden}
                                 onChange={(v) => handleAmountChange(tx.id, v)}
                                 onApplySplit={(n) => handleApplySplit(tx.id, n)}
+                                onRevert={() => handleRevertField(tx.id, "amount")}
                                 formatCurrency={formatCurrency}
                               />
                             )}
@@ -1039,11 +1107,29 @@ export function MonthReviewModal({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                className={cn(
+                                  "h-7 w-7",
+                                  hidden
+                                    ? "text-muted-foreground hover:text-foreground"
+                                    : "text-muted-foreground/60 hover:text-foreground"
+                                )}
                                 onClick={() => handleToggleHidden(tx.id)}
-                                title={hidden ? "Show in totals" : "Hide from totals"}
+                                title={hidden ? "Include in totals" : "Hide from totals"}
                               >
                                 {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </Button>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {!isLocked && isEdited && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleRevertRow(tx.id)}
+                                title="Revert all changes on this row"
+                              >
+                                <Undo2 className="w-4 h-4" />
                               </Button>
                             )}
                           </TableCell>
@@ -1211,6 +1297,7 @@ interface AmountEditorProps {
   disabled: boolean;
   onChange: (rawValue: string) => void;
   onApplySplit: (n: number) => void;
+  onRevert: () => void;
   formatCurrency: (n: number) => string;
 }
 
@@ -1222,6 +1309,7 @@ function AmountEditor({
   disabled,
   onChange,
   onApplySplit,
+  onRevert,
   formatCurrency,
 }: AmountEditorProps) {
   const [localValue, setLocalValue] = useState<string>(Math.abs(effectiveAmount).toString());
@@ -1304,10 +1392,18 @@ function AmountEditor({
         />
       </div>
       {amountChanged && (
-        <span className="text-[10px] text-muted-foreground line-through pr-1 tabular-nums">
-          {formatCurrency(Math.abs(originalAmount))}
-          {splitCount && splitCount > 1 ? ` (÷${splitCount})` : ""}
-        </span>
+        <button
+          type="button"
+          onClick={onRevert}
+          className="group/rv inline-flex items-center gap-1 pr-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+          title="Revert amount"
+        >
+          <Undo2 className="w-2.5 h-2.5 opacity-60 group-hover/rv:opacity-100" />
+          <span className="line-through group-hover/rv:no-underline tabular-nums">
+            {formatCurrency(Math.abs(originalAmount))}
+            {splitCount && splitCount > 1 ? ` (÷${splitCount})` : ""}
+          </span>
+        </button>
       )}
     </div>
   );
