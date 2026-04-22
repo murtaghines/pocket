@@ -20,6 +20,15 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, Building2, Loader2, Pencil, Check, X } from "lucide-react";
 import { ACCOUNT_COLOR_PALETTE, getDefaultAccountColor } from "@/lib/accountColors";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/ui/data-table";
+import { PillBadge } from "@/components/ui/pill-badge";
 
 export function AccountsManager({ className }: { className?: string }) {
   const { t } = useTranslation('profile');
@@ -123,11 +132,23 @@ export function AccountsManager({ className }: { className?: string }) {
         </p>
 
         {cashAccounts.length > 0 ? (
-          <ul className="space-y-2">
-            {cashAccounts.map((account, idx) => {
-              const resolvedColor = account.color || getDefaultAccountColor(idx);
-              return (
-              <li key={account.id} className={`p-3 bg-muted/50 rounded-lg ${editingId === account.id ? 'space-y-3' : ''}`}>
+          <DataTable>
+            <DataTableHeader>
+              <DataTableRow className="hover:bg-transparent">
+                <DataTableHead rowNumber />
+                <DataTableHead type="account">{t('accounts.name', 'Account')}</DataTableHead>
+                <DataTableHead type="tag" className="w-[110px]">{t('accounts.status', 'Status')}</DataTableHead>
+                <DataTableHead className="w-[88px] text-right">{t('accounts.actions', 'Actions')}</DataTableHead>
+              </DataTableRow>
+            </DataTableHeader>
+            <DataTableBody>
+              {cashAccounts.map((account, idx) => {
+                const resolvedColor = account.color || getDefaultAccountColor(idx);
+                if (editingId === account.id) {
+                  return (
+                    <DataTableRow key={account.id}>
+                      <DataTableCell colSpan={4} className="p-3">
+                        <div className="space-y-3">
                 {editingId === account.id ? (
                   <>
                     <div className="flex items-center gap-2">
@@ -203,47 +224,59 @@ export function AccountsManager({ className }: { className?: string }) {
                       </span>
                     </label>
                   </>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span
-                        className="w-6 h-6 rounded-full border border-border shrink-0"
-                        style={{ backgroundColor: resolvedColor }}
-                        aria-hidden
-                      />
-                      <span className="text-sm font-medium truncate">{account.name}</span>
-                      {account.is_primary && (
-                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#ffd027]/20 text-[#7a5c00] font-semibold shrink-0">
-                          {t('accounts.primaryBadge', 'Primary')}
-                        </span>
+                ) : null}
+                        </div>
+                      </DataTableCell>
+                    </DataTableRow>
+                  );
+                }
+                return (
+                  <DataTableRow key={account.id}>
+                    <DataTableCell rowNumber={idx + 1} />
+                    <DataTableCell>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="w-5 h-5 rounded-full border border-border shrink-0"
+                          style={{ backgroundColor: resolvedColor }}
+                          aria-hidden
+                        />
+                        <span className="text-sm font-medium truncate text-foreground">{account.name}</span>
+                      </div>
+                    </DataTableCell>
+                    <DataTableCell>
+                      {account.is_primary ? (
+                        <PillBadge tone="yellow">{t('accounts.primaryBadge', 'Primary')}</PillBadge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleStartEdit(account.id, account.name, resolvedColor, account.is_primary)}
-                        aria-label="Edit"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDeleteClick(account)}
-                        disabled={isDeleting}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </li>
-              );
-            })}
-          </ul>
+                    </DataTableCell>
+                    <DataTableCell className="text-right">
+                      <div className="inline-flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleStartEdit(account.id, account.name, resolvedColor, account.is_primary)}
+                          aria-label="Edit"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDeleteClick(account)}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </DataTableCell>
+                  </DataTableRow>
+                );
+              })}
+            </DataTableBody>
+          </DataTable>
         ) : (
           <p className="text-sm text-muted-foreground/70 text-center py-4">
             {t('accounts.noAccountsYet', 'No accounts yet. Create one to get started.')}
