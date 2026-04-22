@@ -1,9 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DataTable,
@@ -13,14 +11,23 @@ import {
   DataTableHeader,
   DataTableRow,
 } from "@/components/ui/data-table";
+import {
+  FilterToolbar,
+  ToolbarButton,
+  ToolbarDivider,
+  ToolbarSearch,
+  FilterChip,
+  Filter as FilterIcon,
+  ArrowUpDown,
+  EyeOff,
+} from "@/components/ui/filter-chip";
 import { Transaction, Category } from "@/lib/mockData";
-import { Search, Plus, Minus, ArrowRightLeft, TrendingUp, ChevronDown } from "lucide-react";
+import { Plus, Minus, ArrowRightLeft, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from "@/lib/categoryTranslations";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface TransactionTableProps {
   transactions: Transaction[];
