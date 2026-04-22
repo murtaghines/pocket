@@ -28,6 +28,8 @@ interface TrendKpiCardProps {
   icon: ReactNode;
   /** Background color CSS (Tailwind bg-*) */
   bgClass: string;
+  /** Foreground (ink) color CSS for text/icons over the bg. Defaults to white. */
+  fgClass?: string;
   /** All transactions for the period */
   transactions: Array<{ date: string; amount: number; type: string }>;
   /** YYYY-MM */
@@ -49,6 +51,7 @@ export function TrendKpiCard({
   label,
   icon,
   bgClass,
+  fgClass,
   transactions,
   monthKey,
   total,
@@ -136,28 +139,46 @@ export function TrendKpiCard({
   const gradientId = `trend-fill-${kind}`;
   const isBalance = kind === "balance";
 
+  // Determine ink color for non-balance cards. Defaults to a darker shade of
+  // success / destructive so text is readable on the new pastel pill backgrounds.
+  const inkClass =
+    fgClass ??
+    (kind === "income"
+      ? "text-success-muted-foreground"
+      : kind === "expense"
+        ? "text-destructive-muted-foreground"
+        : "text-foreground");
+
   // Balance card uses inverted styling: white bg + blue accents
   const cardClasses = isBalance
     ? "bg-card border border-primary/20"
-    : `border-0 ${bgClass} text-white`;
+    : `border border-border/40 ${bgClass} ${inkClass}`;
 
-  const labelClass = isBalance ? "text-primary/70" : "text-white/80";
-  const iconBgClass = isBalance ? "bg-primary/10" : "bg-white/15 backdrop-blur-sm";
-  const iconColorClass = isBalance ? "text-primary" : "";
+  const labelClass = isBalance ? "text-primary/70" : "opacity-70";
+  const iconBgClass = isBalance ? "bg-primary/10" : "bg-white/60 backdrop-blur-sm";
+  const iconColorClass = isBalance ? "text-primary" : inkClass;
   const valueClass = isBalance
     ? "bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
-    : "text-white";
-  const chipClass = isBalance ? "bg-primary/10 text-primary" : "bg-white/20 text-white";
-  const chipMutedClass = isBalance ? "text-primary/60" : "text-white/70";
-  const hoverTextClass = isBalance ? "text-primary/70" : "text-white/80";
+    : inkClass;
+  const chipClass = isBalance
+    ? "bg-primary/10 text-primary"
+    : `bg-white/60 ${inkClass}`;
+  const chipMutedClass = isBalance ? "text-primary/60" : "opacity-60";
+  const hoverTextClass = isBalance ? "text-primary/70" : "opacity-70";
 
-  // Chart colors
-  const chartStroke = isBalance ? "hsl(var(--primary))" : "#ffffff";
-  const chartGradColor = isBalance ? "hsl(var(--primary))" : "#ffffff";
-  const chartGradStartOp = isBalance ? 0.35 : 0.5;
-  const cursorStroke = isBalance ? "hsl(var(--primary))" : "#ffffff";
-  const dotFill = isBalance ? "hsl(var(--primary))" : "#ffffff";
-  const dotStroke = isBalance ? "hsl(var(--primary))" : "#000000";
+  // Chart colors — use the ink/dark variant of the same family for the trend line
+  const inkVar =
+    kind === "income"
+      ? "hsl(var(--success-muted-foreground))"
+      : kind === "expense"
+        ? "hsl(var(--destructive-muted-foreground))"
+        : "hsl(var(--primary))";
+  const chartStroke = isBalance ? "hsl(var(--primary))" : inkVar;
+  const chartGradColor = isBalance ? "hsl(var(--primary))" : inkVar;
+  const chartGradStartOp = isBalance ? 0.35 : 0.35;
+  const cursorStroke = isBalance ? "hsl(var(--primary))" : inkVar;
+  const dotFill = isBalance ? "hsl(var(--primary))" : inkVar;
+  const dotStroke = isBalance ? "hsl(var(--primary))" : inkVar;
 
   return (
     <Card
