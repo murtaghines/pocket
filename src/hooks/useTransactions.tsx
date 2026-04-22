@@ -109,6 +109,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         .select("*")
         .eq("user_id", user.id)
         .eq("domain", domain)
+        .eq("is_hidden", false)
         .order("date", { ascending: false });
 
       if (periodId) {

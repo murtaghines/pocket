@@ -55,7 +55,8 @@ export function UnifiedUploadsTable() {
         .from("transactions")
         .select("id, import_id, amount, movement")
         .eq("user_id", user.id)
-        .eq("domain", "CASHFLOW");
+        .eq("domain", "CASHFLOW")
+        .eq("is_hidden", false);
       if (error || !data) return {};
       const counts: Record<string, number> = {};
       for (const tx of data) {
