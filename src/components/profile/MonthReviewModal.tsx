@@ -786,14 +786,14 @@ export function MonthReviewModal({
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v && !showRetroactiveDialog) handleCancel(); else onOpenChange(v); }}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme bg-background text-foreground">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme !bg-white text-foreground">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="flex items-center gap-2 text-foreground">
               <Pencil className="w-5 h-5 text-primary" />
-              Edit - {monthLabel}
+              Edit · {monthLabel}
             </DialogTitle>
-            <DialogDescription>
-              {transactions.length} transactions in this month
+            <DialogDescription className="text-muted-foreground">
+              {transactions.length} transactions · changes are saved only when you click <span className="font-medium text-foreground">Save</span>.
             </DialogDescription>
           </DialogHeader>
 
