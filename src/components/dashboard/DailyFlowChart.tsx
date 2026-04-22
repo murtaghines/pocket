@@ -182,15 +182,15 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
         )}
         <div className="flex items-center justify-between gap-3 text-sm mt-1">
           <span className="flex items-center gap-1.5 text-foreground">
-            <span className="w-2 h-2 rounded-full bg-success" /> {incomeLabel}
+            <span className="w-2 h-2 rounded-full bg-success-muted" /> {incomeLabel}
           </span>
-          <span className="font-semibold text-success">{formatCurrency(incomeVal)}</span>
+          <span className="font-semibold text-success-muted">{formatCurrency(incomeVal)}</span>
         </div>
         <div className="flex items-center justify-between gap-3 text-sm mt-1">
           <span className="flex items-center gap-1.5 text-foreground">
-            <span className="w-2 h-2 rounded-full bg-destructive" /> {expenseLabel}
+            <span className="w-2 h-2 rounded-full bg-destructive-muted" /> {expenseLabel}
           </span>
-          <span className="font-semibold text-destructive">{formatCurrency(expenseVal)}</span>
+          <span className="font-semibold text-destructive-muted">{formatCurrency(expenseVal)}</span>
         </div>
       </div>
     );
@@ -204,10 +204,10 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-success" /> {incomeLabel}
+                <span className="w-2.5 h-2.5 rounded-full bg-success-muted" /> {incomeLabel}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-destructive" /> {expenseLabel}
+                <span className="w-2.5 h-2.5 rounded-full bg-destructive-muted" /> {expenseLabel}
               </span>
             </div>
             {ToggleButtons}
@@ -260,7 +260,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
               <Bar
                 dataKey="income"
                 name={incomeLabel}
-                fill="hsl(var(--success))"
+                fill="hsl(var(--success-muted))"
                 radius={[6, 6, 0, 0]}
                 maxBarSize={36}
                 isAnimationActive={false}
@@ -268,7 +268,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
               <Bar
                 dataKey="expense"
                 name={expenseLabel}
-                fill="hsl(var(--destructive))"
+                fill="hsl(var(--destructive-muted))"
                 radius={[6, 6, 0, 0]}
                 maxBarSize={36}
                 isAnimationActive={false}

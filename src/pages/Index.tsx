@@ -162,7 +162,7 @@ export default function Index() {
                 kind="income"
                 label={t('stats.income')}
                 icon={<Plus className="w-5 h-5 text-white" strokeWidth={2.5} />}
-                bgClass="bg-success"
+                bgClass="bg-success-muted"
                 transactions={transactions}
                 monthKey={latestMonthLabel}
                 total={convertedCurrentMonth.income}
@@ -176,7 +176,7 @@ export default function Index() {
                 kind="expense"
                 label={t('stats.expenses')}
                 icon={<Minus className="w-5 h-5 text-white" strokeWidth={2.5} />}
-                bgClass="bg-destructive"
+                bgClass="bg-destructive-muted"
                 transactions={transactions}
                 monthKey={latestMonthLabel}
                 total={convertedCurrentMonth.expenses}
