@@ -161,8 +161,8 @@ export default function Index() {
               <TrendKpiCard
                 kind="income"
                 label={t('stats.income')}
-                icon={<Plus className="w-5 h-5 text-success-muted-foreground" strokeWidth={2.5} />}
-                bgClass="bg-success-muted"
+                icon={<Plus className="w-5 h-5 text-white" strokeWidth={2.5} />}
+                bgClass="bg-success"
                 transactions={transactions}
                 monthKey={latestMonthLabel}
                 total={convertedCurrentMonth.income}
@@ -175,8 +175,8 @@ export default function Index() {
               <TrendKpiCard
                 kind="expense"
                 label={t('stats.expenses')}
-                icon={<Minus className="w-5 h-5 text-destructive-muted-foreground" strokeWidth={2.5} />}
-                bgClass="bg-destructive-muted"
+                icon={<Minus className="w-5 h-5 text-white" strokeWidth={2.5} />}
+                bgClass="bg-destructive"
                 transactions={transactions}
                 monthKey={latestMonthLabel}
                 total={convertedCurrentMonth.expenses}
