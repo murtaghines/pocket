@@ -1328,25 +1328,32 @@ function AmountEditor({
   onRevert,
   formatCurrency,
 }: AmountEditorProps) {
-  const [localValue, setLocalValue] = useState<string>(Math.abs(effectiveAmount).toString());
+  const formatSigned = (n: number) => {
+    const sign = n < 0 ? "-" : "";
+    return `${sign}${Math.abs(n).toFixed(2)}`;
+  };
+  const [localValue, setLocalValue] = useState<string>(formatSigned(effectiveAmount));
   const [splitOpen, setSplitOpen] = useState(false);
   const [splitN, setSplitN] = useState<number>(splitCount || 2);
+  const [isFocused, setIsFocused] = useState(false);
 
-  // Sync local value when external amount changes (e.g., split applied)
+  // Sync local value when external amount changes (e.g., split applied) — but not while editing
   useEffect(() => {
-    setLocalValue(Math.abs(effectiveAmount).toFixed(2));
-  }, [effectiveAmount]);
+    if (!isFocused) {
+      setLocalValue(formatSigned(effectiveAmount));
+    }
+  }, [effectiveAmount, isFocused]);
 
   const handleBlur = () => {
+    setIsFocused(false);
     if (localValue === "" || localValue === "-") {
-      setLocalValue(Math.abs(effectiveAmount).toFixed(2));
+      setLocalValue(formatSigned(effectiveAmount));
       return;
     }
-    const parsed = parseFloat(localValue.replace(",", "."));
-    if (!isNaN(parsed) && parsed !== Math.abs(effectiveAmount)) {
-      onChange(localValue);
-    }
+    onChange(localValue);
   };
+
+  const isNegative = effectiveAmount < 0;
 
   return (
     <div className="flex flex-col items-end gap-0.5 group">
@@ -1402,9 +1409,14 @@ function AmountEditor({
           inputMode="decimal"
           value={localValue}
           onChange={(e) => setLocalValue(e.target.value)}
+          onFocus={() => setIsFocused(true)}
           onBlur={handleBlur}
           disabled={disabled}
-          className="h-8 w-24 text-right tabular-nums text-sm font-medium"
+          title="Tip: you can type expressions like 20/4 or 10+5"
+          className={cn(
+            "h-8 w-28 text-right tabular-nums text-sm font-medium",
+            isNegative && "text-destructive",
+          )}
         />
       </div>
       {amountChanged && (
