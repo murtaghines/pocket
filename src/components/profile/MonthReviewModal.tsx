@@ -308,6 +308,43 @@ export function MonthReviewModal({
     }));
   };
 
+  // Revert a single edited field on a transaction
+  const handleRevertField = (
+    transactionId: string,
+    field: "movement" | "category" | "amount" | "is_hidden",
+  ) => {
+    setEdits(prev => {
+      const current = prev[transactionId];
+      if (!current) return prev;
+      const next = { ...current };
+      delete next[field];
+      if (field === "amount") delete next.splitCount;
+      // If movement was reverted, also clear category if it was auto-set with the movement
+      const isEmpty = Object.keys(next).length === 0;
+      const newEdits = { ...prev };
+      if (isEmpty) {
+        delete newEdits[transactionId];
+      } else {
+        newEdits[transactionId] = next;
+      }
+      return newEdits;
+    });
+  };
+
+  // Revert all edits on a single transaction
+  const handleRevertRow = (transactionId: string) => {
+    setEdits(prev => {
+      const next = { ...prev };
+      delete next[transactionId];
+      return next;
+    });
+  };
+
+  // Discard all pending edits in the modal
+  const handleDiscardAllEdits = () => {
+    setEdits({});
+  };
+
   // Edit amount (preserve sign based on effective movement)
   const handleAmountChange = (transactionId: string, rawValue: string) => {
     const tx = transactions.find(t => t.id === transactionId);
