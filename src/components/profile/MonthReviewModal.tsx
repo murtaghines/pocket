@@ -348,7 +348,23 @@ export function MonthReviewModal({
   const handleAmountChange = (transactionId: string, rawValue: string) => {
     const tx = transactions.find(t => t.id === transactionId);
     if (!tx) return;
-    const parsed = parseFloat(rawValue.replace(",", "."));
+    // Allow simple math expressions like "20/4", "10+5", "100*0.5"
+    const sanitized = rawValue.replace(/\s/g, "").replace(",", ".");
+    let parsed: number;
+    if (/^-?[\d.]+$/.test(sanitized)) {
+      parsed = parseFloat(sanitized);
+    } else if (/^-?[\d+\-*/.()]+$/.test(sanitized)) {
+      try {
+        // Safe: only digits and math operators allowed by regex above
+        // eslint-disable-next-line no-new-func
+        const result = Function(`"use strict"; return (${sanitized});`)();
+        parsed = typeof result === "number" && isFinite(result) ? result : NaN;
+      } catch {
+        return;
+      }
+    } else {
+      return;
+    }
     if (isNaN(parsed)) return;
     const movement = getEffectiveMovement(tx);
     const sign = movement === "EXPENSE" ? -1 : 1;
