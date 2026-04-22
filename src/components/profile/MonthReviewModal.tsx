@@ -808,9 +808,26 @@ export function MonthReviewModal({
                   </div>
                 )}
                 {summary.edited > 0 && !isLocked && (
-                  <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  <button
+                    type="button"
+                    onClick={scrollToFirstEdit}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                    title="Jump to first edited row"
+                  >
+                    <Pencil className="w-3 h-3" />
                     {summary.edited} edited
-                  </Badge>
+                  </button>
+                )}
+                {summary.hidden > 0 && (
+                  <label className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-muted text-muted-foreground text-xs cursor-pointer">
+                    <Switch
+                      checked={showHidden}
+                      onCheckedChange={setShowHidden}
+                      className="scale-75"
+                    />
+                    <EyeOff className="w-3.5 h-3.5" />
+                    Show hidden ({summary.hidden})
+                  </label>
                 )}
               </div>
 
