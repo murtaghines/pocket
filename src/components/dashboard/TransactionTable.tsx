@@ -196,90 +196,85 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         <CardTitle className="text-lg font-semibold">
           {t('transactions.title')}
         </CardTitle>
-        <div className="flex flex-col md:flex-row md:items-end gap-2 mt-2">
-            {/* Movement multi-select */}
-            <div className="flex flex-col gap-1 flex-1">
-              <span className="text-xs font-medium text-muted-foreground">{t('transactions.movement', { defaultValue: 'Movement' })}</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between rounded-xl h-9 text-sm font-normal">
-                    <span className="truncate">{movementFilterLabel}</span>
-                    <ChevronDown className="w-3.5 h-3.5 opacity-50 flex-shrink-0" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-48 p-2 rounded-xl" align="start">
-                  <div className="flex flex-col gap-0.5">
-                    <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
-                      <Checkbox
-                        checked={allMovementsSelected || selectedMovements.length === 0}
-                        onCheckedChange={toggleAllMovements}
-                      />
-                      <span className="text-sm">{tc('viewAll')}</span>
-                    </label>
-                    {movementOptions.map(opt => (
-                      <label key={opt.value} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
-                        <Checkbox
-                          checked={selectedMovements.includes(opt.value)}
-                          onCheckedChange={() => toggleMovement(opt.value)}
-                        />
-                        <span className="text-sm">{opt.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+        {/* Airtable-style toolbar */}
+        <FilterToolbar className="mt-3">
+          <ToolbarButton icon={<EyeOff className="w-3.5 h-3.5" />} label={t('transactions.fields', { defaultValue: 'Fields' })} />
+          <ToolbarButton
+            icon={<FilterIcon className="w-3.5 h-3.5" />}
+            label={t('transactions.filter', { defaultValue: 'Filter' })}
+            active={!allMovementsSelected && selectedMovements.length > 0 || !allCategoriesSelected && selectedCategories.length > 0}
+          />
+          <ToolbarButton icon={<ArrowUpDown className="w-3.5 h-3.5" />} label={t('transactions.sort', { defaultValue: 'Sort' })} />
+          <ToolbarDivider />
 
-            {/* Category multi-select */}
-            <div className="flex flex-col gap-1 flex-1">
-              <span className="text-xs font-medium text-muted-foreground">{t('transactions.category')}</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between rounded-xl h-9 text-sm font-normal">
-                    <span className="truncate">{categoryFilterLabel}</span>
-                    <ChevronDown className="w-3.5 h-3.5 opacity-50 flex-shrink-0" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-2 rounded-xl max-h-64 overflow-y-auto" align="start">
-                  <div className="flex flex-col gap-0.5">
-                    <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
-                      <Checkbox
-                        checked={allCategoriesSelected || selectedCategories.length === 0}
-                        onCheckedChange={toggleAllCategories}
-                      />
-                      <span className="text-sm">{tc('viewAll')}</span>
-                    </label>
-                    {availableCategories.map(cat => (
-                      <label key={cat} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
-                        <Checkbox
-                          checked={selectedCategories.includes(cat)}
-                          onCheckedChange={() => toggleCategory(cat)}
-                        />
-                        <CategoryIcon 
-                          iconName={getCategoryIcon(cat)} 
-                          colorVar={getCategoryColor(cat)} 
-                          size="sm"
-                          showBackground={false}
-                        />
-                        <span className="text-sm">{getCategoryLabel(cat)}</span>
-                      </label>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
+          {/* Movement filter chip */}
+          <FilterChip
+            field={t('transactions.movement', { defaultValue: 'Movement' })}
+            value={movementFilterLabel}
+            active={selectedMovements.length > 0 && !allMovementsSelected}
+            onRemove={selectedMovements.length > 0 && !allMovementsSelected ? () => setSelectedMovements([]) : undefined}
+          >
+            <div className="flex flex-col gap-0.5">
+              <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
+                <Checkbox
+                  checked={allMovementsSelected || selectedMovements.length === 0}
+                  onCheckedChange={toggleAllMovements}
+                />
+                <span className="text-sm">{tc('viewAll')}</span>
+              </label>
+              {movementOptions.map(opt => (
+                <label key={opt.value} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
+                  <Checkbox
+                    checked={selectedMovements.includes(opt.value)}
+                    onCheckedChange={() => toggleMovement(opt.value)}
+                  />
+                  <span className="text-sm">{opt.label}</span>
+                </label>
+              ))}
             </div>
+          </FilterChip>
 
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder={tc('search')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 rounded-xl h-9"
-            />
-          </div>
-        </div>
+          {/* Category filter chip */}
+          <FilterChip
+            field={t('transactions.category')}
+            value={categoryFilterLabel}
+            active={selectedCategories.length > 0 && !allCategoriesSelected}
+            onRemove={selectedCategories.length > 0 && !allCategoriesSelected ? () => setSelectedCategories([]) : undefined}
+          >
+            <div className="flex flex-col gap-0.5 max-h-64 overflow-y-auto">
+              <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
+                <Checkbox
+                  checked={allCategoriesSelected || selectedCategories.length === 0}
+                  onCheckedChange={toggleAllCategories}
+                />
+                <span className="text-sm">{tc('viewAll')}</span>
+              </label>
+              {availableCategories.map(cat => (
+                <label key={cat} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer">
+                  <Checkbox
+                    checked={selectedCategories.includes(cat)}
+                    onCheckedChange={() => toggleCategory(cat)}
+                  />
+                  <CategoryIcon
+                    iconName={getCategoryIcon(cat)}
+                    colorVar={getCategoryColor(cat)}
+                    size="sm"
+                    showBackground={false}
+                  />
+                  <span className="text-sm">{getCategoryLabel(cat)}</span>
+                </label>
+              ))}
+            </div>
+          </FilterChip>
+
+          <div className="flex-1" />
+          <ToolbarSearch
+            value={search}
+            onChange={setSearch}
+            placeholder={tc('search')}
+            className="w-full md:w-56"
+          />
+        </FilterToolbar>
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <DataTable>
