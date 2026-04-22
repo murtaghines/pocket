@@ -832,14 +832,14 @@ export function MonthReviewModal({
               )}
 
               {/* Stats Summary */}
-              <div className="flex gap-4 flex-wrap text-sm">
+              <div className="flex gap-2 flex-wrap items-center text-sm">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
                   <PlusCircle className="w-4 h-4 text-success" />
-                  <span className="text-success font-medium">{formatCurrency(summary.income)}</span>
+                  <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
                   <MinusCircle className="w-4 h-4 text-destructive" />
-                  <span className="text-destructive font-medium">{formatCurrency(summary.expenses)}</span>
+                  <span className="text-destructive font-medium tabular-nums">{formatCurrency(summary.expenses)}</span>
                 </div>
                 {summary.transfers > 0 && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
@@ -848,18 +848,29 @@ export function MonthReviewModal({
                   </div>
                 )}
                 {summary.edited > 0 && !isLocked && (
-                  <button
-                    type="button"
-                    onClick={scrollToFirstEdit}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
-                    title="Jump to first edited row"
-                  >
-                    <Pencil className="w-3 h-3" />
-                    {summary.edited} edited
-                  </button>
+                  <div className="inline-flex items-center gap-1 ml-1">
+                    <button
+                      type="button"
+                      onClick={scrollToFirstEdit}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                      title="Jump to first edited row"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      {summary.edited} edited
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDiscardAllEdits}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs font-medium transition-colors"
+                      title="Discard all unsaved changes"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Discard
+                    </button>
+                  </div>
                 )}
                 {summary.hidden > 0 && (
-                  <label className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-muted text-muted-foreground text-xs cursor-pointer">
+                  <label className="inline-flex items-center gap-2 px-3 py-1 ml-auto rounded-lg bg-muted text-muted-foreground text-xs cursor-pointer">
                     <Switch
                       checked={showHidden}
                       onCheckedChange={setShowHidden}
