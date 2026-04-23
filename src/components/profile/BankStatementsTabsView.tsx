@@ -1121,7 +1121,7 @@ function InlineTransactionsEditor({
               entity_type: "transaction",
               entity_id: id,
               action: (payload as { __action?: string }).__action ?? "edit",
-              diff_json: { fields, before: beforeDiff, after: afterDiff },
+              diff_json: { fields, before: beforeDiff, after: afterDiff } as never,
             },
           ]);
         }
