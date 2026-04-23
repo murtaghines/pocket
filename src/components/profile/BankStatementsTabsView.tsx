@@ -233,7 +233,7 @@ export function BankStatementsTabsView() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       {/* ============= Header: title (left) + actions (right) ============= */}
       <div className="flex items-center justify-between gap-3 px-6 md:px-10 py-5 md:py-6 border-b border-border bg-card">
         <div className="min-w-0">
@@ -480,7 +480,7 @@ function MonthWorkspace({
   // Empty state
   if (imports.length === 0) {
     return (
-      <div className="bg-card py-20 px-6 text-center">
+      <div className="bg-card py-20 px-6 text-center flex-1 flex flex-col items-center justify-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
           <Upload className="w-6 h-6" />
         </div>
@@ -518,7 +518,7 @@ function MonthWorkspace({
   }
 
   return (
-    <div className="bg-card">
+    <div className="bg-card flex-1 flex flex-col">
       <input
         ref={fileInputRef}
         type="file"
@@ -1207,15 +1207,7 @@ function InlineTransactionsEditor({
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-3.5rem)]">
-      {/* Locked banner */}
-      {isLocked && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border text-sm text-muted-foreground">
-          <Lock className="w-4 h-4" />
-          This month is locked. Unlock the file above to edit.
-        </div>
-      )}
-
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Mismatch warning */}
       {mismatchedIds.size > 0 && (
         <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-300 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
@@ -1461,8 +1453,11 @@ function InlineTransactionsEditor({
           </div>
         )}
 
-        {/* Spreadsheet footer: totals (Excel status-bar style, larger font) */}
-        <div className="border-t border-border bg-card px-4 py-2.5 flex flex-wrap items-center gap-4 text-sm">
+        {/* White canvas fills the rest of the screen — pushes footer down */}
+        <div className="bg-card flex-1" />
+
+        {/* Spreadsheet footer: totals (Excel status-bar style) — sticks to the bottom */}
+        <div className="border-t border-border bg-card px-4 py-3 flex flex-wrap items-center gap-4 text-sm">
           <div className="inline-flex items-center gap-1.5 text-muted-foreground">
             <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
             row{summary.total !== 1 ? "s" : ""}
@@ -1498,14 +1493,19 @@ function InlineTransactionsEditor({
               {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
             </button>
           )}
-          <div className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Info className="w-3 h-3" />
-            Changes auto-save
+          <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5" />
+              Changes auto-save
+            </span>
+            {isLocked && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-foreground/80 font-medium">
+                <Lock className="w-3.5 h-3.5" />
+                Month locked
+              </span>
+            )}
           </div>
         </div>
-
-        {/* White canvas fills the rest of the screen */}
-        <div className="bg-card flex-1" />
       </div>
     </div>
   );
