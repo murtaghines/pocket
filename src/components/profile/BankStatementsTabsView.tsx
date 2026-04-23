@@ -278,97 +278,103 @@ function MonthTabStrip({
   };
 
   return (
-    <div className="flex items-center gap-1 border-b border-border">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-        onClick={() => scrollBy(-1)}
-        aria-label="Scroll tabs left"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </Button>
+    <div className="relative">
+      {/* Airtable-style tab strip: pastel band, active tab pops out white */}
+      <div className="flex items-stretch gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-11 w-8 shrink-0 self-end text-muted-foreground hover:text-foreground"
+          onClick={() => scrollBy(-1)}
+          aria-label="Scroll tabs left"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
 
-      <div
-        ref={scrollRef}
-        className="flex-1 flex items-end gap-0.5 overflow-x-auto scrollbar-none"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {slots.map((slot) => {
-          const active = slot.key === activeKey;
-          const imports = importsByMonth[slot.key] || [];
-          const hasData = imports.length > 0;
-          const txCount = imports.reduce((sum, i) => sum + (i.transactions_count || 0), 0);
-          return (
-            <button
-              key={slot.key}
-              type="button"
-              onClick={() => onActivate(slot.key)}
-              className={cn(
-                "group relative flex items-center gap-2 px-4 py-2.5 text-sm whitespace-nowrap transition-colors rounded-t-lg border-t border-x border-transparent -mb-px",
-                active
-                  ? "bg-card border-border text-foreground font-semibold"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
-              )}
-            >
-              <span className="capitalize">{slot.label}</span>
-              {hasData && (
-                <span
-                  className={cn(
-                    "inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-medium tabular-nums",
-                    active
-                      ? "bg-primary/15 text-primary"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {txCount}
-                </span>
-              )}
-              {!hasData && (
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-              )}
-              {active && (
-                <span className="absolute left-2 right-2 -bottom-px h-0.5 bg-card" />
-              )}
-            </button>
-          );
-        })}
+        <div
+          ref={scrollRef}
+          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none bg-primary/5 rounded-t-xl"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {slots.map((slot, idx) => {
+            const active = slot.key === activeKey;
+            const imports = importsByMonth[slot.key] || [];
+            const hasData = imports.length > 0;
+            const txCount = imports.reduce(
+              (sum, i) => sum + (i.transactions_count || 0),
+              0,
+            );
+            return (
+              <button
+                key={slot.key}
+                type="button"
+                onClick={() => onActivate(slot.key)}
+                className={cn(
+                  "group relative flex items-center gap-2 px-5 py-3 text-sm whitespace-nowrap transition-all",
+                  idx === 0 && "rounded-tl-xl",
+                  active
+                    ? "bg-card text-foreground font-semibold rounded-t-xl shadow-[0_-1px_0_0_hsl(var(--border)),1px_0_0_0_hsl(var(--border)),-1px_0_0_0_hsl(var(--border))] z-10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-primary/10",
+                )}
+              >
+                <span className="capitalize">{slot.label}</span>
+                {hasData ? (
+                  <span
+                    className={cn(
+                      "inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[10px] font-semibold tabular-nums",
+                      active
+                        ? "bg-primary/15 text-primary"
+                        : "bg-primary/10 text-primary/70",
+                    )}
+                  >
+                    {txCount}
+                  </span>
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                )}
+              </button>
+            );
+          })}
 
-        {/* Load more / less */}
-        <div className="flex items-center gap-1 px-2 ml-1 border-l border-border self-stretch">
-          {canShowLess && (
+          {/* Load more / less actions, inline with band */}
+          <div className="flex items-center gap-1 px-2 ml-auto self-center">
+            {canShowLess && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:bg-card"
+                onClick={onShowLess}
+                title="Show fewer months"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground"
-              onClick={onShowLess}
-              title="Show fewer months"
+              className="h-7 px-2 text-xs text-muted-foreground gap-1 hover:bg-card"
+              onClick={onLoadMore}
+              title="Show older months"
             >
-              <ChevronUp className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5" />
+              Older
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-muted-foreground gap-1"
-            onClick={onLoadMore}
-            title="Show older months"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Older
-          </Button>
+          </div>
         </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-11 w-8 shrink-0 self-end text-muted-foreground hover:text-foreground"
+          onClick={() => scrollBy(1)}
+          aria-label="Scroll tabs right"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </Button>
       </div>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-        onClick={() => scrollBy(1)}
-        aria-label="Scroll tabs right"
-      >
-        <ChevronRight className="w-4 h-4" />
-      </Button>
+      {/* Bottom border line that the active tab "sits on" */}
+      <div className="h-px bg-border -mt-px" />
     </div>
   );
 }
