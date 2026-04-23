@@ -861,7 +861,7 @@ serve(async (req) => {
       .from('imports')
       .insert({
         user_id: userId,
-        period_id: periodId,
+        period_id: initialPeriodId,
         account_id: accountId,
         domain: domain,
         source_type: sourceType,
