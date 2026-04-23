@@ -61,11 +61,11 @@ export default function MyData() {
       : "Upload portfolio snapshots per month";
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme md:pl-16">
+    <div className="min-h-screen bg-background dashboard-theme md:pl-20">
       <DataRail />
 
-      <main className="px-4 md:px-6 py-4 pb-20 md:pb-8">
-        {/* Page header — compact, Airtable-style */}
+      {/* Full-bleed workspace — uses the entire canvas to the right of the rail */}
+      <main className="px-4 md:px-8 py-5 pb-20 md:pb-10 w-full">
         <header className="mb-4">
           <h1 className="text-[15px] font-semibold tracking-tight text-foreground leading-tight">
             {title}
@@ -73,7 +73,6 @@ export default function MyData() {
           <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
         </header>
 
-        {/* Full-width workspace */}
         {tab === "bank" ? <BankStatementsTabsView /> : <InvestmentTabsView />}
       </main>
     </div>
