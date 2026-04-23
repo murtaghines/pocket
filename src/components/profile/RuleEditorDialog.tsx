@@ -211,8 +211,8 @@ export function RuleEditorDialog({
           <div className="space-y-1.5">
             <DialogTitle>Create a categorization rule</DialogTitle>
             <DialogDescription className="text-sm leading-relaxed">
-              Pick the words to match and how strict the rule should be. Future
-              transactions matching this pattern will be tagged automatically.
+              Edit the pattern and choose how strict the match should be. Future
+              transactions matching it will be tagged automatically.
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -254,43 +254,6 @@ export function RuleEditorDialog({
             </p>
           </div>
 
-          {/* Token chips — only meaningful for fuzzy */}
-          {matchType === "fuzzy" && (
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">
-                Words to match
-              </Label>
-              <div className="flex flex-wrap gap-1.5">
-                {allTokens.map((t) => {
-                  const active = selectedTokens.includes(t);
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => toggleToken(t)}
-                      className={cn(
-                        "group inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                        active
-                          ? "border-primary/30 bg-primary/10 text-primary hover:bg-primary/15"
-                          : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
-                      )}
-                    >
-                      {active ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        <span className="w-3 h-3 inline-block" />
-                      )}
-                      {t}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Tip: keep distinctive words (merchant name, brand) and drop generic ones.
-              </p>
-            </div>
-          )}
-
           {/* Pattern editor */}
           <div className="space-y-2">
             <div className="flex items-baseline justify-between">
@@ -300,18 +263,6 @@ export function RuleEditorDialog({
               >
                 Pattern
               </Label>
-              {matchType === "fuzzy" && patternEdited && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPatternEdited(false);
-                    setCustomPattern(selectedTokens.join(" "));
-                  }}
-                  className="text-[11px] text-primary hover:underline"
-                >
-                  Reset to selected words
-                </button>
-              )}
             </div>
             <Input
               id="rule-pattern"
