@@ -15,8 +15,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        display: ['Space Grotesk', 'sans-serif'],
-        nav: ['Poppins', 'Inter', 'sans-serif'],
+        display: ['Inter', 'sans-serif'],
+        nav: ['Inter', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
