@@ -132,7 +132,7 @@ export default function Index() {
         />
       )}
       
-      <main className="max-w-[1800px] mx-auto w-full">
+      <main className="w-full">
 
         {(isLoading || prefsLoading) && (
           <div className="flex items-center justify-center py-12">
