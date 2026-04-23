@@ -241,54 +241,18 @@ export function BankStatementsTabsView() {
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
 
-  // Track whether the active month workspace has unconfirmed edits so we
-  // can warn the user before they switch months.
-  const [hasPendingEdits, setHasPendingEdits] = useState(false);
-  // Ref the active month editor populates with a "commit everything pending
-  // in this month" function. Lets the parent trigger a save from a toast.
-  const commitAllPendingRef = useRef<(() => Promise<void> | void) | null>(null);
-  // Track the active toast id so we can dismiss it from action handlers.
-  const pendingToastIdRef = useRef<string | number | null>(null);
-
-  const guardedSetActiveKey = (k: string) => {
-    if (!hasPendingEdits) {
-      setActiveKey(k);
-      return;
-    }
-    // Show an interactive toast (bottom-right) instead of a native confirm.
-    // Stay on the current tab until the user picks an action.
-    if (pendingToastIdRef.current !== null) {
-      sonnerToast.dismiss(pendingToastIdRef.current);
-    }
-    const id = sonnerToast("Unconfirmed changes", {
-      description:
-        "You have unsaved edits in this month. Save them before switching tabs?",
-      duration: Infinity,
-      action: {
-        label: "Save & switch",
-        onClick: async () => {
-          try {
-            await commitAllPendingRef.current?.();
-          } finally {
-            pendingToastIdRef.current = null;
-            setActiveKey(k);
-          }
-        },
-      },
-      cancel: {
-        label: "Discard & switch",
-        onClick: () => {
-          pendingToastIdRef.current = null;
-          // Editor unmount on month change clears its pending state.
-          setActiveKey(k);
-        },
-      },
-      onDismiss: () => {
-        pendingToastIdRef.current = null;
-      },
-    });
-    pendingToastIdRef.current = id;
+  // Pending (unsaved) edits live in the parent so they survive when the
+  // user switches to another month tab or navigates the rest of the app.
+  // Each row stays visually "yellow" until the user explicitly saves or
+  // discards it from the row actions — no modal, no toast.
+  type PendingEdit = {
+    movement?: MovementType;
+    category?: string;
+    category_id?: string | null;
+    amount?: number;
   };
+  const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
+  const pendingTxIds = useMemo(() => new Set(Object.keys(pendingByTx)), [pendingByTx]);
 
   // Build month slots: latest first
   const monthSlots = useMemo(() => {
@@ -449,13 +413,11 @@ export function BankStatementsTabsView() {
           isProcessing={isProcessingMonth(activeSlot.key)}
           pendingFiles={[
             ...(pendingFilesByMonth[activeSlot.key] || []),
-            // Auto-distribution bucket — surface its progress on every month
-            // tab so the user always sees the in-flight upload, regardless of
-            // which month they're currently inspecting.
             ...(pendingFilesByMonth["__auto__"] || []),
           ]}
-          onPendingChange={setHasPendingEdits}
-          commitAllRef={commitAllPendingRef}
+          pendingByTx={pendingByTx}
+          setPendingByTx={setPendingByTx}
+          pendingTxIds={pendingTxIds}
         />
       )}
 
