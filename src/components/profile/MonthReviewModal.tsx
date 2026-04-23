@@ -77,6 +77,7 @@ import {
 } from "@/lib/categoryTranslations";
 import { buildRuleFromCorrection, ruleMatchesDescription } from "@/lib/userRules";
 import type { MatchType } from "@/lib/userRules";
+import walletIconWhite from "@/assets/wallet-icon-blue.png";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
