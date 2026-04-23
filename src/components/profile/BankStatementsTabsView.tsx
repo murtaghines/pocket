@@ -209,7 +209,7 @@ export function BankStatementsTabsView() {
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {/* ============= Month Tab Strip (Airtable style) ============= */}
       <MonthTabStrip
         slots={monthSlots}
