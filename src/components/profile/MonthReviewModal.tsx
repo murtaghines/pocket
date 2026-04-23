@@ -566,11 +566,11 @@ export function MonthReviewModal({
   const getMovementIcon = (movement: MovementType) => {
     switch (movement) {
       case "INCOME":
-        return <span className="inline-flex items-center justify-center w-4 h-4 text-success font-semibold text-base leading-none">+</span>;
+        return <Plus className="w-3 h-3" />;
       case "EXPENSE":
-        return <span className="inline-flex items-center justify-center w-4 h-4 text-destructive font-semibold text-base leading-none">−</span>;
+        return <Minus className="w-3 h-3" />;
       case "TRANSFER":
-        return <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />;
+        return <ArrowRightLeft className="w-3 h-3" />;
       default:
         return null;
     }
@@ -586,6 +586,19 @@ export function MonthReviewModal({
         return "text-warning";
       default:
         return "";
+    }
+  };
+
+  const getMovementTone = (movement: MovementType): PillTone => {
+    switch (movement) {
+      case "INCOME":
+        return "green";
+      case "EXPENSE":
+        return "red";
+      case "TRANSFER":
+        return "amber";
+      default:
+        return "neutral";
     }
   };
 
