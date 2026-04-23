@@ -1105,6 +1105,49 @@ function InlineTransactionsEditor({
             </Button>
           </div>
         )}
+
+        {/* Spreadsheet footer: totals + extras */}
+        <div className="border-t border-border bg-muted/20 px-3 py-2 flex flex-wrap items-center gap-3 text-xs">
+          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <span className="tabular-nums">{summary.total}</span>
+            row{summary.total !== 1 ? "s" : ""}
+          </div>
+          <span className="text-border">|</span>
+          <div className="inline-flex items-center gap-1.5">
+            <Plus className="w-3 h-3 text-success" />
+            <span className="text-success font-medium tabular-nums">
+              {formatCurrency(summary.income)}
+            </span>
+          </div>
+          <div className="inline-flex items-center gap-1.5">
+            <Minus className="w-3 h-3 text-destructive" />
+            <span className="text-destructive font-medium tabular-nums">
+              {formatCurrency(summary.expenses)}
+            </span>
+          </div>
+          {summary.transfers > 0 && (
+            <div className="inline-flex items-center gap-1.5">
+              <ArrowRightLeft className="w-3 h-3 text-warning" />
+              <span className="text-warning font-medium tabular-nums">
+                {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
+              </span>
+            </div>
+          )}
+          {summary.hidden > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowHidden((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <EyeOff className="w-3 h-3" />
+              {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
+            </button>
+          )}
+          <div className="ml-auto inline-flex items-center gap-1.5 text-muted-foreground">
+            <Info className="w-3 h-3" />
+            Changes auto-save
+          </div>
+        </div>
       </div>
     </div>
   );
