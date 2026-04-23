@@ -1060,7 +1060,6 @@ function InlineTransactionsEditor({
   const { formatCurrency, formatDate } = useLocalization();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
-  const [showHidden, setShowHidden] = useState(false);
   const [expanded, setExpanded] = useState(false);
   // Per-row "saving"/"saved" indicators
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
