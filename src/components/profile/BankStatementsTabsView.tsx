@@ -895,6 +895,34 @@ function UploadedFilesHistoryList({
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  // Fetch all distinct months covered by transactions of each import.
+  // Some files (e.g. multi-month statements) span more than `target_month`.
+  const { data: monthsByImport = {} } = useQuery({
+    queryKey: ["import-months", user?.id, imports.map((i) => i.id).join(",")],
+    enabled: !!user?.id && imports.length > 0,
+    queryFn: async () => {
+      const ids = imports.map((i) => i.id);
+      if (ids.length === 0) return {} as Record<string, string[]>;
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("import_id, date")
+        .in("import_id", ids);
+      if (error) throw error;
+      const map: Record<string, Set<string>> = {};
+      (data || []).forEach((row: any) => {
+        if (!row.import_id || !row.date) return;
+        const key = String(row.date).substring(0, 7);
+        (map[row.import_id] ??= new Set()).add(key);
+      });
+      const out: Record<string, string[]> = {};
+      Object.entries(map).forEach(([k, set]) => {
+        out[k] = Array.from(set).sort();
+      });
+      return out;
+    },
+  });
 
   const acctName = (id: string | null) =>
     (id && cashAccounts.find((a) => a.id === id)?.name) || "—";
