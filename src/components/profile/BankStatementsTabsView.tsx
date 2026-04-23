@@ -857,10 +857,10 @@ function InlineTransactionsEditor({
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
   return (
-    <div className="space-y-3">
+    <div>
       {/* Locked banner */}
       {isLocked && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border text-sm text-muted-foreground">
           <Lock className="w-4 h-4" />
           This month is locked. Unlock the file above to edit.
         </div>
@@ -868,7 +868,7 @@ function InlineTransactionsEditor({
 
       {/* Mismatch warning */}
       {mismatchedIds.size > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-300 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
+        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-300 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <strong>{mismatchedIds.size}</strong>
           {mismatchedIds.size === 1
@@ -878,53 +878,15 @@ function InlineTransactionsEditor({
         </div>
       )}
 
-      {/* Summary chips */}
-      <div className="flex gap-2 flex-wrap items-center text-sm">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-          <Plus className="w-3 h-3 text-success" />
-          <span className="text-success font-medium tabular-nums">
-            {formatCurrency(summary.income)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
-          <Minus className="w-3 h-3 text-destructive" />
-          <span className="text-destructive font-medium tabular-nums">
-            {formatCurrency(summary.expenses)}
-          </span>
-        </div>
-        {summary.transfers > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
-            <ArrowRightLeft className="w-3 h-3 text-warning" />
-            <span className="text-warning font-medium tabular-nums">
-              {summary.transfers}
-            </span>
-          </div>
-        )}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-lg text-muted-foreground text-xs">
-          {summary.total} row{summary.total !== 1 ? "s" : ""}
-        </div>
-        {summary.hidden > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowHidden((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-muted-foreground text-xs hover:bg-muted/70"
-          >
-            <EyeOff className="w-3 h-3" />
-            {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
-          </button>
-        )}
-        <div className="ml-auto text-xs text-muted-foreground inline-flex items-center gap-1.5">
-          <Info className="w-3 h-3" />
-          Changes auto-save
-        </div>
-      </div>
-
-      {/* The spreadsheet */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="overflow-auto max-h-[70vh]">
+      {/* The spreadsheet — flush, no padding, no inner card */}
+      <div className="bg-card">
+        <div className="overflow-auto max-h-[calc(100vh-220px)]">
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow className="hover:bg-transparent border-b border-border">
+                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground/60 font-medium">
+                  #
+                </TableHead>
                 <TableHead className="w-[8%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Date
                 </TableHead>
@@ -952,7 +914,7 @@ function InlineTransactionsEditor({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rowsToRender.map((tx) => {
+              {rowsToRender.map((tx, idx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
@@ -974,6 +936,9 @@ function InlineTransactionsEditor({
                       isSaved && !isMismatch && "bg-success/5",
                     )}
                   >
+                    <TableCell className="text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
+                      {idx + 1}
+                    </TableCell>
                     <TableCell className="text-sm text-foreground tabular-nums">
                       {formatDate(new Date(tx.date))}
                     </TableCell>
