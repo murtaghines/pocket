@@ -1060,7 +1060,6 @@ function InlineTransactionsEditor({
   const { formatCurrency, formatDate } = useLocalization();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
-  const [showHidden, setShowHidden] = useState(false);
   const [expanded, setExpanded] = useState(false);
   // Per-row "saving"/"saved" indicators
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
@@ -1386,8 +1385,9 @@ function InlineTransactionsEditor({
     );
   }
 
-  // Filter + truncate rows
-  const visibleAll = transactions.filter((t) => showHidden || !t.is_hidden);
+  // All rows always render — hidden ones are visually muted but still listed
+  // so the user can clearly see what was excluded from dashboard calculations.
+  const visibleAll = transactions;
   const showCollapsedHint = !expanded && visibleAll.length > ROW_THRESHOLD;
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
@@ -1467,7 +1467,7 @@ function InlineTransactionsEditor({
                       "transition-colors",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                       isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
-                      isHidden && "opacity-40",
+                      isHidden && "opacity-50 bg-muted/20",
                       isSaved && !isMismatch && "bg-success/5",
                     )}
                   >
@@ -1734,14 +1734,15 @@ function InlineTransactionsEditor({
             </div>
           )}
           {summary.hidden > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowHidden((v) => !v)}
-              className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-            >
+            <div className="inline-flex items-center gap-1.5 text-muted-foreground">
               <EyeOff className="w-3.5 h-3.5" />
-              {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
-            </button>
+              <span className="tabular-nums">
+                {summary.hidden} hidden
+              </span>
+              <span className="text-[11px] text-muted-foreground/70">
+                · excluded from dashboard
+              </span>
+            </div>
           )}
           <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
