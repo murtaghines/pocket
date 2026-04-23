@@ -1560,6 +1560,125 @@ function InlineTransactionsEditor({
           </div>
         </div>
       </div>
+
+      {/* Movement mismatch verification (no rule, just confirm) */}
+      <AlertDialog
+        open={!!movementConfirm}
+        onOpenChange={(o) => !o && setMovementConfirm(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Unusual movement
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {movementConfirm && (
+                <>
+                  The amount is{" "}
+                  <span className="font-semibold">
+                    {formatCurrency(movementConfirm.tx.amount)}
+                  </span>{" "}
+                  but you marked it as{" "}
+                  <span className="font-semibold">
+                    {getMovementLabel(movementConfirm.newMovement)}
+                  </span>
+                  . Are you sure?
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (movementConfirm) {
+                  applyMovementChange(movementConfirm.tx, movementConfirm.newMovement);
+                }
+                setMovementConfirm(null);
+              }}
+            >
+              Yes, save it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Category change → optional "save as rule" */}
+      <AlertDialog
+        open={!!categoryRulePrompt}
+        onOpenChange={(o) => !o && setCategoryRulePrompt(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save as a rule?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {categoryRulePrompt && (
+                <>
+                  Apply{" "}
+                  <span className="font-semibold">
+                    {getCategoryLabel(categoryRulePrompt.newSlug)}
+                  </span>{" "}
+                  to future transactions that look like{" "}
+                  <span className="font-mono text-foreground">
+                    “{categoryRulePrompt.cleanDesc.slice(0, 60)}
+                    {categoryRulePrompt.cleanDesc.length > 60 ? "…" : ""}”
+                  </span>
+                  ?
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCategoryRulePrompt(null)}>
+              Just this one
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!categoryRulePrompt || !user) {
+                  setCategoryRulePrompt(null);
+                  return;
+                }
+                const { cleanDesc, targetMovement, newSlug } = categoryRulePrompt;
+                const ruleData = buildRuleFromCorrection(
+                  cleanDesc,
+                  targetMovement,
+                  newSlug,
+                );
+                const { error } = await supabase.from("user_rules").insert({
+                  user_id: user.id,
+                  source: "user_correction",
+                  match_type: ruleData.match_type,
+                  pattern: ruleData.pattern,
+                  tokens: ruleData.tokens,
+                  movement: targetMovement,
+                  category: newSlug,
+                  confidence: 0.99,
+                  original_description: cleanDesc,
+                  is_active: true,
+                });
+                if (error) {
+                  toast({
+                    title: "Couldn't save rule",
+                    description: error.message,
+                    variant: "destructive",
+                  });
+                } else {
+                  toast({
+                    title: "✓ Rule saved",
+                    description: `Future “${cleanDesc.slice(0, 40)}${cleanDesc.length > 40 ? "…" : ""}” transactions will be categorized as ${getCategoryLabel(newSlug)}.`,
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+                  queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+                }
+                setCategoryRulePrompt(null);
+              }}
+            >
+              Yes, create rule
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
