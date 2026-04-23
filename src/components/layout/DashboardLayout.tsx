@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 import { DataRail } from "./DataRail";
-import walletIconBlue from "@/assets/wallet-icon-blue.png";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -58,12 +57,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-5">
           <nav className="flex items-center justify-between gap-4">
-            {/* Left: Logo + inline navigation */}
-            <div className="flex items-center gap-12">
-              <Link to="/dashboard" className="flex items-center flex-shrink-0">
-                <img src={walletIconBlue} alt="pocket" className="h-10 w-auto" />
-              </Link>
-
+            {/* Left: inline navigation (brand lives in the side rail) */}
+            <div className="flex items-center">
               <div className="hidden md:flex items-center gap-10">
                 {navItems.map((item) => {
                   const active = isActive(item.path);
