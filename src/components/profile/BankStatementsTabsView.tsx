@@ -1115,13 +1115,15 @@ function InlineTransactionsEditor({
           afterDiff[key] = next;
         }
         if (fields.length > 0) {
-          await supabase.from("audit_log").insert({
-            user_id: user.id,
-            entity_type: "transaction",
-            entity_id: id,
-            action: (payload as { __action?: string }).__action ?? "edit",
-            diff_json: { fields, before: beforeDiff, after: afterDiff },
-          });
+          await supabase.from("audit_log").insert([
+            {
+              user_id: user.id,
+              entity_type: "transaction",
+              entity_id: id,
+              action: (payload as { __action?: string }).__action ?? "edit",
+              diff_json: { fields, before: beforeDiff, after: afterDiff },
+            },
+          ]);
         }
       }
       return id;
