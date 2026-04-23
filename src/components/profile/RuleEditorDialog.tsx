@@ -303,13 +303,20 @@ export function RuleEditorDialog({
                     type="button"
                     onClick={() => setMatchType(opt.value)}
                     className={cn(
-                      "rounded-lg border px-2 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-wide transition-colors",
+                      "rounded-lg border px-2 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-wide transition-colors leading-tight",
                       active
                         ? "border-primary/40 bg-primary/8 text-primary ring-1 ring-primary/20"
                         : "border-border bg-card text-foreground hover:bg-muted",
                     )}
                   >
-                    {opt.label}
+                    {opt.labelLines ? (
+                      <span className="block">
+                        <span className="block">{opt.labelLines[0]}</span>
+                        <span className="block">{opt.labelLines[1]}</span>
+                      </span>
+                    ) : (
+                      opt.label
+                    )}
                   </button>
                 );
               })}
