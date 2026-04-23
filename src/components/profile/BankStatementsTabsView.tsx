@@ -1437,7 +1437,26 @@ function InlineTransactionsEditor({
                     )}
                   >
                     <TableCell className="text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
-                      {idx + 1}
+                      <RowEditIndicator
+                        index={idx + 1}
+                        history={auditByTx[tx.id] || []}
+                        open={openHistoryFor === tx.id}
+                        onOpenChange={(o) => setOpenHistoryFor(o ? tx.id : null)}
+                        onRevert={(entry) => {
+                          if (!entry.diff_json?.before) return;
+                          const before = entry.diff_json.before as Record<string, unknown>;
+                          const after = (entry.diff_json.after || {}) as Record<string, unknown>;
+                          // Restore the previous values; mark this as a revert action in audit.
+                          saveMutation.mutate({
+                            id: tx.id,
+                            payload: { ...before, __action: "revert" },
+                            before: after,
+                          });
+                        }}
+                        formatCurrency={formatCurrency}
+                        getCategoryLabel={getCategoryLabel}
+                      />
+                    </TableCell>
                     </TableCell>
                     <TableCell className="text-sm text-foreground tabular-nums">
                       {formatDate(new Date(tx.date))}
