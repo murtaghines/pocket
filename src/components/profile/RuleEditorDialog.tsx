@@ -359,45 +359,29 @@ export function RuleEditorDialog({
         </div>
 
         {/* Footer */}
-        <DialogFooter className="border-t border-border/70 bg-muted/30 px-6 py-4 sm:justify-between sm:gap-2">
-          {onSkip ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-9 px-4 font-medium text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                onSkip();
-                onOpenChange(false);
-              }}
-            >
-              <X className="w-4 h-4 mr-1.5" />
-              {skipLabel}
-            </Button>
-          ) : (
-            <span />
-          )}
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 px-4 font-medium"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              className="h-9 px-4 font-medium"
-              disabled={!canSave}
-              onClick={handleSave}
-            >
-              <Wand2 className="w-4 h-4 mr-1.5" />
-              Create rule
-            </Button>
-          </div>
+        <DialogFooter className="border-t border-border/70 bg-muted/30 px-6 py-4 sm:justify-end sm:gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-9 px-4 font-medium"
+            onClick={() => {
+              onSkip?.();
+              onOpenChange(false);
+            }}
+          >
+            {onSkip ? skipLabel : "Cancel"}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-9 px-4 font-medium"
+            disabled={!canSave}
+            onClick={handleSave}
+          >
+            <Wand2 className="w-4 h-4 mr-1.5" />
+            Create rule
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
