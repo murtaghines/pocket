@@ -692,6 +692,73 @@ function FileChipsBar({
 
 /* ─────────────────────────  Inline editor  ───────────────────────── */
 
+/* ─────────────────  Uploaded files dropdown (header)  ───────────────── */
+
+interface UploadedFilesDropdownProps {
+  imports: Import[];
+  cashAccounts: ReturnType<typeof useAccounts>["accounts"];
+  deleteImport: (id: string) => void;
+  isDeleting: boolean;
+  toggleLockImport: (args: { importId: string; locked: boolean }) => void;
+}
+
+function UploadedFilesDropdown({
+  imports,
+  cashAccounts,
+  deleteImport,
+  isDeleting,
+  toggleLockImport,
+}: UploadedFilesDropdownProps) {
+  const count = imports.length;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 h-8"
+          title="Show uploaded source files"
+          disabled={count === 0}
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          <span className="hidden sm:inline">Files</span>
+          <span className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-primary/10 text-primary text-[10px] font-semibold tabular-nums">
+            {count}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[420px] max-w-[90vw] p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold text-foreground">Uploaded files</p>
+          <p className="text-[11px] text-muted-foreground">
+            Tables below combine all of these
+          </p>
+        </div>
+        {count === 0 ? (
+          <p className="text-xs text-muted-foreground py-4 text-center">
+            No files uploaded yet.
+          </p>
+        ) : (
+          <div className="max-h-[60vh] overflow-auto pr-1">
+            <FileChipsBar
+              imports={imports}
+              cashAccounts={cashAccounts}
+              deleteImport={deleteImport}
+              isDeleting={isDeleting}
+              toggleLockImport={toggleLockImport}
+              onAddMore={() => {}}
+              isProcessing={false}
+              hideAddButton
+            />
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface InlineTransactionsEditorProps {
   monthKey: string;
   monthLabel: string;
