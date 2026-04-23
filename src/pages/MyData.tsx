@@ -61,7 +61,7 @@ export default function MyData() {
       : "Upload portfolio snapshots per month";
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme md:pl-20">
+    <div className="min-h-screen bg-background dashboard-theme md:pl-28">
       <DataRail />
 
       {/* Full-bleed workspace — true edge-to-edge, no padding, white canvas */}
