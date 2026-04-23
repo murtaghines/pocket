@@ -448,17 +448,19 @@ function MonthWorkspace({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-3 md:p-4" style={{ boxShadow: 'var(--shadow-section)' }}>
-      {/* File chips bar */}
-      <FileChipsBar
-        imports={imports}
-        cashAccounts={cashAccounts}
-        deleteImport={deleteImport}
-        isDeleting={isDeleting}
-        toggleLockImport={toggleLockImport}
-        onAddMore={() => fileInputRef.current?.click()}
-        isProcessing={isProcessing}
-      />
+    <div className="bg-card border-x border-b border-border rounded-b-xl">
+      {/* File chips bar — slim toolbar above the spreadsheet */}
+      <div className="px-3 py-2 border-b border-border/60">
+        <FileChipsBar
+          imports={imports}
+          cashAccounts={cashAccounts}
+          deleteImport={deleteImport}
+          isDeleting={isDeleting}
+          toggleLockImport={toggleLockImport}
+          onAddMore={() => fileInputRef.current?.click()}
+          isProcessing={isProcessing}
+        />
+      </div>
       <input
         ref={fileInputRef}
         type="file"
@@ -468,7 +470,7 @@ function MonthWorkspace({
         onChange={(e) => onPickFiles(e.target.files, monthDate)}
       />
 
-      {/* Inline transactions editor */}
+      {/* Inline transactions editor — flush with toolbar (no padding) */}
       <InlineTransactionsEditor
         monthKey={monthKey}
         monthLabel={monthLabel}
