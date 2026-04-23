@@ -1635,6 +1635,45 @@ function InlineTransactionsEditor({
                         </Button>
                       )}
                     </TableCell>
+                    <TableCell className="text-center">
+                      {!isLocked && isEdited && originalSnapshot && (
+                        <RevertToOriginalButton
+                          original={originalSnapshot.values}
+                          fields={originalSnapshot.fields}
+                          current={{
+                            movement: tx.movement,
+                            category: tx.category,
+                            category_id: tx.category_id,
+                            amount: tx.amount,
+                            is_hidden: tx.is_hidden,
+                          }}
+                          formatCurrency={formatCurrency}
+                          getCategoryLabel={getCategoryLabel}
+                          onConfirm={() => {
+                            const payload: Record<string, unknown> = {
+                              ...originalSnapshot.values,
+                              __action: "revert",
+                            };
+                            // If we're restoring category, also clear the manual override flags
+                            if ("category" in originalSnapshot.values) {
+                              payload.category_source = "DEFAULT";
+                              payload.user_corrected = false;
+                            }
+                            saveMutation.mutate({
+                              id: tx.id,
+                              payload,
+                              before: {
+                                movement: tx.movement,
+                                category: tx.category,
+                                category_id: tx.category_id,
+                                amount: tx.amount,
+                                is_hidden: tx.is_hidden,
+                              },
+                            });
+                          }}
+                        />
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })}
