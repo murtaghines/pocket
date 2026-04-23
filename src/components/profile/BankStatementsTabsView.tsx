@@ -891,9 +891,18 @@ function UploadedFilesHistoryList({
   toggleLockImport,
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
+  const queryClient = useQueryClient();
 
   const acctName = (id: string | null) =>
     (id && cashAccounts.find((a) => a.id === id)?.name) || "—";
+
+  const changeAcct = async (importId: string, newId: string) => {
+    await supabase.from("imports").update({ account_id: newId }).eq("id", importId);
+    await supabase.from("transactions").update({ account_id: newId }).eq("import_id", importId);
+    queryClient.invalidateQueries({ queryKey: ["imports"] });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+  };
 
   const fileTypeLabel = (imp: Import) => {
     const fromName = imp.file_name.split(".").pop()?.toUpperCase();
@@ -1012,7 +1021,28 @@ function UploadedFilesHistoryList({
                     {monthLabel(imp.target_month)}
                   </span>
                   <span aria-hidden>·</span>
-                  <span className="truncate">{acctName(imp.account_id)}</span>
+                  {cashAccounts.length > 0 ? (
+                    <Select
+                      value={imp.account_id || ""}
+                      onValueChange={(v) => changeAcct(imp.id, v)}
+                      disabled={!!imp.locked}
+                    >
+                      <SelectTrigger className="h-6 w-auto min-w-[110px] border-0 bg-muted/40 px-2 text-[11px] hover:bg-muted">
+                        <SelectValue placeholder="Account">
+                          {acctName(imp.account_id)}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cashAccounts.map((a) => (
+                          <SelectItem key={a.id} value={a.id} className="text-sm">
+                            {a.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="truncate">{acctName(imp.account_id)}</span>
+                  )}
                   {imp.transactions_count != null &&
                     imp.status === "NORMALIZED" && (
                       <>
