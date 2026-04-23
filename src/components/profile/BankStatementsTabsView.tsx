@@ -1628,7 +1628,7 @@ function InlineTransactionsEditor({
                       isSaved && !isMismatch && "bg-success/5",
                     )}
                   >
-                    <TableCell className="text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
+                    <TableCell className="w-[44px] px-0 text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
                       <RowEditIndicator
                         index={idx + 1}
                         history={isEdited ? (auditByTx[tx.id] || []) : []}
@@ -2205,7 +2205,7 @@ function RowEditIndicator({
   const editEntries = history.filter((h) => h.action !== "revert");
 
   if (editEntries.length === 0) {
-    return <span className="block w-full text-center">{index}</span>;
+    return <span className="flex w-full justify-center text-center">{index}</span>;
   }
 
   return (
@@ -2213,7 +2213,7 @@ function RowEditIndicator({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group flex items-center justify-center w-6 h-6 mx-auto rounded-full hover:bg-primary/10 transition-colors"
+          className="group flex h-6 w-full items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
           title={`${editEntries.length} change${editEntries.length === 1 ? "" : "s"} — click to review`}
         >
           <span className="relative flex w-2 h-2 rounded-full bg-primary" aria-hidden>
