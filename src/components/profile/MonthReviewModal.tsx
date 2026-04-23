@@ -536,11 +536,11 @@ export function MonthReviewModal({
   const getMovementIcon = (movement: MovementType) => {
     switch (movement) {
       case "INCOME":
-        return <PlusCircle className="w-4 h-4 text-success" />;
+        return <span className="inline-flex items-center justify-center w-4 h-4 text-success font-semibold text-base leading-none">+</span>;
       case "EXPENSE":
-        return <MinusCircle className="w-4 h-4 text-destructive" />;
+        return <span className="inline-flex items-center justify-center w-4 h-4 text-destructive font-semibold text-base leading-none">−</span>;
       case "TRANSFER":
-        return <ArrowRightLeft className="w-4 h-4 text-warning" />;
+        return <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />;
       default:
         return null;
     }
