@@ -1463,20 +1463,50 @@ function AmountDisplay({
 }
 
 // ─────────────────────────────────────────────────────────────
-// SplitButton: dedicated column for splitting an amount across N people
+// SplitButton: edit amount manually OR split it across N people.
+// Opens a popover with both controls.
 // ─────────────────────────────────────────────────────────────
 interface SplitButtonProps {
   originalAmount: number;
+  effectiveAmount: number;
+  amountChanged: boolean;
   splitCount?: number;
   disabled: boolean;
   onApplySplit: (n: number) => void;
+  onChangeAmount: (rawValue: string) => void;
   formatCurrency: (n: number) => string;
 }
 
-function SplitButton({ originalAmount, splitCount, disabled, onApplySplit, formatCurrency }: SplitButtonProps) {
+function SplitButton({
+  originalAmount,
+  effectiveAmount,
+  amountChanged,
+  splitCount,
+  disabled,
+  onApplySplit,
+  onChangeAmount,
+  formatCurrency,
+}: SplitButtonProps) {
   const [open, setOpen] = useState(false);
   const [splitN, setSplitN] = useState<number>(splitCount || 2);
-  const isActive = !!splitCount && splitCount > 1;
+  const isSplit = !!splitCount && splitCount > 1;
+  const isActive = isSplit || amountChanged;
+
+  const formatSigned = (n: number) => {
+    const sign = n < 0 ? "-" : "";
+    return `${sign}${Math.abs(n).toFixed(2)}`;
+  };
+  const [amountInput, setAmountInput] = useState<string>(formatSigned(effectiveAmount));
+
+  // Re-sync local input when popover opens or external amount changes
+  useEffect(() => {
+    if (open) setAmountInput(formatSigned(effectiveAmount));
+  }, [open, effectiveAmount]);
+
+  const commitAmount = () => {
+    if (amountInput === "" || amountInput === "-") return;
+    onChangeAmount(amountInput);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -1491,16 +1521,54 @@ function SplitButton({ originalAmount, splitCount, disabled, onApplySplit, forma
               ? "text-primary bg-primary/10 hover:bg-primary/20"
               : "text-muted-foreground hover:text-foreground hover:bg-muted",
           )}
-          title="Split amount across people"
+          title="Edit amount or split across people"
         >
-          <SplitIcon className="w-3.5 h-3.5" />
-          {isActive && <span className="tabular-nums">÷{splitCount}</span>}
+          <Pencil className="w-3.5 h-3.5" />
+          {isSplit && <span className="tabular-nums">÷{splitCount}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-3" align="end">
-        <div className="space-y-3">
+      <PopoverContent className="w-72 p-3" align="end">
+        <div className="space-y-4">
+          {/* Edit amount manually */}
           <div>
             <label className="text-xs font-medium text-muted-foreground">
+              Edit amount
+            </label>
+            <div className="flex gap-2 mt-1">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    commitAmount();
+                    setOpen(false);
+                  }
+                }}
+                title="You can type expressions like 20/4 or 10+5"
+                className="h-8 text-right tabular-nums text-sm"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8"
+                onClick={() => { commitAmount(); setOpen(false); }}
+              >
+                Apply
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Tip: you can type expressions like <span className="font-mono">20/4</span> or <span className="font-mono">10+5</span>
+            </p>
+          </div>
+
+          <div className="border-t border-border" />
+
+          {/* Split across N people */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <SplitIcon className="w-3 h-3" />
               Split between N people
             </label>
             <Input
@@ -1511,20 +1579,20 @@ function SplitButton({ originalAmount, splitCount, disabled, onApplySplit, forma
               onChange={(e) => setSplitN(Math.max(1, parseInt(e.target.value) || 1))}
               className="h-8 mt-1"
             />
+            <div className="text-xs text-muted-foreground mt-2">
+              Original: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount))}</span>
+            </div>
+            <div className="text-sm font-medium">
+              Your share: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount) / splitN)}</span>
+            </div>
+            <Button
+              size="sm"
+              className="w-full h-8 mt-2"
+              onClick={() => { onApplySplit(splitN); setOpen(false); }}
+            >
+              Apply ÷ {splitN}
+            </Button>
           </div>
-          <div className="text-xs text-muted-foreground">
-            Original: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount))}</span>
-          </div>
-          <div className="text-sm font-medium">
-            Your share: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount) / splitN)}</span>
-          </div>
-          <Button
-            size="sm"
-            className="w-full h-8"
-            onClick={() => { onApplySplit(splitN); setOpen(false); }}
-          >
-            Apply ÷ {splitN}
-          </Button>
         </div>
       </PopoverContent>
     </Popover>
