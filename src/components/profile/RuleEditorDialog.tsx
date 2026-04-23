@@ -290,7 +290,7 @@ export function RuleEditorDialog({
             <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">
               Match type
             </Label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-5 gap-1.5">
               {MATCH_OPTIONS.map((opt) => {
                 const active = matchType === opt.value;
                 return (
@@ -299,7 +299,7 @@ export function RuleEditorDialog({
                     type="button"
                     onClick={() => setMatchType(opt.value)}
                     className={cn(
-                      "rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-colors",
+                      "rounded-lg border px-2 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-wide transition-colors",
                       active
                         ? "border-primary/40 bg-primary/8 text-primary ring-1 ring-primary/20"
                         : "border-border bg-card text-foreground hover:bg-muted",
