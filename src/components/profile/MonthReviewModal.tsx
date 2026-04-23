@@ -1246,8 +1246,7 @@ export function MonthReviewModal({
                                 disabled={hidden}
                               >
                                 <SelectTrigger 
-                                  className="h-8 text-sm border-0"
-                                  style={{ backgroundColor: `hsl(var(--${getCategoryColor(effectiveCategory)}) / 0.12)` }}
+                                  className="h-8 text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50"
                                 >
                                   <SelectValue>
                                     <div className="flex items-center gap-1.5">
@@ -1255,9 +1254,9 @@ export function MonthReviewModal({
                                         iconName={getCategoryIcon(effectiveCategory)} 
                                         colorVar={getCategoryColor(effectiveCategory)} 
                                         size="sm"
-                                        showBackground={false}
+                                        showBackground={true}
                                       />
-                                      {translateCategory(effectiveCategory)}
+                                      <span className="text-foreground">{translateCategory(effectiveCategory)}</span>
                                     </div>
                                   </SelectValue>
                                 </SelectTrigger>
@@ -1269,7 +1268,7 @@ export function MonthReviewModal({
                                           iconName={getCategoryIcon(catSlug)} 
                                           colorVar={getCategoryColor(catSlug)} 
                                           size="sm"
-                                          showBackground={false}
+                                          showBackground={true}
                                         />
                                         {translateCategory(catSlug)}
                                       </div>
