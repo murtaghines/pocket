@@ -229,12 +229,12 @@ export function BankStatementsTabsView() {
   return (
     <div>
       {/* ============= Header: title (left) + actions (right) ============= */}
-      <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3 border-b border-border bg-card">
+      <div className="flex items-center justify-between gap-3 px-6 md:px-10 py-5 md:py-6 border-b border-border bg-card">
         <div className="min-w-0">
-          <h1 className="text-[13px] font-semibold tracking-tight text-foreground leading-tight">
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
             Bank statements
           </h1>
-          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+          <p className="text-sm text-muted-foreground mt-1 truncate">
             Pick a month and edit transactions inline
           </p>
         </div>
