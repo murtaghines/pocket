@@ -566,6 +566,7 @@ export function MonthReviewModal({
 
   const handleConfirm = async () => {
     const editEntries = Object.entries(edits);
+    console.log('[MonthReviewModal] handleConfirm fired. editEntries:', editEntries);
     if (editEntries.length === 0) {
       onOpenChange(false);
       return;
@@ -578,7 +579,10 @@ export function MonthReviewModal({
 
       const savePromises = editEntries.map(async ([txId, edit]) => {
         const tx = transactions.find(t => t.id === txId);
-        if (!tx) return;
+        if (!tx) {
+          console.warn('[MonthReviewModal] tx not found for edit', txId);
+          return;
+        }
 
         const effectiveMovement = edit.movement || getEffectiveMovement(tx);
         const effectiveCategory = edit.category || normalizeCategory(tx.category || "other_expense");
@@ -602,14 +606,30 @@ export function MonthReviewModal({
         if (edit.is_hidden !== undefined && edit.is_hidden !== tx.is_hidden) {
           updatePayload.is_hidden = edit.is_hidden;
         }
-        if (Object.keys(updatePayload).length === 0) return;
+        console.log('[MonthReviewModal] tx', txId, {
+          edit,
+          dbMovement: tx.movement,
+          dbCategory: tx.category,
+          normalizedDbCategory: normalizeCategory(tx.category),
+          movementChanged,
+          categoryChanged,
+          updatePayload,
+        });
+        if (Object.keys(updatePayload).length === 0) {
+          console.warn('[MonthReviewModal] skipped tx (no changes detected)', txId);
+          return;
+        }
 
         const { error: updateError } = await supabase
           .from("transactions")
           .update(updatePayload)
           .eq("id", txId);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('[MonthReviewModal] update error', txId, updateError);
+          throw updateError;
+        }
+        console.log('[MonthReviewModal] update OK', txId);
         savedTxIds.push(txId);
 
         // Only suggest a smart rule when category/movement actually changed
