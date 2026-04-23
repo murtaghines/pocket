@@ -1056,24 +1056,47 @@ function UploadedFilesHistoryList({
     return formatMonth(new Date(y, m - 1, 1));
   };
 
-  // Subtle status indicator: just a check icon when ready, badge only for
-  // active or error states (so the list stays calm when everything is fine).
-  const statusIndicator = (s: string) => {
-    if (s === "NORMALIZED") {
+  // Subtle status indicator. Order of priority (highest first):
+  //   FAILED  → red badge
+  //   PARSED / UPLOADED → amber "processing" badge
+  //   has mismatched rows → amber warning icon
+  //   locked → lock icon
+  //   ready → green check
+  const statusIndicator = (imp: Import) => {
+    if (imp.status === "FAILED") {
+      return <PillBadge tone="red">Failed</PillBadge>;
+    }
+    if (imp.status === "PARSED" || imp.status === "UPLOADED") {
       return (
-        <CheckCircle2
-          className="w-3.5 h-3.5 text-success shrink-0"
-          aria-label="Ready"
+        <PillBadge tone="amber">
+          {imp.status === "UPLOADED" ? "Uploading" : "Processing"}
+        </PillBadge>
+      );
+    }
+    const mismatchCount = mismatchByImport[imp.id] || 0;
+    if (mismatchCount > 0) {
+      return (
+        <AlertTriangle
+          className="w-4 h-4 text-warning shrink-0"
+          aria-label={`${mismatchCount} row(s) need review`}
+          titleAccess={`${mismatchCount} row(s) need review`}
         />
       );
     }
-    const map: Record<string, { tone: PillTone; label: string }> = {
-      PARSED: { tone: "amber", label: "Processing" },
-      UPLOADED: { tone: "amber", label: "Uploading" },
-      FAILED: { tone: "red", label: "Failed" },
-    };
-    const cfg = map[s] ?? { tone: "neutral" as PillTone, label: s };
-    return <PillBadge tone={cfg.tone}>{cfg.label}</PillBadge>;
+    if (imp.locked) {
+      return (
+        <Lock
+          className="w-3.5 h-3.5 text-muted-foreground shrink-0"
+          aria-label="Locked"
+        />
+      );
+    }
+    return (
+      <CheckCircle2
+        className="w-4 h-4 text-success shrink-0"
+        aria-label="Ready"
+      />
+    );
   };
 
   // Render every month covered by the import. When transactions span more
