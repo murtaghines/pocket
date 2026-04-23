@@ -719,6 +719,7 @@ function MonthWorkspace({
         isProcessing={isProcessing}
         pendingFiles={activePending}
         onPendingChange={onPendingChange}
+        commitAllRef={commitAllRef}
       />
     </div>
   );
