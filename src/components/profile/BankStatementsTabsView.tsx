@@ -151,6 +151,26 @@ function buildOriginalSnapshot(history: AuditEntry[]): {
   return { values, fields: Object.keys(values) };
 }
 
+/**
+ * Returns true if every tracked field on the current transaction matches its
+ * original (pre-edit) value. Used to hide the "edited" highlight after the
+ * user reverts all their changes back to the imported state.
+ */
+function isBackToOriginal(
+  current: Record<string, unknown>,
+  originalValues: Record<string, unknown>,
+): boolean {
+  for (const key of Object.keys(originalValues)) {
+    const orig = originalValues[key] ?? null;
+    const curr = (current[key] ?? null) as unknown;
+    // Loose equality: numbers/strings normalize, null/undefined treated equal
+    const a = orig == null ? null : String(orig);
+    const b = curr == null ? null : String(curr);
+    if (a !== b) return false;
+  }
+  return true;
+}
+
 interface AuditEntry {
   id: string;
   entity_id: string;
