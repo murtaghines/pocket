@@ -368,6 +368,48 @@ export function useMonthlyFileUpload() {
     });
   }, [user, toast, processFile]);
 
+  /**
+   * Auto-distribute mode: upload one or more files without forcing a target
+   * month. The backend distributes each file's transactions across whichever
+   * months they actually belong to.
+   */
+  const addFiles = useCallback((files: File[], accountId?: string) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be signed in to upload files.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!navigator.onLine) {
+      toast({
+        title: "No connection",
+        description: "You cannot upload files without an internet connection.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const monthKey = AUTO_BUCKET_KEY;
+    const newFiles: PendingFile[] = files.map((file) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      size: file.size,
+      file,
+      status: "pending" as const,
+    }));
+
+    setPendingFilesByMonth((prev) => ({
+      ...prev,
+      [monthKey]: [...(prev[monthKey] || []), ...newFiles],
+    }));
+
+    newFiles.forEach((newFile) => {
+      processFile(newFile, null, monthKey, accountId);
+    });
+  }, [user, toast, processFile]);
+
   const removeFileFromMonth = useCallback((monthKey: string, fileId: string) => {
     setPendingFilesByMonth((prev) => ({
       ...prev,
@@ -412,12 +454,20 @@ export function useMonthlyFileUpload() {
     ).length;
   }, [pendingFilesByMonth]);
 
+  const isProcessingAny = useCallback((): boolean => {
+    return Object.values(pendingFilesByMonth).some((arr) =>
+      arr.some((f) => f.status === "processing" || f.status === "pending"),
+    );
+  }, [pendingFilesByMonth]);
+
   return {
     pendingFilesByMonth,
     addFilesForMonth,
+    addFiles,
     removeFileFromMonth,
     processFilesForMonth,
     isProcessingMonth,
     getPendingCountForMonth,
+    isProcessingAny,
   };
 }
