@@ -377,9 +377,9 @@ export function BankStatementsTabsView() {
         importsByMonth={importsByMonth}
         onLoadMore={() => setMonthsToShow((n) => n + MONTHS_INCREMENT)}
         onShowLess={() =>
-          setMonthsToShow((n) => Math.max(DEFAULT_MONTHS, n - MONTHS_INCREMENT))
+          setMonthsToShow((n) => Math.max(MIN_MONTHS, n - MONTHS_INCREMENT))
         }
-        canShowLess={monthsToShow > DEFAULT_MONTHS}
+        canShowLess={monthsToShow > MIN_MONTHS}
       />
 
       {/* ============= Active month workspace ============= */}
