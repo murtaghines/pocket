@@ -1190,11 +1190,6 @@ function AmountEditButton({
 }: AmountEditButtonProps) {
   const [open, setOpen] = useState(false);
   const [splitN, setSplitN] = useState(2);
-  const [amountInput, setAmountInput] = useState(Math.abs(originalAmount).toFixed(2));
-
-  useEffect(() => {
-    if (open) setAmountInput(Math.abs(originalAmount).toFixed(2));
-  }, [open, originalAmount]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -1204,46 +1199,13 @@ function AmountEditButton({
           size="icon"
           disabled={disabled}
           className="h-7 w-7 text-muted-foreground hover:text-foreground"
-          title="Edit amount or split"
+          title="Split between people"
         >
-          <Pencil className="w-3.5 h-3.5" />
+          <SplitIcon className="w-3.5 h-3.5" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3" align="end">
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Edit amount</label>
-            <div className="flex gap-2 mt-1">
-              <Input
-                type="text"
-                inputMode="decimal"
-                value={amountInput}
-                onChange={(e) => setAmountInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    onChangeAmount(amountInput);
-                    setOpen(false);
-                  }
-                }}
-                className="h-8 text-right tabular-nums text-sm"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8"
-                onClick={() => {
-                  onChangeAmount(amountInput);
-                  setOpen(false);
-                }}
-              >
-                Apply
-              </Button>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Tip: expressions like <span className="font-mono">20/4</span> work
-            </p>
-          </div>
-          <div className="border-t border-border" />
+        <div className="space-y-3">
           <div>
             <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
               <SplitIcon className="w-3 h-3" />
