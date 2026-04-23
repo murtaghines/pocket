@@ -584,8 +584,9 @@ interface MonthWorkspaceProps {
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
-  onPendingChange?: (hasPending: boolean) => void;
-  commitAllRef?: React.MutableRefObject<(() => Promise<void> | void) | null>;
+  pendingByTx: Record<string, PendingEditShape>;
+  setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
+  pendingTxIds: Set<string>;
 }
 
 function MonthWorkspace({
@@ -600,8 +601,9 @@ function MonthWorkspace({
   toggleLockImport,
   isProcessing,
   pendingFiles,
-  onPendingChange,
-  commitAllRef,
+  pendingByTx,
+  setPendingByTx,
+  pendingTxIds,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLocked = imports.some((i) => i.locked);
