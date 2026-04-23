@@ -1294,7 +1294,8 @@ serve(async (req) => {
       const txRecord: any = {
         user_id: userId,
         domain: domain,
-        period_id: periodId,
+        period_id: txPeriodId,
+        _month_key: txMonthKey,
         import_id: importId,
         account_id: accountId,
         date: postedDate,
