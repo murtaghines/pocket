@@ -1570,21 +1570,31 @@ function InlineTransactionsEditor({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-warning" />
-              Unusual movement
+              Sign / movement mismatch
             </AlertDialogTitle>
             <AlertDialogDescription>
               {movementConfirm && (
-                <>
-                  The amount is{" "}
-                  <span className="font-semibold">
-                    {formatCurrency(movementConfirm.tx.amount)}
-                  </span>{" "}
-                  but you marked it as{" "}
-                  <span className="font-semibold">
-                    {getMovementLabel(movementConfirm.newMovement)}
+                <span className="space-y-2 block">
+                  <span className="block">
+                    This transaction is{" "}
+                    <span className="font-semibold">
+                      {movementConfirm.tx.amount < 0 ? "negative" : "positive"} (
+                      {formatCurrency(movementConfirm.tx.amount)})
+                    </span>
+                    , but you're marking it as{" "}
+                    <span className="font-semibold">
+                      {getMovementLabel(movementConfirm.newMovement)}
+                    </span>
+                    .
                   </span>
-                  . Are you sure?
-                </>
+                  <span className="block text-muted-foreground">
+                    Normally{" "}
+                    {movementConfirm.newMovement === "INCOME"
+                      ? "income amounts are positive (money in)"
+                      : "expenses are negative (money out)"}
+                    . Save anyway?
+                  </span>
+                </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1598,7 +1608,7 @@ function InlineTransactionsEditor({
                 setMovementConfirm(null);
               }}
             >
-              Yes, save it
+              Save anyway
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
