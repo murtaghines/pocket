@@ -1177,6 +1177,7 @@ interface InlineTransactionsEditorProps {
   onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
+  onPendingChange?: (hasPending: boolean) => void;
 }
 
 function InlineTransactionsEditor({
@@ -1191,6 +1192,7 @@ function InlineTransactionsEditor({
   onAddMore,
   isProcessing,
   pendingFiles,
+  onPendingChange,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
