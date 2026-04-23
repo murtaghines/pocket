@@ -63,11 +63,13 @@ interface RuleEditorDialogProps {
 const MATCH_OPTIONS: {
   value: MatchType;
   label: string;
+  labelLines?: [string, string];
   hint: string;
 }[] = [
   {
     value: "fuzzy",
     label: "Smart match",
+    labelLines: ["Smart", "match"],
     hint: "Matches when all selected words appear, in any order. Best default.",
   },
   {
@@ -78,11 +80,13 @@ const MATCH_OPTIONS: {
   {
     value: "starts_with",
     label: "Starts with",
+    labelLines: ["Starts", "with"],
     hint: "Matches when the description begins with the pattern.",
   },
   {
     value: "ends_with",
     label: "Ends with",
+    labelLines: ["Ends", "with"],
     hint: "Matches when the description ends with the pattern.",
   },
   {
