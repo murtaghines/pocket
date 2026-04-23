@@ -279,11 +279,11 @@ function MonthTabStrip({
 
   return (
     <div className="relative">
-      {/* Airtable-style tab strip: pastel band, active tab pops out white */}
-      <div className="flex items-stretch">
+      {/* Airtable-style tab strip: full-bleed, pastel band, active tab is white and seamless */}
+      <div className="flex items-stretch border-b border-border bg-primary/5">
         <div
           ref={scrollRef}
-          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none bg-primary/5 rounded-tl-xl"
+          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none"
           style={{ scrollbarWidth: "none" }}
         >
           {slots.map((slot, idx) => {
@@ -300,10 +300,9 @@ function MonthTabStrip({
                 type="button"
                 onClick={() => onActivate(slot.key)}
                 className={cn(
-                  "group relative flex items-center gap-2 px-5 py-3 text-sm whitespace-nowrap transition-all",
-                  idx === 0 && "rounded-tl-xl",
+                  "group relative flex items-center gap-2 px-5 py-2.5 text-sm whitespace-nowrap transition-all border-r border-border/40",
                   active
-                    ? "bg-card text-foreground font-semibold rounded-t-xl shadow-[0_-1px_0_0_hsl(var(--border)),1px_0_0_0_hsl(var(--border)),-1px_0_0_0_hsl(var(--border))] z-10"
+                    ? "bg-card text-foreground font-semibold -mb-px border-b-card z-10"
                     : "text-muted-foreground hover:text-foreground hover:bg-primary/10",
                 )}
               >
@@ -328,7 +327,7 @@ function MonthTabStrip({
         </div>
 
         {/* Right cluster: scroll arrows + load more, all together */}
-        <div className="flex items-center gap-0.5 px-2 bg-primary/5 rounded-tr-xl border-l border-border/40">
+        <div className="flex items-center gap-0.5 px-2 border-l border-border/40">
           <Button
             variant="ghost"
             size="icon"
@@ -370,9 +369,6 @@ function MonthTabStrip({
           </Button>
         </div>
       </div>
-
-      {/* Bottom border line that the active tab "sits on" */}
-      <div className="h-px bg-border -mt-px" />
     </div>
   );
 }
