@@ -1449,6 +1449,10 @@ function InlineTransactionsEditor({
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
                 const isHidden = tx.is_hidden;
+                const txHistory = auditByTx[tx.id] || [];
+                const editEntries = txHistory.filter((h) => h.action !== "revert");
+                const isEdited = editEntries.length > 0;
+                const originalSnapshot = isEdited ? buildOriginalSnapshot(txHistory) : null;
                 const cleanDescription = (tx.description_norm || tx.description)
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
@@ -1462,6 +1466,7 @@ function InlineTransactionsEditor({
                     className={cn(
                       "transition-colors",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                      isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
                       isHidden && "opacity-40",
                       isSaved && !isMismatch && "bg-success/5",
                     )}
