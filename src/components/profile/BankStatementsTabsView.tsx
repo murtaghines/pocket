@@ -280,20 +280,10 @@ function MonthTabStrip({
   return (
     <div className="relative">
       {/* Airtable-style tab strip: pastel band, active tab pops out white */}
-      <div className="flex items-stretch gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-11 w-8 shrink-0 self-end text-muted-foreground hover:text-foreground"
-          onClick={() => scrollBy(-1)}
-          aria-label="Scroll tabs left"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-
+      <div className="flex items-stretch">
         <div
           ref={scrollRef}
-          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none bg-primary/5 rounded-t-xl"
+          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none bg-primary/5 rounded-tl-xl"
           style={{ scrollbarWidth: "none" }}
         >
           {slots.map((slot, idx) => {
@@ -335,42 +325,50 @@ function MonthTabStrip({
               </button>
             );
           })}
+        </div>
 
-          {/* Load more / less actions, inline with band */}
-          <div className="flex items-center gap-1 px-2 ml-auto self-center">
-            {canShowLess && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground hover:bg-card"
-                onClick={onShowLess}
-                title="Show fewer months"
-              >
-                <ChevronUp className="w-3.5 h-3.5" />
-              </Button>
-            )}
+        {/* Right cluster: scroll arrows + load more, all together */}
+        <div className="flex items-center gap-0.5 px-2 bg-primary/5 rounded-tr-xl border-l border-border/40">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-7 text-muted-foreground hover:text-foreground hover:bg-card"
+            onClick={() => scrollBy(-1)}
+            aria-label="Scroll tabs left"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-7 text-muted-foreground hover:text-foreground hover:bg-card"
+            onClick={() => scrollBy(1)}
+            aria-label="Scroll tabs right"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          {canShowLess && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground gap-1 hover:bg-card"
-              onClick={onLoadMore}
-              title="Show older months"
+              className="h-7 px-2 text-xs text-muted-foreground hover:bg-card"
+              onClick={onShowLess}
+              title="Show fewer months"
             >
-              <Plus className="w-3.5 h-3.5" />
-              Older
+              <ChevronUp className="w-3.5 h-3.5" />
             </Button>
-          </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-muted-foreground gap-1 hover:bg-card"
+            onClick={onLoadMore}
+            title="Show older months"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Older
+          </Button>
         </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-11 w-8 shrink-0 self-end text-muted-foreground hover:text-foreground"
-          onClick={() => scrollBy(1)}
-          aria-label="Scroll tabs right"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
       </div>
 
       {/* Bottom border line that the active tab "sits on" */}
@@ -450,17 +448,19 @@ function MonthWorkspace({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-card p-3 md:p-4" style={{ boxShadow: 'var(--shadow-section)' }}>
-      {/* File chips bar */}
-      <FileChipsBar
-        imports={imports}
-        cashAccounts={cashAccounts}
-        deleteImport={deleteImport}
-        isDeleting={isDeleting}
-        toggleLockImport={toggleLockImport}
-        onAddMore={() => fileInputRef.current?.click()}
-        isProcessing={isProcessing}
-      />
+    <div className="bg-card border-x border-b border-border rounded-b-xl">
+      {/* File chips bar — slim toolbar above the spreadsheet */}
+      <div className="px-3 py-2 border-b border-border/60">
+        <FileChipsBar
+          imports={imports}
+          cashAccounts={cashAccounts}
+          deleteImport={deleteImport}
+          isDeleting={isDeleting}
+          toggleLockImport={toggleLockImport}
+          onAddMore={() => fileInputRef.current?.click()}
+          isProcessing={isProcessing}
+        />
+      </div>
       <input
         ref={fileInputRef}
         type="file"
@@ -470,7 +470,7 @@ function MonthWorkspace({
         onChange={(e) => onPickFiles(e.target.files, monthDate)}
       />
 
-      {/* Inline transactions editor */}
+      {/* Inline transactions editor — flush with toolbar (no padding) */}
       <InlineTransactionsEditor
         monthKey={monthKey}
         monthLabel={monthLabel}
@@ -833,7 +833,7 @@ function InlineTransactionsEditor({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card py-12 flex items-center justify-center">
+      <div className="bg-card py-12 flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -841,7 +841,7 @@ function InlineTransactionsEditor({
 
   if (transactions.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card py-12 px-6 text-center">
+      <div className="bg-card py-12 px-6 text-center">
         <FileSpreadsheet className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
         <p className="text-sm text-muted-foreground">
           File uploaded but no transactions detected yet. They will appear here
@@ -857,10 +857,10 @@ function InlineTransactionsEditor({
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
   return (
-    <div className="space-y-3">
+    <div>
       {/* Locked banner */}
       {isLocked && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border text-sm text-muted-foreground">
           <Lock className="w-4 h-4" />
           This month is locked. Unlock the file above to edit.
         </div>
@@ -868,7 +868,7 @@ function InlineTransactionsEditor({
 
       {/* Mismatch warning */}
       {mismatchedIds.size > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-300 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
+        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-300 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <strong>{mismatchedIds.size}</strong>
           {mismatchedIds.size === 1
@@ -878,53 +878,15 @@ function InlineTransactionsEditor({
         </div>
       )}
 
-      {/* Summary chips */}
-      <div className="flex gap-2 flex-wrap items-center text-sm">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-          <Plus className="w-3 h-3 text-success" />
-          <span className="text-success font-medium tabular-nums">
-            {formatCurrency(summary.income)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
-          <Minus className="w-3 h-3 text-destructive" />
-          <span className="text-destructive font-medium tabular-nums">
-            {formatCurrency(summary.expenses)}
-          </span>
-        </div>
-        {summary.transfers > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
-            <ArrowRightLeft className="w-3 h-3 text-warning" />
-            <span className="text-warning font-medium tabular-nums">
-              {summary.transfers}
-            </span>
-          </div>
-        )}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-lg text-muted-foreground text-xs">
-          {summary.total} row{summary.total !== 1 ? "s" : ""}
-        </div>
-        {summary.hidden > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowHidden((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-muted-foreground text-xs hover:bg-muted/70"
-          >
-            <EyeOff className="w-3 h-3" />
-            {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
-          </button>
-        )}
-        <div className="ml-auto text-xs text-muted-foreground inline-flex items-center gap-1.5">
-          <Info className="w-3 h-3" />
-          Changes auto-save
-        </div>
-      </div>
-
-      {/* The spreadsheet */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="overflow-auto max-h-[70vh]">
+      {/* The spreadsheet — flush, no padding, no inner card */}
+      <div className="bg-card">
+        <div className="overflow-auto max-h-[calc(100vh-220px)]">
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow className="hover:bg-transparent border-b border-border">
+                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground/60 font-medium">
+                  #
+                </TableHead>
                 <TableHead className="w-[8%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Date
                 </TableHead>
@@ -952,7 +914,7 @@ function InlineTransactionsEditor({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rowsToRender.map((tx) => {
+              {rowsToRender.map((tx, idx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
@@ -974,6 +936,9 @@ function InlineTransactionsEditor({
                       isSaved && !isMismatch && "bg-success/5",
                     )}
                   >
+                    <TableCell className="text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
+                      {idx + 1}
+                    </TableCell>
                     <TableCell className="text-sm text-foreground tabular-nums">
                       {formatDate(new Date(tx.date))}
                     </TableCell>
@@ -1140,6 +1105,49 @@ function InlineTransactionsEditor({
             </Button>
           </div>
         )}
+
+        {/* Spreadsheet footer: totals + extras */}
+        <div className="border-t border-border bg-muted/20 px-3 py-2 flex flex-wrap items-center gap-3 text-xs">
+          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <span className="tabular-nums">{summary.total}</span>
+            row{summary.total !== 1 ? "s" : ""}
+          </div>
+          <span className="text-border">|</span>
+          <div className="inline-flex items-center gap-1.5">
+            <Plus className="w-3 h-3 text-success" />
+            <span className="text-success font-medium tabular-nums">
+              {formatCurrency(summary.income)}
+            </span>
+          </div>
+          <div className="inline-flex items-center gap-1.5">
+            <Minus className="w-3 h-3 text-destructive" />
+            <span className="text-destructive font-medium tabular-nums">
+              {formatCurrency(summary.expenses)}
+            </span>
+          </div>
+          {summary.transfers > 0 && (
+            <div className="inline-flex items-center gap-1.5">
+              <ArrowRightLeft className="w-3 h-3 text-warning" />
+              <span className="text-warning font-medium tabular-nums">
+                {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
+              </span>
+            </div>
+          )}
+          {summary.hidden > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowHidden((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <EyeOff className="w-3 h-3" />
+              {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
+            </button>
+          )}
+          <div className="ml-auto inline-flex items-center gap-1.5 text-muted-foreground">
+            <Info className="w-3 h-3" />
+            Changes auto-save
+          </div>
+        </div>
       </div>
     </div>
   );
