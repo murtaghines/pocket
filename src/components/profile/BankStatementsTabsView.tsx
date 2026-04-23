@@ -1385,8 +1385,9 @@ function InlineTransactionsEditor({
     );
   }
 
-  // Filter + truncate rows
-  const visibleAll = transactions.filter((t) => showHidden || !t.is_hidden);
+  // All rows always render — hidden ones are visually muted but still listed
+  // so the user can clearly see what was excluded from dashboard calculations.
+  const visibleAll = transactions;
   const showCollapsedHint = !expanded && visibleAll.length > ROW_THRESHOLD;
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
@@ -1733,14 +1734,15 @@ function InlineTransactionsEditor({
             </div>
           )}
           {summary.hidden > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowHidden((v) => !v)}
-              className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-            >
+            <div className="inline-flex items-center gap-1.5 text-muted-foreground">
               <EyeOff className="w-3.5 h-3.5" />
-              {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
-            </button>
+              <span className="tabular-nums">
+                {summary.hidden} hidden
+              </span>
+              <span className="text-[11px] text-muted-foreground/70">
+                · excluded from dashboard
+              </span>
+            </div>
           )}
           <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
