@@ -280,20 +280,10 @@ function MonthTabStrip({
   return (
     <div className="relative">
       {/* Airtable-style tab strip: pastel band, active tab pops out white */}
-      <div className="flex items-stretch gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-11 w-8 shrink-0 self-end text-muted-foreground hover:text-foreground"
-          onClick={() => scrollBy(-1)}
-          aria-label="Scroll tabs left"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-
+      <div className="flex items-stretch">
         <div
           ref={scrollRef}
-          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none bg-primary/5 rounded-t-xl"
+          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none bg-primary/5 rounded-tl-xl"
           style={{ scrollbarWidth: "none" }}
         >
           {slots.map((slot, idx) => {
@@ -335,42 +325,50 @@ function MonthTabStrip({
               </button>
             );
           })}
+        </div>
 
-          {/* Load more / less actions, inline with band */}
-          <div className="flex items-center gap-1 px-2 ml-auto self-center">
-            {canShowLess && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground hover:bg-card"
-                onClick={onShowLess}
-                title="Show fewer months"
-              >
-                <ChevronUp className="w-3.5 h-3.5" />
-              </Button>
-            )}
+        {/* Right cluster: scroll arrows + load more, all together */}
+        <div className="flex items-center gap-0.5 px-2 bg-primary/5 rounded-tr-xl border-l border-border/40">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-7 text-muted-foreground hover:text-foreground hover:bg-card"
+            onClick={() => scrollBy(-1)}
+            aria-label="Scroll tabs left"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-7 text-muted-foreground hover:text-foreground hover:bg-card"
+            onClick={() => scrollBy(1)}
+            aria-label="Scroll tabs right"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          {canShowLess && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground gap-1 hover:bg-card"
-              onClick={onLoadMore}
-              title="Show older months"
+              className="h-7 px-2 text-xs text-muted-foreground hover:bg-card"
+              onClick={onShowLess}
+              title="Show fewer months"
             >
-              <Plus className="w-3.5 h-3.5" />
-              Older
+              <ChevronUp className="w-3.5 h-3.5" />
             </Button>
-          </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-muted-foreground gap-1 hover:bg-card"
+            onClick={onLoadMore}
+            title="Show older months"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Older
+          </Button>
         </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-11 w-8 shrink-0 self-end text-muted-foreground hover:text-foreground"
-          onClick={() => scrollBy(1)}
-          aria-label="Scroll tabs right"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
       </div>
 
       {/* Bottom border line that the active tab "sits on" */}
