@@ -72,7 +72,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       key={item.path}
                       to={item.path}
                       className={cn(
-                        "relative font-nav text-[18px] tracking-tight transition-colors py-1",
+                        "relative text-[15px] tracking-tight transition-colors py-1",
                         active
                           ? "text-foreground font-semibold"
                           : "text-muted-foreground hover:text-foreground font-medium"

@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FileSpreadsheet, TrendingUp } from "lucide-react";
 import { DataRail } from "@/components/layout/DataRail";
 import { BankStatementsTabsView } from "@/components/profile/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/profile/InvestmentTabsView";
@@ -54,30 +53,24 @@ export default function MyData() {
 
   const title =
     tab === "bank"
-      ? "Bank statements & expense reports"
-      : "Investment statements & portfolio reports";
+      ? "Bank statements"
+      : "Investment statements";
   const subtitle =
     tab === "bank"
-      ? "Pick a month and edit transactions inline · Excel, CSV, PDF accepted"
-      : "Upload portfolio snapshots per month · Excel, CSV, PDF accepted";
-  const Icon = tab === "bank" ? FileSpreadsheet : TrendingUp;
+      ? "Pick a month and edit transactions inline"
+      : "Upload portfolio snapshots per month";
 
   return (
     <div className="min-h-screen bg-background dashboard-theme md:pl-16">
       <DataRail />
 
-      <main className="px-4 md:px-8 py-6 pb-20 md:pb-10">
-        {/* Page header — uses the freed real-estate to describe the section */}
-        <header className="flex items-start gap-3 mb-5">
-          <div className="shrink-0 w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-            <Icon className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              {title}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
-          </div>
+      <main className="px-4 md:px-6 py-4 pb-20 md:pb-8">
+        {/* Page header — compact, Airtable-style */}
+        <header className="mb-4">
+          <h1 className="text-[15px] font-semibold tracking-tight text-foreground leading-tight">
+            {title}
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
         </header>
 
         {/* Full-width workspace */}
