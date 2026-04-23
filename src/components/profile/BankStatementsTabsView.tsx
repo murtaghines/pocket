@@ -151,6 +151,26 @@ function buildOriginalSnapshot(history: AuditEntry[]): {
   return { values, fields: Object.keys(values) };
 }
 
+/**
+ * Returns true if every tracked field on the current transaction matches its
+ * original (pre-edit) value. Used to hide the "edited" highlight after the
+ * user reverts all their changes back to the imported state.
+ */
+function isBackToOriginal(
+  current: Record<string, unknown>,
+  originalValues: Record<string, unknown>,
+): boolean {
+  for (const key of Object.keys(originalValues)) {
+    const orig = originalValues[key] ?? null;
+    const curr = (current[key] ?? null) as unknown;
+    // Loose equality: numbers/strings normalize, null/undefined treated equal
+    const a = orig == null ? null : String(orig);
+    const b = curr == null ? null : String(curr);
+    if (a !== b) return false;
+  }
+  return true;
+}
+
 interface AuditEntry {
   id: string;
   entity_id: string;
@@ -1482,8 +1502,15 @@ function InlineTransactionsEditor({
                 const isHidden = tx.is_hidden;
                 const txHistory = auditByTx[tx.id] || [];
                 const editEntries = txHistory.filter((h) => h.action !== "revert");
-                const isEdited = editEntries.length > 0;
-                const originalSnapshot = isEdited ? buildOriginalSnapshot(txHistory) : null;
+                const hasEditHistory = editEntries.length > 0;
+                const snapshot = hasEditHistory ? buildOriginalSnapshot(txHistory) : null;
+                // If the row has been fully reverted to its original imported
+                // values, treat it as "not edited" — drop the blue highlight,
+                // history dot, and revert button.
+                const isEdited =
+                  hasEditHistory &&
+                  !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
+                const originalSnapshot = isEdited ? snapshot : null;
                 const cleanDescription = (tx.description_norm || tx.description)
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
@@ -1505,7 +1532,7 @@ function InlineTransactionsEditor({
                     <TableCell className="text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
                       <RowEditIndicator
                         index={idx + 1}
-                        history={auditByTx[tx.id] || []}
+                        history={isEdited ? (auditByTx[tx.id] || []) : []}
                         open={openHistoryFor === tx.id}
                         onOpenChange={(o) => setOpenHistoryFor(o ? tx.id : null)}
                         onRevert={(entry) => {
