@@ -1263,6 +1263,11 @@ function InlineTransactionsEditor({
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasAnyPending]);
 
+  // Notify parent so it can guard month-tab switches.
+  useEffect(() => {
+    onPendingChange?.(hasAnyPending);
+  }, [hasAnyPending, onPendingChange]);
+
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
 
