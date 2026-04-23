@@ -2099,10 +2099,10 @@ function RowEditIndicator({
         <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-muted/40">
           <History className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold text-foreground">
-            Edit history
+            Changes
           </span>
           <span className="ml-auto text-xs text-muted-foreground">
-            {editEntries.length} change{editEntries.length === 1 ? "" : "s"}
+            {editEntries.length}
           </span>
         </div>
         <div className="flex-1 overflow-auto divide-y divide-border">
@@ -2128,7 +2128,7 @@ function RowEditIndicator({
                     type="button"
                     onClick={() => onRevert(entry)}
                     className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
-                    title="Restore the values from before this change"
+                    title="Undo this change"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Undo
@@ -2156,11 +2156,6 @@ function RowEditIndicator({
               </div>
             );
           })}
-        </div>
-        <div className="px-4 py-2 border-t border-border bg-muted/30">
-          <p className="text-[11px] text-muted-foreground">
-            All edits are tracked. Use Undo to restore the previous value.
-          </p>
         </div>
       </PopoverContent>
     </Popover>
