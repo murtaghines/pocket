@@ -1502,8 +1502,15 @@ function InlineTransactionsEditor({
                 const isHidden = tx.is_hidden;
                 const txHistory = auditByTx[tx.id] || [];
                 const editEntries = txHistory.filter((h) => h.action !== "revert");
-                const isEdited = editEntries.length > 0;
-                const originalSnapshot = isEdited ? buildOriginalSnapshot(txHistory) : null;
+                const hasEditHistory = editEntries.length > 0;
+                const snapshot = hasEditHistory ? buildOriginalSnapshot(txHistory) : null;
+                // If the row has been fully reverted to its original imported
+                // values, treat it as "not edited" — drop the blue highlight,
+                // history dot, and revert button.
+                const isEdited =
+                  hasEditHistory &&
+                  !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
+                const originalSnapshot = isEdited ? snapshot : null;
                 const cleanDescription = (tx.description_norm || tx.description)
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
