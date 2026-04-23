@@ -1730,7 +1730,7 @@ function InlineTransactionsEditor({
                           onValueChange={(v) => handleCategoryChange(tx, v)}
                           disabled={isHidden}
                         >
-                          <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50">
+                          <SelectTrigger className="h-8 w-auto text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 gap-1 [&>svg]:opacity-50 [&>svg]:ml-0">
                             <SelectValue>
                               <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
                                 <CategoryIcon
