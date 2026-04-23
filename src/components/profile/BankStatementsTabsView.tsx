@@ -1749,12 +1749,45 @@ function InlineTransactionsEditor({
               <Info className="w-3.5 h-3.5" />
               Changes auto-save
             </span>
-            {isLocked && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-foreground/80 font-medium">
-                <Lock className="w-3.5 h-3.5" />
-                Month locked
-              </span>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                // Toggle lock on every file of the month at once
+                const nextLocked = !isLocked;
+                imports.forEach((imp) => {
+                  if (!!imp.locked !== nextLocked) {
+                    toggleLockImport({ importId: imp.id, locked: nextLocked });
+                  }
+                });
+                toast({
+                  title: nextLocked ? "Month locked" : "Month unlocked",
+                  description: nextLocked
+                    ? "Editing is disabled until you unlock it."
+                    : "You can edit transactions again.",
+                });
+              }}
+              disabled={imports.length === 0}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium transition-colors",
+                isLocked
+                  ? "bg-foreground/90 text-background hover:bg-foreground"
+                  : "bg-muted text-foreground/80 hover:bg-muted/70",
+                imports.length === 0 && "opacity-50 cursor-not-allowed",
+              )}
+              title={isLocked ? "Unlock month — allow editing" : "Lock month — prevent edits"}
+            >
+              {isLocked ? (
+                <>
+                  <Lock className="w-3.5 h-3.5" />
+                  Locked
+                </>
+              ) : (
+                <>
+                  <Unlock className="w-3.5 h-3.5" />
+                  Lock month
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
