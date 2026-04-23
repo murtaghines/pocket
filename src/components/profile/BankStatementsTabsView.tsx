@@ -238,6 +238,22 @@ export function BankStatementsTabsView() {
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
 
+  // Track whether the active month workspace has unconfirmed edits so we
+  // can warn the user before they switch months.
+  const [hasPendingEdits, setHasPendingEdits] = useState(false);
+
+  const guardedSetActiveKey = (k: string) => {
+    if (
+      hasPendingEdits &&
+      !window.confirm(
+        "You have unconfirmed changes in this month. They will be discarded if you switch tabs. Continue?",
+      )
+    ) {
+      return;
+    }
+    setActiveKey(k);
+  };
+
   // Build month slots: latest first
   const monthSlots = useMemo(() => {
     const now = new Date();
@@ -373,7 +389,7 @@ export function BankStatementsTabsView() {
       <MonthTabStrip
         slots={monthSlots}
         activeKey={activeKey}
-        onActivate={setActiveKey}
+        onActivate={guardedSetActiveKey}
         importsByMonth={importsByMonth}
         onLoadMore={() => setMonthsToShow((n) => n + MONTHS_INCREMENT)}
         onShowLess={() =>
@@ -402,6 +418,7 @@ export function BankStatementsTabsView() {
             // which month they're currently inspecting.
             ...(pendingFilesByMonth["__auto__"] || []),
           ]}
+          onPendingChange={setHasPendingEdits}
         />
       )}
 
@@ -568,6 +585,7 @@ interface MonthWorkspaceProps {
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
+  onPendingChange?: (hasPending: boolean) => void;
 }
 
 function MonthWorkspace({
@@ -582,6 +600,7 @@ function MonthWorkspace({
   toggleLockImport,
   isProcessing,
   pendingFiles,
+  onPendingChange,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLocked = imports.some((i) => i.locked);
@@ -662,6 +681,7 @@ function MonthWorkspace({
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
         pendingFiles={activePending}
+        onPendingChange={onPendingChange}
       />
     </div>
   );
@@ -1177,6 +1197,7 @@ interface InlineTransactionsEditorProps {
   onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
+  onPendingChange?: (hasPending: boolean) => void;
 }
 
 function InlineTransactionsEditor({
@@ -1191,6 +1212,7 @@ function InlineTransactionsEditor({
   onAddMore,
   isProcessing,
   pendingFiles,
+  onPendingChange,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1222,6 +1244,54 @@ function InlineTransactionsEditor({
 
   // Edit-history popover open state (one tx at a time)
   const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
+
+  // Pending (unsaved) edits per-row. Movement / category / amount changes
+  // are buffered here and only persisted when the user clicks the green
+  // "confirm" tick. Hide/Show stays immediate (it's not a content edit).
+  type PendingEdit = {
+    movement?: MovementType;
+    category?: string;
+    category_id?: string | null;
+    amount?: number;
+  };
+  const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
+
+  const setPendingFor = (txId: string, patch: PendingEdit) => {
+    setPendingByTx((prev) => {
+      const next = { ...prev, [txId]: { ...(prev[txId] || {}), ...patch } };
+      return next;
+    });
+  };
+  const clearPendingFor = (txId: string) => {
+    setPendingByTx((prev) => {
+      if (!(txId in prev)) return prev;
+      const next = { ...prev };
+      delete next[txId];
+      return next;
+    });
+  };
+  const hasAnyPending = Object.keys(pendingByTx).length > 0;
+
+  // Block month / tab navigation while there are unconfirmed edits.
+  useEffect(() => {
+    if (!hasAnyPending) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasAnyPending]);
+
+  // Notify parent so it can guard month-tab switches.
+  useEffect(() => {
+    onPendingChange?.(hasAnyPending);
+    return () => {
+      // When this editor unmounts (e.g. user changed month), make sure
+      // the parent flag is cleared so it doesn't keep blocking forever.
+      onPendingChange?.(false);
+    };
+  }, [hasAnyPending, onPendingChange]);
 
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
@@ -1363,7 +1433,12 @@ function InlineTransactionsEditor({
     },
   });
 
-  // Handlers (auto-save on change)
+  // ─── Buffered edit handlers ──────────────────────────────────────────
+  // Movement / category / amount edits do NOT save automatically.
+  // They populate `pendingByTx[id]`. The row turns yellow until the user
+  // clicks the green tick in the "Undo" column, which runs validations
+  // and persists everything together.
+
   const applyMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
     const defaultCat = getCategoriesForMovement(newMovement)[0];
     const cat = categories.find((c) => c.slug === defaultCat);
@@ -1386,18 +1461,27 @@ function InlineTransactionsEditor({
   };
 
   const handleMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
-    if (newMovement === tx.movement) return;
-    // Verification only: warn if movement contradicts the amount sign.
-    // (positive amount → EXPENSE, or negative amount → INCOME).
-    const amount = tx.amount;
-    const looksWrong =
-      (amount > 0 && newMovement === "EXPENSE") ||
-      (amount < 0 && newMovement === "INCOME");
-    if (looksWrong) {
-      setMovementConfirm({ tx, newMovement });
+    if (newMovement === tx.movement) {
+      // Reverting back to the saved value clears the pending entry for this field.
+      setPendingByTx((prev) => {
+        if (!prev[tx.id]) return prev;
+        const { movement: _m, category: _c, category_id: _cid, ...rest } = prev[tx.id];
+        const next = { ...prev };
+        if (Object.keys(rest).length > 0) next[tx.id] = rest;
+        else delete next[tx.id];
+        return next;
+      });
       return;
     }
-    applyMovementChange(tx, newMovement);
+    // When movement changes, reset the category to the default of the new
+    // movement so the user always sees a coherent pair while pending.
+    const defaultCat = getCategoriesForMovement(newMovement)[0];
+    const cat = categories.find((c) => c.slug === defaultCat);
+    setPendingFor(tx.id, {
+      movement: newMovement,
+      category: defaultCat,
+      category_id: cat?.id || null,
+    });
   };
 
   const applyCategoryChange = (
@@ -1422,24 +1506,9 @@ function InlineTransactionsEditor({
   };
 
   const handleCategoryChange = (tx: MonthTransaction, newSlug: string) => {
-    if (normalizeCategory(tx.category) === newSlug) return;
     const cat = categories.find((c) => c.slug === newSlug);
     const categoryId = cat?.id || null;
-    // Apply the change immediately so the UI feels responsive…
-    applyCategoryChange(tx, newSlug, categoryId);
-    // …and ask whether to turn it into a permanent rule.
-    const cleanDesc = (tx.description_norm || tx.description || "")
-      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-      .trim();
-    if (!cleanDesc || !categoryId) return;
-    const targetMovement = (tx.movement || "EXPENSE") as MovementType;
-    setCategoryRulePrompt({
-      tx,
-      newSlug,
-      newCategoryId: categoryId,
-      cleanDesc,
-      targetMovement,
-    });
+    setPendingFor(tx.id, { category: newSlug, category_id: categoryId });
   };
 
   const handleAmountChange = (tx: MonthTransaction, raw: string) => {
@@ -1459,34 +1528,99 @@ function InlineTransactionsEditor({
       return;
     }
     if (isNaN(parsed)) return;
-    const movement = tx.movement || "EXPENSE";
+    const pending = pendingByTx[tx.id] || {};
+    const movement = (pending.movement || tx.movement || "EXPENSE") as MovementType;
     const sign = movement === "EXPENSE" ? -1 : 1;
     const newAmount = sign * Math.abs(parsed);
     if (newAmount === tx.amount) return;
-    saveMutation.mutate({
-      id: tx.id,
-      payload: { amount: newAmount },
-      before: { amount: tx.amount },
-    });
+    setPendingFor(tx.id, { amount: newAmount });
   };
 
   const handleSplit = (tx: MonthTransaction, n: number) => {
     if (n < 1) return;
-    const newAmount = Math.sign(tx.amount || 1) * (Math.abs(tx.amount) / n);
-    if (newAmount === tx.amount) return;
-    saveMutation.mutate({
-      id: tx.id,
-      payload: { amount: newAmount },
-      before: { amount: tx.amount },
-    });
+    const baseAmount = pendingByTx[tx.id]?.amount ?? tx.amount;
+    const newAmount = Math.sign(baseAmount || 1) * (Math.abs(baseAmount) / n);
+    if (newAmount === baseAmount) return;
+    setPendingFor(tx.id, { amount: newAmount });
   };
 
   const handleToggleHidden = (tx: MonthTransaction) => {
+    // Hide/Show stays immediate — it's not part of the pending-edit flow.
     saveMutation.mutate({
       id: tx.id,
       payload: { is_hidden: !tx.is_hidden },
       before: { is_hidden: tx.is_hidden },
     });
+  };
+
+  // Commit a row's pending edits: run validations, then persist via saveMutation.
+  const commitRow = (tx: MonthTransaction) => {
+    const pending = pendingByTx[tx.id];
+    if (!pending) return;
+
+    // 1) Sign vs movement mismatch — confirm with the user before saving.
+    const finalMovement = (pending.movement ?? tx.movement) as MovementType | null;
+    const finalAmount = pending.amount ?? tx.amount;
+    const looksWrong =
+      finalMovement &&
+      ((finalAmount > 0 && finalMovement === "EXPENSE") ||
+        (finalAmount < 0 && finalMovement === "INCOME"));
+    if (looksWrong && pending.movement && pending.movement !== tx.movement) {
+      setMovementConfirm({ tx, newMovement: pending.movement });
+      return;
+    }
+
+    // 2) Build the persistence payload from pending fields.
+    const payload: Record<string, unknown> = {};
+    const before: Record<string, unknown> = {};
+    if (pending.movement && pending.movement !== tx.movement) {
+      payload.movement = pending.movement;
+      before.movement = tx.movement;
+    }
+    if (pending.category && pending.category !== tx.category) {
+      payload.category = pending.category;
+      payload.category_id = pending.category_id ?? null;
+      payload.category_source = "MANUAL";
+      payload.categorized_by = "user";
+      payload.user_corrected = true;
+      before.category = tx.category;
+      before.category_id = tx.category_id;
+    }
+    if (pending.amount !== undefined && pending.amount !== tx.amount) {
+      payload.amount = pending.amount;
+      before.amount = tx.amount;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      clearPendingFor(tx.id);
+      return;
+    }
+
+    saveMutation.mutate(
+      { id: tx.id, payload, before },
+      {
+        onSuccess: () => {
+          // 3) After saving, if category changed, offer to create a rule.
+          if (pending.category && pending.category !== tx.category && pending.category_id) {
+            const cleanDesc = (tx.description_norm || tx.description || "")
+              .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+              .trim();
+            if (cleanDesc) {
+              const targetMovement =
+                ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
+              setCategoryRulePrompt({
+                tx,
+                newSlug: pending.category,
+                newCategoryId: pending.category_id,
+                cleanDesc,
+                targetMovement,
+              });
+            }
+          }
+          clearPendingFor(tx.id);
+        },
+      },
+    );
   };
 
   // Mismatch detection (sign vs movement)
@@ -1611,8 +1745,13 @@ function InlineTransactionsEditor({
                 const cleanDescription = (tx.description_norm || tx.description)
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
-                const movement = tx.movement || "EXPENSE";
-                const category = normalizeCategory(tx.category || "other_expense");
+                const pending = pendingByTx[tx.id];
+                const isPending = !!pending;
+                const movement = (pending?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
+                const category = normalizeCategory(
+                  pending?.category ?? tx.category ?? "other_expense",
+                );
+                const displayAmount = pending?.amount ?? tx.amount;
                 const availableCategories = getCategoriesForMovement(movement);
 
                 return (
@@ -1621,7 +1760,8 @@ function InlineTransactionsEditor({
                     className={cn(
                       "transition-colors",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                      isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                      isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                      isPending && "bg-warning/10 border-l-2 border-l-warning",
                       isHidden && "opacity-50 bg-muted/20",
                       isSaved && !isMismatch && "bg-success/5",
                     )}
@@ -1763,13 +1903,13 @@ function InlineTransactionsEditor({
                       )}
                     </TableCell>
                     <TableCell className="text-right text-sm tabular-nums font-medium text-foreground">
-                      {tx.amount < 0 ? "-" : ""}
-                      {formatCurrency(Math.abs(tx.amount))}
+                      {displayAmount < 0 ? "-" : ""}
+                      {formatCurrency(Math.abs(displayAmount))}
                     </TableCell>
                     <TableCell className="text-center">
                       {!isLocked && (
                         <AmountEditButton
-                          originalAmount={tx.amount}
+                          originalAmount={displayAmount}
                           formatCurrency={formatCurrency}
                           onChangeAmount={(v) => handleAmountChange(tx, v)}
                           onApplySplit={(n) => handleSplit(tx, n)}
@@ -1791,7 +1931,20 @@ function InlineTransactionsEditor({
                       )}
                     </TableCell>
                     <TableCell className="px-0 text-center">
-                      {!isLocked && isEdited && originalSnapshot && (
+                      {!isLocked && isPending ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
+                          onClick={() => commitRow(tx)}
+                          disabled={isSaving}
+                          title="Confirm changes"
+                          aria-label="Confirm changes"
+                        >
+                          <Check className="w-[18px] h-[18px]" />
+                        </Button>
+                      ) : !isLocked && isEdited && originalSnapshot ? (
                         <RevertToOriginalButton
                           original={originalSnapshot.values}
                           fields={originalSnapshot.fields}
@@ -1827,7 +1980,7 @@ function InlineTransactionsEditor({
                             });
                           }}
                         />
-                      )}
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 );
@@ -2007,7 +2160,41 @@ function InlineTransactionsEditor({
             <AlertDialogAction
               onClick={() => {
                 if (movementConfirm) {
-                  applyMovementChange(movementConfirm.tx, movementConfirm.newMovement);
+                  // User confirmed the mismatch — persist the pending edit
+                  // for this row, bypassing the validation in commitRow.
+                  const tx = movementConfirm.tx;
+                  const pending = pendingByTx[tx.id];
+                  if (pending) {
+                    const payload: Record<string, unknown> = {};
+                    const before: Record<string, unknown> = {};
+                    if (pending.movement && pending.movement !== tx.movement) {
+                      payload.movement = pending.movement;
+                      before.movement = tx.movement;
+                    }
+                    if (pending.category && pending.category !== tx.category) {
+                      payload.category = pending.category;
+                      payload.category_id = pending.category_id ?? null;
+                      payload.category_source = "MANUAL";
+                      payload.categorized_by = "user";
+                      payload.user_corrected = true;
+                      before.category = tx.category;
+                      before.category_id = tx.category_id;
+                    }
+                    if (pending.amount !== undefined && pending.amount !== tx.amount) {
+                      payload.amount = pending.amount;
+                      before.amount = tx.amount;
+                    }
+                    if (Object.keys(payload).length > 0) {
+                      saveMutation.mutate(
+                        { id: tx.id, payload, before },
+                        { onSuccess: () => clearPendingFor(tx.id) },
+                      );
+                    } else {
+                      clearPendingFor(tx.id);
+                    }
+                  } else {
+                    applyMovementChange(tx, movementConfirm.newMovement);
+                  }
                 }
                 setMovementConfirm(null);
               }}
