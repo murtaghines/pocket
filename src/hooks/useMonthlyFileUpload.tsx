@@ -187,7 +187,7 @@ export function useMonthlyFileUpload() {
       }, 1200);
 
       // Call the process-import edge function (uses imports table directly)
-      const { data: processData, error } = await supabase.functions.invoke(
+      let { data: processData, error } = await supabase.functions.invoke(
         "process-import",
         {
           body: {
@@ -207,6 +207,20 @@ export function useMonthlyFileUpload() {
           },
         }
       ).finally(() => clearInterval(aiRamp));
+
+      // RECOVERY: edge functions sometimes finish processing successfully but
+      // the HTTP connection drops before we get the response (timeout / network
+      // hiccup). Before declaring failure, poll the imports table — if the row
+      // is there with NORMALIZED status, processing actually succeeded and we
+      // should treat this as success.
+      if (error) {
+        patch({ progressLabel: "Verifying with server…", progressPercent: 90 });
+        const recovered = await pollForImportSuccess(user.id, fileHash);
+        if (recovered) {
+          processData = recovered;
+          error = null as any;
+        }
+      }
 
       // Handle non-2xx responses
       if (error) {
