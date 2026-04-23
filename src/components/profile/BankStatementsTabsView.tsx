@@ -209,7 +209,7 @@ export function BankStatementsTabsView() {
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {/* ============= Month Tab Strip (Airtable style) ============= */}
       <MonthTabStrip
         slots={monthSlots}
@@ -279,11 +279,11 @@ function MonthTabStrip({
 
   return (
     <div className="relative">
-      {/* Airtable-style tab strip: pastel band, active tab pops out white */}
-      <div className="flex items-stretch">
+      {/* Airtable-style tab strip: full-bleed, pastel band, active tab is white and seamless */}
+      <div className="flex items-stretch border-b border-border bg-primary/5">
         <div
           ref={scrollRef}
-          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none bg-primary/5 rounded-tl-xl"
+          className="flex-1 flex items-stretch overflow-x-auto scrollbar-none"
           style={{ scrollbarWidth: "none" }}
         >
           {slots.map((slot, idx) => {
@@ -300,10 +300,9 @@ function MonthTabStrip({
                 type="button"
                 onClick={() => onActivate(slot.key)}
                 className={cn(
-                  "group relative flex items-center gap-2 px-5 py-3 text-sm whitespace-nowrap transition-all",
-                  idx === 0 && "rounded-tl-xl",
+                  "group relative flex items-center gap-2 px-5 py-2.5 text-sm whitespace-nowrap transition-all border-r border-border/40",
                   active
-                    ? "bg-card text-foreground font-semibold rounded-t-xl shadow-[0_-1px_0_0_hsl(var(--border)),1px_0_0_0_hsl(var(--border)),-1px_0_0_0_hsl(var(--border))] z-10"
+                    ? "bg-card text-foreground font-semibold -mb-px border-b-card z-10"
                     : "text-muted-foreground hover:text-foreground hover:bg-primary/10",
                 )}
               >
@@ -328,7 +327,7 @@ function MonthTabStrip({
         </div>
 
         {/* Right cluster: scroll arrows + load more, all together */}
-        <div className="flex items-center gap-0.5 px-2 bg-primary/5 rounded-tr-xl border-l border-border/40">
+        <div className="flex items-center gap-0.5 px-2 border-l border-border/40">
           <Button
             variant="ghost"
             size="icon"
@@ -370,9 +369,6 @@ function MonthTabStrip({
           </Button>
         </div>
       </div>
-
-      {/* Bottom border line that the active tab "sits on" */}
-      <div className="h-px bg-border -mt-px" />
     </div>
   );
 }
@@ -410,7 +406,7 @@ function MonthWorkspace({
   // Empty state
   if (imports.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card py-16 px-6 text-center" style={{ boxShadow: 'var(--shadow-section)' }}>
+      <div className="bg-card py-20 px-6 text-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
           <Upload className="w-6 h-6" />
         </div>
@@ -448,19 +444,7 @@ function MonthWorkspace({
   }
 
   return (
-    <div className="bg-card border-x border-b border-border rounded-b-xl">
-      {/* File chips bar — slim toolbar above the spreadsheet */}
-      <div className="px-3 py-2 border-b border-border/60">
-        <FileChipsBar
-          imports={imports}
-          cashAccounts={cashAccounts}
-          deleteImport={deleteImport}
-          isDeleting={isDeleting}
-          toggleLockImport={toggleLockImport}
-          onAddMore={() => fileInputRef.current?.click()}
-          isProcessing={isProcessing}
-        />
-      </div>
+    <div className="bg-card">
       <input
         ref={fileInputRef}
         type="file"
@@ -470,11 +454,18 @@ function MonthWorkspace({
         onChange={(e) => onPickFiles(e.target.files, monthDate)}
       />
 
-      {/* Inline transactions editor — flush with toolbar (no padding) */}
+      {/* Inline transactions editor — flush with tabs, true edge-to-edge */}
       <InlineTransactionsEditor
         monthKey={monthKey}
         monthLabel={monthLabel}
         isLocked={isLocked}
+        imports={imports}
+        cashAccounts={cashAccounts}
+        deleteImport={deleteImport}
+        isDeleting={isDeleting}
+        toggleLockImport={toggleLockImport}
+        onAddMore={() => fileInputRef.current?.click()}
+        isProcessing={isProcessing}
       />
     </div>
   );
@@ -638,12 +629,26 @@ interface InlineTransactionsEditorProps {
   monthKey: string;
   monthLabel: string;
   isLocked: boolean;
+  imports: Import[];
+  cashAccounts: ReturnType<typeof useAccounts>["accounts"];
+  deleteImport: (id: string) => void;
+  isDeleting: boolean;
+  toggleLockImport: (args: { importId: string; locked: boolean }) => void;
+  onAddMore: () => void;
+  isProcessing: boolean;
 }
 
 function InlineTransactionsEditor({
   monthKey,
   monthLabel,
   isLocked,
+  imports,
+  cashAccounts,
+  deleteImport,
+  isDeleting,
+  toggleLockImport,
+  onAddMore,
+  isProcessing,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -881,7 +886,7 @@ function InlineTransactionsEditor({
       {/* The spreadsheet — flush, no padding, no inner card */}
       <div className="bg-card">
         <div className="overflow-auto max-h-[calc(100vh-220px)]">
-          <Table className="w-full table-fixed">
+          <Table className="w-full table-fixed [&_th]:border-r [&_th]:border-border/60 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/40 [&_td:last-child]:border-r-0">
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow className="hover:bg-transparent border-b border-border">
                 <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground/60 font-medium">
@@ -1106,29 +1111,29 @@ function InlineTransactionsEditor({
           </div>
         )}
 
-        {/* Spreadsheet footer: totals + extras */}
-        <div className="border-t border-border bg-muted/20 px-3 py-2 flex flex-wrap items-center gap-3 text-xs">
+        {/* Spreadsheet footer: totals (Excel status-bar style, larger font) */}
+        <div className="border-t border-border bg-muted/20 px-4 py-2.5 flex flex-wrap items-center gap-4 text-sm">
           <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <span className="tabular-nums">{summary.total}</span>
+            <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
             row{summary.total !== 1 ? "s" : ""}
           </div>
           <span className="text-border">|</span>
           <div className="inline-flex items-center gap-1.5">
-            <Plus className="w-3 h-3 text-success" />
-            <span className="text-success font-medium tabular-nums">
+            <Plus className="w-3.5 h-3.5 text-success" />
+            <span className="text-success font-semibold tabular-nums">
               {formatCurrency(summary.income)}
             </span>
           </div>
           <div className="inline-flex items-center gap-1.5">
-            <Minus className="w-3 h-3 text-destructive" />
-            <span className="text-destructive font-medium tabular-nums">
+            <Minus className="w-3.5 h-3.5 text-destructive" />
+            <span className="text-destructive font-semibold tabular-nums">
               {formatCurrency(summary.expenses)}
             </span>
           </div>
           {summary.transfers > 0 && (
             <div className="inline-flex items-center gap-1.5">
-              <ArrowRightLeft className="w-3 h-3 text-warning" />
-              <span className="text-warning font-medium tabular-nums">
+              <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
+              <span className="text-warning font-semibold tabular-nums">
                 {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
               </span>
             </div>
@@ -1139,14 +1144,27 @@ function InlineTransactionsEditor({
               onClick={() => setShowHidden((v) => !v)}
               className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
             >
-              <EyeOff className="w-3 h-3" />
+              <EyeOff className="w-3.5 h-3.5" />
               {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
             </button>
           )}
-          <div className="ml-auto inline-flex items-center gap-1.5 text-muted-foreground">
+          <div className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <Info className="w-3 h-3" />
             Changes auto-save
           </div>
+        </div>
+
+        {/* Source files bar — discreet, at the bottom (Airtable footer style) */}
+        <div className="border-t border-border bg-card px-4 py-2">
+          <FileChipsBar
+            imports={imports}
+            cashAccounts={cashAccounts}
+            deleteImport={deleteImport}
+            isDeleting={isDeleting}
+            toggleLockImport={toggleLockImport}
+            onAddMore={onAddMore}
+            isProcessing={isProcessing}
+          />
         </div>
       </div>
     </div>
