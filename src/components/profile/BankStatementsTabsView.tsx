@@ -1716,15 +1716,8 @@ function InlineTransactionsEditor({
     }
   };
 
-  // Expose commitAllPending to the parent through the ref so it can call it
-  // from the toast actions. Re-bind on every render to capture latest state.
-  useEffect(() => {
-    if (!commitAllRef) return;
-    commitAllRef.current = commitAllPending;
-    return () => {
-      if (commitAllRef.current === commitAllPending) commitAllRef.current = null;
-    };
-  });
+  // (commitAllPending is no longer exposed externally — pending edits now
+  // persist across tab switches and are confirmed/discarded per row.)
 
   // Mismatch detection (sign vs movement)
   const mismatchedIds = useMemo(() => {
