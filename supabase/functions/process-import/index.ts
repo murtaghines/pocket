@@ -1333,18 +1333,25 @@ serve(async (req) => {
       let duplicateCount = 0;
       
       for (const tx of newTransactions) {
+        const txMonthKey: string = tx._month_key;
+        // Strip our internal helper field before inserting.
+        const { _month_key, ...txClean } = tx;
         const { error: insertError } = await supabase
           .from('transactions')
-          .insert(tx);
-        
+          .insert(txClean);
+
         if (insertError) {
           if (insertError.code === '23505') {
             duplicateCount++;
+            if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
+            monthsDistribution[txMonthKey].duplicates++;
           } else {
             console.error('[process-import] Error inserting transaction:', insertError);
           }
         } else {
           successCount++;
+          if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
+          monthsDistribution[txMonthKey].new++;
         }
       }
       
@@ -1377,7 +1384,9 @@ serve(async (req) => {
       diff_json: {
         file_name: fileName,
         domain,
-        target_month: normalizedTargetMonth,
+        target_month_hint: hintedTargetMonth,
+        months_distribution: monthsDistribution,
+        skipped_months: skippedMonths,
         stats
       }
     });
@@ -1410,9 +1419,10 @@ serve(async (req) => {
         message,
         importId,
         stats,
-        redirectedFromMonth: redirectedFromMonth || undefined,
-        actualMonth: redirectedFromMonth ? normalizedTargetMonth : undefined,
-        dateWarnings: dateWarnings.length > 0 ? dateWarnings.slice(0, 10) : undefined
+        monthsDistribution,
+        skippedMonths,
+        detectedMonths,
+        autoDistributed: autoDistribute,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
