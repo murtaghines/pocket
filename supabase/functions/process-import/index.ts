@@ -1080,7 +1080,7 @@ serve(async (req) => {
       totalParsed: allTransactions.length,
       newTransactions: 0,
       duplicatesIgnored: 0,
-      outsideMonthSkipped: 0,
+      skippedClosedMonth: 0,
       transfers: 0,
       income: 0,
       expenses: 0,
@@ -1088,10 +1088,15 @@ serve(async (req) => {
       categorizedByCategorizer: 0,
       categorizedByAI: 0
     };
+    const monthsDistribution: Record<string, { new: number; duplicates: number }> = {};
+    for (const m of Object.keys(periodIdByMonth)) {
+      monthsDistribution[m] = { new: 0, duplicates: 0 };
+    }
 
     const newTransactions: any[] = [];
-    const seenFingerprints = new Set<string>();
-    const seenNaturalKeys = new Set<string>();
+    // Per-month dedupe trackers (so identical txs in different months stay distinct).
+    const seenFingerprintsByMonth: Record<string, Set<string>> = {};
+    const seenNaturalKeysByMonth: Record<string, Set<string>> = {};
 
     for (let i = 0; i < allTransactions.length; i++) {
       const t = allTransactions[i];
@@ -1113,11 +1118,20 @@ serve(async (req) => {
       }
 
       const txMonthKey = extractMonthKey(postedDate);
-      if (txMonthKey !== normalizedTargetMonth) {
-        console.log(`[process-import] Filtering out transaction from ${txMonthKey} (target: ${normalizedTargetMonth}): ${descriptionClean.substring(0, 40)}`);
-        stats.outsideMonthSkipped++;
+      const txPeriodId = periodIdByMonth[txMonthKey];
+      if (!txPeriodId) {
+        // Month is closed or failed to provision a period — skip but track.
+        stats.skippedClosedMonth++;
         continue;
       }
+      if (!seenFingerprintsByMonth[txMonthKey]) {
+        seenFingerprintsByMonth[txMonthKey] = new Set();
+        seenNaturalKeysByMonth[txMonthKey] = new Set();
+      }
+      const existingFingerprints = existingFingerprintsByMonth[txMonthKey] || new Set<string>();
+      const existingNaturalKeys = existingNaturalKeysByMonth[txMonthKey] || new Set<string>();
+      const seenFingerprints = seenFingerprintsByMonth[txMonthKey];
+      const seenNaturalKeys = seenNaturalKeysByMonth[txMonthKey];
 
       const fingerprint = await calculateFingerprint(
         userId,
@@ -1152,6 +1166,8 @@ serve(async (req) => {
 
       if (existingFingerprints.has(fingerprint) || seenFingerprints.has(fingerprint)) {
         stats.duplicatesIgnored++;
+        if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
+        monthsDistribution[txMonthKey].duplicates++;
         console.log(`[process-import] Duplicate by fingerprint: ${descriptionClean.substring(0, 50)}`);
         continue;
       }
@@ -1161,6 +1177,8 @@ serve(async (req) => {
       
       if (existingNaturalKeys.has(naturalKey) || seenNaturalKeys.has(naturalKey)) {
         stats.duplicatesIgnored++;
+        if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
+        monthsDistribution[txMonthKey].duplicates++;
         console.log(`[process-import] Duplicate by natural key: ${naturalKey.substring(0, 60)}`);
         continue;
       }
