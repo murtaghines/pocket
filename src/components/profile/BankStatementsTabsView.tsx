@@ -1103,8 +1103,7 @@ function InlineTransactionsEditor({
   });
 
   // Handlers (auto-save on change)
-  const handleMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
-    if (newMovement === tx.movement) return;
+  const applyMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
     const defaultCat = getCategoriesForMovement(newMovement)[0];
     const cat = categories.find((c) => c.slug === defaultCat);
     saveMutation.mutate({
@@ -1120,18 +1119,56 @@ function InlineTransactionsEditor({
     });
   };
 
-  const handleCategoryChange = (tx: MonthTransaction, newSlug: string) => {
-    if (normalizeCategory(tx.category) === newSlug) return;
-    const cat = categories.find((c) => c.slug === newSlug);
+  const handleMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
+    if (newMovement === tx.movement) return;
+    // Verification only: warn if movement contradicts the amount sign.
+    // (positive amount → EXPENSE, or negative amount → INCOME).
+    const amount = tx.amount;
+    const looksWrong =
+      (amount > 0 && newMovement === "EXPENSE") ||
+      (amount < 0 && newMovement === "INCOME");
+    if (looksWrong) {
+      setMovementConfirm({ tx, newMovement });
+      return;
+    }
+    applyMovementChange(tx, newMovement);
+  };
+
+  const applyCategoryChange = (
+    tx: MonthTransaction,
+    newSlug: string,
+    categoryId: string | null,
+  ) => {
     saveMutation.mutate({
       id: tx.id,
       payload: {
         category: newSlug,
-        category_id: cat?.id || null,
+        category_id: categoryId,
         category_source: "MANUAL",
         categorized_by: "user",
         user_corrected: true,
       },
+    });
+  };
+
+  const handleCategoryChange = (tx: MonthTransaction, newSlug: string) => {
+    if (normalizeCategory(tx.category) === newSlug) return;
+    const cat = categories.find((c) => c.slug === newSlug);
+    const categoryId = cat?.id || null;
+    // Apply the change immediately so the UI feels responsive…
+    applyCategoryChange(tx, newSlug, categoryId);
+    // …and ask whether to turn it into a permanent rule.
+    const cleanDesc = (tx.description_norm || tx.description || "")
+      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+      .trim();
+    if (!cleanDesc || !categoryId) return;
+    const targetMovement = (tx.movement || "EXPENSE") as MovementType;
+    setCategoryRulePrompt({
+      tx,
+      newSlug,
+      newCategoryId: categoryId,
+      cleanDesc,
+      targetMovement,
     });
   };
 
