@@ -729,16 +729,14 @@ function UploadedFilesDropdown({
         <Button
           variant="outline"
           size="sm"
-          className="gap-1.5 h-8"
-          title="Show uploaded source files"
           disabled={count === 0}
+          title="Show uploaded source files"
+          className="h-9 gap-2 rounded-full px-4 font-medium border-border bg-card hover:bg-muted/60"
         >
-          <FileSpreadsheet className="w-4 h-4" />
-          <span className="hidden sm:inline">Files</span>
-          <span className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-primary/10 text-primary text-[10px] font-semibold tabular-nums">
-            {count}
+          <FileSpreadsheet className="w-4 h-4 text-primary" />
+          <span className="tabular-nums">
+            {count} {count === 1 ? "file" : "files"}
           </span>
-          <PanelRightOpen className="w-3.5 h-3.5 opacity-60" />
         </Button>
       </SheetTrigger>
       <SheetContent
