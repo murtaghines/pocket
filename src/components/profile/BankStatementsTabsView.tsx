@@ -1060,6 +1060,7 @@ interface InlineTransactionsEditorProps {
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   onAddMore: () => void;
   isProcessing: boolean;
+  pendingFiles?: PendingFileInfo[];
 }
 
 function InlineTransactionsEditor({
@@ -1073,6 +1074,7 @@ function InlineTransactionsEditor({
   toggleLockImport,
   onAddMore,
   isProcessing,
+  pendingFiles,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
