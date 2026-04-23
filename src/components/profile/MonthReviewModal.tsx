@@ -912,17 +912,76 @@ export function MonthReviewModal({
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v && !showRetroactiveDialog) handleCancel(); else onOpenChange(v); }}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full flex flex-col dashboard-theme !bg-white text-foreground">
-          <DialogHeader className="space-y-1">
-            <DialogTitle className="flex items-center gap-2 text-foreground">
-              <Pencil className="w-5 h-5 text-primary" />
-              Edit · {monthLabel}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {transactions.length} transactions · changes are saved only when you click <span className="font-medium text-foreground">Save</span>.
+        <DialogContent
+          className="!max-w-none w-screen h-screen sm:rounded-none border-0 p-0 dashboard-theme !bg-white text-foreground gap-0 overflow-hidden flex flex-row [&>button]:hidden"
+        >
+          {/* Hidden a11y header */}
+          <DialogHeader className="sr-only">
+            <DialogTitle>Edit · {monthLabel}</DialogTitle>
+            <DialogDescription>
+              Spreadsheet-style editor for transactions in {monthLabel}.
             </DialogDescription>
           </DialogHeader>
 
+          {/* ============= Left sidebar (brand) ============= */}
+          <aside className="hidden md:flex w-[72px] shrink-0 bg-primary flex-col items-center py-5 gap-6">
+            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 ring-1 ring-white/20">
+              <img src={walletIconWhite} alt="pocket" className="h-6 w-auto brightness-0 invert" />
+            </div>
+            <div className="flex-1 flex flex-col items-center gap-2 mt-2">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/15 text-white">
+                <Pencil className="w-4 h-4" />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="text-white/70 hover:text-white text-[10px] font-medium tracking-wide uppercase"
+              title="Close editor"
+            >
+              Close
+            </button>
+          </aside>
+
+          {/* ============= Right workspace ============= */}
+          <div className="flex-1 min-w-0 flex flex-col bg-white">
+            {/* Workspace header */}
+            <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border">
+              <div className="min-w-0">
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                  Editing data · {monthLabel}
+                </div>
+                <h2 className="font-display text-xl font-bold text-foreground truncate">
+                  Transactions
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {transactions.length} rows · changes save only when you click{" "}
+                  <span className="font-medium text-foreground">Save</span>
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button variant="ghost" onClick={handleCancel} disabled={isSaving} size="sm">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirm}
+                  disabled={transactions.length === 0 || isSaving}
+                  size="sm"
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                  )}
+                  {Object.keys(edits).length > 0
+                    ? `Save ${Object.keys(edits).length} change(s)`
+                    : "Confirm"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Workspace body */}
+            <div className="flex-1 min-h-0 flex flex-col px-6 py-4 gap-3 overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
