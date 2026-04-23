@@ -1112,7 +1112,7 @@ function InlineTransactionsEditor({
         )}
 
         {/* Spreadsheet footer: totals (Excel status-bar style, larger font) */}
-        <div className="border-t border-border bg-muted/20 px-4 py-2.5 flex flex-wrap items-center gap-4 text-sm">
+        <div className="border-t border-border bg-card px-4 py-2.5 flex flex-wrap items-center gap-4 text-sm">
           <div className="inline-flex items-center gap-1.5 text-muted-foreground">
             <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
             row{summary.total !== 1 ? "s" : ""}
@@ -1154,8 +1154,8 @@ function InlineTransactionsEditor({
           </div>
         </div>
 
-        {/* Source files bar — discreet, at the bottom (Airtable footer style) */}
-        <div className="border-t border-border bg-card px-4 py-2">
+        {/* Source files bar — fills remaining white canvas at the bottom */}
+        <div className="border-t border-border bg-card px-4 py-3 flex-1 min-h-[120px]">
           <FileChipsBar
             imports={imports}
             cashAccounts={cashAccounts}
