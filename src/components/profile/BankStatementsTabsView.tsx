@@ -264,6 +264,37 @@ export function BankStatementsTabsView() {
   const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
   const pendingTxIds = useMemo(() => new Set(Object.keys(pendingByTx)), [pendingByTx]);
 
+  // Map pending tx ids → their parent import_id, so the file list in the
+  // "Manage files" sheet can show a yellow indicator on any file that has
+  // unconfirmed edits.
+  const { data: pendingTxImportMap = {} } = useQuery({
+    queryKey: ["pending-tx-imports", user?.id, Array.from(pendingTxIds).sort().join(",")],
+    enabled: !!user?.id && pendingTxIds.size > 0,
+    queryFn: async () => {
+      const ids = Array.from(pendingTxIds);
+      if (ids.length === 0) return {} as Record<string, string>;
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("id, import_id")
+        .in("id", ids);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data || []).forEach((row: { id: string; import_id: string | null }) => {
+        if (row.import_id) map[row.id] = row.import_id;
+      });
+      return map;
+    },
+  });
+
+  const pendingImportIds = useMemo(() => {
+    const set = new Set<string>();
+    pendingTxIds.forEach((txId) => {
+      const importId = pendingTxImportMap[txId];
+      if (importId) set.add(importId);
+    });
+    return set;
+  }, [pendingTxIds, pendingTxImportMap]);
+
   // Build month slots: latest first
   const monthSlots = useMemo(() => {
     const now = new Date();
