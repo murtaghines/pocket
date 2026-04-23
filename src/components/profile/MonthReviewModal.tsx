@@ -940,30 +940,6 @@ export function MonthReviewModal({
 
               {/* Stats Summary */}
               <div className="flex gap-2 flex-wrap items-center text-sm">
-                {!isLocked && (
-                  <div className="inline-flex items-center gap-0.5 mr-1 bg-muted/50 rounded-md p-0.5 border border-border">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                      onClick={handleUndo}
-                      disabled={!canUndo}
-                      title="Undo (⌘Z)"
-                    >
-                      <Undo className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                      onClick={handleRedo}
-                      disabled={!canRedo}
-                      title="Redo (⌘⇧Z)"
-                    >
-                      <Redo className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
                   <span className="text-success font-semibold text-base leading-none">+</span>
                   <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
@@ -1001,7 +977,7 @@ export function MonthReviewModal({
                   </div>
                 )}
                 {summary.hidden > 0 && (
-                  <label className="inline-flex items-center gap-2 px-3 py-1 ml-auto rounded-lg bg-muted text-muted-foreground text-xs cursor-pointer">
+                  <label className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-muted text-muted-foreground text-xs cursor-pointer">
                     <Switch
                       checked={showHidden}
                       onCheckedChange={setShowHidden}
@@ -1010,6 +986,30 @@ export function MonthReviewModal({
                     <EyeOff className="w-3.5 h-3.5" />
                     Show hidden ({summary.hidden})
                   </label>
+                )}
+                {!isLocked && (
+                  <div className="ml-auto inline-flex items-center gap-0.5 bg-muted/50 rounded-md p-0.5 border border-border">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      onClick={handleUndo}
+                      disabled={!canUndo}
+                      title="Undo (⌘Z)"
+                    >
+                      <Undo className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      onClick={handleRedo}
+                      disabled={!canRedo}
+                      title="Redo (⌘⇧Z)"
+                    >
+                      <Redo className="w-4 h-4" />
+                    </Button>
+                  </div>
                 )}
               </div>
 
