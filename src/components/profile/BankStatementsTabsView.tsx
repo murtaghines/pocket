@@ -1060,12 +1060,41 @@ function InlineTransactionsEditor({
     mutationFn: async ({
       id,
       payload,
+      before,
     }: {
       id: string;
       payload: Record<string, unknown>;
+      before?: Record<string, unknown>;
     }) => {
       const { error } = await supabase.from("transactions").update(payload).eq("id", id);
       if (error) throw error;
+
+      // Audit log: record what changed so the user can review/revert later.
+      // We only log fields the user actually edited, with before/after snapshots.
+      if (user?.id && before) {
+        const fields: string[] = [];
+        const beforeDiff: Record<string, unknown> = {};
+        const afterDiff: Record<string, unknown> = {};
+        for (const key of Object.keys(payload)) {
+          // Only persist user-meaningful fields
+          if (!USER_TRACKED_FIELDS.has(key)) continue;
+          const prev = before[key] ?? null;
+          const next = payload[key] ?? null;
+          if (prev === next) continue;
+          fields.push(key);
+          beforeDiff[key] = prev;
+          afterDiff[key] = next;
+        }
+        if (fields.length > 0) {
+          await supabase.from("audit_log").insert({
+            user_id: user.id,
+            entity_type: "transaction",
+            entity_id: id,
+            action: (payload as { __action?: string }).__action ?? "edit",
+            diff_json: { fields, before: beforeDiff, after: afterDiff },
+          });
+        }
+      }
       return id;
     },
     onMutate: ({ id }) => {
@@ -1088,6 +1117,7 @@ function InlineTransactionsEditor({
       }, 1200);
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
     },
     onError: (err: any, vars) => {
       setSavingIds((prev) => {
