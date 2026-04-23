@@ -2254,10 +2254,6 @@ function InlineTransactionsEditor({
             </div>
           )}
           <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5" />
-              Changes auto-save
-            </span>
             <button
               type="button"
               onClick={() => {
