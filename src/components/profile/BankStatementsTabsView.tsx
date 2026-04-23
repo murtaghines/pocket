@@ -92,6 +92,16 @@ import type { Database } from "@/integrations/supabase/types";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
+/** Shape of a buffered (unsaved) edit on a single transaction row.
+ *  Lives at the top of the tab view so pending changes survive when
+ *  the user switches month tabs or hides this view. */
+export type PendingEditShape = {
+  movement?: MovementType;
+  category?: string;
+  category_id?: string | null;
+  amount?: number;
+};
+
 interface MonthTransaction {
   id: string;
   date: string;
@@ -241,54 +251,49 @@ export function BankStatementsTabsView() {
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
 
-  // Track whether the active month workspace has unconfirmed edits so we
-  // can warn the user before they switch months.
-  const [hasPendingEdits, setHasPendingEdits] = useState(false);
-  // Ref the active month editor populates with a "commit everything pending
-  // in this month" function. Lets the parent trigger a save from a toast.
-  const commitAllPendingRef = useRef<(() => Promise<void> | void) | null>(null);
-  // Track the active toast id so we can dismiss it from action handlers.
-  const pendingToastIdRef = useRef<string | number | null>(null);
-
-  const guardedSetActiveKey = (k: string) => {
-    if (!hasPendingEdits) {
-      setActiveKey(k);
-      return;
-    }
-    // Show an interactive toast (bottom-right) instead of a native confirm.
-    // Stay on the current tab until the user picks an action.
-    if (pendingToastIdRef.current !== null) {
-      sonnerToast.dismiss(pendingToastIdRef.current);
-    }
-    const id = sonnerToast("Unconfirmed changes", {
-      description:
-        "You have unsaved edits in this month. Save them before switching tabs?",
-      duration: Infinity,
-      action: {
-        label: "Save & switch",
-        onClick: async () => {
-          try {
-            await commitAllPendingRef.current?.();
-          } finally {
-            pendingToastIdRef.current = null;
-            setActiveKey(k);
-          }
-        },
-      },
-      cancel: {
-        label: "Discard & switch",
-        onClick: () => {
-          pendingToastIdRef.current = null;
-          // Editor unmount on month change clears its pending state.
-          setActiveKey(k);
-        },
-      },
-      onDismiss: () => {
-        pendingToastIdRef.current = null;
-      },
-    });
-    pendingToastIdRef.current = id;
+  // Pending (unsaved) edits live in the parent so they survive when the
+  // user switches to another month tab or navigates the rest of the app.
+  // Each row stays visually "yellow" until the user explicitly saves or
+  // discards it from the row actions — no modal, no toast.
+  type PendingEdit = {
+    movement?: MovementType;
+    category?: string;
+    category_id?: string | null;
+    amount?: number;
   };
+  const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
+  const pendingTxIds = useMemo(() => new Set(Object.keys(pendingByTx)), [pendingByTx]);
+
+  // Map pending tx ids → their parent import_id, so the file list in the
+  // "Manage files" sheet can show a yellow indicator on any file that has
+  // unconfirmed edits.
+  const { data: pendingTxImportMap = {} } = useQuery({
+    queryKey: ["pending-tx-imports", user?.id, Array.from(pendingTxIds).sort().join(",")],
+    enabled: !!user?.id && pendingTxIds.size > 0,
+    queryFn: async () => {
+      const ids = Array.from(pendingTxIds);
+      if (ids.length === 0) return {} as Record<string, string>;
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("id, import_id")
+        .in("id", ids);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data || []).forEach((row: { id: string; import_id: string | null }) => {
+        if (row.import_id) map[row.id] = row.import_id;
+      });
+      return map;
+    },
+  });
+
+  const pendingImportIds = useMemo(() => {
+    const set = new Set<string>();
+    pendingTxIds.forEach((txId) => {
+      const importId = pendingTxImportMap[txId];
+      if (importId) set.add(importId);
+    });
+    return set;
+  }, [pendingTxIds, pendingTxImportMap]);
 
   // Build month slots: latest first
   const monthSlots = useMemo(() => {
@@ -417,6 +422,7 @@ export function BankStatementsTabsView() {
             deleteImport={deleteImport}
             isDeleting={isDeleting}
             toggleLockImport={toggleLockImport}
+            pendingImportIds={pendingImportIds}
           />
         </div>
       </div>
@@ -425,7 +431,7 @@ export function BankStatementsTabsView() {
       <MonthTabStrip
         slots={monthSlots}
         activeKey={activeKey}
-        onActivate={guardedSetActiveKey}
+        onActivate={setActiveKey}
         importsByMonth={importsByMonth}
         onLoadMore={() => setMonthsToShow((n) => n + MONTHS_INCREMENT)}
         onShowLess={() =>
@@ -449,13 +455,11 @@ export function BankStatementsTabsView() {
           isProcessing={isProcessingMonth(activeSlot.key)}
           pendingFiles={[
             ...(pendingFilesByMonth[activeSlot.key] || []),
-            // Auto-distribution bucket — surface its progress on every month
-            // tab so the user always sees the in-flight upload, regardless of
-            // which month they're currently inspecting.
             ...(pendingFilesByMonth["__auto__"] || []),
           ]}
-          onPendingChange={setHasPendingEdits}
-          commitAllRef={commitAllPendingRef}
+          pendingByTx={pendingByTx}
+          setPendingByTx={setPendingByTx}
+          pendingTxIds={pendingTxIds}
         />
       )}
 
@@ -622,8 +626,9 @@ interface MonthWorkspaceProps {
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
-  onPendingChange?: (hasPending: boolean) => void;
-  commitAllRef?: React.MutableRefObject<(() => Promise<void> | void) | null>;
+  pendingByTx: Record<string, PendingEditShape>;
+  setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
+  pendingTxIds: Set<string>;
 }
 
 function MonthWorkspace({
@@ -638,8 +643,9 @@ function MonthWorkspace({
   toggleLockImport,
   isProcessing,
   pendingFiles,
-  onPendingChange,
-  commitAllRef,
+  pendingByTx,
+  setPendingByTx,
+  pendingTxIds,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLocked = imports.some((i) => i.locked);
@@ -720,8 +726,9 @@ function MonthWorkspace({
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
         pendingFiles={activePending}
-        onPendingChange={onPendingChange}
-        commitAllRef={commitAllRef}
+        pendingByTx={pendingByTx}
+        setPendingByTx={setPendingByTx}
+        pendingTxIds={pendingTxIds}
       />
     </div>
   );
@@ -892,6 +899,7 @@ interface UploadedFilesDropdownProps {
   deleteImport: (id: string) => void;
   isDeleting: boolean;
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
+  pendingImportIds: Set<string>;
 }
 
 function UploadedFilesDropdown({
@@ -900,8 +908,10 @@ function UploadedFilesDropdown({
   deleteImport,
   isDeleting,
   toggleLockImport,
+  pendingImportIds,
 }: UploadedFilesDropdownProps) {
   const count = imports.length;
+  const pendingCount = imports.filter((i) => pendingImportIds.has(i.id)).length;
 
   return (
     <Sheet>
@@ -912,11 +922,23 @@ function UploadedFilesDropdown({
           disabled={count === 0}
           title="View, edit account or delete uploaded files"
           aria-label="Manage uploaded files"
-          className="group h-9 gap-2 pl-3 pr-2 font-medium border-2 border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/50 shadow-sm"
+          className={cn(
+            "group h-9 gap-2 pl-3 pr-2 font-medium border-2 shadow-sm",
+            pendingCount > 0
+              ? "border-warning/40 bg-warning/10 text-foreground hover:bg-warning/20 hover:border-warning/60"
+              : "border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/50",
+          )}
         >
-          <FileSpreadsheet className="w-4 h-4 text-primary" />
+          <FileSpreadsheet className={cn("w-4 h-4", pendingCount > 0 ? "text-warning" : "text-primary")} />
           <span className="tabular-nums">Manage files</span>
-          <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold tabular-nums">
+          <span
+            className={cn(
+              "inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums",
+              pendingCount > 0
+                ? "bg-warning text-warning-foreground"
+                : "bg-primary text-primary-foreground",
+            )}
+          >
             {count}
           </span>
         </Button>
@@ -931,6 +953,7 @@ function UploadedFilesDropdown({
           deleteImport={deleteImport}
           isDeleting={isDeleting}
           toggleLockImport={toggleLockImport}
+          pendingImportIds={pendingImportIds}
         />
       </SheetContent>
     </Sheet>
@@ -945,6 +968,7 @@ interface UploadedFilesHistoryListProps {
   deleteImport: (id: string) => void;
   isDeleting: boolean;
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
+  pendingImportIds: Set<string>;
 }
 
 function UploadedFilesHistoryList({
@@ -953,6 +977,7 @@ function UploadedFilesHistoryList({
   deleteImport,
   isDeleting,
   toggleLockImport,
+  pendingImportIds,
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
   const queryClient = useQueryClient();
@@ -1059,6 +1084,7 @@ function UploadedFilesHistoryList({
   // Subtle status indicator. Order of priority (highest first):
   //   FAILED  → red badge
   //   PARSED / UPLOADED → amber "processing" badge
+  //   has unsaved (pending) edits → amber dot
   //   has mismatched rows → amber warning icon
   //   locked → lock icon
   //   ready → green check
@@ -1071,6 +1097,18 @@ function UploadedFilesHistoryList({
         <PillBadge tone="amber">
           {imp.status === "UPLOADED" ? "Uploading" : "Processing"}
         </PillBadge>
+      );
+    }
+    if (pendingImportIds.has(imp.id)) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 text-[11px] font-medium text-warning"
+          aria-label="Unsaved changes"
+          title="This file has unsaved changes"
+        >
+          <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
+          Unsaved
+        </span>
       );
     }
     const mismatchCount = mismatchByImport[imp.id] || 0;
@@ -1291,8 +1329,10 @@ interface InlineTransactionsEditorProps {
   onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
-  onPendingChange?: (hasPending: boolean) => void;
-  commitAllRef?: React.MutableRefObject<(() => Promise<void> | void) | null>;
+  /** Pending edits map lifted to the parent so it survives tab switches. */
+  pendingByTx: Record<string, PendingEditShape>;
+  setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
+  pendingTxIds: Set<string>;
 }
 
 function InlineTransactionsEditor({
@@ -1307,8 +1347,9 @@ function InlineTransactionsEditor({
   onAddMore,
   isProcessing,
   pendingFiles,
-  onPendingChange,
-  commitAllRef,
+  pendingByTx,
+  setPendingByTx,
+  pendingTxIds: _pendingTxIds,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1341,16 +1382,10 @@ function InlineTransactionsEditor({
   // Edit-history popover open state (one tx at a time)
   const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
 
-  // Pending (unsaved) edits per-row. Movement / category / amount changes
-  // are buffered here and only persisted when the user clicks the green
-  // "confirm" tick. Hide/Show stays immediate (it's not a content edit).
-  type PendingEdit = {
-    movement?: MovementType;
-    category?: string;
-    category_id?: string | null;
-    amount?: number;
-  };
-  const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
+  // Pending (unsaved) edits live in the parent (`BankStatementsTabsView`)
+  // so navigating to another month tab does NOT discard them. The row
+  // stays yellow until the user confirms or clears it explicitly.
+  type PendingEdit = PendingEditShape;
 
   const setPendingFor = (txId: string, patch: PendingEdit) => {
     setPendingByTx((prev) => {
@@ -1378,16 +1413,6 @@ function InlineTransactionsEditor({
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasAnyPending]);
-
-  // Notify parent so it can guard month-tab switches.
-  useEffect(() => {
-    onPendingChange?.(hasAnyPending);
-    return () => {
-      // When this editor unmounts (e.g. user changed month), make sure
-      // the parent flag is cleared so it doesn't keep blocking forever.
-      onPendingChange?.(false);
-    };
-  }, [hasAnyPending, onPendingChange]);
 
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
@@ -1754,15 +1779,8 @@ function InlineTransactionsEditor({
     }
   };
 
-  // Expose commitAllPending to the parent through the ref so it can call it
-  // from the toast actions. Re-bind on every render to capture latest state.
-  useEffect(() => {
-    if (!commitAllRef) return;
-    commitAllRef.current = commitAllPending;
-    return () => {
-      if (commitAllRef.current === commitAllPending) commitAllRef.current = null;
-    };
-  });
+  // (commitAllPending is no longer exposed externally — pending edits now
+  // persist across tab switches and are confirmed/discarded per row.)
 
   // Mismatch detection (sign vs movement)
   const mismatchedIds = useMemo(() => {
