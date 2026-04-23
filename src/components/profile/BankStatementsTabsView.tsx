@@ -1584,10 +1584,10 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Split
                 </TableHead>
-                <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Show
                 </TableHead>
-                <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Undo
                 </TableHead>
               </TableRow>
