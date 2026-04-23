@@ -1458,7 +1458,7 @@ function InlineTransactionsEditor({
                   Amount
                 </TableHead>
                 <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Edit
+                  Split
                 </TableHead>
                 <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Show
