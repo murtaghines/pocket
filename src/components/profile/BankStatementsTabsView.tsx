@@ -206,7 +206,13 @@ export function BankStatementsTabsView() {
   const { formatMonth, formatDate, formatCurrency } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting, toggleLockImport } = useImports("CASHFLOW");
   const { accounts } = useAccounts();
-  const { addFilesForMonth, addFiles, isProcessingMonth, isProcessingAny } = useMonthlyFileUpload();
+  const {
+    addFilesForMonth,
+    addFiles,
+    isProcessingMonth,
+    isProcessingAny,
+    pendingFilesByMonth,
+  } = useMonthlyFileUpload();
 
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
@@ -368,6 +374,13 @@ export function BankStatementsTabsView() {
           isDeleting={isDeleting}
           toggleLockImport={toggleLockImport}
           isProcessing={isProcessingMonth(activeSlot.key)}
+          pendingFiles={[
+            ...(pendingFilesByMonth[activeSlot.key] || []),
+            // Auto-distribution bucket — surface its progress on every month
+            // tab so the user always sees the in-flight upload, regardless of
+            // which month they're currently inspecting.
+            ...(pendingFilesByMonth["__auto__"] || []),
+          ]}
         />
       )}
 
