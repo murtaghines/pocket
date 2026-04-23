@@ -24,6 +24,8 @@ import {
   Check,
   PanelRightOpen,
   Split as SplitIcon,
+  History,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,6 +107,35 @@ const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"];
 const DEFAULT_MONTHS = 6;
 const MONTHS_INCREMENT = 1;
 const ROW_THRESHOLD = 50;
+
+/** Fields the user can edit from the inline table — used to build audit diffs. */
+const USER_TRACKED_FIELDS = new Set<string>([
+  "movement",
+  "category",
+  "category_id",
+  "amount",
+  "is_hidden",
+]);
+
+const FIELD_LABELS: Record<string, string> = {
+  movement: "Movement",
+  category: "Category",
+  category_id: "Category",
+  amount: "Amount",
+  is_hidden: "Visibility",
+};
+
+interface AuditEntry {
+  id: string;
+  entity_id: string;
+  action: string;
+  created_at: string;
+  diff_json: {
+    fields?: string[];
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
+  } | null;
+}
 
 const getMovementIcon = (m: MovementType) => {
   switch (m) {
@@ -1023,6 +1054,9 @@ function InlineTransactionsEditor({
     targetMovement: MovementType;
   } | null>(null);
 
+  // Edit-history popover open state (one tx at a time)
+  const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
+
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
 
@@ -1052,17 +1086,71 @@ function InlineTransactionsEditor({
     enabled: !!user,
   });
 
+  // Fetch edit history for every tx in this month, grouped by tx id (newest first)
+  const { data: auditByTx = {} } = useQuery({
+    queryKey: ["tx-audit", monthKey, user?.id],
+    queryFn: async () => {
+      if (!user || transactions.length === 0) return {};
+      const ids = transactions.map((t) => t.id);
+      const { data, error } = await supabase
+        .from("audit_log")
+        .select("id, entity_id, action, created_at, diff_json")
+        .eq("user_id", user.id)
+        .eq("entity_type", "transaction")
+        .in("entity_id", ids)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const grouped: Record<string, AuditEntry[]> = {};
+      for (const row of (data || []) as AuditEntry[]) {
+        (grouped[row.entity_id] ||= []).push(row);
+      }
+      return grouped;
+    },
+    enabled: !!user && transactions.length > 0,
+  });
+
   // Single auto-save mutation: applies any partial update to a transaction
   const saveMutation = useMutation({
     mutationFn: async ({
       id,
       payload,
+      before,
     }: {
       id: string;
       payload: Record<string, unknown>;
+      before?: Record<string, unknown>;
     }) => {
       const { error } = await supabase.from("transactions").update(payload).eq("id", id);
       if (error) throw error;
+
+      // Audit log: record what changed so the user can review/revert later.
+      // We only log fields the user actually edited, with before/after snapshots.
+      if (user?.id && before) {
+        const fields: string[] = [];
+        const beforeDiff: Record<string, unknown> = {};
+        const afterDiff: Record<string, unknown> = {};
+        for (const key of Object.keys(payload)) {
+          // Only persist user-meaningful fields
+          if (!USER_TRACKED_FIELDS.has(key)) continue;
+          const prev = before[key] ?? null;
+          const next = payload[key] ?? null;
+          if (prev === next) continue;
+          fields.push(key);
+          beforeDiff[key] = prev;
+          afterDiff[key] = next;
+        }
+        if (fields.length > 0) {
+          await supabase.from("audit_log").insert([
+            {
+              user_id: user.id,
+              entity_type: "transaction",
+              entity_id: id,
+              action: (payload as { __action?: string }).__action ?? "edit",
+              diff_json: { fields, before: beforeDiff, after: afterDiff } as never,
+            },
+          ]);
+        }
+      }
       return id;
     },
     onMutate: ({ id }) => {
@@ -1085,6 +1173,7 @@ function InlineTransactionsEditor({
       }, 1200);
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
     },
     onError: (err: any, vars) => {
       setSavingIds((prev) => {
@@ -1113,6 +1202,11 @@ function InlineTransactionsEditor({
         category_source: "MANUAL",
         categorized_by: "user",
         user_corrected: true,
+      },
+      before: {
+        movement: tx.movement,
+        category: tx.category,
+        category_id: tx.category_id,
       },
     });
   };
@@ -1145,6 +1239,10 @@ function InlineTransactionsEditor({
         category_source: "MANUAL",
         categorized_by: "user",
         user_corrected: true,
+      },
+      before: {
+        category: tx.category,
+        category_id: tx.category_id,
       },
     });
   };
@@ -1191,20 +1289,29 @@ function InlineTransactionsEditor({
     const sign = movement === "EXPENSE" ? -1 : 1;
     const newAmount = sign * Math.abs(parsed);
     if (newAmount === tx.amount) return;
-    saveMutation.mutate({ id: tx.id, payload: { amount: newAmount } });
+    saveMutation.mutate({
+      id: tx.id,
+      payload: { amount: newAmount },
+      before: { amount: tx.amount },
+    });
   };
 
   const handleSplit = (tx: MonthTransaction, n: number) => {
     if (n < 1) return;
     const newAmount = Math.sign(tx.amount || 1) * (Math.abs(tx.amount) / n);
     if (newAmount === tx.amount) return;
-    saveMutation.mutate({ id: tx.id, payload: { amount: newAmount } });
+    saveMutation.mutate({
+      id: tx.id,
+      payload: { amount: newAmount },
+      before: { amount: tx.amount },
+    });
   };
 
   const handleToggleHidden = (tx: MonthTransaction) => {
     saveMutation.mutate({
       id: tx.id,
       payload: { is_hidden: !tx.is_hidden },
+      before: { is_hidden: tx.is_hidden },
     });
   };
 
@@ -1330,7 +1437,25 @@ function InlineTransactionsEditor({
                     )}
                   >
                     <TableCell className="text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
-                      {idx + 1}
+                      <RowEditIndicator
+                        index={idx + 1}
+                        history={auditByTx[tx.id] || []}
+                        open={openHistoryFor === tx.id}
+                        onOpenChange={(o) => setOpenHistoryFor(o ? tx.id : null)}
+                        onRevert={(entry) => {
+                          if (!entry.diff_json?.before) return;
+                          const before = entry.diff_json.before as Record<string, unknown>;
+                          const after = (entry.diff_json.after || {}) as Record<string, unknown>;
+                          // Restore the previous values; mark this as a revert action in audit.
+                          saveMutation.mutate({
+                            id: tx.id,
+                            payload: { ...before, __action: "revert" },
+                            before: after,
+                          });
+                        }}
+                        formatCurrency={formatCurrency}
+                        getCategoryLabel={getCategoryLabel}
+                      />
                     </TableCell>
                     <TableCell className="text-sm text-foreground tabular-nums">
                       {formatDate(new Date(tx.date))}
@@ -1759,6 +1884,153 @@ function AmountEditButton({
               Apply ÷ {splitN}
             </Button>
           </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/* ─────────────────────────  Row edit history indicator  ───────────────────────── */
+
+interface RowEditIndicatorProps {
+  index: number;
+  history: AuditEntry[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onRevert: (entry: AuditEntry) => void;
+  formatCurrency: (n: number) => string;
+  getCategoryLabel: (slug: string) => string;
+}
+
+function formatAuditValue(
+  field: string,
+  value: unknown,
+  formatCurrency: (n: number) => string,
+  getCategoryLabel: (slug: string) => string,
+): string {
+  if (value === null || value === undefined) return "—";
+  if (field === "amount" && typeof value === "number") return formatCurrency(value);
+  if ((field === "category" || field === "category_id") && typeof value === "string") {
+    return getCategoryLabel(value) || value;
+  }
+  if (field === "movement" && typeof value === "string") return getMovementLabel(value as MovementType);
+  if (field === "is_hidden") return value ? "Hidden" : "Visible";
+  return String(value);
+}
+
+function formatRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const sec = Math.round(diffMs / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.round(hr / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function RowEditIndicator({
+  index,
+  history,
+  open,
+  onOpenChange,
+  onRevert,
+  formatCurrency,
+  getCategoryLabel,
+}: RowEditIndicatorProps) {
+  // Filter out reverts from the visible list to keep things tidy, but use the
+  // full history to know if the row has any changes worth showing.
+  const editEntries = history.filter((h) => h.action !== "revert");
+
+  if (editEntries.length === 0) {
+    return <span>{index}</span>;
+  }
+
+  return (
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="group inline-flex items-center justify-center w-6 h-6 mx-auto rounded-full hover:bg-primary/10 transition-colors"
+          title={`${editEntries.length} change${editEntries.length === 1 ? "" : "s"} — click to review`}
+        >
+          <span className="relative inline-flex w-2 h-2 rounded-full bg-primary" aria-hidden>
+            <span className="absolute inset-0 rounded-full bg-primary/40 animate-pulse" />
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="right"
+        align="start"
+        className="w-[360px] p-0 max-h-[420px] overflow-hidden flex flex-col"
+      >
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-muted/40">
+          <History className="w-4 h-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground">
+            Edit history
+          </span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {editEntries.length} change{editEntries.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className="flex-1 overflow-auto divide-y divide-border">
+          {editEntries.map((entry) => {
+            const fields = entry.diff_json?.fields || [];
+            const before = (entry.diff_json?.before || {}) as Record<string, unknown>;
+            const after = (entry.diff_json?.after || {}) as Record<string, unknown>;
+            // Dedupe overlapping field labels (category + category_id → "Category")
+            const seenLabels = new Set<string>();
+            const uniqueFields = fields.filter((f) => {
+              const label = FIELD_LABELS[f] || f;
+              if (seenLabels.has(label)) return false;
+              seenLabels.add(label);
+              return true;
+            });
+            return (
+              <div key={entry.id} className="px-4 py-3">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
+                    {formatRelativeTime(entry.created_at)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onRevert(entry)}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                    title="Restore the values from before this change"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Undo
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  {uniqueFields.map((f) => (
+                    <div
+                      key={f}
+                      className="text-xs text-foreground flex items-baseline gap-1.5 flex-wrap"
+                    >
+                      <span className="text-muted-foreground">
+                        {FIELD_LABELS[f] || f}:
+                      </span>
+                      <span className="line-through text-muted-foreground/70">
+                        {formatAuditValue(f, before[f], formatCurrency, getCategoryLabel)}
+                      </span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="font-medium text-foreground">
+                        {formatAuditValue(f, after[f], formatCurrency, getCategoryLabel)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="px-4 py-2 border-t border-border bg-muted/30">
+          <p className="text-[11px] text-muted-foreground">
+            All edits are tracked. Use Undo to restore the previous value.
+          </p>
         </div>
       </PopoverContent>
     </Popover>
