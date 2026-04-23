@@ -6,7 +6,7 @@
  * for retroactive application.
  */
 
-export type MatchType = 'fuzzy' | 'contains' | 'starts_with' | 'exact' | 'regex';
+export type MatchType = 'fuzzy' | 'contains' | 'starts_with' | 'ends_with' | 'exact' | 'regex';
 export type RuleSource = 'user_correction' | 'manual';
 
 export interface UserRule {
@@ -103,6 +103,8 @@ export function ruleMatchesDescription(
       return norm.includes(normalize(pattern));
     case 'starts_with':
       return norm.startsWith(normalize(pattern));
+    case 'ends_with':
+      return norm.endsWith(normalize(pattern));
     case 'exact':
       return norm === normalize(pattern);
     case 'regex':
