@@ -1584,10 +1584,10 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Split
                 </TableHead>
-                <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Show
                 </TableHead>
-                <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Undo
                 </TableHead>
               </TableRow>
@@ -1787,7 +1787,7 @@ function InlineTransactionsEditor({
                           onClick={() => handleToggleHidden(tx)}
                           title={isHidden ? "Include in totals" : "Hide from totals"}
                         >
-                          {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {isHidden ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                         </Button>
                       )}
                     </TableCell>
