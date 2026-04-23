@@ -76,6 +76,7 @@ import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
 import { RuleEditorDialog } from "./RuleEditorDialog";
 import {
