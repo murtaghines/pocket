@@ -63,11 +63,13 @@ interface RuleEditorDialogProps {
 const MATCH_OPTIONS: {
   value: MatchType;
   label: string;
+  labelLines?: [string, string];
   hint: string;
 }[] = [
   {
     value: "fuzzy",
     label: "Smart match",
+    labelLines: ["Smart", "match"],
     hint: "Matches when all selected words appear, in any order. Best default.",
   },
   {
@@ -78,11 +80,13 @@ const MATCH_OPTIONS: {
   {
     value: "starts_with",
     label: "Starts with",
+    labelLines: ["Starts", "with"],
     hint: "Matches when the description begins with the pattern.",
   },
   {
     value: "ends_with",
     label: "Ends with",
+    labelLines: ["Ends", "with"],
     hint: "Matches when the description ends with the pattern.",
   },
   {
@@ -299,13 +303,20 @@ export function RuleEditorDialog({
                     type="button"
                     onClick={() => setMatchType(opt.value)}
                     className={cn(
-                      "rounded-lg border px-2 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-wide transition-colors",
+                      "rounded-lg border px-2 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-wide transition-colors leading-tight",
                       active
                         ? "border-primary/40 bg-primary/8 text-primary ring-1 ring-primary/20"
                         : "border-border bg-card text-foreground hover:bg-muted",
                     )}
                   >
-                    {opt.label}
+                    {opt.labelLines ? (
+                      <span className="block">
+                        <span className="block">{opt.labelLines[0]}</span>
+                        <span className="block">{opt.labelLines[1]}</span>
+                      </span>
+                    ) : (
+                      opt.label
+                    )}
                   </button>
                 );
               })}
