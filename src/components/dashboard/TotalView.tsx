@@ -87,7 +87,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* Period summary */}
       <div className="mb-2">
         <h3 className="text-lg font-semibold text-foreground">

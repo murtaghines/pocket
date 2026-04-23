@@ -51,7 +51,7 @@ export default function Profile() {
       >
         <main className="max-w-[1400px] mx-auto space-y-6">
           {/* Profile Header */}
-          <div className="bg-card rounded-xl p-5 md:p-6 animate-fade-in" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
             <ProfileHeader />
           </div>
 

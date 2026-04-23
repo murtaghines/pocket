@@ -12,7 +12,7 @@ export function InvestmentSummaryCard() {
   const { formatCurrency } = useLocalization();
 
   return (
-    <Card variant="bento" className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+    <Card variant="bento" className="" style={{ animationDelay: '300ms' }}>
       <CardContent className="p-5">
         {/* Icon badge - blue diffused */}
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
