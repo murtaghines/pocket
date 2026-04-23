@@ -380,7 +380,7 @@ export function RuleEditorDialog({
             onClick={handleSave}
           >
             <Wand2 className="w-4 h-4 mr-1.5" />
-            Create rule
+            Save rule
           </Button>
         </DialogFooter>
       </DialogContent>
