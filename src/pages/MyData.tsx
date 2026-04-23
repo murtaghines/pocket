@@ -65,7 +65,7 @@ export default function MyData() {
       <DataRail />
 
       {/* Full-bleed workspace — true edge-to-edge, no padding, white canvas */}
-      <main className="w-full bg-card pb-16 md:pb-0">
+      <main className="w-full bg-card min-h-screen">
         <header className="px-4 md:px-6 py-3 border-b border-border bg-card">
           <h1 className="text-[13px] font-semibold tracking-tight text-foreground leading-tight">
             {title}

@@ -862,7 +862,7 @@ function InlineTransactionsEditor({
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
   return (
-    <div>
+    <div className="flex flex-col min-h-[calc(100vh-3.5rem)]">
       {/* Locked banner */}
       {isLocked && (
         <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border text-sm text-muted-foreground">
@@ -884,7 +884,7 @@ function InlineTransactionsEditor({
       )}
 
       {/* The spreadsheet — flush, no padding, no inner card */}
-      <div className="bg-card">
+      <div className="bg-card flex-1 flex flex-col">
         <div className="overflow-auto max-h-[calc(100vh-220px)]">
           <Table className="w-full table-fixed [&_th]:border-r [&_th]:border-border/60 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/40 [&_td:last-child]:border-r-0">
             <TableHeader className="sticky top-0 z-10 bg-card">
@@ -1112,7 +1112,7 @@ function InlineTransactionsEditor({
         )}
 
         {/* Spreadsheet footer: totals (Excel status-bar style, larger font) */}
-        <div className="border-t border-border bg-muted/20 px-4 py-2.5 flex flex-wrap items-center gap-4 text-sm">
+        <div className="border-t border-border bg-card px-4 py-2.5 flex flex-wrap items-center gap-4 text-sm">
           <div className="inline-flex items-center gap-1.5 text-muted-foreground">
             <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
             row{summary.total !== 1 ? "s" : ""}
@@ -1154,8 +1154,8 @@ function InlineTransactionsEditor({
           </div>
         </div>
 
-        {/* Source files bar — discreet, at the bottom (Airtable footer style) */}
-        <div className="border-t border-border bg-card px-4 py-2">
+        {/* Source files bar — fills remaining white canvas at the bottom */}
+        <div className="border-t border-border bg-card px-4 py-3 flex-1 min-h-[120px]">
           <FileChipsBar
             imports={imports}
             cashAccounts={cashAccounts}
