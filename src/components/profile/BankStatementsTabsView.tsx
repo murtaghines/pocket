@@ -238,6 +238,22 @@ export function BankStatementsTabsView() {
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
 
+  // Track whether the active month workspace has unconfirmed edits so we
+  // can warn the user before they switch months.
+  const [hasPendingEdits, setHasPendingEdits] = useState(false);
+
+  const guardedSetActiveKey = (k: string) => {
+    if (
+      hasPendingEdits &&
+      !window.confirm(
+        "You have unconfirmed changes in this month. They will be discarded if you switch tabs. Continue?",
+      )
+    ) {
+      return;
+    }
+    setActiveKey(k);
+  };
+
   // Build month slots: latest first
   const monthSlots = useMemo(() => {
     const now = new Date();
