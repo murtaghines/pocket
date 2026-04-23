@@ -454,6 +454,7 @@ export function BankStatementsTabsView() {
             ...(pendingFilesByMonth["__auto__"] || []),
           ]}
           onPendingChange={setHasPendingEdits}
+          commitAllRef={commitAllPendingRef}
         />
       )}
 
