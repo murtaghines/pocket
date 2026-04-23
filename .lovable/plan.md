@@ -1,89 +1,84 @@
 
 
-## Mejoras al modal "Edit transactions"
+## Multi-Month File Upload — Smart Distribution
 
-Voy a mejorar el modal `MonthReviewModal` (que se abre desde "My Data" al hacer click en un upload) con cuatro funcionalidades nuevas: visibilidad clara de qué fila se editó, comparación con el valor anterior, edición de monto con ayuda para "split", y la posibilidad de ocultar/mostrar transacciones (soft delete).
+### The problem today
 
-### 1. Identificar qué filas fueron editadas
+When a user uploads a file containing transactions from **multiple months** (e.g. Jan + Feb + Mar in one PDF), the current pipeline:
 
-- Cada fila editada en la sesión actual mostrará un **badge azul "Edited"** al lado de la descripción y un **borde lateral izquierdo azul** (similar al amarillo actual de mismatches).
-- En cada celda modificada (movement, category, amount) se mostrará el **valor anterior tachado** en pequeño debajo del nuevo valor, en gris. Ejemplo: muestra `Salary` arriba y `~~Other income~~` debajo.
-- El chip "1 edited" del header pasa a ser **clickeable**: al hacerle click hace scroll a la primera fila editada.
+1. Forces the user to pick a target month before uploading.
+2. Sends every row to the edge function tagged with that single month.
+3. The function **discards** any transaction whose date doesn't match the target month (`stats.outsideMonthSkipped++` at line 1105).
+4. Only auto-redirects when **100%** of rows belong to a single different month.
 
-### 2. Editar el monto (Amount)
+Result: a Jan+Feb+Mar file uploaded "into March" silently loses ~⅔ of the transactions.
 
-- La columna **Amount** se vuelve editable: input numérico con el mismo estilo de los selects.
-- Al hacer hover sobre el input aparece un **botón pequeño "Split"** (icono de divisor) que abre un mini-popover con:
-  - Input "Split between N people" (default 1)
-  - Preview del nuevo monto (`amount / N`)
-  - Botón "Apply" que reemplaza el monto.
-- Se preserva el **signo original** (negativo para expense, positivo para income) automáticamente según el movement seleccionado.
-- El monto editado también muestra el valor anterior tachado debajo.
+### The proposed change
 
-### 3. Ocultar/mostrar transacciones (soft delete)
+**Yes, it makes sense and is not complex.** The dedup logic is already date-based per fingerprint, and we already have a `periods` table keyed by `month_key`. We just need to stop filtering and start distributing.
 
-Implementación con un nuevo campo `is_hidden boolean` en la tabla `transactions`:
+#### 1. Global "Add File" button (UX)
 
-- Nueva columna al final: **icono de ojo** (`Eye` / `EyeOff` de lucide).
-  - Click → marca la fila como oculta: se atenúa al 40% de opacidad y se tacha.
-  - Click de nuevo → la restaura.
-- Las transacciones ocultas **no se cuentan** en el summary del header (income, expenses, transfers).
-- Toggle en el header del modal: **"Show hidden (N)"** para colapsar/mostrar las filas ocultas dentro del modal.
-- En **toda la app** (dashboard, gráficos, totales, heatmap, exports), las transacciones con `is_hidden = true` se filtran. Esto se hace agregando `.eq("is_hidden", false)` (o `.or("is_hidden.is.null,is_hidden.eq.false")`) en todas las queries de `transactions`.
+- Move the upload trigger out of the per-month tab strip into a single, prominent **"Add bank statement"** button at the top-right of the Bank Statements view (next to Export).
+- Remove the requirement to click a specific month tab before uploading.
+- The Account selector dialog stays as-is (account is required, month is auto-detected).
+- Keep an optional per-tab "+" affordance for users who *want* to force a month (advanced).
 
-Las filas ocultas **siguen existiendo en la base de datos** — el usuario las puede revertir en cualquier momento. No se borra nada.
+#### 2. Multi-month distribution (backend)
 
-### 4. Acceso a transacciones ocultas
+Refactor `supabase/functions/process-import/index.ts`:
 
-- En el modal: el toggle "Show hidden" las trae de vuelta visualmente con su estilo atenuado para poder restaurarlas.
-- (Más adelante se podría agregar una vista global "Hidden transactions" en Settings, pero por ahora con el toggle del modal alcanza.)
+- Make `targetMonth` **optional** ("auto") in the request payload.
+- After AI extraction, group transactions by their actual `posted_date` month (`extractMonthKey`).
+- For each detected month:
+  - Auto-create the `period` row if missing (`status: OPEN`).
+  - Reject the group if the period is `CLOSED` (return that month in a `skippedMonths[]` array, don't fail the whole upload).
+  - Run the existing duplicate fingerprint check **scoped to that month**.
+  - Insert surviving transactions with the correct `period_id`.
+- Return enriched stats:
+  ```json
+  {
+    "monthsDistribution": {
+      "2025-01": { "new": 42, "duplicates": 3 },
+      "2025-02": { "new": 51, "duplicates": 0 },
+      "2025-03": { "new": 38, "duplicates": 1 }
+    },
+    "skippedMonths": []
+  }
+  ```
 
----
+#### 3. Single-month uploads stay backward-compatible
 
-### Cambios técnicos
+When the user *does* click "Add file" inside a specific month tab, we keep current behaviour: pre-fill `targetMonth` and warn (toast) if the file contains other months — offering "Distribute anyway" or "Keep only this month".
 
-**Base de datos (migración)**:
-```sql
-ALTER TABLE public.transactions 
-  ADD COLUMN is_hidden boolean NOT NULL DEFAULT false;
+#### 4. Frontend feedback
 
-CREATE INDEX idx_transactions_user_hidden 
-  ON public.transactions(user_id, is_hidden) 
-  WHERE is_hidden = false;
-```
+After processing, show a single toast:
+> "Santander_Q1.pdf: 131 new transactions distributed across January (42), February (51), March (38). 4 duplicates ignored."
 
-**Archivos a modificar**:
+Invalidate `transactions`, `imports`, and `periods` queries so all affected month tabs refresh at once.
 
-| Archivo | Cambio |
-|---|---|
-| `supabase/migrations/<new>.sql` | Agrega columna `is_hidden` + índice |
-| `src/components/profile/MonthReviewModal.tsx` | Badges "Edited", valores anteriores, edición de amount, popover Split, columna hide/show, toggle "Show hidden", lógica de scroll al chip |
-| `src/hooks/useTransactions.tsx` | Agrega `.eq("is_hidden", false)` por defecto + opción `includeHidden` |
-| `src/components/dashboard/DailyHeatmapCard.tsx` | Filtra `is_hidden` |
-| `src/components/dashboard/*Chart.tsx`, `StatCard`, `TopExpensesCard`, `TransactionTable`, etc. | Donde se consuman transacciones, respetan el flag (heredado del hook) |
-| `src/components/profile/UnifiedUploadsTable.tsx` | El conteo por upload excluye ocultas |
+#### 5. Imports table
 
-**Lógica de Split (cliente)**:
-```ts
-const newAmount = Math.sign(originalAmount) * (Math.abs(originalAmount) / splitCount);
-```
+The `imports` row stores the **earliest** detected month as `period_id` (for the file list display) but the actual transactions are correctly distributed. The file chip in the footer shows "spans 3 months" badge when applicable.
 
-**Estado local de edits** (extiende la interfaz existente):
-```ts
-interface TransactionEdits {
-  movement?: MovementType;
-  category?: string;
-  amount?: number;        // nuevo
-  is_hidden?: boolean;    // nuevo
-  splitCount?: number;    // metadata para mostrar "÷6"
-}
-```
+### Files to modify
 
-Al guardar, el `update` de Supabase envía también `amount` e `is_hidden` cuando estén presentes. La regla automática (smart rule) **no** se crea cuando el único cambio es el monto o el hide (sólo se crea cuando cambia categoría/movimiento, como hoy).
+- `supabase/functions/process-import/index.ts` — distribution logic, optional targetMonth, multi-period handling
+- `src/hooks/useMonthlyFileUpload.tsx` — new `addFile(file, accountId, targetMonth?)` overload, updated toast messages
+- `src/components/profile/BankStatementsTabsView.tsx` — add global "Add bank statement" button, keep per-tab "+" as advanced
+- `src/components/profile/AccountSelectDialog.tsx` — drop month label since it's auto-detected in global mode
 
-### Compatibilidad
+### Why this is safe
 
-- Las transacciones existentes quedan con `is_hidden = false` por default → ningún cambio visible para datos actuales.
-- Editar el amount no afecta la deduplicación (el `fingerprint` ya está calculado; no se recalcula al editar manualmente).
-- Los meses **cerrados (locked)** mantienen su comportamiento: no se puede editar amount, hide, movement ni categoría.
+- Fingerprints already include date → no risk of cross-month duplicates.
+- Periods already exist per `(user, month, domain)` → just need to upsert per detected month.
+- `imports` table doesn't have a hard FK to a single period, so multi-month spread is fine.
+
+### Edge cases handled
+
+- File with **one** month → behaves identically to today.
+- File with **closed** periods mixed in → those months are skipped with a clear message, open months still process.
+- File with dates from a **future** month → still distributed (period auto-created), user can review.
+- Duplicate detection still works per-month, so re-uploading the same Q1 file is idempotent.
 
