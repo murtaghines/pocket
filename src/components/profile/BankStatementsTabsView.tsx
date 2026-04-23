@@ -721,8 +721,8 @@ function UploadedFilesDropdown({
   const count = imports.length;
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <Sheet>
+      <SheetTrigger asChild>
         <Button
           variant="outline"
           size="sm"
@@ -737,8 +737,11 @@ function UploadedFilesDropdown({
           </span>
           <ChevronDown className="w-3.5 h-3.5 opacity-60" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-[560px] max-w-[92vw] p-0">
+      </SheetTrigger>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md p-0 flex flex-col bg-card"
+      >
         <UploadedFilesHistoryList
           imports={imports}
           cashAccounts={cashAccounts}
@@ -746,8 +749,8 @@ function UploadedFilesDropdown({
           isDeleting={isDeleting}
           toggleLockImport={toggleLockImport}
         />
-      </PopoverContent>
-    </Popover>
+      </SheetContent>
+    </Sheet>
   );
 }
 
