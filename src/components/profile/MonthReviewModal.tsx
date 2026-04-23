@@ -1173,10 +1173,9 @@ export function MonthReviewModal({
                             {isLocked ? (
                               <div className="flex items-center gap-1.5">
                                 {mismatchedIds.has(tx.id) && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                                {getMovementIcon(effectiveMovement)}
-                                <span className={cn("font-medium", getMovementColor(effectiveMovement))}>
+                                <PillBadge tone={getMovementTone(effectiveMovement)} icon={getMovementIcon(effectiveMovement)}>
                                   {translateMovement(effectiveMovement)}
-                                </span>
+                                </PillBadge>
                               </div>
                             ) : (
                               <div className="flex flex-col gap-0.5">
@@ -1187,34 +1186,28 @@ export function MonthReviewModal({
                                 onValueChange={(value) => handleMovementChange(tx.id, value as MovementType)}
                                 disabled={hidden}
                               >
-                                <SelectTrigger className="h-8 text-sm border border-border bg-transparent hover:bg-muted/50">
+                                <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50 min-w-[110px]">
                                   <SelectValue>
-                                    <div className="flex items-center gap-1.5">
-                                      {getMovementIcon(effectiveMovement)}
-                                      <span className="text-foreground">
-                                        {translateMovement(effectiveMovement)}
-                                      </span>
-                                    </div>
+                                    <PillBadge tone={getMovementTone(effectiveMovement)} icon={getMovementIcon(effectiveMovement)}>
+                                      {translateMovement(effectiveMovement)}
+                                    </PillBadge>
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="INCOME">
-                                    <div className="flex items-center gap-2">
-                                      <span className="inline-flex items-center justify-center w-4 h-4 text-success font-semibold text-base leading-none">+</span>
-                                      <span className="text-success">{translateMovement("INCOME")}</span>
-                                    </div>
+                                    <PillBadge tone="green" icon={<Plus className="w-3 h-3" />}>
+                                      {translateMovement("INCOME")}
+                                    </PillBadge>
                                   </SelectItem>
                                   <SelectItem value="EXPENSE">
-                                    <div className="flex items-center gap-2">
-                                      <span className="inline-flex items-center justify-center w-4 h-4 text-destructive font-semibold text-base leading-none">−</span>
-                                      <span className="text-destructive">{translateMovement("EXPENSE")}</span>
-                                    </div>
+                                    <PillBadge tone="red" icon={<Minus className="w-3 h-3" />}>
+                                      {translateMovement("EXPENSE")}
+                                    </PillBadge>
                                   </SelectItem>
                                   <SelectItem value="TRANSFER">
-                                    <div className="flex items-center gap-2">
-                                      <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
-                                      <span className="text-warning">{translateMovement("TRANSFER")}</span>
-                                    </div>
+                                    <PillBadge tone="amber" icon={<ArrowRightLeft className="w-3 h-3" />}>
+                                      {translateMovement("TRANSFER")}
+                                    </PillBadge>
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
