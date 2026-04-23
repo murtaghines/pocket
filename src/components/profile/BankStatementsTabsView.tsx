@@ -1688,6 +1688,26 @@ function InlineTransactionsEditor({
     );
   };
 
+  // Commit ALL pending rows in this month at once (used by the
+  // "Save & switch" action in the unsaved-changes toast).
+  const commitAllPending = () => {
+    const ids = Object.keys(pendingByTx);
+    for (const id of ids) {
+      const tx = transactions.find((t) => t.id === id);
+      if (tx) commitRow(tx, false);
+    }
+  };
+
+  // Expose commitAllPending to the parent through the ref so it can call it
+  // from the toast actions. Re-bind on every render to capture latest state.
+  useEffect(() => {
+    if (!commitAllRef) return;
+    commitAllRef.current = commitAllPending;
+    return () => {
+      if (commitAllRef.current === commitAllPending) commitAllRef.current = null;
+    };
+  });
+
   // Mismatch detection (sign vs movement)
   const mismatchedIds = useMemo(() => {
     const ids = new Set<string>();
