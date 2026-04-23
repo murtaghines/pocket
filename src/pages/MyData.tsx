@@ -51,28 +51,14 @@ export default function MyData() {
     }
   }, [highlightSection, highlightMonth, setSearchParams]);
 
-  const title =
-    tab === "bank"
-      ? "Bank statements"
-      : "Investment statements";
-  const subtitle =
-    tab === "bank"
-      ? "Pick a month and edit transactions inline"
-      : "Upload portfolio snapshots per month";
-
   return (
     <div className="min-h-screen bg-background dashboard-theme md:pl-28">
       <DataRail />
 
-      {/* Full-bleed workspace — true edge-to-edge, no padding, white canvas */}
+      {/* Full-bleed workspace — true edge-to-edge, no padding, white canvas.
+          Header (title + actions) lives inside the tabs view so it can render
+          on the same row as the "Add file" button and source-files dropdown. */}
       <main className="w-full bg-card min-h-screen">
-        <header className="px-4 md:px-6 py-3 border-b border-border bg-card">
-          <h1 className="text-[13px] font-semibold tracking-tight text-foreground leading-tight">
-            {title}
-          </h1>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
-        </header>
-
         {tab === "bank" ? <BankStatementsTabsView /> : <InvestmentTabsView />}
       </main>
     </div>

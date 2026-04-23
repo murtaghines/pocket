@@ -228,33 +228,53 @@ export function BankStatementsTabsView() {
 
   return (
     <div>
-      {/* ============= Global actions bar ============= */}
-      <div className="flex items-center justify-end gap-2 px-4 md:px-6 py-2 border-b border-border bg-card">
-        <input
-          ref={globalFileInputRef}
-          type="file"
-          multiple
-          className="hidden"
-          accept=".xlsx,.xls,.csv,.pdf"
-          onChange={(e) => {
-            handleGlobalFilesPicked(e.target.files);
-            e.target.value = "";
-          }}
-        />
-        <Button
-          size="sm"
-          onClick={() => globalFileInputRef.current?.click()}
-          disabled={isProcessingAny()}
-          className="gap-1.5"
-          title="Upload one or more files. Transactions are auto-sorted into the right months."
-        >
-          {isProcessingAny() ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Upload className="w-4 h-4" />
-          )}
-          Add bank statement
-        </Button>
+      {/* ============= Header: title (left) + actions (right) ============= */}
+      <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3 border-b border-border bg-card">
+        <div className="min-w-0">
+          <h1 className="text-[13px] font-semibold tracking-tight text-foreground leading-tight">
+            Bank statements
+          </h1>
+          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+            Pick a month and edit transactions inline
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <input
+            ref={globalFileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            accept=".xlsx,.xls,.csv,.pdf"
+            onChange={(e) => {
+              handleGlobalFilesPicked(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => globalFileInputRef.current?.click()}
+            disabled={isProcessingAny()}
+            className="gap-1.5 h-8"
+            title="Upload one or more files. Transactions are auto-sorted into the right months."
+          >
+            {isProcessingAny() ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            Add file
+          </Button>
+
+          {/* Files dropdown — shows every uploaded source file across all months */}
+          <UploadedFilesDropdown
+            imports={imports}
+            cashAccounts={cashAccounts}
+            deleteImport={deleteImport}
+            isDeleting={isDeleting}
+            toggleLockImport={toggleLockImport}
+          />
+        </div>
       </div>
 
       {/* ============= Month Tab Strip (Airtable style) ============= */}
@@ -528,6 +548,7 @@ interface FileChipsBarProps {
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   onAddMore: () => void;
   isProcessing: boolean;
+  hideAddButton?: boolean;
 }
 
 function FileChipsBar({
@@ -538,6 +559,7 @@ function FileChipsBar({
   toggleLockImport,
   onAddMore,
   isProcessing,
+  hideAddButton,
 }: FileChipsBarProps) {
   const queryClient = useQueryClient();
 
@@ -652,7 +674,8 @@ function FileChipsBar({
       ))}
 
       {/* Add file chip */}
-      <Button
+      {!hideAddButton && (
+        <Button
         variant="ghost"
         size="sm"
         className="h-8 gap-1.5 text-primary hover:bg-primary/10 border border-dashed border-primary/30"
@@ -665,12 +688,80 @@ function FileChipsBar({
           <Plus className="w-3.5 h-3.5" />
         )}
         Add file
-      </Button>
+        </Button>
+      )}
     </div>
   );
 }
 
 /* ─────────────────────────  Inline editor  ───────────────────────── */
+
+/* ─────────────────  Uploaded files dropdown (header)  ───────────────── */
+
+interface UploadedFilesDropdownProps {
+  imports: Import[];
+  cashAccounts: ReturnType<typeof useAccounts>["accounts"];
+  deleteImport: (id: string) => void;
+  isDeleting: boolean;
+  toggleLockImport: (args: { importId: string; locked: boolean }) => void;
+}
+
+function UploadedFilesDropdown({
+  imports,
+  cashAccounts,
+  deleteImport,
+  isDeleting,
+  toggleLockImport,
+}: UploadedFilesDropdownProps) {
+  const count = imports.length;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 h-8"
+          title="Show uploaded source files"
+          disabled={count === 0}
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          <span className="hidden sm:inline">Files</span>
+          <span className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-primary/10 text-primary text-[10px] font-semibold tabular-nums">
+            {count}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[420px] max-w-[90vw] p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold text-foreground">Uploaded files</p>
+          <p className="text-[11px] text-muted-foreground">
+            Tables below combine all of these
+          </p>
+        </div>
+        {count === 0 ? (
+          <p className="text-xs text-muted-foreground py-4 text-center">
+            No files uploaded yet.
+          </p>
+        ) : (
+          <div className="max-h-[60vh] overflow-auto pr-1">
+            <FileChipsBar
+              imports={imports}
+              cashAccounts={cashAccounts}
+              deleteImport={deleteImport}
+              isDeleting={isDeleting}
+              toggleLockImport={toggleLockImport}
+              onAddMore={() => {}}
+              isProcessing={false}
+              hideAddButton
+            />
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface InlineTransactionsEditorProps {
   monthKey: string;
@@ -1201,18 +1292,8 @@ function InlineTransactionsEditor({
           </div>
         </div>
 
-        {/* Source files bar — fills remaining white canvas at the bottom */}
-        <div className="border-t border-border bg-card px-4 py-3 flex-1 min-h-[120px]">
-          <FileChipsBar
-            imports={imports}
-            cashAccounts={cashAccounts}
-            deleteImport={deleteImport}
-            isDeleting={isDeleting}
-            toggleLockImport={toggleLockImport}
-            onAddMore={onAddMore}
-            isProcessing={isProcessing}
-          />
-        </div>
+        {/* White canvas fills the rest of the screen */}
+        <div className="bg-card flex-1" />
       </div>
     </div>
   );
