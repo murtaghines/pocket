@@ -985,6 +985,31 @@ function UploadedFilesHistoryList({
     },
   });
 
+  // Detect rows where amount sign and movement disagree (e.g. positive
+  // amount marked as EXPENSE) — surfaces as a warning icon per file.
+  const { data: mismatchByImport = {} } = useQuery({
+    queryKey: ["import-mismatch", user?.id, imports.map((i) => i.id).join(",")],
+    enabled: !!user?.id && imports.length > 0,
+    queryFn: async () => {
+      const ids = imports.map((i) => i.id);
+      if (ids.length === 0) return {} as Record<string, number>;
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("import_id, amount, movement")
+        .in("import_id", ids);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data || []).forEach((row: any) => {
+        if (!row.import_id) return;
+        const wrong =
+          (row.amount > 0 && row.movement === "EXPENSE") ||
+          (row.amount < 0 && row.movement === "INCOME");
+        if (wrong) counts[row.import_id] = (counts[row.import_id] || 0) + 1;
+      });
+      return counts;
+    },
+  });
+
   const acctName = (id: string | null) =>
     (id && cashAccounts.find((a) => a.id === id)?.name) || "—";
 
