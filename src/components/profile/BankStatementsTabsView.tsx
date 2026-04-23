@@ -389,7 +389,7 @@ export function BankStatementsTabsView() {
       <MonthTabStrip
         slots={monthSlots}
         activeKey={activeKey}
-        onActivate={guardedSetActiveKey}
+        onActivate={setActiveKey}
         importsByMonth={importsByMonth}
         onLoadMore={() => setMonthsToShow((n) => n + MONTHS_INCREMENT)}
         onShowLess={() =>
