@@ -39,9 +39,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { 
   CheckCircle2, 
-  PlusCircle, 
-  MinusCircle, 
   ArrowRightLeft, 
+  Plus,
+  Minus,
   Loader2,
   Pencil,
   Lock,
