@@ -228,33 +228,53 @@ export function BankStatementsTabsView() {
 
   return (
     <div>
-      {/* ============= Global actions bar ============= */}
-      <div className="flex items-center justify-end gap-2 px-4 md:px-6 py-2 border-b border-border bg-card">
-        <input
-          ref={globalFileInputRef}
-          type="file"
-          multiple
-          className="hidden"
-          accept=".xlsx,.xls,.csv,.pdf"
-          onChange={(e) => {
-            handleGlobalFilesPicked(e.target.files);
-            e.target.value = "";
-          }}
-        />
-        <Button
-          size="sm"
-          onClick={() => globalFileInputRef.current?.click()}
-          disabled={isProcessingAny()}
-          className="gap-1.5"
-          title="Upload one or more files. Transactions are auto-sorted into the right months."
-        >
-          {isProcessingAny() ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Upload className="w-4 h-4" />
-          )}
-          Add bank statement
-        </Button>
+      {/* ============= Header: title (left) + actions (right) ============= */}
+      <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3 border-b border-border bg-card">
+        <div className="min-w-0">
+          <h1 className="text-[13px] font-semibold tracking-tight text-foreground leading-tight">
+            Bank statements
+          </h1>
+          <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+            Pick a month and edit transactions inline
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <input
+            ref={globalFileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            accept=".xlsx,.xls,.csv,.pdf"
+            onChange={(e) => {
+              handleGlobalFilesPicked(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={() => globalFileInputRef.current?.click()}
+            disabled={isProcessingAny()}
+            className="gap-1.5 h-8"
+            title="Upload one or more files. Transactions are auto-sorted into the right months."
+          >
+            {isProcessingAny() ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            Add file
+          </Button>
+
+          {/* Files dropdown — shows every uploaded source file across all months */}
+          <UploadedFilesDropdown
+            imports={imports}
+            cashAccounts={cashAccounts}
+            deleteImport={deleteImport}
+            isDeleting={isDeleting}
+            toggleLockImport={toggleLockImport}
+          />
+        </div>
       </div>
 
       {/* ============= Month Tab Strip (Airtable style) ============= */}
