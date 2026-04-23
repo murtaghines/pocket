@@ -1765,31 +1765,44 @@ function InlineTransactionsEditor({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 ring-1 ring-warning/20 mb-1">
               <AlertTriangle className="w-5 h-5 text-warning" />
-              Sign / movement mismatch
-            </AlertDialogTitle>
+            </div>
+            <AlertDialogTitle>Sign and movement don't match</AlertDialogTitle>
             <AlertDialogDescription>
               {movementConfirm && (
-                <span className="space-y-2 block">
+                <span className="block space-y-3">
                   <span className="block">
-                    This transaction is{" "}
-                    <span className="font-semibold">
-                      {movementConfirm.tx.amount < 0 ? "negative" : "positive"} (
-                      {formatCurrency(movementConfirm.tx.amount)})
+                    The amount is{" "}
+                    <span className="font-semibold text-foreground">
+                      {movementConfirm.tx.amount < 0 ? "negative" : "positive"}
                     </span>
-                    , but you're marking it as{" "}
-                    <span className="font-semibold">
+                    , but you're marking this as{" "}
+                    <span className="font-semibold text-foreground">
                       {getMovementLabel(movementConfirm.newMovement)}
                     </span>
                     .
                   </span>
-                  <span className="block text-muted-foreground">
-                    Normally{" "}
+                  <span className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs">
+                    <span className="uppercase tracking-wide text-muted-foreground/80 font-medium">
+                      Amount
+                    </span>
+                    <span
+                      className={cn(
+                        "tabular-nums font-semibold text-sm",
+                        movementConfirm.tx.amount < 0 ? "text-destructive" : "text-success",
+                      )}
+                    >
+                      {movementConfirm.tx.amount < 0 ? "−" : "+"}
+                      {formatCurrency(Math.abs(movementConfirm.tx.amount))}
+                    </span>
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Usually{" "}
                     {movementConfirm.newMovement === "INCOME"
-                      ? "income amounts are positive (money in)"
+                      ? "income is positive (money in)"
                       : "expenses are negative (money out)"}
-                    . Save anyway?
+                    . You can save it anyway if it's correct.
                   </span>
                 </span>
               )}
