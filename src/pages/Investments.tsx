@@ -39,7 +39,7 @@ export default function Investments() {
 
   return (
     <DashboardLayout>
-      <main className="max-w-[1400px] mx-auto">
+      <main className="w-full">
         <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8 mb-2 md:mb-3" style={{ boxShadow: 'var(--shadow-section)' }}>
           <div className="mb-8">
             <h2 className="font-display text-3xl font-bold tracking-tight">
