@@ -862,7 +862,7 @@ function InlineTransactionsEditor({
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
   return (
-    <div>
+    <div className="flex flex-col min-h-[calc(100vh-3.5rem)]">
       {/* Locked banner */}
       {isLocked && (
         <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border text-sm text-muted-foreground">
