@@ -22,6 +22,7 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  PanelRightOpen,
   Split as SplitIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -735,7 +736,7 @@ function UploadedFilesDropdown({
           <span className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-primary/10 text-primary text-[10px] font-semibold tabular-nums">
             {count}
           </span>
-          <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+          <PanelRightOpen className="w-3.5 h-3.5 opacity-60" />
         </Button>
       </SheetTrigger>
       <SheetContent
