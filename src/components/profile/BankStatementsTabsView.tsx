@@ -115,7 +115,6 @@ const USER_TRACKED_FIELDS = new Set<string>([
   "category",
   "category_id",
   "amount",
-  "is_hidden",
 ]);
 
 const FIELD_LABELS: Record<string, string> = {
@@ -123,7 +122,6 @@ const FIELD_LABELS: Record<string, string> = {
   category: "Category",
   category_id: "Category",
   amount: "Amount",
-  is_hidden: "Visibility",
 };
 
 /**
