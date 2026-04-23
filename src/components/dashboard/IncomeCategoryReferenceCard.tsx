@@ -92,7 +92,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
   return (
     <Card
       variant="bento"
-      className="relative flex h-[300px] w-full overflow-hidden border-0 text-primary-foreground"
+      className="relative flex h-[300px] w-full overflow-hidden border-0 bg-primary text-primary-foreground"
 
     >
       <CardHeader className="absolute left-0 top-0 z-10 p-5 pb-0">
