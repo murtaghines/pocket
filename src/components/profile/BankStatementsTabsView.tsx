@@ -27,6 +27,7 @@ import {
   History,
   RotateCcw,
   FileText,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -1554,7 +1555,10 @@ function InlineTransactionsEditor({
   };
 
   // Commit a row's pending edits: run validations, then persist via saveMutation.
-  const commitRow = (tx: MonthTransaction) => {
+  // When `withRule` is true and the category changed, automatically create a
+  // categorization rule (CONTAINS match on the cleaned description) instead
+  // of asking the user — that's what the second "Sparkles tick" does.
+  const commitRow = (tx: MonthTransaction, withRule = false) => {
     const pending = pendingByTx[tx.id];
     if (!pending) return;
 
@@ -1599,23 +1603,45 @@ function InlineTransactionsEditor({
     saveMutation.mutate(
       { id: tx.id, payload, before },
       {
-        onSuccess: () => {
-          // 3) After saving, if category changed, offer to create a rule.
+        onSuccess: async () => {
+          // 3) After saving, handle rule creation depending on the tick used.
           if (pending.category && pending.category !== tx.category && pending.category_id) {
             const cleanDesc = (tx.description_norm || tx.description || "")
               .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
               .trim();
-            if (cleanDesc) {
-              const targetMovement =
-                ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
-              setCategoryRulePrompt({
-                tx,
-                newSlug: pending.category,
-                newCategoryId: pending.category_id,
-                cleanDesc,
-                targetMovement,
+            const targetMovement =
+              ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
+
+            if (cleanDesc && withRule && user) {
+              // Auto-create rule using a CONTAINS match on the cleaned description.
+              const { error } = await supabase.from("user_rules").insert({
+                user_id: user.id,
+                source: "user_correction",
+                match_type: "CONTAINS",
+                pattern: cleanDesc,
+                tokens: null,
+                movement: targetMovement,
+                category: pending.category,
+                confidence: 0.99,
+                original_description: cleanDesc,
+                is_active: true,
               });
+              if (error) {
+                toast({
+                  title: "Saved, but couldn't create rule",
+                  description: error.message,
+                  variant: "destructive",
+                });
+              } else {
+                toast({
+                  title: "✓ Saved + rule created",
+                  description: `Future transactions matching “${cleanDesc.slice(0, 40)}${cleanDesc.length > 40 ? "…" : ""}” will be categorized as ${getCategoryLabel(pending.category)}.`,
+                });
+                queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+                queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+              }
             }
+            // If withRule is false, we just save quietly — no prompt.
           }
           clearPendingFor(tx.id);
         },
@@ -1932,18 +1958,40 @@ function InlineTransactionsEditor({
                     </TableCell>
                     <TableCell className="px-0 text-center">
                       {!isLocked && isPending ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
-                          onClick={() => commitRow(tx)}
-                          disabled={isSaving}
-                          title="Confirm changes"
-                          aria-label="Confirm changes"
-                        >
-                          <Check className="w-[18px] h-[18px]" />
-                        </Button>
+                        (() => {
+                          const categoryChanged =
+                            !!pending?.category && pending.category !== tx.category;
+                          return (
+                            <div className="flex items-center justify-center gap-0.5">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
+                                onClick={() => commitRow(tx, false)}
+                                disabled={isSaving}
+                                title="Save changes"
+                                aria-label="Save changes"
+                              >
+                                <Check className="w-[14px] h-[14px]" />
+                              </Button>
+                              {categoryChanged && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 rounded-full bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
+                                  onClick={() => commitRow(tx, true)}
+                                  disabled={isSaving}
+                                  title="Save & create rule for this description"
+                                  aria-label="Save and create categorization rule"
+                                >
+                                  <Sparkles className="w-[14px] h-[14px]" />
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })()
                       ) : !isLocked && isEdited && originalSnapshot ? (
                         <RevertToOriginalButton
                           original={originalSnapshot.values}
