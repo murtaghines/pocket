@@ -1,17 +1,30 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { BankStatementsTabsView } from "@/components/profile/BankStatementsTabsView";
-import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { FileSpreadsheet, TrendingUp } from "lucide-react";
+import { DataRail } from "@/components/layout/DataRail";
+import { BankStatementsTabsView } from "@/components/profile/BankStatementsTabsView";
+import { InvestmentTabsView } from "@/components/profile/InvestmentTabsView";
 
 type Tab = "bank" | "investments";
 
+/**
+ * MyData — full-screen workspace. The persistent vertical DataRail handles
+ * navigation between sub-sections (bank / investments) and back home, so we
+ * intentionally skip DashboardLayout's top nav to maximise the spreadsheet area.
+ */
 export default function MyData() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabParam = searchParams.get("tab");
   const tab: Tab = tabParam === "investments" ? "investments" : "bank";
+
+  // Body class so portaled UI inherits the dashboard theme tokens
+  useEffect(() => {
+    document.body.classList.add("dashboard-theme");
+    return () => {
+      document.body.classList.remove("dashboard-theme");
+    };
+  }, []);
 
   // Legacy deep-link support (?section=bank&month=YYYY-MM) — scroll & highlight
   const highlightSection = searchParams.get("section");
@@ -32,7 +45,6 @@ export default function MyData() {
             element.classList.remove("ring-2", "ring-primary", "ring-offset-2");
           }, 2000);
         }
-        // Preserve tab, drop highlight params
         const next = highlightSection === "investment" ? "investments" : "bank";
         setSearchParams({ tab: next });
       }, 300);
@@ -51,24 +63,26 @@ export default function MyData() {
   const Icon = tab === "bank" ? FileSpreadsheet : TrendingUp;
 
   return (
-    <DashboardLayout>
-      <section className="max-w-[1600px] mx-auto">
-        <header className="flex items-center gap-2 mb-4 px-1">
-          <Icon className="w-5 h-5 text-primary shrink-0" />
+    <div className="min-h-screen bg-background dashboard-theme md:pl-16">
+      <DataRail />
+
+      <main className="px-4 md:px-8 py-6 pb-20 md:pb-10">
+        {/* Page header — uses the freed real-estate to describe the section */}
+        <header className="flex items-start gap-3 mb-5">
+          <div className="shrink-0 w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+            <Icon className="w-5 h-5" />
+          </div>
           <div className="min-w-0">
-            <h1 className="font-display text-lg md:text-xl font-bold tracking-tight text-foreground truncate">
+            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-foreground">
               {title}
             </h1>
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
           </div>
         </header>
 
-        {tab === "bank" ? (
-          <BankStatementsTabsView />
-        ) : (
-          <InvestmentUploadsOrganizer />
-        )}
-      </section>
-    </DashboardLayout>
+        {/* Full-width workspace */}
+        {tab === "bank" ? <BankStatementsTabsView /> : <InvestmentTabsView />}
+      </main>
+    </div>
   );
 }
