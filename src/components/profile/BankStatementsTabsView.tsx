@@ -1907,7 +1907,7 @@ function InlineTransactionsEditor({
           categoryRulePrompt ? getCategoryIcon(categoryRulePrompt.newSlug) : undefined
         }
         onSkip={() => setCategoryRulePrompt(null)}
-        skipLabel="Just this one"
+        skipLabel="Don't create rule"
         onConfirm={async (payload) => {
           if (!user) {
             setCategoryRulePrompt(null);
