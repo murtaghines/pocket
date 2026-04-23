@@ -64,13 +64,13 @@ export default function MyData() {
     <div className="min-h-screen bg-background dashboard-theme md:pl-20">
       <DataRail />
 
-      {/* Full-bleed workspace — uses the entire canvas to the right of the rail */}
-      <main className="px-4 md:px-8 py-5 pb-20 md:pb-10 w-full">
-        <header className="mb-4">
-          <h1 className="text-[15px] font-semibold tracking-tight text-foreground leading-tight">
+      {/* Full-bleed workspace — true edge-to-edge, no padding, white canvas */}
+      <main className="w-full bg-card pb-16 md:pb-0">
+        <header className="px-4 md:px-6 py-3 border-b border-border bg-card">
+          <h1 className="text-[13px] font-semibold tracking-tight text-foreground leading-tight">
             {title}
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
         </header>
 
         {tab === "bank" ? <BankStatementsTabsView /> : <InvestmentTabsView />}
