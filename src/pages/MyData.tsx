@@ -36,8 +36,8 @@ export default function MyData() {
       <main className="max-w-[1600px] mx-auto">
         <div className="space-y-4">
             {/* Bank Statements */}
-            <section className="bg-card rounded-xl md:rounded-2xl p-4 md:p-6" style={{ boxShadow: 'var(--shadow-section)' }}>
-              <header className="flex items-center justify-between gap-4 mb-4">
+            <section>
+              <header className="flex items-center justify-between gap-4 mb-4 px-1">
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className="w-5 h-5 text-primary shrink-0" />
                   <div className="min-w-0">
