@@ -528,7 +528,17 @@ export function MonthReviewModal({
       .reduce((sum, t) => sum + Math.abs(getEffectiveAmount(t)), 0);
     const transfers = visible
       .filter((t) => getEffectiveMovement(t) === "TRANSFER").length;
-    const edited = Object.keys(edits).length;
+    // Count only transactions whose effective values actually differ from the
+    // original DB values. If a user edits and then reverts back, it counts as 0.
+    const edited = transactions.reduce((count, tx) => {
+      const e = edits[tx.id];
+      if (!e) return count;
+      const movementChanged = e.movement !== undefined && e.movement !== (tx.movement ?? getEffectiveMovement(tx));
+      const categoryChanged = e.category !== undefined && e.category !== normalizeCategory(tx.category || "");
+      const amountChanged = e.amount !== undefined && e.amount !== tx.amount;
+      const hiddenChanged = e.is_hidden !== undefined && e.is_hidden !== tx.is_hidden;
+      return (movementChanged || categoryChanged || amountChanged || hiddenChanged) ? count + 1 : count;
+    }, 0);
     const hidden = transactions.filter((t) => isEffectivelyHidden(t)).length;
     return { income, expenses, transfers, edited, hidden };
   }, [transactions, edits]);
