@@ -1,6 +1,5 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
 import {
   Plus,
   Minus,
@@ -47,11 +46,6 @@ import {
 } from "@/components/ui/table";
 import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
 import { CategoryIcon } from "@/components/ui/category-icon";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import {
   AlertDialog,
   AlertDialogAction,
