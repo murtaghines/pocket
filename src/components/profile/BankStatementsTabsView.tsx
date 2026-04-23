@@ -412,7 +412,7 @@ function MonthWorkspace({
   // Empty state
   if (imports.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/20 py-16 px-6 text-center">
+      <div className="rounded-xl border border-border bg-card py-16 px-6 text-center" style={{ boxShadow: 'var(--shadow-section)' }}>
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
           <Upload className="w-6 h-6" />
         </div>
@@ -450,7 +450,7 @@ function MonthWorkspace({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-xl border border-border bg-card p-3 md:p-4" style={{ boxShadow: 'var(--shadow-section)' }}>
       {/* File chips bar */}
       <FileChipsBar
         imports={imports}
