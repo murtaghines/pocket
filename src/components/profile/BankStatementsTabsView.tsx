@@ -1178,6 +1178,11 @@ function InlineTransactionsEditor({
         categorized_by: "user",
         user_corrected: true,
       },
+      before: {
+        movement: tx.movement,
+        category: tx.category,
+        category_id: tx.category_id,
+      },
     });
   };
 
@@ -1209,6 +1214,10 @@ function InlineTransactionsEditor({
         category_source: "MANUAL",
         categorized_by: "user",
         user_corrected: true,
+      },
+      before: {
+        category: tx.category,
+        category_id: tx.category_id,
       },
     });
   };
@@ -1255,20 +1264,29 @@ function InlineTransactionsEditor({
     const sign = movement === "EXPENSE" ? -1 : 1;
     const newAmount = sign * Math.abs(parsed);
     if (newAmount === tx.amount) return;
-    saveMutation.mutate({ id: tx.id, payload: { amount: newAmount } });
+    saveMutation.mutate({
+      id: tx.id,
+      payload: { amount: newAmount },
+      before: { amount: tx.amount },
+    });
   };
 
   const handleSplit = (tx: MonthTransaction, n: number) => {
     if (n < 1) return;
     const newAmount = Math.sign(tx.amount || 1) * (Math.abs(tx.amount) / n);
     if (newAmount === tx.amount) return;
-    saveMutation.mutate({ id: tx.id, payload: { amount: newAmount } });
+    saveMutation.mutate({
+      id: tx.id,
+      payload: { amount: newAmount },
+      before: { amount: tx.amount },
+    });
   };
 
   const handleToggleHidden = (tx: MonthTransaction) => {
     saveMutation.mutate({
       id: tx.id,
       payload: { is_hidden: !tx.is_hidden },
+      before: { is_hidden: tx.is_hidden },
     });
   };
 
