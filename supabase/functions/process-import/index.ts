@@ -742,45 +742,49 @@ serve(async (req) => {
       );
     }
     
-    // Get or create period
-    const { data: period, error: periodError } = await supabase
-      .from('periods')
-      .select('id, status')
-      .eq('user_id', userId)
-      .eq('month_key', normalizedTargetMonth)
-      .eq('domain', domain)
-      .maybeSingle();
-
-    let periodId: string;
-    
-    if (period) {
-      if (period.status === 'CLOSED') {
-        return new Response(
-          JSON.stringify({ 
-            error: 'period_closed',
-            message: `The period ${normalizedTargetMonth} is closed. You must reopen it to add data.`
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      periodId = period.id;
-    } else {
-      const { data: newPeriod, error: createError } = await supabase
+    // Resolve the INITIAL period for the import row.
+    // - If targetMonth hint was provided, use that month (fail fast if closed).
+    // - In auto mode, leave it null for now; we'll pick the earliest detected
+    //   month after AI extraction and patch the import row later.
+    let initialPeriodId: string | null = null;
+    if (hintedTargetMonth) {
+      const { data: period } = await supabase
         .from('periods')
-        .insert({
-          user_id: userId,
-          month_key: normalizedTargetMonth,
-          domain: domain,
-          status: 'OPEN'
-        })
-        .select('id')
-        .single();
+        .select('id, status')
+        .eq('user_id', userId)
+        .eq('month_key', hintedTargetMonth)
+        .eq('domain', domain)
+        .maybeSingle();
 
-      if (createError) {
-        console.error('[process-import] Error creating period:', createError);
-        throw new Error(`Failed to create period: ${createError.message}`);
+      if (period) {
+        if (period.status === 'CLOSED') {
+          return new Response(
+            JSON.stringify({
+              error: 'period_closed',
+              message: `The period ${hintedTargetMonth} is closed. You must reopen it to add data.`
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        initialPeriodId = period.id;
+      } else {
+        const { data: newPeriod, error: createError } = await supabase
+          .from('periods')
+          .insert({
+            user_id: userId,
+            month_key: hintedTargetMonth,
+            domain: domain,
+            status: 'OPEN'
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('[process-import] Error creating period:', createError);
+          throw new Error(`Failed to create period: ${createError.message}`);
+        }
+        initialPeriodId = newPeriod.id;
       }
-      periodId = newPeriod.id;
     }
 
     // Get user's accounts for internal transfer detection
