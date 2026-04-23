@@ -125,6 +125,33 @@ const FIELD_LABELS: Record<string, string> = {
   is_hidden: "Visibility",
 };
 
+/**
+ * Walk the audit history (newest → oldest) and reconstruct the *original*
+ * pre-edit value for every tracked field. Reverts are skipped — they don't
+ * count as user-authored edits — and we only keep the oldest `before` value
+ * we encounter for each field, which is by definition the import-time value.
+ */
+function buildOriginalSnapshot(history: AuditEntry[]): {
+  values: Record<string, unknown>;
+  fields: string[];
+} {
+  const values: Record<string, unknown> = {};
+  // history comes newest-first; iterate oldest-first so we overwrite with the
+  // earliest known `before`, then ignore the field on subsequent (newer) edits.
+  const ordered = [...history]
+    .filter((h) => h.action !== "revert")
+    .reverse();
+  for (const entry of ordered) {
+    const before = (entry.diff_json?.before || {}) as Record<string, unknown>;
+    const fields = entry.diff_json?.fields || [];
+    for (const f of fields) {
+      if (!USER_TRACKED_FIELDS.has(f)) continue;
+      if (!(f in values)) values[f] = before[f] ?? null;
+    }
+  }
+  return { values, fields: Object.keys(values) };
+}
+
 interface AuditEntry {
   id: string;
   entity_id: string;
