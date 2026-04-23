@@ -1438,6 +1438,9 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Show
                 </TableHead>
+                <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  Revert
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
