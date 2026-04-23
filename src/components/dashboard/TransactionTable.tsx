@@ -191,7 +191,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     : selectedCategories.map(c => getCategoryLabel(c)).join(', ');
 
   return (
-    <Card variant="bento" className="animate-slide-up border-0 shadow-none bg-transparent" style={{ animationDelay: '400ms' }}>
+    <Card variant="bento" className="border-0 shadow-none bg-transparent">
       <CardHeader className="pb-2 pt-0 px-0">
         <CardTitle className="text-lg font-semibold">
           {t('transactions.title')}

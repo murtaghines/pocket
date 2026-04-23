@@ -39,7 +39,7 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: `${delay}ms` }}>
+      <Card variant="bento" className="" style={{ animationDelay: `${delay}ms` }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold">
             {t('stats.savingsRate')}
@@ -55,7 +55,7 @@ export function SavingsRateCard({ income, expenses, delay = 0 }: SavingsRateCard
   return (
     <Card 
       variant="bento"
-      className="animate-slide-up"
+      className=""
       style={{ animationDelay: `${delay}ms` }}
     >
       <CardHeader className="pb-2">

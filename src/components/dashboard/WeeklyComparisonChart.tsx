@@ -66,7 +66,7 @@ export function WeeklyComparisonChart() {
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
+      <Card variant="bento" className="flex-1">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -83,7 +83,7 @@ export function WeeklyComparisonChart() {
   }
 
   return (
-    <Card variant="bento" className="animate-slide-up flex-1" style={{ animationDelay: '600ms' }}>
+    <Card variant="bento" className="flex-1">
       <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">

@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 function SectionHeader({ icon: Icon, title, delay = "0ms" }: { icon: React.ElementType; title: string; delay?: string }) {
   return (
-    <div className="flex items-center gap-2.5 animate-slide-up" style={{ animationDelay: delay }}>
+    <div className="flex items-center gap-2.5">
       <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
         <Icon className="w-3.5 h-3.5 text-primary" />
       </div>
@@ -57,14 +57,14 @@ export default function Profile() {
 
           {/* Personal Info & Regional Settings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '50ms', boxShadow: 'var(--shadow-card)' }}>
+            <div className="bg-card rounded-xl p-5 md:p-6">
               <SectionHeader icon={User} title={t('personalInfo.title')} />
               <div className="mt-4">
                 <ProfileInfoCard onLogout={handleLogout} />
               </div>
             </div>
 
-            <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '100ms', boxShadow: 'var(--shadow-card)' }}>
+            <div className="bg-card rounded-xl p-5 md:p-6">
               <SectionHeader icon={Globe} title={ts('regional.title')} />
               <div className="mt-4">
                 <PreferencesForm />
@@ -73,7 +73,7 @@ export default function Profile() {
           </div>
 
           {/* Categories */}
-          <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '150ms', boxShadow: 'var(--shadow-card)' }}>
+          <div className="bg-card rounded-xl p-5 md:p-6">
             <SectionHeader icon={Tags} title={ts('categories.title')} />
             <div className="mt-4">
               <CategoriesEditor />
@@ -81,7 +81,7 @@ export default function Profile() {
           </div>
 
           {/* Banking Accounts */}
-          <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '175ms', boxShadow: 'var(--shadow-card)' }}>
+          <div className="bg-card rounded-xl p-5 md:p-6">
             <SectionHeader icon={Landmark} title={t('accounts.title', { defaultValue: 'Banking Accounts' })} />
             <p className="text-xs text-muted-foreground mt-2 mb-4">
               {t('accounts.managerDescription', { defaultValue: 'Manage your bank accounts and cards. These appear when uploading files.' })}
@@ -90,7 +90,7 @@ export default function Profile() {
           </div>
 
           {/* Delete Account */}
-          <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '200ms', boxShadow: 'var(--shadow-card)' }}>
+          <div className="bg-card rounded-xl p-5 md:p-6">
             <SectionHeader icon={Trash2} title={t('account.title')} />
             <div className="mt-4">
               <p className="text-xs text-muted-foreground mb-4">

@@ -91,7 +91,7 @@ export default function Investments() {
                   </CardContent>
                 </Card>
 
-                <Card className="" style={{ animationDelay: '100ms' }}>
+                <Card className="">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('summary.totalInvested')}
@@ -105,7 +105,7 @@ export default function Investments() {
                   </CardContent>
                 </Card>
 
-                <Card className="" style={{ animationDelay: '200ms' }}>
+                <Card className="">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('summary.totalValue')}
@@ -124,7 +124,7 @@ export default function Investments() {
                   </CardContent>
                 </Card>
 
-                <Card className="" style={{ animationDelay: '300ms' }}>
+                <Card className="">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('byPlatform.title')}

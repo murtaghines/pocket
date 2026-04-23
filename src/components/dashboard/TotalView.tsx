@@ -100,7 +100,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
 
       {/* Aggregate KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card variant="bento" className="animate-slide-up">
+        <Card variant="bento" className="">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-xl bg-success/10 flex items-center justify-center">
@@ -115,7 +115,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
           </CardContent>
         </Card>
 
-        <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '50ms' }}>
+        <Card variant="bento" className="">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center">
@@ -130,7 +130,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
           </CardContent>
         </Card>
 
-        <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+        <Card variant="bento" className="">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -145,7 +145,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
           </CardContent>
         </Card>
 
-        <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+        <Card variant="bento" className="">
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-xl bg-accent/50 flex items-center justify-center">
@@ -162,7 +162,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
       </div>
 
       {/* Cumulative Balance Evolution */}
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
@@ -199,7 +199,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
       <MonthlyChart data={monthlyData} />
 
       {/* Income vs Expenses Trend */}
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -238,7 +238,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
       <YearlyBalanceChart data={monthlyData} />
 
       {/* Monthly Net Balance */}
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
@@ -280,7 +280,7 @@ export function TotalView({ monthlyData }: TotalViewProps) {
       </Card>
 
       {/* Savings Rate Evolution (NEW) */}
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">

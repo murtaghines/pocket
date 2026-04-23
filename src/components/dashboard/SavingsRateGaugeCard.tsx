@@ -48,7 +48,7 @@ export function SavingsRateGaugeCard({
   return (
     <Card
       variant="bento"
-      className="animate-slide-up relative flex h-[200px] flex-col overflow-hidden border border-border/70 bg-card text-foreground shadow-sm"
+      className="relative flex h-[200px] flex-col overflow-hidden border border-border/70 bg-card text-foreground shadow-sm"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="relative flex h-full flex-col p-4 md:p-5">

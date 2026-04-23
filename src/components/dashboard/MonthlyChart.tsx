@@ -48,7 +48,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold">
             {t('charts.monthlyBalance')}
@@ -62,7 +62,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   }
 
   return (
-    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+    <Card variant="bento" className="">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold">
           {t('charts.monthlyBalance')}

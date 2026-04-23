@@ -33,7 +33,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '700ms' }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -50,7 +50,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
   }
 
   return (
-    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '700ms' }}>
+    <Card variant="bento" className="">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">

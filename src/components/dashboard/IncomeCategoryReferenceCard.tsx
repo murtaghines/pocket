@@ -63,8 +63,8 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     return (
       <Card
         variant="bento"
-        className="animate-slide-up h-[300px] w-full"
-        style={{ animationDelay: "200ms" }}
+        className="h-[300px] w-full"
+
       >
         <CardHeader className="p-4 pb-1">
           <CardTitle className="text-base font-semibold">
@@ -92,8 +92,8 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
   return (
     <Card
       variant="bento"
-      className="animate-slide-up relative flex h-[300px] w-full overflow-hidden border-0 text-primary-foreground"
-      style={{ animationDelay: "200ms", backgroundColor: "hsl(var(--primary))" }}
+      className="relative flex h-[300px] w-full overflow-hidden border-0 text-primary-foreground"
+
     >
       <CardHeader className="absolute left-0 top-0 z-10 p-5 pb-0">
         <CardTitle className="text-[15px] font-semibold text-primary-foreground md:text-base">

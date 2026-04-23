@@ -47,7 +47,7 @@ export function BankDistributionChart({ data }: BankDistributionChartProps) {
   };
 
   return (
-    <Card className="animate-slide-up flex-1" style={{ animationDelay: '400ms' }}>
+    <Card className="flex-1">
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <CreditCard className="w-4 h-4" />
