@@ -106,6 +106,35 @@ const DEFAULT_MONTHS = 6;
 const MONTHS_INCREMENT = 1;
 const ROW_THRESHOLD = 50;
 
+/** Fields the user can edit from the inline table — used to build audit diffs. */
+const USER_TRACKED_FIELDS = new Set<string>([
+  "movement",
+  "category",
+  "category_id",
+  "amount",
+  "is_hidden",
+]);
+
+const FIELD_LABELS: Record<string, string> = {
+  movement: "Movement",
+  category: "Category",
+  category_id: "Category",
+  amount: "Amount",
+  is_hidden: "Visibility",
+};
+
+interface AuditEntry {
+  id: string;
+  entity_id: string;
+  action: string;
+  created_at: string;
+  diff_json: {
+    fields?: string[];
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
+  } | null;
+}
+
 const getMovementIcon = (m: MovementType) => {
   switch (m) {
     case "INCOME":
