@@ -621,6 +621,7 @@ interface MonthWorkspaceProps {
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
   onPendingChange?: (hasPending: boolean) => void;
+  commitAllRef?: React.MutableRefObject<(() => Promise<void> | void) | null>;
 }
 
 function MonthWorkspace({
@@ -636,6 +637,7 @@ function MonthWorkspace({
   isProcessing,
   pendingFiles,
   onPendingChange,
+  commitAllRef,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLocked = imports.some((i) => i.locked);
