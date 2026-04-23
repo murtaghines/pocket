@@ -263,18 +263,6 @@ export function RuleEditorDialog({
               >
                 Pattern
               </Label>
-              {matchType === "fuzzy" && patternEdited && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPatternEdited(false);
-                    setCustomPattern(selectedTokens.join(" "));
-                  }}
-                  className="text-[11px] text-primary hover:underline"
-                >
-                  Reset to selected words
-                </button>
-              )}
             </div>
             <Input
               id="rule-pattern"
