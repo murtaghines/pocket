@@ -1202,14 +1202,12 @@ export function MonthReviewModal({
                             {isLocked ? (
                               <span className="font-medium tabular-nums">{formatCurrency(effectiveAmount)}</span>
                             ) : (
-                              <AmountEditor
+                              <AmountDisplay
                                 tx={tx}
                                 effectiveAmount={effectiveAmount}
                                 originalAmount={tx.amount}
                                 amountChanged={amountChanged}
                                 splitCount={editedFields.splitCount}
-                                disabled={hidden}
-                                onChange={(v) => handleAmountChange(tx.id, v)}
                                 onRevert={() => handleRevertField(tx.id, "amount")}
                                 formatCurrency={formatCurrency}
                               />
@@ -1219,9 +1217,12 @@ export function MonthReviewModal({
                             {!isLocked && (
                               <SplitButton
                                 originalAmount={tx.amount}
+                                effectiveAmount={effectiveAmount}
+                                amountChanged={amountChanged}
                                 splitCount={editedFields.splitCount}
                                 disabled={hidden}
                                 onApplySplit={(n) => handleApplySplit(tx.id, n)}
+                                onChangeAmount={(v) => handleAmountChange(tx.id, v)}
                                 formatCurrency={formatCurrency}
                               />
                             )}
