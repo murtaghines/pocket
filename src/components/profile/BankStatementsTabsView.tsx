@@ -102,7 +102,7 @@ interface MonthTransaction {
 
 const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"];
 const DEFAULT_MONTHS = 6;
-const MONTHS_INCREMENT = 6;
+const MONTHS_INCREMENT = 1;
 const ROW_THRESHOLD = 50;
 
 const getMovementIcon = (m: MovementType) => {
@@ -423,22 +423,23 @@ function MonthTabStrip({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground hover:bg-card"
+              className="h-7 w-7 p-0 text-muted-foreground hover:bg-card"
               onClick={onShowLess}
               title="Show fewer months"
+              aria-label="Show fewer months"
             >
-              <ChevronUp className="w-3.5 h-3.5" />
+              <Minus className="w-3.5 h-3.5" />
             </Button>
           )}
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs text-muted-foreground gap-1 hover:bg-card"
+            className="h-7 w-7 p-0 text-muted-foreground hover:bg-card"
             onClick={onLoadMore}
-            title="Show older months"
+            title="Show one older month"
+            aria-label="Show one older month"
           >
             <Plus className="w-3.5 h-3.5" />
-            Older
           </Button>
         </div>
       </div>
