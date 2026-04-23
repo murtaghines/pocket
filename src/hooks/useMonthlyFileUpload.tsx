@@ -225,6 +225,13 @@ export function useMonthlyFileUpload() {
       }
 
       const stats = processData?.stats;
+      const monthsDistribution: Record<string, { new: number; duplicates: number }> =
+        processData?.monthsDistribution || {};
+      const skippedMonths: Array<{ month: string; reason: string; count: number }> =
+        processData?.skippedMonths || [];
+      const distributedMonths = Object.entries(monthsDistribution)
+        .filter(([, v]) => (v?.new || 0) > 0 || (v?.duplicates || 0) > 0)
+        .sort(([a], [b]) => a.localeCompare(b));
       
       // Update to completed
       setPendingFilesByMonth((prev) => ({
@@ -236,28 +243,36 @@ export function useMonthlyFileUpload() {
         ),
       }));
 
-      // Build message
-      let description = `${stats?.newTransactions || 0} new transactions`;
-      if (stats?.duplicatesIgnored > 0) {
-        description += `, ${stats.duplicatesIgnored} duplicates ignored`;
+      // Build human-friendly distribution summary
+      const totalNew = stats?.newTransactions || 0;
+      const totalDup = stats?.duplicatesIgnored || 0;
+      let description = `${totalNew} new transactions`;
+      if (distributedMonths.length > 1) {
+        const breakdown = distributedMonths
+          .filter(([, v]) => (v.new || 0) > 0)
+          .map(([m, v]) => `${formatMonthLabel(m)} (${v.new})`)
+          .join(", ");
+        description = `${totalNew} new transactions distributed across ${breakdown}`;
+      } else if (distributedMonths.length === 1) {
+        const [m, v] = distributedMonths[0];
+        description = `${v.new} new in ${formatMonthLabel(m)}`;
       }
-      if (stats?.categorizedByLocalPattern > 0) {
-        description += `, ${stats.categorizedByLocalPattern} categorized locally`;
-      }
-      if (stats?.transfersDetected > 0) {
-        description += `, ${stats.transfersDetected} internal transfers`;
-      }
+      if (totalDup > 0) description += `, ${totalDup} duplicates ignored`;
 
-      // Show redirect notice if file was moved to a different month
-      if (processData?.redirectedFromMonth && processData?.actualMonth) {
+      toast({
+        title: uploadFile.name,
+        description,
+      });
+
+      // Surface any months we couldn't write to (closed period, etc.)
+      if (skippedMonths.length > 0) {
+        const skippedList = skippedMonths
+          .map((s) => `${formatMonthLabel(s.month)} (${s.count})`)
+          .join(", ");
         toast({
-          title: "File relocated",
-          description: `${uploadFile.name} had transactions from ${processData.actualMonth}, so it was moved there automatically.`,
-        });
-      } else {
-        toast({
-          title: "File processed",
-          description: `${uploadFile.name}: ${description}`,
+          title: "Some months were skipped",
+          description: `Closed or unavailable: ${skippedList}. Reopen them to import.`,
+          variant: "destructive",
         });
       }
 
@@ -265,6 +280,7 @@ export function useMonthlyFileUpload() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["periods"] });
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
       
       // Run integrity check
       try {
