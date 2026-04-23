@@ -1207,15 +1207,7 @@ function InlineTransactionsEditor({
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-3.5rem)]">
-      {/* Locked banner */}
-      {isLocked && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border text-sm text-muted-foreground">
-          <Lock className="w-4 h-4" />
-          This month is locked. Unlock the file above to edit.
-        </div>
-      )}
-
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Mismatch warning */}
       {mismatchedIds.size > 0 && (
         <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-300 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
