@@ -602,7 +602,7 @@ function MonthWorkspace({
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
           <Upload className="w-6 h-6" />
         </div>
-        <h3 className="text-base font-semibold text-foreground capitalize">
+        <h3 className="text-base font-semibold text-foreground">
           {monthLabel} is empty
         </h3>
         <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
