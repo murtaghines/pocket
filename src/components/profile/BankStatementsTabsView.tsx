@@ -1550,7 +1550,7 @@ function InlineTransactionsEditor({
                         getCategoryLabel={getCategoryLabel}
                       />
                     </TableCell>
-                    <TableCell className="text-sm text-foreground tabular-nums whitespace-nowrap">
+                    <TableCell className="text-xs text-foreground tabular-nums whitespace-nowrap">
                       {formatDate(new Date(tx.date))}
                     </TableCell>
                     <TableCell className="text-sm">
