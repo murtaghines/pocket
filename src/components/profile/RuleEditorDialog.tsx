@@ -228,15 +228,17 @@ export function RuleEditorDialog({
               <span className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground">
                 Original description
               </span>
-              <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span>tag as</span>
+              <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-medium text-muted-foreground">
+                <span>Tag as</span>
                 <span
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold normal-case tracking-normal ring-1 shadow-sm"
                   style={
                     categoryColorVar
                       ? {
-                          backgroundColor: `hsl(var(${categoryColorVar}) / 0.12)`,
+                          backgroundColor: `hsl(var(${categoryColorVar}) / 0.15)`,
                           color: `hsl(var(${categoryColorVar}))`,
+                          // @ts-expect-error CSS var via inline style
+                          "--tw-ring-color": `hsl(var(${categoryColorVar}) / 0.35)`,
                         }
                       : undefined
                   }
