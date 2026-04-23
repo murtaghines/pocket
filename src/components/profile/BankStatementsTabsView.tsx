@@ -560,14 +560,25 @@ function MonthWorkspace({
   isDeleting,
   toggleLockImport,
   isProcessing,
+  pendingFiles,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLocked = imports.some((i) => i.locked);
+
+  const activePending = (pendingFiles || []).filter(
+    (f) => f.status === "processing" || f.status === "pending",
+  );
 
   // Empty state
   if (imports.length === 0) {
     return (
       <div className="bg-card py-20 px-6 text-center flex-1 flex flex-col items-center justify-center">
+        {activePending.length > 0 ? (
+          <div className="w-full max-w-xl">
+            <ProcessingPanel files={activePending} />
+          </div>
+        ) : (
+          <>
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
           <Upload className="w-6 h-6" />
         </div>
@@ -600,6 +611,8 @@ function MonthWorkspace({
             Add file
           </Button>
         </div>
+          </>
+        )}
       </div>
     );
   }
@@ -627,6 +640,7 @@ function MonthWorkspace({
         toggleLockImport={toggleLockImport}
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
+        pendingFiles={activePending}
       />
     </div>
   );
