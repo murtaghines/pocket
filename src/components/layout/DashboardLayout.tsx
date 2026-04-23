@@ -55,7 +55,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Top nav — clean, light, inspired by reference */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-5">
+        <div className="w-full px-4 md:px-8 py-4 md:py-5">
           <nav className="flex items-center justify-between gap-4">
             {/* Left: inline navigation (brand lives in the side rail) */}
             <div className="flex items-center">
@@ -126,7 +126,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </nav>
 
       {/* Main content */}
-      <main className="max-w-[1400px] mx-auto px-4 md:px-8 pb-20 md:pb-8 relative z-10">
+      <main className="w-full px-4 md:px-8 pb-20 md:pb-8 relative z-10">
         {children}
       </main>
     </div>

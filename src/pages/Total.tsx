@@ -25,7 +25,7 @@ export default function Total() {
 
   return (
     <DashboardLayout>
-      <main className="max-w-[1400px] mx-auto">
+      <main className="w-full">
         {(isLoading || prefsLoading) && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
