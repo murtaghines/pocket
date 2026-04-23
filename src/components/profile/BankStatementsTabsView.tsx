@@ -849,12 +849,14 @@ function UploadedFilesDropdown({
           variant="outline"
           size="sm"
           disabled={count === 0}
-          title="Show uploaded source files"
-          className="h-9 gap-2 px-4 font-medium border-border bg-card hover:bg-muted/60"
+          title="View, edit account or delete uploaded files"
+          aria-label="Manage uploaded files"
+          className="group h-9 gap-2 pl-3 pr-2 font-medium border-2 border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/50 shadow-sm"
         >
           <FileSpreadsheet className="w-4 h-4 text-primary" />
-          <span className="tabular-nums">
-            {count} {count === 1 ? "file" : "files"}
+          <span className="tabular-nums">Manage files</span>
+          <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold tabular-nums">
+            {count}
           </span>
         </Button>
       </SheetTrigger>
