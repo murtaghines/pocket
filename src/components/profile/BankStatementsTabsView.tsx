@@ -985,6 +985,31 @@ function UploadedFilesHistoryList({
     },
   });
 
+  // Detect rows where amount sign and movement disagree (e.g. positive
+  // amount marked as EXPENSE) — surfaces as a warning icon per file.
+  const { data: mismatchByImport = {} } = useQuery({
+    queryKey: ["import-mismatch", user?.id, imports.map((i) => i.id).join(",")],
+    enabled: !!user?.id && imports.length > 0,
+    queryFn: async () => {
+      const ids = imports.map((i) => i.id);
+      if (ids.length === 0) return {} as Record<string, number>;
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("import_id, amount, movement")
+        .in("import_id", ids);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data || []).forEach((row: any) => {
+        if (!row.import_id) return;
+        const wrong =
+          (row.amount > 0 && row.movement === "EXPENSE") ||
+          (row.amount < 0 && row.movement === "INCOME");
+        if (wrong) counts[row.import_id] = (counts[row.import_id] || 0) + 1;
+      });
+      return counts;
+    },
+  });
+
   const acctName = (id: string | null) =>
     (id && cashAccounts.find((a) => a.id === id)?.name) || "—";
 
@@ -1031,24 +1056,48 @@ function UploadedFilesHistoryList({
     return formatMonth(new Date(y, m - 1, 1));
   };
 
-  // Subtle status indicator: just a check icon when ready, badge only for
-  // active or error states (so the list stays calm when everything is fine).
-  const statusIndicator = (s: string) => {
-    if (s === "NORMALIZED") {
+  // Subtle status indicator. Order of priority (highest first):
+  //   FAILED  → red badge
+  //   PARSED / UPLOADED → amber "processing" badge
+  //   has mismatched rows → amber warning icon
+  //   locked → lock icon
+  //   ready → green check
+  const statusIndicator = (imp: Import) => {
+    if (imp.status === "FAILED") {
+      return <PillBadge tone="red">Failed</PillBadge>;
+    }
+    if (imp.status === "PARSED" || imp.status === "UPLOADED") {
       return (
-        <CheckCircle2
-          className="w-3.5 h-3.5 text-success shrink-0"
-          aria-label="Ready"
+        <PillBadge tone="amber">
+          {imp.status === "UPLOADED" ? "Uploading" : "Processing"}
+        </PillBadge>
+      );
+    }
+    const mismatchCount = mismatchByImport[imp.id] || 0;
+    if (mismatchCount > 0) {
+      return (
+        <AlertTriangle
+          className="w-4 h-4 text-warning shrink-0"
+          aria-label={`${mismatchCount} row(s) need review`}
+        >
+          <title>{`${mismatchCount} row(s) need review`}</title>
+        </AlertTriangle>
+      );
+    }
+    if (imp.locked) {
+      return (
+        <Lock
+          className="w-3.5 h-3.5 text-muted-foreground shrink-0"
+          aria-label="Locked"
         />
       );
     }
-    const map: Record<string, { tone: PillTone; label: string }> = {
-      PARSED: { tone: "amber", label: "Processing" },
-      UPLOADED: { tone: "amber", label: "Uploading" },
-      FAILED: { tone: "red", label: "Failed" },
-    };
-    const cfg = map[s] ?? { tone: "neutral" as PillTone, label: s };
-    return <PillBadge tone={cfg.tone}>{cfg.label}</PillBadge>;
+    return (
+      <CheckCircle2
+        className="w-4 h-4 text-success shrink-0"
+        aria-label="Ready"
+      />
+    );
   };
 
   // Render every month covered by the import. When transactions span more
@@ -1115,10 +1164,15 @@ function UploadedFilesHistoryList({
                     >
                       {imp.file_name}
                     </p>
-                    {statusIndicator(imp.status)}
-                    {imp.locked && (
-                      <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
-                    )}
+                    {statusIndicator(imp)}
+                    {/* Show the lock icon next to a non-lock status, since
+                        statusIndicator only emits the lock by itself when
+                        nothing else needs attention. */}
+                    {imp.locked &&
+                      (imp.status !== "NORMALIZED" ||
+                        (mismatchByImport[imp.id] || 0) > 0) && (
+                        <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
+                      )}
                   </div>
                   {cashAccounts.length > 0 ? (
                     <Select
