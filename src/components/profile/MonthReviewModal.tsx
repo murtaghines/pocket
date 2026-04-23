@@ -58,6 +58,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
