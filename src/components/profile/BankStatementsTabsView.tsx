@@ -789,7 +789,7 @@ function UploadedFilesDropdown({
           size="sm"
           disabled={count === 0}
           title="Show uploaded source files"
-          className="h-9 gap-2 rounded-full px-4 font-medium border-border bg-card hover:bg-muted/60"
+          className="h-9 gap-2 px-4 font-medium border-border bg-card hover:bg-muted/60"
         >
           <FileSpreadsheet className="w-4 h-4 text-primary" />
           <span className="tabular-nums">
