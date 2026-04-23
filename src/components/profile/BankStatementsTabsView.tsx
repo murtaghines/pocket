@@ -243,17 +243,50 @@ export function BankStatementsTabsView() {
   // Track whether the active month workspace has unconfirmed edits so we
   // can warn the user before they switch months.
   const [hasPendingEdits, setHasPendingEdits] = useState(false);
+  // Ref the active month editor populates with a "commit everything pending
+  // in this month" function. Lets the parent trigger a save from a toast.
+  const commitAllPendingRef = useRef<(() => Promise<void> | void) | null>(null);
+  // Track the active toast id so we can dismiss it from action handlers.
+  const pendingToastIdRef = useRef<string | number | null>(null);
 
   const guardedSetActiveKey = (k: string) => {
-    if (
-      hasPendingEdits &&
-      !window.confirm(
-        "You have unconfirmed changes in this month. They will be discarded if you switch tabs. Continue?",
-      )
-    ) {
+    if (!hasPendingEdits) {
+      setActiveKey(k);
       return;
     }
-    setActiveKey(k);
+    // Show an interactive toast (bottom-right) instead of a native confirm.
+    // Stay on the current tab until the user picks an action.
+    if (pendingToastIdRef.current !== null) {
+      sonnerToast.dismiss(pendingToastIdRef.current);
+    }
+    const id = sonnerToast("Unconfirmed changes", {
+      description:
+        "You have unsaved edits in this month. Save them before switching tabs?",
+      duration: Infinity,
+      action: {
+        label: "Save & switch",
+        onClick: async () => {
+          try {
+            await commitAllPendingRef.current?.();
+          } finally {
+            pendingToastIdRef.current = null;
+            setActiveKey(k);
+          }
+        },
+      },
+      cancel: {
+        label: "Discard & switch",
+        onClick: () => {
+          pendingToastIdRef.current = null;
+          // Editor unmount on month change clears its pending state.
+          setActiveKey(k);
+        },
+      },
+      onDismiss: () => {
+        pendingToastIdRef.current = null;
+      },
+    });
+    pendingToastIdRef.current = id;
   };
 
   // Build month slots: latest first
