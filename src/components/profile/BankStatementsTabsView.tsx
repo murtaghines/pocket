@@ -519,6 +519,20 @@ function MonthTabStrip({
   );
 }
 
+/** Mirror of the PendingFile shape exposed by useMonthlyFileUpload — kept
+ *  local so we don't have to export the type from the hook. */
+interface PendingFileInfo {
+  id: string;
+  name: string;
+  size: number;
+  status: "pending" | "processing" | "completed" | "error";
+  error?: string;
+  transactionsCount?: number;
+  progressLabel?: string;
+  progressPercent?: number;
+  startedAt?: number;
+}
+
 /* ─────────────────────────  Month workspace  ───────────────────────── */
 
 interface MonthWorkspaceProps {
@@ -532,6 +546,7 @@ interface MonthWorkspaceProps {
   isDeleting: boolean;
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   isProcessing: boolean;
+  pendingFiles?: PendingFileInfo[];
 }
 
 function MonthWorkspace({
