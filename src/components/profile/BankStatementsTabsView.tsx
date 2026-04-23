@@ -693,16 +693,15 @@ function FileChipsBar({
             </Select>
           )}
 
-          {/* Lock toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-            onClick={() => toggleLockImport({ importId: imp.id, locked: !imp.locked })}
-            title={imp.locked ? "Unlock file" : "Lock file"}
-          >
-            {imp.locked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-          </Button>
+          {/* Locked indicator (read-only — global lock lives in the status bar) */}
+          {imp.locked && (
+            <span
+              className="inline-flex items-center justify-center h-6 w-6 text-muted-foreground"
+              title="This file is part of a locked month"
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </span>
+          )}
 
           {/* Delete */}
           <AlertDialog>
@@ -967,25 +966,6 @@ function UploadedFilesHistoryList({
 
               {/* Actions */}
               <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                  onClick={() =>
-                    toggleLockImport({
-                      importId: imp.id,
-                      locked: !imp.locked,
-                    })
-                  }
-                  title={imp.locked ? "Unlock file" : "Lock file"}
-                >
-                  {imp.locked ? (
-                    <Lock className="w-3.5 h-3.5" />
-                  ) : (
-                    <Unlock className="w-3.5 h-3.5" />
-                  )}
-                </Button>
-
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
