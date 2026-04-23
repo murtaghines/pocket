@@ -1084,6 +1084,7 @@ function UploadedFilesHistoryList({
   // Subtle status indicator. Order of priority (highest first):
   //   FAILED  → red badge
   //   PARSED / UPLOADED → amber "processing" badge
+  //   has unsaved (pending) edits → amber dot
   //   has mismatched rows → amber warning icon
   //   locked → lock icon
   //   ready → green check
@@ -1096,6 +1097,18 @@ function UploadedFilesHistoryList({
         <PillBadge tone="amber">
           {imp.status === "UPLOADED" ? "Uploading" : "Processing"}
         </PillBadge>
+      );
+    }
+    if (pendingImportIds.has(imp.id)) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 text-[11px] font-medium text-warning"
+          aria-label="Unsaved changes"
+          title="This file has unsaved changes"
+        >
+          <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
+          Unsaved
+        </span>
       );
     }
     const mismatchCount = mismatchByImport[imp.id] || 0;
