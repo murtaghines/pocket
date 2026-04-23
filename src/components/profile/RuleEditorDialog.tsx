@@ -206,18 +206,20 @@ export function RuleEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl gap-0 p-0 overflow-hidden">
+      <DialogContent className="max-w-xl gap-0 p-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-4 space-y-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
-            <Wand2 className="w-5 h-5 text-primary" />
-          </div>
-          <div className="space-y-1.5">
-            <DialogTitle>Create a categorization rule</DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed">
-              Edit the pattern and choose how strict the match should be. Future
-              transactions matching it will be tagged automatically.
-            </DialogDescription>
+        <DialogHeader className="px-6 pt-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <DialogTitle>Create a categorization rule</DialogTitle>
+              <DialogDescription className="text-sm leading-relaxed">
+                Edit the pattern and choose how strict the match should be. Future
+                transactions matching it will be tagged automatically.
+              </DialogDescription>
+            </div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+              <Wand2 className="w-5 h-5 text-primary" />
+            </div>
           </div>
         </DialogHeader>
 
