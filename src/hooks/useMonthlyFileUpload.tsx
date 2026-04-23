@@ -47,6 +47,12 @@ interface PendingFile {
   status: "pending" | "processing" | "completed" | "error";
   error?: string;
   transactionsCount?: number;
+  /** Friendly label of what we're doing right now ("Reading file", "Asking AI…"). */
+  progressLabel?: string;
+  /** 0–100 estimate. AI step uses a logarithmic ramp because we can't poll it. */
+  progressPercent?: number;
+  /** Wall-clock when processing started — used for the AI ramp. */
+  startedAt?: number;
 }
 
 type PendingFilesByMonth = Record<string, PendingFile[]>;
