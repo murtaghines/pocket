@@ -1266,8 +1266,10 @@ interface InlineTransactionsEditorProps {
   onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
-  onPendingChange?: (hasPending: boolean) => void;
-  commitAllRef?: React.MutableRefObject<(() => Promise<void> | void) | null>;
+  /** Pending edits map lifted to the parent so it survives tab switches. */
+  pendingByTx: Record<string, PendingEditShape>;
+  setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
+  pendingTxIds: Set<string>;
 }
 
 function InlineTransactionsEditor({
@@ -1282,8 +1284,9 @@ function InlineTransactionsEditor({
   onAddMore,
   isProcessing,
   pendingFiles,
-  onPendingChange,
-  commitAllRef,
+  pendingByTx,
+  setPendingByTx,
+  pendingTxIds: _pendingTxIds,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1316,16 +1319,10 @@ function InlineTransactionsEditor({
   // Edit-history popover open state (one tx at a time)
   const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
 
-  // Pending (unsaved) edits per-row. Movement / category / amount changes
-  // are buffered here and only persisted when the user clicks the green
-  // "confirm" tick. Hide/Show stays immediate (it's not a content edit).
-  type PendingEdit = {
-    movement?: MovementType;
-    category?: string;
-    category_id?: string | null;
-    amount?: number;
-  };
-  const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
+  // Pending (unsaved) edits live in the parent (`BankStatementsTabsView`)
+  // so navigating to another month tab does NOT discard them. The row
+  // stays yellow until the user confirms or clears it explicitly.
+  type PendingEdit = PendingEditShape;
 
   const setPendingFor = (txId: string, patch: PendingEdit) => {
     setPendingByTx((prev) => {
@@ -1353,16 +1350,6 @@ function InlineTransactionsEditor({
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasAnyPending]);
-
-  // Notify parent so it can guard month-tab switches.
-  useEffect(() => {
-    onPendingChange?.(hasAnyPending);
-    return () => {
-      // When this editor unmounts (e.g. user changed month), make sure
-      // the parent flag is cleared so it doesn't keep blocking forever.
-      onPendingChange?.(false);
-    };
-  }, [hasAnyPending, onPendingChange]);
 
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
