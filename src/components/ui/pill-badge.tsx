@@ -38,7 +38,7 @@ const TONE_CLASSES_SOLID: Record<PillTone, string> = {
   neutral: "bg-foreground/80 text-background",
   blue: "bg-[hsl(216_85%_52%)] text-white",
   green: "bg-[hsl(150_65%_38%)] text-white",
-  amber: "bg-[hsl(38_95%_55%)] text-[hsl(28_75%_18%)]",
+  amber: "bg-[hsl(45_100%_62%)] text-[hsl(35_90%_18%)]",
   red: "bg-[hsl(0_72%_52%)] text-white",
   purple: "bg-[hsl(265_60%_55%)] text-white",
   teal: "bg-[hsl(180_55%_38%)] text-white",
