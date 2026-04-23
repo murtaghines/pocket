@@ -955,16 +955,16 @@ export function MonthReviewModal({
                   </div>
                 )}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-                  <PlusCircle className="w-4 h-4 text-success" />
+                  <span className="text-success font-semibold text-base leading-none">+</span>
                   <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
-                  <MinusCircle className="w-4 h-4 text-destructive" />
+                  <span className="text-destructive font-semibold text-base leading-none">−</span>
                   <span className="text-destructive font-medium tabular-nums">{formatCurrency(summary.expenses)}</span>
                 </div>
                 {summary.transfers > 0 && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
-                    <ArrowRightLeft className="w-4 h-4 text-warning" />
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
                     <span className="text-warning font-medium">{summary.transfers}</span>
                   </div>
                 )}
