@@ -406,7 +406,7 @@ function MonthWorkspace({
   // Empty state
   if (imports.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card py-16 px-6 text-center" style={{ boxShadow: 'var(--shadow-section)' }}>
+      <div className="bg-card py-20 px-6 text-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
           <Upload className="w-6 h-6" />
         </div>
