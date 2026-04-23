@@ -1170,7 +1170,14 @@ function InlineTransactionsEditor({
       payload: Record<string, unknown>;
       before?: Record<string, unknown>;
     }) => {
-      const { error } = await supabase.from("transactions").update(payload).eq("id", id);
+      // Extract meta-only keys (prefixed with `__`) so they aren't sent as columns
+      const action = (payload as { __action?: string }).__action ?? "edit";
+      const updatePayload: Record<string, unknown> = {};
+      for (const key of Object.keys(payload)) {
+        if (key.startsWith("__")) continue;
+        updatePayload[key] = payload[key];
+      }
+      const { error } = await supabase.from("transactions").update(updatePayload).eq("id", id);
       if (error) throw error;
 
       // Audit log: record what changed so the user can review/revert later.
@@ -1179,11 +1186,11 @@ function InlineTransactionsEditor({
         const fields: string[] = [];
         const beforeDiff: Record<string, unknown> = {};
         const afterDiff: Record<string, unknown> = {};
-        for (const key of Object.keys(payload)) {
+        for (const key of Object.keys(updatePayload)) {
           // Only persist user-meaningful fields
           if (!USER_TRACKED_FIELDS.has(key)) continue;
           const prev = before[key] ?? null;
-          const next = payload[key] ?? null;
+          const next = updatePayload[key] ?? null;
           if (prev === next) continue;
           fields.push(key);
           beforeDiff[key] = prev;
@@ -1195,7 +1202,7 @@ function InlineTransactionsEditor({
               user_id: user.id,
               entity_type: "transaction",
               entity_id: id,
-              action: (payload as { __action?: string }).__action ?? "edit",
+              action,
               diff_json: { fields, before: beforeDiff, after: afterDiff } as never,
             },
           ]);
