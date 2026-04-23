@@ -51,6 +51,15 @@ interface PendingFile {
 
 type PendingFilesByMonth = Record<string, PendingFile[]>;
 
+// Special bucket key for files uploaded without a forced target month.
+const AUTO_BUCKET_KEY = "__auto__";
+
+function formatMonthLabel(monthKey: string): string {
+  const [y, m] = monthKey.split("-").map(Number);
+  const d = new Date(y, (m || 1) - 1, 1);
+  return d.toLocaleString(undefined, { month: "long", year: "numeric" });
+}
+
 function getMonthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
@@ -61,10 +70,19 @@ export function useMonthlyFileUpload() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const processFile = useCallback(async (uploadFile: PendingFile, targetMonth: Date, monthKey: string, accountId?: string) => {
+  const processFile = useCallback(async (
+    uploadFile: PendingFile,
+    targetMonth: Date | null,
+    monthKey: string,
+    accountId?: string,
+  ) => {
     if (!user) return;
 
-    const targetMonthStr = `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`;
+    // When targetMonth is null we're in AUTO distribution mode — let the
+    // backend split the file across whatever months it actually contains.
+    const targetMonthStr = targetMonth
+      ? `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`
+      : null;
 
     // Update status to processing
     setPendingFilesByMonth((prev) => ({
@@ -135,7 +153,9 @@ export function useMonthlyFileUpload() {
             fileContent,
             userId: user.id,
             domain: "CASHFLOW",
-            targetMonth: targetMonthStr,
+            // Omit targetMonth in auto mode so the backend distributes
+            // transactions across their real posted months.
+            ...(targetMonthStr ? { targetMonth: targetMonthStr } : {}),
             fileHash,
             fileName: uploadFile.name,
             fileSize: uploadFile.size,
