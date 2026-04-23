@@ -2109,7 +2109,41 @@ function InlineTransactionsEditor({
             <AlertDialogAction
               onClick={() => {
                 if (movementConfirm) {
-                  applyMovementChange(movementConfirm.tx, movementConfirm.newMovement);
+                  // User confirmed the mismatch — persist the pending edit
+                  // for this row, bypassing the validation in commitRow.
+                  const tx = movementConfirm.tx;
+                  const pending = pendingByTx[tx.id];
+                  if (pending) {
+                    const payload: Record<string, unknown> = {};
+                    const before: Record<string, unknown> = {};
+                    if (pending.movement && pending.movement !== tx.movement) {
+                      payload.movement = pending.movement;
+                      before.movement = tx.movement;
+                    }
+                    if (pending.category && pending.category !== tx.category) {
+                      payload.category = pending.category;
+                      payload.category_id = pending.category_id ?? null;
+                      payload.category_source = "MANUAL";
+                      payload.categorized_by = "user";
+                      payload.user_corrected = true;
+                      before.category = tx.category;
+                      before.category_id = tx.category_id;
+                    }
+                    if (pending.amount !== undefined && pending.amount !== tx.amount) {
+                      payload.amount = pending.amount;
+                      before.amount = tx.amount;
+                    }
+                    if (Object.keys(payload).length > 0) {
+                      saveMutation.mutate(
+                        { id: tx.id, payload, before },
+                        { onSuccess: () => clearPendingFor(tx.id) },
+                      );
+                    } else {
+                      clearPendingFor(tx.id);
+                    }
+                  } else {
+                    applyMovementChange(tx, movementConfirm.newMovement);
+                  }
                 }
                 setMovementConfirm(null);
               }}
