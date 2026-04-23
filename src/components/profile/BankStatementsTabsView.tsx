@@ -1871,13 +1871,13 @@ function InlineTransactionsEditor({
                       )}
                     </TableCell>
                     <TableCell className="text-right text-sm tabular-nums font-medium text-foreground">
-                      {tx.amount < 0 ? "-" : ""}
-                      {formatCurrency(Math.abs(tx.amount))}
+                      {displayAmount < 0 ? "-" : ""}
+                      {formatCurrency(Math.abs(displayAmount))}
                     </TableCell>
                     <TableCell className="text-center">
                       {!isLocked && (
                         <AmountEditButton
-                          originalAmount={tx.amount}
+                          originalAmount={displayAmount}
                           formatCurrency={formatCurrency}
                           onChangeAmount={(v) => handleAmountChange(tx, v)}
                           onApplySplit={(n) => handleSplit(tx, n)}
@@ -1899,7 +1899,20 @@ function InlineTransactionsEditor({
                       )}
                     </TableCell>
                     <TableCell className="px-0 text-center">
-                      {!isLocked && isEdited && originalSnapshot && (
+                      {!isLocked && isPending ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
+                          onClick={() => commitRow(tx)}
+                          disabled={isSaving}
+                          title="Confirm changes"
+                          aria-label="Confirm changes"
+                        >
+                          <Check className="w-[18px] h-[18px]" />
+                        </Button>
+                      ) : !isLocked && isEdited && originalSnapshot ? (
                         <RevertToOriginalButton
                           original={originalSnapshot.values}
                           fields={originalSnapshot.fields}
@@ -1935,7 +1948,7 @@ function InlineTransactionsEditor({
                             });
                           }}
                         />
-                      )}
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 );
