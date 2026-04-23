@@ -895,6 +895,34 @@ function UploadedFilesHistoryList({
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  // Fetch all distinct months covered by transactions of each import.
+  // Some files (e.g. multi-month statements) span more than `target_month`.
+  const { data: monthsByImport = {} } = useQuery({
+    queryKey: ["import-months", user?.id, imports.map((i) => i.id).join(",")],
+    enabled: !!user?.id && imports.length > 0,
+    queryFn: async () => {
+      const ids = imports.map((i) => i.id);
+      if (ids.length === 0) return {} as Record<string, string[]>;
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("import_id, date")
+        .in("import_id", ids);
+      if (error) throw error;
+      const map: Record<string, Set<string>> = {};
+      (data || []).forEach((row: any) => {
+        if (!row.import_id || !row.date) return;
+        const key = String(row.date).substring(0, 7);
+        (map[row.import_id] ??= new Set()).add(key);
+      });
+      const out: Record<string, string[]> = {};
+      Object.entries(map).forEach(([k, set]) => {
+        out[k] = Array.from(set).sort();
+      });
+      return out;
+    },
+  });
 
   const acctName = (id: string | null) =>
     (id && cashAccounts.find((a) => a.id === id)?.name) || "—";
@@ -942,19 +970,38 @@ function UploadedFilesHistoryList({
     return formatMonth(new Date(y, m - 1, 1));
   };
 
-  const statusBadge = (s: string) => {
+  // Subtle status indicator: just a check icon when ready, badge only for
+  // active or error states (so the list stays calm when everything is fine).
+  const statusIndicator = (s: string) => {
+    if (s === "NORMALIZED") {
+      return (
+        <CheckCircle2
+          className="w-3.5 h-3.5 text-success shrink-0"
+          aria-label="Ready"
+        />
+      );
+    }
     const map: Record<string, { tone: PillTone; label: string }> = {
-      NORMALIZED: { tone: "green", label: "Ready" },
       PARSED: { tone: "amber", label: "Processing" },
       UPLOADED: { tone: "amber", label: "Uploading" },
       FAILED: { tone: "red", label: "Failed" },
     };
     const cfg = map[s] ?? { tone: "neutral" as PillTone, label: s };
-    return (
-      <PillBadge tone={cfg.tone}>
-        {cfg.label}
-      </PillBadge>
-    );
+    return <PillBadge tone={cfg.tone}>{cfg.label}</PillBadge>;
+  };
+
+  // Render every month covered by the import. When transactions span more
+  // than one month, list them all so the user understands what's inside.
+  const monthsLabel = (imp: Import) => {
+    const fromTx = monthsByImport[imp.id];
+    const keys =
+      fromTx && fromTx.length > 0
+        ? fromTx
+        : imp.target_month
+        ? [imp.target_month.substring(0, 7)]
+        : [];
+    if (keys.length === 0) return "—";
+    return keys.map((k) => monthLabel(k)).join(" · ");
   };
 
   return (
@@ -968,10 +1015,7 @@ function UploadedFilesHistoryList({
             All your source files — tables below combine every record
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 mt-1">
-          <span className="inline-flex items-center justify-center min-w-[26px] h-6 px-2 rounded-full bg-primary/10 text-primary text-xs font-semibold tabular-nums">
-            {imports.length}
-          </span>
+        <div className="flex items-center shrink-0 mt-1">
           <SheetClose
             className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label="Close panel"
@@ -1009,7 +1053,7 @@ function UploadedFilesHistoryList({
                   >
                     {imp.file_name}
                   </p>
-                  {statusBadge(imp.status)}
+                  {statusIndicator(imp.status)}
                   {imp.locked && (
                     <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
                   )}
@@ -1029,32 +1073,44 @@ function UploadedFilesHistoryList({
                     {formatUploadedAt(imp.uploaded_at)}
                   </span>
                   <span aria-hidden>·</span>
-                  <span className="capitalize">
-                    {monthLabel(imp.target_month)}
+                  <span className="capitalize" title="Months covered by this file">
+                    {monthsLabel(imp)}
                   </span>
                   <span aria-hidden>·</span>
-                  {cashAccounts.length > 0 ? (
-                    <Select
-                      value={imp.account_id || ""}
-                      onValueChange={(v) => changeAcct(imp.id, v)}
-                      disabled={!!imp.locked}
-                    >
-                      <SelectTrigger className="h-6 w-auto min-w-[110px] border-0 bg-muted/40 px-2 text-[11px] hover:bg-muted">
-                        <SelectValue placeholder="Account">
-                          {acctName(imp.account_id)}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cashAccounts.map((a) => (
-                          <SelectItem key={a.id} value={a.id} className="text-sm">
-                            {a.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="truncate">{acctName(imp.account_id)}</span>
-                  )}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="text-muted-foreground/80">Account:</span>
+                    {cashAccounts.length > 0 ? (
+                      <Select
+                        value={imp.account_id || ""}
+                        onValueChange={(v) => changeAcct(imp.id, v)}
+                        disabled={!!imp.locked}
+                      >
+                        <SelectTrigger
+                          className={cn(
+                            "h-6 w-auto min-w-[110px] border border-input bg-background px-2 text-[11px] font-medium text-foreground gap-1 hover:bg-accent hover:border-primary/40 transition-colors",
+                            imp.locked && "opacity-60 cursor-not-allowed",
+                          )}
+                          title={imp.locked ? "Unlock the file to change account" : "Click to change account"}
+                        >
+                          <Pencil className="w-2.5 h-2.5 text-muted-foreground" />
+                          <SelectValue placeholder="Pick account">
+                            {acctName(imp.account_id)}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cashAccounts.map((a) => (
+                            <SelectItem key={a.id} value={a.id} className="text-sm">
+                              {a.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="truncate font-medium text-foreground">
+                        {acctName(imp.account_id)}
+                      </span>
+                    )}
+                  </span>
                   {imp.transactions_count != null &&
                     imp.status === "NORMALIZED" && (
                       <>
