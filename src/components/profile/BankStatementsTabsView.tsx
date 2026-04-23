@@ -1316,7 +1316,7 @@ function InlineTransactionsEditor({
                     </TableCell>
                     <TableCell className="text-sm">
                       {isLocked ? (
-                        <PillBadge tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                        <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
                           {getMovementLabel(movement)}
                         </PillBadge>
                       ) : (
@@ -1327,24 +1327,24 @@ function InlineTransactionsEditor({
                         >
                           <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50 min-w-[110px]">
                             <SelectValue>
-                              <PillBadge tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                              <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
                                 {getMovementLabel(movement)}
                               </PillBadge>
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="INCOME">
-                              <PillBadge tone="green" icon={<Plus className="w-3 h-3" />}>
+                              <PillBadge variant="solid" tone="green" icon={<Plus className="w-3 h-3" />}>
                                 {getMovementLabel("INCOME")}
                               </PillBadge>
                             </SelectItem>
                             <SelectItem value="EXPENSE">
-                              <PillBadge tone="red" icon={<Minus className="w-3 h-3" />}>
+                              <PillBadge variant="solid" tone="red" icon={<Minus className="w-3 h-3" />}>
                                 {getMovementLabel("EXPENSE")}
                               </PillBadge>
                             </SelectItem>
                             <SelectItem value="TRANSFER">
-                              <PillBadge tone="amber" icon={<ArrowRightLeft className="w-3 h-3" />}>
+                              <PillBadge variant="solid" tone="amber" icon={<ArrowRightLeft className="w-3 h-3" />}>
                                 {getMovementLabel("TRANSFER")}
                               </PillBadge>
                             </SelectItem>
@@ -1354,14 +1354,17 @@ function InlineTransactionsEditor({
                     </TableCell>
                     <TableCell className="text-sm">
                       {isLocked ? (
-                        <div className="flex items-center gap-1.5">
+                        <PillBadge colorVar={getCategoryColor(category)}>
                           <CategoryIcon
                             iconName={getCategoryIcon(category)}
                             colorVar={getCategoryColor(category)}
                             size="sm"
+                            showBackground={false}
                           />
-                          <span className="text-foreground">{getCategoryLabel(category)}</span>
-                        </div>
+                          <span className="truncate max-w-[140px]" title={getCategoryLabel(category)}>
+                            {getCategoryLabel(category)}
+                          </span>
+                        </PillBadge>
                       ) : (
                         <Select
                           value={category}
@@ -1370,15 +1373,17 @@ function InlineTransactionsEditor({
                         >
                           <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50">
                             <SelectValue>
-                              <div className="flex items-center gap-1.5">
+                              <PillBadge colorVar={getCategoryColor(category)}>
                                 <CategoryIcon
                                   iconName={getCategoryIcon(category)}
                                   colorVar={getCategoryColor(category)}
                                   size="sm"
-                                  showBackground
+                                  showBackground={false}
                                 />
-                                <span className="text-foreground">{getCategoryLabel(category)}</span>
-                              </div>
+                                <span className="truncate max-w-[140px]" title={getCategoryLabel(category)}>
+                                  {getCategoryLabel(category)}
+                                </span>
+                              </PillBadge>
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>

@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
  * driving from category color tokens.
  */
 
+export type PillVariant = "soft" | "solid";
+
 export type PillTone =
   | "neutral"
   | "blue"
@@ -30,8 +32,23 @@ const TONE_CLASSES: Record<PillTone, string> = {
   orange: "bg-[hsl(20_95%_92%)] text-[hsl(20_85%_38%)]",
 };
 
+// Solid (saturated) variant: strong fill, contrasting foreground.
+// For yellow/amber the text stays dark brown to remain readable.
+const TONE_CLASSES_SOLID: Record<PillTone, string> = {
+  neutral: "bg-foreground/80 text-background",
+  blue: "bg-[hsl(216_85%_52%)] text-white",
+  green: "bg-[hsl(150_65%_38%)] text-white",
+  amber: "bg-[hsl(38_95%_55%)] text-[hsl(28_75%_18%)]",
+  red: "bg-[hsl(0_72%_52%)] text-white",
+  purple: "bg-[hsl(265_60%_55%)] text-white",
+  teal: "bg-[hsl(180_55%_38%)] text-white",
+  yellow: "bg-[hsl(48_95%_55%)] text-[hsl(35_75%_18%)]",
+  orange: "bg-[hsl(20_85%_52%)] text-white",
+};
+
 export interface PillBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   tone?: PillTone;
+  variant?: PillVariant;
   /** When provided, overrides tone with a custom HSL color (background + foreground). */
   hsl?: string;
   /** When provided, overrides tone using a CSS variable name (e.g. "category-salary"). */
@@ -43,6 +60,7 @@ export interface PillBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 export function PillBadge({
   className,
   tone = "neutral",
+  variant = "soft",
   hsl,
   colorVar,
   size = "sm",
@@ -51,18 +69,34 @@ export function PillBadge({
   style,
   ...props
 }: PillBadgeProps) {
+  // For "soft" custom-color pills, we want a very light background of the
+  // category color but keep the icon/label readable. Text uses a darker
+  // foreground while the icon keeps the saturated category color.
+  const softBgAlpha = 0.18;
   const customStyle = colorVar
-    ? {
-        backgroundColor: `hsl(var(--${colorVar}) / 0.14)`,
-        color: `hsl(var(--${colorVar}))`,
-        ...style,
-      }
+    ? variant === "solid"
+      ? {
+          backgroundColor: `hsl(var(--${colorVar}))`,
+          color: "hsl(var(--primary-foreground))",
+          ...style,
+        }
+      : {
+          backgroundColor: `hsl(var(--${colorVar}) / ${softBgAlpha})`,
+          color: `hsl(var(--${colorVar}))`,
+          ...style,
+        }
     : hsl
-    ? {
-        backgroundColor: `hsl(${hsl} / 0.14)`,
-        color: `hsl(${hsl})`,
-        ...style,
-      }
+    ? variant === "solid"
+      ? {
+          backgroundColor: `hsl(${hsl})`,
+          color: "hsl(var(--primary-foreground))",
+          ...style,
+        }
+      : {
+          backgroundColor: `hsl(${hsl} / ${softBgAlpha})`,
+          color: `hsl(${hsl})`,
+          ...style,
+        }
     : style;
 
   const useCustom = !!(colorVar || hsl);
@@ -72,7 +106,7 @@ export function PillBadge({
       className={cn(
         "inline-flex items-center gap-1 rounded-full font-medium leading-none whitespace-nowrap",
         size === "sm" ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-sm",
-        !useCustom && TONE_CLASSES[tone],
+        !useCustom && (variant === "solid" ? TONE_CLASSES_SOLID[tone] : TONE_CLASSES[tone]),
         className,
       )}
       style={customStyle}
