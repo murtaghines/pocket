@@ -261,7 +261,7 @@ export function BankStatementsTabsView() {
             size="sm"
             onClick={() => globalFileInputRef.current?.click()}
             disabled={isProcessingAny()}
-            className="gap-1.5 h-8"
+            className="gap-2 h-9 px-5 font-medium"
             title="Upload one or more files. Transactions are auto-sorted into the right months."
           >
             {isProcessingAny() ? (
