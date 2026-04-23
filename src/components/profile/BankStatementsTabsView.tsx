@@ -72,6 +72,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { useToast } from "@/hooks/use-toast";
 import { AccountSelectDialog } from "./AccountSelectDialog";
+import { buildRuleFromCorrection } from "@/lib/userRules";
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
@@ -1009,6 +1010,21 @@ function InlineTransactionsEditor({
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
+  // Movement-mismatch confirmation (e.g. positive amount marked as EXPENSE)
+  const [movementConfirm, setMovementConfirm] = useState<{
+    tx: MonthTransaction;
+    newMovement: MovementType;
+  } | null>(null);
+
+  // Category change → "save as rule?" prompt
+  const [categoryRulePrompt, setCategoryRulePrompt] = useState<{
+    tx: MonthTransaction;
+    newSlug: string;
+    newCategoryId: string | null;
+    cleanDesc: string;
+    targetMovement: MovementType;
+  } | null>(null);
+
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
 
@@ -1087,8 +1103,7 @@ function InlineTransactionsEditor({
   });
 
   // Handlers (auto-save on change)
-  const handleMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
-    if (newMovement === tx.movement) return;
+  const applyMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
     const defaultCat = getCategoriesForMovement(newMovement)[0];
     const cat = categories.find((c) => c.slug === defaultCat);
     saveMutation.mutate({
@@ -1104,18 +1119,56 @@ function InlineTransactionsEditor({
     });
   };
 
-  const handleCategoryChange = (tx: MonthTransaction, newSlug: string) => {
-    if (normalizeCategory(tx.category) === newSlug) return;
-    const cat = categories.find((c) => c.slug === newSlug);
+  const handleMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
+    if (newMovement === tx.movement) return;
+    // Verification only: warn if movement contradicts the amount sign.
+    // (positive amount → EXPENSE, or negative amount → INCOME).
+    const amount = tx.amount;
+    const looksWrong =
+      (amount > 0 && newMovement === "EXPENSE") ||
+      (amount < 0 && newMovement === "INCOME");
+    if (looksWrong) {
+      setMovementConfirm({ tx, newMovement });
+      return;
+    }
+    applyMovementChange(tx, newMovement);
+  };
+
+  const applyCategoryChange = (
+    tx: MonthTransaction,
+    newSlug: string,
+    categoryId: string | null,
+  ) => {
     saveMutation.mutate({
       id: tx.id,
       payload: {
         category: newSlug,
-        category_id: cat?.id || null,
+        category_id: categoryId,
         category_source: "MANUAL",
         categorized_by: "user",
         user_corrected: true,
       },
+    });
+  };
+
+  const handleCategoryChange = (tx: MonthTransaction, newSlug: string) => {
+    if (normalizeCategory(tx.category) === newSlug) return;
+    const cat = categories.find((c) => c.slug === newSlug);
+    const categoryId = cat?.id || null;
+    // Apply the change immediately so the UI feels responsive…
+    applyCategoryChange(tx, newSlug, categoryId);
+    // …and ask whether to turn it into a permanent rule.
+    const cleanDesc = (tx.description_norm || tx.description || "")
+      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+      .trim();
+    if (!cleanDesc || !categoryId) return;
+    const targetMovement = (tx.movement || "EXPENSE") as MovementType;
+    setCategoryRulePrompt({
+      tx,
+      newSlug,
+      newCategoryId: categoryId,
+      cleanDesc,
+      targetMovement,
     });
   };
 
@@ -1507,6 +1560,125 @@ function InlineTransactionsEditor({
           </div>
         </div>
       </div>
+
+      {/* Movement mismatch verification (no rule, just confirm) */}
+      <AlertDialog
+        open={!!movementConfirm}
+        onOpenChange={(o) => !o && setMovementConfirm(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Unusual movement
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {movementConfirm && (
+                <>
+                  The amount is{" "}
+                  <span className="font-semibold">
+                    {formatCurrency(movementConfirm.tx.amount)}
+                  </span>{" "}
+                  but you marked it as{" "}
+                  <span className="font-semibold">
+                    {getMovementLabel(movementConfirm.newMovement)}
+                  </span>
+                  . Are you sure?
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (movementConfirm) {
+                  applyMovementChange(movementConfirm.tx, movementConfirm.newMovement);
+                }
+                setMovementConfirm(null);
+              }}
+            >
+              Yes, save it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Category change → optional "save as rule" */}
+      <AlertDialog
+        open={!!categoryRulePrompt}
+        onOpenChange={(o) => !o && setCategoryRulePrompt(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save as a rule?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {categoryRulePrompt && (
+                <>
+                  Apply{" "}
+                  <span className="font-semibold">
+                    {getCategoryLabel(categoryRulePrompt.newSlug)}
+                  </span>{" "}
+                  to future transactions that look like{" "}
+                  <span className="font-mono text-foreground">
+                    “{categoryRulePrompt.cleanDesc.slice(0, 60)}
+                    {categoryRulePrompt.cleanDesc.length > 60 ? "…" : ""}”
+                  </span>
+                  ?
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCategoryRulePrompt(null)}>
+              Just this one
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!categoryRulePrompt || !user) {
+                  setCategoryRulePrompt(null);
+                  return;
+                }
+                const { cleanDesc, targetMovement, newSlug } = categoryRulePrompt;
+                const ruleData = buildRuleFromCorrection(
+                  cleanDesc,
+                  targetMovement,
+                  newSlug,
+                );
+                const { error } = await supabase.from("user_rules").insert({
+                  user_id: user.id,
+                  source: "user_correction",
+                  match_type: ruleData.match_type,
+                  pattern: ruleData.pattern,
+                  tokens: ruleData.tokens,
+                  movement: targetMovement,
+                  category: newSlug,
+                  confidence: 0.99,
+                  original_description: cleanDesc,
+                  is_active: true,
+                });
+                if (error) {
+                  toast({
+                    title: "Couldn't save rule",
+                    description: error.message,
+                    variant: "destructive",
+                  });
+                } else {
+                  toast({
+                    title: "✓ Rule saved",
+                    description: `Future “${cleanDesc.slice(0, 40)}${cleanDesc.length > 40 ? "…" : ""}” transactions will be categorized as ${getCategoryLabel(newSlug)}.`,
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+                  queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+                }
+                setCategoryRulePrompt(null);
+              }}
+            >
+              Yes, create rule
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
