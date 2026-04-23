@@ -1787,7 +1787,7 @@ function InlineTransactionsEditor({
                           onClick={() => handleToggleHidden(tx)}
                           title={isHidden ? "Include in totals" : "Hide from totals"}
                         >
-                          {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {isHidden ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                         </Button>
                       )}
                     </TableCell>
