@@ -41,7 +41,7 @@ export function DataRail() {
       >
         {/* Top: brand mark (white pocket logo) */}
         <Link to="/dashboard" aria-label="Pocket — go to dashboard" className="flex items-center justify-center">
-          <img src={pocketLogoWhite} alt="Pocket" className="h-8 w-auto" />
+          <img src={pocketLogoWhite} alt="Pocket" className="h-12 w-auto" />
         </Link>
 
         {/* Bottom: data section buttons + (when inside /my-data) close button */}
