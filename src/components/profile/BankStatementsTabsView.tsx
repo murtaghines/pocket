@@ -28,6 +28,7 @@ import {
   RotateCcw,
   FileText,
   Sparkles,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -2004,7 +2005,20 @@ function InlineTransactionsEditor({
                       )}
                     </TableCell>
                     <TableCell className="px-0 text-center">
-                      {!isLocked && (
+                      {!isLocked && isPending ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
+                          onClick={() => commitRow(tx, false)}
+                          disabled={isSaving}
+                          title="Save changes"
+                          aria-label="Save changes"
+                        >
+                          <Check className="w-[16px] h-[16px]" />
+                        </Button>
+                      ) : !isLocked ? (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -2014,42 +2028,44 @@ function InlineTransactionsEditor({
                         >
                           {isHidden ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                         </Button>
-                      )}
+                      ) : null}
                     </TableCell>
                     <TableCell className="px-0 text-center">
                       {!isLocked && isPending ? (
                         (() => {
                           const categoryChanged =
                             !!pending?.category && pending.category !== tx.category;
-                          return (
-                            <div className="flex items-center justify-center gap-0.5">
+                          // If the user changed the category, this slot offers
+                          // "save + create rule". Otherwise it offers "discard
+                          // pending edits" so the user can back out.
+                          if (categoryChanged) {
+                            return (
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
-                                onClick={() => commitRow(tx, false)}
+                                className="h-7 w-7 mx-auto rounded-full bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
+                                onClick={() => commitRow(tx, true)}
                                 disabled={isSaving}
-                                title="Save changes"
-                                aria-label="Save changes"
+                                title="Save & create rule for this description"
+                                aria-label="Save and create categorization rule"
                               >
-                                <Check className="w-[14px] h-[14px]" />
+                                <Sparkles className="w-[16px] h-[16px]" />
                               </Button>
-                              {categoryChanged && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 rounded-full bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
-                                  onClick={() => commitRow(tx, true)}
-                                  disabled={isSaving}
-                                  title="Save & create rule for this description"
-                                  aria-label="Save and create categorization rule"
-                                >
-                                  <Sparkles className="w-[14px] h-[14px]" />
-                                </Button>
-                              )}
-                            </div>
+                            );
+                          }
+                          return (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 mx-auto rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => clearPendingFor(tx.id)}
+                              title="Discard pending changes"
+                              aria-label="Discard pending changes"
+                            >
+                              <X className="w-[16px] h-[16px]" />
+                            </Button>
                           );
                         })()
                       ) : !isLocked && isEdited && originalSnapshot ? (
