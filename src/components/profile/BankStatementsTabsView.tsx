@@ -22,6 +22,7 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  PanelRightOpen,
   Split as SplitIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
