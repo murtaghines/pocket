@@ -70,6 +70,43 @@ function getMonthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+/**
+ * After a network/timeout error, poll the `imports` table to see whether the
+ * edge function actually finished its work server-side. We try a few times
+ * with backoff because the row may still be in-flight when we check.
+ * Returns a synthetic processData payload on success, or null if it really
+ * failed.
+ */
+async function pollForImportSuccess(
+  userId: string,
+  fileHash: string,
+): Promise<{ stats: { newTransactions: number; duplicatesIgnored: number }; monthsDistribution: Record<string, { new: number; duplicates: number }>; skippedMonths: never[] } | null> {
+  const delays = [2000, 3000, 4000, 5000, 6000]; // ~20s total
+  for (const wait of delays) {
+    await new Promise((r) => setTimeout(r, wait));
+    const { data: row } = await supabase
+      .from("imports")
+      .select("id, status, transactions_count")
+      .eq("user_id", userId)
+      .eq("file_hash_sha256", fileHash)
+      .order("uploaded_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (row?.status === "NORMALIZED") {
+      return {
+        stats: {
+          newTransactions: row.transactions_count || 0,
+          duplicatesIgnored: 0,
+        },
+        monthsDistribution: {},
+        skippedMonths: [],
+      };
+    }
+    if (row?.status === "FAILED") return null;
+  }
+  return null;
+}
+
 export function useMonthlyFileUpload() {
   const [pendingFilesByMonth, setPendingFilesByMonth] = useState<PendingFilesByMonth>({});
   const { user } = useAuth();
