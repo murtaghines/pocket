@@ -833,7 +833,7 @@ function InlineTransactionsEditor({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card py-12 flex items-center justify-center">
+      <div className="bg-card py-12 flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -841,7 +841,7 @@ function InlineTransactionsEditor({
 
   if (transactions.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card py-12 px-6 text-center">
+      <div className="bg-card py-12 px-6 text-center">
         <FileSpreadsheet className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
         <p className="text-sm text-muted-foreground">
           File uploaded but no transactions detected yet. They will appear here
