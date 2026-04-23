@@ -480,7 +480,7 @@ function MonthWorkspace({
   // Empty state
   if (imports.length === 0) {
     return (
-      <div className="bg-card py-20 px-6 text-center">
+      <div className="bg-card py-20 px-6 text-center flex-1 flex flex-col items-center justify-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
           <Upload className="w-6 h-6" />
         </div>
@@ -518,7 +518,7 @@ function MonthWorkspace({
   }
 
   return (
-    <div className="bg-card">
+    <div className="bg-card flex-1 flex flex-col">
       <input
         ref={fileInputRef}
         type="file"
