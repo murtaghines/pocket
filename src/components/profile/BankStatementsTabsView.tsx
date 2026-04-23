@@ -1223,6 +1223,44 @@ function InlineTransactionsEditor({
   // Edit-history popover open state (one tx at a time)
   const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
 
+  // Pending (unsaved) edits per-row. Movement / category / amount changes
+  // are buffered here and only persisted when the user clicks the green
+  // "confirm" tick. Hide/Show stays immediate (it's not a content edit).
+  type PendingEdit = {
+    movement?: MovementType;
+    category?: string;
+    category_id?: string | null;
+    amount?: number;
+  };
+  const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
+
+  const setPendingFor = (txId: string, patch: PendingEdit) => {
+    setPendingByTx((prev) => {
+      const next = { ...prev, [txId]: { ...(prev[txId] || {}), ...patch } };
+      return next;
+    });
+  };
+  const clearPendingFor = (txId: string) => {
+    setPendingByTx((prev) => {
+      if (!(txId in prev)) return prev;
+      const next = { ...prev };
+      delete next[txId];
+      return next;
+    });
+  };
+  const hasAnyPending = Object.keys(pendingByTx).length > 0;
+
+  // Block month / tab navigation while there are unconfirmed edits.
+  useEffect(() => {
+    if (!hasAnyPending) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasAnyPending]);
+
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
 
