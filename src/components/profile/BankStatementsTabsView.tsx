@@ -92,6 +92,16 @@ import type { Database } from "@/integrations/supabase/types";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
+/** Shape of a buffered (unsaved) edit on a single transaction row.
+ *  Lives at the top of the tab view so pending changes survive when
+ *  the user switches month tabs or hides this view. */
+export type PendingEditShape = {
+  movement?: MovementType;
+  category?: string;
+  category_id?: string | null;
+  amount?: number;
+};
+
 interface MonthTransaction {
   id: string;
   date: string;
@@ -684,8 +694,9 @@ function MonthWorkspace({
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
         pendingFiles={activePending}
-        onPendingChange={onPendingChange}
-        commitAllRef={commitAllRef}
+        pendingByTx={pendingByTx}
+        setPendingByTx={setPendingByTx}
+        pendingTxIds={pendingTxIds}
       />
     </div>
   );
