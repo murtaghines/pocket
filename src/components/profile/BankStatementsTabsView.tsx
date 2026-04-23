@@ -2325,7 +2325,7 @@ function RevertToOriginalButton({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+          className="h-7 w-7 mx-auto text-primary hover:text-primary hover:bg-primary/10"
           title="Restore this row to its original imported values"
         >
           <RotateCcw className="w-4 h-4" />
