@@ -584,6 +584,7 @@ interface MonthWorkspaceProps {
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
+  onPendingChange?: (hasPending: boolean) => void;
 }
 
 function MonthWorkspace({
@@ -598,6 +599,7 @@ function MonthWorkspace({
   toggleLockImport,
   isProcessing,
   pendingFiles,
+  onPendingChange,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLocked = imports.some((i) => i.locked);
@@ -678,6 +680,7 @@ function MonthWorkspace({
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
         pendingFiles={activePending}
+        onPendingChange={onPendingChange}
       />
     </div>
   );
