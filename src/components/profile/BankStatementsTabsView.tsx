@@ -1047,21 +1047,54 @@ function UploadedFilesHistoryList({
 
               <div className="min-w-0 flex-1">
                 {/* Row 1: name + status */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <p
-                    className="text-[13px] font-medium text-foreground truncate"
-                    title={imp.file_name}
-                  >
-                    {imp.file_name}
-                  </p>
-                  {statusIndicator(imp.status)}
-                  {imp.locked && (
-                    <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <p
+                      className="text-[13px] font-medium text-foreground truncate"
+                      title={imp.file_name}
+                    >
+                      {imp.file_name}
+                    </p>
+                    {statusIndicator(imp.status)}
+                    {imp.locked && (
+                      <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
+                    )}
+                  </div>
+                  {cashAccounts.length > 0 ? (
+                    <Select
+                      value={imp.account_id || ""}
+                      onValueChange={(v) => changeAcct(imp.id, v)}
+                      disabled={!!imp.locked}
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          "h-7 w-auto min-w-[120px] shrink-0 border border-input bg-background px-2.5 text-[12px] font-medium text-foreground gap-1.5 hover:bg-accent hover:border-primary/40 transition-colors",
+                          imp.locked && "opacity-60 cursor-not-allowed",
+                        )}
+                        title={imp.locked ? "Unlock the file to change account" : "Click to change account"}
+                      >
+                        <Pencil className="w-3 h-3 text-muted-foreground" />
+                        <SelectValue placeholder="Pick account">
+                          {acctName(imp.account_id)}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cashAccounts.map((a) => (
+                          <SelectItem key={a.id} value={a.id} className="text-sm">
+                            {a.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="shrink-0 truncate text-[12px] font-medium text-foreground">
+                      {acctName(imp.account_id)}
+                    </span>
                   )}
                 </div>
 
                 {/* Row 2: meta — type · size · uploaded · month · account · txns */}
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 pr-3 text-[11px] text-muted-foreground">
                   <span className="font-medium tabular-nums">
                     {fileTypeLabel(imp)}
                   </span>
@@ -1076,41 +1109,6 @@ function UploadedFilesHistoryList({
                   <span aria-hidden>·</span>
                   <span className="capitalize" title="Months covered by this file">
                     {monthsLabel(imp)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="text-muted-foreground/80">Account:</span>
-                    {cashAccounts.length > 0 ? (
-                      <Select
-                        value={imp.account_id || ""}
-                        onValueChange={(v) => changeAcct(imp.id, v)}
-                        disabled={!!imp.locked}
-                      >
-                        <SelectTrigger
-                          className={cn(
-                            "h-6 w-auto min-w-[110px] border border-input bg-background px-2 text-[11px] font-medium text-foreground gap-1 hover:bg-accent hover:border-primary/40 transition-colors",
-                            imp.locked && "opacity-60 cursor-not-allowed",
-                          )}
-                          title={imp.locked ? "Unlock the file to change account" : "Click to change account"}
-                        >
-                          <Pencil className="w-2.5 h-2.5 text-muted-foreground" />
-                          <SelectValue placeholder="Pick account">
-                            {acctName(imp.account_id)}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cashAccounts.map((a) => (
-                            <SelectItem key={a.id} value={a.id} className="text-sm">
-                              {a.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="truncate font-medium text-foreground">
-                        {acctName(imp.account_id)}
-                      </span>
-                    )}
                   </span>
                   {imp.transactions_count != null &&
                     imp.status === "NORMALIZED" && (
