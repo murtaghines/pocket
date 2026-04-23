@@ -859,7 +859,7 @@ function UploadedFilesDropdown({
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md p-0 flex flex-col bg-card"
+        className="w-full sm:max-w-md p-0 flex flex-col bg-card [&>button]:hidden"
       >
         <UploadedFilesHistoryList
           imports={imports}
