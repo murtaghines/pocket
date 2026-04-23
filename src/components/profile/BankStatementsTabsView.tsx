@@ -827,32 +827,32 @@ function UploadedFilesHistoryList({
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold text-foreground">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="px-6 py-5 border-b border-border flex items-start justify-between gap-3 shrink-0">
+        <div className="min-w-0">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground leading-tight">
             Uploaded files
-          </p>
-          <p className="text-[11px] text-muted-foreground">
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
             All your source files — tables below combine every record
           </p>
         </div>
-        <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold tabular-nums">
+        <span className="inline-flex items-center justify-center min-w-[26px] h-6 px-2 rounded-full bg-primary/10 text-primary text-xs font-semibold tabular-nums shrink-0 mt-1">
           {imports.length}
         </span>
       </div>
 
       {imports.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-8 text-center">
+        <p className="text-sm text-muted-foreground py-12 text-center">
           No files uploaded yet.
         </p>
       ) : (
-        <div className="max-h-[60vh] overflow-auto divide-y divide-border">
+        <div className="flex-1 min-h-0 overflow-auto divide-y divide-border">
           {imports.map((imp) => (
             <div
               key={imp.id}
               className={cn(
-                "group px-3 py-2.5 flex items-start gap-3 hover:bg-muted/30 transition-colors",
+                "group px-6 py-3.5 flex items-start gap-3 hover:bg-muted/30 transition-colors",
                 imp.locked && "bg-muted/15",
               )}
             >
