@@ -1015,10 +1015,7 @@ function UploadedFilesHistoryList({
             All your source files — tables below combine every record
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 mt-1">
-          <span className="inline-flex items-center justify-center min-w-[26px] h-6 px-2 rounded-full bg-primary/10 text-primary text-xs font-semibold tabular-nums">
-            {imports.length}
-          </span>
+        <div className="flex items-center shrink-0 mt-1">
           <SheetClose
             className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label="Close panel"
