@@ -1010,6 +1010,21 @@ function InlineTransactionsEditor({
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
+  // Movement-mismatch confirmation (e.g. positive amount marked as EXPENSE)
+  const [movementConfirm, setMovementConfirm] = useState<{
+    tx: MonthTransaction;
+    newMovement: MovementType;
+  } | null>(null);
+
+  // Category change → "save as rule?" prompt
+  const [categoryRulePrompt, setCategoryRulePrompt] = useState<{
+    tx: MonthTransaction;
+    newSlug: string;
+    newCategoryId: string | null;
+    cleanDesc: string;
+    targetMovement: MovementType;
+  } | null>(null);
+
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
 
