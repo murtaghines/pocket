@@ -6,8 +6,9 @@ import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
+import { AccountsManager } from "@/components/settings/AccountsManager";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { User, Globe, Tags, Trash2 } from "lucide-react";
+import { User, Globe, Tags, Trash2, Landmark } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -77,6 +78,15 @@ export default function Profile() {
             <div className="mt-4">
               <CategoriesEditor />
             </div>
+          </div>
+
+          {/* Banking Accounts */}
+          <div className="bg-card rounded-xl p-5 md:p-6 animate-slide-up" style={{ animationDelay: '175ms', boxShadow: 'var(--shadow-card)' }}>
+            <SectionHeader icon={Landmark} title={t('accounts.title', { defaultValue: 'Banking Accounts' })} />
+            <p className="text-xs text-muted-foreground mt-2 mb-4">
+              {t('accounts.managerDescription', { defaultValue: 'Manage your bank accounts and cards. These appear when uploading files.' })}
+            </p>
+            <AccountsManager className="!shadow-none !p-0 !border-0 !bg-transparent" />
           </div>
 
           {/* Delete Account */}
