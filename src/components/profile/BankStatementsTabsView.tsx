@@ -141,7 +141,7 @@ export function BankStatementsTabsView() {
   const { formatMonth, formatDate, formatCurrency } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting, toggleLockImport } = useImports("CASHFLOW");
   const { accounts } = useAccounts();
-  const { addFilesForMonth, isProcessingMonth } = useMonthlyFileUpload();
+  const { addFilesForMonth, addFiles, isProcessingMonth, isProcessingAny } = useMonthlyFileUpload();
 
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
@@ -177,7 +177,8 @@ export function BankStatementsTabsView() {
   // Account-select dialog state (when uploading from a tab)
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [pendingDate, setPendingDate] = useState<Date>(new Date());
+  const [pendingDate, setPendingDate] = useState<Date | null>(new Date());
+  const globalFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFilesPicked = (files: FileList | null, monthDate: Date) => {
     if (!files) return;
@@ -191,10 +192,27 @@ export function BankStatementsTabsView() {
     }
   };
 
+  // Global "Add bank statement" — no forced month, backend distributes.
+  const handleGlobalFilesPicked = (files: FileList | null) => {
+    if (!files) return;
+    const valid = Array.from(files).filter((f) =>
+      VALID_EXTS.includes("." + (f.name.split(".").pop()?.toLowerCase() || "")),
+    );
+    if (valid.length) {
+      setPendingFiles(valid);
+      setPendingDate(null);
+      setAccountDialogOpen(true);
+    }
+  };
+
   const handleAccountConfirm = (accountId: string) => {
     setAccountDialogOpen(false);
     if (pendingFiles.length) {
-      addFilesForMonth(pendingFiles, pendingDate, accountId);
+      if (pendingDate) {
+        addFilesForMonth(pendingFiles, pendingDate, accountId);
+      } else {
+        addFiles(pendingFiles, accountId);
+      }
       setPendingFiles([]);
     }
   };
@@ -210,6 +228,35 @@ export function BankStatementsTabsView() {
 
   return (
     <div>
+      {/* ============= Global actions bar ============= */}
+      <div className="flex items-center justify-end gap-2 px-4 md:px-6 py-2 border-b border-border bg-card">
+        <input
+          ref={globalFileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          accept=".xlsx,.xls,.csv,.pdf"
+          onChange={(e) => {
+            handleGlobalFilesPicked(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        <Button
+          size="sm"
+          onClick={() => globalFileInputRef.current?.click()}
+          disabled={isProcessingAny()}
+          className="gap-1.5"
+          title="Upload one or more files. Transactions are auto-sorted into the right months."
+        >
+          {isProcessingAny() ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4" />
+          )}
+          Add bank statement
+        </Button>
+      </div>
+
       {/* ============= Month Tab Strip (Airtable style) ============= */}
       <MonthTabStrip
         slots={monthSlots}

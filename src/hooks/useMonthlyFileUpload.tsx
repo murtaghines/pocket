@@ -51,6 +51,15 @@ interface PendingFile {
 
 type PendingFilesByMonth = Record<string, PendingFile[]>;
 
+// Special bucket key for files uploaded without a forced target month.
+const AUTO_BUCKET_KEY = "__auto__";
+
+function formatMonthLabel(monthKey: string): string {
+  const [y, m] = monthKey.split("-").map(Number);
+  const d = new Date(y, (m || 1) - 1, 1);
+  return d.toLocaleString(undefined, { month: "long", year: "numeric" });
+}
+
 function getMonthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
@@ -61,10 +70,19 @@ export function useMonthlyFileUpload() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const processFile = useCallback(async (uploadFile: PendingFile, targetMonth: Date, monthKey: string, accountId?: string) => {
+  const processFile = useCallback(async (
+    uploadFile: PendingFile,
+    targetMonth: Date | null,
+    monthKey: string,
+    accountId?: string,
+  ) => {
     if (!user) return;
 
-    const targetMonthStr = `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`;
+    // When targetMonth is null we're in AUTO distribution mode — let the
+    // backend split the file across whatever months it actually contains.
+    const targetMonthStr = targetMonth
+      ? `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`
+      : null;
 
     // Update status to processing
     setPendingFilesByMonth((prev) => ({
@@ -135,7 +153,9 @@ export function useMonthlyFileUpload() {
             fileContent,
             userId: user.id,
             domain: "CASHFLOW",
-            targetMonth: targetMonthStr,
+            // Omit targetMonth in auto mode so the backend distributes
+            // transactions across their real posted months.
+            ...(targetMonthStr ? { targetMonth: targetMonthStr } : {}),
             fileHash,
             fileName: uploadFile.name,
             fileSize: uploadFile.size,
@@ -205,6 +225,13 @@ export function useMonthlyFileUpload() {
       }
 
       const stats = processData?.stats;
+      const monthsDistribution: Record<string, { new: number; duplicates: number }> =
+        processData?.monthsDistribution || {};
+      const skippedMonths: Array<{ month: string; reason: string; count: number }> =
+        processData?.skippedMonths || [];
+      const distributedMonths = Object.entries(monthsDistribution)
+        .filter(([, v]) => (v?.new || 0) > 0 || (v?.duplicates || 0) > 0)
+        .sort(([a], [b]) => a.localeCompare(b));
       
       // Update to completed
       setPendingFilesByMonth((prev) => ({
@@ -216,28 +243,36 @@ export function useMonthlyFileUpload() {
         ),
       }));
 
-      // Build message
-      let description = `${stats?.newTransactions || 0} new transactions`;
-      if (stats?.duplicatesIgnored > 0) {
-        description += `, ${stats.duplicatesIgnored} duplicates ignored`;
+      // Build human-friendly distribution summary
+      const totalNew = stats?.newTransactions || 0;
+      const totalDup = stats?.duplicatesIgnored || 0;
+      let description = `${totalNew} new transactions`;
+      if (distributedMonths.length > 1) {
+        const breakdown = distributedMonths
+          .filter(([, v]) => (v.new || 0) > 0)
+          .map(([m, v]) => `${formatMonthLabel(m)} (${v.new})`)
+          .join(", ");
+        description = `${totalNew} new transactions distributed across ${breakdown}`;
+      } else if (distributedMonths.length === 1) {
+        const [m, v] = distributedMonths[0];
+        description = `${v.new} new in ${formatMonthLabel(m)}`;
       }
-      if (stats?.categorizedByLocalPattern > 0) {
-        description += `, ${stats.categorizedByLocalPattern} categorized locally`;
-      }
-      if (stats?.transfersDetected > 0) {
-        description += `, ${stats.transfersDetected} internal transfers`;
-      }
+      if (totalDup > 0) description += `, ${totalDup} duplicates ignored`;
 
-      // Show redirect notice if file was moved to a different month
-      if (processData?.redirectedFromMonth && processData?.actualMonth) {
+      toast({
+        title: uploadFile.name,
+        description,
+      });
+
+      // Surface any months we couldn't write to (closed period, etc.)
+      if (skippedMonths.length > 0) {
+        const skippedList = skippedMonths
+          .map((s) => `${formatMonthLabel(s.month)} (${s.count})`)
+          .join(", ");
         toast({
-          title: "File relocated",
-          description: `${uploadFile.name} had transactions from ${processData.actualMonth}, so it was moved there automatically.`,
-        });
-      } else {
-        toast({
-          title: "File processed",
-          description: `${uploadFile.name}: ${description}`,
+          title: "Some months were skipped",
+          description: `Closed or unavailable: ${skippedList}. Reopen them to import.`,
+          variant: "destructive",
         });
       }
 
@@ -245,6 +280,7 @@ export function useMonthlyFileUpload() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["periods"] });
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
       
       // Run integrity check
       try {
@@ -332,6 +368,48 @@ export function useMonthlyFileUpload() {
     });
   }, [user, toast, processFile]);
 
+  /**
+   * Auto-distribute mode: upload one or more files without forcing a target
+   * month. The backend distributes each file's transactions across whichever
+   * months they actually belong to.
+   */
+  const addFiles = useCallback((files: File[], accountId?: string) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be signed in to upload files.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!navigator.onLine) {
+      toast({
+        title: "No connection",
+        description: "You cannot upload files without an internet connection.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const monthKey = AUTO_BUCKET_KEY;
+    const newFiles: PendingFile[] = files.map((file) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      size: file.size,
+      file,
+      status: "pending" as const,
+    }));
+
+    setPendingFilesByMonth((prev) => ({
+      ...prev,
+      [monthKey]: [...(prev[monthKey] || []), ...newFiles],
+    }));
+
+    newFiles.forEach((newFile) => {
+      processFile(newFile, null, monthKey, accountId);
+    });
+  }, [user, toast, processFile]);
+
   const removeFileFromMonth = useCallback((monthKey: string, fileId: string) => {
     setPendingFilesByMonth((prev) => ({
       ...prev,
@@ -376,12 +454,20 @@ export function useMonthlyFileUpload() {
     ).length;
   }, [pendingFilesByMonth]);
 
+  const isProcessingAny = useCallback((): boolean => {
+    return Object.values(pendingFilesByMonth).some((arr) =>
+      arr.some((f) => f.status === "processing" || f.status === "pending"),
+    );
+  }, [pendingFilesByMonth]);
+
   return {
     pendingFilesByMonth,
     addFilesForMonth,
+    addFiles,
     removeFileFromMonth,
     processFilesForMonth,
     isProcessingMonth,
     getPendingCountForMonth,
+    isProcessingAny,
   };
 }
