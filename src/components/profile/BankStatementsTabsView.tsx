@@ -548,6 +548,7 @@ interface FileChipsBarProps {
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   onAddMore: () => void;
   isProcessing: boolean;
+  hideAddButton?: boolean;
 }
 
 function FileChipsBar({
@@ -558,6 +559,7 @@ function FileChipsBar({
   toggleLockImport,
   onAddMore,
   isProcessing,
+  hideAddButton,
 }: FileChipsBarProps) {
   const queryClient = useQueryClient();
 
@@ -672,7 +674,8 @@ function FileChipsBar({
       ))}
 
       {/* Add file chip */}
-      <Button
+      {!hideAddButton && (
+        <Button
         variant="ghost"
         size="sm"
         className="h-8 gap-1.5 text-primary hover:bg-primary/10 border border-dashed border-primary/30"
@@ -685,7 +688,8 @@ function FileChipsBar({
           <Plus className="w-3.5 h-3.5" />
         )}
         Add file
-      </Button>
+        </Button>
+      )}
     </div>
   );
 }
