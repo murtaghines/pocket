@@ -1713,8 +1713,13 @@ function InlineTransactionsEditor({
                 const cleanDescription = (tx.description_norm || tx.description)
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
-                const movement = tx.movement || "EXPENSE";
-                const category = normalizeCategory(tx.category || "other_expense");
+                const pending = pendingByTx[tx.id];
+                const isPending = !!pending;
+                const movement = (pending?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
+                const category = normalizeCategory(
+                  pending?.category ?? tx.category ?? "other_expense",
+                );
+                const displayAmount = pending?.amount ?? tx.amount;
                 const availableCategories = getCategoriesForMovement(movement);
 
                 return (
@@ -1723,7 +1728,8 @@ function InlineTransactionsEditor({
                     className={cn(
                       "transition-colors",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                      isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                      isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                      isPending && "bg-warning/10 border-l-2 border-l-warning",
                       isHidden && "opacity-50 bg-muted/20",
                       isSaved && !isMismatch && "bg-success/5",
                     )}
