@@ -702,17 +702,21 @@ serve(async (req) => {
       confirmOutOfMonth = false
     } = await req.json();
 
-    if (!fileContent || !userId || !domain || !targetMonth) {
+    // targetMonth is OPTIONAL: when provided we use it as a hint and as the
+    // initial period for the import row; when omitted, the file is fully
+    // distributed across whatever months the transactions actually belong to.
+    if (!fileContent || !userId || !domain) {
       console.error('Missing required fields');
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: fileContent, userId, domain, targetMonth' }),
+        JSON.stringify({ error: 'Missing required fields: fileContent, userId, domain' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    let normalizedTargetMonth = normalizeTargetMonth(targetMonth);
+    const hintedTargetMonth = targetMonth ? normalizeTargetMonth(targetMonth) : null;
+    const autoDistribute = !hintedTargetMonth;
 
-    console.log(`[process-import] Starting: domain=${domain}, targetMonth=${normalizedTargetMonth}, contentLength=${fileContent.length}`);
+    console.log(`[process-import] Starting: domain=${domain}, targetMonth=${hintedTargetMonth ?? 'AUTO'}, contentLength=${fileContent.length}`);
 
     const calculatedFileHash = fileHash || await sha256(fileContent);
     
