@@ -970,19 +970,38 @@ function UploadedFilesHistoryList({
     return formatMonth(new Date(y, m - 1, 1));
   };
 
-  const statusBadge = (s: string) => {
+  // Subtle status indicator: just a check icon when ready, badge only for
+  // active or error states (so the list stays calm when everything is fine).
+  const statusIndicator = (s: string) => {
+    if (s === "NORMALIZED") {
+      return (
+        <CheckCircle2
+          className="w-3.5 h-3.5 text-success shrink-0"
+          aria-label="Ready"
+        />
+      );
+    }
     const map: Record<string, { tone: PillTone; label: string }> = {
-      NORMALIZED: { tone: "green", label: "Ready" },
       PARSED: { tone: "amber", label: "Processing" },
       UPLOADED: { tone: "amber", label: "Uploading" },
       FAILED: { tone: "red", label: "Failed" },
     };
     const cfg = map[s] ?? { tone: "neutral" as PillTone, label: s };
-    return (
-      <PillBadge tone={cfg.tone}>
-        {cfg.label}
-      </PillBadge>
-    );
+    return <PillBadge tone={cfg.tone}>{cfg.label}</PillBadge>;
+  };
+
+  // Render every month covered by the import. When transactions span more
+  // than one month, list them all so the user understands what's inside.
+  const monthsLabel = (imp: Import) => {
+    const fromTx = monthsByImport[imp.id];
+    const keys =
+      fromTx && fromTx.length > 0
+        ? fromTx
+        : imp.target_month
+        ? [imp.target_month.substring(0, 7)]
+        : [];
+    if (keys.length === 0) return "—";
+    return keys.map((k) => monthLabel(k)).join(" · ");
   };
 
   return (
