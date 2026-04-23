@@ -1164,10 +1164,15 @@ function UploadedFilesHistoryList({
                     >
                       {imp.file_name}
                     </p>
-                    {statusIndicator(imp.status)}
-                    {imp.locked && (
-                      <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
-                    )}
+                    {statusIndicator(imp)}
+                    {/* Show the lock icon next to a non-lock status, since
+                        statusIndicator only emits the lock by itself when
+                        nothing else needs attention. */}
+                    {imp.locked &&
+                      (imp.status !== "NORMALIZED" ||
+                        (mismatchByImport[imp.id] || 0) > 0) && (
+                        <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
+                      )}
                   </div>
                   {cashAccounts.length > 0 ? (
                     <Select
