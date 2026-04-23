@@ -125,6 +125,33 @@ const FIELD_LABELS: Record<string, string> = {
   is_hidden: "Visibility",
 };
 
+/**
+ * Walk the audit history (newest → oldest) and reconstruct the *original*
+ * pre-edit value for every tracked field. Reverts are skipped — they don't
+ * count as user-authored edits — and we only keep the oldest `before` value
+ * we encounter for each field, which is by definition the import-time value.
+ */
+function buildOriginalSnapshot(history: AuditEntry[]): {
+  values: Record<string, unknown>;
+  fields: string[];
+} {
+  const values: Record<string, unknown> = {};
+  // history comes newest-first; iterate oldest-first so we overwrite with the
+  // earliest known `before`, then ignore the field on subsequent (newer) edits.
+  const ordered = [...history]
+    .filter((h) => h.action !== "revert")
+    .reverse();
+  for (const entry of ordered) {
+    const before = (entry.diff_json?.before || {}) as Record<string, unknown>;
+    const fields = entry.diff_json?.fields || [];
+    for (const f of fields) {
+      if (!USER_TRACKED_FIELDS.has(f)) continue;
+      if (!(f in values)) values[f] = before[f] ?? null;
+    }
+  }
+  return { values, fields: Object.keys(values) };
+}
+
 interface AuditEntry {
   id: string;
   entity_id: string;
@@ -1411,6 +1438,9 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Show
                 </TableHead>
+                <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  Revert
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1419,6 +1449,10 @@ function InlineTransactionsEditor({
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
                 const isHidden = tx.is_hidden;
+                const txHistory = auditByTx[tx.id] || [];
+                const editEntries = txHistory.filter((h) => h.action !== "revert");
+                const isEdited = editEntries.length > 0;
+                const originalSnapshot = isEdited ? buildOriginalSnapshot(txHistory) : null;
                 const cleanDescription = (tx.description_norm || tx.description)
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
@@ -1432,6 +1466,7 @@ function InlineTransactionsEditor({
                     className={cn(
                       "transition-colors",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                      isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
                       isHidden && "opacity-40",
                       isSaved && !isMismatch && "bg-success/5",
                     )}
@@ -1598,6 +1633,45 @@ function InlineTransactionsEditor({
                         >
                           {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </Button>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {!isLocked && isEdited && originalSnapshot && (
+                        <RevertToOriginalButton
+                          original={originalSnapshot.values}
+                          fields={originalSnapshot.fields}
+                          current={{
+                            movement: tx.movement,
+                            category: tx.category,
+                            category_id: tx.category_id,
+                            amount: tx.amount,
+                            is_hidden: tx.is_hidden,
+                          }}
+                          formatCurrency={formatCurrency}
+                          getCategoryLabel={getCategoryLabel}
+                          onConfirm={() => {
+                            const payload: Record<string, unknown> = {
+                              ...originalSnapshot.values,
+                              __action: "revert",
+                            };
+                            // If we're restoring category, also clear the manual override flags
+                            if ("category" in originalSnapshot.values) {
+                              payload.category_source = "DEFAULT";
+                              payload.user_corrected = false;
+                            }
+                            saveMutation.mutate({
+                              id: tx.id,
+                              payload,
+                              before: {
+                                movement: tx.movement,
+                                category: tx.category,
+                                category_id: tx.category_id,
+                                amount: tx.amount,
+                                is_hidden: tx.is_hidden,
+                              },
+                            });
+                          }}
+                        />
                       )}
                     </TableCell>
                   </TableRow>
@@ -2034,5 +2108,93 @@ function RowEditIndicator({
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/* ─────────────────────  Revert-to-original button (per row)  ───────────────────── */
+
+interface RevertToOriginalButtonProps {
+  original: Record<string, unknown>;
+  fields: string[];
+  current: Record<string, unknown>;
+  formatCurrency: (n: number) => string;
+  getCategoryLabel: (slug: string) => string;
+  onConfirm: () => void;
+}
+
+function RevertToOriginalButton({
+  original,
+  fields,
+  current,
+  formatCurrency,
+  getCategoryLabel,
+  onConfirm,
+}: RevertToOriginalButtonProps) {
+  // Hide overlapping field labels (category + category_id collapse to "Category")
+  const seen = new Set<string>();
+  const uniqueFields = fields.filter((f) => {
+    const label = FIELD_LABELS[f] || f;
+    if (seen.has(label)) return false;
+    seen.add(label);
+    return true;
+  });
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+          title="Restore this row to its original imported values"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <RotateCcw className="w-5 h-5 text-primary" />
+            Restore original values?
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                This will discard all your manual edits and bring this transaction
+                back to the values it had when it was first imported.
+              </p>
+              <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1.5">
+                {uniqueFields.map((f) => (
+                  <div
+                    key={f}
+                    className="text-xs text-foreground flex items-baseline gap-1.5 flex-wrap"
+                  >
+                    <span className="text-muted-foreground font-medium">
+                      {FIELD_LABELS[f] || f}:
+                    </span>
+                    <span className="line-through text-muted-foreground/70">
+                      {formatAuditValue(f, current[f], formatCurrency, getCategoryLabel)}
+                    </span>
+                    <span className="text-muted-foreground">→</span>
+                    <span className="font-medium text-primary">
+                      {formatAuditValue(f, original[f], formatCurrency, getCategoryLabel)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                You can still review the full edit history afterwards from the row indicator.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            Restore original
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
