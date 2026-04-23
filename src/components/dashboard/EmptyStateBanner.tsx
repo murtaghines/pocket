@@ -16,7 +16,7 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
   }
 
   return (
-    <div className="mb-6 rounded-2xl border border-border bg-muted/50 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 animate-fade-in">
+    <div className="mb-6 rounded-2xl border border-border bg-muted/50 p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
           <FileSpreadsheet className="w-5 h-5 text-primary" />

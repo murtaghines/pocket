@@ -37,7 +37,7 @@ export function BalanceChart({ data }: BalanceChartProps) {
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '350ms' }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold">
             {t('stats.balance')}
@@ -51,7 +51,7 @@ export function BalanceChart({ data }: BalanceChartProps) {
   }
 
   return (
-    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '350ms' }}>
+    <Card variant="bento" className="">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold">
           {t('stats.balance')}

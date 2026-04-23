@@ -29,7 +29,7 @@ export function MonthComparisonCard({ currentMonth, previousMonth }: MonthCompar
   };
 
   return (
-    <Card className="animate-slide-up" style={{ animationDelay: '350ms' }}>
+    <Card className="">
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <ArrowRight className="w-4 h-4" />

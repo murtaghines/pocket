@@ -214,7 +214,7 @@ export function UploadsManager() {
   const sortedMonthKeys = Object.keys(uploadsByMonth).sort((a, b) => b.localeCompare(a));
 
   return (
-    <Card className="animate-fade-in">
+    <Card className="">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

@@ -41,7 +41,7 @@ export default function Investments() {
     <DashboardLayout>
       <main className="max-w-[1400px] mx-auto">
         <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8 mb-2 md:mb-3" style={{ boxShadow: 'var(--shadow-section)' }}>
-          <div className="mb-8 animate-fade-in">
+          <div className="mb-8">
             <h2 className="font-display text-3xl font-bold tracking-tight">
               {t('title')}
             </h2>
@@ -77,7 +77,7 @@ export default function Investments() {
           {!isLoading && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <Card className="animate-fade-in">
+                <Card className="">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {tc('time.thisMonth')}
@@ -91,7 +91,7 @@ export default function Investments() {
                   </CardContent>
                 </Card>
 
-                <Card className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+                <Card className="">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('summary.totalInvested')}
@@ -105,7 +105,7 @@ export default function Investments() {
                   </CardContent>
                 </Card>
 
-                <Card className="animate-fade-in" style={{ animationDelay: '200ms' }}>
+                <Card className="">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('summary.totalValue')}
@@ -124,7 +124,7 @@ export default function Investments() {
                   </CardContent>
                 </Card>
 
-                <Card className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+                <Card className="">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('byPlatform.title')}

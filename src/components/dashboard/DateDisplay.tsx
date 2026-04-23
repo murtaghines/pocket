@@ -18,7 +18,7 @@ export function DateDisplay({ currentView, onViewChange, hideToggle }: DateDispl
   const monthName = today.toLocaleDateString(i18n.language, { month: 'long' });
   
   return (
-    <div className="flex items-center gap-4 animate-fade-in">
+    <div className="flex items-center gap-4">
       {/* Large day number in yellow circle */}
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-warning/20 flex items-center justify-center">
         <span className="text-2xl md:text-3xl font-bold text-foreground">

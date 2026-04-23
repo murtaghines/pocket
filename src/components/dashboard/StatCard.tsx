@@ -66,10 +66,9 @@ export function StatCard({
     <Card 
       variant="bento"
       className={cn(
-        "animate-slide-up overflow-hidden relative",
+        "overflow-hidden relative",
         isBalanceCard && "border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10"
       )}
-      style={{ animationDelay: `${delay}ms` }}
     >
       <div className="p-4 md:p-5 relative">
         {/* Icon badge */}

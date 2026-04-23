@@ -27,7 +27,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold">
           {t('topExpenses.title')}
@@ -41,7 +41,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
   }
 
   return (
-    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: '500ms' }}>
+    <Card variant="bento" className="">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold">
           {t('topExpenses.title')}

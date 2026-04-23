@@ -155,7 +155,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="animate-slide-up" style={{ animationDelay: "150ms" }}>
+      <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg font-semibold">{titleText}</CardTitle>
@@ -197,7 +197,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
   };
 
   return (
-    <Card variant="bento" className="animate-slide-up" style={{ animationDelay: "150ms" }}>
+    <Card variant="bento" className="">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <CardTitle className="text-lg font-semibold">{titleText}</CardTitle>

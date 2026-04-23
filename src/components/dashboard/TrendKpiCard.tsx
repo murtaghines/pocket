@@ -162,8 +162,7 @@ export function TrendKpiCard({
   return (
     <Card
       variant="bento"
-      className={`animate-slide-up overflow-hidden ${cardClasses} h-[200px] flex flex-col relative`}
-      style={{ animationDelay: `${delay}ms` }}
+      className={`overflow-hidden ${cardClasses} h-[200px] flex flex-col relative`}
     >
       <div className="p-4 md:p-5 relative flex flex-col h-full">
         {/* Header */}
