@@ -1012,7 +1012,7 @@ function UploadedFilesHistoryList({
             Uploaded files
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            All your source files — tables below combine every record
+            All historical data
           </p>
         </div>
         <div className="flex items-center shrink-0 mt-1">
