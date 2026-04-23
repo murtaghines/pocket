@@ -1236,6 +1236,7 @@ interface InlineTransactionsEditorProps {
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
   onPendingChange?: (hasPending: boolean) => void;
+  commitAllRef?: React.MutableRefObject<(() => Promise<void> | void) | null>;
 }
 
 function InlineTransactionsEditor({
@@ -1251,6 +1252,7 @@ function InlineTransactionsEditor({
   isProcessing,
   pendingFiles,
   onPendingChange,
+  commitAllRef,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
