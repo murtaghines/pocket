@@ -1401,7 +1401,12 @@ function InlineTransactionsEditor({
     },
   });
 
-  // Handlers (auto-save on change)
+  // ─── Buffered edit handlers ──────────────────────────────────────────
+  // Movement / category / amount edits do NOT save automatically.
+  // They populate `pendingByTx[id]`. The row turns yellow until the user
+  // clicks the green tick in the "Undo" column, which runs validations
+  // and persists everything together.
+
   const applyMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
     const defaultCat = getCategoriesForMovement(newMovement)[0];
     const cat = categories.find((c) => c.slug === defaultCat);
@@ -1424,18 +1429,27 @@ function InlineTransactionsEditor({
   };
 
   const handleMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
-    if (newMovement === tx.movement) return;
-    // Verification only: warn if movement contradicts the amount sign.
-    // (positive amount → EXPENSE, or negative amount → INCOME).
-    const amount = tx.amount;
-    const looksWrong =
-      (amount > 0 && newMovement === "EXPENSE") ||
-      (amount < 0 && newMovement === "INCOME");
-    if (looksWrong) {
-      setMovementConfirm({ tx, newMovement });
+    if (newMovement === tx.movement) {
+      // Reverting back to the saved value clears the pending entry for this field.
+      setPendingByTx((prev) => {
+        if (!prev[tx.id]) return prev;
+        const { movement: _m, category: _c, category_id: _cid, ...rest } = prev[tx.id];
+        const next = { ...prev };
+        if (Object.keys(rest).length > 0) next[tx.id] = rest;
+        else delete next[tx.id];
+        return next;
+      });
       return;
     }
-    applyMovementChange(tx, newMovement);
+    // When movement changes, reset the category to the default of the new
+    // movement so the user always sees a coherent pair while pending.
+    const defaultCat = getCategoriesForMovement(newMovement)[0];
+    const cat = categories.find((c) => c.slug === defaultCat);
+    setPendingFor(tx.id, {
+      movement: newMovement,
+      category: defaultCat,
+      category_id: cat?.id || null,
+    });
   };
 
   const applyCategoryChange = (
@@ -1460,24 +1474,9 @@ function InlineTransactionsEditor({
   };
 
   const handleCategoryChange = (tx: MonthTransaction, newSlug: string) => {
-    if (normalizeCategory(tx.category) === newSlug) return;
     const cat = categories.find((c) => c.slug === newSlug);
     const categoryId = cat?.id || null;
-    // Apply the change immediately so the UI feels responsive…
-    applyCategoryChange(tx, newSlug, categoryId);
-    // …and ask whether to turn it into a permanent rule.
-    const cleanDesc = (tx.description_norm || tx.description || "")
-      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-      .trim();
-    if (!cleanDesc || !categoryId) return;
-    const targetMovement = (tx.movement || "EXPENSE") as MovementType;
-    setCategoryRulePrompt({
-      tx,
-      newSlug,
-      newCategoryId: categoryId,
-      cleanDesc,
-      targetMovement,
-    });
+    setPendingFor(tx.id, { category: newSlug, category_id: categoryId });
   };
 
   const handleAmountChange = (tx: MonthTransaction, raw: string) => {
@@ -1497,34 +1496,99 @@ function InlineTransactionsEditor({
       return;
     }
     if (isNaN(parsed)) return;
-    const movement = tx.movement || "EXPENSE";
+    const pending = pendingByTx[tx.id] || {};
+    const movement = (pending.movement || tx.movement || "EXPENSE") as MovementType;
     const sign = movement === "EXPENSE" ? -1 : 1;
     const newAmount = sign * Math.abs(parsed);
     if (newAmount === tx.amount) return;
-    saveMutation.mutate({
-      id: tx.id,
-      payload: { amount: newAmount },
-      before: { amount: tx.amount },
-    });
+    setPendingFor(tx.id, { amount: newAmount });
   };
 
   const handleSplit = (tx: MonthTransaction, n: number) => {
     if (n < 1) return;
-    const newAmount = Math.sign(tx.amount || 1) * (Math.abs(tx.amount) / n);
-    if (newAmount === tx.amount) return;
-    saveMutation.mutate({
-      id: tx.id,
-      payload: { amount: newAmount },
-      before: { amount: tx.amount },
-    });
+    const baseAmount = pendingByTx[tx.id]?.amount ?? tx.amount;
+    const newAmount = Math.sign(baseAmount || 1) * (Math.abs(baseAmount) / n);
+    if (newAmount === baseAmount) return;
+    setPendingFor(tx.id, { amount: newAmount });
   };
 
   const handleToggleHidden = (tx: MonthTransaction) => {
+    // Hide/Show stays immediate — it's not part of the pending-edit flow.
     saveMutation.mutate({
       id: tx.id,
       payload: { is_hidden: !tx.is_hidden },
       before: { is_hidden: tx.is_hidden },
     });
+  };
+
+  // Commit a row's pending edits: run validations, then persist via saveMutation.
+  const commitRow = (tx: MonthTransaction) => {
+    const pending = pendingByTx[tx.id];
+    if (!pending) return;
+
+    // 1) Sign vs movement mismatch — confirm with the user before saving.
+    const finalMovement = (pending.movement ?? tx.movement) as MovementType | null;
+    const finalAmount = pending.amount ?? tx.amount;
+    const looksWrong =
+      finalMovement &&
+      ((finalAmount > 0 && finalMovement === "EXPENSE") ||
+        (finalAmount < 0 && finalMovement === "INCOME"));
+    if (looksWrong && pending.movement && pending.movement !== tx.movement) {
+      setMovementConfirm({ tx, newMovement: pending.movement });
+      return;
+    }
+
+    // 2) Build the persistence payload from pending fields.
+    const payload: Record<string, unknown> = {};
+    const before: Record<string, unknown> = {};
+    if (pending.movement && pending.movement !== tx.movement) {
+      payload.movement = pending.movement;
+      before.movement = tx.movement;
+    }
+    if (pending.category && pending.category !== tx.category) {
+      payload.category = pending.category;
+      payload.category_id = pending.category_id ?? null;
+      payload.category_source = "MANUAL";
+      payload.categorized_by = "user";
+      payload.user_corrected = true;
+      before.category = tx.category;
+      before.category_id = tx.category_id;
+    }
+    if (pending.amount !== undefined && pending.amount !== tx.amount) {
+      payload.amount = pending.amount;
+      before.amount = tx.amount;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      clearPendingFor(tx.id);
+      return;
+    }
+
+    saveMutation.mutate(
+      { id: tx.id, payload, before },
+      {
+        onSuccess: () => {
+          // 3) After saving, if category changed, offer to create a rule.
+          if (pending.category && pending.category !== tx.category && pending.category_id) {
+            const cleanDesc = (tx.description_norm || tx.description || "")
+              .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+              .trim();
+            if (cleanDesc) {
+              const targetMovement =
+                ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
+              setCategoryRulePrompt({
+                tx,
+                newSlug: pending.category,
+                newCategoryId: pending.category_id,
+                cleanDesc,
+                targetMovement,
+              });
+            }
+          }
+          clearPendingFor(tx.id);
+        },
+      },
+    );
   };
 
   // Mismatch detection (sign vs movement)
