@@ -107,6 +107,7 @@ interface MonthTransaction {
 
 const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"];
 const DEFAULT_MONTHS = 6;
+const MIN_MONTHS = 5;
 const MONTHS_INCREMENT = 1;
 const ROW_THRESHOLD = 50;
 
@@ -376,9 +377,9 @@ export function BankStatementsTabsView() {
         importsByMonth={importsByMonth}
         onLoadMore={() => setMonthsToShow((n) => n + MONTHS_INCREMENT)}
         onShowLess={() =>
-          setMonthsToShow((n) => Math.max(DEFAULT_MONTHS, n - MONTHS_INCREMENT))
+          setMonthsToShow((n) => Math.max(MIN_MONTHS, n - MONTHS_INCREMENT))
         }
-        canShowLess={monthsToShow > DEFAULT_MONTHS}
+        canShowLess={monthsToShow > MIN_MONTHS}
       />
 
       {/* ============= Active month workspace ============= */}
