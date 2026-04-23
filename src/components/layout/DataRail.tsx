@@ -43,20 +43,9 @@ export function DataRail() {
         <Link
           to="/dashboard"
           aria-label="Pocket — go to dashboard"
-          className="flex flex-col items-center gap-4"
+          className="flex flex-col items-center"
         >
           <img src={pocketLogoWhite} alt="Pocket" className="h-14 w-14" />
-          {/* "pocket" wordmark, rotated so reading bottom→up gives:
-              first the logo (top of stack visually) then "pocket" below it.
-              writingMode vertical-rl + no flip = text reads top→bottom,
-              which means bottom→up the user reads "pocket" last. */}
-          <span
-            aria-hidden="true"
-            className="text-primary-foreground font-bold tracking-[0.4em] text-2xl lowercase select-none leading-none"
-            style={{ writingMode: "vertical-rl" }}
-          >
-            pocket
-          </span>
         </Link>
 
         {/* Bottom: data section buttons + (when inside /my-data) close button */}
