@@ -52,7 +52,7 @@ export default function MyData() {
   }, [highlightSection, highlightMonth, setSearchParams]);
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme md:pl-28">
+    <div className="min-h-screen bg-background dashboard-theme md:pl-24">
       <DataRail />
 
       {/* Full-bleed workspace — true edge-to-edge, no padding, white canvas.
