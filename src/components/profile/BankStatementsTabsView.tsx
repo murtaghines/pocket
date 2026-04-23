@@ -1532,7 +1532,7 @@ function InlineTransactionsEditor({
                     <TableCell className="text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
                       <RowEditIndicator
                         index={idx + 1}
-                        history={auditByTx[tx.id] || []}
+                        history={isEdited ? (auditByTx[tx.id] || []) : []}
                         open={openHistoryFor === tx.id}
                         onOpenChange={(o) => setOpenHistoryFor(o ? tx.id : null)}
                         onRevert={(entry) => {
