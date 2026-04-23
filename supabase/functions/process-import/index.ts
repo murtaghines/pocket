@@ -972,103 +972,108 @@ serve(async (req) => {
 
     console.log(`[process-import] Total transactions parsed: ${allTransactions.length}`);
 
-    // Check for date mismatches
-    const dateWarnings: Array<{ date: string; description: string; expected: string; found: string }> = [];
+    // ========== MULTI-MONTH DISTRIBUTION ==========
+    // Group transactions by their actual posted month, resolve a period for
+    // each detected month, and skip any month whose period is CLOSED.
     const monthCounts: Record<string, number> = {};
-    
     for (const t of allTransactions) {
       const txDate = t.posted_date || t.date;
       if (txDate) {
-        const txMonthKey = extractMonthKey(txDate);
-        monthCounts[txMonthKey] = (monthCounts[txMonthKey] || 0) + 1;
-        if (txMonthKey !== normalizedTargetMonth) {
-          dateWarnings.push({
-            date: txDate,
-            description: t.description_clean || t.description || '',
-            expected: normalizedTargetMonth,
-            found: txMonthKey
-          });
-        }
+        const k = extractMonthKey(txDate);
+        monthCounts[k] = (monthCounts[k] || 0) + 1;
       }
     }
 
-    // If ALL transactions belong to a different month, auto-redirect to the correct month
-    const targetMonthCount = monthCounts[normalizedTargetMonth] || 0;
-    let redirectedFromMonth: string | null = null;
-    if (allTransactions.length > 0 && targetMonthCount === 0) {
-      const dominantMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0];
-      const correctMonth = dominantMonth[0];
-      console.log(`[process-import] Wrong month detected! All ${allTransactions.length} transactions belong to ${correctMonth}, not ${normalizedTargetMonth}. Auto-redirecting.`);
-      
-      redirectedFromMonth = normalizedTargetMonth;
-      normalizedTargetMonth = correctMonth;
+    const detectedMonths = Object.keys(monthCounts).sort();
+    const earliestMonth = detectedMonths[0] || hintedTargetMonth || null;
 
-      const { data: correctPeriod } = await supabase
+    // Resolve period for each detected month (auto-create OPEN periods).
+    const periodIdByMonth: Record<string, string> = {};
+    const skippedMonths: Array<{ month: string; reason: string; count: number }> = [];
+
+    for (const m of detectedMonths) {
+      // Reuse the hinted period if it matches.
+      if (hintedTargetMonth === m && initialPeriodId) {
+        periodIdByMonth[m] = initialPeriodId;
+        continue;
+      }
+      const { data: existingPeriod } = await supabase
         .from('periods')
         .select('id, status')
         .eq('user_id', userId)
-        .eq('month_key', correctMonth)
+        .eq('month_key', m)
         .eq('domain', domain)
         .maybeSingle();
 
-      if (correctPeriod?.status === 'CLOSED') {
-        await supabase.from('import_rows').delete().eq('import_id', importId);
-        await supabase.from('imports').delete().eq('id', importId);
-        if (fileStorageUrl) {
-          await supabase.storage.from('financial-files').remove([fileStorageUrl]);
+      if (existingPeriod) {
+        if (existingPeriod.status === 'CLOSED') {
+          skippedMonths.push({ month: m, reason: 'period_closed', count: monthCounts[m] });
+          continue;
         }
-        return new Response(
-          JSON.stringify({ 
-            error: 'period_closed',
-            message: `This file contains transactions from ${correctMonth}, but that period is closed.`
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      if (correctPeriod) {
-        periodId = correctPeriod.id;
+        periodIdByMonth[m] = existingPeriod.id;
       } else {
-        const { data: newCorrectPeriod, error: createErr } = await supabase
+        const { data: newPeriod, error: createErr } = await supabase
           .from('periods')
-          .insert({ user_id: userId, month_key: correctMonth, domain, status: 'OPEN' })
+          .insert({ user_id: userId, month_key: m, domain, status: 'OPEN' })
           .select('id')
           .single();
-        if (createErr) throw new Error(`Failed to create period for ${correctMonth}: ${createErr.message}`);
-        periodId = newCorrectPeriod.id;
+        if (createErr) {
+          console.error(`[process-import] Failed to create period for ${m}:`, createErr);
+          skippedMonths.push({ month: m, reason: 'period_create_failed', count: monthCounts[m] });
+          continue;
+        }
+        periodIdByMonth[m] = newPeriod.id;
       }
-
-      await supabase.from('imports').update({ period_id: periodId }).eq('id', importId);
     }
 
-    // Get existing transactions for TARGET MONTH ONLY to detect duplicates
-    const [targetYear, targetMonthNum] = normalizedTargetMonth.split('-').map(Number);
-    const monthStart = `${normalizedTargetMonth}-01`;
-    const nextMonth = targetMonthNum === 12 ? 1 : targetMonthNum + 1;
-    const nextYear = targetMonthNum === 12 ? targetYear + 1 : targetYear;
-    const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
-    
-    const { data: existingTxs } = await supabase
-      .from('transactions')
-      .select('fingerprint, date, amount, description_norm')
-      .eq('user_id', userId)
-      .eq('domain', domain)
-      .gte('date', monthStart)
-      .lt('date', monthEnd);
-    
-    console.log(`[process-import] Querying duplicates for month ${normalizedTargetMonth} (${monthStart} to ${monthEnd})`);
+    // Patch the import row's period_id to point at the earliest VALID month
+    // (so the file appears in that month tab in the UI). Falls back to the
+    // hinted period if all detected months were skipped.
+    const earliestValidMonth = detectedMonths.find((m) => periodIdByMonth[m]) || null;
+    const importPeriodId =
+      (earliestValidMonth && periodIdByMonth[earliestValidMonth]) ||
+      initialPeriodId ||
+      null;
+    if (importPeriodId && importPeriodId !== initialPeriodId) {
+      await supabase.from('imports').update({ period_id: importPeriodId }).eq('id', importId);
+    }
 
-    const existingFingerprints = new Set(
-      existingTxs?.filter(t => t.fingerprint).map(t => t.fingerprint) || []
-    );
-    
-    const existingNaturalKeys = new Set(
-      existingTxs?.map(t => 
-        `${t.date}|${parseFloat(t.amount).toFixed(2)}|${(t.description_norm || '').toLowerCase()}`
-      ) || []
-    );
-    
-    console.log(`[process-import] Found ${existingFingerprints.size} existing fingerprints, ${existingNaturalKeys.size} natural keys`);
+    // Pre-fetch existing transactions for ALL detected months in one query so
+    // duplicate detection is scoped per-month but cheap.
+    const existingFingerprintsByMonth: Record<string, Set<string>> = {};
+    const existingNaturalKeysByMonth: Record<string, Set<string>> = {};
+    if (detectedMonths.length > 0) {
+      const minMonth = detectedMonths[0];
+      const maxMonth = detectedMonths[detectedMonths.length - 1];
+      const [minY, minM] = minMonth.split('-').map(Number);
+      const [maxY, maxM] = maxMonth.split('-').map(Number);
+      const queryStart = `${minMonth}-01`;
+      const nextM = maxM === 12 ? 1 : maxM + 1;
+      const nextY = maxM === 12 ? maxY + 1 : maxY;
+      const queryEnd = `${nextY}-${String(nextM).padStart(2, '0')}-01`;
+
+      const { data: existingTxs } = await supabase
+        .from('transactions')
+        .select('fingerprint, date, amount, description_norm')
+        .eq('user_id', userId)
+        .eq('domain', domain)
+        .gte('date', queryStart)
+        .lt('date', queryEnd);
+
+      for (const m of detectedMonths) {
+        existingFingerprintsByMonth[m] = new Set();
+        existingNaturalKeysByMonth[m] = new Set();
+      }
+      for (const tx of existingTxs || []) {
+        const k = extractMonthKey(tx.date);
+        if (!existingFingerprintsByMonth[k]) continue;
+        if (tx.fingerprint) existingFingerprintsByMonth[k].add(tx.fingerprint);
+        existingNaturalKeysByMonth[k].add(
+          `${tx.date}|${parseFloat(String(tx.amount)).toFixed(2)}|${(tx.description_norm || '').toLowerCase()}`
+        );
+      }
+      console.log(`[process-import] Distribution: ${JSON.stringify(monthCounts)}, valid months: ${Object.keys(periodIdByMonth).length}, skipped: ${skippedMonths.length}`);
+    }
 
     // Process and create transactions
     const stats = {
