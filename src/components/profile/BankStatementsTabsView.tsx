@@ -107,6 +107,7 @@ interface MonthTransaction {
 
 const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"];
 const DEFAULT_MONTHS = 6;
+const MIN_MONTHS = 5;
 const MONTHS_INCREMENT = 1;
 const ROW_THRESHOLD = 50;
 
