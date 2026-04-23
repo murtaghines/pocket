@@ -1098,19 +1098,19 @@ export function MonthReviewModal({
                                 <SelectContent>
                                   <SelectItem value="INCOME">
                                     <div className="flex items-center gap-2">
-                                      <PlusCircle className="w-4 h-4 text-success" />
+                                      <span className="inline-flex items-center justify-center w-4 h-4 text-success font-semibold text-base leading-none">+</span>
                                       <span className="text-success">{translateMovement("INCOME")}</span>
                                     </div>
                                   </SelectItem>
                                   <SelectItem value="EXPENSE">
                                     <div className="flex items-center gap-2">
-                                      <MinusCircle className="w-4 h-4 text-destructive" />
+                                      <span className="inline-flex items-center justify-center w-4 h-4 text-destructive font-semibold text-base leading-none">−</span>
                                       <span className="text-destructive">{translateMovement("EXPENSE")}</span>
                                     </div>
                                   </SelectItem>
                                   <SelectItem value="TRANSFER">
                                     <div className="flex items-center gap-2">
-                                      <ArrowRightLeft className="w-4 h-4 text-warning" />
+                                      <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
                                       <span className="text-warning">{translateMovement("TRANSFER")}</span>
                                     </div>
                                   </SelectItem>
