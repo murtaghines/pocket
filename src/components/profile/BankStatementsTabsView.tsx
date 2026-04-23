@@ -1901,10 +1901,7 @@ function InlineTransactionsEditor({
             <div className="inline-flex items-center gap-1.5 text-muted-foreground">
               <EyeOff className="w-3.5 h-3.5" />
               <span className="tabular-nums">
-                {summary.hidden} hidden
-              </span>
-              <span className="text-[11px] text-muted-foreground/70">
-                · excluded from dashboard
+                {summary.hidden} excluded from analysis
               </span>
             </div>
           )}
