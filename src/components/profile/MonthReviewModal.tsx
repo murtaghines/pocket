@@ -1410,66 +1410,39 @@ export function MonthReviewModal({
 }
 
 // ─────────────────────────────────────────────────────────────
-// AmountEditor: editable amount input (sign preserved, math expressions allowed)
+// AmountDisplay: read-only amount display with revert affordance.
+// (Editing is handled in the Split column popover.)
 // ─────────────────────────────────────────────────────────────
-interface AmountEditorProps {
+interface AmountDisplayProps {
   tx: MonthTransaction;
   effectiveAmount: number;
   originalAmount: number;
   amountChanged: boolean;
   splitCount?: number;
-  disabled: boolean;
-  onChange: (rawValue: string) => void;
   onRevert: () => void;
   formatCurrency: (n: number) => string;
 }
 
-function AmountEditor({
+function AmountDisplay({
   effectiveAmount,
   originalAmount,
   amountChanged,
   splitCount,
-  disabled,
-  onChange,
   onRevert,
   formatCurrency,
-}: AmountEditorProps) {
-  const formatSigned = (n: number) => {
-    const sign = n < 0 ? "-" : "";
-    return `${sign}${Math.abs(n).toFixed(2)}`;
-  };
-  const [localValue, setLocalValue] = useState<string>(formatSigned(effectiveAmount));
-  const [isFocused, setIsFocused] = useState(false);
-
-  // Sync local value when external amount changes (e.g., split applied) — but not while editing
-  useEffect(() => {
-    if (!isFocused) {
-      setLocalValue(formatSigned(effectiveAmount));
-    }
-  }, [effectiveAmount, isFocused]);
-
-  const handleBlur = () => {
-    setIsFocused(false);
-    if (localValue === "" || localValue === "-") {
-      setLocalValue(formatSigned(effectiveAmount));
-      return;
-    }
-    onChange(localValue);
-  };
-
+}: AmountDisplayProps) {
+  const isNeg = effectiveAmount < 0;
   return (
-    <div className="flex flex-col items-end gap-0.5 group">
-      <Input
-          type="text"
-          inputMode="decimal"
-          value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={handleBlur}
-          disabled={disabled}
-          title="Tip: you can type expressions like 20/4 or 10+5"
-          className="h-8 w-28 text-right tabular-nums text-sm font-medium text-foreground"
-        />
+    <div className="flex flex-col items-end gap-0.5">
+      <span
+        className={cn(
+          "tabular-nums text-sm font-medium",
+          amountChanged ? "text-primary" : "text-foreground",
+        )}
+      >
+        {isNeg ? "-" : ""}
+        {formatCurrency(Math.abs(effectiveAmount))}
+      </span>
       {amountChanged && (
         <button
           type="button"
