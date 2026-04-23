@@ -1958,18 +1958,40 @@ function InlineTransactionsEditor({
                     </TableCell>
                     <TableCell className="px-0 text-center">
                       {!isLocked && isPending ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
-                          onClick={() => commitRow(tx)}
-                          disabled={isSaving}
-                          title="Confirm changes"
-                          aria-label="Confirm changes"
-                        >
-                          <Check className="w-[18px] h-[18px]" />
-                        </Button>
+                        (() => {
+                          const categoryChanged =
+                            !!pending?.category && pending.category !== tx.category;
+                          return (
+                            <div className="flex items-center justify-center gap-0.5">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
+                                onClick={() => commitRow(tx, false)}
+                                disabled={isSaving}
+                                title="Save changes"
+                                aria-label="Save changes"
+                              >
+                                <Check className="w-[14px] h-[14px]" />
+                              </Button>
+                              {categoryChanged && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 rounded-full bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
+                                  onClick={() => commitRow(tx, true)}
+                                  disabled={isSaving}
+                                  title="Save & create rule for this description"
+                                  aria-label="Save and create categorization rule"
+                                >
+                                  <Sparkles className="w-[14px] h-[14px]" />
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })()
                       ) : !isLocked && isEdited && originalSnapshot ? (
                         <RevertToOriginalButton
                           original={originalSnapshot.values}
