@@ -74,7 +74,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { useToast } from "@/hooks/use-toast";
 import { AccountSelectDialog } from "./AccountSelectDialog";
-import { buildRuleFromCorrection } from "@/lib/userRules";
+import { RuleEditorDialog } from "./RuleEditorDialog";
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
