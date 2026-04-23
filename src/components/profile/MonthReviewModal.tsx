@@ -306,7 +306,7 @@ export function MonthReviewModal({
         }
       }
       if (Object.keys(autoEdits).length > 0) {
-        setEdits(prev => ({ ...autoEdits, ...prev }));
+        updateEdits(prev => ({ ...autoEdits, ...prev }));
         setMismatchAutoApplied(true);
       }
     }
@@ -378,7 +378,7 @@ export function MonthReviewModal({
     const tx = transactions.find(t => t.id === transactionId);
     if (!tx) return;
     const current = isEffectivelyHidden(tx);
-    setEdits(prev => ({
+    updateEdits(prev => ({
       ...prev,
       [transactionId]: {
         ...prev[transactionId],
@@ -392,7 +392,7 @@ export function MonthReviewModal({
     transactionId: string,
     field: "movement" | "category" | "amount" | "is_hidden",
   ) => {
-    setEdits(prev => {
+    updateEdits(prev => {
       const current = prev[transactionId];
       if (!current) return prev;
       const next = { ...current };
@@ -412,7 +412,7 @@ export function MonthReviewModal({
 
   // Revert all edits on a single transaction
   const handleRevertRow = (transactionId: string) => {
-    setEdits(prev => {
+    updateEdits(prev => {
       const next = { ...prev };
       delete next[transactionId];
       return next;
@@ -421,7 +421,7 @@ export function MonthReviewModal({
 
   // Discard all pending edits in the modal
   const handleDiscardAllEdits = () => {
-    setEdits({});
+    updateEdits({});
   };
 
   // Edit amount (preserve sign based on effective movement)
@@ -449,7 +449,7 @@ export function MonthReviewModal({
     const movement = getEffectiveMovement(tx);
     const sign = movement === "EXPENSE" ? -1 : 1;
     const newAmount = sign * Math.abs(parsed);
-    setEdits(prev => ({
+    updateEdits(prev => ({
       ...prev,
       [transactionId]: {
         ...prev[transactionId],
@@ -465,7 +465,7 @@ export function MonthReviewModal({
     if (!tx || splitCount < 1) return;
     const original = tx.amount; // always split from original DB amount
     const newAmount = Math.sign(original || 1) * (Math.abs(original) / splitCount);
-    setEdits(prev => ({
+    updateEdits(prev => ({
       ...prev,
       [transactionId]: {
         ...prev[transactionId],
@@ -499,7 +499,7 @@ export function MonthReviewModal({
     // Find category ID
     const category = categories.find(c => c.slug === defaultCategory);
 
-    setEdits(prev => ({
+    updateEdits(prev => ({
       ...prev,
       [transactionId]: {
         ...prev[transactionId],
@@ -517,7 +517,7 @@ export function MonthReviewModal({
     const effectiveMovement = getEffectiveMovement(tx);
     const category = categories.find(c => c.slug === newCategorySlug);
 
-    setEdits(prev => ({
+    updateEdits(prev => ({
       ...prev,
       [transactionId]: {
         ...prev[transactionId],
@@ -588,12 +588,12 @@ export function MonthReviewModal({
   };
 
   const handleCancel = () => {
-    setEdits({});
+    updateEdits({});
     onOpenChange(false);
   };
 
   const handleConfirm = async () => {
-    const editEntries = Object.entries(edits);
+    const editEntries = Object.entries(editsRef.current);
     console.log('[MonthReviewModal] handleConfirm fired. editEntries:', editEntries);
     if (editEntries.length === 0) {
       onOpenChange(false);
@@ -694,7 +694,7 @@ export function MonthReviewModal({
         duration: 4000,
       });
 
-      setEdits({});
+      updateEdits({});
       setEditedTxIds(savedTxIds);
 
       if (pendingRules.length > 0) {
