@@ -629,12 +629,26 @@ interface InlineTransactionsEditorProps {
   monthKey: string;
   monthLabel: string;
   isLocked: boolean;
+  imports: Import[];
+  cashAccounts: ReturnType<typeof useAccounts>["accounts"];
+  deleteImport: (id: string) => void;
+  isDeleting: boolean;
+  toggleLockImport: (args: { importId: string; locked: boolean }) => void;
+  onAddMore: () => void;
+  isProcessing: boolean;
 }
 
 function InlineTransactionsEditor({
   monthKey,
   monthLabel,
   isLocked,
+  imports,
+  cashAccounts,
+  deleteImport,
+  isDeleting,
+  toggleLockImport,
+  onAddMore,
+  isProcessing,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
