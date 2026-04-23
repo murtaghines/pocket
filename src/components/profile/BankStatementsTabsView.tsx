@@ -76,6 +76,7 @@ import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
 import { RuleEditorDialog } from "./RuleEditorDialog";
 import {
@@ -242,17 +243,50 @@ export function BankStatementsTabsView() {
   // Track whether the active month workspace has unconfirmed edits so we
   // can warn the user before they switch months.
   const [hasPendingEdits, setHasPendingEdits] = useState(false);
+  // Ref the active month editor populates with a "commit everything pending
+  // in this month" function. Lets the parent trigger a save from a toast.
+  const commitAllPendingRef = useRef<(() => Promise<void> | void) | null>(null);
+  // Track the active toast id so we can dismiss it from action handlers.
+  const pendingToastIdRef = useRef<string | number | null>(null);
 
   const guardedSetActiveKey = (k: string) => {
-    if (
-      hasPendingEdits &&
-      !window.confirm(
-        "You have unconfirmed changes in this month. They will be discarded if you switch tabs. Continue?",
-      )
-    ) {
+    if (!hasPendingEdits) {
+      setActiveKey(k);
       return;
     }
-    setActiveKey(k);
+    // Show an interactive toast (bottom-right) instead of a native confirm.
+    // Stay on the current tab until the user picks an action.
+    if (pendingToastIdRef.current !== null) {
+      sonnerToast.dismiss(pendingToastIdRef.current);
+    }
+    const id = sonnerToast("Unconfirmed changes", {
+      description:
+        "You have unsaved edits in this month. Save them before switching tabs?",
+      duration: Infinity,
+      action: {
+        label: "Save & switch",
+        onClick: async () => {
+          try {
+            await commitAllPendingRef.current?.();
+          } finally {
+            pendingToastIdRef.current = null;
+            setActiveKey(k);
+          }
+        },
+      },
+      cancel: {
+        label: "Discard & switch",
+        onClick: () => {
+          pendingToastIdRef.current = null;
+          // Editor unmount on month change clears its pending state.
+          setActiveKey(k);
+        },
+      },
+      onDismiss: () => {
+        pendingToastIdRef.current = null;
+      },
+    });
+    pendingToastIdRef.current = id;
   };
 
   // Build month slots: latest first
@@ -420,6 +454,7 @@ export function BankStatementsTabsView() {
             ...(pendingFilesByMonth["__auto__"] || []),
           ]}
           onPendingChange={setHasPendingEdits}
+          commitAllRef={commitAllPendingRef}
         />
       )}
 
@@ -587,6 +622,7 @@ interface MonthWorkspaceProps {
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
   onPendingChange?: (hasPending: boolean) => void;
+  commitAllRef?: React.MutableRefObject<(() => Promise<void> | void) | null>;
 }
 
 function MonthWorkspace({
@@ -602,6 +638,7 @@ function MonthWorkspace({
   isProcessing,
   pendingFiles,
   onPendingChange,
+  commitAllRef,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLocked = imports.some((i) => i.locked);
@@ -683,6 +720,7 @@ function MonthWorkspace({
         isProcessing={isProcessing}
         pendingFiles={activePending}
         onPendingChange={onPendingChange}
+        commitAllRef={commitAllRef}
       />
     </div>
   );
@@ -1199,6 +1237,7 @@ interface InlineTransactionsEditorProps {
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
   onPendingChange?: (hasPending: boolean) => void;
+  commitAllRef?: React.MutableRefObject<(() => Promise<void> | void) | null>;
 }
 
 function InlineTransactionsEditor({
@@ -1214,6 +1253,7 @@ function InlineTransactionsEditor({
   isProcessing,
   pendingFiles,
   onPendingChange,
+  commitAllRef,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1648,6 +1688,26 @@ function InlineTransactionsEditor({
       },
     );
   };
+
+  // Commit ALL pending rows in this month at once (used by the
+  // "Save & switch" action in the unsaved-changes toast).
+  const commitAllPending = () => {
+    const ids = Object.keys(pendingByTx);
+    for (const id of ids) {
+      const tx = transactions.find((t) => t.id === id);
+      if (tx) commitRow(tx, false);
+    }
+  };
+
+  // Expose commitAllPending to the parent through the ref so it can call it
+  // from the toast actions. Re-bind on every render to capture latest state.
+  useEffect(() => {
+    if (!commitAllRef) return;
+    commitAllRef.current = commitAllPending;
+    return () => {
+      if (commitAllRef.current === commitAllPending) commitAllRef.current = null;
+    };
+  });
 
   // Mismatch detection (sign vs movement)
   const mismatchedIds = useMemo(() => {
