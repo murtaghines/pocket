@@ -1079,8 +1079,9 @@ function UploadedFilesHistoryList({
         <AlertTriangle
           className="w-4 h-4 text-warning shrink-0"
           aria-label={`${mismatchCount} row(s) need review`}
-          titleAccess={`${mismatchCount} row(s) need review`}
-        />
+        >
+          <title>{`${mismatchCount} row(s) need review`}</title>
+        </AlertTriangle>
       );
     }
     if (imp.locked) {
