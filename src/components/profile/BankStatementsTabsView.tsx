@@ -1221,18 +1221,8 @@ function InlineTransactionsEditor({
           </div>
         </div>
 
-        {/* Source files bar — fills remaining white canvas at the bottom */}
-        <div className="border-t border-border bg-card px-4 py-3 flex-1 min-h-[120px]">
-          <FileChipsBar
-            imports={imports}
-            cashAccounts={cashAccounts}
-            deleteImport={deleteImport}
-            isDeleting={isDeleting}
-            toggleLockImport={toggleLockImport}
-            onAddMore={onAddMore}
-            isProcessing={isProcessing}
-          />
-        </div>
+        {/* White canvas fills the rest of the screen */}
+        <div className="bg-card flex-1" />
       </div>
     </div>
   );
