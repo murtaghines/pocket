@@ -36,12 +36,25 @@ export function DataRail() {
   return (
     <TooltipProvider delayDuration={200}>
       <aside
-        className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-20 bg-primary flex-col items-center justify-between py-4"
+        className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-28 bg-primary flex-col items-center justify-between py-5"
         aria-label="Data rail"
       >
-        {/* Top: brand mark (white pocket logo) */}
-        <Link to="/dashboard" aria-label="Pocket — go to dashboard" className="flex items-center justify-center">
-          <img src={pocketLogoWhite} alt="Pocket" className="h-12 w-auto" />
+        {/* Top: brand mark (white pocket icon) + rotated wordmark below */}
+        <Link
+          to="/dashboard"
+          aria-label="Pocket — go to dashboard"
+          className="flex flex-col items-center gap-3"
+        >
+          <img src={pocketLogoWhite} alt="Pocket" className="h-16 w-16" />
+          {/* "pocket" wordmark, rotated 90° counter-clockwise so it reads
+              from bottom to top, sitting just below the asterisk icon. */}
+          <span
+            aria-hidden="true"
+            className="text-primary-foreground font-bold tracking-[0.35em] text-lg lowercase select-none"
+            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+          >
+            pocket
+          </span>
         </Link>
 
         {/* Bottom: data section buttons + (when inside /my-data) close button */}
