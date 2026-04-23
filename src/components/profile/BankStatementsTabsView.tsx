@@ -26,6 +26,7 @@ import {
   Split as SplitIcon,
   History,
   RotateCcw,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -206,7 +207,13 @@ export function BankStatementsTabsView() {
   const { formatMonth, formatDate, formatCurrency } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting, toggleLockImport } = useImports("CASHFLOW");
   const { accounts } = useAccounts();
-  const { addFilesForMonth, addFiles, isProcessingMonth, isProcessingAny } = useMonthlyFileUpload();
+  const {
+    addFilesForMonth,
+    addFiles,
+    isProcessingMonth,
+    isProcessingAny,
+    pendingFilesByMonth,
+  } = useMonthlyFileUpload();
 
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
@@ -368,6 +375,13 @@ export function BankStatementsTabsView() {
           isDeleting={isDeleting}
           toggleLockImport={toggleLockImport}
           isProcessing={isProcessingMonth(activeSlot.key)}
+          pendingFiles={[
+            ...(pendingFilesByMonth[activeSlot.key] || []),
+            // Auto-distribution bucket — surface its progress on every month
+            // tab so the user always sees the in-flight upload, regardless of
+            // which month they're currently inspecting.
+            ...(pendingFilesByMonth["__auto__"] || []),
+          ]}
         />
       )}
 
@@ -506,6 +520,20 @@ function MonthTabStrip({
   );
 }
 
+/** Mirror of the PendingFile shape exposed by useMonthlyFileUpload — kept
+ *  local so we don't have to export the type from the hook. */
+interface PendingFileInfo {
+  id: string;
+  name: string;
+  size: number;
+  status: "pending" | "processing" | "completed" | "error";
+  error?: string;
+  transactionsCount?: number;
+  progressLabel?: string;
+  progressPercent?: number;
+  startedAt?: number;
+}
+
 /* ─────────────────────────  Month workspace  ───────────────────────── */
 
 interface MonthWorkspaceProps {
@@ -519,6 +547,7 @@ interface MonthWorkspaceProps {
   isDeleting: boolean;
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   isProcessing: boolean;
+  pendingFiles?: PendingFileInfo[];
 }
 
 function MonthWorkspace({
@@ -532,14 +561,25 @@ function MonthWorkspace({
   isDeleting,
   toggleLockImport,
   isProcessing,
+  pendingFiles,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isLocked = imports.some((i) => i.locked);
+
+  const activePending = (pendingFiles || []).filter(
+    (f) => f.status === "processing" || f.status === "pending",
+  );
 
   // Empty state
   if (imports.length === 0) {
     return (
       <div className="bg-card py-20 px-6 text-center flex-1 flex flex-col items-center justify-center">
+        {activePending.length > 0 ? (
+          <div className="w-full max-w-xl">
+            <ProcessingPanel files={activePending} />
+          </div>
+        ) : (
+          <>
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
           <Upload className="w-6 h-6" />
         </div>
@@ -572,6 +612,8 @@ function MonthWorkspace({
             Add file
           </Button>
         </div>
+          </>
+        )}
       </div>
     );
   }
@@ -599,6 +641,7 @@ function MonthWorkspace({
         toggleLockImport={toggleLockImport}
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
+        pendingFiles={activePending}
       />
     </div>
   );
@@ -1018,6 +1061,7 @@ interface InlineTransactionsEditorProps {
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   onAddMore: () => void;
   isProcessing: boolean;
+  pendingFiles?: PendingFileInfo[];
 }
 
 function InlineTransactionsEditor({
@@ -1031,6 +1075,7 @@ function InlineTransactionsEditor({
   toggleLockImport,
   onAddMore,
   isProcessing,
+  pendingFiles,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1683,8 +1728,16 @@ function InlineTransactionsEditor({
           </div>
         )}
 
-        {/* White canvas fills the rest of the screen — pushes footer down */}
-        <div className="bg-card flex-1" />
+        {/* White canvas fills the rest of the screen — pushes footer down.
+            When a file is being processed, surface the live progress panel
+            here so users see what's happening without leaving the table. */}
+        <div className="bg-card flex-1 px-6 py-6 flex items-start justify-center">
+          {pendingFiles && pendingFiles.length > 0 && (
+            <div className="w-full max-w-xl">
+              <ProcessingPanel files={pendingFiles} />
+            </div>
+          )}
+        </div>
 
         {/* Spreadsheet footer: totals (Excel status-bar style) — sticks to the bottom */}
         <div className="border-t border-border bg-card px-4 py-3 flex flex-wrap items-center gap-4 text-sm">
@@ -2200,5 +2253,122 @@ function RevertToOriginalButton({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/* ─────────────────────────  Processing panel  ─────────────────────────
+ *
+ * Live progress card surfaced while a file upload is being processed.
+ * Shows: filename, friendly status copy, indeterminate-feeling progress bar
+ * (capped at 88% during the AI step so we never lie about being done), and
+ * a checklist of macro-stages so users understand what we're doing for them.
+ */
+
+const PROCESSING_STAGES: { threshold: number; label: string }[] = [
+  { threshold: 18, label: "Read your file" },
+  { threshold: 28, label: "Checked for duplicates" },
+  { threshold: 38, label: "Uploaded securely" },
+  { threshold: 92, label: "Read transactions with AI" },
+  { threshold: 100, label: "Saved & categorized" },
+];
+
+function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-card shadow-[0_2px_18px_-8px_rgb(8_8_8_/_0.08)] overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-border/60 bg-muted/30 flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+          <Loader2 className="w-4 h-4 text-primary animate-spin" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-foreground">
+            Processing your file{files.length > 1 ? "s" : ""}
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            This usually takes 20–60 seconds. You can keep working in another tab.
+          </div>
+        </div>
+      </div>
+
+      <div className="px-5 py-4 space-y-5">
+        {files.map((f) => (
+          <FileProgress key={f.id} file={f} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FileProgress({ file }: { file: PendingFileInfo }) {
+  const pct = Math.max(0, Math.min(100, file.progressPercent ?? 0));
+  const label = file.progressLabel || "Preparing…";
+  const sizeKb = file.size ? Math.round(file.size / 102.4) / 10 : null;
+
+  return (
+    <div className="space-y-2.5">
+      {/* File row */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+          <span className="text-sm font-medium text-foreground truncate">
+            {file.name}
+          </span>
+          {sizeKb !== null && (
+            <span className="text-[11px] text-muted-foreground shrink-0">
+              {sizeKb < 1024 ? `${sizeKb} KB` : `${(sizeKb / 1024).toFixed(1)} MB`}
+            </span>
+          )}
+        </div>
+        <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">
+          {Math.round(pct)}%
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+
+      {/* Live status copy */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Loader2 className="w-3 h-3 animate-spin text-primary" />
+        <span>{label}</span>
+      </div>
+
+      {/* Stage checklist */}
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 pt-1">
+        {PROCESSING_STAGES.map((stage) => {
+          const done = pct >= stage.threshold;
+          const active = !done && pct >= (
+            PROCESSING_STAGES[PROCESSING_STAGES.indexOf(stage) - 1]?.threshold ?? 0
+          );
+          return (
+            <li
+              key={stage.label}
+              className={cn(
+                "flex items-center gap-1.5 text-[11px]",
+                done
+                  ? "text-foreground"
+                  : active
+                    ? "text-foreground/80"
+                    : "text-muted-foreground/50",
+              )}
+            >
+              {done ? (
+                <Check className="w-3 h-3 text-success shrink-0" />
+              ) : active ? (
+                <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+              ) : (
+                <span className="w-3 h-3 rounded-full border border-border shrink-0" />
+              )}
+              <span>{stage.label}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

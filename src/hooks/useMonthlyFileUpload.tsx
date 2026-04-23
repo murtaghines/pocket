@@ -47,6 +47,12 @@ interface PendingFile {
   status: "pending" | "processing" | "completed" | "error";
   error?: string;
   transactionsCount?: number;
+  /** Friendly label of what we're doing right now ("Reading file", "Asking AI…"). */
+  progressLabel?: string;
+  /** 0–100 estimate. AI step uses a logarithmic ramp because we can't poll it. */
+  progressPercent?: number;
+  /** Wall-clock when processing started — used for the AI ramp. */
+  startedAt?: number;
 }
 
 type PendingFilesByMonth = Record<string, PendingFile[]>;
@@ -84,16 +90,27 @@ export function useMonthlyFileUpload() {
       ? `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`
       : null;
 
+    // Helper: patch a single field on this file's progress state
+    const patch = (changes: Partial<PendingFile>) => {
+      setPendingFilesByMonth((prev) => ({
+        ...prev,
+        [monthKey]: (prev[monthKey] || []).map((f) =>
+          f.id === uploadFile.id ? { ...f, ...changes } : f
+        ),
+      }));
+    };
+
     // Update status to processing
-    setPendingFilesByMonth((prev) => ({
-      ...prev,
-      [monthKey]: (prev[monthKey] || []).map((f) =>
-        f.id === uploadFile.id ? { ...f, status: "processing" as const } : f
-      ),
-    }));
+    patch({
+      status: "processing",
+      progressLabel: "Reading file…",
+      progressPercent: 5,
+      startedAt: Date.now(),
+    });
 
     try {
       const fileContent = await extractFileContent(uploadFile.file);
+      patch({ progressLabel: "Checking for duplicates…", progressPercent: 18 });
       
       if (!fileContent.trim()) {
         throw new Error("The file is empty");
@@ -133,6 +150,7 @@ export function useMonthlyFileUpload() {
         return;
       }
 
+      patch({ progressLabel: "Uploading to your vault…", progressPercent: 28 });
       // Upload original file to storage
       const filePath = `${user.id}/${Date.now()}_${uploadFile.name}`;
       const { error: uploadError } = await supabase.storage
@@ -144,6 +162,29 @@ export function useMonthlyFileUpload() {
           "Could not upload the file (connection interrupted). Please try again."
         );
       }
+
+      patch({
+        progressLabel: "Reading transactions with AI…",
+        progressPercent: 38,
+      });
+
+      // The AI extraction step can take 20-90s; we don't get progress events
+      // back, so we ramp the bar logarithmically toward 88% to convey "still
+      // working" without ever pretending we're done.
+      const aiRampStart = Date.now();
+      const aiRamp = setInterval(() => {
+        const elapsed = (Date.now() - aiRampStart) / 1000;
+        // Approaches ~88% asymptotically; tuned so 30s ≈ 75%, 60s ≈ 83%.
+        const pct = Math.min(88, 38 + 18 * Math.log(1 + elapsed * 0.45));
+        const labels = [
+          "Reading transactions with AI…",
+          "Categorizing each transaction…",
+          "Cross-checking with your rules…",
+          "Almost there — finalizing…",
+        ];
+        const labelIdx = Math.min(labels.length - 1, Math.floor(elapsed / 12));
+        patch({ progressLabel: labels[labelIdx], progressPercent: pct });
+      }, 1200);
 
       // Call the process-import edge function (uses imports table directly)
       const { data: processData, error } = await supabase.functions.invoke(
@@ -165,7 +206,7 @@ export function useMonthlyFileUpload() {
             accountId: accountId || null,
           },
         }
-      );
+      ).finally(() => clearInterval(aiRamp));
 
       // Handle non-2xx responses
       if (error) {
@@ -225,6 +266,7 @@ export function useMonthlyFileUpload() {
       }
 
       const stats = processData?.stats;
+      patch({ progressLabel: "Saving transactions…", progressPercent: 92 });
       const monthsDistribution: Record<string, { new: number; duplicates: number }> =
         processData?.monthsDistribution || {};
       const skippedMonths: Array<{ month: string; reason: string; count: number }> =
@@ -238,7 +280,13 @@ export function useMonthlyFileUpload() {
         ...prev,
         [monthKey]: (prev[monthKey] || []).map((f) =>
           f.id === uploadFile.id
-            ? { ...f, status: "completed" as const, transactionsCount: stats?.newTransactions || 0 }
+            ? {
+                ...f,
+                status: "completed" as const,
+                transactionsCount: stats?.newTransactions || 0,
+                progressLabel: `Done · ${stats?.newTransactions || 0} new transactions`,
+                progressPercent: 100,
+              }
             : f
         ),
       }));
