@@ -1084,6 +1084,29 @@ function InlineTransactionsEditor({
     enabled: !!user,
   });
 
+  // Fetch edit history for every tx in this month, grouped by tx id (newest first)
+  const { data: auditByTx = {} } = useQuery({
+    queryKey: ["tx-audit", monthKey, user?.id],
+    queryFn: async () => {
+      if (!user || transactions.length === 0) return {};
+      const ids = transactions.map((t) => t.id);
+      const { data, error } = await supabase
+        .from("audit_log")
+        .select("id, entity_id, action, created_at, diff_json")
+        .eq("user_id", user.id)
+        .eq("entity_type", "transaction")
+        .in("entity_id", ids)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const grouped: Record<string, AuditEntry[]> = {};
+      for (const row of (data || []) as AuditEntry[]) {
+        (grouped[row.entity_id] ||= []).push(row);
+      }
+      return grouped;
+    },
+    enabled: !!user && transactions.length > 0,
+  });
+
   // Single auto-save mutation: applies any partial update to a transaction
   const saveMutation = useMutation({
     mutationFn: async ({
