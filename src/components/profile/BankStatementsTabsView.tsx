@@ -1457,7 +1457,6 @@ function InlineTransactionsEditor({
                         getCategoryLabel={getCategoryLabel}
                       />
                     </TableCell>
-                    </TableCell>
                     <TableCell className="text-sm text-foreground tabular-nums">
                       {formatDate(new Date(tx.date))}
                     </TableCell>
