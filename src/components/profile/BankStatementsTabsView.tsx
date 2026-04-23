@@ -1111,29 +1111,29 @@ function InlineTransactionsEditor({
           </div>
         )}
 
-        {/* Spreadsheet footer: totals + extras */}
-        <div className="border-t border-border bg-muted/20 px-3 py-2 flex flex-wrap items-center gap-3 text-xs">
+        {/* Spreadsheet footer: totals (Excel status-bar style, larger font) */}
+        <div className="border-t border-border bg-muted/20 px-4 py-2.5 flex flex-wrap items-center gap-4 text-sm">
           <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <span className="tabular-nums">{summary.total}</span>
+            <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
             row{summary.total !== 1 ? "s" : ""}
           </div>
           <span className="text-border">|</span>
           <div className="inline-flex items-center gap-1.5">
-            <Plus className="w-3 h-3 text-success" />
-            <span className="text-success font-medium tabular-nums">
+            <Plus className="w-3.5 h-3.5 text-success" />
+            <span className="text-success font-semibold tabular-nums">
               {formatCurrency(summary.income)}
             </span>
           </div>
           <div className="inline-flex items-center gap-1.5">
-            <Minus className="w-3 h-3 text-destructive" />
-            <span className="text-destructive font-medium tabular-nums">
+            <Minus className="w-3.5 h-3.5 text-destructive" />
+            <span className="text-destructive font-semibold tabular-nums">
               {formatCurrency(summary.expenses)}
             </span>
           </div>
           {summary.transfers > 0 && (
             <div className="inline-flex items-center gap-1.5">
-              <ArrowRightLeft className="w-3 h-3 text-warning" />
-              <span className="text-warning font-medium tabular-nums">
+              <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
+              <span className="text-warning font-semibold tabular-nums">
                 {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
               </span>
             </div>
@@ -1144,14 +1144,27 @@ function InlineTransactionsEditor({
               onClick={() => setShowHidden((v) => !v)}
               className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
             >
-              <EyeOff className="w-3 h-3" />
+              <EyeOff className="w-3.5 h-3.5" />
               {showHidden ? "Hide" : "Show"} hidden ({summary.hidden})
             </button>
           )}
-          <div className="ml-auto inline-flex items-center gap-1.5 text-muted-foreground">
+          <div className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <Info className="w-3 h-3" />
             Changes auto-save
           </div>
+        </div>
+
+        {/* Source files bar — discreet, at the bottom (Airtable footer style) */}
+        <div className="border-t border-border bg-card px-4 py-2">
+          <FileChipsBar
+            imports={imports}
+            cashAccounts={cashAccounts}
+            deleteImport={deleteImport}
+            isDeleting={isDeleting}
+            toggleLockImport={toggleLockImport}
+            onAddMore={onAddMore}
+            isProcessing={isProcessing}
+          />
         </div>
       </div>
     </div>
