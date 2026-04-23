@@ -733,7 +733,7 @@ function UploadedFilesDropdown({
           <ChevronDown className="w-3.5 h-3.5 opacity-60" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[420px] max-w-[90vw] p-3">
+      <PopoverContent align="end" className="w-[560px] max-w-[92vw] p-0">
         <UploadedFilesHistoryList
           imports={imports}
           cashAccounts={cashAccounts}
