@@ -1778,12 +1778,12 @@ function InlineTransactionsEditor({
                         />
                       )}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-0 text-center">
                       {!isLocked && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-muted-foreground/60 hover:text-foreground"
+                          className="h-7 w-7 mx-auto text-muted-foreground/60 hover:text-foreground"
                           onClick={() => handleToggleHidden(tx)}
                           title={isHidden ? "Include in totals" : "Hide from totals"}
                         >
@@ -1791,7 +1791,7 @@ function InlineTransactionsEditor({
                         </Button>
                       )}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-0 text-center">
                       {!isLocked && isEdited && originalSnapshot && (
                         <RevertToOriginalButton
                           original={originalSnapshot.values}
