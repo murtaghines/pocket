@@ -74,7 +74,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { useToast } from "@/hooks/use-toast";
 import { AccountSelectDialog } from "./AccountSelectDialog";
-import { buildRuleFromCorrection } from "@/lib/userRules";
+import { RuleEditorDialog } from "./RuleEditorDialog";
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
@@ -1825,80 +1825,57 @@ function InlineTransactionsEditor({
       </AlertDialog>
 
       {/* Category change → optional "save as rule" */}
-      <AlertDialog
+      <RuleEditorDialog
         open={!!categoryRulePrompt}
         onOpenChange={(o) => !o && setCategoryRulePrompt(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Save as a rule?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {categoryRulePrompt && (
-                <>
-                  Apply{" "}
-                  <span className="font-semibold">
-                    {getCategoryLabel(categoryRulePrompt.newSlug)}
-                  </span>{" "}
-                  to future transactions that look like{" "}
-                  <span className="font-mono text-foreground">
-                    “{categoryRulePrompt.cleanDesc.slice(0, 60)}
-                    {categoryRulePrompt.cleanDesc.length > 60 ? "…" : ""}”
-                  </span>
-                  ?
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setCategoryRulePrompt(null)}>
-              Just this one
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                if (!categoryRulePrompt || !user) {
-                  setCategoryRulePrompt(null);
-                  return;
-                }
-                const { cleanDesc, targetMovement, newSlug } = categoryRulePrompt;
-                const ruleData = buildRuleFromCorrection(
-                  cleanDesc,
-                  targetMovement,
-                  newSlug,
-                );
-                const { error } = await supabase.from("user_rules").insert({
-                  user_id: user.id,
-                  source: "user_correction",
-                  match_type: ruleData.match_type,
-                  pattern: ruleData.pattern,
-                  tokens: ruleData.tokens,
-                  movement: targetMovement,
-                  category: newSlug,
-                  confidence: 0.99,
-                  original_description: cleanDesc,
-                  is_active: true,
-                });
-                if (error) {
-                  toast({
-                    title: "Couldn't save rule",
-                    description: error.message,
-                    variant: "destructive",
-                  });
-                } else {
-                  toast({
-                    title: "✓ Rule saved",
-                    description: `Future “${cleanDesc.slice(0, 40)}${cleanDesc.length > 40 ? "…" : ""}” transactions will be categorized as ${getCategoryLabel(newSlug)}.`,
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["user_rules"] });
-                  queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
-                }
-                setCategoryRulePrompt(null);
-              }}
-            >
-              Yes, create rule
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        description={categoryRulePrompt?.cleanDesc ?? ""}
+        movement={categoryRulePrompt?.targetMovement ?? "EXPENSE"}
+        categorySlug={categoryRulePrompt?.newSlug ?? ""}
+        categoryLabel={
+          categoryRulePrompt ? getCategoryLabel(categoryRulePrompt.newSlug) : ""
+        }
+        categoryColorVar={
+          categoryRulePrompt ? getCategoryColor(categoryRulePrompt.newSlug) : undefined
+        }
+        categoryIcon={
+          categoryRulePrompt ? getCategoryIcon(categoryRulePrompt.newSlug) : undefined
+        }
+        onSkip={() => setCategoryRulePrompt(null)}
+        skipLabel="Just this one"
+        onConfirm={async (payload) => {
+          if (!user) {
+            setCategoryRulePrompt(null);
+            return;
+          }
+          const { error } = await supabase.from("user_rules").insert({
+            user_id: user.id,
+            source: "user_correction",
+            match_type: payload.match_type,
+            pattern: payload.pattern,
+            tokens: payload.tokens,
+            movement: payload.movement,
+            category: payload.category,
+            confidence: 0.99,
+            original_description: payload.original_description,
+            is_active: true,
+          });
+          if (error) {
+            toast({
+              title: "Couldn't save rule",
+              description: error.message,
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "✓ Rule saved",
+              description: `Future transactions matching “${payload.pattern.slice(0, 40)}${payload.pattern.length > 40 ? "…" : ""}” will be categorized as ${getCategoryLabel(payload.category)}.`,
+            });
+            queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+            queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+          }
+          setCategoryRulePrompt(null);
+        }}
+      />
     </div>
   );
 }
