@@ -1,11 +1,10 @@
 import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PiggyBank, BarChart3 } from "lucide-react";
+import { LayoutDashboard, PiggyBank, BarChart3, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { DataFolderButton } from "./DataFolderButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { DataRail } from "./DataRail";
 import walletIconBlue from "@/assets/wallet-icon-blue.png";
@@ -43,6 +42,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { label: t('navigation.dashboard', 'Dashboard'), path: '/dashboard', icon: LayoutDashboard },
     { label: t('navigation.total', 'Total'), path: '/total', icon: BarChart3 },
     { label: t('navigation.investments'), path: '/investments', icon: PiggyBank },
+  ];
+
+  const mobileNavItems = [
+    ...navItems,
+    { label: 'Data', path: '/my-data?tab=bank', icon: FileSpreadsheet },
   ];
 
   return (
@@ -105,9 +109,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Mobile bottom nav - kept for mobile UX */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
         <div className="flex items-center justify-around h-14 px-4">
-          {navItems.map((item) => {
+          {mobileNavItems.map((item) => {
             const Icon = item.icon;
-            const active = isActive(item.path);
+            const active = isActive(item.path.split('?')[0]);
             return (
               <Link
                 key={item.path}
