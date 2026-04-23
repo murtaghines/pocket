@@ -49,7 +49,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme relative md:pl-28">
+    <div className="min-h-screen bg-background dashboard-theme relative md:pl-24">
       {/* Persistent vertical data rail (desktop) */}
       <DataRail />
 
