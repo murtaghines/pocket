@@ -1467,7 +1467,7 @@ function InlineTransactionsEditor({
                       "transition-colors",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                       isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
-                      isHidden && "opacity-40",
+                      isHidden && "opacity-50 bg-muted/20",
                       isSaved && !isMismatch && "bg-success/5",
                     )}
                   >
