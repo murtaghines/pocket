@@ -2204,7 +2204,7 @@ function RowEditIndicator({
   const editEntries = history.filter((h) => h.action !== "revert");
 
   if (editEntries.length === 0) {
-    return <span>{index}</span>;
+    return <span className="block w-full text-center">{index}</span>;
   }
 
   return (
@@ -2212,10 +2212,10 @@ function RowEditIndicator({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group inline-flex items-center justify-center w-6 h-6 mx-auto rounded-full hover:bg-primary/10 transition-colors"
+          className="group flex items-center justify-center w-6 h-6 mx-auto rounded-full hover:bg-primary/10 transition-colors"
           title={`${editEntries.length} change${editEntries.length === 1 ? "" : "s"} — click to review`}
         >
-          <span className="relative inline-flex w-2 h-2 rounded-full bg-primary" aria-hidden>
+          <span className="relative flex w-2 h-2 rounded-full bg-primary" aria-hidden>
             <span className="absolute inset-0 rounded-full bg-primary/40 animate-pulse" />
           </span>
         </button>
