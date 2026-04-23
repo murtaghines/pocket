@@ -1,12 +1,12 @@
 import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PiggyBank, BarChart3 } from "lucide-react";
+import { LayoutDashboard, PiggyBank, BarChart3, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { DataFolderButton } from "./DataFolderButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { DataRail } from "./DataRail";
 import walletIconBlue from "@/assets/wallet-icon-blue.png";
 
 interface DashboardLayoutProps {
@@ -44,8 +44,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { label: t('navigation.investments'), path: '/investments', icon: PiggyBank },
   ];
 
+  const mobileNavItems = [
+    ...navItems,
+    { label: 'Data', path: '/my-data?tab=bank', icon: FileSpreadsheet },
+  ];
+
   return (
-    <div className="min-h-screen bg-background dashboard-theme relative">
+    <div className="min-h-screen bg-background dashboard-theme relative md:pl-16">
+      {/* Persistent vertical data rail (desktop) */}
+      <DataRail />
+
       {/* Top nav — clean, light, inspired by reference */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-5">
@@ -83,7 +91,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Right side: Theme toggle + Bell + Avatar */}
             <div className="flex items-center gap-2 md:gap-3">
               <ThemeToggle />
-              <DataFolderButton />
               <Link to="/profile">
                 <div className={cn(
                   "w-12 h-12 rounded-full flex items-center justify-center text-[15px] font-semibold transition-all overflow-hidden",
@@ -102,9 +109,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Mobile bottom nav - kept for mobile UX */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
         <div className="flex items-center justify-around h-14 px-4">
-          {navItems.map((item) => {
+          {mobileNavItems.map((item) => {
             const Icon = item.icon;
-            const active = isActive(item.path);
+            const active = isActive(item.path.split('?')[0]);
             return (
               <Link
                 key={item.path}
