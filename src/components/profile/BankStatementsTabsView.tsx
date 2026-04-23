@@ -1023,6 +1023,9 @@ function InlineTransactionsEditor({
     targetMovement: MovementType;
   } | null>(null);
 
+  // Edit-history popover open state (one tx at a time)
+  const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
+
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
 
