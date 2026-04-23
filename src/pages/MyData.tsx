@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { UnifiedUploadsTable } from "@/components/profile/UnifiedUploadsTable";
@@ -7,7 +6,6 @@ import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploa
 import { FileText, TrendingUp } from "lucide-react";
 
 export default function MyData() {
-  const { t } = useTranslation('profile');
   const [searchParams, setSearchParams] = useSearchParams();
 
   const highlightSection = searchParams.get('section');
