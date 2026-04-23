@@ -1465,10 +1465,10 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground/60 font-medium">
                   #
                 </TableHead>
-                <TableHead className="w-[8%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[11%] whitespace-nowrap text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Date
                 </TableHead>
-                <TableHead className="w-[28%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[25%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Description
                 </TableHead>
                 <TableHead className="w-[10%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
@@ -1550,7 +1550,7 @@ function InlineTransactionsEditor({
                         getCategoryLabel={getCategoryLabel}
                       />
                     </TableCell>
-                    <TableCell className="text-sm text-foreground tabular-nums">
+                    <TableCell className="text-sm text-foreground tabular-nums whitespace-nowrap">
                       {formatDate(new Date(tx.date))}
                     </TableCell>
                     <TableCell className="text-sm">
