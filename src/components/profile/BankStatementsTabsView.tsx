@@ -1346,7 +1346,7 @@ function InlineTransactionsEditor({
                     </TableCell>
                     <TableCell className="text-sm">
                       {isLocked ? (
-                        <PillBadge colorVar={getCategoryColor(category)}>
+                        <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
                           <CategoryIcon
                             iconName={getCategoryIcon(category)}
                             colorVar={getCategoryColor(category)}
@@ -1365,7 +1365,7 @@ function InlineTransactionsEditor({
                         >
                           <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50">
                             <SelectValue>
-                              <PillBadge colorVar={getCategoryColor(category)}>
+                              <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
                                 <CategoryIcon
                                   iconName={getCategoryIcon(category)}
                                   colorVar={getCategoryColor(category)}
