@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { UnifiedUploadsTable } from "@/components/profile/UnifiedUploadsTable";
+import { BankStatementsTabsView } from "@/components/profile/BankStatementsTabsView";
 import { InvestmentUploadsOrganizer } from "@/components/profile/InvestmentUploadsOrganizer";
 import { FileText, TrendingUp } from "lucide-react";
 
@@ -33,21 +33,25 @@ export default function MyData() {
 
   return (
     <DashboardLayout>
-      <main className="max-w-[1400px] mx-auto">
+      <main className="max-w-[1600px] mx-auto">
         <div className="space-y-4">
             {/* Bank Statements */}
-            <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-5 h-5 text-primary" />
-                <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
-                  Upload your bank statements, credit card bills, or expense reports
-                </h2>
-              </div>
-              <p className="text-sm text-muted-foreground mb-6">
-                Accepted formats: Excel (.xlsx, .xls), CSV, PDF
-              </p>
-              <UnifiedUploadsTable />
-            </div>
+            <section className="bg-card rounded-xl md:rounded-2xl p-4 md:p-6" style={{ boxShadow: 'var(--shadow-section)' }}>
+              <header className="flex items-center justify-between gap-4 mb-4">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="w-5 h-5 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <h2 className="font-display text-lg md:text-xl font-bold tracking-tight text-foreground truncate">
+                      Bank statements & expense reports
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      Pick a month and edit transactions inline · Excel, CSV, PDF accepted
+                    </p>
+                  </div>
+                </div>
+              </header>
+              <BankStatementsTabsView />
+            </section>
 
             {/* Investment Uploads */}
             <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8" style={{ boxShadow: 'var(--shadow-section)' }}>
