@@ -536,11 +536,11 @@ export function MonthReviewModal({
   const getMovementIcon = (movement: MovementType) => {
     switch (movement) {
       case "INCOME":
-        return <PlusCircle className="w-4 h-4 text-success" />;
+        return <span className="inline-flex items-center justify-center w-4 h-4 text-success font-semibold text-base leading-none">+</span>;
       case "EXPENSE":
-        return <MinusCircle className="w-4 h-4 text-destructive" />;
+        return <span className="inline-flex items-center justify-center w-4 h-4 text-destructive font-semibold text-base leading-none">−</span>;
       case "TRANSFER":
-        return <ArrowRightLeft className="w-4 h-4 text-warning" />;
+        return <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />;
       default:
         return null;
     }
@@ -955,16 +955,16 @@ export function MonthReviewModal({
                   </div>
                 )}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-                  <PlusCircle className="w-4 h-4 text-success" />
+                  <span className="text-success font-semibold text-base leading-none">+</span>
                   <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg">
-                  <MinusCircle className="w-4 h-4 text-destructive" />
+                  <span className="text-destructive font-semibold text-base leading-none">−</span>
                   <span className="text-destructive font-medium tabular-nums">{formatCurrency(summary.expenses)}</span>
                 </div>
                 {summary.transfers > 0 && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 rounded-lg">
-                    <ArrowRightLeft className="w-4 h-4 text-warning" />
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
                     <span className="text-warning font-medium">{summary.transfers}</span>
                   </div>
                 )}
@@ -1098,19 +1098,19 @@ export function MonthReviewModal({
                                 <SelectContent>
                                   <SelectItem value="INCOME">
                                     <div className="flex items-center gap-2">
-                                      <PlusCircle className="w-4 h-4 text-success" />
+                                      <span className="inline-flex items-center justify-center w-4 h-4 text-success font-semibold text-base leading-none">+</span>
                                       <span className="text-success">{translateMovement("INCOME")}</span>
                                     </div>
                                   </SelectItem>
                                   <SelectItem value="EXPENSE">
                                     <div className="flex items-center gap-2">
-                                      <MinusCircle className="w-4 h-4 text-destructive" />
+                                      <span className="inline-flex items-center justify-center w-4 h-4 text-destructive font-semibold text-base leading-none">−</span>
                                       <span className="text-destructive">{translateMovement("EXPENSE")}</span>
                                     </div>
                                   </SelectItem>
                                   <SelectItem value="TRANSFER">
                                     <div className="flex items-center gap-2">
-                                      <ArrowRightLeft className="w-4 h-4 text-warning" />
+                                      <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
                                       <span className="text-warning">{translateMovement("TRANSFER")}</span>
                                     </div>
                                   </SelectItem>
@@ -1202,14 +1202,12 @@ export function MonthReviewModal({
                             {isLocked ? (
                               <span className="font-medium tabular-nums">{formatCurrency(effectiveAmount)}</span>
                             ) : (
-                              <AmountEditor
+                              <AmountDisplay
                                 tx={tx}
                                 effectiveAmount={effectiveAmount}
                                 originalAmount={tx.amount}
                                 amountChanged={amountChanged}
                                 splitCount={editedFields.splitCount}
-                                disabled={hidden}
-                                onChange={(v) => handleAmountChange(tx.id, v)}
                                 onRevert={() => handleRevertField(tx.id, "amount")}
                                 formatCurrency={formatCurrency}
                               />
@@ -1219,9 +1217,12 @@ export function MonthReviewModal({
                             {!isLocked && (
                               <SplitButton
                                 originalAmount={tx.amount}
+                                effectiveAmount={effectiveAmount}
+                                amountChanged={amountChanged}
                                 splitCount={editedFields.splitCount}
                                 disabled={hidden}
                                 onApplySplit={(n) => handleApplySplit(tx.id, n)}
+                                onChangeAmount={(v) => handleAmountChange(tx.id, v)}
                                 formatCurrency={formatCurrency}
                               />
                             )}
@@ -1410,66 +1411,39 @@ export function MonthReviewModal({
 }
 
 // ─────────────────────────────────────────────────────────────
-// AmountEditor: editable amount input (sign preserved, math expressions allowed)
+// AmountDisplay: read-only amount display with revert affordance.
+// (Editing is handled in the Split column popover.)
 // ─────────────────────────────────────────────────────────────
-interface AmountEditorProps {
+interface AmountDisplayProps {
   tx: MonthTransaction;
   effectiveAmount: number;
   originalAmount: number;
   amountChanged: boolean;
   splitCount?: number;
-  disabled: boolean;
-  onChange: (rawValue: string) => void;
   onRevert: () => void;
   formatCurrency: (n: number) => string;
 }
 
-function AmountEditor({
+function AmountDisplay({
   effectiveAmount,
   originalAmount,
   amountChanged,
   splitCount,
-  disabled,
-  onChange,
   onRevert,
   formatCurrency,
-}: AmountEditorProps) {
-  const formatSigned = (n: number) => {
-    const sign = n < 0 ? "-" : "";
-    return `${sign}${Math.abs(n).toFixed(2)}`;
-  };
-  const [localValue, setLocalValue] = useState<string>(formatSigned(effectiveAmount));
-  const [isFocused, setIsFocused] = useState(false);
-
-  // Sync local value when external amount changes (e.g., split applied) — but not while editing
-  useEffect(() => {
-    if (!isFocused) {
-      setLocalValue(formatSigned(effectiveAmount));
-    }
-  }, [effectiveAmount, isFocused]);
-
-  const handleBlur = () => {
-    setIsFocused(false);
-    if (localValue === "" || localValue === "-") {
-      setLocalValue(formatSigned(effectiveAmount));
-      return;
-    }
-    onChange(localValue);
-  };
-
+}: AmountDisplayProps) {
+  const isNeg = effectiveAmount < 0;
   return (
-    <div className="flex flex-col items-end gap-0.5 group">
-      <Input
-          type="text"
-          inputMode="decimal"
-          value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={handleBlur}
-          disabled={disabled}
-          title="Tip: you can type expressions like 20/4 or 10+5"
-          className="h-8 w-28 text-right tabular-nums text-sm font-medium text-foreground"
-        />
+    <div className="flex flex-col items-end gap-0.5">
+      <span
+        className={cn(
+          "tabular-nums text-sm font-medium",
+          amountChanged ? "text-primary" : "text-foreground",
+        )}
+      >
+        {isNeg ? "-" : ""}
+        {formatCurrency(Math.abs(effectiveAmount))}
+      </span>
       {amountChanged && (
         <button
           type="button"
@@ -1489,20 +1463,50 @@ function AmountEditor({
 }
 
 // ─────────────────────────────────────────────────────────────
-// SplitButton: dedicated column for splitting an amount across N people
+// SplitButton: edit amount manually OR split it across N people.
+// Opens a popover with both controls.
 // ─────────────────────────────────────────────────────────────
 interface SplitButtonProps {
   originalAmount: number;
+  effectiveAmount: number;
+  amountChanged: boolean;
   splitCount?: number;
   disabled: boolean;
   onApplySplit: (n: number) => void;
+  onChangeAmount: (rawValue: string) => void;
   formatCurrency: (n: number) => string;
 }
 
-function SplitButton({ originalAmount, splitCount, disabled, onApplySplit, formatCurrency }: SplitButtonProps) {
+function SplitButton({
+  originalAmount,
+  effectiveAmount,
+  amountChanged,
+  splitCount,
+  disabled,
+  onApplySplit,
+  onChangeAmount,
+  formatCurrency,
+}: SplitButtonProps) {
   const [open, setOpen] = useState(false);
   const [splitN, setSplitN] = useState<number>(splitCount || 2);
-  const isActive = !!splitCount && splitCount > 1;
+  const isSplit = !!splitCount && splitCount > 1;
+  const isActive = isSplit || amountChanged;
+
+  const formatSigned = (n: number) => {
+    const sign = n < 0 ? "-" : "";
+    return `${sign}${Math.abs(n).toFixed(2)}`;
+  };
+  const [amountInput, setAmountInput] = useState<string>(formatSigned(effectiveAmount));
+
+  // Re-sync local input when popover opens or external amount changes
+  useEffect(() => {
+    if (open) setAmountInput(formatSigned(effectiveAmount));
+  }, [open, effectiveAmount]);
+
+  const commitAmount = () => {
+    if (amountInput === "" || amountInput === "-") return;
+    onChangeAmount(amountInput);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -1517,16 +1521,54 @@ function SplitButton({ originalAmount, splitCount, disabled, onApplySplit, forma
               ? "text-primary bg-primary/10 hover:bg-primary/20"
               : "text-muted-foreground hover:text-foreground hover:bg-muted",
           )}
-          title="Split amount across people"
+          title="Edit amount or split across people"
         >
-          <SplitIcon className="w-3.5 h-3.5" />
-          {isActive && <span className="tabular-nums">÷{splitCount}</span>}
+          <Pencil className="w-3.5 h-3.5" />
+          {isSplit && <span className="tabular-nums">÷{splitCount}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-3" align="end">
-        <div className="space-y-3">
+      <PopoverContent className="w-72 p-3" align="end">
+        <div className="space-y-4">
+          {/* Edit amount manually */}
           <div>
             <label className="text-xs font-medium text-muted-foreground">
+              Edit amount
+            </label>
+            <div className="flex gap-2 mt-1">
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    commitAmount();
+                    setOpen(false);
+                  }
+                }}
+                title="You can type expressions like 20/4 or 10+5"
+                className="h-8 text-right tabular-nums text-sm"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8"
+                onClick={() => { commitAmount(); setOpen(false); }}
+              >
+                Apply
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Tip: you can type expressions like <span className="font-mono">20/4</span> or <span className="font-mono">10+5</span>
+            </p>
+          </div>
+
+          <div className="border-t border-border" />
+
+          {/* Split across N people */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <SplitIcon className="w-3 h-3" />
               Split between N people
             </label>
             <Input
@@ -1537,20 +1579,20 @@ function SplitButton({ originalAmount, splitCount, disabled, onApplySplit, forma
               onChange={(e) => setSplitN(Math.max(1, parseInt(e.target.value) || 1))}
               className="h-8 mt-1"
             />
+            <div className="text-xs text-muted-foreground mt-2">
+              Original: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount))}</span>
+            </div>
+            <div className="text-sm font-medium">
+              Your share: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount) / splitN)}</span>
+            </div>
+            <Button
+              size="sm"
+              className="w-full h-8 mt-2"
+              onClick={() => { onApplySplit(splitN); setOpen(false); }}
+            >
+              Apply ÷ {splitN}
+            </Button>
           </div>
-          <div className="text-xs text-muted-foreground">
-            Original: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount))}</span>
-          </div>
-          <div className="text-sm font-medium">
-            Your share: <span className="tabular-nums">{formatCurrency(Math.abs(originalAmount) / splitN)}</span>
-          </div>
-          <Button
-            size="sm"
-            className="w-full h-8"
-            onClick={() => { onApplySplit(splitN); setOpen(false); }}
-          >
-            Apply ÷ {splitN}
-          </Button>
         </div>
       </PopoverContent>
     </Popover>
