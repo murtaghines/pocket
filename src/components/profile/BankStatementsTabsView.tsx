@@ -422,6 +422,7 @@ export function BankStatementsTabsView() {
             deleteImport={deleteImport}
             isDeleting={isDeleting}
             toggleLockImport={toggleLockImport}
+            pendingImportIds={pendingImportIds}
           />
         </div>
       </div>
@@ -898,6 +899,7 @@ interface UploadedFilesDropdownProps {
   deleteImport: (id: string) => void;
   isDeleting: boolean;
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
+  pendingImportIds: Set<string>;
 }
 
 function UploadedFilesDropdown({
@@ -906,8 +908,10 @@ function UploadedFilesDropdown({
   deleteImport,
   isDeleting,
   toggleLockImport,
+  pendingImportIds,
 }: UploadedFilesDropdownProps) {
   const count = imports.length;
+  const pendingCount = imports.filter((i) => pendingImportIds.has(i.id)).length;
 
   return (
     <Sheet>
@@ -918,11 +922,23 @@ function UploadedFilesDropdown({
           disabled={count === 0}
           title="View, edit account or delete uploaded files"
           aria-label="Manage uploaded files"
-          className="group h-9 gap-2 pl-3 pr-2 font-medium border-2 border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/50 shadow-sm"
+          className={cn(
+            "group h-9 gap-2 pl-3 pr-2 font-medium border-2 shadow-sm",
+            pendingCount > 0
+              ? "border-warning/40 bg-warning/10 text-foreground hover:bg-warning/20 hover:border-warning/60"
+              : "border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/50",
+          )}
         >
-          <FileSpreadsheet className="w-4 h-4 text-primary" />
+          <FileSpreadsheet className={cn("w-4 h-4", pendingCount > 0 ? "text-warning" : "text-primary")} />
           <span className="tabular-nums">Manage files</span>
-          <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold tabular-nums">
+          <span
+            className={cn(
+              "inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums",
+              pendingCount > 0
+                ? "bg-warning text-warning-foreground"
+                : "bg-primary text-primary-foreground",
+            )}
+          >
             {count}
           </span>
         </Button>
@@ -937,6 +953,7 @@ function UploadedFilesDropdown({
           deleteImport={deleteImport}
           isDeleting={isDeleting}
           toggleLockImport={toggleLockImport}
+          pendingImportIds={pendingImportIds}
         />
       </SheetContent>
     </Sheet>
@@ -951,6 +968,7 @@ interface UploadedFilesHistoryListProps {
   deleteImport: (id: string) => void;
   isDeleting: boolean;
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
+  pendingImportIds: Set<string>;
 }
 
 function UploadedFilesHistoryList({
@@ -959,6 +977,7 @@ function UploadedFilesHistoryList({
   deleteImport,
   isDeleting,
   toggleLockImport,
+  pendingImportIds,
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
   const queryClient = useQueryClient();
