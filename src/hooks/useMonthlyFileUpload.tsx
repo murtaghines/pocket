@@ -266,6 +266,7 @@ export function useMonthlyFileUpload() {
       }
 
       const stats = processData?.stats;
+      patch({ progressLabel: "Saving transactions…", progressPercent: 92 });
       const monthsDistribution: Record<string, { new: number; duplicates: number }> =
         processData?.monthsDistribution || {};
       const skippedMonths: Array<{ month: string; reason: string; count: number }> =
@@ -279,7 +280,13 @@ export function useMonthlyFileUpload() {
         ...prev,
         [monthKey]: (prev[monthKey] || []).map((f) =>
           f.id === uploadFile.id
-            ? { ...f, status: "completed" as const, transactionsCount: stats?.newTransactions || 0 }
+            ? {
+                ...f,
+                status: "completed" as const,
+                transactionsCount: stats?.newTransactions || 0,
+                progressLabel: `Done · ${stats?.newTransactions || 0} new transactions`,
+                progressPercent: 100,
+              }
             : f
         ),
       }));
