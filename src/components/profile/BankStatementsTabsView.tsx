@@ -389,7 +389,7 @@ export function BankStatementsTabsView() {
       <MonthTabStrip
         slots={monthSlots}
         activeKey={activeKey}
-        onActivate={setActiveKey}
+        onActivate={guardedSetActiveKey}
         importsByMonth={importsByMonth}
         onLoadMore={() => setMonthsToShow((n) => n + MONTHS_INCREMENT)}
         onShowLess={() =>
@@ -418,6 +418,7 @@ export function BankStatementsTabsView() {
             // which month they're currently inspecting.
             ...(pendingFilesByMonth["__auto__"] || []),
           ]}
+          onPendingChange={setHasPendingEdits}
         />
       )}
 
