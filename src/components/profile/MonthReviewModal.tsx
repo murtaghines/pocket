@@ -160,6 +160,24 @@ export function MonthReviewModal({
   const [showHidden, setShowHidden] = useState(false);
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
+  const editsRef = useRef<Record<string, TransactionEdits>>({});
+
+  const updateEdits = useCallback(
+    (
+      updater:
+        | Record<string, TransactionEdits>
+        | ((prev: Record<string, TransactionEdits>) => Record<string, TransactionEdits>)
+    ) => {
+      const prev = editsRef.current;
+      const next = typeof updater === "function"
+        ? updater(prev)
+        : updater;
+
+      editsRef.current = next;
+      setEdits(next);
+    },
+    [],
+  );
 
   // ============= Undo / Redo history (spreadsheet-like) =============
   const editsHistory = useRef<Record<string, TransactionEdits>[]>([{}]);
@@ -198,14 +216,14 @@ export function MonthReviewModal({
     if (historyIndex.current <= 0) return;
     historyIndex.current--;
     isReplaying.current = true;
-    setEdits(editsHistory.current[historyIndex.current]);
+    updateEdits(editsHistory.current[historyIndex.current]);
   };
 
   const handleRedo = () => {
     if (historyIndex.current >= editsHistory.current.length - 1) return;
     historyIndex.current++;
     isReplaying.current = true;
-    setEdits(editsHistory.current[historyIndex.current]);
+    updateEdits(editsHistory.current[historyIndex.current]);
   };
 
   // Keyboard shortcuts: Cmd/Ctrl+Z (undo), Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y (redo)
