@@ -1286,6 +1286,11 @@ function InlineTransactionsEditor({
   // Notify parent so it can guard month-tab switches.
   useEffect(() => {
     onPendingChange?.(hasAnyPending);
+    return () => {
+      // When this editor unmounts (e.g. user changed month), make sure
+      // the parent flag is cleared so it doesn't keep blocking forever.
+      onPendingChange?.(false);
+    };
   }, [hasAnyPending, onPendingChange]);
 
   const accountName = (id: string | null) =>
