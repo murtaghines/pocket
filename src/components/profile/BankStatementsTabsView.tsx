@@ -2548,9 +2548,6 @@ function RevertToOriginalButton({
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                You can still review the full edit history afterwards from the row indicator.
-              </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
