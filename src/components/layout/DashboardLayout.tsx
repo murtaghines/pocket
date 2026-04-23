@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DataFolderButton } from "./DataFolderButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { DataRail } from "./DataRail";
 import walletIconBlue from "@/assets/wallet-icon-blue.png";
 
 interface DashboardLayoutProps {
@@ -45,7 +46,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme relative">
+    <div className="min-h-screen bg-background dashboard-theme relative md:pl-16">
+      {/* Persistent vertical data rail (desktop) */}
+      <DataRail />
+
       {/* Top nav — clean, light, inspired by reference */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 md:py-5">
@@ -83,7 +87,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Right side: Theme toggle + Bell + Avatar */}
             <div className="flex items-center gap-2 md:gap-3">
               <ThemeToggle />
-              <DataFolderButton />
               <Link to="/profile">
                 <div className={cn(
                   "w-12 h-12 rounded-full flex items-center justify-center text-[15px] font-semibold transition-all overflow-hidden",
