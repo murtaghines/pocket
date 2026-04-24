@@ -78,6 +78,7 @@ interface DbTransaction {
   domain: AppDomain | null;
   account_id: string | null;
   running_balance: number | null;
+  user_corrected: boolean | null;
 }
 
 interface UseTransactionsOptions {
