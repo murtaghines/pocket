@@ -52,6 +52,7 @@ export default function Index() {
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
@@ -66,13 +67,27 @@ export default function Index() {
     return convertAmount(amount, 'EUR', userCurrency);
   };
 
-  const currentMonth = monthlyData[monthlyData.length - 1] || { month: '', income: 0, expenses: 0, balance: 0 };
-  const previousMonth = monthlyData[monthlyData.length - 2] || { month: '', income: 0, expenses: 0, balance: 0 };
-  
-  // Get the month label from the last uploaded data (not current calendar month)
-  const latestMonthLabel = monthlyData.length > 0 
-    ? monthlyData[monthlyData.length - 1].month 
-    : null;
+  // Available months (only those with data), sorted descending (newest first)
+  const availableMonths = [...monthlyData]
+    .map((m) => m.month)
+    .filter(Boolean)
+    .sort((a, b) => b.localeCompare(a));
+
+  // Default to latest month with data; allow user to override via selector
+  const latestMonthLabel =
+    selectedMonth && availableMonths.includes(selectedMonth)
+      ? selectedMonth
+      : availableMonths[0] ?? null;
+
+  const currentIndex = monthlyData.findIndex((m) => m.month === latestMonthLabel);
+  const currentMonth =
+    currentIndex >= 0
+      ? monthlyData[currentIndex]
+      : { month: '', income: 0, expenses: 0, balance: 0 };
+  const previousMonth =
+    currentIndex > 0
+      ? monthlyData[currentIndex - 1]
+      : { month: '', income: 0, expenses: 0, balance: 0 };
   
   const convertedCurrentMonth = {
     ...currentMonth,
