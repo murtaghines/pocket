@@ -24,6 +24,8 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
 import { Wallet, Loader2 } from "lucide-react";
+import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import type { Category } from "@/lib/mockData";
 import {
   DropdownMenu,
   DropdownMenuContent,
