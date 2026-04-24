@@ -40,8 +40,6 @@ export default function Index() {
   const { 
     transactions, 
     monthlyData, 
-    categoryData,
-    incomeCategoryData,
     summary, 
     openingBalanceByMonth,
     isLoading 
