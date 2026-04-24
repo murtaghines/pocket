@@ -324,9 +324,19 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       </PillBadge>
                     </DataTableCell>
                     <DataTableCell>
-                      <span className="break-words line-clamp-2 text-foreground/90">
-                        {transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}
-                      </span>
+                      <div className="flex items-start gap-2">
+                        <span className="break-words line-clamp-2 text-foreground/90">
+                          {transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}
+                        </span>
+                        {transaction.userCorrected && (
+                          <span
+                            title={t('transactions.edited')}
+                            className="mt-1 inline-flex shrink-0 items-center rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-warning-foreground"
+                          >
+                            {t('transactions.edited')}
+                          </span>
+                        )}
+                      </div>
                     </DataTableCell>
                     <DataTableCell className="hidden md:table-cell">
                       <PillBadge colorVar={getCategoryColor(transaction.category)}>
