@@ -24,6 +24,8 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
 import { Wallet, Loader2 } from "lucide-react";
+import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import type { Category } from "@/lib/mockData";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,8 +40,6 @@ export default function Index() {
   const { 
     transactions, 
     monthlyData, 
-    categoryData,
-    incomeCategoryData,
     summary, 
     openingBalanceByMonth,
     isLoading 
@@ -126,15 +126,45 @@ export default function Index() {
     balance: convertToUserCurrency(m.balance),
   }));
 
-  const convertedCategoryData = categoryData.map(c => ({
-    ...c,
-    value: convertToUserCurrency(c.value),
-  }));
+  // Recompute category breakdowns for the SELECTED month so charts react
+  // to the month dropdown AND to live edits (categories, movement) made in
+  // the transaction tables.
+  const getCategoryHslColor = (slug: string): string => {
+    const varName = categoryColorVars[slug];
+    if (!varName) return "hsl(220, 10%, 55%)";
+    if (typeof window !== "undefined") {
+      const value = getComputedStyle(document.documentElement)
+        .getPropertyValue(`--${varName}`)
+        .trim();
+      if (value) return `hsl(${value})`;
+    }
+    return "hsl(220, 10%, 55%)";
+  };
 
-  const convertedIncomeCategoryData = incomeCategoryData.map(c => ({
-    ...c,
-    value: convertToUserCurrency(c.value),
-  }));
+  const monthTransactions = latestMonthLabel
+    ? transactions.filter((t) => t.date.startsWith(latestMonthLabel))
+    : [];
+
+  const buildCategoryData = (filterFn: (t: typeof transactions[number]) => boolean) => {
+    const totals: Record<string, number> = {};
+    monthTransactions.filter(filterFn).forEach((t) => {
+      const key = t.categorySlug || t.category;
+      totals[key] = (totals[key] || 0) + Math.abs(t.amount);
+    });
+    return Object.entries(totals).map(([slug, value]) => ({
+      name: getCategoryLabel(slug),
+      value: Math.round(convertToUserCurrency(value) * 100) / 100,
+      category: slug as Category,
+      color: getCategoryHslColor(slug),
+    }));
+  };
+
+  const convertedCategoryData = buildCategoryData(
+    (t) => t.movement === "EXPENSE" || t.type === "expense"
+  );
+  const convertedIncomeCategoryData = buildCategoryData(
+    (t) => t.movement === "INCOME" || t.type === "income"
+  );
 
   const convertedSummary = {
     income: convertToUserCurrency(summary.income),
