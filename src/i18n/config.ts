@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 
 // Import translations
 import commonEn from './locales/en/common.json';
@@ -26,7 +25,6 @@ import categoriesEs from './locales/es/categories.json';
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español' },
 ] as const;
 
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number]['code'];
@@ -63,28 +61,26 @@ export const COUNTRY_LANGUAGE_MAP: Record<string, SupportedLanguage> = {
 };
 
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    lng: 'en',
     fallbackLng: 'en',
+    supportedLngs: ['en'],
     defaultNS: 'common',
     ns: ['common', 'auth', 'dashboard', 'investments', 'profile', 'settings', 'categories'],
     interpolation: {
       escapeValue: false,
     },
-    detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
-      lookupLocalStorage: 'i18nextLng',
-      convertDetectedLanguage: (lng: string) => {
-        // Extract base language (e.g., 'es-MX' -> 'es')
-        const baseLang = lng.split('-')[0];
-        // Check if it's a supported language
-        const supported = SUPPORTED_LANGUAGES.find(l => l.code === baseLang);
-        return supported ? baseLang : 'en';
-      },
-    },
   });
+
+// Always force English regardless of any previously cached preference.
+try {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('i18nextLng', 'en');
+  }
+} catch {
+  // ignore (e.g., privacy mode)
+}
 
 export default i18n;
