@@ -134,30 +134,69 @@ export function TrendKpiCard({
   const isDown = change !== undefined && change < 0;
 
   const gradientId = `trend-fill-${kind}`;
-  const isBalance = kind === "balance";
 
-  // Balance card uses inverted styling: white bg + blue accents
-  const cardClasses = isBalance
-    ? "bg-card border border-primary/20"
-    : `border-0 ${bgClass} text-white`;
+  // All three KPIs share the inverted style: white card, very light tint
+  // border, accent-colored text/chart driven by the kind.
+  const accentVar =
+    kind === "income"
+      ? "--success"
+      : kind === "expense"
+        ? "--destructive"
+        : "--primary";
+  const accent = `hsl(var(${accentVar}))`;
 
-  const labelClass = isBalance ? "text-primary/70" : "text-white/80";
-  const iconBgClass = isBalance ? "bg-primary/10" : "bg-white/15 backdrop-blur-sm";
-  const iconColorClass = isBalance ? "text-primary" : "";
-  const valueClass = isBalance
-    ? "bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
-    : "text-white";
-  const chipClass = isBalance ? "bg-primary/10 text-primary" : "bg-white/20 text-white";
-  const chipMutedClass = isBalance ? "text-primary/60" : "text-white/70";
-  const hoverTextClass = isBalance ? "text-primary/70" : "text-white/80";
+  // Tailwind class shorthands per accent (kept as static literals so the
+  // JIT picks them up at build time).
+  const accentClasses =
+    kind === "income"
+      ? {
+          card: "bg-success/5 border border-success/20",
+          label: "text-success/80",
+          iconBg: "bg-success/10",
+          iconColor: "text-success",
+          value: "bg-gradient-to-r from-success to-success/60 bg-clip-text text-transparent",
+          chip: "bg-success/10 text-success",
+          chipMuted: "text-success/60",
+          hoverText: "text-success/70",
+        }
+      : kind === "expense"
+        ? {
+            card: "bg-destructive/5 border border-destructive/20",
+            label: "text-destructive/80",
+            iconBg: "bg-destructive/10",
+            iconColor: "text-destructive",
+            value: "bg-gradient-to-r from-destructive to-destructive/60 bg-clip-text text-transparent",
+            chip: "bg-destructive/10 text-destructive",
+            chipMuted: "text-destructive/60",
+            hoverText: "text-destructive/70",
+          }
+        : {
+            card: "bg-card border border-primary/20",
+            label: "text-primary/70",
+            iconBg: "bg-primary/10",
+            iconColor: "text-primary",
+            value: "bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent",
+            chip: "bg-primary/10 text-primary",
+            chipMuted: "text-primary/60",
+            hoverText: "text-primary/70",
+          };
 
-  // Chart colors
-  const chartStroke = isBalance ? "hsl(var(--primary))" : "#ffffff";
-  const chartGradColor = isBalance ? "hsl(var(--primary))" : "#ffffff";
-  const chartGradStartOp = isBalance ? 0.35 : 0.5;
-  const cursorStroke = isBalance ? "hsl(var(--primary))" : "#ffffff";
-  const dotFill = isBalance ? "hsl(var(--primary))" : "#ffffff";
-  const dotStroke = isBalance ? "hsl(var(--primary))" : "#000000";
+  const cardClasses = accentClasses.card;
+  const labelClass = accentClasses.label;
+  const iconBgClass = accentClasses.iconBg;
+  const iconColorClass = accentClasses.iconColor;
+  const valueClass = accentClasses.value;
+  const chipClass = accentClasses.chip;
+  const chipMutedClass = accentClasses.chipMuted;
+  const hoverTextClass = accentClasses.hoverText;
+
+  // Chart colors all driven by the accent token
+  const chartStroke = accent;
+  const chartGradColor = accent;
+  const chartGradStartOp = 0.35;
+  const cursorStroke = accent;
+  const dotFill = accent;
+  const dotStroke = accent;
 
   return (
     <Card
