@@ -27,7 +27,9 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English' },
 ] as const;
 
-export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number]['code'];
+// Kept as a union for backward compatibility with persisted user preferences,
+// but the app is forced to render in English only.
+export type SupportedLanguage = 'en' | 'es';
 
 const resources = {
   en: {
