@@ -42,10 +42,10 @@ export default function Investments() {
       <main className="w-full">
         <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-8 mb-2 md:mb-3" style={{ boxShadow: 'var(--shadow-section)' }}>
           <div className="mb-8">
-            <h2 className="font-display text-3xl font-bold tracking-tight">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
               {t('title')}
-            </h2>
-            <p className="text-muted-foreground mt-1">
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
               {currentMonthName}
             </p>
           </div>

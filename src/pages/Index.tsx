@@ -146,9 +146,9 @@ export default function Index() {
 
             {/* Section header */}
             <div className="mb-6">
-              <h3 className="font-nav text-2xl md:text-3xl font-semibold capitalize text-foreground">
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
                 {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
-              </h3>
+              </h1>
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
                 <p className="text-sm text-muted-foreground mt-1">
                   {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
