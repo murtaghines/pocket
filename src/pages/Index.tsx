@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, ChevronDown } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
@@ -24,6 +24,13 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
 import { Wallet, Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export default function Index() {
   const { t } = useTranslation('dashboard');
@@ -45,6 +52,7 @@ export default function Index() {
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
@@ -59,13 +67,27 @@ export default function Index() {
     return convertAmount(amount, 'EUR', userCurrency);
   };
 
-  const currentMonth = monthlyData[monthlyData.length - 1] || { month: '', income: 0, expenses: 0, balance: 0 };
-  const previousMonth = monthlyData[monthlyData.length - 2] || { month: '', income: 0, expenses: 0, balance: 0 };
-  
-  // Get the month label from the last uploaded data (not current calendar month)
-  const latestMonthLabel = monthlyData.length > 0 
-    ? monthlyData[monthlyData.length - 1].month 
-    : null;
+  // Available months (only those with data), sorted descending (newest first)
+  const availableMonths = [...monthlyData]
+    .map((m) => m.month)
+    .filter(Boolean)
+    .sort((a, b) => b.localeCompare(a));
+
+  // Default to latest month with data; allow user to override via selector
+  const latestMonthLabel =
+    selectedMonth && availableMonths.includes(selectedMonth)
+      ? selectedMonth
+      : availableMonths[0] ?? null;
+
+  const currentIndex = monthlyData.findIndex((m) => m.month === latestMonthLabel);
+  const currentMonth =
+    currentIndex >= 0
+      ? monthlyData[currentIndex]
+      : { month: '', income: 0, expenses: 0, balance: 0 };
+  const previousMonth =
+    currentIndex > 0
+      ? monthlyData[currentIndex - 1]
+      : { month: '', income: 0, expenses: 0, balance: 0 };
   
   const convertedCurrentMonth = {
     ...currentMonth,
@@ -146,9 +168,40 @@ export default function Index() {
 
             {/* Section header */}
             <div className="mb-6">
-              <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
-                {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
-              </h1>
+              {availableMonths.length > 0 ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="h-auto px-2 -ml-2 py-1 hover:bg-muted/60 rounded-lg"
+                    >
+                      <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
+                        {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : ''}
+                      </h1>
+                      <ChevronDown className="w-5 h-5 ml-2 text-muted-foreground" strokeWidth={2.25} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="max-h-80 overflow-y-auto">
+                    {availableMonths.map((m) => (
+                      <DropdownMenuItem
+                        key={m}
+                        onSelect={() => setSelectedMonth(m)}
+                        className={
+                          m === latestMonthLabel
+                            ? "capitalize font-medium bg-muted/60"
+                            : "capitalize"
+                        }
+                      >
+                        {formatMonth(m + '-01')}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
+                  {t('period.noPeriods', 'No data yet')}
+                </h1>
+              )}
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
                 <p className="text-sm text-muted-foreground mt-1">
                   {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
