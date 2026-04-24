@@ -49,6 +49,7 @@ export interface Transaction {
   account: string;
   bank: string;
   runningBalance?: number | null;
+  userCorrected?: boolean;
 }
 
 export interface MonthlyData {
