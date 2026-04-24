@@ -171,6 +171,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           account: t.account_id ? (accountMap[t.account_id] || t.bank || "Unknown") : (t.bank || "Unknown"),
           bank: t.account_id ? (accountMap[t.account_id] || t.bank || "Unknown") : (t.bank || "Unknown"),
           runningBalance: t.running_balance,
+          userCorrected: t.user_corrected ?? false,
         };
       });
     },
