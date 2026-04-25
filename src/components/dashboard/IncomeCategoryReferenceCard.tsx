@@ -16,12 +16,13 @@ const SVG_SIZE = 360;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
 const OUTER_RADIUS = 150;
-const INNER_RADIUS = 70;
+const INNER_RADIUS = 56;
 const VISUAL_BOX_WIDTH = 460;
 const VISUAL_BOX_HEIGHT = 220;
 const VISUAL_CHART_SIZE = 220;
 const VISUAL_CHART_LEFT = 8;
 const LABEL_COLUMN_LEFT = VISUAL_CHART_LEFT + VISUAL_CHART_SIZE + 24;
+const LABEL_COLUMN_WIDTH = VISUAL_BOX_WIDTH - LABEL_COLUMN_LEFT;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
@@ -52,12 +53,31 @@ const getRingStroke = (style: RingStyle) => {
 export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCardProps) {
   const { t } = useTranslation("dashboard");
 
-  const sorted = [...data]
+  const filtered = [...data]
     .filter((item) => item.value > 0)
     .sort((a, b) => b.value - a.value);
 
+  const totalAll = filtered.reduce((sum, item) => sum + item.value, 0);
+  const hasData = filtered.length > 0 && totalAll > 0;
+
+  // Cap visible rings at 6: collapse the long tail into a single "Other" ring
+  // so the chart never gets visually cluttered with too many concentric rings.
+  const MAX_RINGS = 6;
+  let sorted = filtered;
+  if (filtered.length > MAX_RINGS) {
+    const head = filtered.slice(0, MAX_RINGS - 1);
+    const tail = filtered.slice(MAX_RINGS - 1);
+    const tailValue = tail.reduce((sum, item) => sum + item.value, 0);
+    sorted = [
+      ...head,
+      {
+        name: t("charts.otherCategories", "Other"),
+        value: tailValue,
+        color: tail[0]?.color ?? "",
+      },
+    ];
+  }
   const total = sorted.reduce((sum, item) => sum + item.value, 0);
-  const hasData = sorted.length > 0 && total > 0;
 
   if (!hasData) {
     return (
@@ -80,7 +100,12 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
   const ringCount = sorted.length;
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
-  const strokeWidth = ringCount > 1 ? Math.max(20, Math.min(32, ringSpacing * 0.9)) : 30;
+  // Scale stroke width down as we add rings so they never overlap.
+  // 1 ring -> 30, 2 -> 28, 3 -> 24, 4 -> 20, 5 -> 17, 6 -> 14
+  const strokeWidth =
+    ringCount === 1
+      ? 30
+      : Math.max(12, Math.min(28, ringSpacing * 0.78));
   const cx = SVG_SIZE * 0.5;
   const cy = SVG_SIZE * 0.5;
   const radiiByIndex = sorted.map((_, index) =>
@@ -88,6 +113,20 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
   );
   const chartCenterX = VISUAL_CHART_LEFT + VISUAL_CHART_SIZE / 2;
   const chartCenterY = VISUAL_BOX_HEIGHT / 2;
+
+  // Two-column legend when there are many categories so labels never collide
+  // and stay legible at any count. <=4 -> single column, >4 -> two columns.
+  const useTwoColumns = ringCount > 4;
+  const columnCount = useTwoColumns ? 2 : 1;
+  const rowsPerColumn = Math.ceil(ringCount / columnCount);
+  const lineHeight = useTwoColumns ? 22 : ringCount >= 4 ? 24 : 26;
+  const columnGap = 12;
+  const columnWidth = useTwoColumns
+    ? (LABEL_COLUMN_WIDTH - columnGap) / 2
+    : LABEL_COLUMN_WIDTH;
+  const labelTextSize = useTwoColumns ? "text-[11px] md:text-xs" : "text-[13px] md:text-sm";
+  const labelValueSize = useTwoColumns ? "text-[11px] md:text-xs" : "text-[13px] md:text-sm";
+  const dotSize = useTwoColumns ? "h-2 w-2" : "h-2.5 w-2.5";
 
   return (
     <Card
@@ -174,26 +213,28 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
             {sorted.map((category, index) => {
               const pct = (category.value / total) * 100;
               const ringStyle = RING_STYLES[index % RING_STYLES.length];
-              const radius = radiiByIndex[index];
-              const scaledRadius = (radius / SVG_SIZE) * VISUAL_CHART_SIZE;
-              // Stack labels vertically at the right side, ordered by ring (outer ring on top)
-              const lineHeight = 26;
-              const totalHeight = (sorted.length - 1) * lineHeight;
+              const colIndex = Math.floor(index / rowsPerColumn);
+              const rowIndex = index % rowsPerColumn;
+              const itemsInThisColumn =
+                colIndex === columnCount - 1 ? ringCount - colIndex * rowsPerColumn : rowsPerColumn;
+              const totalHeight = (itemsInThisColumn - 1) * lineHeight;
               const startY = chartCenterY - totalHeight / 2;
-              const topY = startY + index * lineHeight;
+              const topY = startY + rowIndex * lineHeight;
+              const leftX = LABEL_COLUMN_LEFT + colIndex * (columnWidth + columnGap);
 
               return (
                 <div
                   key={`${category.name}-legend-${index}`}
-                  className="absolute flex items-center gap-2.5 whitespace-nowrap text-primary-foreground"
+                  className="absolute flex items-center gap-2 text-primary-foreground"
                   style={{
-                    left: `${LABEL_COLUMN_LEFT}px`,
+                    left: `${leftX}px`,
+                    width: `${columnWidth}px`,
                     top: `${topY}px`,
                     transform: "translateY(-50%)",
                   }}
                 >
                   <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full border border-primary-foreground/80"
+                    className={`${dotSize} shrink-0 rounded-full border border-primary-foreground/80`}
                     style={{
                       backgroundColor:
                         ringStyle === "white"
@@ -203,8 +244,10 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
                             : "transparent",
                     }}
                   />
-                  <span className="text-[13px] font-medium md:text-sm">{category.name}</span>
-                  <span className="text-[13px] font-semibold tabular-nums md:text-sm">
+                  <span className={`${labelTextSize} min-w-0 flex-1 truncate font-medium`}>
+                    {category.name}
+                  </span>
+                  <span className={`${labelValueSize} shrink-0 font-semibold tabular-nums`}>
                     {pct.toFixed(0)}%
                   </span>
                 </div>
