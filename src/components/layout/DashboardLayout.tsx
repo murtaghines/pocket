@@ -39,7 +39,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navItems = [
     { label: t('navigation.dashboard', 'Dashboard'), path: '/dashboard', icon: LayoutDashboard },
-    { label: t('navigation.total', 'Total'), path: '/total', icon: BarChart3 },
+    { label: t('navigation.history', 'History'), path: '/history', icon: BarChart3 },
     { label: t('navigation.investments'), path: '/investments', icon: PiggyBank },
   ];
 
