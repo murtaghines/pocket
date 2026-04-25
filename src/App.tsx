@@ -18,6 +18,7 @@ import Investments from "./pages/Investments";
 import Profile from "./pages/Profile";
 import MyData from "./pages/MyData";
 import NotFound from "./pages/NotFound";
+import ComingSoon from "./pages/ComingSoon";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,21 @@ const App = () => (
             } />
             {/* Backwards-compatible redirect from the previous /total route */}
             <Route path="/total" element={<Navigate to="/history" replace />} />
+            <Route path="/calendar" element={
+              <ProtectedRoute>
+                <ComingSoon title="Calendar" subtitle="A monthly view of your activity" />
+              </ProtectedRoute>
+            } />
+            <Route path="/planning/planned" element={
+              <ProtectedRoute>
+                <ComingSoon title="Planned payments" subtitle="Schedule and track upcoming expenses" />
+              </ProtectedRoute>
+            } />
+            <Route path="/planning/budgets" element={
+              <ProtectedRoute>
+                <ComingSoon title="Budgets" subtitle="Set spending limits per category" />
+              </ProtectedRoute>
+            } />
             <Route path="/investments" element={
               <ProtectedRoute>
                 <Investments />
