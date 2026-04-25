@@ -11,7 +11,7 @@ import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
 import { LanguagePreferenceSync } from "@/components/layout/LanguagePreferenceSync";
 import { SUPPORTED_LANGUAGES } from "@/i18n/config";
 import Index from "./pages/Index";
-import Total from "./pages/Total";
+import History from "./pages/History";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
@@ -90,11 +90,13 @@ const App = () => (
                 <Index />
               </ProtectedRoute>
             } />
-            <Route path="/total" element={
+            <Route path="/history" element={
               <ProtectedRoute>
-                <Total />
+                <History />
               </ProtectedRoute>
             } />
+            {/* Backwards-compatible redirect from the previous /total route */}
+            <Route path="/total" element={<Navigate to="/history" replace />} />
             <Route path="/investments" element={
               <ProtectedRoute>
                 <Investments />

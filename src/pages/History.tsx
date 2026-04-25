@@ -5,23 +5,29 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useTranslation } from "react-i18next";
-import { Loader2, BarChart3 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-export default function Total() {
-  const { t } = useTranslation('dashboard');
+export default function History() {
+  const { t } = useTranslation("dashboard");
   const { transactions, monthlyData, isLoading } = useTransactions();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
-  const { convertAmount } = useExchangeRates('EUR');
+  const { convertAmount } = useExchangeRates("EUR");
 
-  const userCurrency = preferences?.base_currency || 'EUR';
-  const convertToUserCurrency = (amount: number) => convertAmount(amount, 'EUR', userCurrency);
+  const userCurrency = preferences?.base_currency || "EUR";
+  const convertToUserCurrency = (amount: number) =>
+    convertAmount(amount, "EUR", userCurrency);
 
-  const convertedMonthlyData = monthlyData.map(m => ({
+  const convertedMonthlyData = monthlyData.map((m) => ({
     ...m,
     income: convertToUserCurrency(m.income),
     expenses: convertToUserCurrency(m.expenses),
     balance: convertToUserCurrency(m.balance),
   }));
+
+  // Sort transactions newest first for the historical table
+  const sortedTransactions = [...transactions].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
 
   return (
     <DashboardLayout>
@@ -34,12 +40,16 @@ export default function Total() {
 
         {!isLoading && !prefsLoading && (
           <>
+            {/* Header — matches Dashboard typography */}
             <div className="mb-6">
-              <h3 className="text-2xl md:text-3xl font-semibold text-foreground">
-                {t('views.total', 'Total')}
-              </h3>
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
+                {t("views.history", "History")}
+              </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                {t('views.totalSubtitle', 'Accumulated view across all periods')}
+                {t(
+                  "views.historySubtitle",
+                  "All your data, every month combined",
+                )}
               </p>
             </div>
 
@@ -47,9 +57,12 @@ export default function Total() {
               <TotalView monthlyData={convertedMonthlyData} />
             </div>
 
-            <div className="bg-card rounded-2xl p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
+            <div
+              className="bg-card rounded-2xl p-3 md:p-4 border border-border mt-6"
+              style={{ boxShadow: "var(--shadow-section)" }}
+            >
               <div className="max-h-[500px] overflow-y-auto">
-                <TransactionTable transactions={transactions} />
+                <TransactionTable transactions={sortedTransactions} />
               </div>
             </div>
           </>

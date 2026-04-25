@@ -144,6 +144,8 @@
   "views": {
     "monthly": "Monthly",
     "total": "Total",
+    "history": "History",
+    "historySubtitle": "All your data, every month combined",
     "historicalOverview": "Historical Overview",
     "monthsTracked": "{{count}} months tracked",
     "totalIncome": "Total Income",

@@ -33,6 +33,7 @@
   "required": "Requerido",
   "navigation": {
     "dashboard": "Panel",
+    "history": "Histórico",
     "investments": "Inversiones",
     "profile": "Perfil",
     "myData": "Mis Datos",
