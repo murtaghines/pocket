@@ -113,6 +113,8 @@
   "views": {
     "monthly": "Mensual",
     "total": "Total",
+    "history": "Histórico",
+    "historySubtitle": "Todos tus datos, todos los meses combinados",
     "historicalOverview": "Vista Histórica",
     "monthsTracked": "{{count}} meses registrados",
     "totalIncome": "Ingresos Totales",

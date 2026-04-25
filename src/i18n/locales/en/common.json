@@ -34,6 +34,7 @@
   "required": "Required",
   "navigation": {
     "dashboard": "Dashboard",
+    "history": "History",
     "investments": "Investments",
     "profile": "Profile",
     "myData": "My Data",

@@ -315,7 +315,7 @@ export default function Index() {
             {/* Expense Charts Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <SpendingByCategoryChart data={convertedCategoryData} />
-              <TopExpensesCard transactions={transactions} />
+              <TopExpensesCard transactions={monthTransactions} />
             </div>
 
             {/* Accounts stack (moved below) */}
@@ -331,7 +331,7 @@ export default function Index() {
             {/* Transactions */}
             <div className="bg-card rounded-2xl p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
               <div className="max-h-[500px] overflow-y-auto">
-                <TransactionTable transactions={transactions} />
+                <TransactionTable transactions={monthTransactions} />
               </div>
             </div>
           </>
