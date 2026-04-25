@@ -1,11 +1,15 @@
 import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PiggyBank, BarChart3, FileSpreadsheet } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
+import {
+  LayoutDashboard,
+  PiggyBank,
+  BarChart3,
+  Target,
+  FileSpreadsheet,
+  User,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "./ThemeToggle";
 import { DataRail } from "./DataRail";
 
 interface DashboardLayoutProps {
@@ -13,107 +17,47 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user } = useAuth();
-  const { profile } = useProfile();
   const location = useLocation();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   // Add dashboard-theme to body so portaled elements (popovers, selects, dialogs) inherit theme
   useEffect(() => {
-    document.body.classList.add('dashboard-theme');
+    document.body.classList.add("dashboard-theme");
     return () => {
-      document.body.classList.remove('dashboard-theme');
+      document.body.classList.remove("dashboard-theme");
     };
   }, []);
 
-  const isActive = (path: string) => location.pathname === path;
-
-  const getInitials = () => {
-    if (profile?.first_name) {
-      const first = profile.first_name.charAt(0).toUpperCase();
-      const last = profile.last_name?.charAt(0).toUpperCase() || '';
-      return first + last;
-    }
-    return user?.email?.charAt(0).toUpperCase() || 'U';
-  };
-
-  const navItems = [
-    { label: t('navigation.dashboard', 'Dashboard'), path: '/dashboard', icon: LayoutDashboard },
-    { label: t('navigation.history', 'History'), path: '/history', icon: BarChart3 },
-    { label: t('navigation.investments'), path: '/investments', icon: PiggyBank },
-  ];
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   const mobileNavItems = [
-    ...navItems,
-    { label: 'Data', path: '/my-data?tab=bank', icon: FileSpreadsheet },
+    { label: t("navigation.dashboard", "Dashboard"), path: "/dashboard", icon: LayoutDashboard },
+    { label: t("navigation.history", "History"), path: "/history", icon: BarChart3 },
+    { label: t("navigation.investments", "Investments"), path: "/investments", icon: PiggyBank },
+    { label: "Planning", path: "/planning/budgets", icon: Target },
+    { label: "Data", path: "/my-data?tab=bank", icon: FileSpreadsheet },
+    { label: t("navigation.profile", "Profile"), path: "/profile", icon: User },
   ];
 
   return (
     <div className="min-h-screen bg-background dashboard-theme relative md:pl-24">
-      {/* Persistent vertical data rail (desktop) */}
+      {/* Persistent vertical rail (desktop) handles all navigation + utilities */}
       <DataRail />
 
-      {/* Top nav — clean, light, inspired by reference */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md">
-        <div className="w-full px-4 md:px-8 py-4 md:py-5">
-          <nav className="flex items-center justify-between gap-4">
-            {/* Left: inline navigation (brand lives in the side rail) */}
-            <div className="flex items-center">
-              <div className="hidden md:flex items-center gap-10">
-                {navItems.map((item) => {
-                  const active = isActive(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={cn(
-                        "relative text-[15px] tracking-tight transition-colors py-1",
-                        active
-                          ? "text-foreground font-semibold"
-                          : "text-muted-foreground hover:text-foreground font-medium"
-                      )}
-                    >
-                      {item.label}
-                      {active && (
-                        <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-foreground rounded-full" />
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Right side: Theme toggle + Bell + Avatar */}
-            <div className="flex items-center gap-2 md:gap-3">
-              <ThemeToggle />
-              <Link to="/profile">
-                <div className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center text-[15px] font-semibold transition-all overflow-hidden",
-                  isActive('/profile')
-                    ? "bg-primary text-primary-foreground ring-2 ring-primary/20"
-                    : "bg-[hsl(0_0%_88%)] dark:bg-muted text-foreground hover:bg-[hsl(0_0%_82%)] dark:hover:bg-muted/70"
-                )}>
-                  {getInitials()}
-                </div>
-              </Link>
-            </div>
-          </nav>
-        </div>
-      </header>
-
-      {/* Mobile bottom nav - kept for mobile UX */}
+      {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
-        <div className="flex items-center justify-around h-14 px-4">
+        <div className="flex items-center justify-around h-14 px-2 overflow-x-auto">
           {mobileNavItems.map((item) => {
             const Icon = item.icon;
-            const active = isActive(item.path.split('?')[0]);
+            const active = isActive(item.path.split("?")[0]);
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 rounded-xl transition-all flex-1 max-w-[100px]",
-                  active ? "text-foreground" : "text-muted-foreground"
+                  "flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl transition-all flex-1 min-w-[56px]",
+                  active ? "text-foreground" : "text-muted-foreground",
                 )}
               >
                 <Icon className="w-5 h-5" />
@@ -126,7 +70,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </nav>
 
       {/* Main content */}
-      <main className="w-full px-4 md:px-8 pb-20 md:pb-8 relative z-10">
+      <main className="w-full px-4 md:px-8 pt-6 md:pt-8 pb-20 md:pb-8 relative z-10">
         {children}
       </main>
     </div>
