@@ -281,7 +281,7 @@ function WorkspaceLinks({
   isWorkspaceActive: (item: NavChild) => boolean;
 }) {
   return (
-    <div className="mt-4 px-3 pt-4 border-t border-primary-foreground/15">
+    <div className="mt-4 pt-4 border-t border-primary-foreground/15">
       <div className="space-y-2">
         {items.map((item) => {
           const Icon = item.icon!;
@@ -289,7 +289,7 @@ function WorkspaceLinks({
           return (
             <div
               key={item.to}
-              className="grid h-10 grid-cols-[72px_minmax(0,1fr)] items-center"
+              className="relative h-10"
             >
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -297,7 +297,7 @@ function WorkspaceLinks({
                     to={item.to}
                     aria-label={item.label}
                     className={cn(
-                      "col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                      "absolute left-8 top-0 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
                       active
                         ? "text-primary-foreground bg-primary-foreground/10"
                         : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
@@ -317,7 +317,7 @@ function WorkspaceLinks({
                 <Link
                   to={item.to}
                   className={cn(
-                    "min-w-0 rounded-md px-2 py-1.5 text-sm transition-colors",
+                    "ml-24 flex h-10 min-w-0 items-center rounded-md px-2 text-sm transition-colors",
                     active
                       ? "bg-primary-foreground/10 text-primary-foreground font-medium"
                       : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
