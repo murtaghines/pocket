@@ -102,28 +102,28 @@ export function DataRail() {
         aria-label="Primary navigation"
       >
         {/* Top: brand */}
-        <div
-          className={cn(
-            "flex items-center px-4",
-            expanded ? "justify-between" : "justify-center",
-          )}
-        >
+        <div className="relative h-12">
           <Link
             to="/dashboard"
             aria-label="Pocket — go to dashboard"
-            className="flex items-center gap-2"
+            className="absolute left-0 top-0 flex h-12 w-24 items-center justify-center"
           >
             <img src={pocketLogoWhite} alt="Pocket" className="h-12 w-12" />
-            {expanded && (
-              <span className="text-lg font-semibold tracking-tight">
-                Pocket
-              </span>
-            )}
           </Link>
+          {expanded && (
+            <Link
+              to="/dashboard"
+              aria-hidden="true"
+              tabIndex={-1}
+              className="ml-24 flex h-12 items-center pr-4"
+            >
+              <span className="text-lg font-semibold tracking-tight">Pocket</span>
+            </Link>
+          )}
         </div>
 
         {/* Navigation — identical icon column and vertical rhythm in both states */}
-        <nav className="flex-1 overflow-y-auto mt-6 px-3">
+        <nav className="flex-1 overflow-y-auto mt-6">
           <NavigationGroups groups={groups} expanded={expanded} isActive={isActive} />
         </nav>
 
@@ -137,8 +137,8 @@ export function DataRail() {
         {/* Expand / collapse — bottom of rail, slim chevron */}
         <div
           className={cn(
-            "mt-4 px-3 pt-3",
-            expanded ? "flex justify-end" : "flex justify-center",
+            "mt-4 pt-3",
+            expanded ? "flex justify-start" : "flex justify-start",
           )}
         >
           <Tooltip>
@@ -147,7 +147,7 @@ export function DataRail() {
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
                 aria-label={expanded ? "Collapse navigation" : "Expand navigation"}
-                className="w-8 h-8 rounded-md flex items-center justify-center text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-colors"
+                className="ml-8 w-8 h-8 rounded-md flex items-center justify-center text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-colors"
               >
                 {expanded ? (
                   <ChevronLeft className="w-4 h-4" strokeWidth={2} />
@@ -204,7 +204,7 @@ function NavigationGroups({
 
         return (
           <div key={group.key} style={{ height: blockHeight }} className="w-full">
-            <div className="grid h-10 grid-cols-[72px_minmax(0,1fr)] items-center">
+            <div className="relative h-10">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
@@ -212,7 +212,7 @@ function NavigationGroups({
                     aria-label={group.label}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                      "absolute left-8 top-0 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
                       active
                         ? "text-primary-foreground bg-primary-foreground/10"
                         : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
@@ -232,7 +232,7 @@ function NavigationGroups({
                 <Link
                   to={target}
                   className={cn(
-                    "min-w-0 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors",
+                    "ml-24 flex h-10 min-w-0 items-center rounded-md px-2 text-sm font-semibold transition-colors",
                     active
                       ? "text-primary-foreground"
                       : "text-primary-foreground/85 hover:text-primary-foreground",
@@ -244,7 +244,7 @@ function NavigationGroups({
             </div>
 
             {expanded && group.children && (
-              <div className="ml-[72px] border-l border-primary-foreground/15 pl-3">
+              <div className="ml-24 border-l border-primary-foreground/15 pl-3 pr-3">
                 {group.children.map((child) => {
                   const childActive = isActive(child.to);
                   return (
@@ -281,7 +281,7 @@ function WorkspaceLinks({
   isWorkspaceActive: (item: NavChild) => boolean;
 }) {
   return (
-    <div className="mt-4 px-3 pt-4 border-t border-primary-foreground/15">
+    <div className="mt-4 pt-4 border-t border-primary-foreground/15">
       <div className="space-y-2">
         {items.map((item) => {
           const Icon = item.icon!;
@@ -289,7 +289,7 @@ function WorkspaceLinks({
           return (
             <div
               key={item.to}
-              className="grid h-10 grid-cols-[72px_minmax(0,1fr)] items-center"
+              className="relative h-10"
             >
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -297,7 +297,7 @@ function WorkspaceLinks({
                     to={item.to}
                     aria-label={item.label}
                     className={cn(
-                      "col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                      "absolute left-8 top-0 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
                       active
                         ? "text-primary-foreground bg-primary-foreground/10"
                         : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
@@ -317,7 +317,7 @@ function WorkspaceLinks({
                 <Link
                   to={item.to}
                   className={cn(
-                    "min-w-0 rounded-md px-2 py-1.5 text-sm transition-colors",
+                    "ml-24 flex h-10 min-w-0 items-center rounded-md px-2 text-sm transition-colors",
                     active
                       ? "bg-primary-foreground/10 text-primary-foreground font-medium"
                       : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
