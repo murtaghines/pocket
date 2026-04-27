@@ -122,77 +122,17 @@ export function DataRail() {
           </Link>
         </div>
 
-        {/* Navigation — identical vertical rhythm in both states */}
+        {/* Navigation — identical icon column and vertical rhythm in both states */}
         <nav className="flex-1 overflow-y-auto mt-6 px-3">
-          {expanded ? (
-            <div className="space-y-5">
-              {groups.map((group) => (
-                <ExpandedGroup
-                  key={group.key}
-                  group={group}
-                  isActive={isActive}
-                />
-              ))}
-            </div>
-          ) : (
-            <CollapsedGroups groups={groups} isActive={isActive} />
-          )}
+          <NavigationGroups groups={groups} expanded={expanded} isActive={isActive} />
         </nav>
 
         {/* Workspace cluster */}
-        {expanded ? (
-          <div className="mt-4 px-3">
-            <div className="ml-3 border-l border-primary-foreground/15 pl-3 space-y-0.5">
-              {workspace.map((item) => {
-                const Icon = item.icon;
-                const active = isWorkspaceActive(item);
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={cn(
-                      "flex items-center gap-2 py-1.5 px-2 text-sm rounded-md transition-colors",
-                      active
-                        ? "text-primary-foreground bg-primary-foreground/10 font-medium"
-                        : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
-                    )}
-                  >
-                    {Icon && <Icon className="w-4 h-4" />}
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-4 flex flex-col items-center gap-3">
-            {workspace.map((item) => {
-              const Icon = item.icon!;
-              const active = isWorkspaceActive(item);
-              return (
-                <Tooltip key={item.to}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to={item.to}
-                      aria-label={item.label}
-                      className={cn(
-                        "flex items-center justify-center w-10 h-10 rounded-lg transition-colors",
-                        active
-                          ? "text-primary-foreground bg-primary-foreground/10"
-                          : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
-                      )}
-                    >
-                      <Icon className="w-5 h-5" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={8}>
-                    {item.label}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
-        )}
+        <WorkspaceLinks
+          items={workspace}
+          expanded={expanded}
+          isWorkspaceActive={isWorkspaceActive}
+        />
 
         {/* Expand / collapse — bottom of rail, slim chevron */}
         <div
