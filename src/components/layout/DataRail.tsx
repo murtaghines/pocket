@@ -102,28 +102,28 @@ export function DataRail() {
         aria-label="Primary navigation"
       >
         {/* Top: brand */}
-        <div
-          className={cn(
-            "flex items-center px-4",
-            expanded ? "justify-between" : "justify-center",
-          )}
-        >
+        <div className="relative h-12">
           <Link
             to="/dashboard"
             aria-label="Pocket — go to dashboard"
-            className="flex items-center gap-2"
+            className="absolute left-0 top-0 flex h-12 w-24 items-center justify-center"
           >
             <img src={pocketLogoWhite} alt="Pocket" className="h-12 w-12" />
-            {expanded && (
-              <span className="text-lg font-semibold tracking-tight">
-                Pocket
-              </span>
-            )}
           </Link>
+          {expanded && (
+            <Link
+              to="/dashboard"
+              aria-hidden="true"
+              tabIndex={-1}
+              className="ml-24 flex h-12 items-center pr-4"
+            >
+              <span className="text-lg font-semibold tracking-tight">Pocket</span>
+            </Link>
+          )}
         </div>
 
         {/* Navigation — identical icon column and vertical rhythm in both states */}
-        <nav className="flex-1 overflow-y-auto mt-6 px-3">
+        <nav className="flex-1 overflow-y-auto mt-6">
           <NavigationGroups groups={groups} expanded={expanded} isActive={isActive} />
         </nav>
 
@@ -137,8 +137,8 @@ export function DataRail() {
         {/* Expand / collapse — bottom of rail, slim chevron */}
         <div
           className={cn(
-            "mt-4 px-3 pt-3",
-            expanded ? "flex justify-end" : "flex justify-center",
+            "mt-4 pt-3",
+            expanded ? "flex justify-start" : "flex justify-start",
           )}
         >
           <Tooltip>
@@ -147,7 +147,7 @@ export function DataRail() {
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
                 aria-label={expanded ? "Collapse navigation" : "Expand navigation"}
-                className="w-8 h-8 rounded-md flex items-center justify-center text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-colors"
+                className="ml-8 w-8 h-8 rounded-md flex items-center justify-center text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-colors"
               >
                 {expanded ? (
                   <ChevronLeft className="w-4 h-4" strokeWidth={2} />
