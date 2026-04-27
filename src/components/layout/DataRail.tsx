@@ -10,10 +10,6 @@ import {
   FileSpreadsheet,
   PanelLeftOpen,
   PanelLeftClose,
-  LogOut,
-  Sun,
-  Moon,
-  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,16 +19,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
-import { useTheme } from "@/hooks/useTheme";
-import { useTranslation } from "react-i18next";
 import pocketLogoWhite from "@/assets/pocket-logo-white.png";
 
 type NavChild = {
   label: string;
   to: string;
-  icon: LucideIcon;
 };
 
 type NavGroup = {
@@ -44,40 +35,31 @@ type NavGroup = {
 };
 
 /**
- * Persistent left rail. Collapsed by default (icon strip); when the
- * user opens it, it expands to a full sidebar with grouped navigation,
- * mirroring modern product UIs (Pipeline Radar / Zelos style).
- * Branding stays blue. The bottom cluster keeps utility actions
- * (My Data, theme toggle, sign out) within thumb reach.
+ * Persistent left rail. Collapsed = logo + 3 group icons (Dashboard,
+ * Investments, Planning), no borders/cards, same vertical rhythm as
+ * the expanded state. Expanded = full grouped navigation with a thin
+ * vertical guide line under each group, and a very subtle translucent
+ * highlight on the active route — matching the reference UI.
  */
 export function DataRail() {
   const location = useLocation();
-  const { signOut } = useAuth();
-  const { profile } = useProfile();
-  const { theme, setTheme } = useTheme();
-  const { t } = useTranslation("common");
   const [expanded, setExpanded] = useState(false);
 
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + "/");
-
-  const dashboardChildren: NavChild[] = [
-    { label: "Monthly", to: "/dashboard", icon: LayoutDashboard },
-    { label: "History", to: "/history", icon: HistoryIcon },
-    { label: "Calendar", to: "/calendar", icon: CalendarDays },
-  ];
-
-  const planningChildren: NavChild[] = [
-    { label: "Planned payments", to: "/planning/planned", icon: Wallet },
-    { label: "Budgets", to: "/planning/budgets", icon: Target },
-  ];
+  const isActive = (path: string) => {
+    const [base] = path.split("?");
+    return location.pathname === base || location.pathname.startsWith(base + "/");
+  };
 
   const groups: NavGroup[] = [
     {
       key: "dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
-      children: dashboardChildren,
+      children: [
+        { label: "Monthly", to: "/dashboard" },
+        { label: "History", to: "/history" },
+        { label: "Calendar", to: "/calendar" },
+      ],
     },
     {
       key: "investments",
@@ -89,15 +71,17 @@ export function DataRail() {
       key: "planning",
       label: "Planning",
       icon: Target,
-      children: planningChildren,
+      children: [
+        { label: "Planned payments", to: "/planning/planned" },
+        { label: "Budgets", to: "/planning/budgets" },
+      ],
     },
   ];
 
-  const initials = (() => {
-    const f = profile?.first_name?.charAt(0).toUpperCase() ?? "";
-    const l = profile?.last_name?.charAt(0).toUpperCase() ?? "";
-    return (f + l) || "U";
-  })();
+  const workspace: NavChild[] = [
+    { label: "My Data — Dashboard", to: "/my-data?tab=bank" },
+    { label: "My Data — Investments", to: "/my-data?tab=investments" },
+  ];
 
   const railWidth = expanded ? "w-64" : "w-24";
 
@@ -110,7 +94,7 @@ export function DataRail() {
         )}
         aria-label="Primary navigation"
       >
-        {/* Top: brand */}
+        {/* Top: brand + collapse toggle */}
         <div
           className={cn(
             "flex items-center px-4",
@@ -134,23 +118,23 @@ export function DataRail() {
               type="button"
               onClick={() => setExpanded(false)}
               aria-label="Collapse navigation"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-primary-foreground/80 hover:bg-primary-foreground/10 transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-primary-foreground/70 hover:bg-primary-foreground/10 transition-colors"
             >
               <PanelLeftClose className="w-4 h-4" />
             </button>
           )}
         </div>
 
-        {/* Expand toggle when collapsed */}
+        {/* Expand toggle when collapsed — kept subtle, no border */}
         {!expanded && (
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center mt-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   onClick={() => setExpanded(true)}
                   aria-label="Expand navigation"
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-primary-foreground/80 hover:bg-primary-foreground/10 transition-colors"
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-primary-foreground/60 hover:bg-primary-foreground/10 transition-colors"
                 >
                   <PanelLeftOpen className="w-4 h-4" />
                 </button>
@@ -165,10 +149,7 @@ export function DataRail() {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto mt-6 px-3">
           {expanded ? (
-            <div className="space-y-6">
-              <p className="px-3 text-[10px] font-semibold tracking-[0.18em] uppercase text-primary-foreground/50">
-                Manage
-              </p>
+            <div className="space-y-5">
               {groups.map((group) => (
                 <ExpandedGroup
                   key={group.key}
@@ -178,105 +159,98 @@ export function DataRail() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-3">
-              {groups.flatMap((group) => {
-                const items: NavChild[] = group.children
-                  ? group.children
-                  : group.to
-                    ? [{ label: group.label, to: group.to, icon: group.icon }]
-                    : [];
-                return items.map((item) => (
-                  <CollapsedItem
-                    key={item.to}
-                    item={item}
-                    active={isActive(item.to)}
-                  />
-                ));
+            <div className="flex flex-col items-center gap-5">
+              {groups.map((group) => {
+                const Icon = group.icon;
+                const target =
+                  group.to ?? group.children?.[0]?.to ?? "#";
+                const active =
+                  (group.to && isActive(group.to)) ||
+                  group.children?.some((c) => isActive(c.to)) ||
+                  false;
+                return (
+                  <Tooltip key={group.key}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={target}
+                        aria-label={group.label}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "flex items-center justify-center w-10 h-10 rounded-lg transition-colors",
+                          active
+                            ? "text-primary-foreground"
+                            : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
+                        )}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={8}>
+                      {group.label}
+                    </TooltipContent>
+                  </Tooltip>
+                );
               })}
             </div>
           )}
         </nav>
 
-        {/* Bottom utility cluster */}
-        <div
-          className={cn(
-            "mt-4 border-t border-primary-foreground/15 pt-4 px-3 space-y-2",
-            expanded ? "" : "flex flex-col items-center",
-          )}
-        >
-          {expanded && (
-            <p className="px-3 text-[10px] font-semibold tracking-[0.18em] uppercase text-primary-foreground/50">
-              Workspace
-            </p>
-          )}
-
-          <RailUtility
-            expanded={expanded}
-            to="/my-data?tab=bank"
-            icon={FileSpreadsheet}
-            label={t("navigation.myData", "My Data")}
-            active={location.pathname === "/my-data"}
-          />
-
-          <RailUtility
-            expanded={expanded}
-            as="button"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            icon={theme === "dark" ? Sun : Moon}
-            label={theme === "dark" ? "Light mode" : "Dark mode"}
-          />
-
-          <RailUtility
-            expanded={expanded}
-            to="/profile"
-            icon={null}
-            label={profile?.first_name || t("navigation.profile", "Profile")}
-            active={location.pathname === "/profile"}
-            avatarInitials={initials}
-          />
-
-          <RailUtility
-            expanded={expanded}
-            as="button"
-            onClick={() => signOut()}
-            icon={LogOut}
-            label={t("navigation.logout", "Log out")}
-          />
-        </div>
+        {/* Workspace cluster — only data shortcuts */}
+        {expanded ? (
+          <div className="mt-4 px-3">
+            <div className="flex items-center gap-2 px-3 mb-1.5 text-primary-foreground/70">
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="text-xs font-semibold tracking-tight uppercase">
+                Workspace
+              </span>
+            </div>
+            <div className="ml-3 border-l border-primary-foreground/15 pl-3 space-y-0.5">
+              {workspace.map((item) => {
+                const active =
+                  location.pathname === "/my-data" &&
+                  location.search.includes(item.to.split("?")[1] ?? "");
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "block py-1.5 pr-2 text-sm rounded-md transition-colors",
+                      active
+                        ? "text-primary-foreground bg-primary-foreground/10 px-2 font-medium"
+                        : "text-primary-foreground/75 hover:text-primary-foreground px-2",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col items-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to="/my-data?tab=bank"
+                  aria-label="My Data"
+                  className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-lg transition-colors",
+                    location.pathname === "/my-data"
+                      ? "text-primary-foreground"
+                      : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
+                  )}
+                >
+                  <FileSpreadsheet className="w-5 h-5" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                My Data
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </aside>
     </TooltipProvider>
-  );
-}
-
-function CollapsedItem({
-  item,
-  active,
-}: {
-  item: NavChild;
-  active: boolean;
-}) {
-  const Icon = item.icon;
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={item.to}
-          aria-label={item.label}
-          aria-current={active ? "page" : undefined}
-          className={cn(
-            "w-12 h-12 rounded-xl flex items-center justify-center transition-all border",
-            active
-              ? "bg-primary-foreground text-primary border-primary-foreground shadow-md"
-              : "bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20",
-          )}
-        >
-          <Icon className="w-5 h-5" />
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={8}>
-        {item.label}
-      </TooltipContent>
-    </Tooltip>
   );
 }
 
@@ -295,10 +269,10 @@ function ExpandedGroup({
       <Link
         to={group.to ?? "#"}
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
+          "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
           active
-            ? "bg-primary-foreground/15 text-primary-foreground"
-            : "text-primary-foreground/85 hover:bg-primary-foreground/10",
+            ? "bg-primary-foreground/10 text-primary-foreground"
+            : "text-primary-foreground/85 hover:bg-primary-foreground/5",
         )}
       >
         <Icon className="w-4 h-4" />
@@ -309,13 +283,13 @@ function ExpandedGroup({
 
   return (
     <div>
-      <div className="flex items-center gap-2 px-3 mb-1.5 text-primary-foreground/70">
+      <div className="flex items-center gap-2 px-3 mb-1.5 text-primary-foreground/85">
         <Icon className="w-4 h-4" />
-        <span className="text-xs font-semibold tracking-tight uppercase">
+        <span className="text-sm font-semibold tracking-tight">
           {group.label}
         </span>
       </div>
-      <div className="ml-3 border-l border-primary-foreground/15 pl-2 space-y-0.5">
+      <div className="ml-3 border-l border-primary-foreground/15 pl-3 space-y-0.5">
         {group.children.map((child) => {
           const active = isActive(child.to);
           return (
@@ -323,89 +297,17 @@ function ExpandedGroup({
               key={child.to}
               to={child.to}
               className={cn(
-                "flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-md text-sm transition-colors",
+                "block py-1.5 px-2 rounded-md text-sm transition-colors",
                 active
-                  ? "bg-primary-foreground text-primary font-semibold shadow-sm"
-                  : "text-primary-foreground/85 hover:bg-primary-foreground/10",
+                  ? "bg-primary-foreground/10 text-primary-foreground font-medium"
+                  : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
               )}
             >
-              <span className="flex-1 truncate">{child.label}</span>
-              {active && <ChevronRight className="w-3.5 h-3.5" />}
+              {child.label}
             </Link>
           );
         })}
       </div>
     </div>
-  );
-}
-
-type RailUtilityProps = {
-  expanded: boolean;
-  icon: LucideIcon | null;
-  label: string;
-  active?: boolean;
-  avatarInitials?: string;
-} & (
-  | { as?: "link"; to: string; onClick?: never }
-  | { as: "button"; onClick: () => void; to?: never }
-);
-
-function RailUtility(props: RailUtilityProps) {
-  const { expanded, icon: Icon, label, active, avatarInitials } = props;
-
-  const content = (
-    <>
-      {avatarInitials ? (
-        <span
-          className={cn(
-            "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0",
-            active
-              ? "bg-primary-foreground text-primary"
-              : "bg-primary-foreground/15 text-primary-foreground",
-          )}
-        >
-          {avatarInitials}
-        </span>
-      ) : Icon ? (
-        <Icon className="w-4 h-4 flex-shrink-0" />
-      ) : null}
-      {expanded && <span className="text-sm truncate">{label}</span>}
-    </>
-  );
-
-  const className = cn(
-    "transition-colors",
-    expanded
-      ? cn(
-          "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-primary-foreground/85 hover:bg-primary-foreground/10",
-          active && "bg-primary-foreground/15 text-primary-foreground",
-        )
-      : cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20",
-          active &&
-            "bg-primary-foreground text-primary border-primary-foreground shadow-md",
-        ),
-  );
-
-  const wrapped =
-    !("as" in props) || props.as !== "button" ? (
-      <Link to={(props as { to: string }).to} className={className}>
-        {content}
-      </Link>
-    ) : (
-      <button type="button" onClick={props.onClick} className={className}>
-        {content}
-      </button>
-    );
-
-  if (expanded) return wrapped;
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{wrapped}</TooltipTrigger>
-      <TooltipContent side="right" sideOffset={8}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
   );
 }
