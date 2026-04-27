@@ -7,10 +7,22 @@ import {
   Target,
   FileSpreadsheet,
   User,
+  LogOut,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DataRail } from "./DataRail";
+import { ThemeToggle } from "./ThemeToggle";
+import { NotificationBell } from "./NotificationBell";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -19,6 +31,14 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const { t } = useTranslation("common");
+  const { signOut } = useAuth();
+  const { profile } = useProfile();
+
+  const initials = (() => {
+    const f = profile?.first_name?.charAt(0).toUpperCase() ?? "";
+    const l = profile?.last_name?.charAt(0).toUpperCase() ?? "";
+    return (f + l) || "U";
+  })();
 
   // Add dashboard-theme to body so portaled elements (popovers, selects, dialogs) inherit theme
   useEffect(() => {
@@ -45,6 +65,44 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Persistent vertical rail (desktop) handles all navigation + utilities */}
       <DataRail />
 
+      {/* Top-right utility bar (desktop) — theme + profile */}
+      <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-end gap-3 px-6 bg-background/80 backdrop-blur-sm">
+        <NotificationBell variant="light" />
+        <ThemeToggle />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Profile menu"
+              className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
+                location.pathname === "/profile"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-foreground text-background hover:opacity-90",
+              )}
+            >
+              {initials}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem asChild>
+              <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                <User className="w-4 h-4" />
+                {t("navigation.profile", "Profile")}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => signOut()}
+              className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+            >
+              <LogOut className="w-4 h-4" />
+              {t("navigation.logout", "Log out")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </header>
+
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
         <div className="flex items-center justify-around h-14 px-2 overflow-x-auto">
@@ -70,7 +128,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </nav>
 
       {/* Main content */}
-      <main className="w-full px-4 md:px-8 pt-6 md:pt-8 pb-20 md:pb-8 relative z-10">
+      <main className="w-full px-4 md:px-8 pt-6 md:pt-2 pb-20 md:pb-8 relative z-10">
         {children}
       </main>
     </div>
