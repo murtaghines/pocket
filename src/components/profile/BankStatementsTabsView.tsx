@@ -1061,8 +1061,9 @@ function UploadedFilesHistoryList({
   const fileTypeVisual = (imp: Import) => {
     const ext = (imp.file_name.split(".").pop() || "").toLowerCase();
     const mime = imp.file_mime || "";
+    const tint = "bg-primary/10 text-primary";
     if (ext === "pdf" || mime.includes("pdf")) {
-      return { Icon: FileText, tint: "bg-destructive/10 text-destructive" };
+      return { Icon: FileText, tint };
     }
     if (
       ext === "xlsx" ||
@@ -1070,15 +1071,15 @@ function UploadedFilesHistoryList({
       mime.includes("sheet") ||
       mime.includes("excel")
     ) {
-      return { Icon: FileSpreadsheet, tint: "bg-success/10 text-success" };
+      return { Icon: FileSpreadsheet, tint };
     }
     if (ext === "csv" || mime.includes("csv")) {
-      return { Icon: FileSpreadsheet, tint: "bg-primary/10 text-primary" };
+      return { Icon: FileSpreadsheet, tint };
     }
     if (ext === "txt" || mime.includes("text/plain")) {
-      return { Icon: FileText, tint: "bg-muted text-muted-foreground" };
+      return { Icon: FileText, tint };
     }
-    return { Icon: FileIcon, tint: "bg-muted text-muted-foreground" };
+    return { Icon: FileIcon, tint };
   };
 
   const fileSizeLabel = (bytes: number | null) => {
