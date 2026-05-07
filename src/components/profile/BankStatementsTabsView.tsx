@@ -29,6 +29,7 @@ import {
   FileText,
   Sparkles,
   X,
+  File as FileIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
