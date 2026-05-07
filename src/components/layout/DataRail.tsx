@@ -244,7 +244,7 @@ function NavigationGroups({
             </div>
 
             {expanded && group.children && (
-              <div className="ml-[35px] border-l border-primary-foreground/15 pl-[36px]">
+              <div className="ml-[36px] border-l border-primary-foreground/15 pl-[44px]">
                 {group.children.map((child) => {
                   const childActive = isActive(child.to);
                   return (
