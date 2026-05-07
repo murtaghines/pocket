@@ -244,7 +244,7 @@ function NavigationGroups({
             </div>
 
             {expanded && group.children && (
-              <div className="ml-[72px] border-l border-primary-foreground/15 pl-3">
+              <div className="ml-[36px] border-l border-primary-foreground/15 pl-[44px]">
                 {group.children.map((child) => {
                   const childActive = isActive(child.to);
                   return (
@@ -252,7 +252,7 @@ function NavigationGroups({
                       key={child.to}
                       to={child.to}
                       className={cn(
-                        "flex h-8 items-center rounded-md px-2 text-sm transition-colors",
+                        "flex h-8 items-center rounded-md px-0 text-sm transition-colors",
                         childActive
                           ? "bg-primary-foreground/10 text-primary-foreground font-medium"
                           : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
