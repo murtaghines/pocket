@@ -4,7 +4,7 @@ import {
   Plus,
   Minus,
   ArrowRightLeft,
-  Sheet,
+  Sheet as SheetIcon,
   FileType,
   Loader2,
   CheckCircle2,
@@ -1075,7 +1075,7 @@ function UploadedFilesHistoryList({
       return { Icon: FileSpreadsheet, tint };
     }
     if (ext === "csv" || mime.includes("csv")) {
-      return { Icon: Sheet, tint };
+      return { Icon: SheetIcon, tint };
     }
     if (ext === "txt" || mime.includes("text/plain")) {
       return { Icon: FileType, tint };
