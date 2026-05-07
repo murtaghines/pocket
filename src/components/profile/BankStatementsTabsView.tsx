@@ -29,6 +29,7 @@ import {
   FileText,
   Sparkles,
   X,
+  File as FileIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -1056,6 +1057,30 @@ function UploadedFilesHistoryList({
     return "FILE";
   };
 
+  // Icon + tint per file type — keeps the listing scannable at a glance.
+  const fileTypeVisual = (imp: Import) => {
+    const ext = (imp.file_name.split(".").pop() || "").toLowerCase();
+    const mime = imp.file_mime || "";
+    if (ext === "pdf" || mime.includes("pdf")) {
+      return { Icon: FileText, tint: "bg-destructive/10 text-destructive" };
+    }
+    if (
+      ext === "xlsx" ||
+      ext === "xls" ||
+      mime.includes("sheet") ||
+      mime.includes("excel")
+    ) {
+      return { Icon: FileSpreadsheet, tint: "bg-success/10 text-success" };
+    }
+    if (ext === "csv" || mime.includes("csv")) {
+      return { Icon: FileSpreadsheet, tint: "bg-primary/10 text-primary" };
+    }
+    if (ext === "txt" || mime.includes("text/plain")) {
+      return { Icon: FileText, tint: "bg-muted text-muted-foreground" };
+    }
+    return { Icon: FileIcon, tint: "bg-muted text-muted-foreground" };
+  };
+
   const fileSizeLabel = (bytes: number | null) => {
     if (!bytes) return "—";
     if (bytes < 1024) return `${bytes} B`;
@@ -1188,30 +1213,67 @@ function UploadedFilesHistoryList({
                 imp.locked && "bg-muted/15",
               )}
             >
-              <div className="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center">
-                <FileSpreadsheet className="w-4 h-4" />
-              </div>
+              {(() => {
+                const { Icon: TypeIcon, tint } = fileTypeVisual(imp);
+                return (
+                  <div
+                    className={cn(
+                      "shrink-0 mt-0.5 w-8 h-8 rounded-md flex items-center justify-center",
+                      tint,
+                    )}
+                  >
+                    <TypeIcon className="w-4 h-4" />
+                  </div>
+                );
+              })()}
 
               <div className="min-w-0 flex-1">
                 {/* Row 1: name + status */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <p
-                      className="text-[13px] font-medium text-foreground truncate"
-                      title={imp.file_name}
-                    >
-                      {imp.file_name}
-                    </p>
-                    {statusIndicator(imp)}
-                    {/* Show the lock icon next to a non-lock status, since
-                        statusIndicator only emits the lock by itself when
-                        nothing else needs attention. */}
-                    {imp.locked &&
-                      (imp.status !== "NORMALIZED" ||
-                        (mismatchByImport[imp.id] || 0) > 0) && (
-                        <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
-                      )}
-                  </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <p
+                    className="text-[13px] font-medium text-foreground truncate"
+                    title={imp.file_name}
+                  >
+                    {imp.file_name}
+                  </p>
+                  {statusIndicator(imp)}
+                  {imp.locked &&
+                    (imp.status !== "NORMALIZED" ||
+                      (mismatchByImport[imp.id] || 0) > 0) && (
+                      <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
+                    )}
+                </div>
+
+                {/* Row 2: meta — single line, no wrap */}
+                <div className="mt-1 flex items-center gap-x-2 pr-3 text-[11px] text-muted-foreground whitespace-nowrap overflow-hidden">
+                  <span className="font-medium tabular-nums">
+                    {fileTypeLabel(imp)}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span className="tabular-nums">
+                    {fileSizeLabel(imp.file_size)}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span title="Upload date and time" className="tabular-nums">
+                    {formatUploadedAt(imp.uploaded_at)}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span className="capitalize truncate" title="Months covered by this file">
+                    {monthsLabel(imp)}
+                  </span>
+                  {imp.transactions_count != null &&
+                    imp.status === "NORMALIZED" && (
+                      <>
+                        <span aria-hidden>·</span>
+                        <span className="tabular-nums shrink-0">
+                          {imp.transactions_count} tx
+                        </span>
+                      </>
+                    )}
+                </div>
+
+                {/* Row 3: account assignment */}
+                <div className="mt-2">
                   {cashAccounts.length > 0 ? (
                     <Select
                       value={imp.account_id || ""}
@@ -1220,7 +1282,7 @@ function UploadedFilesHistoryList({
                     >
                       <SelectTrigger
                         className={cn(
-                          "h-7 w-auto min-w-[120px] shrink-0 border border-input bg-background px-2.5 text-[12px] font-medium text-foreground gap-1.5 hover:bg-accent hover:border-primary/40 transition-colors",
+                          "h-7 w-auto min-w-[120px] max-w-full border border-input bg-background px-2.5 text-[12px] font-medium text-foreground gap-1.5 hover:bg-accent hover:border-primary/40 transition-colors",
                           imp.locked && "opacity-60 cursor-not-allowed",
                         )}
                         title={imp.locked ? "Unlock the file to change account" : "Click to change account"}
@@ -1239,38 +1301,10 @@ function UploadedFilesHistoryList({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <span className="shrink-0 truncate text-[12px] font-medium text-foreground">
+                    <span className="truncate text-[12px] font-medium text-foreground">
                       {acctName(imp.account_id)}
                     </span>
                   )}
-                </div>
-
-                {/* Row 2: meta — type · size · uploaded · month · account · txns */}
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 pr-3 text-[11px] text-muted-foreground">
-                  <span className="font-medium tabular-nums">
-                    {fileTypeLabel(imp)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span className="tabular-nums">
-                    {fileSizeLabel(imp.file_size)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span title="Upload date and time" className="tabular-nums">
-                    {formatUploadedAt(imp.uploaded_at)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span className="capitalize" title="Months covered by this file">
-                    {monthsLabel(imp)}
-                  </span>
-                  {imp.transactions_count != null &&
-                    imp.status === "NORMALIZED" && (
-                      <>
-                        <span aria-hidden>·</span>
-                        <span className="tabular-nums">
-                          {imp.transactions_count} tx
-                        </span>
-                      </>
-                    )}
                 </div>
               </div>
 
