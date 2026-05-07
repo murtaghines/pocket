@@ -4,7 +4,8 @@ import {
   Plus,
   Minus,
   ArrowRightLeft,
-  Pencil,
+  Sheet as SheetIcon,
+  FileType,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -1074,10 +1075,10 @@ function UploadedFilesHistoryList({
       return { Icon: FileSpreadsheet, tint };
     }
     if (ext === "csv" || mime.includes("csv")) {
-      return { Icon: FileSpreadsheet, tint };
+      return { Icon: SheetIcon, tint };
     }
     if (ext === "txt" || mime.includes("text/plain")) {
-      return { Icon: FileText, tint };
+      return { Icon: FileType, tint };
     }
     return { Icon: FileIcon, tint };
   };
@@ -1246,7 +1247,7 @@ function UploadedFilesHistoryList({
                 </div>
 
                 {/* Row 2: meta — single line, no wrap */}
-                <div className="mt-1 flex items-center gap-x-2 pr-3 text-[11px] text-muted-foreground whitespace-nowrap overflow-hidden">
+                <div className="mt-1 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
                   <span className="font-medium tabular-nums">
                     {fileTypeLabel(imp)}
                   </span>
@@ -1259,7 +1260,7 @@ function UploadedFilesHistoryList({
                     {formatUploadedAt(imp.uploaded_at)}
                   </span>
                   <span aria-hidden>·</span>
-                  <span className="capitalize truncate" title="Months covered by this file">
+                  <span className="capitalize" title="Months covered by this file">
                     {monthsLabel(imp)}
                   </span>
                   {imp.transactions_count != null &&
@@ -1288,7 +1289,6 @@ function UploadedFilesHistoryList({
                         )}
                         title={imp.locked ? "Unlock the file to change account" : "Click to change account"}
                       >
-                        <Pencil className="w-3 h-3 text-muted-foreground" />
                         <SelectValue placeholder="Pick account">
                           {acctName(imp.account_id)}
                         </SelectValue>
