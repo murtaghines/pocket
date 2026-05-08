@@ -54,9 +54,14 @@ import {
   RotateCcw,
   Undo,
   Redo,
+  PlusCircle,
+  CalendarIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -160,6 +165,8 @@ export function MonthReviewModal({
   const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
   const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addedTxIds, setAddedTxIds] = useState<Set<string>>(new Set());
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const editsRef = useRef<Record<string, TransactionEdits>>({});
