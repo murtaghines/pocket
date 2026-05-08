@@ -1116,7 +1116,7 @@ export function MonthReviewModal({
                 </Button>
                 <Button
                   onClick={handleConfirm}
-                  disabled={transactions.length === 0 || isSaving}
+                  disabled={(transactions.length === 0 && addedTxIds.size === 0) || isSaving}
                   size="sm"
                 >
                   {isSaving ? (
@@ -1124,8 +1124,8 @@ export function MonthReviewModal({
                   ) : (
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                   )}
-                  {Object.keys(edits).length > 0
-                    ? `Save ${Object.keys(edits).length} change(s)`
+                  {Object.keys(edits).length + addedTxIds.size > 0
+                    ? `Save ${Object.keys(edits).length + addedTxIds.size} change(s)`
                     : "Confirm"}
                 </Button>
               </div>
