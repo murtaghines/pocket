@@ -54,9 +54,14 @@ import {
   RotateCcw,
   Undo,
   Redo,
+  PlusCircle,
+  CalendarIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -160,6 +165,8 @@ export function MonthReviewModal({
   const [editedTxIds, setEditedTxIds] = useState<string[]>([]);
   const [isApplyingRetroactive, setIsApplyingRetroactive] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addedTxIds, setAddedTxIds] = useState<Set<string>>(new Set());
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const editsRef = useRef<Record<string, TransactionEdits>>({});
@@ -610,7 +617,8 @@ export function MonthReviewModal({
   const handleConfirm = async () => {
     const editEntries = Object.entries(editsRef.current);
     console.log('[MonthReviewModal] handleConfirm fired. editEntries:', editEntries);
-    if (editEntries.length === 0) {
+    const hasAdds = addedTxIds.size > 0;
+    if (editEntries.length === 0 && !hasAdds) {
       onOpenChange(false);
       return;
     }
@@ -700,16 +708,42 @@ export function MonthReviewModal({
 
       await Promise.all(savePromises);
 
+      // Also build smart rules for newly-added manual transactions so the
+      // user can opt in to auto-categorizing similar future entries.
+      for (const addedId of addedTxIds) {
+        const tx = transactions.find(t => t.id === addedId);
+        if (!tx) continue;
+        const movement = getEffectiveMovement(tx);
+        const catSlug = getEffectiveCategory(tx);
+        const category = categories.find(c => c.slug === catSlug);
+        if (!category?.id) continue;
+        const cleanDesc = (tx.description_norm || tx.description).trim();
+        if (!cleanDesc) continue;
+        const ruleData = buildRuleFromCorrection(cleanDesc, movement, catSlug);
+        pendingRules.push({
+          pattern: ruleData.pattern,
+          match_type: ruleData.match_type,
+          tokens: ruleData.tokens,
+          categorySlug: catSlug,
+          categoryId: category.id,
+          movement,
+          txDescription: cleanDesc,
+        });
+        savedTxIds.push(addedId);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
+      const totalSaved = editEntries.length + addedTxIds.size;
       toast({
-        title: `✓ ${editEntries.length} change(s) saved`,
+        title: `✓ ${totalSaved} change(s) saved`,
         description: `Transactions updated for ${monthLabel}`,
         duration: 4000,
       });
 
       updateEdits({});
+      setAddedTxIds(new Set());
       setEditedTxIds(savedTxIds);
 
       if (pendingRules.length > 0) {
@@ -923,6 +957,109 @@ export function MonthReviewModal({
     onOpenChange(false);
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // Add a brand-new manual transaction (e.g. cash spending)
+  // ─────────────────────────────────────────────────────────────
+  const handleAddManualEntry = async (entry: {
+    date: string;
+    description: string;
+    accountId: string;
+    movement: MovementType;
+    categorySlug: string;
+    amount: number; // positive
+  }) => {
+    if (!user) return;
+    try {
+      // Resolve or create period for this month/domain
+      let periodId: string | null = null;
+      const { data: existingPeriod } = await supabase
+        .from("periods")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("month_key", monthKey)
+        .eq("domain", "CASHFLOW")
+        .maybeSingle();
+      if (existingPeriod) {
+        periodId = existingPeriod.id;
+      } else {
+        const { data: newPeriod } = await supabase
+          .from("periods")
+          .insert({ user_id: user.id, month_key: monthKey, domain: "CASHFLOW", status: "OPEN" })
+          .select("id")
+          .single();
+        periodId = newPeriod?.id ?? null;
+      }
+
+      const account = accounts.find(a => a.id === entry.accountId);
+      const category = categories.find(c => c.slug === entry.categorySlug);
+      const sign = entry.movement === "EXPENSE" ? -1 : 1;
+      const signedAmount = sign * Math.abs(entry.amount);
+      const typeLegacy =
+        entry.movement === "INCOME" ? "income" :
+        entry.movement === "TRANSFER" ? "transfer" : "expense";
+      const cleanDesc = entry.description.trim();
+      const descNorm = cleanDesc.toLowerCase();
+      const uniqHash = `manual-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: user.id,
+          domain: "CASHFLOW",
+          date: entry.date,
+          description: cleanDesc,
+          description_norm: descNorm,
+          description_clean: cleanDesc,
+          amount: signedAmount,
+          amount_base: signedAmount,
+          fx_rate: 1,
+          currency: account?.currency_base || "EUR",
+          type: typeLegacy,
+          movement: entry.movement,
+          category: entry.categorySlug,
+          category_id: category?.id || null,
+          account_id: entry.accountId,
+          bank: account?.name || null,
+          period_id: periodId,
+          import_id: importId || null,
+          category_source: "MANUAL",
+          categorized_by: "user",
+          user_corrected: true,
+          is_hidden: false,
+          transaction_hash: uniqHash,
+          fingerprint: uniqHash,
+          source_row_hash: uniqHash,
+        })
+        .select("id")
+        .single();
+
+      if (insertError || !inserted) throw insertError || new Error("Insert failed");
+
+      setAddedTxIds(prev => {
+        const next = new Set(prev);
+        next.add(inserted.id);
+        return next;
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
+      toast({
+        title: "Entry added",
+        description: "Click Save to confirm and optionally create a rule.",
+        duration: 3500,
+      });
+      setShowAddDialog(false);
+    } catch (err) {
+      console.error("[MonthReviewModal] add manual entry error", err);
+      toast({
+        title: "Error",
+        description: "Could not add entry. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v && !showRetroactiveDialog) handleCancel(); else onOpenChange(v); }}>
@@ -979,7 +1116,7 @@ export function MonthReviewModal({
                 </Button>
                 <Button
                   onClick={handleConfirm}
-                  disabled={transactions.length === 0 || isSaving}
+                  disabled={(transactions.length === 0 && addedTxIds.size === 0) || isSaving}
                   size="sm"
                 >
                   {isSaving ? (
@@ -987,8 +1124,8 @@ export function MonthReviewModal({
                   ) : (
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                   )}
-                  {Object.keys(edits).length > 0
-                    ? `Save ${Object.keys(edits).length} change(s)`
+                  {Object.keys(edits).length + addedTxIds.size > 0
+                    ? `Save ${Object.keys(edits).length + addedTxIds.size} change(s)`
                     : "Confirm"}
                 </Button>
               </div>
@@ -1032,6 +1169,17 @@ export function MonthReviewModal({
 
               {/* Stats Summary */}
               <div className="flex gap-2 flex-wrap items-center text-sm">
+                {!isLocked && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
+                    onClick={() => setShowAddDialog(true)}
+                  >
+                    <PlusCircle className="w-3.5 h-3.5" />
+                    Add entry
+                  </Button>
+                )}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
                   <span className="text-success font-semibold text-base leading-none">+</span>
                   <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
@@ -1129,6 +1277,7 @@ export function MonthReviewModal({
                       const effectiveCategory = getEffectiveCategory(tx);
                       const availableCategories = getCategoriesForMovement(effectiveMovement);
                       const isEdited = !!edits[tx.id];
+                      const isAdded = addedTxIds.has(tx.id);
                       const editedFields = edits[tx.id] || {};
                       const movementChanged = editedFields.movement !== undefined && editedFields.movement !== tx.movement;
                       const categoryChanged = editedFields.category !== undefined && editedFields.category !== normalizeCategory(tx.category);
@@ -1146,7 +1295,7 @@ export function MonthReviewModal({
                           ref={(el) => { rowRefs.current[tx.id] = el; }}
                           className={cn(
                             "transition-all",
-                            isEdited && !mismatchedIds.has(tx.id) && "bg-primary/5 border-l-2 border-l-primary",
+                            (isEdited || isAdded) && !mismatchedIds.has(tx.id) && "bg-primary/5 border-l-2 border-l-primary",
                             mismatchedIds.has(tx.id) && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                             hidden && "opacity-40"
                           )}
@@ -1159,9 +1308,9 @@ export function MonthReviewModal({
                               <span className={cn("break-words flex-1", hidden && "line-through")} title={cleanDescription}>
                                 {cleanDescription}
                               </span>
-                              {isEdited && (
+                              {(isEdited || isAdded) && (
                                 <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] h-4 px-1.5 shrink-0 mt-0.5">
-                                  Edited
+                                  {isAdded ? "Added" : "Edited"}
                                 </Badge>
                               )}
                             </div>
@@ -1367,9 +1516,9 @@ export function MonthReviewModal({
             {/* Workspace footer */}
             <div className="flex items-center justify-between gap-3 px-6 py-3 border-t border-border bg-muted/30">
               <div className="text-xs text-muted-foreground">
-                {Object.keys(edits).length > 0 ? (
+                {Object.keys(edits).length + addedTxIds.size > 0 ? (
                   <span>
-                    <span className="font-medium text-foreground">{Object.keys(edits).length}</span> unsaved change(s)
+                    <span className="font-medium text-foreground">{Object.keys(edits).length + addedTxIds.size}</span> unsaved change(s)
                   </span>
                 ) : (
                   <span>No pending changes</span>
@@ -1382,15 +1531,15 @@ export function MonthReviewModal({
                 <Button
                   size="sm"
                   onClick={handleConfirm}
-                  disabled={transactions.length === 0 || isSaving}
+                  disabled={(transactions.length === 0 && addedTxIds.size === 0) || isSaving}
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                   )}
-                  {Object.keys(edits).length > 0
-                    ? `Save ${Object.keys(edits).length} change(s)`
+                  {Object.keys(edits).length + addedTxIds.size > 0
+                    ? `Save ${Object.keys(edits).length + addedTxIds.size} change(s)`
                     : "Confirm"}
                 </Button>
               </div>
@@ -1523,7 +1672,307 @@ export function MonthReviewModal({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Manual Entry Dialog */}
+      <AddManualEntryDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        monthKey={monthKey}
+        monthLabel={monthLabel}
+        onSubmit={handleAddManualEntry}
+      />
     </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// AddManualEntryDialog: collect a brand-new manual transaction
+// (e.g. cash). All fields use dropdowns / pickers for cleanliness.
+// ─────────────────────────────────────────────────────────────
+interface AddManualEntryDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  monthKey: string; // YYYY-MM — date is constrained to this month
+  monthLabel: string;
+  onSubmit: (entry: {
+    date: string;
+    description: string;
+    accountId: string;
+    movement: MovementType;
+    categorySlug: string;
+    amount: number;
+  }) => Promise<void> | void;
+}
+
+function AddManualEntryDialog({
+  open,
+  onOpenChange,
+  monthKey,
+  monthLabel,
+  onSubmit,
+}: AddManualEntryDialogProps) {
+  const { accounts } = useAccounts();
+  const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+
+  const [year, monthNum] = monthKey.split("-").map(Number);
+  const firstDay = `${year}-${String(monthNum).padStart(2, "0")}-01`;
+  const lastDayNum = new Date(year, monthNum, 0).getDate();
+  const lastDay = `${year}-${String(monthNum).padStart(2, "0")}-${String(lastDayNum).padStart(2, "0")}`;
+
+  const [date, setDate] = useState<string>(firstDay);
+  const [description, setDescription] = useState<string>("");
+  const [accountId, setAccountId] = useState<string>("");
+  const [movement, setMovement] = useState<MovementType>("EXPENSE");
+  const [categorySlug, setCategorySlug] = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [amountStr, setAmountStr] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Reset on open
+  useEffect(() => {
+    if (open) {
+      setDate(firstDay);
+      setDescription("");
+      setAccountId(accounts[0]?.id || "");
+      setMovement("EXPENSE");
+      setCategorySlug(EXPENSE_CATEGORIES[0]);
+      setAmountStr("");
+    }
+  }, [open]);
+
+  // Sync default category when movement changes
+  useEffect(() => {
+    const list =
+      movement === "INCOME" ? INCOME_CATEGORIES :
+      movement === "TRANSFER" ? TRANSFER_CATEGORIES :
+      EXPENSE_CATEGORIES;
+    setCategorySlug(list[0]);
+  }, [movement]);
+
+  const availableCategories =
+    movement === "INCOME" ? INCOME_CATEGORIES :
+    movement === "TRANSFER" ? TRANSFER_CATEGORIES :
+    EXPENSE_CATEGORIES;
+
+  const parsedAmount = (() => {
+    const s = amountStr.replace(",", ".").trim();
+    const n = parseFloat(s);
+    return isNaN(n) ? NaN : Math.abs(n);
+  })();
+
+  const dateValid = date >= firstDay && date <= lastDay;
+  const canSubmit =
+    !!accountId &&
+    description.trim().length > 0 &&
+    !isNaN(parsedAmount) &&
+    parsedAmount > 0 &&
+    dateValid &&
+    !submitting;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        date,
+        description: description.trim(),
+        accountId,
+        movement,
+        categorySlug,
+        amount: parsedAmount,
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const movementTone = (m: MovementType): PillTone =>
+    m === "INCOME" ? "green" : m === "TRANSFER" ? "amber" : "red";
+  const movementIcon = (m: MovementType) =>
+    m === "INCOME" ? <Plus className="w-3 h-3" /> :
+    m === "TRANSFER" ? <ArrowRightLeft className="w-3 h-3" /> :
+    <Minus className="w-3 h-3" />;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="dashboard-theme bg-background text-foreground sm:max-w-[460px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <PlusCircle className="w-5 h-5 text-primary" />
+            Add manual entry · {monthLabel}
+          </DialogTitle>
+          <DialogDescription>
+            Record a transaction that isn't on a statement (e.g. cash).
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3.5 py-1">
+          {/* Date */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal h-9",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(new Date(date + "T00:00:00"), "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={new Date(date + "T00:00:00")}
+                  onSelect={(d) => {
+                    if (d) {
+                      const y = d.getFullYear();
+                      const m = String(d.getMonth() + 1).padStart(2, "0");
+                      const dd = String(d.getDate()).padStart(2, "0");
+                      setDate(`${y}-${m}-${dd}`);
+                    }
+                  }}
+                  defaultMonth={new Date(firstDay + "T00:00:00")}
+                  disabled={(d) => {
+                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                    return iso < firstDay || iso > lastDay;
+                  }}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Description</Label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. Cash lunch"
+              className="h-9"
+              maxLength={200}
+            />
+          </div>
+
+          {/* Account */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Account</Label>
+            <Select value={accountId} onValueChange={setAccountId}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select an account" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Movement + Category */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Movement</Label>
+              <Select value={movement} onValueChange={(v) => setMovement(v as MovementType)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue>
+                    <PillBadge tone={movementTone(movement)} icon={movementIcon(movement)}>
+                      {getMovementLabel(movement)}
+                    </PillBadge>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INCOME">
+                    <PillBadge tone="green" icon={<Plus className="w-3 h-3" />}>
+                      {getMovementLabel("INCOME")}
+                    </PillBadge>
+                  </SelectItem>
+                  <SelectItem value="EXPENSE">
+                    <PillBadge tone="red" icon={<Minus className="w-3 h-3" />}>
+                      {getMovementLabel("EXPENSE")}
+                    </PillBadge>
+                  </SelectItem>
+                  <SelectItem value="TRANSFER">
+                    <PillBadge tone="amber" icon={<ArrowRightLeft className="w-3 h-3" />}>
+                      {getMovementLabel("TRANSFER")}
+                    </PillBadge>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Category</Label>
+              <Select value={categorySlug} onValueChange={setCategorySlug}>
+                <SelectTrigger className="h-9">
+                  <SelectValue>
+                    <div className="flex items-center gap-1.5">
+                      <CategoryIcon
+                        iconName={getCategoryIcon(categorySlug)}
+                        colorVar={getCategoryColor(categorySlug)}
+                        size="sm"
+                        showBackground={true}
+                      />
+                      <span>{getCategoryLabel(categorySlug)}</span>
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCategories.map((slug) => (
+                    <SelectItem key={slug} value={slug}>
+                      <div className="flex items-center gap-2">
+                        <CategoryIcon
+                          iconName={getCategoryIcon(slug)}
+                          colorVar={getCategoryColor(slug)}
+                          size="sm"
+                          showBackground={true}
+                        />
+                        {getCategoryLabel(slug)}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Amount {movement === "EXPENSE" ? "(will be saved as a negative value)" : ""}
+            </Label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
+              placeholder="0,00"
+              className="h-9 text-right tabular-nums"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={!canSubmit}>
+            {submitting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <PlusCircle className="w-4 h-4 mr-2" />
+            )}
+            Add entry
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
