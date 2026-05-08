@@ -1516,9 +1516,9 @@ export function MonthReviewModal({
             {/* Workspace footer */}
             <div className="flex items-center justify-between gap-3 px-6 py-3 border-t border-border bg-muted/30">
               <div className="text-xs text-muted-foreground">
-                {Object.keys(edits).length > 0 ? (
+                {Object.keys(edits).length + addedTxIds.size > 0 ? (
                   <span>
-                    <span className="font-medium text-foreground">{Object.keys(edits).length}</span> unsaved change(s)
+                    <span className="font-medium text-foreground">{Object.keys(edits).length + addedTxIds.size}</span> unsaved change(s)
                   </span>
                 ) : (
                   <span>No pending changes</span>
@@ -1531,15 +1531,15 @@ export function MonthReviewModal({
                 <Button
                   size="sm"
                   onClick={handleConfirm}
-                  disabled={transactions.length === 0 || isSaving}
+                  disabled={(transactions.length === 0 && addedTxIds.size === 0) || isSaving}
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                   )}
-                  {Object.keys(edits).length > 0
-                    ? `Save ${Object.keys(edits).length} change(s)`
+                  {Object.keys(edits).length + addedTxIds.size > 0
+                    ? `Save ${Object.keys(edits).length + addedTxIds.size} change(s)`
                     : "Confirm"}
                 </Button>
               </div>
