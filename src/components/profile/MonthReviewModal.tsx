@@ -617,7 +617,8 @@ export function MonthReviewModal({
   const handleConfirm = async () => {
     const editEntries = Object.entries(editsRef.current);
     console.log('[MonthReviewModal] handleConfirm fired. editEntries:', editEntries);
-    if (editEntries.length === 0) {
+    const hasAdds = addedTxIds.size > 0;
+    if (editEntries.length === 0 && !hasAdds) {
       onOpenChange(false);
       return;
     }
@@ -707,16 +708,42 @@ export function MonthReviewModal({
 
       await Promise.all(savePromises);
 
+      // Also build smart rules for newly-added manual transactions so the
+      // user can opt in to auto-categorizing similar future entries.
+      for (const addedId of addedTxIds) {
+        const tx = transactions.find(t => t.id === addedId);
+        if (!tx) continue;
+        const movement = getEffectiveMovement(tx);
+        const catSlug = getEffectiveCategory(tx);
+        const category = categories.find(c => c.slug === catSlug);
+        if (!category?.id) continue;
+        const cleanDesc = (tx.description_norm || tx.description).trim();
+        if (!cleanDesc) continue;
+        const ruleData = buildRuleFromCorrection(cleanDesc, movement, catSlug);
+        pendingRules.push({
+          pattern: ruleData.pattern,
+          match_type: ruleData.match_type,
+          tokens: ruleData.tokens,
+          categorySlug: catSlug,
+          categoryId: category.id,
+          movement,
+          txDescription: cleanDesc,
+        });
+        savedTxIds.push(addedId);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
+      const totalSaved = editEntries.length + addedTxIds.size;
       toast({
-        title: `✓ ${editEntries.length} change(s) saved`,
+        title: `✓ ${totalSaved} change(s) saved`,
         description: `Transactions updated for ${monthLabel}`,
         duration: 4000,
       });
 
       updateEdits({});
+      setAddedTxIds(new Set());
       setEditedTxIds(savedTxIds);
 
       if (pendingRules.length > 0) {
