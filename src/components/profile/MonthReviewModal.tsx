@@ -1672,6 +1672,15 @@ export function MonthReviewModal({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Manual Entry Dialog */}
+      <AddManualEntryDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        monthKey={monthKey}
+        monthLabel={monthLabel}
+        onSubmit={handleAddManualEntry}
+      />
     </>
   );
 }
