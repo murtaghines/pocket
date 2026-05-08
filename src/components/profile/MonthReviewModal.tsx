@@ -1136,6 +1136,7 @@ export function MonthReviewModal({
                       const effectiveCategory = getEffectiveCategory(tx);
                       const availableCategories = getCategoriesForMovement(effectiveMovement);
                       const isEdited = !!edits[tx.id];
+                      const isAdded = addedTxIds.has(tx.id);
                       const editedFields = edits[tx.id] || {};
                       const movementChanged = editedFields.movement !== undefined && editedFields.movement !== tx.movement;
                       const categoryChanged = editedFields.category !== undefined && editedFields.category !== normalizeCategory(tx.category);
@@ -1153,7 +1154,7 @@ export function MonthReviewModal({
                           ref={(el) => { rowRefs.current[tx.id] = el; }}
                           className={cn(
                             "transition-all",
-                            isEdited && !mismatchedIds.has(tx.id) && "bg-primary/5 border-l-2 border-l-primary",
+                            (isEdited || isAdded) && !mismatchedIds.has(tx.id) && "bg-primary/5 border-l-2 border-l-primary",
                             mismatchedIds.has(tx.id) && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                             hidden && "opacity-40"
                           )}
@@ -1166,9 +1167,9 @@ export function MonthReviewModal({
                               <span className={cn("break-words flex-1", hidden && "line-through")} title={cleanDescription}>
                                 {cleanDescription}
                               </span>
-                              {isEdited && (
+                              {(isEdited || isAdded) && (
                                 <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] h-4 px-1.5 shrink-0 mt-0.5">
-                                  Edited
+                                  {isAdded ? "Added" : "Edited"}
                                 </Badge>
                               )}
                             </div>
