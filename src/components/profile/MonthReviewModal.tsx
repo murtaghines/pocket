@@ -930,6 +930,109 @@ export function MonthReviewModal({
     onOpenChange(false);
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // Add a brand-new manual transaction (e.g. cash spending)
+  // ─────────────────────────────────────────────────────────────
+  const handleAddManualEntry = async (entry: {
+    date: string;
+    description: string;
+    accountId: string;
+    movement: MovementType;
+    categorySlug: string;
+    amount: number; // positive
+  }) => {
+    if (!user) return;
+    try {
+      // Resolve or create period for this month/domain
+      let periodId: string | null = null;
+      const { data: existingPeriod } = await supabase
+        .from("periods")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("month_key", monthKey)
+        .eq("domain", "CASHFLOW")
+        .maybeSingle();
+      if (existingPeriod) {
+        periodId = existingPeriod.id;
+      } else {
+        const { data: newPeriod } = await supabase
+          .from("periods")
+          .insert({ user_id: user.id, month_key: monthKey, domain: "CASHFLOW", status: "OPEN" })
+          .select("id")
+          .single();
+        periodId = newPeriod?.id ?? null;
+      }
+
+      const account = accounts.find(a => a.id === entry.accountId);
+      const category = categories.find(c => c.slug === entry.categorySlug);
+      const sign = entry.movement === "EXPENSE" ? -1 : 1;
+      const signedAmount = sign * Math.abs(entry.amount);
+      const typeLegacy =
+        entry.movement === "INCOME" ? "income" :
+        entry.movement === "TRANSFER" ? "transfer" : "expense";
+      const cleanDesc = entry.description.trim();
+      const descNorm = cleanDesc.toLowerCase();
+      const uniqHash = `manual-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: user.id,
+          domain: "CASHFLOW",
+          date: entry.date,
+          description: cleanDesc,
+          description_norm: descNorm,
+          description_clean: cleanDesc,
+          amount: signedAmount,
+          amount_base: signedAmount,
+          fx_rate: 1,
+          currency: account?.currency_base || "EUR",
+          type: typeLegacy,
+          movement: entry.movement,
+          category: entry.categorySlug,
+          category_id: category?.id || null,
+          account_id: entry.accountId,
+          bank: account?.name || null,
+          period_id: periodId,
+          import_id: importId || null,
+          category_source: "MANUAL",
+          categorized_by: "user",
+          user_corrected: true,
+          is_hidden: false,
+          transaction_hash: uniqHash,
+          fingerprint: uniqHash,
+          source_row_hash: uniqHash,
+        })
+        .select("id")
+        .single();
+
+      if (insertError || !inserted) throw insertError || new Error("Insert failed");
+
+      setAddedTxIds(prev => {
+        const next = new Set(prev);
+        next.add(inserted.id);
+        return next;
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["month-transactions", monthKey] });
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
+      toast({
+        title: "Entry added",
+        description: "Click Save to confirm and optionally create a rule.",
+        duration: 3500,
+      });
+      setShowAddDialog(false);
+    } catch (err) {
+      console.error("[MonthReviewModal] add manual entry error", err);
+      toast({
+        title: "Error",
+        description: "Could not add entry. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v && !showRetroactiveDialog) handleCancel(); else onOpenChange(v); }}>
