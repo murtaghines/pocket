@@ -31,6 +31,7 @@ import {
   Sparkles,
   X,
   File as FileIcon,
+  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,6 +83,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
 import { RuleEditorDialog } from "./RuleEditorDialog";
+import { AddManualEntryDialog } from "./MonthReviewModal";
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
