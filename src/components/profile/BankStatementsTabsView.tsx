@@ -2450,41 +2450,13 @@ function InlineTransactionsEditor({
         </div>
 
         {/* Spreadsheet footer: totals (Excel status-bar style) — sticks to the bottom */}
-        <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 flex flex-wrap items-center gap-4 text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
-          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
-            row{summary.total !== 1 ? "s" : ""}
-          </div>
-          <span className="text-border">|</span>
-          <div className="inline-flex items-center gap-1.5">
-            <Plus className="w-3.5 h-3.5 text-success" />
-            <span className="text-success font-semibold tabular-nums">
-              {formatCurrency(summary.income)}
-            </span>
-          </div>
-          <div className="inline-flex items-center gap-1.5">
-            <Minus className="w-3.5 h-3.5 text-destructive" />
-            <span className="text-destructive font-semibold tabular-nums">
-              {formatCurrency(summary.expenses)}
-            </span>
-          </div>
-          {summary.transfers > 0 && (
-            <div className="inline-flex items-center gap-1.5">
-              <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
-              <span className="text-warning font-semibold tabular-nums">
-                {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
-              </span>
-            </div>
-          )}
-          {summary.hidden > 0 && (
-            <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-              <EyeOff className="w-3.5 h-3.5" />
-              <span className="tabular-nums">
-                {summary.hidden} excluded from analysis
-              </span>
-            </div>
-          )}
-          <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
+        <ManualEntryFooter
+          monthKey={monthKey}
+          monthLabel={monthLabel}
+          importId={imports[0]?.id ?? null}
+          isLocked={isLocked}
+          summary={summary}
+          rightSlot={
             <button
               type="button"
               onClick={() => {
@@ -2524,8 +2496,8 @@ function InlineTransactionsEditor({
                 </>
               )}
             </button>
-          </div>
-        </div>
+          }
+        />
       </div>
 
       {/* Movement mismatch verification (no rule, just confirm) */}
