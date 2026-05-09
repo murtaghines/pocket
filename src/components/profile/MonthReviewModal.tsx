@@ -1169,17 +1169,6 @@ export function MonthReviewModal({
 
               {/* Stats Summary */}
               <div className="flex gap-2 flex-wrap items-center text-sm">
-                {!isLocked && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
-                    onClick={() => setShowAddDialog(true)}
-                  >
-                    <PlusCircle className="w-3.5 h-3.5" />
-                    Add entry
-                  </Button>
-                )}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
                   <span className="text-success font-semibold text-base leading-none">+</span>
                   <span className="text-success font-medium tabular-nums">{formatCurrency(summary.income)}</span>
