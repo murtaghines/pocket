@@ -1732,7 +1732,7 @@ interface AddManualEntryDialogProps {
   }) => Promise<void> | void;
 }
 
-function AddManualEntryDialog({
+export function AddManualEntryDialog({
   open,
   onOpenChange,
   monthKey,

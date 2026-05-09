@@ -31,6 +31,7 @@ import {
   Sparkles,
   X,
   File as FileIcon,
+  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,6 +83,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
 import { RuleEditorDialog } from "./RuleEditorDialog";
+import { AddManualEntryDialog } from "./MonthReviewModal";
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
@@ -616,6 +618,190 @@ interface PendingFileInfo {
 
 /* ─────────────────────────  Month workspace  ───────────────────────── */
 
+/**
+ * Static footer shown at the bottom of every month tab — both when the
+ * month has files and when it's empty. Always shows the row/income/expense/
+ * transfer summary plus an "Add entry" button on the left so the user can
+ * record manual cash movements from anywhere. The Lock-month button (when
+ * provided) sits on the far right.
+ */
+interface ManualEntryFooterProps {
+  monthKey: string;
+  monthLabel: string;
+  importId?: string | null;
+  isLocked: boolean;
+  summary: {
+    total: number;
+    income: number;
+    expenses: number;
+    transfers: number;
+    hidden?: number;
+  };
+  rightSlot?: React.ReactNode;
+}
+
+function ManualEntryFooter({
+  monthKey,
+  monthLabel,
+  importId,
+  isLocked,
+  summary,
+  rightSlot,
+}: ManualEntryFooterProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { accounts } = useAccounts();
+  const { categories } = useCategories("CASHFLOW");
+  const { formatCurrency } = useLocalization();
+  const [open, setOpen] = useState(false);
+
+  const handleSubmit = async (entry: {
+    date: string;
+    description: string;
+    accountId: string;
+    movement: MovementType;
+    categorySlug: string;
+    amount: number;
+  }) => {
+    if (!user) return;
+    try {
+      // Resolve or create CASHFLOW period for this month
+      let periodId: string | null = null;
+      const { data: existingPeriod } = await supabase
+        .from("periods")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("month_key", monthKey)
+        .eq("domain", "CASHFLOW")
+        .maybeSingle();
+      if (existingPeriod) {
+        periodId = existingPeriod.id;
+      } else {
+        const { data: newPeriod } = await supabase
+          .from("periods")
+          .insert({ user_id: user.id, month_key: monthKey, domain: "CASHFLOW", status: "OPEN" })
+          .select("id")
+          .single();
+        periodId = newPeriod?.id ?? null;
+      }
+
+      const account = accounts.find((a) => a.id === entry.accountId);
+      const category = categories.find((c) => c.slug === entry.categorySlug);
+      const sign = entry.movement === "EXPENSE" ? -1 : 1;
+      const signedAmount = sign * Math.abs(entry.amount);
+      const typeLegacy =
+        entry.movement === "INCOME" ? "income" :
+        entry.movement === "TRANSFER" ? "transfer" : "expense";
+      const cleanDesc = entry.description.trim();
+      const descNorm = cleanDesc.toLowerCase();
+      const uniqHash = `manual-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      const { error: insertError } = await supabase.from("transactions").insert({
+        user_id: user.id,
+        domain: "CASHFLOW",
+        date: entry.date,
+        description: cleanDesc,
+        description_norm: descNorm,
+        description_clean: cleanDesc,
+        amount: signedAmount,
+        amount_base: signedAmount,
+        fx_rate: 1,
+        currency: account?.currency_base || "EUR",
+        type: typeLegacy,
+        movement: entry.movement,
+        category: entry.categorySlug,
+        category_id: category?.id || null,
+        account_id: entry.accountId,
+        bank: account?.name || null,
+        period_id: periodId,
+        import_id: importId || null,
+        category_source: "MANUAL",
+        categorized_by: "user",
+        user_corrected: true,
+        is_hidden: false,
+        transaction_hash: uniqHash,
+        fingerprint: uniqHash,
+        source_row_hash: uniqHash,
+      });
+
+      if (insertError) throw insertError;
+
+      await queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user.id] });
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
+      toast({ title: "Entry added", duration: 2500 });
+      setOpen(false);
+    } catch (err) {
+      console.error("[ManualEntryFooter] insert error", err);
+      toast({
+        title: "Error",
+        description: "Could not add entry. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 flex flex-wrap items-center gap-3 text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+          onClick={() => setOpen(true)}
+          disabled={isLocked}
+          title={isLocked ? "Unlock the month to add entries" : "Add a manual entry (cash, etc.)"}
+        >
+          <PlusCircle className="w-3.5 h-3.5" />
+          Add entry
+        </Button>
+        <span className="text-border">|</span>
+        <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
+          row{summary.total !== 1 ? "s" : ""}
+        </div>
+        <div className="inline-flex items-center gap-1.5">
+          <Plus className="w-3.5 h-3.5 text-success" />
+          <span className="text-success font-semibold tabular-nums">
+            {formatCurrency(summary.income)}
+          </span>
+        </div>
+        <div className="inline-flex items-center gap-1.5">
+          <Minus className="w-3.5 h-3.5 text-destructive" />
+          <span className="text-destructive font-semibold tabular-nums">
+            {formatCurrency(summary.expenses)}
+          </span>
+        </div>
+        <div className="inline-flex items-center gap-1.5">
+          <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
+          <span className="text-warning font-semibold tabular-nums">
+            {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
+          </span>
+        </div>
+        {summary.hidden !== undefined && summary.hidden > 0 && (
+          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <EyeOff className="w-3.5 h-3.5" />
+            <span className="tabular-nums">
+              {summary.hidden} excluded from analysis
+            </span>
+          </div>
+        )}
+        {rightSlot && (
+          <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
+            {rightSlot}
+          </div>
+        )}
+      <AddManualEntryDialog
+        open={open}
+        onOpenChange={setOpen}
+        monthKey={monthKey}
+        monthLabel={monthLabel}
+        onSubmit={handleSubmit}
+      />
+    </div>
+  );
+}
+
 interface MonthWorkspaceProps {
   monthKey: string;
   monthLabel: string;
@@ -659,47 +845,57 @@ function MonthWorkspace({
   // Empty state
   if (imports.length === 0) {
     return (
-      <div className="bg-card py-20 px-6 text-center flex-1 flex flex-col items-center justify-center">
-        {activePending.length > 0 ? (
-          <div className="w-full max-w-xl">
-            <ProcessingPanel files={activePending} />
-          </div>
-        ) : (
-          <>
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
-          <Upload className="w-6 h-6" />
+      <div className="bg-card flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20">
+          {activePending.length > 0 ? (
+            <div className="w-full max-w-xl">
+              <ProcessingPanel files={activePending} />
+            </div>
+          ) : (
+            <>
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
+                <Upload className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground">
+                {monthLabel} is empty
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                Add a bank statement, credit card bill, or expense report to start
+                editing this month's transactions directly. You can also add
+                manual entries (e.g. cash) from the bar below.
+              </p>
+              <div className="mt-5">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  accept=".xlsx,.xls,.csv,.pdf"
+                  onChange={(e) => onPickFiles(e.target.files, monthDate)}
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isProcessing}
+                  className="gap-2"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  Add file
+                </Button>
+              </div>
+            </>
+          )}
         </div>
-        <h3 className="text-base font-semibold text-foreground">
-          {monthLabel} is empty
-        </h3>
-        <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-          Add a bank statement, credit card bill, or expense report to start
-          editing this month's transactions directly.
-        </p>
-        <div className="mt-5">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            accept=".xlsx,.xls,.csv,.pdf"
-            onChange={(e) => onPickFiles(e.target.files, monthDate)}
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isProcessing}
-            className="gap-2"
-          >
-            {isProcessing ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
-            Add file
-          </Button>
-        </div>
-          </>
-        )}
+        <ManualEntryFooter
+          monthKey={monthKey}
+          monthLabel={monthLabel}
+          importId={null}
+          isLocked={false}
+          summary={{ total: 0, income: 0, expenses: 0, transfers: 0 }}
+        />
       </div>
     );
   }
@@ -2254,41 +2450,13 @@ function InlineTransactionsEditor({
         </div>
 
         {/* Spreadsheet footer: totals (Excel status-bar style) — sticks to the bottom */}
-        <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 flex flex-wrap items-center gap-4 text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
-          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
-            row{summary.total !== 1 ? "s" : ""}
-          </div>
-          <span className="text-border">|</span>
-          <div className="inline-flex items-center gap-1.5">
-            <Plus className="w-3.5 h-3.5 text-success" />
-            <span className="text-success font-semibold tabular-nums">
-              {formatCurrency(summary.income)}
-            </span>
-          </div>
-          <div className="inline-flex items-center gap-1.5">
-            <Minus className="w-3.5 h-3.5 text-destructive" />
-            <span className="text-destructive font-semibold tabular-nums">
-              {formatCurrency(summary.expenses)}
-            </span>
-          </div>
-          {summary.transfers > 0 && (
-            <div className="inline-flex items-center gap-1.5">
-              <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
-              <span className="text-warning font-semibold tabular-nums">
-                {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
-              </span>
-            </div>
-          )}
-          {summary.hidden > 0 && (
-            <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-              <EyeOff className="w-3.5 h-3.5" />
-              <span className="tabular-nums">
-                {summary.hidden} excluded from analysis
-              </span>
-            </div>
-          )}
-          <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
+        <ManualEntryFooter
+          monthKey={monthKey}
+          monthLabel={monthLabel}
+          importId={imports[0]?.id ?? null}
+          isLocked={isLocked}
+          summary={summary}
+          rightSlot={
             <button
               type="button"
               onClick={() => {
@@ -2328,8 +2496,8 @@ function InlineTransactionsEditor({
                 </>
               )}
             </button>
-          </div>
-        </div>
+          }
+        />
       </div>
 
       {/* Movement mismatch verification (no rule, just confirm) */}
