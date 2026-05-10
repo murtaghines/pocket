@@ -2438,16 +2438,14 @@ function InlineTransactionsEditor({
           </div>
         )}
 
-        {/* White canvas fills the rest of the screen — pushes footer down.
-            When a file is being processed, surface the live progress panel
-            here so users see what's happening without leaving the table. */}
-        <div className="bg-card flex-1 px-6 py-6 flex items-start justify-center">
-          {pendingFiles && pendingFiles.length > 0 && (
+        {/* Live processing panel — only rendered while files are being processed. */}
+        {pendingFiles && pendingFiles.length > 0 && (
+          <div className="bg-card px-6 py-6 flex items-start justify-center border-t border-border">
             <div className="w-full max-w-xl">
               <ProcessingPanel files={pendingFiles} />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Spreadsheet footer: totals (Excel status-bar style) — sticks to the bottom */}
         <ManualEntryFooter
