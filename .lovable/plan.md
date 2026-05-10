@@ -1,74 +1,58 @@
-## Por qué el login falla ahora mismo
+## Objetivo
+Reemplazar el OTP por defecto de Supabase (que envía link) por un **código de 6 dígitos** enviado por email vía Resend, sin necesidad de dominio propio. El email saldrá de `onboarding@resend.dev` (dominio compartido de Resend).
 
-Revisé la base de datos de usuarios y **está vacía**: no existe ningún usuario registrado (ni siquiera `ines@murtagh.net`). Por eso el endpoint devuelve `400 invalid_credentials` — no hay con qué comparar la contraseña. Las cuentas previas no se llegaron a crear (o se borraron en pruebas).
+> Nota: el secret `RESEND_API_KEY` ya está configurado en el proyecto, así que no hace falta pedirlo de nuevo.
 
-Dicho esto, el flujo de signup actual también tiene problemas que justifican rehacerlo como pides:
+## Cambios
 
-- Pide la contraseña en el paso 6 **sin haber verificado el email**.
-- Llama a `supabase.auth.signUp(email, password)`. Como el proyecto NO tiene auto-confirm activado, Supabase responde "OK" pero el usuario queda sin confirmar y no puede hacer login hasta clickear el link del email — y ese link va a `window.location.origin/`, que no maneja el callback bien.
-- Si el email no llega o se ignora, el usuario nunca confirma → "credenciales inválidas" para siempre.
+### 1. Base de datos: tabla `email_otps`
+Tabla nueva para guardar los códigos generados, con expiración de 10 minutos y máximo 5 intentos.
 
-## Nuevo flujo de registro propuesto
+Campos: `email`, `code_hash` (hash sha256, no guardamos el código en plano), `expires_at`, `attempts`, `consumed_at`.
 
-```text
-Step 1 — Nombre + apellido
-Step 2 — Email
-Step 3 — VERIFICAR EMAIL (input de código de 6 dígitos)   ← nuevo
-Step 4 — País / moneda
-Step 5 — Inversiones (opcional)
-Step 6 — Cuenta conjunta (opcional)
-Step 7 — Crear contraseña                                 ← se mueve al final
-```
+RLS: bloqueada para clientes (solo edge functions con service role).
 
-### Cómo funciona técnicamente
+Índice en `email` para búsquedas rápidas + limpieza de códigos viejos.
 
-1. **Step 2 → 3 (enviar código).** Al pulsar "Continue" en el email, llamamos `supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true, data: { first_name, last_name } } })`. Esto crea el usuario en `auth.users` (sin contraseña, sin confirmar) y le manda un email con un código de 6 dígitos.
-2. **Step 3 (verificar).** El usuario pega el código. Llamamos `supabase.auth.verifyOtp({ email, token, type: 'email' })`. Si es correcto, Supabase marca `email_confirmed_at` y devuelve una sesión válida — el usuario ya está logueado, solo le falta password y datos.
-   - Botón "Reenviar código" con cooldown de 30 s.
-   - Mensaje de error claro si el código es incorrecto / expiró.
-3. **Steps 4–6.** Se completan país, inversiones y cuenta conjunta como ahora, pero ya con el usuario logueado, así que las preferencias se guardan en cuanto avanza.
-4. **Step 7 (password).** Llamamos `supabase.auth.updateUser({ password })`. Como ya hay sesión, esto solo añade la contraseña a la cuenta existente. Al confirmar, redirigimos a `/dashboard`.
+### 2. Edge function `send-otp-code`
+- Recibe `{ email, firstName }`
+- Genera código random de 6 dígitos
+- Guarda hash en `email_otps` con `expires_at = now() + 10min`
+- Invalida códigos previos no consumidos del mismo email
+- Envía email vía Resend gateway con plantilla brandeada de Pocket (azul `#3391D0`, logo, código grande centrado)
+- Subject: "Tu código de Pocket: 123456"
+- Rate limit: máximo 1 envío cada 30s por email
 
-### Por qué este orden es mejor
+### 3. Edge function `verify-otp-code`
+- Recibe `{ email, code }`
+- Busca el último OTP no consumido para ese email
+- Si expirado o `attempts >= 5` → error
+- Si código inválido → incrementa `attempts`, error
+- Si válido → marca `consumed_at`, crea/actualiza usuario en `auth.users` usando admin API y devuelve una **session válida** (genera magic link y extrae tokens)
+- Devuelve `{ access_token, refresh_token }` al cliente
 
-- El email queda **verificado siempre** antes de crear nada relevante.
-- Si abandonan en mitad del onboarding, ya tienen una cuenta válida con la que pueden volver a entrar (con código por email) y completar el resto.
-- La contraseña queda asociada a un email confirmado → el login con contraseña funciona desde el primer intento.
-- El reseteo de contraseña sigue funcionando exactamente igual.
+### 4. Frontend `src/pages/Auth.tsx`
+- En **Step 2 → 3**: en vez de `supabase.auth.signInWithOtp`, llamar `send-otp-code`
+- En **Step 3 → 4**: en vez de `supabase.auth.verifyOtp`, llamar `verify-otp-code` y luego `supabase.auth.setSession(tokens)`
+- Resto del flujo (steps 4-7) queda igual: country, investments, joint accounts, password
+- "Resend code" llama de nuevo a `send-otp-code` con cooldown de 30s
 
-## Login
+### 5. Plantilla del email
+HTML inline con branding Pocket:
+- Header con logo / nombre "pocket" en azul
+- Saludo "Hola {firstName}"
+- Caja blanca con el código de 6 dígitos en fuente grande, monoespaciada
+- "Este código expira en 10 minutos"
+- Footer pequeño
 
-El login con `email + password` se queda igual (`signInWithPassword`). Adicionalmente:
+## Detalles técnicos
 
-- Si el usuario intenta entrar con un email que existe pero **no tiene contraseña** (porque dejó el onboarding antes del Step 7), mostramos un toast "Tu cuenta aún no tiene contraseña — te enviamos un código por email para entrar y terminar de configurarla", y disparamos el flujo OTP para que entre y aterrice en Step 7.
-- Mensaje de error más útil para `invalid_credentials`: "Email o contraseña incorrectos. ¿Olvidaste tu contraseña?" con link a recovery.
+- Resend desde `onboarding@resend.dev` (no requiere dominio verificado, free tier 3000/mes).
+- Hash con `crypto.subtle.digest('SHA-256', code)` antes de guardar.
+- `verify-otp-code` usa `supabase.auth.admin.generateLink({ type: 'magiclink' })` internamente solo para extraer una sesión válida — el link nunca se envía.
+- Si el usuario no existe, lo creamos con `supabase.auth.admin.createUser({ email, email_confirm: true })` antes de generar la sesión.
+- Limpieza: códigos vencidos quedan en la tabla (sin job de cron por ahora; volumen bajo).
 
-## Plantilla del email de verificación
-
-Como ya tienes Lovable Cloud + dominio de email, voy a generar las plantillas de auth emails con la marca **Pocket** (azul `#3391D0`, logo, copy en inglés) y desplegar el `auth-email-hook`. La plantilla de "magic link / verification code" mostrará el código de 6 dígitos bien grande y un botón secundario.
-
-## Configuración de Supabase Auth
-
-Voy a aplicar:
-- `auto_confirm_email: false` (queremos que el OTP sea quien confirme).
-- `disable_signup: false`.
-- `password_hibp_enabled: true` para bloquear contraseñas filtradas.
-
-## Archivos que tocaré
-
-| Archivo | Cambio |
-|---|---|
-| `src/pages/Auth.tsx` | Reordenar pasos (1-7), añadir paso de verificación, cambiar `handleSignUp` por flujo OTP + `updateUser({ password })`, mejorar error de login |
-| `src/components/onboarding/StepEmailVerification.tsx` (nuevo) | UI del input de 6 dígitos + reenvío |
-| `src/components/onboarding/StepEmail.tsx` | Disparar envío de OTP al pasar al siguiente paso |
-| `src/components/onboarding/StepPassword.tsx` | Usar `updateUser` en vez de signUp |
-| `supabase/functions/auth-email-hook/*` y `_shared/email-templates/*` | Generados y branded con Pocket |
-| Config auth | `configure_auth` con los valores arriba |
-
-## Lo que NO cambia
-
-- Login con contraseña sigue siendo el flujo principal.
-- Reset password (`/auth?reset=true`) sigue igual.
-- Onboarding modal post-login no se toca (ya casi no se usa porque el onboarding ahora es parte del signup).
-
-¿Procedo con esta implementación o quieres ajustar algún paso (p. ej. mover país antes de verificar el email, o saltarte el código y usar magic-link en su lugar)?
+## Limitaciones conocidas
+- El email saldrá con remitente `onboarding@resend.dev`, no de `pocket.com`. Si en el futuro querés branding total, pasamos a comprar/conectar dominio.
+- Resend free tier: 100 emails/día, 3000/mes. Suficiente para arrancar.
