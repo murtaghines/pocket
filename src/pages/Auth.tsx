@@ -319,21 +319,14 @@ export default function Auth() {
   const normalizedEmail = email.trim().toLowerCase();
 
   const sendOtp = async (): Promise<boolean> => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: normalizedEmail,
-      options: {
-        shouldCreateUser: true,
-        data: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-        },
-      },
+    const { data, error } = await supabase.functions.invoke("send-otp-code", {
+      body: { email: normalizedEmail, firstName: firstName.trim() },
     });
 
-    if (error) {
+    if (error || (data && data.error)) {
       toast({
         title: "Couldn't send code",
-        description: error.message,
+        description: (data && data.error) || error?.message || "Please try again.",
         variant: "destructive",
       });
       return false;
