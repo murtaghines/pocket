@@ -17,6 +17,7 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
+import { StepEmailVerification } from "@/components/onboarding/StepEmailVerification";
 import { StepCountry } from "@/components/onboarding/StepCountry";
 import { StepInvestments } from "@/components/onboarding/StepInvestments";
 import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
@@ -30,18 +31,19 @@ import {
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6;
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 const STEP_QUESTIONS: Record<RegisterStep, string> = {
   1: "What's your name?",
   2: "What's your email?",
-  3: "Where are you located?",
-  4: "Do you invest?",
-  5: "Do you share finances?",
-  6: "Create your password",
+  3: "Verify your email",
+  4: "Where are you located?",
+  5: "Do you invest?",
+  6: "Do you share finances?",
+  7: "Create your password",
 };
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, #1b76ff 0%, #0d5ad6 100%)';
 
