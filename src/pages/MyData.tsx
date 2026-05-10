@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DataRail } from "@/components/layout/DataRail";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { BankStatementsTabsView } from "@/components/profile/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/profile/InvestmentTabsView";
 
