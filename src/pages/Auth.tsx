@@ -347,16 +347,34 @@ export default function Auth() {
   };
 
   const verifyOtpCode = async (): Promise<boolean> => {
-    const { error } = await supabase.auth.verifyOtp({
-      email: normalizedEmail,
-      token: otpCode,
-      type: 'email',
+    const { data, error } = await supabase.functions.invoke("verify-otp-code", {
+      body: {
+        email: normalizedEmail,
+        code: otpCode,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      },
     });
 
-    if (error) {
+    if (error || !data?.ok) {
       toast({
         title: "Invalid code",
-        description: error.message,
+        description: (data && data.error) || error?.message || "Please check the code and try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Exchange the hashed token for a real session
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      token_hash: data.hashed_token,
+      type: "magiclink",
+    });
+
+    if (verifyErr) {
+      toast({
+        title: "Couldn't sign you in",
+        description: verifyErr.message,
         variant: "destructive",
       });
       return false;
