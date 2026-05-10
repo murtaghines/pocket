@@ -17,6 +17,7 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
+import { StepEmailVerification } from "@/components/onboarding/StepEmailVerification";
 import { StepCountry } from "@/components/onboarding/StepCountry";
 import { StepInvestments } from "@/components/onboarding/StepInvestments";
 import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
@@ -30,18 +31,19 @@ import {
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6;
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 const STEP_QUESTIONS: Record<RegisterStep, string> = {
   1: "What's your name?",
   2: "What's your email?",
-  3: "Where are you located?",
-  4: "Do you invest?",
-  5: "Do you share finances?",
-  6: "Create your password",
+  3: "Verify your email",
+  4: "Where are you located?",
+  5: "Do you invest?",
+  6: "Do you share finances?",
+  7: "Create your password",
 };
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, #1b76ff 0%, #0d5ad6 100%)';
 
@@ -164,6 +166,8 @@ export default function Auth() {
   const [jointAccountNames, setJointAccountNames] = useState<string[]>([]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [resendingOtp, setResendingOtp] = useState(false);
   const [language] = useState(detectBrowserLanguage());
   
   const [rememberMe, setRememberMe] = useState(false);
@@ -312,7 +316,60 @@ export default function Auth() {
     );
   }
 
-  const handleSignUp = async () => {
+  const sendOtp = async (): Promise<boolean> => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        },
+      },
+    });
+
+    if (error) {
+      toast({
+        title: "Couldn't send code",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleResendOtp = async () => {
+    setResendingOtp(true);
+    const ok = await sendOtp();
+    if (ok) {
+      toast({
+        title: "Code sent",
+        description: `We sent a new code to ${email}.`,
+      });
+    }
+    setResendingOtp(false);
+  };
+
+  const verifyOtpCode = async (): Promise<boolean> => {
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otpCode,
+      type: 'email',
+    });
+
+    if (error) {
+      toast({
+        title: "Invalid code",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const finalizeSignUp = async () => {
     if (password !== confirmPassword) {
       toast({
         title: "Error",
@@ -333,70 +390,66 @@ export default function Auth() {
 
     setLoading(true);
 
-    const redirectUrl = `${window.location.origin}/`;
-
     const allCategories = [...DEFAULT_INCOME_CATEGORIES, ...DEFAULT_EXPENSE_CATEGORIES];
     const localeMap: Record<string, string> = {
       en: 'en-US',
       es: 'es-ES',
     };
 
-    const { error, data } = await supabase.auth.signUp({
-      email,
+    // Set the password on the now-verified, signed-in user
+    const { data: updateData, error: updateError } = await supabase.auth.updateUser({
       password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-        }
-      }
     });
 
-    if (error) {
+    if (updateError) {
       toast({
-        title: "Error creating account",
-        description: error.message,
+        title: "Couldn't set password",
+        description: updateError.message,
         variant: "destructive",
       });
-    } else {
-      if (data.user) {
-        try {
-          await supabase.from('user_preferences').upsert({
-            user_id: data.user.id,
-            country: country,
-            base_currency: currency,
-            selected_categories: allCategories,
-            language: language,
-            locale: localeMap[language] || 'en-US',
-            onboarding_completed: true,
-            investment_platforms: investmentPlatforms,
-            joint_account_names: jointAccountNames,
-          });
-        } catch (prefError) {
-          console.error('Error saving preferences:', prefError);
-        }
-
-        // Also update profiles with new fields
-        try {
-          await supabase.from('profiles').update({
-            investment_platforms: investmentPlatforms,
-            joint_account_names: jointAccountNames,
-          }).eq('user_id', data.user.id);
-        } catch (profileError) {
-          console.error('Error updating profile:', profileError);
-        }
-      }
-      
-      localStorage.setItem('i18nextLng', language);
-      
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
-      });
-      setAuthMode("login");
-      setRegisterStep(1);
+      setLoading(false);
+      return;
     }
+
+    const userId = updateData.user?.id;
+
+    if (userId) {
+      try {
+        await supabase.from('user_preferences').upsert({
+          user_id: userId,
+          country,
+          base_currency: currency,
+          selected_categories: allCategories,
+          language,
+          locale: localeMap[language] || 'en-US',
+          onboarding_completed: true,
+          investment_platforms: investmentPlatforms,
+          joint_account_names: jointAccountNames,
+        });
+      } catch (prefError) {
+        console.error('Error saving preferences:', prefError);
+      }
+
+      try {
+        await supabase.from('profiles').update({
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          investment_platforms: investmentPlatforms,
+          joint_account_names: jointAccountNames,
+        }).eq('user_id', userId);
+      } catch (profileError) {
+        console.error('Error updating profile:', profileError);
+      }
+    }
+
+    localStorage.setItem('i18nextLng', language);
+    setRememberPreference(true);
+
+    toast({
+      title: "Welcome to pocket!",
+      description: "Your account is ready.",
+    });
+    navigate("/dashboard");
     setLoading(false);
   };
 
@@ -410,14 +463,17 @@ export default function Auth() {
     });
 
     if (error) {
+      const isInvalidCreds = /invalid.*credentials/i.test(error.message);
       toast({
-        title: "Error signing in",
-        description: error.message,
+        title: "Couldn't sign in",
+        description: isInvalidCreds
+          ? "Wrong email or password. If you just signed up, make sure you finished creating your password."
+          : error.message,
         variant: "destructive",
       });
     } else {
       setRememberPreference(rememberMe);
-      
+
       if (rememberMe) {
         localStorage.setItem(REMEMBER_EMAIL_KEY, email);
       } else {
@@ -436,24 +492,49 @@ export default function Auth() {
       case 2:
         return emailValid;
       case 3:
-        return country.length > 0 && currency.length > 0;
+        return otpCode.length === 6;
       case 4:
-        return true; // optional
+        return country.length > 0 && currency.length > 0;
       case 5:
         return true; // optional
       case 6:
+        return true; // optional
+      case 7:
         return password.length >= 6 && password === confirmPassword;
       default:
         return true;
     }
   };
 
-  const handleNext = () => {
-    if (registerStep < TOTAL_STEPS) {
-      setRegisterStep((prev) => (prev + 1) as RegisterStep);
-    } else {
-      handleSignUp();
+  const handleNext = async () => {
+    // Step 2 -> 3: send OTP
+    if (registerStep === 2) {
+      setLoading(true);
+      const ok = await sendOtp();
+      setLoading(false);
+      if (!ok) return;
+      setOtpCode("");
+      setRegisterStep(3);
+      return;
     }
+
+    // Step 3 -> 4: verify OTP
+    if (registerStep === 3) {
+      setLoading(true);
+      const ok = await verifyOtpCode();
+      setLoading(false);
+      if (!ok) return;
+      setRegisterStep(4);
+      return;
+    }
+
+    // Final step: finalize signup
+    if (registerStep === TOTAL_STEPS) {
+      await finalizeSignUp();
+      return;
+    }
+
+    setRegisterStep((prev) => (prev + 1) as RegisterStep);
   };
 
   const handleBack = () => {
@@ -471,12 +552,22 @@ export default function Auth() {
       case 2:
         return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
       case 3:
-        return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
+        return (
+          <StepEmailVerification
+            email={email}
+            code={otpCode}
+            onCodeChange={setOtpCode}
+            onResend={handleResendOtp}
+            resending={resendingOtp}
+          />
+        );
       case 4:
-        return <StepInvestments country={country} selectedPlatforms={investmentPlatforms} onPlatformsChange={setInvestmentPlatforms} />;
+        return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
       case 5:
-        return <StepJointAccount jointAccountNames={jointAccountNames} onJointAccountNamesChange={setJointAccountNames} />;
+        return <StepInvestments country={country} selectedPlatforms={investmentPlatforms} onPlatformsChange={setInvestmentPlatforms} />;
       case 6:
+        return <StepJointAccount jointAccountNames={jointAccountNames} onJointAccountNamesChange={setJointAccountNames} />;
+      case 7:
         return (
           <StepPassword 
             password={password} 
