@@ -52,12 +52,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     location.pathname === path || location.pathname.startsWith(path + "/");
 
   const mobileNavItems = [
-    { label: t("navigation.dashboard", "Dashboard"), path: "/dashboard", icon: LayoutDashboard },
+    { label: t("navigation.dashboard", "Home"), path: "/dashboard", icon: LayoutDashboard },
     { label: t("navigation.history", "History"), path: "/history", icon: BarChart3 },
-    { label: t("navigation.investments", "Investments"), path: "/investments", icon: PiggyBank },
-    { label: "Planning", path: "/planning/budgets", icon: Target },
+    { label: t("navigation.investments", "Invest"), path: "/investments", icon: PiggyBank },
+    { label: "Plan", path: "/planning/budgets", icon: Target },
     { label: "Data", path: "/my-data?tab=bank", icon: FileSpreadsheet },
-    { label: t("navigation.profile", "Profile"), path: "/profile", icon: User },
+    { label: t("navigation.profile", "Me"), path: "/profile", icon: User },
   ];
 
   return (
@@ -105,7 +105,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
-        <div className="flex items-center justify-around h-14 px-2 overflow-x-auto">
+        <div className="flex items-stretch justify-between h-14 px-1">
           {mobileNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path.split("?")[0]);
@@ -114,12 +114,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl transition-all flex-1 min-w-[56px]",
-                  active ? "text-foreground" : "text-muted-foreground",
+                  "flex flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-xl transition-all flex-1 min-w-0",
+                  active ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <Icon className="w-5 h-5 shrink-0" />
+                <span className="text-[10px] font-medium leading-none truncate max-w-full">{item.label}</span>
               </Link>
             );
           })}

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DataRail } from "@/components/layout/DataRail";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { BankStatementsTabsView } from "@/components/profile/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/profile/InvestmentTabsView";
 
@@ -58,9 +59,11 @@ export default function MyData() {
       {/* Full-bleed workspace — true edge-to-edge, no padding, white canvas.
           Header (title + actions) lives inside the tabs view so it can render
           on the same row as the "Add file" button and source-files dropdown. */}
-      <main className="w-full bg-card min-h-screen">
+      <main className="w-full bg-card min-h-screen pb-20 md:pb-0">
         {tab === "bank" ? <BankStatementsTabsView /> : <InvestmentTabsView />}
       </main>
+
+      <MobileBottomNav />
     </div>
   );
 }

@@ -5,9 +5,9 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 export function HeroSection() {
   return (
-    <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden bg-white">
+    <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-20 lg:pt-40 lg:pb-32 overflow-hidden bg-white">
       {/* Decorative yellow cloud - top right */}
-      <div className="absolute -top-16 -right-16 w-64 h-64 opacity-15 pointer-events-none">
+      <div className="absolute -top-10 -right-10 w-40 h-40 sm:-top-16 sm:-right-16 sm:w-64 sm:h-64 opacity-15 pointer-events-none">
         <img src={pocketIcon} alt="" className="w-full h-full object-contain" />
       </div>
       
@@ -27,14 +27,14 @@ export function HeroSection() {
 
         {/* Main headline */}
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 text-[#0F4264]">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-5 sm:mb-6 text-[#0F4264]">
             Take control of your finances
             <br />
             <span className="text-primary">without the hassle</span>
           </h1>
-          
-          <p className="text-lg md:text-xl text-[#6b7280] max-w-2xl mx-auto mb-10">
-            pocket helps you organize your expenses, investments, and savings in one place. 
+
+          <p className="text-base sm:text-lg md:text-xl text-[#6b7280] max-w-2xl mx-auto mb-8 sm:mb-10">
+            pocket helps you organize your expenses, investments, and savings in one place.
             Upload your bank statements and get instant insights.
           </p>
 
@@ -72,27 +72,27 @@ export function HeroSection() {
                 </div>
                 
                 {/* Dashboard content placeholder */}
-                <div className="bg-[#f8f9fa] p-6 md:p-8">
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white border border-[#e5e5e5] rounded-xl p-4">
-                      <div className="text-xs text-[#6b7280] mb-1">Income</div>
-                      <div className="text-2xl font-bold text-success">€4,250</div>
+                <div className="bg-[#f8f9fa] p-3 sm:p-6 md:p-8">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                    <div className="bg-white border border-[#e5e5e5] rounded-xl p-2 sm:p-4">
+                      <div className="text-[10px] sm:text-xs text-[#6b7280] mb-1">Income</div>
+                      <div className="text-sm sm:text-2xl font-bold text-success">€4,250</div>
                     </div>
-                    <div className="bg-white border border-[#e5e5e5] rounded-xl p-4">
-                      <div className="text-xs text-[#6b7280] mb-1">Expenses</div>
-                      <div className="text-2xl font-bold text-destructive">€2,180</div>
+                    <div className="bg-white border border-[#e5e5e5] rounded-xl p-2 sm:p-4">
+                      <div className="text-[10px] sm:text-xs text-[#6b7280] mb-1">Expenses</div>
+                      <div className="text-sm sm:text-2xl font-bold text-destructive">€2,180</div>
                     </div>
-                    <div className="bg-white border border-[#e5e5e5] rounded-xl p-4">
-                      <div className="text-xs text-[#6b7280] mb-1">Balance</div>
-                      <div className="text-2xl font-bold text-primary">€2,070</div>
+                    <div className="bg-white border border-[#e5e5e5] rounded-xl p-2 sm:p-4">
+                      <div className="text-[10px] sm:text-xs text-[#6b7280] mb-1">Balance</div>
+                      <div className="text-sm sm:text-2xl font-bold text-primary">€2,070</div>
                     </div>
                   </div>
-                  
+
                   {/* Chart placeholder */}
-                  <div className="bg-white border border-[#e5e5e5] rounded-xl p-6 h-48 flex items-end justify-around gap-2">
+                  <div className="bg-white border border-[#e5e5e5] rounded-xl p-3 sm:p-6 h-32 sm:h-48 flex items-end justify-around gap-1 sm:gap-2">
                     {[40, 65, 45, 80, 55, 90, 70, 85, 60, 75, 50, 95].map((height, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         className="flex-1 bg-gradient-to-t from-primary/60 to-primary rounded-t"
                         style={{ height: `${height}%` }}
                       />

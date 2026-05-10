@@ -28,6 +28,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from "@/lib/categoryTranslations";
+import { TransactionCardList } from "./TransactionCardList";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -277,6 +278,19 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         </FilterToolbar>
       </CardHeader>
       <CardContent className="px-0 pb-0">
+        {/* Mobile: stacked card list */}
+        <div className="md:hidden">
+          <TransactionCardList
+            transactions={filteredTransactions}
+            emptyLabel={t('transactions.noTransactions')}
+          />
+          <p className="text-sm text-muted-foreground mt-3">
+            {filteredTransactions.length} / {transactions.length}
+          </p>
+        </div>
+
+        {/* Desktop: full table */}
+        <div className="hidden md:block">
         <DataTable>
           <DataTableHeader>
             <DataTableRow className="hover:bg-transparent">
@@ -372,6 +386,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         <p className="text-sm text-muted-foreground mt-3">
           {filteredTransactions.length} / {transactions.length}
         </p>
+        </div>
       </CardContent>
     </Card>
   );

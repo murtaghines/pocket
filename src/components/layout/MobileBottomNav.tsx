@@ -1,130 +1,59 @@
-import { LayoutDashboard, PiggyBank, Upload, Settings } from "lucide-react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  PiggyBank,
+  BarChart3,
+  Target,
+  FileSpreadsheet,
+  User,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
+/**
+ * Shared mobile bottom navigation bar. Used by DashboardLayout and any
+ * page (e.g. MyData) that opts out of DashboardLayout but still needs nav.
+ */
 export function MobileBottomNav() {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { t } = useTranslation('common');
-  const { t: tp } = useTranslation('profile');
+  const { t } = useTranslation("common");
 
-  const isProfilePage = location.pathname === '/profile';
-  const currentTab = searchParams.get('tab') || 'data';
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
-  const handleTabChange = (tab: string) => {
-    setSearchParams({ tab });
-  };
-
-  // Profile page navigation items - only 2 tabs
-  const profileNavItems = [
-    {
-      tabId: 'data',
-      icon: Upload,
-      label: tp('tabs.data'),
-    },
-    {
-      tabId: 'settings',
-      icon: Settings,
-      label: tp('tabs.settings'),
-    },
+  const items = [
+    { label: t("navigation.dashboard", "Home"), path: "/dashboard", icon: LayoutDashboard },
+    { label: t("navigation.history", "History"), path: "/history", icon: BarChart3 },
+    { label: t("navigation.investments", "Invest"), path: "/investments", icon: PiggyBank },
+    { label: "Plan", path: "/planning/budgets", icon: Target },
+    { label: "Data", path: "/my-data?tab=bank", icon: FileSpreadsheet },
+    { label: t("navigation.profile", "Me"), path: "/profile", icon: User },
   ];
-
-  // Default navigation items
-  const defaultNavItems = [
-    {
-      path: '/dashboard',
-      icon: LayoutDashboard,
-      label: t('navigation.dashboard'),
-    },
-    {
-      path: '/investments',
-      icon: PiggyBank,
-      label: t('navigation.investments'),
-    },
-  ];
-
-  if (isProfilePage) {
-    return (
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border">
-        <div className="flex items-center justify-around h-16 px-4">
-          {profileNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = currentTab === item.tabId;
-            
-            return (
-              <button
-                key={item.tabId}
-                onClick={() => handleTabChange(item.tabId)}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 px-6 py-2 rounded-xl transition-all duration-200 flex-1 max-w-[140px]",
-                  active 
-                    ? "bg-primary/10" 
-                    : "hover:bg-muted active:scale-95"
-                )}
-              >
-                <Icon 
-                  className={cn(
-                    "w-5 h-5 transition-colors",
-                    active ? "text-primary" : "text-muted-foreground"
-                  )} 
-                />
-                <span 
-                  className={cn(
-                    "text-xs font-medium transition-colors",
-                    active ? "text-primary" : "text-muted-foreground"
-                  )}
-                >
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {/* Safe area padding for devices with home indicator */}
-        <div className="h-[env(safe-area-inset-bottom,0)] bg-background" />
-      </nav>
-    );
-  }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border">
-      <div className="flex items-center justify-around h-16 px-4">
-        {defaultNavItems.map((item) => {
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
+      <div className="flex items-stretch justify-between h-14 px-1">
+        {items.map((item) => {
           const Icon = item.icon;
-          const active = location.pathname === item.path;
-          
+          const active = isActive(item.path.split("?")[0]);
           return (
             <Link
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 px-6 py-2 rounded-xl transition-all duration-200 flex-1 max-w-[140px]",
-                active 
-                  ? "bg-primary/10" 
-                  : "hover:bg-muted active:scale-95"
+                "flex flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-xl transition-all flex-1 min-w-0",
+                active ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Icon 
-                className={cn(
-                  "w-5 h-5 transition-colors",
-                  active ? "text-primary" : "text-muted-foreground"
-                )} 
-              />
-              <span 
-                className={cn(
-                  "text-xs font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground"
-                )}
-              >
+              <Icon className="w-5 h-5 shrink-0" />
+              <span className="text-[10px] font-medium leading-none truncate max-w-full">
                 {item.label}
               </span>
             </Link>
           );
         })}
       </div>
-      {/* Safe area padding for devices with home indicator */}
-      <div className="h-[env(safe-area-inset-bottom,0)] bg-background" />
+      <div className="h-[env(safe-area-inset-bottom,0)] bg-card" />
     </nav>
   );
 }

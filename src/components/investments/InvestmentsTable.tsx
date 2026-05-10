@@ -40,7 +40,61 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
         <CardTitle>{t('history.title')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        {/* Mobile: stacked cards */}
+        <div className="md:hidden flex flex-col gap-2">
+          {displayedInvestments.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-6">—</p>
+          )}
+          {displayedInvestments.map((inv) => (
+            <div
+              key={inv.id}
+              className="bg-background border border-border rounded-xl p-3 flex items-center gap-3"
+            >
+              <div
+                className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
+                  inv.type === "deposit"
+                    ? "bg-success/15 text-success"
+                    : "bg-destructive/15 text-destructive"
+                }`}
+              >
+                {inv.type === "deposit" ? (
+                  <ArrowUpCircle className="w-4 h-4" />
+                ) : (
+                  <ArrowDownCircle className="w-4 h-4" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-foreground line-clamp-1">
+                  {inv.description}
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                    {inv.platform}
+                  </Badge>
+                  {inv.asset_type && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {ASSET_LABELS[inv.asset_type] || inv.asset_type}
+                    </Badge>
+                  )}
+                  <span className="text-[11px] text-muted-foreground">
+                    {formatDate(inv.date)}
+                  </span>
+                </div>
+              </div>
+              <div
+                className={`text-sm font-semibold whitespace-nowrap ${
+                  inv.type === "deposit" ? "text-success" : "text-destructive"
+                }`}
+              >
+                {inv.type === "deposit" ? "+" : "-"}
+                {formatCurrency(Math.abs(inv.amount))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
