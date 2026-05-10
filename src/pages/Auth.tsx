@@ -316,9 +316,11 @@ export default function Auth() {
     );
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
+
   const sendOtp = async (): Promise<boolean> => {
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: normalizedEmail,
       options: {
         shouldCreateUser: true,
         data: {
@@ -353,7 +355,7 @@ export default function Auth() {
 
   const verifyOtpCode = async (): Promise<boolean> => {
     const { error } = await supabase.auth.verifyOtp({
-      email,
+      email: normalizedEmail,
       token: otpCode,
       type: 'email',
     });
@@ -390,6 +392,20 @@ export default function Auth() {
 
     setLoading(true);
 
+    const { data: sessionData } = await supabase.auth.getSession();
+    const activeUser = sessionData.session?.user;
+
+    if (!activeUser) {
+      toast({
+        title: "Email verification expired",
+        description: "Please verify your email again before creating your password.",
+        variant: "destructive",
+      });
+      setRegisterStep(3);
+      setLoading(false);
+      return;
+    }
+
     const allCategories = [...DEFAULT_INCOME_CATEGORIES, ...DEFAULT_EXPENSE_CATEGORIES];
     const localeMap: Record<string, string> = {
       en: 'en-US',
@@ -411,7 +427,7 @@ export default function Auth() {
       return;
     }
 
-    const userId = updateData.user?.id;
+    const userId = updateData.user?.id || activeUser.id;
 
     if (userId) {
       try {
@@ -431,12 +447,13 @@ export default function Auth() {
       }
 
       try {
-        await supabase.from('profiles').update({
+        await supabase.from('profiles').upsert({
+          user_id: userId,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           investment_platforms: investmentPlatforms,
           joint_account_names: jointAccountNames,
-        }).eq('user_id', userId);
+        }, { onConflict: 'user_id' });
       } catch (profileError) {
         console.error('Error updating profile:', profileError);
       }
@@ -458,7 +475,7 @@ export default function Auth() {
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: normalizedEmail,
       password,
     });
 
@@ -475,7 +492,7 @@ export default function Auth() {
       setRememberPreference(rememberMe);
 
       if (rememberMe) {
-        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+        localStorage.setItem(REMEMBER_EMAIL_KEY, normalizedEmail);
       } else {
         localStorage.removeItem(REMEMBER_EMAIL_KEY);
         transferSessionToSessionStorage();
