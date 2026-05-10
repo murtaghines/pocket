@@ -2213,7 +2213,7 @@ function InlineTransactionsEditor({
                           onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
                           disabled={isHidden}
                         >
-                          <SelectTrigger className="h-8 w-auto text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 gap-1 [&>svg]:opacity-50 [&>svg]:ml-0">
+                          <SelectTrigger className="h-8 w-full min-w-[120px] text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50 [&>svg]:ml-2 [&>svg]:flex-shrink-0">
                             <SelectValue>
                               <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
                                 {getMovementLabel(movement)}
@@ -2259,7 +2259,7 @@ function InlineTransactionsEditor({
                           onValueChange={(v) => handleCategoryChange(tx, v)}
                           disabled={isHidden}
                         >
-                          <SelectTrigger className="h-8 w-auto text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 gap-1 [&>svg]:opacity-50 [&>svg]:ml-0">
+                          <SelectTrigger className="h-8 w-full min-w-[160px] text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50 [&>svg]:ml-2 [&>svg]:flex-shrink-0">
                             <SelectValue>
                               <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
                                 <CategoryIcon
