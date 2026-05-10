@@ -319,21 +319,14 @@ export default function Auth() {
   const normalizedEmail = email.trim().toLowerCase();
 
   const sendOtp = async (): Promise<boolean> => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: normalizedEmail,
-      options: {
-        shouldCreateUser: true,
-        data: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-        },
-      },
+    const { data, error } = await supabase.functions.invoke("send-otp-code", {
+      body: { email: normalizedEmail, firstName: firstName.trim() },
     });
 
-    if (error) {
+    if (error || (data && data.error)) {
       toast({
         title: "Couldn't send code",
-        description: error.message,
+        description: (data && data.error) || error?.message || "Please try again.",
         variant: "destructive",
       });
       return false;
@@ -354,16 +347,34 @@ export default function Auth() {
   };
 
   const verifyOtpCode = async (): Promise<boolean> => {
-    const { error } = await supabase.auth.verifyOtp({
-      email: normalizedEmail,
-      token: otpCode,
-      type: 'email',
+    const { data, error } = await supabase.functions.invoke("verify-otp-code", {
+      body: {
+        email: normalizedEmail,
+        code: otpCode,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      },
     });
 
-    if (error) {
+    if (error || !data?.ok) {
       toast({
         title: "Invalid code",
-        description: error.message,
+        description: (data && data.error) || error?.message || "Please check the code and try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Exchange the hashed token for a real session
+    const { error: verifyErr } = await supabase.auth.verifyOtp({
+      token_hash: data.hashed_token,
+      type: "magiclink",
+    });
+
+    if (verifyErr) {
+      toast({
+        title: "Couldn't sign you in",
+        description: verifyErr.message,
         variant: "destructive",
       });
       return false;
