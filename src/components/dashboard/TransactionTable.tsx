@@ -386,6 +386,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         <p className="text-sm text-muted-foreground mt-3">
           {filteredTransactions.length} / {transactions.length}
         </p>
+        </div>
       </CardContent>
     </Card>
   );
