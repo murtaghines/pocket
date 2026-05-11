@@ -136,6 +136,11 @@ const App = () => (
                 <MyData />
               </ProtectedRoute>
             } />
+            <Route path="/categories" element={
+              <ProtectedRoute>
+                <Categories />
+              </ProtectedRoute>
+            } />
             <Route path="/auth" element={
               <PublicRoute>
                 <Auth />
