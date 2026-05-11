@@ -17,7 +17,6 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
-import { StepEmailVerification } from "@/components/onboarding/StepEmailVerification";
 import { StepCountry } from "@/components/onboarding/StepCountry";
 import { StepInvestments } from "@/components/onboarding/StepInvestments";
 import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
@@ -31,19 +30,18 @@ import {
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 const STEP_QUESTIONS: Record<RegisterStep, string> = {
   1: "What's your name?",
   2: "What's your email?",
-  3: "Verify your email",
-  4: "Where are you located?",
-  5: "Do you invest?",
-  6: "Do you share finances?",
-  7: "Create your password",
+  3: "Where are you located?",
+  4: "Do you invest?",
+  5: "Do you share finances?",
+  6: "Create your password",
 };
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 6;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, #1b76ff 0%, #0d5ad6 100%)';
 
@@ -166,8 +164,6 @@ export default function Auth() {
   const [jointAccountNames, setJointAccountNames] = useState<string[]>([]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [otpCode, setOtpCode] = useState("");
-  const [resendingOtp, setResendingOtp] = useState(false);
   const [language] = useState(detectBrowserLanguage());
   
   const [rememberMe, setRememberMe] = useState(false);
@@ -318,70 +314,6 @@ export default function Auth() {
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  const sendOtp = async (): Promise<boolean> => {
-    const { data, error } = await supabase.functions.invoke("send-otp-code", {
-      body: { email: normalizedEmail, firstName: firstName.trim() },
-    });
-
-    if (error || (data && data.error)) {
-      toast({
-        title: "Couldn't send code",
-        description: (data && data.error) || error?.message || "Please try again.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    return true;
-  };
-
-  const handleResendOtp = async () => {
-    setResendingOtp(true);
-    const ok = await sendOtp();
-    if (ok) {
-      toast({
-        title: "Code sent",
-        description: `We sent a new code to ${email}.`,
-      });
-    }
-    setResendingOtp(false);
-  };
-
-  const verifyOtpCode = async (): Promise<boolean> => {
-    const { data, error } = await supabase.functions.invoke("verify-otp-code", {
-      body: {
-        email: normalizedEmail,
-        code: otpCode,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-      },
-    });
-
-    if (error || !data?.ok) {
-      toast({
-        title: "Invalid code",
-        description: (data && data.error) || error?.message || "Please check the code and try again.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // Exchange the hashed token for a real session
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
-      token_hash: data.hashed_token,
-      type: "magiclink",
-    });
-
-    if (verifyErr) {
-      toast({
-        title: "Couldn't sign you in",
-        description: verifyErr.message,
-        variant: "destructive",
-      });
-      return false;
-    }
-    return true;
-  };
-
   const finalizeSignUp = async () => {
     if (password !== confirmPassword) {
       toast({
@@ -403,18 +335,45 @@ export default function Auth() {
 
     setLoading(true);
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const activeUser = sessionData.session?.user;
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        },
+      },
+    });
 
-    if (!activeUser) {
+    if (signUpError) {
       toast({
-        title: "Email verification expired",
-        description: "Please verify your email again before creating your password.",
+        title: "Couldn't create your account",
+        description: signUpError.message,
         variant: "destructive",
       });
-      setRegisterStep(3);
       setLoading(false);
       return;
+    }
+
+    // If session not returned (e.g. email confirm required), try to sign in directly
+    let userId = signUpData.user?.id;
+    if (!signUpData.session) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+      if (signInError) {
+        toast({
+          title: "Account created",
+          description: "Please log in to continue.",
+        });
+        setAuthMode("login");
+        setLoading(false);
+        return;
+      }
+      userId = signInData.user?.id || userId;
     }
 
     const allCategories = [...DEFAULT_INCOME_CATEGORIES, ...DEFAULT_EXPENSE_CATEGORIES];
@@ -422,23 +381,6 @@ export default function Auth() {
       en: 'en-US',
       es: 'es-ES',
     };
-
-    // Set the password on the now-verified, signed-in user
-    const { data: updateData, error: updateError } = await supabase.auth.updateUser({
-      password,
-    });
-
-    if (updateError) {
-      toast({
-        title: "Couldn't set password",
-        description: updateError.message,
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    const userId = updateData.user?.id || activeUser.id;
 
     if (userId) {
       try {
@@ -520,14 +462,12 @@ export default function Auth() {
       case 2:
         return emailValid;
       case 3:
-        return otpCode.length === 6;
-      case 4:
         return country.length > 0 && currency.length > 0;
+      case 4:
+        return true; // optional
       case 5:
         return true; // optional
       case 6:
-        return true; // optional
-      case 7:
         return password.length >= 6 && password === confirmPassword;
       default:
         return true;
@@ -535,33 +475,10 @@ export default function Auth() {
   };
 
   const handleNext = async () => {
-    // Step 2 -> 3: send OTP
-    if (registerStep === 2) {
-      setLoading(true);
-      const ok = await sendOtp();
-      setLoading(false);
-      if (!ok) return;
-      setOtpCode("");
-      setRegisterStep(3);
-      return;
-    }
-
-    // Step 3 -> 4: verify OTP
-    if (registerStep === 3) {
-      setLoading(true);
-      const ok = await verifyOtpCode();
-      setLoading(false);
-      if (!ok) return;
-      setRegisterStep(4);
-      return;
-    }
-
-    // Final step: finalize signup
     if (registerStep === TOTAL_STEPS) {
       await finalizeSignUp();
       return;
     }
-
     setRegisterStep((prev) => (prev + 1) as RegisterStep);
   };
 
@@ -580,22 +497,12 @@ export default function Auth() {
       case 2:
         return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
       case 3:
-        return (
-          <StepEmailVerification
-            email={email}
-            code={otpCode}
-            onCodeChange={setOtpCode}
-            onResend={handleResendOtp}
-            resending={resendingOtp}
-          />
-        );
-      case 4:
         return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
-      case 5:
+      case 4:
         return <StepInvestments country={country} selectedPlatforms={investmentPlatforms} onPlatformsChange={setInvestmentPlatforms} />;
-      case 6:
+      case 5:
         return <StepJointAccount jointAccountNames={jointAccountNames} onJointAccountNamesChange={setJointAccountNames} />;
-      case 7:
+      case 6:
         return (
           <StepPassword 
             password={password} 
