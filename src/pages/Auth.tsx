@@ -659,11 +659,30 @@ export default function Auth() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    toast({
-                      title: "Forgot password?",
-                      description: "Please contact support to reset your password.",
+                  onClick={async () => {
+                    if (!emailValid || !normalizedEmail) {
+                      toast({
+                        title: "Enter your email first",
+                        description: "Type your email above so we can send you a reset link.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+                      redirectTo: `${window.location.origin}/auth?reset=true`,
                     });
+                    if (error) {
+                      toast({
+                        title: "Couldn't send reset email",
+                        description: error.message,
+                        variant: "destructive",
+                      });
+                    } else {
+                      toast({
+                        title: "Check your email",
+                        description: `We sent a password reset link to ${normalizedEmail}.`,
+                      });
+                    }
                   }}
                   className="text-sm text-primary hover:underline"
                 >
