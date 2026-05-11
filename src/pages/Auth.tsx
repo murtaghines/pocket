@@ -152,6 +152,16 @@ export default function Auth() {
   useEffect(() => {
     setAuthModeState(modeFromUrl);
   }, [modeFromUrl]);
+
+  // Detect Supabase password recovery event and force the reset screen
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setSearchParams({ reset: "true" });
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [setSearchParams]);
   const [registerStep, setRegisterStep] = useState<RegisterStep>(1);
   
   const [firstName, setFirstName] = useState("");
