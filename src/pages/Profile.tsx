@@ -72,14 +72,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Categories */}
-          <div className="bg-card rounded-xl p-5 md:p-6">
-            <SectionHeader icon={Tags} title={ts('categories.title')} />
-            <div className="mt-4">
-              <CategoriesEditor />
-            </div>
-          </div>
-
           {/* Banking Accounts */}
           <div className="bg-card rounded-xl p-5 md:p-6">
             <SectionHeader icon={Landmark} title={t('accounts.title', { defaultValue: 'Banking Accounts' })} />
