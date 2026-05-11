@@ -5,10 +5,9 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProfileInfoCard } from "@/components/profile/ProfileInfoCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { PreferencesForm } from "@/components/settings/PreferencesForm";
-import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 import { AccountsManager } from "@/components/settings/AccountsManager";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { User, Globe, Tags, Trash2, Landmark } from "lucide-react";
+import { User, Globe, Trash2, Landmark } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
