@@ -6,6 +6,7 @@ import {
   Target,
   Landmark,
   LineChart,
+  Tags,
   ChevronRight,
   ChevronLeft,
   type LucideIcon,
