@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Trash2, Pencil, ChevronDown, ChevronRight, Palette } from 'lucide-react';
+import { Plus, Trash2, Pencil, ChevronDown, Palette } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
@@ -10,6 +9,7 @@ import { CategoryIcon } from '@/components/ui/category-icon';
 import type { Database } from '@/integrations/supabase/types';
 import { ColorIconPicker } from '@/components/settings/ColorIconPicker';
 import type { CustomCategoryRule, VisualOverride } from '@/hooks/useCustomCategories';
+import { cn } from '@/lib/utils';
 
 type Category = Database["public"]["Tables"]["categories"]["Row"];
 type Rule = Database["public"]["Tables"]["categorization_rules"]["Row"];
@@ -26,14 +26,103 @@ interface Props {
   onSetVisualOverride?: (slug: string, color?: string, icon?: string) => Promise<void>;
 }
 
-const matchTypeKey = (mt: string) => {
-  if (mt === 'SMART') return 'categories.smartMatch';
-  if (mt === 'STARTS_WITH') return 'categories.startsWith';
-  if (mt === 'REGEX') return 'categories.regex';
-  if (mt === 'EXACT') return 'categories.exact';
-  return 'categories.contains';
+const matchTypeLabel = (mt: string, t: (k: string) => string) => {
+  if (mt === 'SMART') return t('categories.smartMatch');
+  if (mt === 'STARTS_WITH') return t('categories.startsWith');
+  if (mt === 'REGEX') return t('categories.regex');
+  if (mt === 'EXACT') return t('categories.exact');
+  return t('categories.contains');
 };
 
+function renderLucide(iconName: string, size = 16) {
+  const I = icons[iconName as keyof typeof icons];
+  if (!I) return null;
+  return <I size={size} />;
+}
+
+function CategoryRow({
+  accent,
+  iconNode,
+  name,
+  ruleCount,
+  isOpen,
+  onToggle,
+  rightSlot,
+  children,
+  isCustom,
+}: {
+  accent: string; // css color
+  iconNode: React.ReactNode;
+  name: string;
+  ruleCount: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  rightSlot?: React.ReactNode;
+  children: React.ReactNode;
+  isCustom?: boolean;
+}) {
+  return (
+    <div className="group border-b border-border/60 last:border-b-0">
+      <div
+        className={cn(
+          "grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 transition-colors cursor-pointer",
+          isOpen ? "bg-muted/40" : "hover:bg-muted/30"
+        )}
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{
+              backgroundColor: `${accent}1F`,
+              color: accent,
+            }}
+          >
+            {iconNode}
+          </div>
+        </div>
+
+        <div className="min-w-0 flex items-center gap-2">
+          <span className="text-[15px] font-medium text-foreground truncate">{name}</span>
+          {isCustom && (
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold shrink-0">
+              Custom
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {ruleCount > 0 ? (
+            <span
+              className="text-xs font-medium px-2 py-0.5 rounded-full"
+              style={{
+                backgroundColor: `${accent}1A`,
+                color: accent,
+              }}
+            >
+              {ruleCount} {ruleCount === 1 ? 'rule' : 'rules'}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">No rules</span>
+          )}
+          {rightSlot}
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 text-muted-foreground transition-transform shrink-0",
+              isOpen && "rotate-180"
+            )}
+          />
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="px-4 pb-4 pt-1 bg-muted/20" onClick={(e) => e.stopPropagation()}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function CategoryRulesList({
   categories,
@@ -50,147 +139,120 @@ export function CategoryRulesList({
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const renderIcon = (iconName: string, size = 14) => {
-    const IconComponent = icons[iconName as keyof typeof icons];
-    if (!IconComponent) return null;
-    return <IconComponent size={size} />;
+  const resolveCssColor = (override: VisualOverride | undefined, slug: string) => {
+    if (override?.color) return `hsl(${override.color})`;
+    const v = getCategoryColor(slug);
+    return `hsl(var(--${v}))`;
   };
 
   return (
-    <div className="space-y-0.5">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
       {/* System categories */}
       {categories.map((cat) => {
         const slug = cat.slug || cat.name;
         const rules = getRulesForCategory(cat.id);
         const isOpen = expanded === cat.id;
         const override = getVisualOverride?.(slug);
-        const defaultColorVar = getCategoryColor(slug);
+        const accent = resolveCssColor(override, slug);
         const defaultIcon = getCategoryIcon(slug);
-        // Use override color as raw HSL, else use CSS var
-        const hasOverrideColor = !!override?.color;
-        const accentColor = hasOverrideColor ? override.color! : undefined;
         const displayIcon = override?.icon || defaultIcon;
 
         return (
-          <div key={cat.id}>
-            <button
-              className="w-full flex items-center gap-2.5 px-2 py-2 text-left hover:bg-muted/60 transition-colors rounded-md group"
-              onClick={() => setExpanded(isOpen ? null : cat.id)}
-            >
-              <div
-                className="w-1 h-5 rounded-full shrink-0 transition-opacity group-hover:opacity-100 opacity-60"
-                style={{ backgroundColor: accentColor ? `hsl(${accentColor})` : `hsl(var(--${defaultColorVar}))` }}
-              />
-              {override?.icon ? (
-                <div
-                  className="w-5 h-5 rounded flex items-center justify-center shrink-0"
-                  style={{
-                    backgroundColor: accentColor ? `hsl(${accentColor} / 0.12)` : `hsl(var(--${defaultColorVar}) / 0.12)`,
-                    color: accentColor ? `hsl(${accentColor})` : `hsl(var(--${defaultColorVar}))`,
-                  }}
-                >
-                  {renderIcon(displayIcon, 12)}
-                </div>
+          <CategoryRow
+            key={cat.id}
+            accent={accent}
+            iconNode={
+              override?.icon ? (
+                renderLucide(displayIcon, 16)
               ) : (
-                <CategoryIcon
-                  iconName={displayIcon}
-                  colorVar={defaultColorVar}
-                  size="sm"
-                  showBackground={false}
-                />
-              )}
-              <span className="text-sm font-medium flex-1 truncate">
-                {getCategoryLabel(slug)}
-              </span>
-              {rules.length > 0 && (
-                <span className="text-[10px] text-muted-foreground tabular-nums">
-                  {rules.length} {rules.length === 1 ? t('categories.rule') : t('categories.rules')}
-                </span>
-              )}
-              {isOpen ? (
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              )}
-            </button>
-
-            {isOpen && (
-              <div
-                className="ml-3 pl-3 border-l-2 pb-2 pt-1 space-y-1.5 mb-1"
-                style={{ borderColor: accentColor ? `hsl(${accentColor} / 0.3)` : `hsl(var(--${defaultColorVar}) / 0.3)` }}
-              >
-                {/* Color/Icon customization */}
-                {onSetVisualOverride && (
-                  <div className="flex items-center gap-1.5 pb-1">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-xs h-6 gap-1 text-muted-foreground hover:text-foreground px-2">
-                          <Palette className="w-3 h-3" />
-                          {t('categories.editColorIcon', 'Edit color & icon')}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[340px] p-4" align="start">
-                        <ColorIconPicker
-                          currentColor={accentColor || '210 30% 50%'}
-                          currentIcon={override?.icon || defaultIcon}
-                          onSave={(c, i) => onSetVisualOverride(slug, c, i)}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                )}
-
-                {rules.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-1 pl-1">
-                    {t('categories.noRules')}
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    {rules.map((rule) => (
-                      <div
-                        key={rule.id}
-                        className="flex items-center justify-between gap-2 text-xs rounded-md px-2.5 py-1.5 bg-muted/40 hover:bg-muted/60 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider shrink-0">
-                            {t(matchTypeKey(rule.match_type))}
-                          </span>
-                          <code className="text-xs font-mono truncate text-foreground/80">{rule.pattern}</code>
-                        </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            onClick={(e) => { e.stopPropagation(); onEditRule(rule, cat); }}
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                            onClick={(e) => { e.stopPropagation(); onDeleteRule(rule.id); }}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <CategoryIcon iconName={displayIcon} colorVar={getCategoryColor(slug)} size="sm" showBackground={false} />
+              )
+            }
+            name={getCategoryLabel(slug)}
+            ruleCount={rules.length}
+            isOpen={isOpen}
+            onToggle={() => setExpanded(isOpen ? null : cat.id)}
+            rightSlot={
+              onSetVisualOverride && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-background text-muted-foreground hover:text-foreground"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Edit color & icon"
+                    >
+                      <Palette className="w-3.5 h-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[340px] p-4" align="end" onClick={(e) => e.stopPropagation()}>
+                    <ColorIconPicker
+                      currentColor={override?.color || '210 30% 50%'}
+                      currentIcon={override?.icon || defaultIcon}
+                      onSave={(c, i) => onSetVisualOverride(slug, c, i)}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )
+            }
+          >
+            {rules.length === 0 ? (
+              <div className="flex items-center justify-between gap-3 py-2">
+                <p className="text-sm text-muted-foreground">
+                  No custom rules yet. Add keywords to fine-tune how transactions are categorized.
+                </p>
                 <Button
-                  variant="ghost"
                   size="sm"
-                  className="text-xs h-7 w-full justify-start text-muted-foreground hover:text-foreground"
+                  variant="outline"
+                  className="shrink-0 gap-1.5"
                   onClick={() => onAddRule(cat)}
                 >
-                  <Plus className="w-3 h-3 mr-1.5" />
-                  {t('categories.addRule')}
+                  <Plus className="w-3.5 h-3.5" />
+                  Add rule
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-1.5 pt-1">
+                {rules.map((rule) => (
+                  <div
+                    key={rule.id}
+                    className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2 hover:border-primary/40 transition-colors"
+                  >
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground shrink-0 w-20">
+                      {matchTypeLabel(rule.match_type, t)}
+                    </span>
+                    <code className="text-sm font-mono text-foreground flex-1 truncate">{rule.pattern}</code>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => onEditRule(rule, cat)}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => onDeleteRule(rule.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full justify-start gap-1.5 text-muted-foreground hover:text-foreground mt-1"
+                  onClick={() => onAddRule(cat)}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add another rule
                 </Button>
               </div>
             )}
-          </div>
+          </CategoryRow>
         );
       })}
 
@@ -198,77 +260,60 @@ export function CategoryRulesList({
       {customCategories.map((cat, idx) => {
         const customId = `custom-${cat.slug}-${idx}`;
         const isOpen = expanded === customId;
-        const color = cat.color || '210 30% 50%';
+        const accent = `hsl(${cat.color || '210 30% 50%'})`;
         const iconName = cat.icon || 'circle';
 
         return (
-          <div key={customId}>
-            <button
-              className="w-full flex items-center gap-2.5 px-2 py-2 text-left hover:bg-muted/60 transition-colors rounded-md group"
-              onClick={() => setExpanded(isOpen ? null : customId)}
-            >
-              <div
-                className="w-1 h-5 rounded-full shrink-0 transition-opacity group-hover:opacity-100 opacity-60"
-                style={{ backgroundColor: `hsl(${color})` }}
-              />
-              <div
-                className="w-5 h-5 rounded flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `hsl(${color} / 0.12)`, color: `hsl(${color})` }}
-              >
-                {renderIcon(iconName, 12)}
-              </div>
-              <span className="text-sm font-medium flex-1 truncate">
-                {cat.name}
-              </span>
-              <Badge variant="outline" className="text-[9px] h-4 px-1.5 shrink-0 border-dashed">
-                Custom
-              </Badge>
-              {cat.keywords.length > 0 && (
-                <span className="text-[10px] text-muted-foreground tabular-nums">
-                  {cat.keywords.length} {cat.keywords.length === 1 ? t('categories.rule') : t('categories.rules')}
-                </span>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => { e.stopPropagation(); onDeleteCustomCategory?.(cat); }}
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-              {isOpen ? (
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              )}
-            </button>
-
-            {isOpen && (
-              <div className="ml-3 pl-3 border-l-2 pb-2 pt-1 space-y-1.5 mb-1" style={{ borderColor: `hsl(${color} / 0.3)` }}>
-                {cat.keywords.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-1 pl-1">
-                    {t('categories.noRules')}
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    {cat.keywords.map((kw, ki) => (
-                      <div
-                        key={ki}
-                        className="flex items-center gap-2 text-xs rounded-md px-2.5 py-1.5 bg-muted/40"
-                      >
-                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider shrink-0">
-                          {t('categories.contains')}
-                        </span>
-                        <code className="text-xs font-mono truncate text-foreground/80">{kw}</code>
-                      </div>
-                    ))}
+          <CategoryRow
+            key={customId}
+            accent={accent}
+            iconNode={renderLucide(iconName, 16)}
+            name={cat.name}
+            ruleCount={cat.keywords.length}
+            isOpen={isOpen}
+            onToggle={() => setExpanded(isOpen ? null : customId)}
+            isCustom
+            rightSlot={
+              onDeleteCustomCategory && (
+                <button
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-background text-muted-foreground hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteCustomCategory(cat);
+                  }}
+                  aria-label="Delete custom category"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )
+            }
+          >
+            {cat.keywords.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">No keywords yet.</p>
+            ) : (
+              <div className="space-y-1.5 pt-1">
+                {cat.keywords.map((kw, ki) => (
+                  <div
+                    key={ki}
+                    className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2"
+                  >
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground shrink-0 w-20">
+                      Contains
+                    </span>
+                    <code className="text-sm font-mono text-foreground flex-1 truncate">{kw}</code>
                   </div>
-                )}
+                ))}
               </div>
             )}
-          </div>
+          </CategoryRow>
         );
       })}
+
+      {categories.length === 0 && customCategories.length === 0 && (
+        <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+          No categories yet.
+        </div>
+      )}
     </div>
   );
 }
