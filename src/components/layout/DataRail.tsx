@@ -82,9 +82,13 @@ export function DataRail() {
   const workspace: NavChild[] = [
     { label: "Bank statements", to: "/my-data?tab=bank", icon: Landmark },
     { label: "Investment files", to: "/my-data?tab=investments", icon: LineChart },
+    { label: "Categories & rules", to: "/categories", icon: Tags },
   ];
 
   const isWorkspaceActive = (item: NavChild) => {
+    if (item.to.startsWith("/categories")) {
+      return location.pathname === "/categories";
+    }
     if (location.pathname !== "/my-data") return false;
     const wantTab = item.to.includes("investments") ? "investments" : "bank";
     const currentTab = new URLSearchParams(location.search).get("tab") ?? "bank";
