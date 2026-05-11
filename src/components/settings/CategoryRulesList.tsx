@@ -286,7 +286,7 @@ export function CategoryRulesList({
           <CategoryRow
             key={customId}
             accent={accent}
-            iconNode={renderLucide(iconName, 16)}
+            iconNode={renderLucide(iconName, 22)}
             name={cat.name}
             ruleCount={cat.keywords.length}
             isOpen={isOpen}
