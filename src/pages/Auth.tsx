@@ -238,9 +238,10 @@ export default function Auth() {
     } else {
       toast({
         title: t('success.passwordUpdated'),
-        description: t('success.passwordUpdatedDescription'),
+        description: "Please sign in with your new password.",
       });
-      navigate("/dashboard");
+      await supabase.auth.signOut();
+      navigate("/auth?mode=login");
     }
     setUpdateLoading(false);
   };
