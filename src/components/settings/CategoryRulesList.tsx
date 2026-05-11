@@ -47,6 +47,7 @@ function CategoryRow({
   ruleCount,
   isOpen,
   onToggle,
+  editTrigger,
   rightSlot,
   children,
   isCustom,
@@ -57,6 +58,7 @@ function CategoryRow({
   ruleCount: number;
   isOpen: boolean;
   onToggle: () => void;
+  editTrigger?: React.ReactNode;
   rightSlot?: React.ReactNode;
   children: React.ReactNode;
   isCustom?: boolean;
@@ -65,38 +67,55 @@ function CategoryRow({
     <div className="group border-b border-border/60 last:border-b-0">
       <div
         className={cn(
-          "grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 transition-colors cursor-pointer",
+          "flex items-center gap-4 px-4 py-3 transition-colors cursor-pointer",
           isOpen ? "bg-muted/40" : "hover:bg-muted/30"
         )}
         onClick={onToggle}
       >
-        <div className="flex items-center gap-3 min-w-0">
+        {/* Icon + name as a unified colored chip */}
+        <div
+          className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl min-w-0 flex-1"
+          style={{
+            backgroundColor: `${accent}14`,
+          }}
+        >
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            className="relative w-11 h-11 rounded-lg flex items-center justify-center shrink-0"
             style={{
-              backgroundColor: `${accent}1F`,
+              backgroundColor: `${accent}2E`,
               color: accent,
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             {iconNode}
+            {editTrigger && (
+              <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center bg-foreground/40 backdrop-blur-[1px]">
+                {editTrigger}
+              </div>
+            )}
           </div>
-        </div>
 
-        <div className="min-w-0 flex items-center gap-2">
-          <span className="text-[15px] font-medium text-foreground truncate">{name}</span>
-          {isCustom && (
-            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold shrink-0">
-              Custom
+          <div className="min-w-0 flex items-center gap-2">
+            <span
+              className="text-[16px] font-semibold truncate"
+              style={{ color: accent }}
+            >
+              {name}
             </span>
-          )}
+            {isCustom && (
+              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-background/70 text-foreground/70 font-semibold shrink-0">
+                Custom
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           {ruleCount > 0 ? (
             <span
-              className="text-xs font-medium px-2 py-0.5 rounded-full"
+              className="text-xs font-semibold px-2.5 py-1 rounded-full"
               style={{
-                backgroundColor: `${accent}1A`,
+                backgroundColor: `${accent}1F`,
                 color: accent,
               }}
             >
