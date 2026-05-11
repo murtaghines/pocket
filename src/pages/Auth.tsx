@@ -462,14 +462,12 @@ export default function Auth() {
       case 2:
         return emailValid;
       case 3:
-        return otpCode.length === 6;
-      case 4:
         return country.length > 0 && currency.length > 0;
+      case 4:
+        return true; // optional
       case 5:
         return true; // optional
       case 6:
-        return true; // optional
-      case 7:
         return password.length >= 6 && password === confirmPassword;
       default:
         return true;
@@ -477,33 +475,10 @@ export default function Auth() {
   };
 
   const handleNext = async () => {
-    // Step 2 -> 3: send OTP
-    if (registerStep === 2) {
-      setLoading(true);
-      const ok = await sendOtp();
-      setLoading(false);
-      if (!ok) return;
-      setOtpCode("");
-      setRegisterStep(3);
-      return;
-    }
-
-    // Step 3 -> 4: verify OTP
-    if (registerStep === 3) {
-      setLoading(true);
-      const ok = await verifyOtpCode();
-      setLoading(false);
-      if (!ok) return;
-      setRegisterStep(4);
-      return;
-    }
-
-    // Final step: finalize signup
     if (registerStep === TOTAL_STEPS) {
       await finalizeSignUp();
       return;
     }
-
     setRegisterStep((prev) => (prev + 1) as RegisterStep);
   };
 
@@ -522,22 +497,12 @@ export default function Auth() {
       case 2:
         return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
       case 3:
-        return (
-          <StepEmailVerification
-            email={email}
-            code={otpCode}
-            onCodeChange={setOtpCode}
-            onResend={handleResendOtp}
-            resending={resendingOtp}
-          />
-        );
-      case 4:
         return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
-      case 5:
+      case 4:
         return <StepInvestments country={country} selectedPlatforms={investmentPlatforms} onPlatformsChange={setInvestmentPlatforms} />;
-      case 6:
+      case 5:
         return <StepJointAccount jointAccountNames={jointAccountNames} onJointAccountNamesChange={setJointAccountNames} />;
-      case 7:
+      case 6:
         return (
           <StepPassword 
             password={password} 
