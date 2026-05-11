@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
 import Profile from "./pages/Profile";
 import MyData from "./pages/MyData";
+import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 import ComingSoon from "./pages/ComingSoon";
 
@@ -133,6 +134,11 @@ const App = () => (
             <Route path="/my-data" element={
               <ProtectedRoute>
                 <MyData />
+              </ProtectedRoute>
+            } />
+            <Route path="/categories" element={
+              <ProtectedRoute>
+                <Categories />
               </ProtectedRoute>
             } />
             <Route path="/auth" element={
