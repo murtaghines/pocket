@@ -106,27 +106,24 @@ export function CategoriesEditor() {
     return arr.filter(c => c.name.toLowerCase().includes(q) || c.keywords.some(k => k.toLowerCase().includes(q)));
   };
 
-  const tabs: { key: TabKey; label: string; icon: typeof TrendingUp; count: number; accent: string }[] = [
+  const tabs: { key: TabKey; label: string; icon: typeof TrendingUp; count: number }[] = [
     {
       key: 'expense',
       label: 'Expenses',
       icon: TrendingDown,
       count: expenseCategories.length + expenseCustom.length,
-      accent: 'text-orange-600 dark:text-orange-400',
     },
     {
       key: 'income',
       label: 'Income',
       icon: TrendingUp,
       count: incomeCategories.length + incomeCustom.length,
-      accent: 'text-emerald-600 dark:text-emerald-400',
     },
     {
       key: 'transfer',
       label: 'Transfers',
       icon: ArrowRightLeft,
       count: transferCategories.length,
-      accent: 'text-sky-600 dark:text-sky-400',
     },
   ];
 
@@ -137,26 +134,23 @@ export function CategoriesEditor() {
   })();
 
   return (
-    <div className="space-y-5">
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search categories or keywords…"
-            className="pl-9 h-10 text-sm bg-card"
-          />
+    <div className="flex flex-col min-h-screen">
+      {/* ============= Header: title (left) + actions (right) — mirrors Bank statements ============= */}
+      <div className="flex items-center justify-between gap-3 px-6 md:px-10 py-5 md:py-6 border-b border-border bg-card">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
+            Categories &amp; rules
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 truncate">
+            Manage standard and custom categories, plus the rules that classify your transactions.
+          </p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-          <span>
-            <span className="font-semibold text-foreground tabular-nums">{totalRules}</span> rules total
-          </span>
+
+        <div className="flex items-center gap-2 shrink-0">
           <Button
-            size="default"
-            className="h-10 gap-1.5"
+            size="sm"
             onClick={() => setShowCreateCategory(true)}
+            className="gap-2 h-9 px-5 font-medium"
           >
             <Plus className="w-4 h-4" />
             New category
@@ -164,74 +158,98 @@ export function CategoriesEditor() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-border">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const active = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={cn(
-                "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Icon className={cn("w-4 h-4", active ? tab.accent : '')} />
-              <span>{tab.label}</span>
-              <span className={cn(
-                "text-xs px-1.5 py-0.5 rounded font-semibold tabular-nums",
-                active ? "bg-muted text-foreground" : "bg-muted/60 text-muted-foreground"
-              )}>
-                {tab.count}
-              </span>
-              {active && (
-                <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-primary rounded-full" />
-              )}
-            </button>
-          );
-        })}
+      {/* ============= Tab strip (Airtable style — same band as Bank statements) ============= */}
+      <div className="relative">
+        <div className="flex items-stretch border-b border-border bg-primary/5">
+          <div className="flex-1 flex items-stretch overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const active = tab.key === activeTab;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "group relative flex items-center gap-2 px-5 py-2.5 text-sm whitespace-nowrap transition-all border-r border-border/40",
+                    active
+                      ? "bg-card text-foreground font-semibold -mb-px border-b-card z-10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-primary/10",
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                  <span
+                    className={cn(
+                      "inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[10px] font-semibold tabular-nums",
+                      active ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary/70",
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right cluster — search + total rules */}
+          <div className="hidden md:flex items-center gap-3 px-3 border-l border-border/40">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              <span className="font-semibold text-foreground tabular-nums">{totalRules}</span> rules total
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Helper hint */}
-      <p className="text-sm text-muted-foreground">
-        Click any category to view, add or edit its rules. Rules teach Pocket how to classify transactions
-        from your statements automatically.
-      </p>
-
-      {/* List */}
-      {isLoading ? (
-        <div className="rounded-xl border border-border bg-card py-12 text-center text-sm text-muted-foreground">
-          Loading categories…
-        </div>
-      ) : activeData.cats.length === 0 && activeData.custom.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-muted/20 py-12 text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            {search ? 'No categories match your search.' : 'No categories in this section yet.'}
+      {/* ============= Workspace (matches Bank statements white canvas) ============= */}
+      <div className="flex-1 px-6 md:px-10 py-6 md:py-8 space-y-5">
+        {/* Search + helper */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative flex-1 min-w-0 max-w-xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search categories or keywords…"
+              className="pl-9 h-10 text-sm"
+            />
+          </div>
+          <p className="text-sm text-muted-foreground sm:text-right">
+            Click any category to view, add or edit its rules.
           </p>
-          {!search && (
-            <Button variant="outline" size="sm" onClick={() => setShowCreateCategory(true)} className="gap-1.5">
-              <Plus className="w-3.5 h-3.5" />
-              Create category
-            </Button>
-          )}
         </div>
-      ) : (
-        <CategoryRulesList
-          categories={activeData.cats}
-          getRulesForCategory={getRulesForCategory}
-          onAddRule={handleAddRule}
-          onEditRule={handleEditRule}
-          onDeleteRule={(id) => deleteRule.mutate(id)}
-          customCategories={activeData.custom}
-          onDeleteCustomCategory={handleDeleteCustomCategory}
-          getVisualOverride={getVisualOverride}
-          onSetVisualOverride={setVisualOverride}
-        />
-      )}
+
+        {/* List */}
+        {isLoading ? (
+          <div className="rounded-xl border border-border bg-card py-12 text-center text-sm text-muted-foreground">
+            Loading categories…
+          </div>
+        ) : activeData.cats.length === 0 && activeData.custom.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 py-12 text-center">
+            <p className="text-sm text-muted-foreground mb-3">
+              {search ? 'No categories match your search.' : 'No categories in this section yet.'}
+            </p>
+            {!search && (
+              <Button variant="outline" size="sm" onClick={() => setShowCreateCategory(true)} className="gap-1.5">
+                <Plus className="w-3.5 h-3.5" />
+                Create category
+              </Button>
+            )}
+          </div>
+        ) : (
+          <CategoryRulesList
+            categories={activeData.cats}
+            getRulesForCategory={getRulesForCategory}
+            onAddRule={handleAddRule}
+            onEditRule={handleEditRule}
+            onDeleteRule={(id) => deleteRule.mutate(id)}
+            customCategories={activeData.custom}
+            onDeleteCustomCategory={handleDeleteCustomCategory}
+            getVisualOverride={getVisualOverride}
+            onSetVisualOverride={setVisualOverride}
+          />
+        )}
+      </div>
 
       <AddRuleDialog
         open={!!dialogState}
