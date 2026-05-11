@@ -34,10 +34,10 @@ const matchTypeLabel = (mt: string, t: (k: string) => string) => {
   return t('categories.contains');
 };
 
-function renderLucide(iconName: string, size = 16) {
+function renderLucide(iconName: string, size = 22) {
   const I = icons[iconName as keyof typeof icons];
   if (!I) return null;
-  return <I size={size} />;
+  return <I size={size} strokeWidth={2} />;
 }
 
 function CategoryRow({
