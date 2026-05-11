@@ -1,31 +1,19 @@
-Plan para resolverlo:
+## Plan
 
-1. Validar el email en el paso 2 del registro
-- Agregar una función backend segura `check-email-availability` que reciba un email y responda si ya existe una cuenta.
-- Usarla cuando el usuario completa o sale del campo email.
-- Si el email ya existe, mostrar el error ahí mismo y deshabilitar “Next”, para que no pueda llegar al último paso.
-- Mantener la validación de formato actual y agregar estados claros: verificando, disponible, ya existe, error de red.
+### 1) Resetear tu contraseña ahora
+- Voy a setear directamente la contraseña de `ines@murtagh.net` a **`Pocket1234!`** desde el backend (admin API).
+- Vas a poder iniciar sesión enseguida con ese usuario y email.
+- Importante: cambiala desde la app cuando entres (Settings) por seguridad, ya que la temporal me la dijiste por chat.
 
-2. Evitar errores tardíos en el último paso
-- Ajustar `Auth.tsx` para que `canProceedStep()` del paso email dependa también de “email disponible”.
-- Antes de avanzar del paso email, volver a verificar si hace falta, para evitar pasar con un estado viejo.
-- Mejorar el mensaje del último `signUp` por si el backend igualmente devuelve “user already exists”.
+### 2) Arreglar el flujo de recuperación de contraseña
+Hoy pasa esto: el link del email te loguea correctamente, pero el `redirectTo` te manda a `/auth?reset=true` con la sesión ya iniciada — y como hay lógica que redirige a usuarios autenticados al dashboard, nunca llegás a ver el formulario de nueva contraseña.
 
-3. Ayudarte con la contraseña olvidada de `ines@murtagh.net`
-- Reemplazar el botón “Forgot password?” que hoy solo dice “contact support” por un flujo real de recuperación.
-- Al hacer clic, enviar un email de recuperación para el email ingresado usando la autenticación integrada.
-- El link abrirá la pantalla existente `/auth?reset=true`, donde ya se puede setear una nueva contraseña.
-- Importante: aunque eliminemos verificación de email para registrarse, recuperación de contraseña sí requiere mandar un email al dueño de la cuenta por seguridad.
+Cambios:
+- Detectar el evento `PASSWORD_RECOVERY` de la autenticación: cuando llega ese evento, forzar la ruta `/auth?reset=true` y NO redirigir al dashboard aunque haya sesión.
+- En la pantalla `Auth` con `?reset=true`, asegurarse de que se muestre el formulario "Set New Password" siempre, incluso si ya hay sesión activa.
+- En el guard de rutas autenticadas, agregar una excepción: si la URL es `/auth?reset=true` o si recién ocurrió un `PASSWORD_RECOVERY`, dejar pasar al formulario en vez de mandarlo al dashboard.
+- Después de actualizar la contraseña, cerrar sesión y mandar a login para que entre con la nueva contraseña limpia.
 
-4. Limpieza mínima del intento anterior
-- Quitar referencias del frontend al flujo OTP si quedó alguna.
-- Dejar las funciones OTP sin uso por ahora; eliminarlas de backend sería opcional y no necesario para destrabar el registro.
-
-Archivos principales a tocar:
-- `src/pages/Auth.tsx`
-- `src/components/onboarding/StepEmail.tsx`
-- Nueva función backend `supabase/functions/check-email-availability/index.ts`
-
-Resultado esperado:
-- Al escribir `ines@murtagh.net` en registro, el paso de email avisará inmediatamente si ya existe y no dejará continuar.
-- Desde login, podrás pedir recuperación de contraseña para `ines@murtagh.net`.
+### 3) Resultado esperado
+- Podés entrar ya con `Pocket1234!`.
+- Cuando alguien (vos u otra persona) use "Forgot password?" en el futuro, el link del email abrirá correctamente el formulario para fijar la nueva contraseña.
