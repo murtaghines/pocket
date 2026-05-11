@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Trash2, Pencil, ChevronDown, Palette } from 'lucide-react';
+import { Plus, Trash2, Pencil, ChevronDown, Palette, ListChecks } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
@@ -40,61 +39,102 @@ function renderLucide(iconName: string, size = 22) {
   return <I size={size} strokeWidth={2} />;
 }
 
+type PanelKind = 'edit' | 'rules';
+
+function PanelTrigger({
+  active,
+  accent,
+  icon,
+  label,
+  onClick,
+  badge,
+}: {
+  active: boolean;
+  accent: string;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={cn(
+        "flex items-center gap-2 px-3 h-9 rounded-lg text-[13px] font-medium border transition-all",
+        active
+          ? "bg-card shadow-sm"
+          : "bg-background/40 hover:bg-background border-border/60 text-foreground/80"
+      )}
+      style={
+        active
+          ? { borderColor: accent, color: accent }
+          : undefined
+      }
+    >
+      <span className="shrink-0">{icon}</span>
+      <span>{label}</span>
+      {badge}
+      <ChevronDown
+        className={cn(
+          "w-3.5 h-3.5 transition-transform",
+          active && "rotate-180"
+        )}
+      />
+    </button>
+  );
+}
+
 function CategoryRow({
   accent,
   iconNode,
   name,
   ruleCount,
-  isOpen,
-  onToggle,
-  editTrigger,
-  rightSlot,
-  children,
   isCustom,
+  openPanel,
+  onTogglePanel,
+  showEdit,
+  showRules = true,
+  rightSlot,
+  editPanel,
+  rulesPanel,
 }: {
-  accent: string; // css color
+  accent: string;
   iconNode: React.ReactNode;
   name: string;
   ruleCount: number;
-  isOpen: boolean;
-  onToggle: () => void;
-  editTrigger?: React.ReactNode;
-  rightSlot?: React.ReactNode;
-  children: React.ReactNode;
   isCustom?: boolean;
+  openPanel: PanelKind | null;
+  onTogglePanel: (p: PanelKind) => void;
+  showEdit: boolean;
+  showRules?: boolean;
+  rightSlot?: React.ReactNode;
+  editPanel?: React.ReactNode;
+  rulesPanel?: React.ReactNode;
 }) {
+  const isOpen = openPanel !== null;
   return (
     <div className="group border-b border-border/60 last:border-b-0">
       <div
         className={cn(
-          "flex items-center gap-4 px-4 py-3 transition-colors cursor-pointer",
-          isOpen ? "bg-muted/40" : "hover:bg-muted/30"
+          "flex items-center gap-4 px-4 py-3 transition-colors",
+          isOpen ? "bg-muted/40" : "hover:bg-muted/20"
         )}
-        onClick={onToggle}
       >
-        {/* Icon + name as a unified colored chip */}
+        {/* Icon + name chip */}
         <div
           className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl min-w-0 flex-1"
-          style={{
-            backgroundColor: `${accent}14`,
-          }}
+          style={{ backgroundColor: `${accent}14` }}
         >
           <div
-            className="relative w-11 h-11 rounded-lg flex items-center justify-center shrink-0"
-            style={{
-              backgroundColor: `${accent}2E`,
-              color: accent,
-            }}
-            onClick={(e) => e.stopPropagation()}
+            className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${accent}2E`, color: accent }}
           >
             {iconNode}
-            {editTrigger && (
-              <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center bg-foreground/40 backdrop-blur-[1px]">
-                {editTrigger}
-              </div>
-            )}
           </div>
-
           <div className="min-w-0 flex items-center gap-2">
             <span
               className="text-[16px] font-semibold truncate"
@@ -110,33 +150,49 @@ function CategoryRow({
           </div>
         </div>
 
+        {/* Action triggers */}
         <div className="flex items-center gap-2 shrink-0">
-          {ruleCount > 0 ? (
-            <span
-              className="text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{
-                backgroundColor: `${accent}1F`,
-                color: accent,
-              }}
-            >
-              {ruleCount} {ruleCount === 1 ? 'rule' : 'rules'}
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground">No rules</span>
+          {showEdit && (
+            <PanelTrigger
+              active={openPanel === 'edit'}
+              accent={accent}
+              icon={<Palette className="w-3.5 h-3.5" />}
+              label="Edit category"
+              onClick={() => onTogglePanel('edit')}
+            />
+          )}
+          {showRules && (
+            <PanelTrigger
+              active={openPanel === 'rules'}
+              accent={accent}
+              icon={<ListChecks className="w-3.5 h-3.5" />}
+              label="Rules"
+              onClick={() => onTogglePanel('rules')}
+              badge={
+                <span
+                  className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full ml-0.5"
+                  style={{
+                    backgroundColor: `${accent}1F`,
+                    color: accent,
+                  }}
+                >
+                  {ruleCount}
+                </span>
+              }
+            />
           )}
           {rightSlot}
-          <ChevronDown
-            className={cn(
-              "w-4 h-4 text-muted-foreground transition-transform shrink-0",
-              isOpen && "rotate-180"
-            )}
-          />
         </div>
       </div>
 
-      {isOpen && (
-        <div className="px-4 pb-4 pt-1 bg-muted/20" onClick={(e) => e.stopPropagation()}>
-          {children}
+      {openPanel === 'edit' && editPanel && (
+        <div className="px-4 pb-4 pt-2 bg-muted/20 border-t border-border/40">
+          {editPanel}
+        </div>
+      )}
+      {openPanel === 'rules' && rulesPanel && (
+        <div className="px-4 pb-4 pt-2 bg-muted/20 border-t border-border/40">
+          {rulesPanel}
         </div>
       )}
     </div>
@@ -156,12 +212,85 @@ export function CategoryRulesList({
 }: Props) {
   const { t } = useTranslation('settings');
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, PanelKind | null>>({});
+
+  const togglePanel = (id: string, panel: PanelKind) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [id]: prev[id] === panel ? null : panel,
+    }));
+  };
 
   const resolveCssColor = (override: VisualOverride | undefined, slug: string) => {
     if (override?.color) return `hsl(${override.color})`;
     const v = getCategoryColor(slug);
     return `hsl(var(--${v}))`;
+  };
+
+  const renderRulesPanel = (cat: Category, rules: Rule[], accent: string) => {
+    if (rules.length === 0) {
+      return (
+        <div className="flex items-center justify-between gap-3 py-2">
+          <p className="text-sm text-muted-foreground">
+            No rules yet. Add keywords to fine-tune how transactions are categorized.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 gap-1.5"
+            onClick={() => onAddRule(cat)}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add rule
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-1.5">
+        {rules.map((rule) => (
+          <div
+            key={rule.id}
+            className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2 hover:border-primary/40 transition-colors"
+          >
+            <span
+              className="text-[10px] uppercase tracking-wider font-semibold shrink-0 w-20"
+              style={{ color: accent }}
+            >
+              {matchTypeLabel(rule.match_type, t)}
+            </span>
+            <code className="text-sm font-mono text-foreground flex-1 truncate">{rule.pattern}</code>
+            <div className="flex items-center gap-0.5 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => onEditRule(rule, cat)}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => onDeleteRule(rule.id)}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+        ))}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="w-full justify-start gap-1.5 text-muted-foreground hover:text-foreground mt-1"
+          onClick={() => onAddRule(cat)}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add another rule
+        </Button>
+      </div>
+    );
   };
 
   return (
@@ -170,11 +299,11 @@ export function CategoryRulesList({
       {categories.map((cat) => {
         const slug = cat.slug || cat.name;
         const rules = getRulesForCategory(cat.id);
-        const isOpen = expanded === cat.id;
         const override = getVisualOverride?.(slug);
         const accent = resolveCssColor(override, slug);
         const defaultIcon = getCategoryIcon(slug);
         const displayIcon = override?.icon || defaultIcon;
+        const openPanel = expanded[cat.id] ?? null;
 
         return (
           <CategoryRow
@@ -189,98 +318,29 @@ export function CategoryRulesList({
             }
             name={getCategoryLabel(slug)}
             ruleCount={rules.length}
-            isOpen={isOpen}
-            onToggle={() => setExpanded(isOpen ? null : cat.id)}
-            editTrigger={
+            openPanel={openPanel}
+            onTogglePanel={(p) => togglePanel(cat.id, p)}
+            showEdit={!!onSetVisualOverride}
+            editPanel={
               onSetVisualOverride && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className="p-1.5 rounded-md text-white hover:scale-110 transition-transform"
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label="Edit color & icon"
-                    >
-                      <Palette className="w-4 h-4" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[340px] p-4" align="start" onClick={(e) => e.stopPropagation()}>
-                    <ColorIconPicker
-                      currentColor={override?.color || '210 30% 50%'}
-                      currentIcon={override?.icon || defaultIcon}
-                      onSave={(c, i) => onSetVisualOverride(slug, c, i)}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <ColorIconPicker
+                  currentColor={override?.color || '210 30% 50%'}
+                  currentIcon={override?.icon || defaultIcon}
+                  onSave={(c, i) => onSetVisualOverride(slug, c, i)}
+                />
               )
             }
-          >
-            {rules.length === 0 ? (
-              <div className="flex items-center justify-between gap-3 py-2">
-                <p className="text-sm text-muted-foreground">
-                  No custom rules yet. Add keywords to fine-tune how transactions are categorized.
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0 gap-1.5"
-                  onClick={() => onAddRule(cat)}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add rule
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-1.5 pt-1">
-                {rules.map((rule) => (
-                  <div
-                    key={rule.id}
-                    className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2 hover:border-primary/40 transition-colors"
-                  >
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground shrink-0 w-20">
-                      {matchTypeLabel(rule.match_type, t)}
-                    </span>
-                    <code className="text-sm font-mono text-foreground flex-1 truncate">{rule.pattern}</code>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                        onClick={() => onEditRule(rule, cat)}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => onDeleteRule(rule.id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="w-full justify-start gap-1.5 text-muted-foreground hover:text-foreground mt-1"
-                  onClick={() => onAddRule(cat)}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add another rule
-                </Button>
-              </div>
-            )}
-          </CategoryRow>
+            rulesPanel={renderRulesPanel(cat, rules, accent)}
+          />
         );
       })}
 
       {/* Custom categories */}
       {customCategories.map((cat, idx) => {
         const customId = `custom-${cat.slug}-${idx}`;
-        const isOpen = expanded === customId;
         const accent = `hsl(${cat.color || '210 30% 50%'})`;
         const iconName = cat.icon || 'circle';
+        const openPanel = expanded[customId] ?? null;
 
         return (
           <CategoryRow
@@ -289,42 +349,44 @@ export function CategoryRulesList({
             iconNode={renderLucide(iconName, 22)}
             name={cat.name}
             ruleCount={cat.keywords.length}
-            isOpen={isOpen}
-            onToggle={() => setExpanded(isOpen ? null : customId)}
             isCustom
+            openPanel={openPanel}
+            onTogglePanel={(p) => togglePanel(customId, p)}
+            showEdit={false}
             rightSlot={
               onDeleteCustomCategory && (
                 <button
                   className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-background text-muted-foreground hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteCustomCategory(cat);
-                  }}
+                  onClick={() => onDeleteCustomCategory(cat)}
                   aria-label="Delete custom category"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )
             }
-          >
-            {cat.keywords.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-2">No keywords yet.</p>
-            ) : (
-              <div className="space-y-1.5 pt-1">
-                {cat.keywords.map((kw, ki) => (
-                  <div
-                    key={ki}
-                    className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2"
-                  >
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground shrink-0 w-20">
-                      Contains
-                    </span>
-                    <code className="text-sm font-mono text-foreground flex-1 truncate">{kw}</code>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CategoryRow>
+            rulesPanel={
+              cat.keywords.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2">No keywords yet.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {cat.keywords.map((kw, ki) => (
+                    <div
+                      key={ki}
+                      className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2"
+                    >
+                      <span
+                        className="text-[10px] uppercase tracking-wider font-semibold shrink-0 w-20"
+                        style={{ color: accent }}
+                      >
+                        Contains
+                      </span>
+                      <code className="text-sm font-mono text-foreground flex-1 truncate">{kw}</code>
+                    </div>
+                  ))}
+                </div>
+              )
+            }
+          />
         );
       })}
 
