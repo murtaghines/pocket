@@ -182,28 +182,28 @@ export function CategoryRulesList({
             accent={accent}
             iconNode={
               override?.icon ? (
-                renderLucide(displayIcon, 16)
+                renderLucide(displayIcon, 22)
               ) : (
-                <CategoryIcon iconName={displayIcon} colorVar={getCategoryColor(slug)} size="sm" showBackground={false} />
+                <CategoryIcon iconName={displayIcon} colorVar={getCategoryColor(slug)} size="md" showBackground={false} />
               )
             }
             name={getCategoryLabel(slug)}
             ruleCount={rules.length}
             isOpen={isOpen}
             onToggle={() => setExpanded(isOpen ? null : cat.id)}
-            rightSlot={
+            editTrigger={
               onSetVisualOverride && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-background text-muted-foreground hover:text-foreground"
+                      className="p-1.5 rounded-md text-white hover:scale-110 transition-transform"
                       onClick={(e) => e.stopPropagation()}
                       aria-label="Edit color & icon"
                     >
-                      <Palette className="w-3.5 h-3.5" />
+                      <Palette className="w-4 h-4" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[340px] p-4" align="end" onClick={(e) => e.stopPropagation()}>
+                  <PopoverContent className="w-[340px] p-4" align="start" onClick={(e) => e.stopPropagation()}>
                     <ColorIconPicker
                       currentColor={override?.color || '210 30% 50%'}
                       currentIcon={override?.icon || defaultIcon}
