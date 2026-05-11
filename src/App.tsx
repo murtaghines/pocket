@@ -67,7 +67,14 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (user) {
+  // Allow the password recovery screen even if a session exists (Supabase
+  // auto-logs the user in when they click the recovery link).
+  const isResetFlow =
+    typeof window !== "undefined" &&
+    (window.location.search.includes("reset=true") ||
+      window.location.hash.includes("type=recovery"));
+
+  if (user && !isResetFlow) {
     return <Navigate to="/dashboard" replace />;
   }
 
