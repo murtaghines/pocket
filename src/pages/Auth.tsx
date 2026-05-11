@@ -17,7 +17,6 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
-import { StepEmailVerification } from "@/components/onboarding/StepEmailVerification";
 import { StepCountry } from "@/components/onboarding/StepCountry";
 import { StepInvestments } from "@/components/onboarding/StepInvestments";
 import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
