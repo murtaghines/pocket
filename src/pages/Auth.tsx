@@ -314,70 +314,6 @@ export default function Auth() {
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  const sendOtp = async (): Promise<boolean> => {
-    const { data, error } = await supabase.functions.invoke("send-otp-code", {
-      body: { email: normalizedEmail, firstName: firstName.trim() },
-    });
-
-    if (error || (data && data.error)) {
-      toast({
-        title: "Couldn't send code",
-        description: (data && data.error) || error?.message || "Please try again.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    return true;
-  };
-
-  const handleResendOtp = async () => {
-    setResendingOtp(true);
-    const ok = await sendOtp();
-    if (ok) {
-      toast({
-        title: "Code sent",
-        description: `We sent a new code to ${email}.`,
-      });
-    }
-    setResendingOtp(false);
-  };
-
-  const verifyOtpCode = async (): Promise<boolean> => {
-    const { data, error } = await supabase.functions.invoke("verify-otp-code", {
-      body: {
-        email: normalizedEmail,
-        code: otpCode,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-      },
-    });
-
-    if (error || !data?.ok) {
-      toast({
-        title: "Invalid code",
-        description: (data && data.error) || error?.message || "Please check the code and try again.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // Exchange the hashed token for a real session
-    const { error: verifyErr } = await supabase.auth.verifyOtp({
-      token_hash: data.hashed_token,
-      type: "magiclink",
-    });
-
-    if (verifyErr) {
-      toast({
-        title: "Couldn't sign you in",
-        description: verifyErr.message,
-        variant: "destructive",
-      });
-      return false;
-    }
-    return true;
-  };
-
   const finalizeSignUp = async () => {
     if (password !== confirmPassword) {
       toast({
@@ -399,18 +335,45 @@ export default function Auth() {
 
     setLoading(true);
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const activeUser = sessionData.session?.user;
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        },
+      },
+    });
 
-    if (!activeUser) {
+    if (signUpError) {
       toast({
-        title: "Email verification expired",
-        description: "Please verify your email again before creating your password.",
+        title: "Couldn't create your account",
+        description: signUpError.message,
         variant: "destructive",
       });
-      setRegisterStep(3);
       setLoading(false);
       return;
+    }
+
+    // If session not returned (e.g. email confirm required), try to sign in directly
+    let userId = signUpData.user?.id;
+    if (!signUpData.session) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+      if (signInError) {
+        toast({
+          title: "Account created",
+          description: "Please log in to continue.",
+        });
+        setAuthMode("login");
+        setLoading(false);
+        return;
+      }
+      userId = signInData.user?.id || userId;
     }
 
     const allCategories = [...DEFAULT_INCOME_CATEGORIES, ...DEFAULT_EXPENSE_CATEGORIES];
@@ -418,23 +381,6 @@ export default function Auth() {
       en: 'en-US',
       es: 'es-ES',
     };
-
-    // Set the password on the now-verified, signed-in user
-    const { data: updateData, error: updateError } = await supabase.auth.updateUser({
-      password,
-    });
-
-    if (updateError) {
-      toast({
-        title: "Couldn't set password",
-        description: updateError.message,
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    const userId = updateData.user?.id || activeUser.id;
 
     if (userId) {
       try {
