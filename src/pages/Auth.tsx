@@ -164,8 +164,6 @@ export default function Auth() {
   const [jointAccountNames, setJointAccountNames] = useState<string[]>([]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [otpCode, setOtpCode] = useState("");
-  const [resendingOtp, setResendingOtp] = useState(false);
   const [language] = useState(detectBrowserLanguage());
   
   const [rememberMe, setRememberMe] = useState(false);
