@@ -1,122 +1,69 @@
-import { FileSpreadsheet, Shield, Zap, PiggyBank, BarChart3, Globe } from "lucide-react";
-
-const features = [
-  {
-    label: "AUTOMATED",
-    icon: FileSpreadsheet,
-    title: "Smart import",
-    titleSecondLine: "of statements",
-    description: "Upload your Excel or PDF files and our system automatically extracts and categorizes all your transactions.",
-    color: "from-green-500/20 to-green-500/5",
-    iconBg: "bg-green-500/10",
-    iconColor: "text-green-500",
-  },
-  {
-    label: "SECURE",
-    icon: Shield,
-    title: "Privacy",
-    titleSecondLine: "guaranteed",
-    description: "Your financial data is encrypted and protected. We never share your information with third parties.",
-    color: "from-red-500/20 to-red-500/5",
-    iconBg: "bg-red-500/10",
-    iconColor: "text-red-500",
-  },
-  {
-    label: "INTELLIGENT",
-    icon: Zap,
-    title: "Automatic",
-    titleSecondLine: "categorization",
-    description: "AI learns from your patterns and automatically categorizes your expenses with precision.",
-    color: "from-primary/20 to-primary/5",
-    iconBg: "bg-primary/10",
-    iconColor: "text-primary",
-  },
-  {
-    label: "INVESTMENTS",
-    icon: PiggyBank,
-    title: "Investment",
-    titleSecondLine: "tracking",
-    description: "Connect your investment accounts and visualize your entire portfolio in a single dashboard.",
-    color: "from-yellow-500/20 to-yellow-500/5",
-    iconBg: "bg-yellow-500/10",
-    iconColor: "text-yellow-500",
-  },
-  {
-    label: "ANALYTICS",
-    icon: BarChart3,
-    title: "Detailed",
-    titleSecondLine: "reports",
-    description: "Interactive charts and monthly reports that help you understand your financial habits.",
-    color: "from-purple-500/20 to-purple-500/5",
-    iconBg: "bg-purple-500/10",
-    iconColor: "text-purple-500",
-  },
-  {
-    label: "MULTI-CURRENCY",
-    icon: Globe,
-    title: "International",
-    titleSecondLine: "support",
-    description: "Work with multiple currencies and banks from different countries. Automatic currency conversion.",
-    color: "from-cyan-500/20 to-cyan-500/5",
-    iconBg: "bg-cyan-500/10",
-    iconColor: "text-cyan-500",
-  },
-];
-
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-20 lg:py-32 bg-card/30">
-      <div className="container px-4 md:px-6">
-        {/* Section header */}
-        <div className="text-center mb-16">
-          <span className="text-sm text-muted-foreground tracking-wider uppercase mb-4 block">
-            Features
-          </span>
-          <h2 className="text-3xl md:text-5xl font-bold">
-            Everything you need to
+    <section className="bg-white py-24 lg:py-40 overflow-hidden">
+      <div className="container px-6">
+        {/* Overlapping rainbow headline */}
+        <div className="relative text-center max-w-6xl mx-auto">
+          <h2
+            className="font-black uppercase leading-[0.92] tracking-tight"
+            style={{
+              fontSize: "clamp(2.25rem, 8vw, 7rem)",
+              color: "#3391D0",
+            }}
+          >
+            Whether you spend,
             <br />
-            <span className="text-muted-foreground">manage your money</span>
+            <span style={{ color: "#FDB813" }}>save or invest,</span>
+            <br />
+            <span style={{ color: "#0F4264" }}>pocket has you</span>
+            <br />
+            <span style={{ color: "#FDB813" }}>covered.</span>
           </h2>
         </div>
 
-        {/* Features grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature) => (
-            <div 
-              key={feature.title}
-              className="group bg-card border border-border/50 rounded-2xl p-6 hover:border-border transition-all duration-300 relative overflow-hidden"
-            >
-              {/* Gradient background */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-              
-              <div className="relative z-10">
-                {/* Label */}
-                <span className="text-xs text-muted-foreground tracking-wider">
-                  {feature.label}
-                </span>
-
-                {/* Icon */}
-                <div className="mt-8 mb-6">
-                  <div className={`w-16 h-16 rounded-2xl ${feature.iconBg} flex items-center justify-center`}>
-                    <feature.icon className={`w-8 h-8 ${feature.iconColor}`} />
-                  </div>
-                </div>
-
-                {/* Title */}
-                <h3 className="text-xl font-bold mb-1">
-                  {feature.title}
-                </h3>
-                <h3 className="text-xl font-bold text-muted-foreground mb-4">
-                  {feature.titleSecondLine}
-                </h3>
-
-                {/* Description */}
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {feature.description}
-                </p>
+        {/* Floating cards cluster */}
+        <div className="relative mt-24 lg:mt-32 mx-auto max-w-5xl h-[420px] lg:h-[520px]">
+          {/* Phone */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-56 lg:w-72 h-[400px] lg:h-[500px] rounded-[2.5rem] bg-[#0F4264] p-3 shadow-2xl">
+            <div className="w-full h-full rounded-[2rem] bg-white p-4 flex flex-col gap-3">
+              <div className="text-[10px] text-[#6b7280]">Total balance</div>
+              <div className="text-2xl font-bold text-[#0F4264]">€12.480,50</div>
+              <div className="h-px bg-[#e5e5e5] my-1" />
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between"><span>Salary</span><span className="text-[#16a34a] font-semibold">+€3.200</span></div>
+                <div className="flex justify-between"><span>Groceries</span><span className="text-[#dc2626] font-semibold">-€420</span></div>
+                <div className="flex justify-between"><span>Transport</span><span className="text-[#dc2626] font-semibold">-€85</span></div>
+                <div className="flex justify-between"><span>Investments</span><span className="text-[#16a34a] font-semibold">+4,2%</span></div>
+              </div>
+              <div className="mt-auto flex items-end gap-1 h-16">
+                {[40, 65, 45, 80, 55, 90, 70, 85, 60, 75, 50, 95].map((h, i) => (
+                  <div key={i} className="flex-1 rounded-t bg-[#3391D0]" style={{ height: `${h}%` }} />
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Floating cards */}
+          <div className="hidden md:block absolute left-2 top-8 w-56 bg-white rounded-2xl shadow-xl border border-[#e5e5e5] p-4 rotate-[-6deg]">
+            <div className="text-[10px] text-[#6b7280]">Salary received</div>
+            <div className="text-lg font-bold text-[#16a34a]">+€3.200,00</div>
+          </div>
+
+          <div className="hidden md:block absolute right-4 top-12 w-52 bg-[#FDB813] rounded-2xl shadow-xl p-4 rotate-[8deg]">
+            <div className="text-[10px] text-[#0F4264]/70 font-bold tracking-widest">GROCERIES</div>
+            <div className="text-lg font-bold text-[#0F4264]">€420 this month</div>
+          </div>
+
+          <div className="hidden md:block absolute left-8 bottom-8 w-56 bg-[#0F4264] text-white rounded-2xl shadow-xl p-4 rotate-[5deg]">
+            <div className="text-[10px] text-white/60 font-bold tracking-widest">INVESTMENTS</div>
+            <div className="text-lg font-bold">Portfolio +4,2%</div>
+          </div>
+
+          <div className="hidden md:block absolute right-2 bottom-12 w-52 bg-white rounded-2xl shadow-xl border border-[#e5e5e5] p-4 rotate-[-4deg]">
+            <div className="text-[10px] text-[#6b7280]">New transaction</div>
+            <div className="text-sm font-semibold text-[#0F4264]">Auto-categorized</div>
+            <div className="text-xs text-[#3391D0] mt-1">Restaurant · Food</div>
+          </div>
         </div>
       </div>
     </section>

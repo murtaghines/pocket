@@ -1,41 +1,36 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import pocketIcon from "@/assets/pocket-icon.png";
 
 export function CTASection() {
   return (
-    <section className="py-20 lg:py-32 relative overflow-hidden bg-white">
-      {/* Decorative cloud */}
-      <div className="absolute -bottom-12 -right-12 w-56 h-56 opacity-10 pointer-events-none">
-        <img src={pocketIcon} alt="" className="w-full h-full object-contain" />
-      </div>
-      
-      <div className="container px-4 md:px-6 relative z-10">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-[#0F4264]">
-            Start taking control
-            <br />
-            of your finances today
-          </h2>
-          
-          <p className="text-lg text-[#6b7280] mb-10 max-w-xl mx-auto">
-            Sign up for free and discover how pocket can help you make better financial decisions.
-          </p>
+    <section className="relative overflow-hidden py-24 lg:py-36" style={{ background: "#3391D0" }}>
+      <div className="container px-6 text-center relative z-10">
+        <p className="text-xs font-bold tracking-[0.3em] text-white/80 mb-6">
+          JOIN PEOPLE TAKING CONTROL
+        </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
-              <Button size="lg" className="rounded-full px-8 py-6 text-lg font-medium shadow-lg w-full sm:w-auto">
-                Create free account
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-            <Link to="/auth?mode=login">
-              <Button variant="outline" size="lg" className="rounded-full px-8 py-6 text-lg font-medium w-full sm:w-auto border-[#0F4264] text-[#0F4264] hover:bg-[#0F4264] hover:text-white">
-                I already have an account
-              </Button>
-            </Link>
-          </div>
+        <h2
+          className="font-black text-white uppercase leading-[0.88] tracking-tight"
+          style={{ fontSize: "clamp(3rem, 13vw, 12rem)" }}
+        >
+          Start with
+          <br />
+          pocket
+        </h2>
+
+        <div className="mt-12 flex justify-center">
+          <Link
+            to="/auth"
+            className="inline-flex items-center bg-white text-[#0F4264] font-semibold rounded-full px-8 py-4 text-base shadow-xl hover:shadow-2xl transition-shadow"
+          >
+            Sign up for free
+          </Link>
+        </div>
+
+        <div className="mt-20 flex flex-col items-center gap-3">
+          <img src={pocketIcon} alt="Pocket" className="w-16 h-16 brightness-0 invert" />
+          <div className="text-white text-2xl font-bold">100%</div>
+          <div className="text-white/70 text-xs tracking-[0.2em]">FREE TO START</div>
         </div>
       </div>
     </section>
