@@ -88,27 +88,45 @@ serve(async (req) => {
       const desc = tx.description_raw || tx.description || '';
       if (!desc.trim()) continue;
 
-      // Re-run the categorizer with the updated rules
+      const currentCategory = tx.category || '';
+      const currentMovement = tx.movement || '';
+
+      // Re-run the categorizer
       const rawResult = categorize(desc, tx.amount, userContext);
 
-      // Sign-first guardrail: discard matches that contradict the amount sign
-      // (TRANSFER is exempt — transfers can be positive or negative).
+      // Sign-first guardrail: discard categorizer matches that contradict
+      // the amount sign (TRANSFER is exempt — transfers can be ±).
       let result = rawResult;
       if (rawResult && rawResult.movement !== 'TRANSFER') {
         if (rawResult.movement === 'EXPENSE' && tx.amount > 0) result = null;
         else if (rawResult.movement === 'INCOME' && tx.amount < 0) result = null;
       }
 
-      // If no valid categorizer result, derive from sign as a default.
-      const targetMovement = result?.movement
-        ?? (tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : (tx.movement || 'EXPENSE'));
-      const targetCategory = result?.category
-        ?? (targetMovement === 'INCOME' ? 'other_income'
-          : targetMovement === 'EXPENSE' ? 'other_expense'
-          : tx.category);
+      let targetMovement: string | null = null;
+      let targetCategory: string | null = null;
 
-      const currentCategory = tx.category || '';
-      const currentMovement = tx.movement || '';
+      const signMovement = tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : currentMovement;
+      const isOtherCategory = currentCategory === 'other_income' || currentCategory === 'other_expense' || !currentCategory;
+      const signMismatch = currentMovement !== 'TRANSFER' && currentMovement !== signMovement;
+
+      if (signMismatch) {
+        // Force a sign correction. Prefer categorizer's category if it agrees,
+        // otherwise fall back to other_income / other_expense.
+        if (result && result.movement === signMovement) {
+          targetMovement = result.movement;
+          targetCategory = result.category;
+        } else {
+          targetMovement = signMovement;
+          targetCategory = signMovement === 'INCOME' ? 'other_income' : 'other_expense';
+        }
+      } else if (result && isOtherCategory && result.category !== 'other_expense' && result.category !== 'other_income') {
+        // Upgrade an "other_*" placeholder to a more specific category when
+        // the categorizer now knows it. Never downgrade a specific category.
+        targetMovement = result.movement;
+        targetCategory = result.category;
+      } else {
+        continue;
+      }
 
       if (targetCategory !== currentCategory || targetMovement !== currentMovement) {
         fixes.push({

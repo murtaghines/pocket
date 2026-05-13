@@ -1027,6 +1027,32 @@ const RULE_BUCKETS: RuleBucket[] = [
     ], 0.80),
   },
 
+
+  // ── income / transfers_in ─────────────────────────────────
+  // Generic incoming Bizum / transfer from a third party.
+  // LOW priority: only fires if no more specific income rule
+  // (salary, sales, refunds, rents, gifts…) matched first.
+  // The sign-first guardrail in process-import ensures this
+  // only applies to positive amounts.
+  {
+    movement: 'INCOME',
+    category: 'transfers_in',
+    rules: r([
+      'BIZUM\\s*DE\\b',
+      'BIZUM\\s*RECIBIDO',
+      'BIZUM\\s*A\\s*FAVOR',
+      'TRANSFERENCIA\\s*RECIBIDA',
+      'TRANSFERENCIA\\s*A\\s*FAVOR',
+      'TRANSFERENCIA\\s*INMEDIATA\\s*A\\s*FAVOR',
+      'INGRESO\\s*TRANSFERENCIA',
+      'INCOMING\\s*TRANSFER',
+      'TRANSFER\\s*RECEIVED',
+      'WIRE\\s*RECEIVED',
+      'ZELLE\\s*RECEIVED',
+      'VENMO\\s*RECEIVED',
+      'TWINT\\s*RECEIVED',
+    ], 0.70),
+  },
   // ══════════════════════════════════════════════════════════
   // EXPENSE
   // Most-specific first. No pattern should appear in two buckets.
