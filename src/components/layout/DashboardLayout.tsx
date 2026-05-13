@@ -32,14 +32,9 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
-  const navigate = useNavigate();
   const { t } = useTranslation("common");
-  const { t: td } = useTranslation("dashboard");
   const { signOut } = useAuth();
   const { profile } = useProfile();
-  const { transactions } = useTransactions();
-  const isDashboard = location.pathname === "/dashboard";
-  const showUploadCta = isDashboard && transactions.length === 0;
 
   const initials = (() => {
     const f = profile?.first_name?.charAt(0).toUpperCase() ?? "";
