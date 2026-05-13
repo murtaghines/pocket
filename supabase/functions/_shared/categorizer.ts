@@ -216,6 +216,31 @@ export function fuzzyMatch(
   return { matched: matched.length >= required, score, tokens: matched };
 }
 
+  // ── income / transfers_in ─────────────────────────────────
+  // Generic incoming Bizum / transfer from a third party.
+  // Low priority: only fires if no more specific income rule
+  // (salary, sales, refunds, rents, gifts…) matched first.
+  // Sign-first guardrail in process-import ensures this only
+  // applies to positive amounts.
+  {
+    movement: 'INCOME',
+    category: 'transfers_in',
+    rules: r([
+      'BIZUM\\s*DE\\b',
+      'BIZUM\\s*RECIBIDO',
+      'BIZUM\\s*A\\s*FAVOR',
+      'TRANSFERENCIA\\s*RECIBIDA',
+      'TRANSFERENCIA\\s*A\\s*FAVOR',
+      'TRANSFERENCIA\\s*INMEDIATA\\s*A\\s*FAVOR',
+      'INGRESO\\s*TRANSFERENCIA',
+      'INCOMING\\s*TRANSFER',
+      'TRANSFER\\s*RECEIVED',
+      'WIRE\\s*RECEIVED',
+      'ZELLE\\s*RECEIVED',
+      'VENMO\\s*RECEIVED',
+      'TWINT\\s*RECEIVED',
+    ], 0.70),
+  },
 
 // ─────────────────────────────────────────────────────────────
 // INTERNAL TYPES
