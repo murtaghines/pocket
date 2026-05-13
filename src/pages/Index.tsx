@@ -194,7 +194,7 @@ export default function Index() {
 
         {!isLoading && !prefsLoading && (
           <>
-            <EmptyStateBanner hasData={transactions.length > 0} />
+            
 
             {/* Section header */}
             <div className="mb-6">
