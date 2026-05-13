@@ -161,7 +161,7 @@ export function TrendKpiCard({
         }
       : kind === "expense"
         ? {
-            card: "bg-destructive/5 border border-destructive/20",
+            card: "bg-card border border-destructive/20",
             label: "text-destructive/80",
             iconBg: "bg-destructive/10",
             iconColor: "text-destructive",
