@@ -68,20 +68,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <DataRail />
 
       {/* Top-right utility bar (desktop) — theme + profile */}
-      <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-between gap-3 px-6 bg-background/80 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          {showUploadCta && (
-            <Button
-              onClick={() => navigate("/profile")}
-              size="sm"
-              className="gap-1.5 whitespace-nowrap rounded-full px-4 text-sm h-9"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              {td("welcome.uploadButton")}
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          )}
-        </div>
+      <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-end gap-3 px-6 bg-background/80 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <NotificationBell variant="light" />
         <ThemeToggle />
