@@ -150,7 +150,7 @@ export function TrendKpiCard({
   const accentClasses =
     kind === "income"
       ? {
-          card: "bg-success/5 border border-success/20",
+          card: "bg-card border border-success/20",
           label: "text-success/80",
           iconBg: "bg-success/10",
           iconColor: "text-success",
