@@ -20,7 +20,7 @@ const benefits = [
 
 export function ContactSection() {
   return (
-    <section className="py-24 lg:py-32 relative overflow-hidden" style={{ background: "#0A1F2E" }}>
+    <section data-nav-theme="dark" className="py-24 lg:py-32 relative overflow-hidden" style={{ background: "#080808" }}>
       <div className="container px-6 relative z-10">
         <div className="text-center mb-16">
           <p className="text-xs font-bold tracking-[0.25em] text-white/50 mb-4">WHY POCKET</p>
@@ -39,17 +39,17 @@ export function ContactSection() {
               className="bg-white rounded-3xl p-8 shadow-2xl"
               style={{ transform: `rotate(${i % 2 === 0 ? -2 : 2}deg)` }}
             >
-              <div className="w-14 h-14 rounded-2xl bg-[#3391D0]/10 flex items-center justify-center mb-6">
-                <b.icon className="w-7 h-7 text-[#3391D0]" strokeWidth={2} />
+              <div className="w-14 h-14 rounded-2xl bg-[#1b76ff]/10 flex items-center justify-center mb-6">
+                <b.icon className="w-7 h-7 text-[#1b76ff]" strokeWidth={2} />
               </div>
-              <h3 className="text-xl font-bold text-[#0F4264] mb-2">{b.title}</h3>
+              <h3 className="text-xl font-bold text-[#080808] mb-2">{b.title}</h3>
               <p className="text-sm text-[#6b7280] leading-relaxed">{b.body}</p>
             </div>
           ))}
         </div>
 
         <div className="mt-20 text-center">
-          <p className="text-xs font-bold tracking-[0.25em] text-[#FDB813] mb-3">PRIVATE BY DEFAULT</p>
+          <p className="text-xs font-bold tracking-[0.25em] text-[#FFBB03] mb-3">PRIVATE BY DEFAULT</p>
           <p className="text-white/70 max-w-xl mx-auto">
             Your data is encrypted and never shared. You stay in control of every byte.
           </p>

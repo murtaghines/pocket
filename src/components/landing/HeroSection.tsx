@@ -4,7 +4,7 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 export function HeroSection() {
   return (
-    <section className="relative pt-28 pb-12 lg:pt-36 lg:pb-20 overflow-hidden" style={{ background: "#3391D0" }}>
+    <section data-nav-theme="dark" className="relative pt-28 pb-12 lg:pt-36 lg:pb-20 overflow-hidden" style={{ background: "#1b76ff" }}>
       <div className="container px-4 md:px-6 relative">
         {/* Top-right side note */}
         <div className="hidden lg:block absolute right-6 top-36 max-w-xs text-white">
@@ -54,7 +54,7 @@ export function HeroSection() {
         <div className="mt-10">
           <Link
             to="/auth"
-            className="inline-flex items-center gap-2 bg-white text-[#0F4264] font-semibold rounded-full px-7 py-4 text-base shadow-xl hover:shadow-2xl transition-shadow"
+            className="inline-flex items-center gap-2 bg-white text-[#080808] font-semibold rounded-full px-7 py-4 text-base shadow-xl hover:shadow-2xl transition-shadow"
           >
             Get started for free
             <ArrowRight className="w-4 h-4" />

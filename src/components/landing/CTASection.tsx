@@ -3,7 +3,7 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 export function CTASection() {
   return (
-    <section className="relative overflow-hidden py-24 lg:py-36" style={{ background: "#3391D0" }}>
+    <section data-nav-theme="dark" className="relative overflow-hidden py-24 lg:py-36" style={{ background: "#1b76ff" }}>
       <div className="container px-6 text-center relative z-10">
         <p className="text-xs font-bold tracking-[0.3em] text-white/80 mb-6">
           JOIN PEOPLE TAKING CONTROL
@@ -21,7 +21,7 @@ export function CTASection() {
         <div className="mt-12 flex justify-center">
           <Link
             to="/auth"
-            className="inline-flex items-center bg-white text-[#0F4264] font-semibold rounded-full px-8 py-4 text-base shadow-xl hover:shadow-2xl transition-shadow"
+            className="inline-flex items-center bg-white text-[#080808] font-semibold rounded-full px-8 py-4 text-base shadow-xl hover:shadow-2xl transition-shadow"
           >
             Sign up for free
           </Link>
