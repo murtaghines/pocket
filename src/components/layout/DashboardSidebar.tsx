@@ -78,9 +78,9 @@ export function DashboardSidebar() {
       {/* Tablet: Logo + inline navigation with icons only */}
       <div className="hidden md:flex lg:hidden items-center gap-4">
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-1.5">
-          <img src={walletIconBlue} alt="wallet icon" className="h-6 w-auto" />
-          <img src={walletTextBlack} alt="wallet" className="h-4 w-auto" />
+        <Link to="/dashboard" className="flex items-center gap-2">
+          <img src={walletIconBlue} alt="pocket" className="h-6 w-auto" />
+          <span className="text-base font-bold text-foreground lowercase tracking-tight">pocket</span>
         </Link>
         
         {/* Inline navigation with icons only */}
@@ -114,9 +114,9 @@ export function DashboardSidebar() {
           <Menu className="w-5 h-5" />
         </Button>
         
-        <Link to="/dashboard" className="flex items-center gap-1">
-          <img src={walletIconBlue} alt="wallet icon" className="h-5 w-auto" />
-          <img src={walletTextBlack} alt="wallet" className="h-3.5 w-auto" />
+        <Link to="/dashboard" className="flex items-center gap-1.5">
+          <img src={walletIconBlue} alt="pocket" className="h-5 w-auto" />
+          <span className="text-sm font-bold text-foreground lowercase tracking-tight">pocket</span>
         </Link>
       </div>
       
@@ -135,8 +135,9 @@ export function DashboardSidebar() {
       )}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <img src={walletTextBlack} alt="wallet" className="h-6 w-auto" />
+          <div className="flex items-center gap-2">
+            <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
+            <span className="text-base font-bold text-foreground lowercase tracking-tight">pocket</span>
           </div>
           <Button
             variant="ghost"
