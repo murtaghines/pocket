@@ -1,13 +1,14 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CurrencySelector } from "./CurrencySelector";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { NotificationBell } from "./NotificationBell";
 import { useTranslation } from "react-i18next";
 import { useProfile } from "@/hooks/useProfile";
+import { useTransactions } from "@/hooks/useTransactions";
 import walletIconBlue from "@/assets/wallet-icon-blue.png";
 import walletTextBlack from "@/assets/wallet-text-black.png";
 
