@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   PiggyBank,
@@ -8,14 +8,18 @@ import {
   FileSpreadsheet,
   User,
   LogOut,
+  Upload,
+  ArrowRight,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DataRail } from "./DataRail";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useTransactions } from "@/hooks/useTransactions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +34,14 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation("common");
+  const { t: td } = useTranslation("dashboard");
   const { signOut } = useAuth();
   const { profile } = useProfile();
+  const { transactions } = useTransactions();
+  const isDashboard = location.pathname === "/dashboard";
+  const showUploadCta = isDashboard && transactions.length === 0;
 
   const initials = (() => {
     const f = profile?.first_name?.charAt(0).toUpperCase() ?? "";
@@ -66,8 +75,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <DataRail />
 
       {/* Top-right utility bar (desktop) — theme + profile */}
-      <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-end gap-3 px-6 bg-background/80 backdrop-blur-sm">
-        <NotificationBell variant="light" />
+      <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-between gap-3 px-6 bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          {showUploadCta && (
+            <Button
+              onClick={() => navigate("/profile")}
+              size="sm"
+              className="gap-1.5 whitespace-nowrap rounded-full px-4 text-sm h-9"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              {td("welcome.uploadButton")}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <NotificationBell variant="light" />
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -101,6 +124,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </header>
 
       {/* Mobile bottom nav */}
