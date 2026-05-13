@@ -1,14 +1,16 @@
 {
   "title": "Dashboard",
   "welcome": {
-    "title": "Welcome to wallet!",
+    "title": "Welcome to pocket!",
     "message": "Start by uploading your first bank statement to see your finances.",
     "uploadButton": "Upload file",
     "viewProfile": "View profile",
     "morning": "Good morning",
     "afternoon": "Good afternoon",
     "evening": "Good evening",
-    "subtitle": "Here's your financial overview"
+    "subtitle": "Here's your financial overview",
+    "bannerTitle": "Welcome to pocket!",
+    "bannerMessage": "You don't have any data yet. Upload your first bank statement to start visualizing your finances in a clear and simple way."
   },
   "stats": {
     "income": "Income",

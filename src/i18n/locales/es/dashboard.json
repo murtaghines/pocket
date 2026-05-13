@@ -1,14 +1,16 @@
 {
   "title": "Panel",
   "welcome": {
-    "title": "¡Bienvenido a wallet!",
+    "title": "¡Bienvenido a pocket!",
     "message": "Comienza subiendo tu primer extracto bancario para ver tus finanzas.",
     "uploadButton": "Subir archivo",
     "viewProfile": "Ver perfil",
     "morning": "Buenos días",
     "afternoon": "Buenas tardes",
     "evening": "Buenas noches",
-    "subtitle": "Aquí está tu resumen financiero"
+    "subtitle": "Aquí está tu resumen financiero",
+    "bannerTitle": "¡Bienvenido a pocket!",
+    "bannerMessage": "Aún no tienes información cargada. Sube tu primer extracto bancario para empezar a visualizar tus finanzas de forma clara y sencilla."
   },
   "stats": {
     "income": "Ingresos",
