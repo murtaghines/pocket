@@ -194,8 +194,6 @@ export default function Index() {
 
         {!isLoading && !prefsLoading && (
           <>
-            <EmptyStateBanner hasData={availableMonths.length > 0} />
-
             {/* Section header */}
             <div className="mb-6">
               {availableMonths.length > 0 ? (

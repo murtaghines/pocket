@@ -67,8 +67,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Persistent vertical rail (desktop) handles all navigation + utilities */}
       <DataRail />
 
-      {/* Top-right utility bar (desktop) — theme + profile */}
-      <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-end gap-3 px-6 bg-background/80 backdrop-blur-sm">
+      {/* Top utility bar (desktop) — empty-state CTA on left, theme + profile on right */}
+      <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-between gap-3 px-6 bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center min-w-0">
+          <EmptyStateBanner />
+        </div>
         <div className="flex items-center gap-3">
           <NotificationBell variant="light" />
         <ThemeToggle />
