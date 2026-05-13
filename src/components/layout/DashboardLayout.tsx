@@ -8,8 +8,6 @@ import {
   FileSpreadsheet,
   User,
   LogOut,
-  Upload,
-  ArrowRight,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
