@@ -88,27 +88,41 @@ serve(async (req) => {
       const desc = tx.description_raw || tx.description || '';
       if (!desc.trim()) continue;
 
-      // Re-run the categorizer with the updated rules
+      const currentCategory = tx.category || '';
+      const currentMovement = tx.movement || '';
+
+      // Re-run the categorizer
       const rawResult = categorize(desc, tx.amount, userContext);
 
-      // Sign-first guardrail: discard matches that contradict the amount sign
-      // (TRANSFER is exempt — transfers can be positive or negative).
+      // Sign-first guardrail: discard categorizer matches that contradict
+      // the amount sign (TRANSFER is exempt — transfers can be ±).
       let result = rawResult;
       if (rawResult && rawResult.movement !== 'TRANSFER') {
         if (rawResult.movement === 'EXPENSE' && tx.amount > 0) result = null;
         else if (rawResult.movement === 'INCOME' && tx.amount < 0) result = null;
       }
 
-      // If no valid categorizer result, derive from sign as a default.
-      const targetMovement = result?.movement
-        ?? (tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : (tx.movement || 'EXPENSE'));
-      const targetCategory = result?.category
-        ?? (targetMovement === 'INCOME' ? 'other_income'
-          : targetMovement === 'EXPENSE' ? 'other_expense'
-          : tx.category);
+      let targetMovement: string;
+      let targetCategory: string;
 
-      const currentCategory = tx.category || '';
-      const currentMovement = tx.movement || '';
+      if (result) {
+        // Categorizer produced a valid match → use it.
+        targetMovement = result.movement;
+        targetCategory = result.category;
+      } else {
+        // No (valid) categorizer match. Only force a change when the
+        // CURRENT classification disagrees with the amount sign.
+        // Otherwise leave the existing category untouched (it may have
+        // come from AI / user / earlier rule and we shouldn't downgrade
+        // it to "other_*").
+        const signMovement = tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : currentMovement;
+        if (currentMovement !== 'TRANSFER' && currentMovement !== signMovement) {
+          targetMovement = signMovement;
+          targetCategory = signMovement === 'INCOME' ? 'other_income' : 'other_expense';
+        } else {
+          continue; // nothing to fix
+        }
+      }
 
       if (targetCategory !== currentCategory || targetMovement !== currentMovement) {
         fixes.push({
