@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   PiggyBank,
@@ -8,14 +8,18 @@ import {
   FileSpreadsheet,
   User,
   LogOut,
+  Upload,
+  ArrowRight,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DataRail } from "./DataRail";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useTransactions } from "@/hooks/useTransactions";
 import {
   DropdownMenu,
   DropdownMenuContent,
