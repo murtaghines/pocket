@@ -1225,27 +1225,42 @@ serve(async (req) => {
       // ── Priority 2: Advanced Categorizer (2500+ regex patterns) ──
       // Uses the description_raw for best matching against bank descriptions.
       // Also tries description_clean as fallback.
-      const categorizerMatch = categorize(descriptionRaw, amountSigned, userContext)
-                            || categorize(descriptionClean, amountSigned, userContext);
-      
+      const rawMatch = categorize(descriptionRaw, amountSigned, userContext)
+                    || categorize(descriptionClean, amountSigned, userContext);
+
+      // Sign-first guardrail: reject categorizer matches whose movement
+      // contradicts the amount sign (TRANSFER is exempt — it can be ±).
+      let categorizerMatch = rawMatch;
+      if (rawMatch && rawMatch.movement !== 'TRANSFER') {
+        if (rawMatch.movement === 'EXPENSE' && amountSigned > 0) {
+          console.log(`[process-import] Rejected categorizer match (positive amount but EXPENSE rule): "${descriptionRaw.substring(0, 40)}" rule=${rawMatch.matchedRule}`);
+          categorizerMatch = null;
+        } else if (rawMatch.movement === 'INCOME' && amountSigned < 0) {
+          console.log(`[process-import] Rejected categorizer match (negative amount but INCOME rule): "${descriptionRaw.substring(0, 40)}" rule=${rawMatch.matchedRule}`);
+          categorizerMatch = null;
+        }
+      }
+
       if (categorizerMatch) {
-        // Map extended categories to app categories
         const mappedCategory = mapCategorySlug(categorizerMatch.category);
-        
-        // Determine movement from categorizer result
         movement = categorizerMatch.movement as MovementType;
         categorySlug = mappedCategory;
-        
-        // Validate the mapped slug is valid for this movement
         categorySlug = validateCategorySlug(categorySlug, movement);
-        
         categoryId = categorySlugToId[categorySlug] || null;
         categorySource = 'CATEGORIZER';
         categorizedBy = 'categorizer';
         stats.categorizedByCategorizer++;
-        
+
         console.log(`[process-import] Categorizer match: "${descriptionRaw.substring(0, 40)}" → ${categorizerMatch.category}→${categorySlug} (confidence: ${categorizerMatch.confidence}, rule: ${categorizerMatch.matchedRule.substring(0, 40)})`);
       } else {
+        // No (valid) categorizer match — fall back to sign-derived movement.
+        if (amountSigned > 0 && movement !== 'TRANSFER') {
+          movement = 'INCOME';
+          categorySlug = 'other_income';
+        } else if (amountSigned < 0 && movement !== 'TRANSFER') {
+          movement = 'EXPENSE';
+          categorySlug = 'other_expense';
+        }
         stats.categorizedByAI++;
         categoryId = categorySlugToId[categorySlug] || null;
       }
