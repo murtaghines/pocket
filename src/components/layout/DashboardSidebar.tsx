@@ -50,9 +50,9 @@ export function DashboardSidebar() {
       {/* Desktop: Logo + inline navigation with text */}
       <div className="hidden lg:flex items-center gap-6">
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-1.5">
-          <img src={walletIconBlue} alt="wallet icon" className="h-7 w-auto" />
-          <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
+        <Link to="/dashboard" className="flex items-center gap-2">
+          <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
+          <span className="text-lg font-bold text-foreground lowercase tracking-tight">pocket</span>
         </Link>
         
         {/* Inline navigation with text */}
