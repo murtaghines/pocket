@@ -89,22 +89,35 @@ serve(async (req) => {
       if (!desc.trim()) continue;
 
       // Re-run the categorizer with the updated rules
-      const result = categorize(desc, tx.amount, userContext);
-      
-      if (!result) continue; // No match from categorizer
+      const rawResult = categorize(desc, tx.amount, userContext);
+
+      // Sign-first guardrail: discard matches that contradict the amount sign
+      // (TRANSFER is exempt — transfers can be positive or negative).
+      let result = rawResult;
+      if (rawResult && rawResult.movement !== 'TRANSFER') {
+        if (rawResult.movement === 'EXPENSE' && tx.amount > 0) result = null;
+        else if (rawResult.movement === 'INCOME' && tx.amount < 0) result = null;
+      }
+
+      // If no valid categorizer result, derive from sign as a default.
+      const targetMovement = result?.movement
+        ?? (tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : (tx.movement || 'EXPENSE'));
+      const targetCategory = result?.category
+        ?? (targetMovement === 'INCOME' ? 'other_income'
+          : targetMovement === 'EXPENSE' ? 'other_expense'
+          : tx.category);
 
       const currentCategory = tx.category || '';
       const currentMovement = tx.movement || '';
 
-      // Check if categorization changed
-      if (result.category !== currentCategory || result.movement !== currentMovement) {
+      if (targetCategory !== currentCategory || targetMovement !== currentMovement) {
         fixes.push({
           id: tx.id,
           description: desc.substring(0, 80),
           oldMovement: currentMovement,
-          newMovement: result.movement,
+          newMovement: targetMovement,
           oldCategory: currentCategory,
-          newCategory: result.category,
+          newCategory: targetCategory,
         });
       }
     }
