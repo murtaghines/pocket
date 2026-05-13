@@ -124,6 +124,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </header>
 
       {/* Mobile bottom nav */}
