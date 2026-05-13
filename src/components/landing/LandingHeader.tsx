@@ -16,7 +16,7 @@ export function LandingHeader() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <img src={pocketIcon} alt="pocket" className="h-7 w-auto" />
-            <img src={pocketLogoWhite} alt="pocket" className="h-4 w-auto" />
+            <span className="text-lg font-bold text-white lowercase tracking-tight">pocket</span>
           </Link>
 
           {/* Center Navigation - Desktop */}

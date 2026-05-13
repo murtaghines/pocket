@@ -52,8 +52,8 @@ export function AppSidebar() {
         {/* Logo - same height as header (h-16) */}
         <div className="h-16 px-6 border-b border-border flex items-center">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={walletIconBlue} alt="wallet icon" className="h-8 w-auto" />
-            <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
+            <img src={walletIconBlue} alt="pocket" className="h-8 w-auto" />
+            <span className="text-xl font-bold text-foreground lowercase tracking-tight">pocket</span>
           </Link>
         </div>
         
@@ -141,8 +141,8 @@ export function AppSidebar() {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <img src={walletIconBlue} alt="wallet icon" className="h-7 w-auto" />
-            <img src={walletTextBlack} alt="wallet" className="h-5 w-auto" />
+            <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
+            <span className="text-base font-bold text-foreground lowercase tracking-tight">pocket</span>
           </div>
           <Button
             variant="ghost"

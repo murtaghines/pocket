@@ -96,8 +96,9 @@ function AuthBottomSections() {
           <div className="flex flex-col md:flex-row justify-between gap-12 mb-16">
             {/* Logo */}
             <div className="flex-shrink-0">
-              <Link to="/" className="inline-block">
-                <img src={pocketLogoWhite} alt="pocket" className="h-5 w-auto opacity-90" />
+              <Link to="/" className="inline-flex items-center gap-2">
+                <img src={pocketLogoWhite} alt="pocket" className="h-7 w-auto opacity-90" />
+                <span className="text-lg font-bold text-white lowercase tracking-tight">pocket</span>
               </Link>
             </div>
 
