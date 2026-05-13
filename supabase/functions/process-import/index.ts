@@ -1284,6 +1284,20 @@ serve(async (req) => {
         stats.categorizedByRule++;
       }
 
+      // ── Sign sanity check: amount sign must agree with movement (except TRANSFER) ──
+      // A positive amount cannot be an EXPENSE; a negative amount cannot be INCOME.
+      if (movement === 'EXPENSE' && amountSigned > 0) {
+        movement = 'INCOME';
+        categorySlug = 'other_income';
+        categoryId = categorySlugToId[categorySlug] || null;
+        console.log(`[process-import] Sign correction: positive amount ${amountSigned} re-classified EXPENSE→INCOME for "${descriptionRaw.substring(0, 40)}"`);
+      } else if (movement === 'INCOME' && amountSigned < 0) {
+        movement = 'EXPENSE';
+        categorySlug = 'other_expense';
+        categoryId = categorySlugToId[categorySlug] || null;
+        console.log(`[process-import] Sign correction: negative amount ${amountSigned} re-classified INCOME→EXPENSE for "${descriptionRaw.substring(0, 40)}"`);
+      }
+
       const legacyType = getLegacyType(movement);
       const legacyTxType = getLegacyTxType(movement, categorySlug);
 
