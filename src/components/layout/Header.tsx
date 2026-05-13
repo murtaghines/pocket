@@ -16,7 +16,10 @@ export function Header() {
   const { signOut, user } = useAuth();
   const { profile } = useProfile();
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
+  const { t: td } = useTranslation('dashboard');
+  const { transactions } = useTransactions();
 
   const isActive = (path: string) => location.pathname === path;
   const isProfilePage = location.pathname === '/profile';
