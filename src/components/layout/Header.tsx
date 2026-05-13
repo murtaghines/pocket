@@ -40,7 +40,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-background border-b border-border">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Left side - Navigation (responsive) */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
           {/* Dashboard sidebar/navigation - on dashboard/investments/profile */}
           {(isDashboard || isInvestments || isProfilePage) ? (
             <DashboardSidebar />
@@ -49,6 +49,19 @@ export function Header() {
               <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
               <span className="text-lg font-bold text-foreground lowercase tracking-tight">pocket</span>
             </Link>
+          )}
+
+          {/* Inline upload CTA when dashboard is empty */}
+          {isDashboard && transactions.length === 0 && (
+            <Button
+              onClick={() => navigate('/profile')}
+              size="sm"
+              className="hidden sm:inline-flex gap-1.5 whitespace-nowrap rounded-full px-4 text-sm h-9"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              {td('welcome.uploadButton')}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
           )}
         </div>
 
