@@ -102,26 +102,30 @@ serve(async (req) => {
         else if (rawResult.movement === 'INCOME' && tx.amount < 0) result = null;
       }
 
-      let targetMovement: string;
-      let targetCategory: string;
+      let targetMovement: string | null = null;
+      let targetCategory: string | null = null;
 
-      if (result) {
-        // Categorizer produced a valid match → use it.
+      const signMovement = tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : currentMovement;
+      const isOtherCategory = currentCategory === 'other_income' || currentCategory === 'other_expense' || !currentCategory;
+      const signMismatch = currentMovement !== 'TRANSFER' && currentMovement !== signMovement;
+
+      if (signMismatch) {
+        // Force a sign correction. Prefer categorizer's category if it agrees,
+        // otherwise fall back to other_income / other_expense.
+        if (result && result.movement === signMovement) {
+          targetMovement = result.movement;
+          targetCategory = result.category;
+        } else {
+          targetMovement = signMovement;
+          targetCategory = signMovement === 'INCOME' ? 'other_income' : 'other_expense';
+        }
+      } else if (result && isOtherCategory && result.category !== 'other_expense' && result.category !== 'other_income') {
+        // Upgrade an "other_*" placeholder to a more specific category when
+        // the categorizer now knows it. Never downgrade a specific category.
         targetMovement = result.movement;
         targetCategory = result.category;
       } else {
-        // No (valid) categorizer match. Only force a change when the
-        // CURRENT classification disagrees with the amount sign.
-        // Otherwise leave the existing category untouched (it may have
-        // come from AI / user / earlier rule and we shouldn't downgrade
-        // it to "other_*").
-        const signMovement = tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : currentMovement;
-        if (currentMovement !== 'TRANSFER' && currentMovement !== signMovement) {
-          targetMovement = signMovement;
-          targetCategory = signMovement === 'INCOME' ? 'other_income' : 'other_expense';
-        } else {
-          continue; // nothing to fix
-        }
+        continue;
       }
 
       if (targetCategory !== currentCategory || targetMovement !== currentMovement) {
