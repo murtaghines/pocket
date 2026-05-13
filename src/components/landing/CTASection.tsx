@@ -3,7 +3,7 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 export function CTASection() {
   return (
-    <section className="relative overflow-hidden py-24 lg:py-36" style={{ background: "#1b76ff" }}>
+    <section data-nav-theme="dark" className="relative overflow-hidden py-24 lg:py-36" style={{ background: "#1b76ff" }}>
       <div className="container px-6 text-center relative z-10">
         <p className="text-xs font-bold tracking-[0.3em] text-white/80 mb-6">
           JOIN PEOPLE TAKING CONTROL

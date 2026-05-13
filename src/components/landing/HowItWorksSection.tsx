@@ -21,7 +21,7 @@ const panels = [
 
 export function HowItWorksSection() {
   return (
-    <section className="bg-white">
+    <section data-nav-theme="light" className="bg-white">
       {panels.map((p, i) => (
         <div
           key={p.title}

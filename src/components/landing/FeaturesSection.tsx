@@ -1,6 +1,6 @@
 export function FeaturesSection() {
   return (
-    <section className="bg-white py-24 lg:py-40 overflow-hidden">
+    <section data-nav-theme="light" className="bg-white py-24 lg:py-40 overflow-hidden">
       <div className="container px-6">
         {/* Overlapping rainbow headline */}
         <div className="relative text-center max-w-6xl mx-auto">

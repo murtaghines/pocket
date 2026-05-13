@@ -4,7 +4,7 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 export function HeroSection() {
   return (
-    <section className="relative pt-28 pb-12 lg:pt-36 lg:pb-20 overflow-hidden" style={{ background: "#1b76ff" }}>
+    <section data-nav-theme="dark" className="relative pt-28 pb-12 lg:pt-36 lg:pb-20 overflow-hidden" style={{ background: "#1b76ff" }}>
       <div className="container px-4 md:px-6 relative">
         {/* Top-right side note */}
         <div className="hidden lg:block absolute right-6 top-36 max-w-xs text-white">

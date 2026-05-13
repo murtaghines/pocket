@@ -20,7 +20,7 @@ const benefits = [
 
 export function ContactSection() {
   return (
-    <section className="py-24 lg:py-32 relative overflow-hidden" style={{ background: "#080808" }}>
+    <section data-nav-theme="dark" className="py-24 lg:py-32 relative overflow-hidden" style={{ background: "#080808" }}>
       <div className="container px-6 relative z-10">
         <div className="text-center mb-16">
           <p className="text-xs font-bold tracking-[0.25em] text-white/50 mb-4">WHY POCKET</p>
