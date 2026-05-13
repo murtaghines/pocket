@@ -198,11 +198,21 @@ export function TrendKpiCard({
   const dotFill = accent;
   const dotStroke = accent;
 
+  const tintOverlayClass =
+    kind === "income"
+      ? "bg-success/5"
+      : kind === "expense"
+        ? "bg-destructive/5"
+        : "";
+
   return (
     <Card
       variant="bento"
       className={`overflow-hidden ${cardClasses} h-[200px] flex flex-col relative`}
     >
+      {tintOverlayClass && (
+        <div className={`absolute inset-0 pointer-events-none ${tintOverlayClass}`} />
+      )}
       <div className="p-4 md:p-5 relative flex flex-col h-full">
         {/* Header */}
         <div className="flex items-start justify-between mb-2">
