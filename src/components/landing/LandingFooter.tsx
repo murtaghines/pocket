@@ -7,8 +7,9 @@ export function LandingFooter() {
       <div className="container px-4 md:px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img src={pocketLogoWhite} alt="pocket" className="h-5 w-auto opacity-60" />
+          <Link to="/" className="flex items-center gap-2 opacity-60">
+            <img src={pocketLogoWhite} alt="pocket" className="h-6 w-auto" />
+            <span className="text-base font-bold text-white lowercase tracking-tight">pocket</span>
           </Link>
 
           {/* Links */}
