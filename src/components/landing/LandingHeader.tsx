@@ -12,7 +12,7 @@ export function LandingHeader() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
       <div className="max-w-7xl mx-auto">
-        <nav className="flex items-center justify-between backdrop-blur-xl border border-white/10 rounded-full px-6 py-3" style={{ background: '#0F4264' }}>
+        <nav className="flex items-center justify-between backdrop-blur-xl border border-white/10 rounded-full px-6 py-3" style={{ background: '#080808' }}>
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <img src={pocketIcon} alt="pocket" className="h-7 w-auto" />
@@ -46,7 +46,7 @@ export function LandingHeader() {
             <Link to="/auth">
               <Button 
                 size="sm" 
-                className={`text-sm rounded-full px-5 bg-white text-[#0F4264] hover:bg-white/90 ${isRegisterMode ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0F4264]' : ''}`}
+                className={`text-sm rounded-full px-5 bg-white text-[#080808] hover:bg-white/90 ${isRegisterMode ? 'ring-2 ring-white ring-offset-2 ring-offset-[#080808]' : ''}`}
               >
                 Get started
               </Button>
