@@ -906,6 +906,18 @@ serve(async (req) => {
       }
     }
 
+    // Load user_rules — corrections learned from My Data. Highest priority,
+    // applied before Settings rules and the generic categorizer.
+    const { data: userRulesRaw } = await supabase
+      .from('user_rules')
+      .select('id, match_type, pattern, tokens, movement, category, source')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('source', { ascending: false })       // 'user_correction' > 'manual'
+      .order('created_at', { ascending: false });  // newest first
+    const userRules: UserRuleRow[] = (userRulesRaw || []) as UserRuleRow[];
+    console.log(`[process-import] Loaded ${userRules.length} active user_rules`);
+
     // Create import record
     const { data: importRecord, error: importError } = await supabase
       .from('imports')
