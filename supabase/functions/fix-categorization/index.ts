@@ -122,16 +122,19 @@ serve(async (req) => {
         else if (rawResult.movement === 'INCOME' && tx.amount < 0) result = null;
       }
 
+      // Map extended slugs to app-level slugs (transfers_in → transfers, etc.)
+      if (result) {
+        result = { ...result, category: mapCategorySlug(result.category) as any };
+      }
+
       let targetMovement: string | null = null;
       let targetCategory: string | null = null;
 
       const signMovement = tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : currentMovement;
-      const isOtherCategory = currentCategory === 'other_income' || currentCategory === 'other_expense' || !currentCategory;
+      const isGenericCategory = GENERIC_SLUGS.has(currentCategory) || !categorySlugToId[currentCategory];
       const signMismatch = currentMovement !== 'TRANSFER' && currentMovement !== signMovement;
 
       if (signMismatch) {
-        // Force a sign correction. Prefer categorizer's category if it agrees,
-        // otherwise fall back to other_income / other_expense.
         if (result && result.movement === signMovement) {
           targetMovement = result.movement;
           targetCategory = result.category;
@@ -139,10 +142,17 @@ serve(async (req) => {
           targetMovement = signMovement;
           targetCategory = signMovement === 'INCOME' ? 'other_income' : 'other_expense';
         }
-      } else if (result && isOtherCategory && result.category !== 'other_expense' && result.category !== 'other_income') {
-        // Upgrade an "other_*" placeholder to a more specific category when
-        // the categorizer now knows it. Never downgrade a specific category.
+      } else if (result && isGenericCategory && result.category !== 'other_expense' && result.category !== 'other_income') {
+        // Upgrade a generic / unmapped placeholder to a real category.
         targetMovement = result.movement;
+        targetCategory = result.category;
+      } else if (isGenericCategory && currentCategory && !categorySlugToId[currentCategory]) {
+        // Stuck on an extended slug like 'transfers_in' that doesn't exist in DB → remap.
+        targetMovement = currentMovement;
+        targetCategory = mapCategorySlug(currentCategory);
+      } else {
+        continue;
+      }
         targetCategory = result.category;
       } else {
         continue;
