@@ -280,7 +280,8 @@ export function CategoryRulesList({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="flex flex-col gap-3">
+
       {/* System categories */}
       {categories.map((cat) => {
         const slug = cat.slug || cat.name;
