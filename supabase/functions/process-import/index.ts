@@ -1327,14 +1327,29 @@ serve(async (req) => {
         categoryId = categorySlugToId[categorySlug] || null;
       }
       
-      // ── Priority 1: User categorization rules (HIGHEST priority) ──
-      const ruleMatch = await applyCategoryRules(
-        supabase,
-        userId,
-        domain,
-        descriptionClean,
-        counterpartyRaw
-      );
+      // ── Priority 1a: user_rules (learned corrections from My Data) ──
+      const userRuleHit = applyUserRulesMatch(descriptionRaw, userRules)
+                       || applyUserRulesMatch(descriptionClean, userRules);
+
+      // ── Priority 1b: categorization_rules (Settings rules) — only if no user_rule matched ──
+      const ruleMatch = userRuleHit
+        ? null
+        : await applyCategoryRules(supabase, userId, domain, descriptionClean, counterpartyRaw);
+
+      if (userRuleHit) {
+        const mappedCat = mapCategorySlug(userRuleHit.category);
+        const validatedCat = validateCategorySlug(mappedCat, userRuleHit.movement as MovementType);
+        movement = userRuleHit.movement as MovementType;
+        categorySlug = validatedCat;
+        categoryId = categorySlugToId[categorySlug] || null;
+        categorizationRuleId = userRuleHit.ruleId;
+        categorySource = 'USER_RULE';
+        categorizedBy = 'user_rule';
+        if (categorizerMatch) stats.categorizedByCategorizer--;
+        else stats.categorizedByAI--;
+        stats.categorizedByRule++;
+        console.log(`[process-import] user_rule match: "${descriptionRaw.substring(0, 40)}" → ${userRuleHit.movement}/${categorySlug} (rule=${userRuleHit.ruleId})`);
+      }
       
       if (ruleMatch) {
         categoryId = ruleMatch.categoryId;
