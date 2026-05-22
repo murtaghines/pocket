@@ -8,6 +8,26 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+
+// Map categorizer's extended slugs to app-level slugs that exist in the DB.
+// Must stay in sync with process-import's CATEGORY_SLUG_MAP.
+const CATEGORY_SLUG_MAP: Record<string, string> = {
+  'investments_income': 'investment',
+  'rental_income': 'rents',
+  'transfers_in': 'transfers',
+  'gifts_received': 'other_income',
+  'sales': 'other_income',
+  'gifts_given': 'other_expense',
+  'insurance': 'other_expense',
+  'family': 'other_expense',
+  'donations': 'other_expense',
+  'personal_services': 'other_expense',
+  'taxes': 'other_expense',
+};
+const mapCategorySlug = (slug: string): string =>
+  slug?.startsWith('custom_') ? slug : (CATEGORY_SLUG_MAP[slug] || slug);
+
+const GENERIC_SLUGS = new Set(['other_income', 'other_expense', '', 'transfers_in', 'investments_income', 'rental_income', 'gifts_received', 'sales']);
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 serve(async (req) => {
@@ -102,16 +122,19 @@ serve(async (req) => {
         else if (rawResult.movement === 'INCOME' && tx.amount < 0) result = null;
       }
 
+      // Map extended slugs to app-level slugs (transfers_in → transfers, etc.)
+      if (result) {
+        result = { ...result, category: mapCategorySlug(result.category) as any };
+      }
+
       let targetMovement: string | null = null;
       let targetCategory: string | null = null;
 
       const signMovement = tx.amount > 0 ? 'INCOME' : tx.amount < 0 ? 'EXPENSE' : currentMovement;
-      const isOtherCategory = currentCategory === 'other_income' || currentCategory === 'other_expense' || !currentCategory;
+      const isGenericCategory = GENERIC_SLUGS.has(currentCategory) || !categorySlugToId[currentCategory];
       const signMismatch = currentMovement !== 'TRANSFER' && currentMovement !== signMovement;
 
       if (signMismatch) {
-        // Force a sign correction. Prefer categorizer's category if it agrees,
-        // otherwise fall back to other_income / other_expense.
         if (result && result.movement === signMovement) {
           targetMovement = result.movement;
           targetCategory = result.category;
@@ -119,14 +142,19 @@ serve(async (req) => {
           targetMovement = signMovement;
           targetCategory = signMovement === 'INCOME' ? 'other_income' : 'other_expense';
         }
-      } else if (result && isOtherCategory && result.category !== 'other_expense' && result.category !== 'other_income') {
-        // Upgrade an "other_*" placeholder to a more specific category when
-        // the categorizer now knows it. Never downgrade a specific category.
+      } else if (result && isGenericCategory && result.category !== 'other_expense' && result.category !== 'other_income') {
+        // Upgrade a generic / unmapped placeholder to a real category.
         targetMovement = result.movement;
         targetCategory = result.category;
+      } else if (isGenericCategory && currentCategory && !categorySlugToId[currentCategory]) {
+        // Stuck on an extended slug like 'transfers_in' that doesn't exist in DB → remap.
+        targetMovement = currentMovement;
+        targetCategory = mapCategorySlug(currentCategory);
       } else {
         continue;
       }
+
+
 
       if (targetCategory !== currentCategory || targetMovement !== currentMovement) {
         fixes.push({
