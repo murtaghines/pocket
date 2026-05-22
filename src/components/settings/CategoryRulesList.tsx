@@ -87,8 +87,9 @@ function GroupShell({
   children,
 }: GroupShellProps) {
   return (
-    <div className="border-b border-border last:border-b-0">
+    <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
       {/* Group header band — Airtable style */}
+
       <button
         type="button"
         onClick={onToggle}
