@@ -498,6 +498,56 @@ async function applyCategoryRules(
   return null;
 }
 
+// ========== USER RULES (learned from corrections in My Data) ==========
+// These take priority over Settings rules and over the generic categorizer.
+interface UserRuleRow {
+  id: string;
+  match_type: string;
+  pattern: string;
+  tokens: string[] | null;
+  movement: string;
+  category: string;
+  source: string;
+}
+
+function normalizeForRule(text: string): string {
+  return (text || '')
+    .toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function applyUserRulesMatch(
+  description: string,
+  rules: UserRuleRow[],
+): { movement: string; category: string; ruleId: string } | null {
+  const norm = normalizeForRule(description);
+  for (const rule of rules) {
+    let matched = false;
+    const mt = (rule.match_type || '').toLowerCase();
+    if (mt === 'fuzzy') {
+      const tokens: string[] = rule.tokens || [];
+      matched = tokens.length > 0 && tokens.every((t) => norm.includes(t.toUpperCase()));
+    } else if (mt === 'contains') {
+      matched = norm.includes((rule.pattern || '').toUpperCase());
+    } else if (mt === 'starts_with') {
+      matched = norm.startsWith((rule.pattern || '').toUpperCase());
+    } else if (mt === 'ends_with') {
+      matched = norm.endsWith((rule.pattern || '').toUpperCase());
+    } else if (mt === 'exact') {
+      matched = norm === (rule.pattern || '').toUpperCase();
+    } else if (mt === 'regex') {
+      try { matched = new RegExp(rule.pattern, 'i').test(description); } catch { /* ignore */ }
+    }
+    if (matched) {
+      return { movement: rule.movement, category: rule.category, ruleId: rule.id };
+    }
+  }
+  return null;
+}
+
 async function getCategoryIdBySlug(
   supabase: any,
   slug: string,
