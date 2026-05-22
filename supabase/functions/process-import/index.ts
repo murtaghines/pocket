@@ -498,6 +498,56 @@ async function applyCategoryRules(
   return null;
 }
 
+// ========== USER RULES (learned from corrections in My Data) ==========
+// These take priority over Settings rules and over the generic categorizer.
+interface UserRuleRow {
+  id: string;
+  match_type: string;
+  pattern: string;
+  tokens: string[] | null;
+  movement: string;
+  category: string;
+  source: string;
+}
+
+function normalizeForRule(text: string): string {
+  return (text || '')
+    .toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function applyUserRulesMatch(
+  description: string,
+  rules: UserRuleRow[],
+): { movement: string; category: string; ruleId: string } | null {
+  const norm = normalizeForRule(description);
+  for (const rule of rules) {
+    let matched = false;
+    const mt = (rule.match_type || '').toLowerCase();
+    if (mt === 'fuzzy') {
+      const tokens: string[] = rule.tokens || [];
+      matched = tokens.length > 0 && tokens.every((t) => norm.includes(t.toUpperCase()));
+    } else if (mt === 'contains') {
+      matched = norm.includes((rule.pattern || '').toUpperCase());
+    } else if (mt === 'starts_with') {
+      matched = norm.startsWith((rule.pattern || '').toUpperCase());
+    } else if (mt === 'ends_with') {
+      matched = norm.endsWith((rule.pattern || '').toUpperCase());
+    } else if (mt === 'exact') {
+      matched = norm === (rule.pattern || '').toUpperCase();
+    } else if (mt === 'regex') {
+      try { matched = new RegExp(rule.pattern, 'i').test(description); } catch { /* ignore */ }
+    }
+    if (matched) {
+      return { movement: rule.movement, category: rule.category, ruleId: rule.id };
+    }
+  }
+  return null;
+}
+
 async function getCategoryIdBySlug(
   supabase: any,
   slug: string,
@@ -855,6 +905,18 @@ serve(async (req) => {
         categorySlugToId[cat.slug] = cat.id;
       }
     }
+
+    // Load user_rules — corrections learned from My Data. Highest priority,
+    // applied before Settings rules and the generic categorizer.
+    const { data: userRulesRaw } = await supabase
+      .from('user_rules')
+      .select('id, match_type, pattern, tokens, movement, category, source')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('source', { ascending: false })       // 'user_correction' > 'manual'
+      .order('created_at', { ascending: false });  // newest first
+    const userRules: UserRuleRow[] = (userRulesRaw || []) as UserRuleRow[];
+    console.log(`[process-import] Loaded ${userRules.length} active user_rules`);
 
     // Create import record
     const { data: importRecord, error: importError } = await supabase
@@ -1265,14 +1327,29 @@ serve(async (req) => {
         categoryId = categorySlugToId[categorySlug] || null;
       }
       
-      // ── Priority 1: User categorization rules (HIGHEST priority) ──
-      const ruleMatch = await applyCategoryRules(
-        supabase,
-        userId,
-        domain,
-        descriptionClean,
-        counterpartyRaw
-      );
+      // ── Priority 1a: user_rules (learned corrections from My Data) ──
+      const userRuleHit = applyUserRulesMatch(descriptionRaw, userRules)
+                       || applyUserRulesMatch(descriptionClean, userRules);
+
+      // ── Priority 1b: categorization_rules (Settings rules) — only if no user_rule matched ──
+      const ruleMatch = userRuleHit
+        ? null
+        : await applyCategoryRules(supabase, userId, domain, descriptionClean, counterpartyRaw);
+
+      if (userRuleHit) {
+        const mappedCat = mapCategorySlug(userRuleHit.category);
+        const validatedCat = validateCategorySlug(mappedCat, userRuleHit.movement as MovementType);
+        movement = userRuleHit.movement as MovementType;
+        categorySlug = validatedCat;
+        categoryId = categorySlugToId[categorySlug] || null;
+        categorizationRuleId = userRuleHit.ruleId;
+        categorySource = 'USER_RULE';
+        categorizedBy = 'user_rule';
+        if (categorizerMatch) stats.categorizedByCategorizer--;
+        else stats.categorizedByAI--;
+        stats.categorizedByRule++;
+        console.log(`[process-import] user_rule match: "${descriptionRaw.substring(0, 40)}" → ${userRuleHit.movement}/${categorySlug} (rule=${userRuleHit.ruleId})`);
+      }
       
       if (ruleMatch) {
         categoryId = ruleMatch.categoryId;
