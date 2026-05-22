@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { TrendingUp, TrendingDown, Plus, Search, ArrowRightLeft } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useTranslation } from 'react-i18next';
+
 import { useCategories } from '@/hooks/useCategories';
 import { useCategorizationRules } from '@/hooks/useCategorizationRules';
 import { useCustomCategories, type CustomCategoryRule } from '@/hooks/useCustomCategories';
