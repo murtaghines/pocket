@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Pencil, ChevronDown, Palette, ListChecks } from 'lucide-react';
+import { Plus, Trash2, Pencil, ChevronRight, Palette, Sparkles } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { CategoryIcon } from '@/components/ui/category-icon';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { Database } from '@/integrations/supabase/types';
 import { ColorIconPicker } from '@/components/settings/ColorIconPicker';
 import type { CustomCategoryRule, VisualOverride } from '@/hooks/useCustomCategories';
 import { cn } from '@/lib/utils';
 
-type Category = Database["public"]["Tables"]["categories"]["Row"];
-type Rule = Database["public"]["Tables"]["categorization_rules"]["Row"];
+type Category = Database['public']['Tables']['categories']['Row'];
+type Rule = Database['public']['Tables']['categorization_rules']['Row'];
 
 interface Props {
   categories: Category[];
@@ -33,169 +34,222 @@ const matchTypeLabel = (mt: string, t: (k: string) => string) => {
   return t('categories.contains');
 };
 
-function renderLucide(iconName: string, size = 22) {
+// Friendly examples per category slug — shown as placeholders when there are no rules
+const EXAMPLE_PATTERNS: Record<string, { type: string; pattern: string }> = {
+  groceries: { type: 'Contains', pattern: 'mercadona' },
+  restaurants: { type: 'Contains', pattern: 'uber eats' },
+  transport: { type: 'Contains', pattern: 'cabify' },
+  travel: { type: 'Contains', pattern: 'booking.com' },
+  housing: { type: 'Contains', pattern: 'alquiler' },
+  health: { type: 'Contains', pattern: 'farmacia' },
+  entertainment: { type: 'Contains', pattern: 'cinepolis' },
+  subscriptions: { type: 'Contains', pattern: 'netflix' },
+  shopping: { type: 'Contains', pattern: 'amazon' },
+  sports: { type: 'Contains', pattern: 'basic fit' },
+  education: { type: 'Contains', pattern: 'udemy' },
+  pets: { type: 'Contains', pattern: 'kiwoko' },
+  other: { type: 'Contains', pattern: 'misc' },
+  salary: { type: 'Contains', pattern: 'nomina' },
+  rents: { type: 'Contains', pattern: 'alquiler recibido' },
+  investment: { type: 'Contains', pattern: 'dividendos' },
+  transfers: { type: 'Contains', pattern: 'bizum' },
+};
+
+function renderLucide(iconName: string, size = 18) {
   const I = icons[iconName as keyof typeof icons];
   if (!I) return null;
   return <I size={size} strokeWidth={2} />;
 }
 
-type PanelKind = 'edit' | 'rules';
-
-function PanelTrigger({
-  active,
-  accent,
-  icon,
-  label,
-  onClick,
-  badge,
-}: {
-  active: boolean;
-  accent: string;
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  badge?: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      className={cn(
-        "flex items-center gap-2 px-3 h-9 rounded-lg text-[13px] font-medium border transition-all",
-        active
-          ? "bg-card shadow-sm"
-          : "bg-background/40 hover:bg-background border-border/60 text-foreground/80"
-      )}
-      style={
-        active
-          ? { borderColor: accent, color: accent }
-          : undefined
-      }
-    >
-      <span className="shrink-0">{icon}</span>
-      <span>{label}</span>
-      {badge}
-      <ChevronDown
-        className={cn(
-          "w-3.5 h-3.5 transition-transform",
-          active && "rotate-180"
-        )}
-      />
-    </button>
-  );
-}
-
-function CategoryRow({
-  accent,
-  iconNode,
-  name,
-  ruleCount,
-  isCustom,
-  openPanel,
-  onTogglePanel,
-  showEdit,
-  showRules = true,
-  rightSlot,
-  editPanel,
-  rulesPanel,
-}: {
+interface GroupShellProps {
   accent: string;
   iconNode: React.ReactNode;
   name: string;
-  ruleCount: number;
   isCustom?: boolean;
-  openPanel: PanelKind | null;
-  onTogglePanel: (p: PanelKind) => void;
-  showEdit: boolean;
-  showRules?: boolean;
-  rightSlot?: React.ReactNode;
-  editPanel?: React.ReactNode;
-  rulesPanel?: React.ReactNode;
-}) {
-  const isOpen = openPanel !== null;
+  ruleCount: number;
+  expanded: boolean;
+  onToggle: () => void;
+  onEditCategory?: () => React.ReactNode; // returns popover content
+  onDelete?: () => void;
+  children: React.ReactNode;
+}
+
+function GroupShell({
+  accent,
+  iconNode,
+  name,
+  isCustom,
+  ruleCount,
+  expanded,
+  onToggle,
+  onEditCategory,
+  onDelete,
+  children,
+}: GroupShellProps) {
   return (
-    <div className="group border-b border-border/60 last:border-b-0">
-      <div
-        className={cn(
-          "flex items-center gap-4 px-4 py-3 transition-colors",
-          isOpen ? "bg-muted/40" : "hover:bg-muted/20"
-        )}
+    <div className="border-b border-border last:border-b-0">
+      {/* Group header band — Airtable style */}
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-muted/30"
+        style={{ backgroundColor: `${accent}0F` }}
       >
-        {/* Icon + name chip */}
+        <ChevronRight
+          className={cn(
+            'w-4 h-4 text-muted-foreground transition-transform shrink-0',
+            expanded && 'rotate-90'
+          )}
+        />
         <div
-          className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl min-w-0 flex-1"
-          style={{ backgroundColor: `${accent}14` }}
+          className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+          style={{ backgroundColor: `${accent}24`, color: accent }}
         >
-          <div
-            className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0"
-            style={{ backgroundColor: `${accent}2E`, color: accent }}
-          >
-            {iconNode}
-          </div>
-          <div className="min-w-0 flex items-center gap-2">
-            <span
-              className="text-[16px] font-semibold truncate"
-              style={{ color: accent }}
-            >
-              {name}
-            </span>
-            {isCustom && (
-              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-background/70 text-foreground/70 font-semibold shrink-0">
-                Custom
-              </span>
-            )}
-          </div>
+          {iconNode}
         </div>
+        <span
+          className="text-[14px] font-semibold tracking-tight truncate"
+          style={{ color: accent }}
+        >
+          {name}
+        </span>
+        {isCustom && (
+          <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-background/80 text-foreground/70 font-semibold shrink-0">
+            Custom
+          </span>
+        )}
+        <span className="text-[11px] text-muted-foreground tabular-nums ml-1">
+          {ruleCount} {ruleCount === 1 ? 'rule' : 'rules'}
+        </span>
 
-        {/* Action triggers */}
-        <div className="flex items-center gap-2 shrink-0">
-          {showEdit && (
-            <PanelTrigger
-              active={openPanel === 'edit'}
-              accent={accent}
-              icon={<Palette className="w-3.5 h-3.5" />}
-              label="Edit category"
-              onClick={() => onTogglePanel('edit')}
-            />
-          )}
-          {showRules && (
-            <PanelTrigger
-              active={openPanel === 'rules'}
-              accent={accent}
-              icon={<ListChecks className="w-3.5 h-3.5" />}
-              label="Rules"
-              onClick={() => onTogglePanel('rules')}
-              badge={
-                <span
-                  className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full ml-0.5"
-                  style={{
-                    backgroundColor: `${accent}1F`,
-                    color: accent,
-                  }}
+        <div className="ml-auto flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+          {onEditCategory && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
+                  aria-label="Customize color & icon"
+                  title="Customize color & icon"
                 >
-                  {ruleCount}
-                </span>
-              }
-            />
+                  <Palette className="w-3.5 h-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[320px] p-3">
+                {onEditCategory()}
+              </PopoverContent>
+            </Popover>
           )}
-          {rightSlot}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-background/80 transition-colors"
+              aria-label="Delete custom category"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
-      </div>
+      </button>
 
-      {openPanel === 'edit' && editPanel && (
-        <div className="px-4 pb-4 pt-2 bg-muted/20 border-t border-border/40">
-          {editPanel}
-        </div>
-      )}
-      {openPanel === 'rules' && rulesPanel && (
-        <div className="px-4 pb-4 pt-2 bg-muted/20 border-t border-border/40">
-          {rulesPanel}
+      {/* Rules table */}
+      {expanded && (
+        <div className="bg-card">
+          {/* Column headers */}
+          <div className="grid grid-cols-[140px_1fr_72px] items-center gap-3 px-3 py-1.5 border-b border-border/60 bg-muted/20">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+              Match type
+            </span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+              Pattern
+            </span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right pr-1">
+              Actions
+            </span>
+          </div>
+          {children}
         </div>
       )}
     </div>
+  );
+}
+
+interface RuleRowProps {
+  matchType: string;
+  pattern: string;
+  accent: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  placeholder?: boolean;
+}
+
+function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder }: RuleRowProps) {
+  return (
+    <div
+      className={cn(
+        'grid grid-cols-[140px_1fr_72px] items-center gap-3 px-3 py-2 border-b border-border/40 last:border-b-0 group/row transition-colors',
+        placeholder ? 'bg-transparent' : 'hover:bg-muted/20'
+      )}
+    >
+      <span
+        className={cn(
+          'text-[11px] font-semibold uppercase tracking-wider truncate',
+          placeholder && 'text-muted-foreground/60'
+        )}
+        style={placeholder ? undefined : { color: accent }}
+      >
+        {matchType}
+      </span>
+      <div className="flex items-center gap-2 min-w-0">
+        {placeholder && (
+          <Sparkles className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+        )}
+        <code
+          className={cn(
+            'text-[13px] font-mono truncate',
+            placeholder ? 'text-muted-foreground/60 italic' : 'text-foreground'
+          )}
+        >
+          {placeholder ? `e.g. "${pattern}"` : pattern}
+        </code>
+      </div>
+      <div className="flex items-center justify-end gap-0.5">
+        {!placeholder && onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background opacity-0 group-hover/row:opacity-100 transition-all"
+            aria-label="Edit rule"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+        )}
+        {!placeholder && onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-background opacity-0 group-hover/row:opacity-100 transition-all"
+            aria-label="Delete rule"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AddRuleRow({ accent, onAdd }: { accent: string; onAdd: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onAdd}
+      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors"
+    >
+      <Plus className="w-3.5 h-3.5" style={{ color: accent }} />
+      <span>Add rule</span>
+    </button>
   );
 }
 
@@ -212,85 +266,16 @@ export function CategoryRulesList({
 }: Props) {
   const { t } = useTranslation('settings');
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
-  const [expanded, setExpanded] = useState<Record<string, PanelKind | null>>({});
+  // Default: all groups expanded so the user sees the empty/example row right away
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
-  const togglePanel = (id: string, panel: PanelKind) => {
-    setExpanded((prev) => ({
-      ...prev,
-      [id]: prev[id] === panel ? null : panel,
-    }));
-  };
+  const toggle = (id: string) =>
+    setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const resolveCssColor = (override: VisualOverride | undefined, slug: string) => {
     if (override?.color) return `hsl(${override.color})`;
     const v = getCategoryColor(slug);
     return `hsl(var(--${v}))`;
-  };
-
-  const renderRulesPanel = (cat: Category, rules: Rule[], accent: string) => {
-    if (rules.length === 0) {
-      return (
-        <div className="flex items-center justify-between gap-3 py-2">
-          <p className="text-sm text-muted-foreground">
-            No rules yet. Add keywords to fine-tune how transactions are categorized.
-          </p>
-          <Button
-            size="sm"
-            variant="outline"
-            className="shrink-0 gap-1.5"
-            onClick={() => onAddRule(cat)}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add rule
-          </Button>
-        </div>
-      );
-    }
-    return (
-      <div className="space-y-1.5">
-        {rules.map((rule) => (
-          <div
-            key={rule.id}
-            className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2 hover:border-primary/40 transition-colors"
-          >
-            <span
-              className="text-[10px] uppercase tracking-wider font-semibold shrink-0 w-20"
-              style={{ color: accent }}
-            >
-              {matchTypeLabel(rule.match_type, t)}
-            </span>
-            <code className="text-sm font-mono text-foreground flex-1 truncate">{rule.pattern}</code>
-            <div className="flex items-center gap-0.5 shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                onClick={() => onEditRule(rule, cat)}
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                onClick={() => onDeleteRule(rule.id)}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        ))}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="w-full justify-start gap-1.5 text-muted-foreground hover:text-foreground mt-1"
-          onClick={() => onAddRule(cat)}
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Add another rule
-        </Button>
-      </div>
-    );
   };
 
   return (
@@ -303,35 +288,62 @@ export function CategoryRulesList({
         const accent = resolveCssColor(override, slug);
         const defaultIcon = getCategoryIcon(slug);
         const displayIcon = override?.icon || defaultIcon;
-        const openPanel = expanded[cat.id] ?? null;
+        const expanded = !collapsed[cat.id];
+        const example = EXAMPLE_PATTERNS[slug] || { type: 'Contains', pattern: 'keyword' };
 
         return (
-          <CategoryRow
+          <GroupShell
             key={cat.id}
             accent={accent}
             iconNode={
               override?.icon ? (
-                renderLucide(displayIcon, 22)
+                renderLucide(displayIcon, 16)
               ) : (
-                <CategoryIcon iconName={displayIcon} colorVar={getCategoryColor(slug)} size="md" showBackground={false} />
+                <CategoryIcon
+                  iconName={displayIcon}
+                  colorVar={getCategoryColor(slug)}
+                  size="sm"
+                  showBackground={false}
+                />
               )
             }
             name={getCategoryLabel(slug)}
             ruleCount={rules.length}
-            openPanel={openPanel}
-            onTogglePanel={(p) => togglePanel(cat.id, p)}
-            showEdit={!!onSetVisualOverride}
-            editPanel={
-              onSetVisualOverride && (
-                <ColorIconPicker
-                  currentColor={override?.color || '210 30% 50%'}
-                  currentIcon={override?.icon || defaultIcon}
-                  onSave={(c, i) => onSetVisualOverride(slug, c, i)}
-                />
-              )
+            expanded={expanded}
+            onToggle={() => toggle(cat.id)}
+            onEditCategory={
+              onSetVisualOverride
+                ? () => (
+                    <ColorIconPicker
+                      currentColor={override?.color || '210 30% 50%'}
+                      currentIcon={override?.icon || defaultIcon}
+                      onSave={(c, i) => onSetVisualOverride(slug, c, i)}
+                    />
+                  )
+                : undefined
             }
-            rulesPanel={renderRulesPanel(cat, rules, accent)}
-          />
+          >
+            {rules.length === 0 ? (
+              <RuleRow
+                placeholder
+                matchType={example.type}
+                pattern={example.pattern}
+                accent={accent}
+              />
+            ) : (
+              rules.map((rule) => (
+                <RuleRow
+                  key={rule.id}
+                  matchType={matchTypeLabel(rule.match_type, t)}
+                  pattern={rule.pattern}
+                  accent={accent}
+                  onEdit={() => onEditRule(rule, cat)}
+                  onDelete={() => onDeleteRule(rule.id)}
+                />
+              ))
+            )}
+            <AddRuleRow accent={accent} onAdd={() => onAddRule(cat)} />
+          </GroupShell>
         );
       })}
 
@@ -340,53 +352,38 @@ export function CategoryRulesList({
         const customId = `custom-${cat.slug}-${idx}`;
         const accent = `hsl(${cat.color || '210 30% 50%'})`;
         const iconName = cat.icon || 'circle';
-        const openPanel = expanded[customId] ?? null;
+        const expanded = !collapsed[customId];
 
         return (
-          <CategoryRow
+          <GroupShell
             key={customId}
             accent={accent}
-            iconNode={renderLucide(iconName, 22)}
+            iconNode={renderLucide(iconName, 16)}
             name={cat.name}
-            ruleCount={cat.keywords.length}
             isCustom
-            openPanel={openPanel}
-            onTogglePanel={(p) => togglePanel(customId, p)}
-            showEdit={false}
-            rightSlot={
-              onDeleteCustomCategory && (
-                <button
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-background text-muted-foreground hover:text-destructive"
-                  onClick={() => onDeleteCustomCategory(cat)}
-                  aria-label="Delete custom category"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )
-            }
-            rulesPanel={
-              cat.keywords.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-2">No keywords yet.</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {cat.keywords.map((kw, ki) => (
-                    <div
-                      key={ki}
-                      className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2"
-                    >
-                      <span
-                        className="text-[10px] uppercase tracking-wider font-semibold shrink-0 w-20"
-                        style={{ color: accent }}
-                      >
-                        Contains
-                      </span>
-                      <code className="text-sm font-mono text-foreground flex-1 truncate">{kw}</code>
-                    </div>
-                  ))}
-                </div>
-              )
-            }
-          />
+            ruleCount={cat.keywords.length}
+            expanded={expanded}
+            onToggle={() => toggle(customId)}
+            onDelete={onDeleteCustomCategory ? () => onDeleteCustomCategory(cat) : undefined}
+          >
+            {cat.keywords.length === 0 ? (
+              <RuleRow
+                placeholder
+                matchType="Contains"
+                pattern="keyword"
+                accent={accent}
+              />
+            ) : (
+              cat.keywords.map((kw, ki) => (
+                <RuleRow
+                  key={ki}
+                  matchType="Contains"
+                  pattern={kw}
+                  accent={accent}
+                />
+              ))
+            )}
+          </GroupShell>
         );
       })}
 
