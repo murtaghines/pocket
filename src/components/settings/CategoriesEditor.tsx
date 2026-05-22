@@ -35,7 +35,7 @@ export function CategoriesEditor() {
   const [dialogState, setDialogState] = useState<RuleDialogState | null>(null);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('expense');
-  const [search, setSearch] = useState('');
+
 
   const isLoading = catsLoading || rulesLoading;
 
