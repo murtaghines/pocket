@@ -91,21 +91,6 @@ export function CategoriesEditor() {
     }
   };
 
-  const filterByName = <T extends { name: string; slug?: string | null }>(arr: T[]) => {
-    if (!search.trim()) return arr;
-    const q = search.toLowerCase();
-    return arr.filter(c => {
-      const label = c.slug ? getCategoryLabel(c.slug).toLowerCase() : c.name.toLowerCase();
-      return label.includes(q) || c.name.toLowerCase().includes(q);
-    });
-  };
-
-  const filterCustom = (arr: CustomCategoryRule[]) => {
-    if (!search.trim()) return arr;
-    const q = search.toLowerCase();
-    return arr.filter(c => c.name.toLowerCase().includes(q) || c.keywords.some(k => k.toLowerCase().includes(q)));
-  };
-
   const tabs: { key: TabKey; label: string; icon: typeof TrendingUp; count: number }[] = [
     {
       key: 'expense',
@@ -128,10 +113,11 @@ export function CategoriesEditor() {
   ];
 
   const activeData = (() => {
-    if (activeTab === 'income') return { cats: filterByName(incomeCategories), custom: filterCustom(incomeCustom) };
-    if (activeTab === 'expense') return { cats: filterByName(expenseCategories), custom: filterCustom(expenseCustom) };
-    return { cats: filterByName(transferCategories), custom: [] as CustomCategoryRule[] };
+    if (activeTab === 'income') return { cats: incomeCategories, custom: incomeCustom };
+    if (activeTab === 'expense') return { cats: expenseCategories, custom: expenseCustom };
+    return { cats: transferCategories, custom: [] as CustomCategoryRule[] };
   })();
+
 
   return (
     <div className="flex flex-col min-h-screen">
