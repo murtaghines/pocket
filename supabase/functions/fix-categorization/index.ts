@@ -8,6 +8,26 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+
+// Map categorizer's extended slugs to app-level slugs that exist in the DB.
+// Must stay in sync with process-import's CATEGORY_SLUG_MAP.
+const CATEGORY_SLUG_MAP: Record<string, string> = {
+  'investments_income': 'investment',
+  'rental_income': 'rents',
+  'transfers_in': 'transfers',
+  'gifts_received': 'other_income',
+  'sales': 'other_income',
+  'gifts_given': 'other_expense',
+  'insurance': 'other_expense',
+  'family': 'other_expense',
+  'donations': 'other_expense',
+  'personal_services': 'other_expense',
+  'taxes': 'other_expense',
+};
+const mapCategorySlug = (slug: string): string =>
+  slug?.startsWith('custom_') ? slug : (CATEGORY_SLUG_MAP[slug] || slug);
+
+const GENERIC_SLUGS = new Set(['other_income', 'other_expense', '', 'transfers_in', 'investments_income', 'rental_income', 'gifts_received', 'sales']);
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 serve(async (req) => {
