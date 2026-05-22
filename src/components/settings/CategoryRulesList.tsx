@@ -87,8 +87,9 @@ function GroupShell({
   children,
 }: GroupShellProps) {
   return (
-    <div className="border-b border-border last:border-b-0">
+    <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
       {/* Group header band — Airtable style */}
+
       <button
         type="button"
         onClick={onToggle}
@@ -279,7 +280,8 @@ export function CategoryRulesList({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="flex flex-col gap-3">
+
       {/* System categories */}
       {categories.map((cat) => {
         const slug = cat.slug || cat.name;
@@ -388,10 +390,11 @@ export function CategoryRulesList({
       })}
 
       {categories.length === 0 && customCategories.length === 0 && (
-        <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
           No categories yet.
         </div>
       )}
+
     </div>
   );
 }

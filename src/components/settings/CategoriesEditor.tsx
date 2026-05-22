@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { TrendingUp, TrendingDown, Plus, Search, ArrowRightLeft } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useTranslation } from 'react-i18next';
+
 import { useCategories } from '@/hooks/useCategories';
 import { useCategorizationRules } from '@/hooks/useCategorizationRules';
 import { useCustomCategories, type CustomCategoryRule } from '@/hooks/useCustomCategories';
@@ -35,7 +35,7 @@ export function CategoriesEditor() {
   const [dialogState, setDialogState] = useState<RuleDialogState | null>(null);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('expense');
-  const [search, setSearch] = useState('');
+
 
   const isLoading = catsLoading || rulesLoading;
 
@@ -91,21 +91,6 @@ export function CategoriesEditor() {
     }
   };
 
-  const filterByName = <T extends { name: string; slug?: string | null }>(arr: T[]) => {
-    if (!search.trim()) return arr;
-    const q = search.toLowerCase();
-    return arr.filter(c => {
-      const label = c.slug ? getCategoryLabel(c.slug).toLowerCase() : c.name.toLowerCase();
-      return label.includes(q) || c.name.toLowerCase().includes(q);
-    });
-  };
-
-  const filterCustom = (arr: CustomCategoryRule[]) => {
-    if (!search.trim()) return arr;
-    const q = search.toLowerCase();
-    return arr.filter(c => c.name.toLowerCase().includes(q) || c.keywords.some(k => k.toLowerCase().includes(q)));
-  };
-
   const tabs: { key: TabKey; label: string; icon: typeof TrendingUp; count: number }[] = [
     {
       key: 'expense',
@@ -128,10 +113,11 @@ export function CategoriesEditor() {
   ];
 
   const activeData = (() => {
-    if (activeTab === 'income') return { cats: filterByName(incomeCategories), custom: filterCustom(incomeCustom) };
-    if (activeTab === 'expense') return { cats: filterByName(expenseCategories), custom: filterCustom(expenseCustom) };
-    return { cats: filterByName(transferCategories), custom: [] as CustomCategoryRule[] };
+    if (activeTab === 'income') return { cats: incomeCategories, custom: incomeCustom };
+    if (activeTab === 'expense') return { cats: expenseCategories, custom: expenseCustom };
+    return { cats: transferCategories, custom: [] as CustomCategoryRule[] };
   })();
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -201,25 +187,12 @@ export function CategoriesEditor() {
         </div>
       </div>
 
-      {/* ============= Workspace (matches Bank statements white canvas) ============= */}
-      <div className="flex-1 px-6 md:px-10 py-6 md:py-8 space-y-5">
-        {/* Search + helper */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="relative flex-1 min-w-0 max-w-xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search categories or keywords…"
-              className="pl-9 h-10 text-sm"
-            />
-          </div>
-          <p className="text-sm text-muted-foreground sm:text-right">
-            Click any category to view, add or edit its rules.
-          </p>
-        </div>
+      {/* ============= Workspace ============= */}
+      <div className="flex-1 px-6 md:px-10 py-6 md:py-8 space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Click any category to view, add or edit its rules.
+        </p>
 
-        {/* List */}
         {isLoading ? (
           <div className="rounded-xl border border-border bg-card py-12 text-center text-sm text-muted-foreground">
             Loading categories…
@@ -227,14 +200,12 @@ export function CategoriesEditor() {
         ) : activeData.cats.length === 0 && activeData.custom.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-muted/20 py-12 text-center">
             <p className="text-sm text-muted-foreground mb-3">
-              {search ? 'No categories match your search.' : 'No categories in this section yet.'}
+              No categories in this section yet.
             </p>
-            {!search && (
-              <Button variant="outline" size="sm" onClick={() => setShowCreateCategory(true)} className="gap-1.5">
-                <Plus className="w-3.5 h-3.5" />
-                Create category
-              </Button>
-            )}
+            <Button variant="outline" size="sm" onClick={() => setShowCreateCategory(true)} className="gap-1.5">
+              <Plus className="w-3.5 h-3.5" />
+              Create category
+            </Button>
           </div>
         ) : (
           <CategoryRulesList
@@ -250,6 +221,7 @@ export function CategoriesEditor() {
           />
         )}
       </div>
+
 
       <AddRuleDialog
         open={!!dialogState}
