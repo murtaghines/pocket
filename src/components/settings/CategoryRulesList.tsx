@@ -390,10 +390,11 @@ export function CategoryRulesList({
       })}
 
       {categories.length === 0 && customCategories.length === 0 && (
-        <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
           No categories yet.
         </div>
       )}
+
     </div>
   );
 }
