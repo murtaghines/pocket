@@ -153,10 +153,8 @@ serve(async (req) => {
       } else {
         continue;
       }
-        targetCategory = result.category;
-      } else {
-        continue;
-      }
+
+
 
       if (targetCategory !== currentCategory || targetMovement !== currentMovement) {
         fixes.push({
