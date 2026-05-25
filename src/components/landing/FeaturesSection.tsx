@@ -1,6 +1,36 @@
+import { useInView } from "@/hooks/useInView";
+
+function FloatingCard({
+  delay,
+  className,
+  children,
+}: {
+  delay: number;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const { ref, inView } = useInView<HTMLDivElement>(0.3);
+  return (
+    <div
+      ref={ref}
+      className={`${className} transition-all duration-700 ease-out`}
+      style={{
+        transitionDelay: `${delay}ms`,
+        opacity: inView ? 1 : 0,
+        transform: inView
+          ? undefined
+          : "translate3d(0, 40px, 0) scale(0.92)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function FeaturesSection() {
   return (
     <section data-nav-theme="light" className="bg-white py-24 lg:py-40 overflow-hidden">
+
       <div className="container px-6">
         {/* Overlapping rainbow headline */}
         <div className="relative text-center max-w-6xl mx-auto">
