@@ -1,10 +1,24 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import pocketIcon from "@/assets/pocket-icon.png";
+import { useScrollProgress } from "@/hooks/useScrollProgress";
 
 export function HeroSection() {
+  const { ref, progress } = useScrollProgress<HTMLElement>();
+
+  // Parallax offsets (intensity ~3/5)
+  const headlineY = progress * -80;
+  const cardY = progress * -40;
+  const ghostX = progress * 40;
+  const ghostOpacity = Math.max(0.1, 0.25 - Math.abs(progress) * 0.15);
+
   return (
-    <section data-nav-theme="dark" className="relative pt-28 pb-12 lg:pt-36 lg:pb-20 overflow-hidden" style={{ background: "#1b76ff" }}>
+    <section
+      ref={ref}
+      data-nav-theme="dark"
+      className="relative pt-28 pb-12 lg:pt-36 lg:pb-20 overflow-hidden min-h-screen"
+      style={{ background: "#1b76ff" }}
+    >
       <div className="container px-4 md:px-6 relative">
         {/* Top-right side note */}
         <div className="hidden lg:block absolute right-6 top-36 max-w-xs text-white">
@@ -15,18 +29,24 @@ export function HeroSection() {
           </p>
         </div>
 
-        {/* Massive headline */}
+        {/* Massive headline (parallax) */}
         <h1
-          className="font-black text-white tracking-tight uppercase leading-[0.88]"
-          style={{ fontSize: "clamp(3rem, 13vw, 12rem)" }}
+          className="font-black text-white tracking-tight uppercase leading-[0.88] will-change-transform"
+          style={{
+            fontSize: "clamp(3rem, 13vw, 12rem)",
+            transform: `translate3d(0, ${headlineY}px, 0)`,
+          }}
         >
           Track your
           <br />
           money
         </h1>
 
-        {/* Floating "QR-style" card */}
-        <div className="my-6 lg:my-8 inline-flex items-center gap-4 bg-white/10 backdrop-blur-sm border border-white/30 rounded-2xl p-4 lg:p-5">
+        {/* Floating "QR-style" card (parallax) */}
+        <div
+          className="my-6 lg:my-8 inline-flex items-center gap-4 bg-white/10 backdrop-blur-sm border border-white/30 rounded-2xl p-4 lg:p-5 will-change-transform"
+          style={{ transform: `translate3d(0, ${cardY}px, 0)` }}
+        >
           <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-xl bg-white flex items-center justify-center">
             <img src={pocketIcon} alt="Pocket" className="w-10 h-10 lg:w-12 lg:h-12" />
           </div>
@@ -36,10 +56,14 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Ghost echo headline */}
+        {/* Ghost echo headline (horizontal drift) */}
         <h2
-          className="font-black uppercase tracking-tight leading-[0.88] text-white/25 select-none"
-          style={{ fontSize: "clamp(3rem, 13vw, 12rem)" }}
+          className="font-black uppercase tracking-tight leading-[0.88] text-white select-none will-change-transform"
+          style={{
+            fontSize: "clamp(3rem, 13vw, 12rem)",
+            transform: `translate3d(${ghostX}px, 0, 0)`,
+            opacity: ghostOpacity,
+          }}
         >
           like never
           <br />
