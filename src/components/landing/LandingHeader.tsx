@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Apple } from "lucide-react";
 import pocketIcon from "@/assets/pocket-icon.png";
+
 
 export function LandingHeader() {
   // theme is determined by the section currently behind the navbar
@@ -55,14 +55,24 @@ export function LandingHeader() {
           <span className="text-base font-bold lowercase tracking-tight">pocket</span>
         </Link>
 
-        {/* CTA pill (right) */}
-        <Link
-          to="/auth"
-          className={`pointer-events-auto inline-flex items-center gap-2 backdrop-blur-xl border ${pillBorder} ${pillBg} ${pillText} rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-300`}
-        >
-          <Apple className="w-4 h-4" />
-          <span>Get started</span>
-        </Link>
+        {/* Right-side actions */}
+        <div className="flex items-center gap-2">
+          <Link
+            to="/auth?mode=login"
+            className={`pointer-events-auto inline-flex items-center backdrop-blur-xl border ${pillBorder} ${
+              isDark ? "bg-white/10 text-white" : "bg-transparent text-[#080808]"
+            } rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 hover:opacity-90`}
+          >
+            Log in
+          </Link>
+          <Link
+            to="/auth"
+            className={`pointer-events-auto inline-flex items-center backdrop-blur-xl border ${pillBorder} ${pillBg} ${pillText} rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-300`}
+          >
+            Get started
+          </Link>
+        </div>
+
       </div>
     </header>
   );
