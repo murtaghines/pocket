@@ -2,10 +2,12 @@ import { useInView } from "@/hooks/useInView";
 
 function FloatingCard({
   delay,
+  rotate = 0,
   className,
   children,
 }: {
   delay: number;
+  rotate?: number;
   className: string;
   children: React.ReactNode;
 }) {
@@ -13,19 +15,20 @@ function FloatingCard({
   return (
     <div
       ref={ref}
-      className={`${className} transition-all duration-700 ease-out`}
+      className={`${className} transition-all duration-700 ease-out will-change-transform`}
       style={{
         transitionDelay: `${delay}ms`,
         opacity: inView ? 1 : 0,
         transform: inView
-          ? undefined
-          : "translate3d(0, 40px, 0) scale(0.92)",
+          ? `translate3d(0, 0, 0) rotate(${rotate}deg) scale(1)`
+          : `translate3d(0, 40px, 0) rotate(${rotate}deg) scale(0.9)`,
       }}
     >
       {children}
     </div>
   );
 }
+
 
 export function FeaturesSection() {
   return (
@@ -74,26 +77,43 @@ export function FeaturesSection() {
           </div>
 
           {/* Floating cards */}
-          <div className="hidden md:block absolute left-2 top-8 w-56 bg-white rounded-2xl shadow-xl border border-[#e5e5e5] p-4 rotate-[-6deg]">
+          <FloatingCard
+            delay={100}
+            rotate={-6}
+            className="hidden md:block absolute left-2 top-8 w-56 bg-white rounded-2xl shadow-xl border border-[#e5e5e5] p-4"
+          >
             <div className="text-[10px] text-[#6b7280]">Salary received</div>
             <div className="text-lg font-bold text-[#16a34a]">+€3.200,00</div>
-          </div>
+          </FloatingCard>
 
-          <div className="hidden md:block absolute right-4 top-12 w-52 bg-[#FFBB03] rounded-2xl shadow-xl p-4 rotate-[8deg]">
+          <FloatingCard
+            delay={200}
+            rotate={8}
+            className="hidden md:block absolute right-4 top-12 w-52 bg-[#FFBB03] rounded-2xl shadow-xl p-4"
+          >
             <div className="text-[10px] text-[#080808]/70 font-bold tracking-widest">GROCERIES</div>
             <div className="text-lg font-bold text-[#080808]">€420 this month</div>
-          </div>
+          </FloatingCard>
 
-          <div className="hidden md:block absolute left-8 bottom-8 w-56 bg-[#080808] text-white rounded-2xl shadow-xl p-4 rotate-[5deg]">
+          <FloatingCard
+            delay={300}
+            rotate={5}
+            className="hidden md:block absolute left-8 bottom-8 w-56 bg-[#080808] text-white rounded-2xl shadow-xl p-4"
+          >
             <div className="text-[10px] text-white/60 font-bold tracking-widest">INVESTMENTS</div>
             <div className="text-lg font-bold">Portfolio +4,2%</div>
-          </div>
+          </FloatingCard>
 
-          <div className="hidden md:block absolute right-2 bottom-12 w-52 bg-white rounded-2xl shadow-xl border border-[#e5e5e5] p-4 rotate-[-4deg]">
+          <FloatingCard
+            delay={400}
+            rotate={-4}
+            className="hidden md:block absolute right-2 bottom-12 w-52 bg-white rounded-2xl shadow-xl border border-[#e5e5e5] p-4"
+          >
             <div className="text-[10px] text-[#6b7280]">New transaction</div>
             <div className="text-sm font-semibold text-[#080808]">Auto-categorized</div>
             <div className="text-xs text-[#1b76ff] mt-1">Restaurant · Food</div>
-          </div>
+          </FloatingCard>
+
         </div>
       </div>
     </section>
