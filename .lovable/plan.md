@@ -1,54 +1,47 @@
-## Respuesta corta
+## Objetivo
 
-**Sí, pero con un matiz importante.** Depende de *dónde* crees la regla:
+Renovar la navegación de la landing pública (`src/pages/Landing.tsx`) para que las secciones se superpongan al hacer scroll y haya parallax sutil en imágenes y textos, manteniendo intensidad media (3/5): moderna y divertida, sin marearse.
 
-| Dónde la creás | Tabla | ¿Se aplica en próximos uploads? |
-|---|---|---|
-| Settings → Categorías → "Añadir regla" (ej. *Oxigent → Salary*) | `categorization_rules` | ✅ Sí, con **prioridad máxima** (anula al categorizador genérico de "transferencia de…") |
-| My Data → editar una transacción y guardar como regla aprendida | `user_rules` | ❌ **No**, hoy `process-import` no lee esta tabla |
+## Qué se cambia
 
-Por cómo está hoy `process-import`:
+Sólo la landing pública. Nada del dashboard ni de la lógica de negocio.
 
-```
-1. Categorizador genérico (regex "TRANSFERENCIA DE …") → transfers_in
-2. Sign guardrail (positivo = INCOME)
-3. ⮕ applyCategoryRules() — categorization_rules del usuario, SOBREESCRIBE lo anterior
-4. Sign sanity check final
-```
+### 1. Sticky sections que se pisan
+- Envolver cada sección (`HeroSection`, `HowItWorksSection`, `FeaturesSection`, `ContactSection`, `CTASection`) en un wrapper `sticky top-0` con `min-h-screen` y bordes redondeados arriba (`rounded-t-[2.5rem]`).
+- Cada sección sucesiva sube por encima de la anterior con sombra superior (`shadow-2xl`), creando el efecto de "tarjetas apiladas" tipo Apple/Linear.
+- El Hero queda al fondo; las siguientes lo cubren progresivamente. La última (`CTASection` + footer) cierra el stack.
+- Fondos sólidos por sección para que el overlap sea visible:
+  - Hero: azul `#1b76ff` (ya existe)
+  - HowItWorks: blanco crema
+  - Features: gris claro / azul muy claro
+  - Contact: blanco
+  - CTA: azul oscuro
 
-Entonces si creás la regla **desde Settings** con patrón `OXIGENT` (CONTAINS) → categoría *Salary*, el próximo Oxigent que aparezca queda como **Salary / Income**, no como Transfers.
+### 2. Parallax suave (intensidad 3/5)
+Usando `framer-motion` (ya disponible) con `useScroll` + `useTransform`:
+- Hero: el headline grande "TRACK YOUR MONEY" se mueve a velocidad lenta (y: 0 → -80px) y la card flotante a velocidad media mientras se sale.
+- FeaturesSection: las cards entran con `whileInView` (fade + translateY de 40px → 0, stagger 80ms).
+- HowItWorks: el número de cada paso hace un parallax sutil (y: 0 → -30px) respecto al texto.
+- Hero ghost headline "LIKE NEVER BEFORE" con un drift horizontal lento (-20px → +20px) durante scroll.
 
-## Propuesta de cambio
+### 3. Header
+- `LandingHeader` ya es sticky; ajustar para que cambie de fondo (`bg-transparent` → `bg-white/80 backdrop-blur`) tras pasar el hero usando `useScroll`.
 
-Para que sea consistente y "lo que edites en My Data se aprenda", propongo cerrar el gap:
+### 4. Detalles de implementación
+- Crear `src/components/landing/StickyStack.tsx`: wrapper genérico que recibe `children` y aplica `sticky top-0 min-h-screen rounded-t-[2.5rem] overflow-hidden shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.15)]`.
+- Modificar `src/pages/Landing.tsx` para envolver cada sección con `StickyStack` (excepto Hero, que es la base).
+- Añadir hooks de parallax inline en `HeroSection.tsx`, `HowItWorksSection.tsx`, `FeaturesSection.tsx`.
+- Respetar `prefers-reduced-motion`: si está activo, desactivar los `useTransform` y dejar scroll normal.
 
-### 1. `process-import` también consume `user_rules`
-Cargar `user_rules` activas del usuario y aplicarlas **antes** del categorizador genérico (misma prioridad que las de Settings, ordenadas por `source = 'user_correction'` > `'manual'` y luego por `created_at` desc).
+### Archivos tocados
+- `src/pages/Landing.tsx` (envolver con stack)
+- `src/components/landing/StickyStack.tsx` (nuevo)
+- `src/components/landing/HeroSection.tsx` (parallax headline + card)
+- `src/components/landing/HowItWorksSection.tsx` (parallax números)
+- `src/components/landing/FeaturesSection.tsx` (reveal on view)
+- `src/components/landing/LandingHeader.tsx` (fondo dinámico al scrollear)
 
-Reutilizar la misma lógica de matching que ya existe en `process-financial-file` (`applyUserRules` con tipos `fuzzy` / `contains` / `starts_with` / `exact` / `regex`).
-
-### 2. Orden de prioridad final (unificado)
-```
-1. user_rules (correcciones aprendidas en My Data)         ← NUEVO en process-import
-2. categorization_rules (reglas de Settings)               ← ya funciona
-3. Detección de auto-transferencias (mismo banco/usuario)  ← ya funciona
-4. Categorizador genérico (regex compartido)               ← ya funciona
-5. Fallback por signo (+ → other_income, - → other_expense)
-6. Sign sanity check
-```
-
-### 3. UX — confirmar al usuario
-Cuando edites Oxigent en My Data y elijas "Crear regla", mostrar un toast: *"Próximas transacciones con 'Oxigent' se categorizarán como Salary automáticamente."*
-
-### 4. Sin migración de datos
-No hace falta tocar la base. Las reglas ya creadas seguirán funcionando; sólo amplía qué tablas lee el importador.
-
-## Archivos a tocar
-
-- `supabase/functions/process-import/index.ts` — añadir carga de `user_rules` + función `applyUserRules` (copiada/extraída desde `process-financial-file`), invocarla antes de `applyCategoryRules`.
-- (Opcional) extraer el matcher a `supabase/functions/_shared/userRulesMatcher.ts` para evitar duplicación.
-
-## Qué NO cambia
-- Categorizador genérico sigue tratando "Transferencia de X" como TRANSFER por defecto — correcto, como vos decís.
-- Sign guardrail sigue activo (positivo nunca es expense salvo TRANSFER).
-- Las reglas custom siempre ganan, así que tu Oxigent siempre saldrá como Salary.
+## Qué NO se toca
+- Dashboard `/index`
+- Auth, onboarding, edge functions, lógica de transacciones
+- Colores/tokens del design system (sólo se usan los existentes)
