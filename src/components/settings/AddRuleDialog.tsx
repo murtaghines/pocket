@@ -33,13 +33,13 @@ interface Props {
   isSaving: boolean;
 }
 
-const MATCH_TYPES = [
+const MATCH_TYPES: Array<{ value: string; icon: typeof Sparkles; recommended?: boolean }> = [
   { value: 'SMART', icon: Sparkles, recommended: true },
   { value: 'CONTAINS', icon: Search },
   { value: 'STARTS_WITH', icon: AlignLeft },
   { value: 'EXACT', icon: Type },
   { value: 'REGEX', icon: Code2 },
-] as const;
+];
 
 const LABEL_KEY: Record<string, string> = {
   SMART: 'smartMatch',
