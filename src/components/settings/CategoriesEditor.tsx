@@ -19,8 +19,14 @@ type Rule = Database["public"]["Tables"]["categorization_rules"]["Row"];
 type TabKey = 'income' | 'expense' | 'transfer';
 
 interface RuleDialogState {
-  categoryId: string;
-  categoryName: string;
+  category: {
+    id: string;
+    name: string;
+    movement?: string | null;
+    slug?: string | null;
+    icon?: string | null;
+    color?: string | null;
+  };
   editingRule?: { id: string; pattern: string; matchType: string } | null;
 }
 
