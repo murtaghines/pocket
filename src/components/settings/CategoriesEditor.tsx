@@ -19,8 +19,14 @@ type Rule = Database["public"]["Tables"]["categorization_rules"]["Row"];
 type TabKey = 'income' | 'expense' | 'transfer';
 
 interface RuleDialogState {
-  categoryId: string;
-  categoryName: string;
+  category: {
+    id: string;
+    name: string;
+    movement?: string | null;
+    slug?: string | null;
+    icon?: string | null;
+    color?: string | null;
+  };
   editingRule?: { id: string; pattern: string; matchType: string } | null;
 }
 
@@ -44,14 +50,22 @@ export function CategoriesEditor() {
 
   const totalRules = rules.length + customCategories.reduce((acc, c) => acc + c.keywords.length, 0);
 
-  const handleAddRule = (cat: { id: string; name: string }) => {
-    setDialogState({ categoryId: cat.id, categoryName: cat.name });
+  const toDialogCat = (cat: any) => ({
+    id: cat.id,
+    name: getCategoryLabel(cat.slug) || cat.name,
+    movement: cat.movement,
+    slug: cat.slug,
+    icon: cat.icon,
+    color: cat.color,
+  });
+
+  const handleAddRule = (cat: any) => {
+    setDialogState({ category: toDialogCat(cat) });
   };
 
-  const handleEditRule = (rule: Rule, cat: { id: string; name: string }) => {
+  const handleEditRule = (rule: Rule, cat: any) => {
     setDialogState({
-      categoryId: cat.id,
-      categoryName: cat.name,
+      category: toDialogCat(cat),
       editingRule: { id: rule.id, pattern: rule.pattern, matchType: rule.match_type },
     });
   };
@@ -66,7 +80,7 @@ export function CategoriesEditor() {
       );
     } else {
       addRule.mutate(
-        { category_id: dialogState.categoryId, pattern, match_type: matchType, match_field: 'description_norm' },
+        { category_id: dialogState.category.id, pattern, match_type: matchType, match_field: 'description_norm' },
         { onSuccess: () => setDialogState(null) }
       );
     }
@@ -225,7 +239,7 @@ export function CategoriesEditor() {
 
       <AddRuleDialog
         open={!!dialogState}
-        categoryName={dialogState?.categoryName || ''}
+        category={dialogState?.category ?? null}
         editingRule={dialogState?.editingRule}
         onClose={() => setDialogState(null)}
         onSave={handleSave}
