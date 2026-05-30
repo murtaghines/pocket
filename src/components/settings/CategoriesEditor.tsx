@@ -239,7 +239,7 @@ export function CategoriesEditor() {
 
       <AddRuleDialog
         open={!!dialogState}
-        categoryName={dialogState?.categoryName || ''}
+        category={dialogState?.category ?? null}
         editingRule={dialogState?.editingRule}
         onClose={() => setDialogState(null)}
         onSave={handleSave}
