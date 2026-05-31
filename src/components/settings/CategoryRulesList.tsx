@@ -278,7 +278,7 @@ export function CategoryRulesList({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
 
       {/* System categories */}
       {categories.map((cat) => {
