@@ -161,7 +161,7 @@ function GroupShell({
                   <Palette className="w-3.5 h-3.5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-[320px] p-3">
+              <PopoverContent align="end" sideOffset={8} className="w-[440px] p-4">
                 {onEditCategory()}
               </PopoverContent>
             </Popover>
