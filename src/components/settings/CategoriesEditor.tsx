@@ -203,9 +203,7 @@ export function CategoriesEditor() {
 
       {/* ============= Workspace ============= */}
       <div className="flex-1 px-6 md:px-10 py-6 md:py-8 space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Click any category to view, add or edit its rules.
-        </p>
+
 
         {isLoading ? (
           <div className="rounded-xl border border-border bg-card py-12 text-center text-sm text-muted-foreground">
