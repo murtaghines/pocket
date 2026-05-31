@@ -69,7 +69,8 @@ interface GroupShellProps {
   ruleCount: number;
   expanded: boolean;
   onToggle: () => void;
-  onEditCategory?: () => React.ReactNode; // returns popover content
+  onEditCategory?: () => React.ReactNode; // color popover content
+  onEditIcon?: () => React.ReactNode; // icon popover content
   onDelete?: () => void;
   children: React.ReactNode;
 }
@@ -83,6 +84,7 @@ function GroupShell({
   expanded,
   onToggle,
   onEditCategory,
+  onEditIcon,
   onDelete,
   children,
 }: GroupShellProps) {
