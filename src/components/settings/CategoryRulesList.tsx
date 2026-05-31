@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Pencil, ChevronRight, Palette, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Pencil, ChevronRight, Palette, Sparkles, Smile } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
@@ -69,7 +69,8 @@ interface GroupShellProps {
   ruleCount: number;
   expanded: boolean;
   onToggle: () => void;
-  onEditCategory?: () => React.ReactNode; // returns popover content
+  onEditCategory?: () => React.ReactNode; // color popover content
+  onEditIcon?: () => React.ReactNode; // icon popover content
   onDelete?: () => void;
   children: React.ReactNode;
 }
@@ -83,6 +84,7 @@ function GroupShell({
   expanded,
   onToggle,
   onEditCategory,
+  onEditIcon,
   onDelete,
   children,
 }: GroupShellProps) {
@@ -124,14 +126,31 @@ function GroupShell({
         </span>
 
         <div className="ml-auto flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+          {onEditIcon && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
+                  aria-label="Change icon"
+                  title="Change icon"
+                >
+                  <Smile className="w-3.5 h-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[320px] p-3">
+                {onEditIcon()}
+              </PopoverContent>
+            </Popover>
+          )}
           {onEditCategory && (
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
                   className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
-                  aria-label="Customize color & icon"
-                  title="Customize color & icon"
+                  aria-label="Change color"
+                  title="Change color"
                 >
                   <Palette className="w-3.5 h-3.5" />
                 </button>
@@ -315,7 +334,20 @@ export function CategoryRulesList({
               onSetVisualOverride
                 ? () => (
                     <ColorIconPicker
-                      currentColor={override?.color || '210 30% 50%'}
+                      mode="color"
+                      currentColor={override?.color || '203 60% 51%'}
+                      currentIcon={override?.icon || defaultIcon}
+                      onSave={(c, i) => onSetVisualOverride(slug, c, i)}
+                    />
+                  )
+                : undefined
+            }
+            onEditIcon={
+              onSetVisualOverride
+                ? () => (
+                    <ColorIconPicker
+                      mode="icon"
+                      currentColor={override?.color || '203 60% 51%'}
                       currentIcon={override?.icon || defaultIcon}
                       onSave={(c, i) => onSetVisualOverride(slug, c, i)}
                     />
