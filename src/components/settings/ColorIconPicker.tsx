@@ -36,24 +36,17 @@ const CURATED_COLORS = [
 ];
 
 const CURATED_ICONS = [
-  // Existing category icons
   'briefcase', 'rotate-ccw', 'arrow-down-left', 'circle-plus', 'trending-up',
-  'laptop', 'home', 'shopping-cart', 'utensils', 'car',
-  'heart-pulse', 'gamepad-2', 'shopping-bag', 'graduation-cap', 'repeat',
-  'plane', 'dumbbell', 'ellipsis', 'paw-print', 'arrow-left-right',
-  'coffee', 'wine', 'cake', 'apple', 'beer',
-  'baby', 'users', 'heart', 'gift', 'smile',
-  'wrench', 'scissors', 'hammer', 'settings', 'clipboard',
-  'palette', 'music', 'camera', 'pen-tool', 'image',
-  'sun', 'cloud', 'umbrella', 'leaf', 'flower-2',
-  'smartphone', 'monitor', 'wifi', 'bluetooth', 'headphones',
-  'wallet', 'credit-card', 'piggy-bank', 'receipt', 'banknote',
-  'bike', 'train-front', 'ship', 'fuel', 'truck',
-  'key', 'shield', 'crown', 'star', 'zap',
-  'sparkles', 'flame', 'tag', 'anchor', 'compass',
-  'book', 'newspaper', 'map', 'globe', 'building-2',
-  'pill', 'stethoscope', 'syringe', 'activity',
-  'dog', 'cat', 'fish', 'bird',
+  'laptop', 'house', 'shopping-cart',
+  'utensils', 'car', 'heart-pulse', 'gamepad-2', 'shopping-bag', 'graduation-cap', 'repeat', 'plane',
+  'dumbbell', 'ellipsis', 'paw-print', 'arrow-left-right', 'coffee', 'wine', 'cake', 'apple',
+  'beer', 'baby', 'users', 'heart', 'gift', 'smile', 'wrench', 'scissors',
+  'hammer', 'settings', 'clipboard', 'palette', 'music', 'camera', 'pen-tool', 'image',
+  'sun', 'cloud', 'umbrella', 'leaf', 'flower-2', 'smartphone', 'monitor', 'wifi',
+  'bluetooth', 'headphones', 'wallet', 'credit-card', 'piggy-bank', 'receipt', 'banknote', 'bike',
+  'train-front', 'ship', 'fuel', 'truck', 'key', 'shield', 'crown', 'star',
+  'zap', 'sparkles', 'flame', 'tag', 'anchor', 'compass', 'book', 'newspaper',
+  'map', 'globe', 'building-2', 'pill', 'stethoscope', 'syringe', 'activity', 'cat',
 ];
 
 interface ColorIconPickerProps {
@@ -110,7 +103,7 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave, mode = 'bot
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('categories.icon', 'Icon')}
           </span>
-          <div className="grid grid-cols-8 gap-1.5 max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
+          <div className="grid grid-cols-8 gap-2 max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
             {CURATED_ICONS.map((ic) => {
               const isSelected = icon === ic;
               return (
