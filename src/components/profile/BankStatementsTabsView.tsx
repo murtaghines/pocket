@@ -2296,38 +2296,6 @@ function InlineTransactionsEditor({
                     </TableCell>
                     <TableCell className="text-center">
                       {!isLocked && isPending ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
-                          onClick={() => commitRow(tx, false)}
-                          disabled={isSaving}
-                          title="Save changes"
-                          aria-label="Save changes"
-                        >
-                          <Check className="w-[16px] h-[16px]" />
-                        </Button>
-                      ) : !isLocked ? (
-                        <AmountEditButton
-                          originalAmount={displayAmount}
-                          formatCurrency={formatCurrency}
-                          onChangeAmount={(v) => handleAmountChange(tx, v)}
-                          onApplySplit={(n) => handleSplit(tx, n)}
-                          disabled={isHidden}
-                        />
-                      ) : (
-                        <div
-                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/40 cursor-not-allowed"
-                          title="Unlock the month to split"
-                          aria-disabled="true"
-                        >
-                          <SplitIcon className="w-3.5 h-3.5" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="px-0 text-center">
-                      {!isLocked && isPending ? (
                         (() => {
                           const categoryChanged =
                             !!pending?.category && pending.category !== tx.category;
@@ -2348,6 +2316,38 @@ function InlineTransactionsEditor({
                           );
                         })()
                       ) : !isLocked ? (
+                        <AmountEditButton
+                          originalAmount={displayAmount}
+                          formatCurrency={formatCurrency}
+                          onChangeAmount={(v) => handleAmountChange(tx, v)}
+                          onApplySplit={(n) => handleSplit(tx, n)}
+                          disabled={isHidden}
+                        />
+                      ) : (
+                        <div
+                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/40 cursor-not-allowed"
+                          title="Unlock the month to split"
+                          aria-disabled="true"
+                        >
+                          <SplitIcon className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-0 text-center">
+                      {!isLocked && isPending ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
+                          onClick={() => commitRow(tx, false)}
+                          disabled={isSaving}
+                          title="Save changes"
+                          aria-label="Save changes"
+                        >
+                          <Check className="w-[16px] h-[16px]" />
+                        </Button>
+                      ) : !isLocked ? (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -2367,6 +2367,7 @@ function InlineTransactionsEditor({
                         </div>
                       )}
                     </TableCell>
+
                     <TableCell className="px-0 text-center">
                       {!isLocked && isPending ? (
                         <Button
