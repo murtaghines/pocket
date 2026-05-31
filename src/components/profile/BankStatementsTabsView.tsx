@@ -2082,11 +2082,11 @@ function InlineTransactionsEditor({
         <div className="overflow-auto max-h-[calc(100vh-220px)]">
           <Table className="w-full table-fixed [&_th]:border-r [&_th]:border-border/60 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/40 [&_td:last-child]:border-r-0">
             <TableHeader className="sticky top-0 z-10 bg-card">
-              <TableRow className="hover:bg-transparent border-b border-border">
-                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground/60 font-medium">
+              <TableRow className="hover:bg-transparent border-b border-border [&>th]:h-10">
+                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   #
                 </TableHead>
-                <TableHead className="w-[11%] whitespace-nowrap text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[10%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Date
                 </TableHead>
                 <TableHead className="w-[25%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
@@ -2107,13 +2107,10 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Split
                 </TableHead>
-                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Show
-                </TableHead>
-                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Undo
-                </TableHead>
+                <TableHead className="w-[44px]" />
+                <TableHead className="w-[44px]" />
               </TableRow>
+
             </TableHeader>
             <TableBody>
               {rowsToRender.map((tx, idx) => {
