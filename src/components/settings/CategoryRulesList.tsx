@@ -157,7 +157,7 @@ function GroupShell({
       {/* Rules table */}
       {expanded && (
         <div className="bg-card">
-          {/* Column headers */}
+          {/* Column headers — Match type + Pattern only (row actions appear on hover) */}
           <div className="grid grid-cols-[140px_1fr_72px] items-center gap-3 px-3 py-1.5 border-b border-border/60 bg-muted/20">
             <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               Match type
@@ -165,9 +165,7 @@ function GroupShell({
             <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               Pattern
             </span>
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right pr-1">
-              Actions
-            </span>
+            <span />
           </div>
           {children}
         </div>
@@ -280,7 +278,7 @@ export function CategoryRulesList({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
 
       {/* System categories */}
       {categories.map((cat) => {
@@ -390,7 +388,7 @@ export function CategoryRulesList({
       })}
 
       {categories.length === 0 && customCategories.length === 0 && (
-        <div className="rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
           No categories yet.
         </div>
       )}
