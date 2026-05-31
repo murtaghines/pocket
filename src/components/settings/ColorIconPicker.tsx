@@ -103,7 +103,7 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave, mode = 'bot
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('categories.icon', 'Icon')}
           </span>
-          <div className="grid grid-cols-8 gap-1.5 max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
+          <div className="grid grid-cols-8 gap-2 max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
             {CURATED_ICONS.map((ic) => {
               const isSelected = icon === ic;
               return (
