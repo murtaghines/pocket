@@ -142,7 +142,7 @@ export function CategoriesEditor() {
             Categories &amp; rules
           </h1>
           <p className="text-sm text-muted-foreground mt-1 truncate">
-            Manage standard and custom categories, plus the rules that classify your transactions.
+            Manage standard and custom categories — click any one to view, add or edit the rules that classify your transactions.
           </p>
         </div>
 
