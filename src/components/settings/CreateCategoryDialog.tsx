@@ -146,7 +146,7 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
           {/* Color Picker */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">{t('categories.color', 'Color')}</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-12 gap-2">
               {CURATED_COLORS.map((color) => (
                 <button
                   key={color}
@@ -172,31 +172,20 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
                 <button
                   key={iconName}
                   type="button"
-                  className="w-8 h-8 rounded-lg border transition-all flex items-center justify-center hover:bg-muted/80"
+                  className="w-9 h-9 rounded-lg border transition-all flex items-center justify-center hover:bg-muted/80"
                   style={{
                     borderColor: selectedIcon === iconName ? `hsl(${selectedColor})` : 'hsl(var(--border))',
-                    backgroundColor: selectedIcon === iconName ? `hsl(${selectedColor} / 0.1)` : undefined,
-                    color: selectedIcon === iconName ? `hsl(${selectedColor})` : 'hsl(var(--muted-foreground))',
+                    backgroundColor: selectedIcon === iconName ? `hsl(${selectedColor} / 0.12)` : undefined,
+                    color: selectedIcon === iconName ? `hsl(${selectedColor})` : 'hsl(var(--foreground) / 0.75)',
                   }}
                   onClick={() => setSelectedIcon(iconName)}
                 >
-                  {renderIcon(iconName, 14)}
+                  {renderIcon(iconName, 16)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Preview */}
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/40 border border-border/50">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: `hsl(${selectedColor} / 0.15)`, color: `hsl(${selectedColor})` }}
-            >
-              {renderIcon(selectedIcon, 14)}
-            </div>
-            <span className="text-sm font-medium">{name || t('categories.customCategoryNamePlaceholder')}</span>
-            <Badge variant="outline" className="text-[9px] ml-auto">Custom</Badge>
-          </div>
 
           {/* Keywords */}
           <div className="space-y-1.5">
