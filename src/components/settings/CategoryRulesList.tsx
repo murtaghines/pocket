@@ -56,7 +56,12 @@ const EXAMPLE_PATTERNS: Record<string, { type: string; pattern: string }> = {
 };
 
 function renderLucide(iconName: string, size = 18) {
-  const I = icons[iconName as keyof typeof icons];
+  if (!iconName) return null;
+  const pascal = iconName
+    .split('-')
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join('');
+  const I = icons[pascal as keyof typeof icons];
   if (!I) return null;
   return <I size={size} strokeWidth={2} />;
 }

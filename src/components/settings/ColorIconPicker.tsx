@@ -77,13 +77,13 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave, mode = 'bot
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('categories.color', 'Color')}
           </span>
-          <div className="grid grid-cols-12 gap-2">
+          <div className="grid grid-cols-12 gap-2.5">
             {CURATED_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 className={cn(
-                  'w-7 h-7 rounded-full border-2 transition-all flex items-center justify-center hover:scale-110'
+                  'w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center hover:scale-110'
                 )}
                 style={{
                   backgroundColor: `hsl(${c})`,
@@ -91,7 +91,7 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave, mode = 'bot
                 }}
                 onClick={() => setColor(c)}
               >
-                {color === c && <Check className="w-3.5 h-3.5 text-white drop-shadow-sm" />}
+                {color === c && <Check className="w-3 h-3 text-white drop-shadow-sm" />}
               </button>
             ))}
           </div>
