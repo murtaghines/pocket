@@ -2104,11 +2104,12 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[14%] text-right text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Amount
                 </TableHead>
-                <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[52px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Split
                 </TableHead>
-                <TableHead className="w-[44px]" />
-                <TableHead className="w-[44px]" />
+                <TableHead className="w-[52px]" />
+                <TableHead className="w-[52px]" />
+
               </TableRow>
 
             </TableHeader>
