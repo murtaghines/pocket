@@ -2082,11 +2082,11 @@ function InlineTransactionsEditor({
         <div className="overflow-auto max-h-[calc(100vh-220px)]">
           <Table className="w-full table-fixed [&_th]:border-r [&_th]:border-border/60 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/40 [&_td:last-child]:border-r-0">
             <TableHeader className="sticky top-0 z-10 bg-card">
-              <TableRow className="hover:bg-transparent border-b border-border">
-                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground/60 font-medium">
+              <TableRow className="hover:bg-transparent border-b border-border [&>th]:h-10">
+                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   #
                 </TableHead>
-                <TableHead className="w-[11%] whitespace-nowrap text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[10%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Date
                 </TableHead>
                 <TableHead className="w-[25%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
@@ -2107,13 +2107,10 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Split
                 </TableHead>
-                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Show
-                </TableHead>
-                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Undo
-                </TableHead>
+                <TableHead className="w-[44px]" />
+                <TableHead className="w-[44px]" />
               </TableRow>
+
             </TableHeader>
             <TableBody>
               {rowsToRender.map((tx, idx) => {
@@ -2148,7 +2145,7 @@ function InlineTransactionsEditor({
                   <TableRow
                     key={tx.id}
                     className={cn(
-                      "transition-colors",
+                      "transition-colors [&>td]:py-3",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                       isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
                       isPending && "bg-warning/10 border-l-2 border-l-warning",
@@ -2333,7 +2330,7 @@ function InlineTransactionsEditor({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 mx-auto text-muted-foreground/60 hover:text-foreground"
+                          className="h-7 w-7 mx-auto text-muted-foreground hover:text-foreground"
                           onClick={() => handleToggleHidden(tx)}
                           title={isHidden ? "Include in totals" : "Hide from totals"}
                         >
@@ -2423,7 +2420,15 @@ function InlineTransactionsEditor({
                             });
                           }}
                         />
-                      ) : null}
+                      ) : (
+                        <div
+                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/30 cursor-not-allowed"
+                          title="Nothing to undo"
+                          aria-disabled="true"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
