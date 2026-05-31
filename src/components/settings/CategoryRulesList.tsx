@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Pencil, ChevronRight, Palette, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Pencil, ChevronRight, Palette, Sparkles, Smile } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
