@@ -334,7 +334,20 @@ export function CategoryRulesList({
               onSetVisualOverride
                 ? () => (
                     <ColorIconPicker
-                      currentColor={override?.color || '210 30% 50%'}
+                      mode="color"
+                      currentColor={override?.color || '203 60% 51%'}
+                      currentIcon={override?.icon || defaultIcon}
+                      onSave={(c, i) => onSetVisualOverride(slug, c, i)}
+                    />
+                  )
+                : undefined
+            }
+            onEditIcon={
+              onSetVisualOverride
+                ? () => (
+                    <ColorIconPicker
+                      mode="icon"
+                      currentColor={override?.color || '203 60% 51%'}
                       currentIcon={override?.icon || defaultIcon}
                       onSave={(c, i) => onSetVisualOverride(slug, c, i)}
                     />
