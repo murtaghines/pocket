@@ -1,47 +1,74 @@
-## Objetivo
+# Rediseño del diálogo "Create new category"
 
-Renovar la navegación de la landing pública (`src/pages/Landing.tsx`) para que las secciones se superpongan al hacer scroll y haya parallax sutil en imágenes y textos, manteniendo intensidad media (3/5): moderna y divertida, sin marearse.
+Cambios solo en `src/components/settings/CreateCategoryDialog.tsx` (UI, sin tocar lógica de guardado).
 
-## Qué se cambia
+## 1. Paleta de colores alineada a la marca
 
-Sólo la landing pública. Nada del dashboard ni de la lógica de negocio.
+Reemplazar los 16 colores actuales por **24 colores** (2 filas completas de 12), ordenados por tono y construidos alrededor del azul pastel de Pocket (`#3391D0` ≈ `203 60% 51%`).
 
-### 1. Sticky sections que se pisan
-- Envolver cada sección (`HeroSection`, `HowItWorksSection`, `FeaturesSection`, `ContactSection`, `CTASection`) en un wrapper `sticky top-0` con `min-h-screen` y bordes redondeados arriba (`rounded-t-[2.5rem]`).
-- Cada sección sucesiva sube por encima de la anterior con sombra superior (`shadow-2xl`), creando el efecto de "tarjetas apiladas" tipo Apple/Linear.
-- El Hero queda al fondo; las siguientes lo cubren progresivamente. La última (`CTASection` + footer) cierra el stack.
-- Fondos sólidos por sección para que el overlap sea visible:
-  - Hero: azul `#1b76ff` (ya existe)
-  - HowItWorks: blanco crema
-  - Features: gris claro / azul muy claro
-  - Contact: blanco
-  - CTA: azul oscuro
+Orden: del azul de marca → análogos fríos → verdes → cálidos → cálidos profundos → neutros. Cada color con suficiente diferencia de tono/saturación para que no haya repetidos visualmente.
 
-### 2. Parallax suave (intensidad 3/5)
-Usando `framer-motion` (ya disponible) con `useScroll` + `useTransform`:
-- Hero: el headline grande "TRACK YOUR MONEY" se mueve a velocidad lenta (y: 0 → -80px) y la card flotante a velocidad media mientras se sale.
-- FeaturesSection: las cards entran con `whileInView` (fade + translateY de 40px → 0, stagger 80ms).
-- HowItWorks: el número de cada paso hace un parallax sutil (y: 0 → -30px) respecto al texto.
-- Hero ghost headline "LIKE NEVER BEFORE" con un drift horizontal lento (-20px → +20px) durante scroll.
+**Fila 1 — Familia fría/marca (azules, cyans, teals, verdes):**
+```
+203 60% 51%  ← Pocket blue (default)
+210 70% 60%
+220 65% 55%
+230 55% 60%
+250 55% 62%
+270 50% 60%
+190 65% 48%
+180 55% 45%
+170 55% 42%
+155 50% 45%
+140 45% 48%
+120 40% 50%
+```
 
-### 3. Header
-- `LandingHeader` ya es sticky; ajustar para que cambie de fondo (`bg-transparent` → `bg-white/80 backdrop-blur`) tras pasar el hero usando `useScroll`.
+**Fila 2 — Familia cálida/tierra/neutros (amarillos, naranjas, rojos, rosas, marrones, grises):**
+```
+50 85% 55%
+40 90% 55%
+30 85% 55%
+20 80% 55%
+10 75% 55%
+355 70% 58%
+335 60% 58%
+315 50% 55%
+25 40% 45%
+35 35% 40%
+210 15% 50%
+215 20% 35%
+```
 
-### 4. Detalles de implementación
-- Crear `src/components/landing/StickyStack.tsx`: wrapper genérico que recibe `children` y aplica `sticky top-0 min-h-screen rounded-t-[2.5rem] overflow-hidden shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.15)]`.
-- Modificar `src/pages/Landing.tsx` para envolver cada sección con `StickyStack` (excepto Hero, que es la base).
-- Añadir hooks de parallax inline en `HeroSection.tsx`, `HowItWorksSection.tsx`, `FeaturesSection.tsx`.
-- Respetar `prefers-reduced-motion`: si está activo, desactivar los `useTransform` y dejar scroll normal.
+Resultado: 2 filas perfectas de 12, gradiente continuo, sin duplicados perceptuales, ancla en el azul de marca como primer chip y default.
 
-### Archivos tocados
-- `src/pages/Landing.tsx` (envolver con stack)
-- `src/components/landing/StickyStack.tsx` (nuevo)
-- `src/components/landing/HeroSection.tsx` (parallax headline + card)
-- `src/components/landing/HowItWorksSection.tsx` (parallax números)
-- `src/components/landing/FeaturesSection.tsx` (reveal on view)
-- `src/components/landing/LandingHeader.tsx` (fondo dinámico al scrollear)
+## 2. Íconos invisibles
 
-## Qué NO se toca
-- Dashboard `/index`
-- Auth, onboarding, edge functions, lógica de transacciones
-- Colores/tokens del design system (sólo se usan los existentes)
+Causa: cuando el color elegido es el azul de marca, el ícono seleccionado se pinta del mismo azul sobre fondo `color/0.1` (muy claro) — pero los **no seleccionados** se muestran con `text-muted-foreground` sobre fondo blanco, lo cual debería ser visible. Revisando el screenshot, los slots están vacíos: probablemente el render de Lucide falla por el casing del nombre o el tamaño 14 con stroke fino.
+
+Fix:
+- Subir el tamaño del ícono a `16` y asegurar `strokeWidth={2}`.
+- Forzar color de ícono no seleccionado a `text-foreground/70` (no `muted-foreground` que es casi invisible sobre blanco en el tema actual).
+- Para el seleccionado: si el color del chip es muy claro, usar el color a 100% sobre fondo `color/0.15`; ya está así, mantener.
+- Verificar que `icons[iconName]` resuelve (kebab-case correcto en `CURATED_ICONS`). Confirmar que ninguno cambió de nombre en la versión de Lucide instalada.
+
+## 3. Preview row confuso
+
+La fila inferior con "e.g. Hobbies, Side Projects..." + badge "Custom" es un **preview** de cómo se verá la categoría con el ícono+color+nombre elegidos. El usuario no lo entiende.
+
+Opciones (elegir la más limpia):
+- **Eliminar** el bloque preview completo. El usuario ya ve el ícono seleccionado destacado en la grilla con su color, no necesita una segunda representación.
+
+Recomendación: **eliminar**. Simplifica el diálogo y reduce altura.
+
+## 4. Detalles visuales menores
+
+- Color picker: chips de `w-7 h-7` → `w-8 h-8`, gap `2`, grid de 12 columnas explícito (`grid grid-cols-12 gap-2`) para garantizar 2 filas exactas en cualquier ancho.
+- Icon picker: mantener grid pero asegurar que los íconos se rendericen con buen contraste (ver punto 2).
+- Quitar la última oración del helper text ("Transactions matching your keywords…") si quedó pegada; dejar solo la frase corta de "appears in your dashboard".
+
+## Archivos afectados
+
+- `src/components/settings/CreateCategoryDialog.tsx` — actualizar `CURATED_COLORS` (24 valores), tamaño/color de íconos, eliminar bloque Preview, ajustar grid del color picker.
+
+Sin cambios en lógica, hooks, traducciones ni backend.

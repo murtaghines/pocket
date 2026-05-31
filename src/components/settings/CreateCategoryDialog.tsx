@@ -21,22 +21,32 @@ function generateSlug(name: string): string {
 }
 
 const CURATED_COLORS = [
-  '220 70% 55%',   // Blue
-  '250 60% 58%',   // Purple
-  '280 55% 55%',   // Violet
-  '310 50% 55%',   // Magenta
-  '340 65% 55%',   // Pink
-  '25 80% 55%',    // Orange
-  '45 85% 50%',    // Amber
-  '175 60% 42%',   // Teal
-  '195 70% 48%',   // Cyan
-  '160 50% 45%',   // Sage
-  '35 60% 50%',    // Brown
-  '270 40% 50%',   // Lavender
-  '200 50% 40%',   // Steel
-  '15 70% 50%',    // Terracotta
-  '330 45% 50%',   // Rose
-  '210 30% 50%',   // Slate
+  // Row 1 — Cool / brand family
+  '203 60% 51%', // Pocket blue (default)
+  '210 70% 60%',
+  '220 65% 55%',
+  '230 55% 60%',
+  '250 55% 62%',
+  '270 50% 60%',
+  '190 65% 48%',
+  '180 55% 45%',
+  '170 55% 42%',
+  '155 50% 45%',
+  '140 45% 48%',
+  '120 40% 50%',
+  // Row 2 — Warm / earth / neutrals
+  '50 85% 55%',
+  '40 90% 55%',
+  '30 85% 55%',
+  '20 80% 55%',
+  '10 75% 55%',
+  '355 70% 58%',
+  '335 60% 58%',
+  '315 50% 55%',
+  '25 40% 45%',
+  '35 35% 40%',
+  '210 15% 50%',
+  '215 20% 35%',
 ];
 
 const CURATED_ICONS = [
@@ -136,7 +146,7 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
           {/* Color Picker */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">{t('categories.color', 'Color')}</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-12 gap-2">
               {CURATED_COLORS.map((color) => (
                 <button
                   key={color}
@@ -162,31 +172,20 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
                 <button
                   key={iconName}
                   type="button"
-                  className="w-8 h-8 rounded-lg border transition-all flex items-center justify-center hover:bg-muted/80"
+                  className="w-9 h-9 rounded-lg border transition-all flex items-center justify-center hover:bg-muted/80"
                   style={{
                     borderColor: selectedIcon === iconName ? `hsl(${selectedColor})` : 'hsl(var(--border))',
-                    backgroundColor: selectedIcon === iconName ? `hsl(${selectedColor} / 0.1)` : undefined,
-                    color: selectedIcon === iconName ? `hsl(${selectedColor})` : 'hsl(var(--muted-foreground))',
+                    backgroundColor: selectedIcon === iconName ? `hsl(${selectedColor} / 0.12)` : undefined,
+                    color: selectedIcon === iconName ? `hsl(${selectedColor})` : 'hsl(var(--foreground) / 0.75)',
                   }}
                   onClick={() => setSelectedIcon(iconName)}
                 >
-                  {renderIcon(iconName, 14)}
+                  {renderIcon(iconName, 16)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Preview */}
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/40 border border-border/50">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: `hsl(${selectedColor} / 0.15)`, color: `hsl(${selectedColor})` }}
-            >
-              {renderIcon(selectedIcon, 14)}
-            </div>
-            <span className="text-sm font-medium">{name || t('categories.customCategoryNamePlaceholder')}</span>
-            <Badge variant="outline" className="text-[9px] ml-auto">Custom</Badge>
-          </div>
 
           {/* Keywords */}
           <div className="space-y-1.5">
