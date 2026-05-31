@@ -250,9 +250,8 @@ export function useImports(domain?: AppDomain) {
         .eq('id', importId);
       if (error) throw error;
     },
-    onSuccess: (_d, vars) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['imports'] });
-      toast.success(vars.locked ? 'File locked' : 'File unlocked');
     },
     onError: () => {
       toast.error('Could not update file lock');

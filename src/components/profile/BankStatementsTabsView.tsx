@@ -2297,7 +2297,7 @@ function InlineTransactionsEditor({
                       {formatCurrency(Math.abs(displayAmount))}
                     </TableCell>
                     <TableCell className="text-center">
-                      {!isLocked && (
+                      {!isLocked ? (
                         <AmountEditButton
                           originalAmount={displayAmount}
                           formatCurrency={formatCurrency}
@@ -2305,6 +2305,14 @@ function InlineTransactionsEditor({
                           onApplySplit={(n) => handleSplit(tx, n)}
                           disabled={isHidden}
                         />
+                      ) : (
+                        <div
+                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/40 cursor-not-allowed"
+                          title="Unlock the month to split"
+                          aria-disabled="true"
+                        >
+                          <SplitIcon className="w-3.5 h-3.5" />
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="px-0 text-center">
@@ -2331,7 +2339,15 @@ function InlineTransactionsEditor({
                         >
                           {isHidden ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                         </Button>
-                      ) : null}
+                      ) : (
+                        <div
+                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/40 cursor-not-allowed"
+                          title="Unlock the month to edit visibility"
+                          aria-disabled="true"
+                        >
+                          {isHidden ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="px-0 text-center">
                       {!isLocked && isPending ? (
