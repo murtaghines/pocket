@@ -53,7 +53,7 @@ const CURATED_ICONS = [
   'coffee', 'gift', 'baby', 'music', 'book', 'wrench',
   'scissors', 'palette', 'flame', 'zap', 'sparkles', 'crown',
   'star', 'tag', 'anchor', 'compass', 'umbrella', 'wine',
-  'cake', 'dog', 'cat', 'truck', 'shield', 'key',
+  'cake', 'cat', 'paw-print', 'truck', 'shield', 'key',
 ] as const;
 
 interface Props {
