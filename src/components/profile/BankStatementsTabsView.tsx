@@ -2145,7 +2145,7 @@ function InlineTransactionsEditor({
                   <TableRow
                     key={tx.id}
                     className={cn(
-                      "transition-colors",
+                      "transition-colors [&>td]:py-3",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                       isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
                       isPending && "bg-warning/10 border-l-2 border-l-warning",
@@ -2330,7 +2330,7 @@ function InlineTransactionsEditor({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 mx-auto text-muted-foreground/60 hover:text-foreground"
+                          className="h-7 w-7 mx-auto text-muted-foreground hover:text-foreground"
                           onClick={() => handleToggleHidden(tx)}
                           title={isHidden ? "Include in totals" : "Hide from totals"}
                         >
@@ -2420,7 +2420,15 @@ function InlineTransactionsEditor({
                             });
                           }}
                         />
-                      ) : null}
+                      ) : (
+                        <div
+                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/30 cursor-not-allowed"
+                          title="Nothing to undo"
+                          aria-disabled="true"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
