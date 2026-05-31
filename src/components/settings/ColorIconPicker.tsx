@@ -77,14 +77,12 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave, mode = 'bot
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('categories.color', 'Color')}
           </span>
-          <div className="grid grid-cols-12 gap-2.5">
+          <div className="grid grid-cols-12 gap-2">
             {CURATED_COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
-                className={cn(
-                  'w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center hover:scale-110'
-                )}
+                className="aspect-square w-full rounded-full border-2 transition-all flex items-center justify-center hover:scale-110"
                 style={{
                   backgroundColor: `hsl(${c})`,
                   borderColor: color === c ? 'hsl(var(--foreground))' : 'transparent',
@@ -103,16 +101,14 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave, mode = 'bot
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('categories.icon', 'Icon')}
           </span>
-          <div className="grid grid-cols-8 gap-2 max-h-[240px] overflow-y-auto pr-1 scrollbar-thin">
+          <div className="grid grid-cols-8 gap-2 max-h-[260px] overflow-y-auto pr-1 scrollbar-thin">
             {CURATED_ICONS.map((ic) => {
               const isSelected = icon === ic;
               return (
                 <button
                   key={ic}
                   type="button"
-                  className={cn(
-                    'w-9 h-9 rounded-lg border transition-all flex items-center justify-center hover:bg-muted/60'
-                  )}
+                  className="aspect-square w-full rounded-lg border transition-all flex items-center justify-center hover:bg-muted/60"
                   style={{
                     borderColor: isSelected ? `hsl(${color})` : 'hsl(var(--border))',
                     backgroundColor: isSelected ? `hsl(${color} / 0.12)` : undefined,
@@ -120,7 +116,7 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave, mode = 'bot
                   }}
                   onClick={() => setIcon(ic)}
                 >
-                  {renderIcon(ic, 16)}
+                  {renderIcon(ic, 18)}
                 </button>
               );
             })}
