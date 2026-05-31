@@ -142,7 +142,7 @@ export function CategoriesEditor() {
             Categories &amp; rules
           </h1>
           <p className="text-sm text-muted-foreground mt-1 truncate">
-            Manage standard and custom categories, plus the rules that classify your transactions.
+            Manage standard and custom categories — click any one to view, add or edit the rules that classify your transactions.
           </p>
         </div>
 
@@ -203,9 +203,7 @@ export function CategoriesEditor() {
 
       {/* ============= Workspace ============= */}
       <div className="flex-1 px-6 md:px-10 py-6 md:py-8 space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Click any category to view, add or edit its rules.
-        </p>
+
 
         {isLoading ? (
           <div className="rounded-xl border border-border bg-card py-12 text-center text-sm text-muted-foreground">
