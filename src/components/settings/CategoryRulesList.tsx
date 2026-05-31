@@ -126,14 +126,31 @@ function GroupShell({
         </span>
 
         <div className="ml-auto flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+          {onEditIcon && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
+                  aria-label="Change icon"
+                  title="Change icon"
+                >
+                  <Smile className="w-3.5 h-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[320px] p-3">
+                {onEditIcon()}
+              </PopoverContent>
+            </Popover>
+          )}
           {onEditCategory && (
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
                   className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
-                  aria-label="Customize color & icon"
-                  title="Customize color & icon"
+                  aria-label="Change color"
+                  title="Change color"
                 >
                   <Palette className="w-3.5 h-3.5" />
                 </button>
