@@ -157,7 +157,7 @@ function GroupShell({
       {/* Rules table */}
       {expanded && (
         <div className="bg-card">
-          {/* Column headers */}
+          {/* Column headers — Match type + Pattern only (row actions appear on hover) */}
           <div className="grid grid-cols-[140px_1fr_72px] items-center gap-3 px-3 py-1.5 border-b border-border/60 bg-muted/20">
             <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               Match type
@@ -165,9 +165,7 @@ function GroupShell({
             <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               Pattern
             </span>
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground text-right pr-1">
-              Actions
-            </span>
+            <span />
           </div>
           {children}
         </div>
