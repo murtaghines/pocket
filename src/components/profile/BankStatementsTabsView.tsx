@@ -2104,11 +2104,12 @@ function InlineTransactionsEditor({
                 <TableHead className="w-[14%] text-right text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Amount
                 </TableHead>
-                <TableHead className="w-[6%] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[52px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Split
                 </TableHead>
-                <TableHead className="w-[44px]" />
-                <TableHead className="w-[44px]" />
+                <TableHead className="w-[52px]" />
+                <TableHead className="w-[52px]" />
+
               </TableRow>
 
             </TableHeader>
@@ -2294,7 +2295,20 @@ function InlineTransactionsEditor({
                       {formatCurrency(Math.abs(displayAmount))}
                     </TableCell>
                     <TableCell className="text-center">
-                      {!isLocked ? (
+                      {!isLocked && isPending ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
+                          onClick={() => commitRow(tx, false)}
+                          disabled={isSaving}
+                          title="Save changes"
+                          aria-label="Save changes"
+                        >
+                          <Check className="w-[16px] h-[16px]" />
+                        </Button>
+                      ) : !isLocked ? (
                         <AmountEditButton
                           originalAmount={displayAmount}
                           formatCurrency={formatCurrency}
@@ -2314,18 +2328,25 @@ function InlineTransactionsEditor({
                     </TableCell>
                     <TableCell className="px-0 text-center">
                       {!isLocked && isPending ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
-                          onClick={() => commitRow(tx, false)}
-                          disabled={isSaving}
-                          title="Save changes"
-                          aria-label="Save changes"
-                        >
-                          <Check className="w-[16px] h-[16px]" />
-                        </Button>
+                        (() => {
+                          const categoryChanged =
+                            !!pending?.category && pending.category !== tx.category;
+                          if (!categoryChanged) return null;
+                          return (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 mx-auto rounded-full bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
+                              onClick={() => commitRow(tx, true)}
+                              disabled={isSaving}
+                              title="Save & create rule for this description"
+                              aria-label="Save and create categorization rule"
+                            >
+                              <Sparkles className="w-[16px] h-[16px]" />
+                            </Button>
+                          );
+                        })()
                       ) : !isLocked ? (
                         <Button
                           variant="ghost"
@@ -2348,42 +2369,17 @@ function InlineTransactionsEditor({
                     </TableCell>
                     <TableCell className="px-0 text-center">
                       {!isLocked && isPending ? (
-                        (() => {
-                          const categoryChanged =
-                            !!pending?.category && pending.category !== tx.category;
-                          // If the user changed the category, this slot offers
-                          // "save + create rule". Otherwise it offers "discard
-                          // pending edits" so the user can back out.
-                          if (categoryChanged) {
-                            return (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 mx-auto rounded-full bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
-                                onClick={() => commitRow(tx, true)}
-                                disabled={isSaving}
-                                title="Save & create rule for this description"
-                                aria-label="Save and create categorization rule"
-                              >
-                                <Sparkles className="w-[16px] h-[16px]" />
-                              </Button>
-                            );
-                          }
-                          return (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 mx-auto rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => clearPendingFor(tx.id)}
-                              title="Discard pending changes"
-                              aria-label="Discard pending changes"
-                            >
-                              <X className="w-[16px] h-[16px]" />
-                            </Button>
-                          );
-                        })()
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 mx-auto rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => clearPendingFor(tx.id)}
+                          title="Discard pending changes"
+                          aria-label="Discard pending changes"
+                        >
+                          <X className="w-[16px] h-[16px]" />
+                        </Button>
                       ) : !isLocked && isEdited && originalSnapshot ? (
                         <RevertToOriginalButton
                           original={originalSnapshot.values}
@@ -2402,7 +2398,6 @@ function InlineTransactionsEditor({
                               ...originalSnapshot.values,
                               __action: "revert",
                             };
-                            // If we're restoring category, also clear the manual override flags
                             if ("category" in originalSnapshot.values) {
                               payload.category_source = "DEFAULT";
                               payload.user_corrected = false;
@@ -2430,6 +2425,7 @@ function InlineTransactionsEditor({
                         </div>
                       )}
                     </TableCell>
+
                   </TableRow>
                 );
               })}
