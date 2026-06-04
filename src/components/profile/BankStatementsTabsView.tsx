@@ -1426,7 +1426,7 @@ function UploadedFilesHistoryList({
               })()}
 
               <div className="min-w-0 flex-1">
-                {/* Row 1: name + status */}
+                {/* Row 1: name + status (+ account selector on the right) */}
                 <div className="flex items-center gap-2 min-w-0">
                   <p
                     className="text-[13px] font-medium text-foreground truncate"
@@ -1440,6 +1440,38 @@ function UploadedFilesHistoryList({
                       (mismatchByImport[imp.id] || 0) > 0) && (
                       <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
                     )}
+                  <div className="ml-auto shrink-0 pl-2">
+                    {cashAccounts.length > 0 ? (
+                      <Select
+                        value={imp.account_id || ""}
+                        onValueChange={(v) => changeAcct(imp.id, v)}
+                        disabled={!!imp.locked}
+                      >
+                        <SelectTrigger
+                          className={cn(
+                            "h-7 w-auto min-w-[120px] max-w-[180px] border border-input bg-background px-2.5 text-[12px] font-medium text-foreground gap-1.5 hover:bg-accent hover:border-primary/40 transition-colors",
+                            imp.locked && "opacity-60 cursor-not-allowed",
+                          )}
+                          title={imp.locked ? "Unlock the file to change account" : "Click to change account"}
+                        >
+                          <SelectValue placeholder="Pick account">
+                            {acctName(imp.account_id)}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cashAccounts.map((a) => (
+                            <SelectItem key={a.id} value={a.id} className="text-sm">
+                              {a.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="truncate text-[12px] font-medium text-foreground">
+                        {acctName(imp.account_id)}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Row 2: meta — single line, no wrap */}
@@ -1469,41 +1501,8 @@ function UploadedFilesHistoryList({
                       </>
                     )}
                 </div>
-
-                {/* Row 3: account assignment */}
-                <div className="mt-2">
-                  {cashAccounts.length > 0 ? (
-                    <Select
-                      value={imp.account_id || ""}
-                      onValueChange={(v) => changeAcct(imp.id, v)}
-                      disabled={!!imp.locked}
-                    >
-                      <SelectTrigger
-                        className={cn(
-                          "h-7 w-auto min-w-[120px] max-w-full border border-input bg-background px-2.5 text-[12px] font-medium text-foreground gap-1.5 hover:bg-accent hover:border-primary/40 transition-colors",
-                          imp.locked && "opacity-60 cursor-not-allowed",
-                        )}
-                        title={imp.locked ? "Unlock the file to change account" : "Click to change account"}
-                      >
-                        <SelectValue placeholder="Pick account">
-                          {acctName(imp.account_id)}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cashAccounts.map((a) => (
-                          <SelectItem key={a.id} value={a.id} className="text-sm">
-                            {a.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="truncate text-[12px] font-medium text-foreground">
-                      {acctName(imp.account_id)}
-                    </span>
-                  )}
-                </div>
               </div>
+
 
               {/* Actions */}
               <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
