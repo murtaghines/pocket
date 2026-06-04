@@ -1440,7 +1440,7 @@ function UploadedFilesHistoryList({
                       (mismatchByImport[imp.id] || 0) > 0) && (
                       <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
                     )}
-                  <div className="ml-auto shrink-0 pl-2">
+                  <div className="ml-auto shrink-0 pl-2 mr-10">
                     {cashAccounts.length > 0 ? (
                       <Select
                         value={imp.account_id || ""}
@@ -1475,7 +1475,8 @@ function UploadedFilesHistoryList({
                 </div>
 
                 {/* Row 2: meta — single line, no wrap */}
-                <div className="mt-1 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
+                <div className="mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
+
                   <span className="font-medium tabular-nums">
                     {fileTypeLabel(imp)}
                   </span>
