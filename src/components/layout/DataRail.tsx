@@ -128,7 +128,7 @@ export function DataRail() {
         </div>
 
         {/* Navigation — identical icon column and vertical rhythm in both states */}
-        <nav className="flex-1 overflow-y-auto mt-10 px-3">
+        <nav className="flex-1 mt-10 px-3 overflow-visible">
           <SectionLabel expanded={expanded}>Main</SectionLabel>
           <NavigationGroups groups={groups} expanded={expanded} isActive={isActive} />
         </nav>
