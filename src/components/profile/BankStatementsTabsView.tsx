@@ -1440,6 +1440,31 @@ function UploadedFilesHistoryList({
                       (mismatchByImport[imp.id] || 0) > 0) && (
                       <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
                     )}
+                </div>
+
+                {/* Row 2: meta + account selector on the right */}
+                <div className="mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
+
+                  <span className="font-medium tabular-nums">
+                    {fileTypeLabel(imp)}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span title="Upload date and time" className="tabular-nums">
+                    {formatUploadedAt(imp.uploaded_at)}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span className="capitalize" title="Months covered by this file">
+                    {monthsLabel(imp)}
+                  </span>
+                  {imp.transactions_count != null &&
+                    imp.status === "NORMALIZED" && (
+                      <>
+                        <span aria-hidden>·</span>
+                        <span className="tabular-nums shrink-0">
+                          {imp.transactions_count} tx
+                        </span>
+                      </>
+                    )}
                   <div className="ml-auto shrink-0 pl-2">
                     {cashAccounts.length > 0 ? (
                       <Select
@@ -1474,34 +1499,6 @@ function UploadedFilesHistoryList({
                   </div>
                 </div>
 
-                {/* Row 2: meta — single line, no wrap */}
-                <div className="mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
-
-                  <span className="font-medium tabular-nums">
-                    {fileTypeLabel(imp)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span className="tabular-nums">
-                    {fileSizeLabel(imp.file_size)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span title="Upload date and time" className="tabular-nums">
-                    {formatUploadedAt(imp.uploaded_at)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span className="capitalize" title="Months covered by this file">
-                    {monthsLabel(imp)}
-                  </span>
-                  {imp.transactions_count != null &&
-                    imp.status === "NORMALIZED" && (
-                      <>
-                        <span aria-hidden>·</span>
-                        <span className="tabular-nums shrink-0">
-                          {imp.transactions_count} tx
-                        </span>
-                      </>
-                    )}
-                </div>
               </div>
 
 
