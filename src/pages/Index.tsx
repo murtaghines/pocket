@@ -195,7 +195,7 @@ export default function Index() {
         {!isLoading && !prefsLoading && (
           <>
             {/* Section header */}
-            <div className="mb-6">
+            <div className="mb-6 md:-mt-14 md:relative md:z-40">
               {availableMonths.length > 0 ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
