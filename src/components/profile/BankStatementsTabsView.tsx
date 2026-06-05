@@ -1426,7 +1426,7 @@ function UploadedFilesHistoryList({
               })()}
 
               <div className="min-w-0 flex-1">
-                {/* Row 1: name + status (+ account selector on the right) */}
+                {/* Row 1: name + status + account selector on the right */}
                 <div className="flex items-center gap-2 min-w-0">
                   <p
                     className="text-[13px] font-medium text-foreground truncate"
@@ -1439,31 +1439,6 @@ function UploadedFilesHistoryList({
                     (imp.status !== "NORMALIZED" ||
                       (mismatchByImport[imp.id] || 0) > 0) && (
                       <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
-                    )}
-                </div>
-
-                {/* Row 2: meta + account selector on the right */}
-                <div className="mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
-
-                  <span className="font-medium tabular-nums">
-                    {fileTypeLabel(imp)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span title="Upload date and time" className="tabular-nums">
-                    {formatUploadedAt(imp.uploaded_at)}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span className="capitalize" title="Months covered by this file">
-                    {monthsLabel(imp)}
-                  </span>
-                  {imp.transactions_count != null &&
-                    imp.status === "NORMALIZED" && (
-                      <>
-                        <span aria-hidden>·</span>
-                        <span className="tabular-nums shrink-0">
-                          {imp.transactions_count} tx
-                        </span>
-                      </>
                     )}
                   <div className="ml-auto shrink-0 pl-2">
                     {cashAccounts.length > 0 ? (
@@ -1499,44 +1474,67 @@ function UploadedFilesHistoryList({
                   </div>
                 </div>
 
+                {/* Row 2: meta + delete on the right */}
+                <div className="mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
+
+                  <span className="font-medium tabular-nums">
+                    {fileTypeLabel(imp)}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span title="Upload date and time" className="tabular-nums">
+                    {formatUploadedAt(imp.uploaded_at)}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span className="capitalize" title="Months covered by this file">
+                    {monthsLabel(imp)}
+                  </span>
+                  {imp.transactions_count != null &&
+                    imp.status === "NORMALIZED" && (
+                      <>
+                        <span aria-hidden>·</span>
+                        <span className="tabular-nums shrink-0">
+                          {imp.transactions_count} tx
+                        </span>
+                      </>
+                    )}
+                  <div className="ml-auto shrink-0 pl-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          disabled={isDeleting || imp.locked}
+                          title="Delete file"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete file?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove{" "}
+                            <strong>{imp.file_name}</strong> and all its
+                            transactions. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteImport(imp.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+
               </div>
 
-
-              {/* Actions */}
-              <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      disabled={isDeleting || imp.locked}
-                      title="Delete file"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete file?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently remove{" "}
-                        <strong>{imp.file_name}</strong> and all its
-                        transactions. This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => deleteImport(imp.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
             </div>
           ))}
         </div>
