@@ -249,26 +249,48 @@ function NavigationGroups({
               )}
             </div>
 
-            {expanded && group.children && (
-              <div className="ml-[36px] border-l border-primary-foreground/15 pl-[44px]">
-                {group.children.map((child) => {
-                  const childActive = isActive(child.to);
-                  return (
-                    <Link
-                      key={child.to}
-                      to={child.to}
-                      className={cn(
-                        "flex h-8 items-center rounded-md px-0 text-sm transition-colors",
-                        childActive
-                          ? "bg-primary-foreground/10 text-primary-foreground font-medium"
-                          : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
-                      )}
-                    >
-                      <span className="truncate">{child.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
+            {group.children && (
+              expanded ? (
+                <div className="ml-[36px] border-l border-primary-foreground/15 pl-[44px]">
+                  {group.children.map((child) => {
+                    const childActive = isActive(child.to);
+                    return (
+                      <Link
+                        key={child.to}
+                        to={child.to}
+                        className={cn(
+                          "flex h-8 items-center rounded-md px-0 text-sm transition-colors",
+                          childActive
+                            ? "bg-primary-foreground/10 text-primary-foreground font-medium"
+                            : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
+                        )}
+                      >
+                        <span className="truncate">{child.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-0.5 flex flex-col items-center gap-0.5 px-1">
+                  {group.children.map((child) => {
+                    const childActive = isActive(child.to);
+                    return (
+                      <Link
+                        key={child.to}
+                        to={child.to}
+                        className={cn(
+                          "flex h-8 w-full items-center justify-center rounded-md px-1 text-[11px] font-medium leading-none transition-colors",
+                          childActive
+                            ? "bg-primary-foreground/15 text-primary-foreground"
+                            : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
+                        )}
+                      >
+                        <span className="truncate">{child.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )
             )}
           </div>
         );
