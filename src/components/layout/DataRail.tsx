@@ -128,7 +128,8 @@ export function DataRail() {
         </div>
 
         {/* Navigation — identical icon column and vertical rhythm in both states */}
-        <nav className="flex-1 overflow-y-auto mt-6 px-3">
+        <nav className="flex-1 overflow-y-auto mt-10 px-3">
+          <SectionLabel expanded={expanded}>Main</SectionLabel>
           <NavigationGroups groups={groups} expanded={expanded} isActive={isActive} />
         </nav>
 
@@ -276,6 +277,19 @@ function NavigationGroups({
   );
 }
 
+function SectionLabel({ expanded, children }: { expanded: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary-foreground/50",
+        expanded ? "px-2" : "text-center",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 function WorkspaceLinks({
   items,
   expanded,
@@ -286,7 +300,9 @@ function WorkspaceLinks({
   isWorkspaceActive: (item: NavChild) => boolean;
 }) {
   return (
-    <div className="mt-4 px-3 pt-4 border-t border-primary-foreground/15">
+    <div className="mt-6 px-3 pt-4 border-t border-primary-foreground/15">
+      <SectionLabel expanded={expanded}>Data</SectionLabel>
+
       <div className="space-y-2">
         {items.map((item) => {
           const Icon = item.icon!;
