@@ -310,7 +310,7 @@ export default function Index() {
             </div>
 
             {/* Transactions */}
-            <div className="bg-card rounded-2xl p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
+            <div className="bg-card rounded-lg p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
               <div className="max-h-[500px] overflow-y-auto">
                 <TransactionTable transactions={monthTransactions} />
               </div>
