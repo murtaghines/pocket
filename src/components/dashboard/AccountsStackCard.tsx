@@ -176,7 +176,7 @@ export function AccountsStackCard({
                 type="button"
                 key={acc.id}
                 onClick={() => promoteAccount(acc.id)}
-                className="relative block w-full text-left rounded-2xl p-5 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40"
+                className="relative block w-full text-left rounded-lg p-5 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT, backgroundColor: v.bg }}
               >
                 {isFront && (
@@ -252,7 +252,7 @@ export function AccountsStackCard({
               <button
                 type="button"
                 onClick={() => setAllOpen(true)}
-                className="relative block w-full text-left rounded-2xl p-5 bg-[#e5e5e0] shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                className="relative block w-full text-left rounded-lg p-5 bg-[#e5e5e0] shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
               >
                 <div className="absolute bottom-0 left-0 right-0 px-5 pb-2 flex items-center justify-between">
@@ -273,7 +273,7 @@ export function AccountsStackCard({
             return (
               <div
                 key={`placeholder-${i}`}
-                className="relative block w-full rounded-2xl p-5 shadow-md overflow-hidden"
+                className="relative block w-full rounded-lg p-5 shadow-md overflow-hidden"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT, backgroundColor: "#d2d2cb" }}
                 aria-hidden
               >
@@ -290,7 +290,7 @@ export function AccountsStackCard({
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="relative block w-full rounded-2xl p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
+                className="relative block w-full rounded-lg p-5 bg-white border-2 border-dashed border-[#1b76ff]/40 shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#1b76ff]/40 group"
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
               >
                 {/* Always show only the "+" aligned to the bottom strip,
