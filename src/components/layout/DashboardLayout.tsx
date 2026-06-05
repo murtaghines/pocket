@@ -138,7 +138,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </nav>
 
       {/* Main content */}
-      <main className="w-full px-4 md:px-8 pt-6 md:pt-2 pb-20 md:pb-8 relative z-10">
+      <main className="w-full px-4 md:px-6 pt-6 md:pt-2 pb-20 md:pb-8 relative z-10">
         {children}
       </main>
     </div>

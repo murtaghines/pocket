@@ -8,16 +8,16 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card border border-border rounded-2xl shadow-[var(--shadow-card)]",
-        glass: "bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-[var(--shadow-card)]",
-        gradient: "bg-gradient-to-br from-card to-accent/50 border border-border rounded-2xl shadow-[var(--shadow-card)]",
-        stat: "bg-card border border-border rounded-2xl shadow-[var(--shadow-card)]",
-        income: "bg-success/5 border border-border rounded-2xl shadow-[var(--shadow-card)]",
-        expense: "bg-destructive/5 border border-border rounded-2xl shadow-[var(--shadow-card)]",
-        neutral: "bg-card border border-border rounded-2xl shadow-[var(--shadow-card)]",
-        settings: "bg-primary/5 border border-border rounded-2xl shadow-[var(--shadow-card)]",
-        modern: "bg-card border border-border rounded-[1.5rem] shadow-[var(--shadow-bento)]",
-        bento: "bg-card border border-border rounded-[1.5rem] shadow-[var(--shadow-bento)]",
+        default: "bg-card border border-border rounded-lg shadow-[var(--shadow-card)]",
+        glass: "bg-card/80 backdrop-blur-xl border border-border rounded-lg shadow-[var(--shadow-card)]",
+        gradient: "bg-gradient-to-br from-card to-accent/50 border border-border rounded-lg shadow-[var(--shadow-card)]",
+        stat: "bg-card border border-border rounded-lg shadow-[var(--shadow-card)]",
+        income: "bg-success/5 border border-border rounded-lg shadow-[var(--shadow-card)]",
+        expense: "bg-destructive/5 border border-border rounded-lg shadow-[var(--shadow-card)]",
+        neutral: "bg-card border border-border rounded-lg shadow-[var(--shadow-card)]",
+        settings: "bg-primary/5 border border-border rounded-lg shadow-[var(--shadow-card)]",
+        modern: "bg-card border border-border rounded-lg shadow-[var(--shadow-bento)]",
+        bento: "bg-card border border-border rounded-lg shadow-[var(--shadow-bento)]",
       },
     },
     defaultVariants: {
