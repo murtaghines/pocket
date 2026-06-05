@@ -19,6 +19,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTransactions } from "@/hooks/useTransactions";
 import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
+import { HeaderMonthSelector } from "./HeaderMonthSelector";
+import { MonthSelectionProvider } from "@/hooks/useMonthSelection";
 import {
   DropdownMenu,
   DropdownMenuContent,
