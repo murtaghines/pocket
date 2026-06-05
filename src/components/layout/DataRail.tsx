@@ -57,11 +57,13 @@ export function DataRail() {
       key: "dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
-      children: [
-        { label: "Monthly", to: "/dashboard" },
-        { label: "History", to: "/history" },
-        { label: "Calendar", to: "/calendar" },
-      ],
+      to: "/dashboard",
+    },
+    {
+      key: "history",
+      label: "History",
+      icon: History,
+      to: "/history",
     },
     {
       key: "investments",
