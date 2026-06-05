@@ -120,7 +120,7 @@ export function HeaderMonthSelector({ variant = "header", expanded = true }: Hea
     );
   }
 
-  // Default 'header' variant (legacy — kept for fallback, hidden when not needed)
+  // Default 'header' variant — title + opening balance subtitle on the left of the top bar
   if (!hasMonths) return null;
   return (
     <div className="flex flex-col min-w-0">
