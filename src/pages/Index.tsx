@@ -210,7 +210,7 @@ export default function Index() {
           <>
             {/* Section header (mobile only — desktop shows it in the sticky top bar) */}
             <div className="mb-6 md:hidden">
-              <h1 className="text-xl font-semibold tracking-tight capitalize text-foreground leading-tight">
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
                 {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
               </h1>
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
