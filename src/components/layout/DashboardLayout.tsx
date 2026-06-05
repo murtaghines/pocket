@@ -74,7 +74,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Top utility bar (desktop) — month selector on left, theme + profile on right */}
       <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-between gap-3 px-6 bg-background/80 backdrop-blur-sm">
         <div className="flex items-center min-w-0 gap-4">
-          <HeaderMonthSelector />
           <EmptyStateBanner />
         </div>
         <div className="flex items-center gap-3">
