@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
 import { LanguagePreferenceSync } from "@/components/layout/LanguagePreferenceSync";
+import { MonthSelectionProvider } from "@/hooks/useMonthSelection";
 import { SUPPORTED_LANGUAGES } from "@/i18n/config";
 import Index from "./pages/Index";
 import History from "./pages/History";
@@ -91,8 +92,9 @@ const App = () => (
         <LanguagePreferenceSync />
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
+        <MonthSelectionProvider>
+          <BrowserRouter>
+            <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>
@@ -148,8 +150,9 @@ const App = () => (
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+            </Routes>
+          </BrowserRouter>
+        </MonthSelectionProvider>
       </TooltipProvider>
       </ThemeProvider>
     </AuthProvider>
