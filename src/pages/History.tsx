@@ -40,7 +40,7 @@ export default function History() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* Header — matches Dashboard typography */}
+            {/* Page header — same pattern as Dashboard / Investments */}
             <div className="mb-6">
               <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
                 {t("views.history", "History")}
@@ -58,7 +58,7 @@ export default function History() {
             </div>
 
             <div
-              className="bg-card rounded-2xl p-3 md:p-4 border border-border mt-6"
+              className="bg-card rounded-lg p-3 md:p-4 border border-border"
               style={{ boxShadow: "var(--shadow-section)" }}
             >
               <div className="max-h-[500px] overflow-y-auto">
@@ -68,6 +68,12 @@ export default function History() {
           </>
         )}
       </main>
+
+      <footer className="mt-12 relative z-10">
+        <div className="container px-4 md:px-6 py-6">
+          <p className="text-sm text-muted-foreground text-center">pocket</p>
+        </div>
+      </footer>
     </DashboardLayout>
   );
 }
