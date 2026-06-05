@@ -144,5 +144,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {children}
       </main>
     </div>
+    </MonthSelectionProvider>
   );
 }
