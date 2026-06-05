@@ -19,7 +19,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import pocketLogoWhite from "@/assets/pocket-logo-white.png";
-import { HeaderMonthSelector } from "./HeaderMonthSelector";
 
 type NavChild = {
   label: string;

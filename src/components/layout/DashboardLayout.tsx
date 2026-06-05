@@ -20,7 +20,6 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTransactions } from "@/hooks/useTransactions";
 import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
 import { HeaderMonthSelector } from "./HeaderMonthSelector";
-import { MonthSelectionProvider } from "@/hooks/useMonthSelection";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,7 +65,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   return (
-    <MonthSelectionProvider>
     <div className="min-h-screen bg-background dashboard-theme relative md:pl-24">
       {/* Persistent vertical rail (desktop) handles all navigation + utilities */}
       <DataRail />
@@ -144,6 +142,5 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {children}
       </main>
     </div>
-    </MonthSelectionProvider>
   );
 }
