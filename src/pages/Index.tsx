@@ -74,6 +74,25 @@ export default function Index() {
       ? selectedMonth
       : availableMonths[0] ?? null;
 
+  // Sync month state into the layout header
+  useEffect(() => {
+    setAvailableMonths(availableMonths);
+  }, [availableMonths.join('|')]);
+
+  useEffect(() => {
+    if (latestMonthLabel && selectedMonth !== latestMonthLabel) {
+      setSelectedMonth(latestMonthLabel);
+    }
+  }, [latestMonthLabel]);
+
+  useEffect(() => {
+    if (latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null) {
+      setOpeningBalance(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]));
+    } else {
+      setOpeningBalance(null);
+    }
+  }, [latestMonthLabel, openingBalanceByMonth, userCurrency]);
+
   const currentIndex = monthlyData.findIndex((m) => m.month === latestMonthLabel);
   const currentMonth =
     currentIndex >= 0
