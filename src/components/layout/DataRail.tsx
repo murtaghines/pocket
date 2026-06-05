@@ -128,11 +128,8 @@ export function DataRail() {
           </Link>
         </div>
 
-        {/* Selected month (visible on /dashboard) */}
-        <HeaderMonthSelector variant="rail" expanded={expanded} />
-
         {/* Navigation — identical icon column and vertical rhythm in both states */}
-        <nav className="flex-1 overflow-y-auto mt-4 px-3">
+        <nav className="flex-1 overflow-y-auto mt-6 px-3">
           <NavigationGroups groups={groups} expanded={expanded} isActive={isActive} />
         </nav>
 
