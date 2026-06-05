@@ -189,42 +189,11 @@ export default function Index() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* Section header */}
-            <div className="mb-6 md:-mt-14 md:relative md:z-40">
-              {availableMonths.length > 0 ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="h-auto px-2 -ml-2 py-1 hover:bg-muted/60 rounded-lg"
-                    >
-                      <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
-                        {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : ''}
-                      </h1>
-                      <ChevronDown className="w-5 h-5 ml-2 text-muted-foreground" strokeWidth={2.25} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="max-h-80 overflow-y-auto">
-                    {availableMonths.map((m) => (
-                      <DropdownMenuItem
-                        key={m}
-                        onSelect={() => setSelectedMonth(m)}
-                        className={
-                          m === latestMonthLabel
-                            ? "capitalize font-medium bg-muted/60"
-                            : "capitalize"
-                        }
-                      >
-                        {formatMonth(m + '-01')}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
-                  {t('period.noPeriods', 'No data yet')}
-                </h1>
-              )}
+            {/* Section header (mobile only — desktop shows it in the sticky top bar) */}
+            <div className="mb-6 md:hidden">
+              <h1 className="text-xl font-semibold tracking-tight capitalize text-foreground leading-tight">
+                {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+              </h1>
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
                 <p className="text-sm text-muted-foreground mt-1">
                   {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
