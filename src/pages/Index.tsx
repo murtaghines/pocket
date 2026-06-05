@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, ChevronDown } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
@@ -23,15 +23,10 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
+import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { Wallet, Loader2 } from "lucide-react";
 import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
 import type { Category } from "@/lib/mockData";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
 export default function Index() {
@@ -52,7 +47,7 @@ export default function Index() {
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance } = useMonthSelection();
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
@@ -78,6 +73,25 @@ export default function Index() {
     selectedMonth && availableMonths.includes(selectedMonth)
       ? selectedMonth
       : availableMonths[0] ?? null;
+
+  // Sync month state into the layout header
+  useEffect(() => {
+    setAvailableMonths(availableMonths);
+  }, [availableMonths.join('|')]);
+
+  useEffect(() => {
+    if (latestMonthLabel && selectedMonth !== latestMonthLabel) {
+      setSelectedMonth(latestMonthLabel);
+    }
+  }, [latestMonthLabel]);
+
+  useEffect(() => {
+    if (latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null) {
+      setOpeningBalance(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]));
+    } else {
+      setOpeningBalance(null);
+    }
+  }, [latestMonthLabel, openingBalanceByMonth, userCurrency]);
 
   const currentIndex = monthlyData.findIndex((m) => m.month === latestMonthLabel);
   const currentMonth =
@@ -194,42 +208,11 @@ export default function Index() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* Section header */}
-            <div className="mb-6 md:-mt-14 md:relative md:z-40">
-              {availableMonths.length > 0 ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="h-auto px-2 -ml-2 py-1 hover:bg-muted/60 rounded-lg"
-                    >
-                      <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
-                        {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : ''}
-                      </h1>
-                      <ChevronDown className="w-5 h-5 ml-2 text-muted-foreground" strokeWidth={2.25} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="max-h-80 overflow-y-auto">
-                    {availableMonths.map((m) => (
-                      <DropdownMenuItem
-                        key={m}
-                        onSelect={() => setSelectedMonth(m)}
-                        className={
-                          m === latestMonthLabel
-                            ? "capitalize font-medium bg-muted/60"
-                            : "capitalize"
-                        }
-                      >
-                        {formatMonth(m + '-01')}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
-                  {t('period.noPeriods', 'No data yet')}
-                </h1>
-              )}
+            {/* Section header (mobile only — desktop shows it in the sticky top bar) */}
+            <div className="mb-6 md:hidden">
+              <h1 className="text-xl font-semibold tracking-tight capitalize text-foreground leading-tight">
+                {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
+              </h1>
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
                 <p className="text-sm text-muted-foreground mt-1">
                   {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
