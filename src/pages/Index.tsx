@@ -47,7 +47,7 @@ export default function Index() {
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance } = useMonthSelection();
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
