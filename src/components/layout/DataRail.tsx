@@ -204,12 +204,18 @@ function NavigationGroups({
         const active =
           Boolean(group.to && isActive(group.to)) ||
           Boolean(group.children?.some((child) => isActive(child.to)));
+        const hasChildren = Boolean(group.children?.length);
         const childrenCount = group.children?.length ?? 0;
-        const blockHeight =
-          HEADER + childrenCount * CHILD + (idx < groups.length - 1 ? GAP : 0);
+        const blockHeight = expanded
+          ? HEADER + childrenCount * CHILD + (idx < groups.length - 1 ? GAP : 0)
+          : HEADER + (idx < groups.length - 1 ? GAP : 0);
 
         return (
-          <div key={group.key} style={{ height: blockHeight }} className="w-full">
+          <div
+            key={group.key}
+            style={{ height: blockHeight }}
+            className="group/nav relative w-full"
+          >
             <div className="grid h-10 grid-cols-[72px_minmax(0,1fr)] items-center">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -218,16 +224,19 @@ function NavigationGroups({
                     aria-label={group.label}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                      "relative col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
                       active
                         ? "text-primary-foreground bg-primary-foreground/10"
                         : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
+                    {!expanded && hasChildren && active && (
+                      <span className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary-foreground" />
+                    )}
                   </Link>
                 </TooltipTrigger>
-                {!expanded && (
+                {!expanded && !hasChildren && (
                   <TooltipContent side="right" sideOffset={8}>
                     {group.label}
                   </TooltipContent>
@@ -249,20 +258,51 @@ function NavigationGroups({
               )}
             </div>
 
-            {group.children && (
-              expanded ? (
-                <div className="ml-[36px] border-l border-primary-foreground/15 pl-[44px]">
-                  {group.children.map((child) => {
+            {hasChildren && expanded && (
+              <div className="ml-[36px] border-l border-primary-foreground/15 pl-[44px]">
+                {group.children!.map((child) => {
+                  const childActive = isActive(child.to);
+                  return (
+                    <Link
+                      key={child.to}
+                      to={child.to}
+                      className={cn(
+                        "flex h-8 items-center rounded-md px-0 text-sm transition-colors",
+                        childActive
+                          ? "bg-primary-foreground/10 text-primary-foreground font-medium"
+                          : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
+                      )}
+                    >
+                      <span className="truncate">{child.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
+            {hasChildren && !expanded && (
+              <div
+                className={cn(
+                  "pointer-events-none absolute left-full top-0 z-50 pl-3",
+                  "opacity-0 -translate-x-1 transition-all duration-150",
+                  "group-hover/nav:pointer-events-auto group-hover/nav:opacity-100 group-hover/nav:translate-x-0",
+                )}
+              >
+                <div className="min-w-[160px] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg">
+                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {group.label}
+                  </div>
+                  {group.children!.map((child) => {
                     const childActive = isActive(child.to);
                     return (
                       <Link
                         key={child.to}
                         to={child.to}
                         className={cn(
-                          "flex h-8 items-center rounded-md px-0 text-sm transition-colors",
+                          "flex h-8 items-center rounded-md px-2 text-sm transition-colors",
                           childActive
-                            ? "bg-primary-foreground/10 text-primary-foreground font-medium"
-                            : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
+                            ? "bg-accent text-accent-foreground font-medium"
+                            : "text-popover-foreground hover:bg-accent hover:text-accent-foreground",
                         )}
                       >
                         <span className="truncate">{child.label}</span>
@@ -270,27 +310,7 @@ function NavigationGroups({
                     );
                   })}
                 </div>
-              ) : (
-                <div className="mt-0.5 flex flex-col items-center gap-0.5 px-1">
-                  {group.children.map((child) => {
-                    const childActive = isActive(child.to);
-                    return (
-                      <Link
-                        key={child.to}
-                        to={child.to}
-                        className={cn(
-                          "flex h-8 w-full items-center justify-center rounded-md px-1 text-[11px] font-medium leading-none transition-colors",
-                          childActive
-                            ? "bg-primary-foreground/15 text-primary-foreground"
-                            : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
-                        )}
-                      >
-                        <span className="truncate">{child.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )
+              </div>
             )}
           </div>
         );
@@ -298,6 +318,7 @@ function NavigationGroups({
     </div>
   );
 }
+
 
 function SectionLabel({ expanded, children }: { expanded: boolean; children: React.ReactNode }) {
   return (
