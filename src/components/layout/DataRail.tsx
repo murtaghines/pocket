@@ -62,7 +62,7 @@ export function DataRail() {
     {
       key: "history",
       label: "History",
-      icon: History,
+      icon: TrendingUp,
       to: "/history",
     },
     {
