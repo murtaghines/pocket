@@ -75,10 +75,7 @@ export function DataRail() {
       key: "planning",
       label: "Planning",
       icon: Target,
-      children: [
-        { label: "Planned payments", to: "/planning/planned" },
-        { label: "Budgets", to: "/planning/budgets" },
-      ],
+      to: "/planning",
     },
   ];
 
