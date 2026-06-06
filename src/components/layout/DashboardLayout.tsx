@@ -60,7 +60,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { label: t("navigation.dashboard", "Home"), path: "/dashboard", icon: LayoutDashboard },
     { label: t("navigation.history", "History"), path: "/history", icon: TrendingUp },
     { label: t("navigation.investments", "Invest"), path: "/investments", icon: PiggyBank },
-    { label: "Plan", path: "/planning/budgets", icon: Target },
+    { label: "Plan", path: "/planning", icon: Target },
     { label: "Data", path: "/my-data?tab=bank", icon: FileSpreadsheet },
     { label: t("navigation.profile", "Me"), path: "/profile", icon: User },
   ];
@@ -72,6 +72,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
     if (location.pathname.startsWith("/investments")) {
       return { title: t("navigation.investments", "Investments"), subtitle: null };
+    }
+    if (location.pathname.startsWith("/planning")) {
+      return { title: "Planning", subtitle: "Plan upcoming payments and set budgets per category" };
     }
     return null;
   })();
