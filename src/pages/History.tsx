@@ -40,8 +40,8 @@ export default function History() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* Page header — same pattern as Dashboard / Investments */}
-            <div className="mb-6">
+            {/* Page header — mobile only; desktop renders in the sticky top bar */}
+            <div className="mb-6 md:hidden">
               <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
                 {t("views.history", "History")}
               </h1>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  History,
+  TrendingUp,
   PiggyBank,
   Target,
   Landmark,
@@ -62,7 +62,7 @@ export function DataRail() {
     {
       key: "history",
       label: "History",
-      icon: History,
+      icon: TrendingUp,
       to: "/history",
     },
     {

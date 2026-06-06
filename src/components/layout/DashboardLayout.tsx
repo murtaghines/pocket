@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   PiggyBank,
   BarChart3,
+  TrendingUp,
   Target,
   FileSpreadsheet,
   User,
@@ -57,22 +58,45 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const mobileNavItems = [
     { label: t("navigation.dashboard", "Home"), path: "/dashboard", icon: LayoutDashboard },
-    { label: t("navigation.history", "History"), path: "/history", icon: BarChart3 },
+    { label: t("navigation.history", "History"), path: "/history", icon: TrendingUp },
     { label: t("navigation.investments", "Invest"), path: "/investments", icon: PiggyBank },
     { label: "Plan", path: "/planning/budgets", icon: Target },
     { label: "Data", path: "/my-data?tab=bank", icon: FileSpreadsheet },
     { label: t("navigation.profile", "Me"), path: "/profile", icon: User },
   ];
 
+  // Page header shown in the desktop top bar for non-dashboard routes
+  const pageHeader = (() => {
+    if (location.pathname.startsWith("/history")) {
+      return { title: t("navigation.history", "History"), subtitle: t("views.historySubtitle", "All your data, every month combined") };
+    }
+    if (location.pathname.startsWith("/investments")) {
+      return { title: t("navigation.investments", "Investments"), subtitle: null };
+    }
+    return null;
+  })();
+
   return (
     <div className="min-h-screen bg-background dashboard-theme relative md:pl-24">
       {/* Persistent vertical rail (desktop) handles all navigation + utilities */}
       <DataRail />
 
-      {/* Top utility bar (desktop) — month selector on left, theme + profile on right */}
+      {/* Top utility bar (desktop) — month selector or page title on left, theme + profile on right */}
       <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-between gap-3 px-6 bg-background/80 backdrop-blur-sm">
         <div className="flex items-center min-w-0 gap-4">
           <HeaderMonthSelector />
+          {pageHeader && (
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight truncate">
+                {pageHeader.title}
+              </h1>
+              {pageHeader.subtitle && (
+                <p className="text-sm text-muted-foreground leading-tight truncate">
+                  {pageHeader.subtitle}
+                </p>
+              )}
+            </div>
+          )}
           <EmptyStateBanner />
         </div>
         <div className="flex items-center gap-3">
