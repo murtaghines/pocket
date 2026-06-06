@@ -21,6 +21,7 @@ import MyData from "./pages/MyData";
 import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 import ComingSoon from "./pages/ComingSoon";
+import Planning from "./pages/Planning";
 
 const queryClient = new QueryClient();
 
