@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   PiggyBank,
   BarChart3,
+  TrendingUp,
   Target,
   FileSpreadsheet,
   User,
