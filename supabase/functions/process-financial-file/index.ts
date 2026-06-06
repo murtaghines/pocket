@@ -231,8 +231,27 @@ serve(async (req) => {
   }
 
   try {
-    const { fileContent, importId, uploadId, userId, previewOnly, confirmTransactions, transactions } = await req.json();
-    
+    // Authenticate caller via JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const authClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: authData, error: authError } = await authClient.auth.getUser();
+    if (authError || !authData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const body = await req.json();
+    const { fileContent, importId, uploadId, previewOnly, confirmTransactions, transactions } = body;
+    // Force userId to the authenticated user — ignore client-supplied value
+    const userId = authData.user.id;
+
     // Support both importId (new) and uploadId (legacy) for backwards compatibility
     const recordId = importId || uploadId;
 
