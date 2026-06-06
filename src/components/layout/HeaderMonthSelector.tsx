@@ -130,10 +130,10 @@ export function HeaderMonthSelector({ variant = "header", expanded = true }: Hea
             type="button"
             className="inline-flex items-center gap-1.5 h-auto px-2 -ml-2 py-1 hover:bg-muted/60 rounded-lg"
           >
-            <h1 className="text-lg md:text-xl font-semibold tracking-tight capitalize text-foreground leading-tight truncate">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight truncate">
               {label}
             </h1>
-            <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={2.25} />
+            <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" strokeWidth={2.25} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="max-h-80 overflow-y-auto">
