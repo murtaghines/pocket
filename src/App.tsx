@@ -114,16 +114,13 @@ const App = () => (
                 <ComingSoon title="Calendar" subtitle="A monthly view of your activity" />
               </ProtectedRoute>
             } />
-            <Route path="/planning/planned" element={
+            <Route path="/planning" element={
               <ProtectedRoute>
-                <ComingSoon title="Planned payments" subtitle="Schedule and track upcoming expenses" />
+                <Planning />
               </ProtectedRoute>
             } />
-            <Route path="/planning/budgets" element={
-              <ProtectedRoute>
-                <ComingSoon title="Budgets" subtitle="Set spending limits per category" />
-              </ProtectedRoute>
-            } />
+            <Route path="/planning/planned" element={<Navigate to="/planning" replace />} />
+            <Route path="/planning/budgets" element={<Navigate to="/planning" replace />} />
             <Route path="/investments" element={
               <ProtectedRoute>
                 <Investments />
