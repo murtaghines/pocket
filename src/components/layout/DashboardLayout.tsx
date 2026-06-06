@@ -58,12 +58,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const mobileNavItems = [
     { label: t("navigation.dashboard", "Home"), path: "/dashboard", icon: LayoutDashboard },
-    { label: t("navigation.history", "History"), path: "/history", icon: BarChart3 },
+    { label: t("navigation.history", "History"), path: "/history", icon: TrendingUp },
     { label: t("navigation.investments", "Invest"), path: "/investments", icon: PiggyBank },
     { label: "Plan", path: "/planning/budgets", icon: Target },
     { label: "Data", path: "/my-data?tab=bank", icon: FileSpreadsheet },
     { label: t("navigation.profile", "Me"), path: "/profile", icon: User },
   ];
+
+  // Page header shown in the desktop top bar for non-dashboard routes
+  const pageHeader = (() => {
+    if (location.pathname.startsWith("/history")) {
+      return { title: t("navigation.history", "History"), subtitle: t("views.historySubtitle", "All your data, every month combined") };
+    }
+    if (location.pathname.startsWith("/investments")) {
+      return { title: t("navigation.investments", "Investments"), subtitle: null };
+    }
+    return null;
+  })();
 
   return (
     <div className="min-h-screen bg-background dashboard-theme relative md:pl-24">
