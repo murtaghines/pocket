@@ -149,7 +149,7 @@ export function HeaderMonthSelector({ variant = "header", expanded = true }: Hea
         </DropdownMenuContent>
       </DropdownMenu>
       {openingBalance != null && (
-        <p className="text-xs text-muted-foreground -mt-0.5 truncate">
+        <p className="text-sm text-muted-foreground leading-tight truncate">
           {t("stats.openingBalance", { defaultValue: "Opening balance" })}: {formatCurrency(openingBalance)}
         </p>
       )}
