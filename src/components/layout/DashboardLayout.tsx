@@ -81,10 +81,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Persistent vertical rail (desktop) handles all navigation + utilities */}
       <DataRail />
 
-      {/* Top utility bar (desktop) — month selector on left, theme + profile on right */}
+      {/* Top utility bar (desktop) — month selector or page title on left, theme + profile on right */}
       <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-between gap-3 px-6 bg-background/80 backdrop-blur-sm">
         <div className="flex items-center min-w-0 gap-4">
           <HeaderMonthSelector />
+          {pageHeader && (
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight truncate">
+                {pageHeader.title}
+              </h1>
+              {pageHeader.subtitle && (
+                <p className="text-sm text-muted-foreground leading-tight truncate">
+                  {pageHeader.subtitle}
+                </p>
+              )}
+            </div>
+          )}
           <EmptyStateBanner />
         </div>
         <div className="flex items-center gap-3">
