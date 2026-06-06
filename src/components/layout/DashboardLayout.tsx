@@ -73,6 +73,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (location.pathname.startsWith("/investments")) {
       return { title: t("navigation.investments", "Investments"), subtitle: null };
     }
+    if (location.pathname.startsWith("/planning")) {
+      return { title: "Planning", subtitle: "Plan upcoming payments and set budgets per category" };
+    }
     return null;
   })();
 
