@@ -737,28 +737,40 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    const { 
-      fileContent, 
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const authClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: authData, error: authError } = await authClient.auth.getUser();
+    if (authError || !authData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const {
+      fileContent,
       fileHash,
       fileName,
       fileSize,
       fileMime,
       fileStorageUrl,
-      userId, 
       accountId = null,
       domain,
       targetMonth,
       sourceType = 'OTHER',
       confirmOutOfMonth = false
     } = await req.json();
+    const userId = authData.user.id;
 
-    // targetMonth is OPTIONAL: when provided we use it as a hint and as the
-    // initial period for the import row; when omitted, the file is fully
-    // distributed across whatever months the transactions actually belong to.
-    if (!fileContent || !userId || !domain) {
+    if (!fileContent || !domain) {
       console.error('Missing required fields');
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: fileContent, userId, domain' }),
+        JSON.stringify({ error: 'Missing required fields: fileContent, domain' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
