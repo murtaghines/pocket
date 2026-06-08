@@ -20,7 +20,7 @@ export function HeroSection() {
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-0 select-none overflow-hidden">
         <div
           className="font-black uppercase text-white leading-[0.82] tracking-tight"
-          style={{ opacity: 0.1 }}
+          style={{ opacity: 0.18 }}
         >
           {(["LIKE", "NEVER", "BEFORE"] as const).map((word, i) => (
             <div

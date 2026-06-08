@@ -1,8 +1,7 @@
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { MarqueeSection } from "@/components/landing/MarqueeSection";
-import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
-import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { AppShowcaseSection } from "@/components/landing/AppShowcaseSection";
+import { StatementSection } from "@/components/landing/StatementSection";
 import { ContactSection } from "@/components/landing/ContactSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -18,21 +17,22 @@ export default function Landing() {
           <HeroSection />
         </div>
 
-        {/* Marquee — sits right after hero, not sticky */}
-        <div className="relative" style={{ zIndex: 5 }}>
-          <MarqueeSection />
-        </div>
-
-        {/* Sticky stacking sections */}
+        {/* App Showcase — 3 browser mockups on yellow */}
         <StickyStack index={10}>
-          <HowItWorksSection />
+          <AppShowcaseSection />
         </StickyStack>
+
+        {/* Statement — big bold text on white */}
         <StickyStack index={20}>
-          <FeaturesSection />
+          <StatementSection />
         </StickyStack>
+
+        {/* Dashboard showcase — dark with large browser mockup */}
         <StickyStack index={30}>
           <ContactSection />
         </StickyStack>
+
+        {/* CTA */}
         <StickyStack index={40}>
           <CTASection />
         </StickyStack>
