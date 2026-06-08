@@ -152,6 +152,10 @@ export default {
           "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
           "50%": { transform: "translateY(-8px) rotate(1deg)" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -164,6 +168,7 @@ export default {
         "float-slow": "float-slow 6s ease-in-out infinite",
         "float-medium": "float-medium 4s ease-in-out infinite",
         "float-fast": "float-fast 3s ease-in-out infinite",
+        marquee: "marquee 30s linear infinite",
       },
     },
   },

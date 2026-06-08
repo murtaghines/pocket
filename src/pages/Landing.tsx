@@ -1,5 +1,6 @@
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { MarqueeSection } from "@/components/landing/MarqueeSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { ContactSection } from "@/components/landing/ContactSection";
@@ -12,12 +13,17 @@ export default function Landing() {
     <div className="min-h-screen bg-white text-foreground">
       <LandingHeader />
       <main className="relative">
-        {/* Hero is the base layer — no sticky wrap, lives at z-0 */}
+        {/* Hero — base layer */}
         <div className="relative" style={{ zIndex: 0 }}>
           <HeroSection />
         </div>
 
-        {/* Each subsequent section sticks to the top and covers the previous */}
+        {/* Marquee — sits right after hero, not sticky */}
+        <div className="relative" style={{ zIndex: 5 }}>
+          <MarqueeSection />
+        </div>
+
+        {/* Sticky stacking sections */}
         <StickyStack index={10}>
           <HowItWorksSection />
         </StickyStack>
@@ -31,6 +37,7 @@ export default function Landing() {
           <CTASection />
         </StickyStack>
       </main>
+
       <div className="relative" style={{ zIndex: 50 }}>
         <LandingFooter />
       </div>
