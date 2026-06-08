@@ -5,13 +5,13 @@ export function StatementSection() {
 
   const words = [
     { text: "WHETHER", color: "#1b76ff" },
-    { text: "YOU", color: "#FFBB03" },
+    { text: "YOU", color: "#080808" },
     { text: "SPEND,", color: "#080808" },
     { text: "SAVE", color: "#1b76ff" },
     { text: "OR", color: "#080808" },
-    { text: "INVEST,", color: "#FFBB03" },
+    { text: "INVEST,", color: "#080808" },
     { text: "POCKET", color: "#1b76ff" },
-    { text: "HAS", color: "#FFBB03" },
+    { text: "HAS", color: "#080808" },
     { text: "YOU", color: "#080808" },
     { text: "COVERED.", color: "#1b76ff" },
   ];
@@ -20,7 +20,7 @@ export function StatementSection() {
     <section
       ref={ref}
       data-nav-theme="light"
-      className="bg-white py-24 lg:py-40 overflow-hidden"
+      className="bg-white py-32 lg:py-56 overflow-hidden"
     >
       <div className="container px-6">
         <div

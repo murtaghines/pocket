@@ -155,43 +155,47 @@ export function AppShowcaseSection() {
   return (
     <section
       data-nav-theme="light"
-      className="relative overflow-hidden py-24 lg:py-36"
-      style={{ background: "#FFBB03" }}
+      className="relative overflow-hidden py-32 lg:py-48 bg-white"
     >
-      {/* Decorative blobs */}
-      <div className="absolute top-12 left-12 w-5 h-5 rounded-full bg-[#080808]/20" />
-      <div className="absolute bottom-16 right-20 w-8 h-8 rounded-full bg-white/40" />
-      <div className="absolute top-1/2 left-8 w-3 h-3 rounded-full bg-[#1b76ff]/40" />
+      {/* Subtle decorative dots — very small, blue/black only */}
+      <div className="absolute top-16 right-16 w-4 h-4 rounded-full bg-[#1b76ff]/20" />
+      <div className="absolute bottom-20 left-12 w-3 h-3 rounded-full bg-[#080808]/10" />
+      <div className="absolute top-1/3 left-6 w-2 h-2 rounded-full bg-[#1b76ff]/30" />
+      <div className="absolute bottom-1/3 right-8 w-5 h-5 rounded-full bg-[#080808]/05" />
 
       <div className="container px-6">
-        {/* Label */}
-        <p className="text-[10px] font-black tracking-[0.3em] text-[#080808]/50 mb-6 uppercase">
-          What you get
-        </p>
+        {/* Section headline */}
+        <h2
+          className="font-black text-[#080808] uppercase leading-[0.9] tracking-tight mb-20 lg:mb-28"
+          style={{ fontSize: "clamp(2.5rem, 7vw, 6rem)" }}
+        >
+          Everything<br />
+          <span style={{ color: "#1b76ff" }}>in one place.</span>
+        </h2>
 
-        {/* 3 browser mockups */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-4 items-end">
-          <Browser rotate={-4} delay={0}>
+        {/* 3 browser mockups — more spacing, staggered heights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 items-end">
+          <Browser rotate={-3} delay={0}>
             <DashboardScreen />
           </Browser>
-          <Browser rotate={1} delay={120}>
+          <Browser rotate={0} delay={120}>
             <TransactionsScreen />
           </Browser>
-          <Browser rotate={5} delay={240}>
+          <Browser rotate={3} delay={240}>
             <InvestmentsScreen />
           </Browser>
         </div>
 
-        {/* Labels below */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
+        {/* Labels below — minimal */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-10 lg:mt-14">
           {[
-            { title: "Dashboard", sub: "Balance, savings rate and daily spending — at a glance." },
-            { title: "Transactions", sub: "Every movement categorized. No manual work." },
-            { title: "Investments", sub: "Your portfolio, tracked and compared." },
-          ].map((item, i) => (
+            { title: "Dashboard", sub: "Your full picture, at a glance." },
+            { title: "Transactions", sub: "Every movement, auto-categorized." },
+            { title: "Investments", sub: "Your portfolio, tracked." },
+          ].map((item) => (
             <div key={item.title} className="text-[#080808]">
-              <div className="font-black text-lg uppercase leading-tight">{item.title}</div>
-              <div className="text-sm text-[#080808]/60 mt-1">{item.sub}</div>
+              <div className="font-black text-xl uppercase leading-tight">{item.title}</div>
+              <div className="text-sm text-[#080808]/50 mt-1.5">{item.sub}</div>
             </div>
           ))}
         </div>

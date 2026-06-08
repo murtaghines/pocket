@@ -158,28 +158,17 @@ export function ContactSection() {
   return (
     <section
       data-nav-theme="dark"
-      className="relative py-24 lg:py-36 overflow-hidden"
+      className="relative py-32 lg:py-48 overflow-hidden"
       style={{ background: "#080808" }}
     >
-      {/* Subtle grid */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
       <div className="container px-6 relative z-10">
-        {/* Label */}
-        <p className="text-[10px] font-black tracking-[0.3em] text-white/30 mb-4 uppercase">Your finances, clearly</p>
+        {/* Headline — minimal, top of section */}
         <h2
-          className="font-black text-white uppercase leading-[0.92] tracking-tight mb-16"
-          style={{ fontSize: "clamp(2rem, 6vw, 5rem)" }}
+          className="font-black text-white uppercase leading-[0.9] tracking-tight mb-20 lg:mb-28"
+          style={{ fontSize: "clamp(2.5rem, 7vw, 6rem)" }}
         >
-          See everything
-          <br />
-          <span style={{ color: "#FFBB03" }}>in one place</span>
+          See everything<br />
+          <span style={{ color: "#1b76ff" }}>clearly.</span>
         </h2>
 
         {/* Browser mockup — large, centered */}
@@ -191,21 +180,21 @@ export function ContactSection() {
             icon={Sparkles}
             text="AI categorization"
             accent="#1b76ff"
-            className="-left-4 top-24 hidden lg:flex"
+            className="-left-8 top-24 hidden lg:flex"
             delay={200}
           />
           <FeatureChip
             icon={TrendingUp}
             text="Track investments"
-            accent="#FFBB03"
-            className="-right-4 top-32 hidden lg:flex"
+            accent="#1b76ff"
+            className="-right-8 top-32 hidden lg:flex"
             delay={350}
           />
           <FeatureChip
             icon={ShieldCheck}
             text="Privacy first"
-            accent="#16a34a"
-            className="-left-4 bottom-24 hidden lg:flex"
+            accent="#1b76ff"
+            className="-left-8 bottom-24 hidden lg:flex"
             delay={500}
           />
         </div>
