@@ -5,7 +5,8 @@ import pocketIcon from "@/assets/pocket-icon.png";
 
 export function LandingHeader() {
   // theme is determined by the section currently behind the navbar
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  // Start as "dark" because the hero (first section) is always blue/dark
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     const sections = Array.from(

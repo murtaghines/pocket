@@ -120,7 +120,6 @@ export function AppShowcaseSection() {
       className="relative bg-white overflow-hidden py-32 lg:py-52"
       style={{
         borderRadius: "2rem 2rem 0 0",
-        marginTop: "-2rem",
         position: "relative",
         zIndex: 1,
       }}
