@@ -5,15 +5,15 @@ export function StatementSection() {
 
   const words = [
     { text: "WHETHER", color: "#1b76ff" },
-    { text: "YOU", color: "#080808" },
+    { text: "YOU", color: "#FFBB03" },
     { text: "SPEND,", color: "#080808" },
     { text: "SAVE", color: "#1b76ff" },
     { text: "OR", color: "#080808" },
-    { text: "INVEST,", color: "#080808" },
+    { text: "INVEST,", color: "#FFBB03" },
     { text: "POCKET", color: "#1b76ff" },
     { text: "HAS", color: "#080808" },
-    { text: "YOU", color: "#080808" },
-    { text: "COVERED.", color: "#1b76ff" },
+    { text: "YOU", color: "#FFBB03" },
+    { text: "COVERED.", color: "#080808" },
   ];
 
   return (

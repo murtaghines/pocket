@@ -1,112 +1,107 @@
 import { useInView } from "@/hooks/useInView";
 
-/* ── Tiny browser chrome wrapper ──────────────────────────────────────────── */
-function Browser({
-  rotate = 0,
-  delay = 0,
+/* ── Floating card wrapper ─────────────────────────────────────────────────── */
+function FloatingCard({
   children,
+  className,
+  delay = 0,
+  from = "bottom",
 }: {
-  rotate?: number;
-  delay?: number;
   children: React.ReactNode;
+  className: string;
+  delay?: number;
+  from?: "bottom" | "left" | "right";
 }) {
-  const { ref, inView } = useInView<HTMLDivElement>(0.2);
+  const { ref, inView } = useInView<HTMLDivElement>(0.05);
+  const initial =
+    from === "left" ? "translateX(-28px)" : from === "right" ? "translateX(28px)" : "translateY(28px)";
+
   return (
     <div
       ref={ref}
-      className="rounded-2xl overflow-hidden shadow-[0_30px_80px_-10px_rgba(0,0,0,0.35)] transition-all duration-700 ease-out will-change-transform"
+      className={`absolute ${className} bg-white rounded-2xl shadow-[0_8px_40px_-8px_rgba(0,0,0,0.15)] transition-all duration-700 ease-out`}
       style={{
-        transform: inView
-          ? `rotate(${rotate}deg) translateY(0) scale(1)`
-          : `rotate(${rotate}deg) translateY(40px) scale(0.95)`,
         opacity: inView ? 1 : 0,
+        transform: inView ? "translate(0)" : initial,
         transitionDelay: `${delay}ms`,
       }}
     >
-      {/* Chrome bar */}
-      <div className="bg-[#e8e8e8] px-3 py-2 flex items-center gap-2">
+      {children}
+    </div>
+  );
+}
+
+/* ── Browser frame ─────────────────────────────────────────────────────────── */
+function BrowserFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-[0_40px_120px_-20px_rgba(0,0,0,0.18)] border border-black/[0.06]">
+      <div className="bg-[#efefef] px-4 py-2.5 flex items-center gap-2">
         <div className="flex gap-1.5 shrink-0">
           <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
           <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
           <div className="w-3 h-3 rounded-full bg-[#28c840]" />
         </div>
-        <div className="flex-1 bg-white rounded-md px-3 py-1 text-[10px] text-[#9ca3af] truncate">
-          app.pocket.com
+        <div className="flex-1 bg-white/80 rounded-md px-3 py-1 text-[10px] text-[#9ca3af]">
+          app.pocket.com/dashboard
         </div>
       </div>
-      {/* Screen */}
-      <div className="bg-white">{children}</div>
+      <div className="bg-[#f8f9fb]">{children}</div>
     </div>
   );
 }
 
-/* ── Screen contents ───────────────────────────────────────────────────────── */
-
-function DashboardScreen() {
-  const bars = [35, 55, 42, 70, 52, 88, 65, 78, 48, 60, 72, 95];
+/* ── Dashboard screen inside the browser ──────────────────────────────────── */
+function DashboardPreview() {
+  const bars = [30, 52, 38, 66, 50, 84, 62, 76, 44, 58, 70, 96];
   return (
-    <div className="p-4 space-y-3 bg-[#f9fafb] min-h-[280px]">
-      {/* Top stats */}
-      <div className="grid grid-cols-3 gap-2">
+    <div className="p-5 space-y-3">
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-2.5">
         {[
           { label: "Balance", value: "€4,280", color: "#080808" },
           { label: "Income", value: "+€5.200", color: "#16a34a" },
           { label: "Expenses", value: "−€919", color: "#dc2626" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl p-3 shadow-sm">
-            <div className="text-[9px] text-[#9ca3af] mb-1">{s.label}</div>
+            <div className="text-[8px] text-[#9ca3af] mb-1 font-medium uppercase tracking-wider">{s.label}</div>
             <div className="text-sm font-black" style={{ color: s.color }}>{s.value}</div>
           </div>
         ))}
       </div>
-      {/* Savings rate */}
-      <div className="bg-white rounded-xl p-3 shadow-sm flex items-center justify-between">
-        <div>
-          <div className="text-[9px] text-[#9ca3af]">Savings rate</div>
-          <div className="text-lg font-black text-[#1b76ff]">38%</div>
-        </div>
-        <div className="w-14 h-14 rounded-full border-4 border-[#1b76ff] border-r-[#e5e5e5] rotate-[45deg]" />
-      </div>
+
       {/* Bar chart */}
-      <div className="bg-white rounded-xl p-3 shadow-sm">
-        <div className="text-[9px] text-[#9ca3af] mb-2">Daily spending — March</div>
-        <div className="flex items-end gap-0.5 h-12">
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <div className="text-[8px] text-[#9ca3af] mb-3 font-medium">Daily spending — March</div>
+        <div className="flex items-end gap-0.5 h-14">
           {bars.map((h, i) => (
             <div
               key={i}
               className="flex-1 rounded-t"
-              style={{ height: `${h}%`, background: i === 11 ? "#FFBB03" : "#1b76ff", opacity: 0.6 + (i / bars.length) * 0.4 }}
+              style={{
+                height: `${h}%`,
+                background: i === 11 ? "#FFBB03" : "#1b76ff",
+                opacity: 0.4 + (i / bars.length) * 0.6,
+              }}
             />
           ))}
         </div>
       </div>
-    </div>
-  );
-}
 
-function TransactionsScreen() {
-  const rows = [
-    { name: "Mercadona", cat: "Groceries", amount: "−€92,40", dot: "#16a34a" },
-    { name: "Salary", cat: "Income", amount: "+€3.200", dot: "#1b76ff" },
-    { name: "Cabify", cat: "Transport", amount: "−€14,20", dot: "#f97316" },
-    { name: "Netflix", cat: "Subscriptions", amount: "−€15,99", dot: "#dc2626" },
-    { name: "Decathlon", cat: "Sports", amount: "−€68,00", dot: "#7c3aed" },
-    { name: "Zara", cat: "Shopping", amount: "−€45,90", dot: "#db2777" },
-  ];
-  return (
-    <div className="bg-white min-h-[280px]">
-      <div className="px-4 py-3 border-b border-[#f0f0f0]">
-        <div className="text-[10px] font-bold text-[#080808]">Transactions · March</div>
-      </div>
-      <div className="divide-y divide-[#f5f5f5]">
-        {rows.map((r) => (
-          <div key={r.name} className="px-4 py-2.5 flex items-center gap-3">
+      {/* Transaction list */}
+      <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+        {[
+          { name: "Mercadona", cat: "Groceries", amount: "−€92,40", dot: "#16a34a" },
+          { name: "Salary", cat: "Income", amount: "+€3.200", dot: "#1b76ff" },
+          { name: "Cabify", cat: "Transport", amount: "−€14,20", dot: "#f97316" },
+          { name: "Netflix", cat: "Subscriptions", amount: "−€15,99", dot: "#dc2626" },
+        ].map((r) => (
+          <div key={r.name} className="px-4 py-2.5 flex items-center gap-3 border-b border-[#f5f5f5] last:border-0">
             <div className="w-2 h-2 rounded-full shrink-0" style={{ background: r.dot }} />
             <div className="flex-1 min-w-0">
               <div className="text-[10px] font-semibold text-[#080808] truncate">{r.name}</div>
               <div className="text-[9px] text-[#9ca3af]">{r.cat}</div>
             </div>
-            <div className="text-[10px] font-bold text-[#080808] shrink-0">{r.amount}</div>
+            <div className="text-[10px] font-bold text-[#080808]">{r.amount}</div>
           </div>
         ))}
       </div>
@@ -114,90 +109,116 @@ function TransactionsScreen() {
   );
 }
 
-function InvestmentsScreen() {
-  const assets = [
-    { name: "ETF MSCI World", pct: "+12.4%", value: "€14.200", w: 58, color: "#1b76ff" },
-    { name: "S&P 500", pct: "+9.1%", value: "€8.600", w: 35, color: "#FFBB03" },
-    { name: "Cash", pct: "+0.8%", value: "€2.000", w: 7, color: "#080808" },
-  ];
-  return (
-    <div className="p-4 bg-[#f9fafb] min-h-[280px] space-y-3">
-      <div className="bg-white rounded-xl p-3 shadow-sm">
-        <div className="text-[9px] text-[#9ca3af]">Total portfolio</div>
-        <div className="text-xl font-black text-[#080808]">€24,800</div>
-        <div className="text-[9px] text-[#16a34a] font-semibold mt-0.5">↑ +4.2% this year</div>
-      </div>
-      {/* Stacked bar */}
-      <div className="bg-white rounded-xl p-3 shadow-sm">
-        <div className="text-[9px] text-[#9ca3af] mb-2">Asset allocation</div>
-        <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
-          {assets.map((a) => (
-            <div key={a.name} className="rounded-full" style={{ width: `${a.w}%`, background: a.color }} />
-          ))}
-        </div>
-      </div>
-      {assets.map((a) => (
-        <div key={a.name} className="bg-white rounded-xl px-3 py-2.5 shadow-sm flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-semibold text-[#080808]">{a.name}</div>
-            <div className="text-[9px] font-bold text-[#16a34a]">{a.pct}</div>
-          </div>
-          <div className="text-[11px] font-black text-[#080808]">{a.value}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /* ── Section ───────────────────────────────────────────────────────────────── */
-
 export function AppShowcaseSection() {
+  const { ref, inView } = useInView<HTMLElement>(0.1);
+
   return (
     <section
+      ref={ref}
       data-nav-theme="light"
-      className="relative overflow-hidden py-32 lg:py-48 bg-white"
+      className="relative bg-white overflow-hidden py-32 lg:py-52"
     >
-      {/* Subtle decorative dots — very small, blue/black only */}
-      <div className="absolute top-16 right-16 w-4 h-4 rounded-full bg-[#1b76ff]/20" />
-      <div className="absolute bottom-20 left-12 w-3 h-3 rounded-full bg-[#080808]/10" />
-      <div className="absolute top-1/3 left-6 w-2 h-2 rounded-full bg-[#1b76ff]/30" />
-      <div className="absolute bottom-1/3 right-8 w-5 h-5 rounded-full bg-[#080808]/05" />
-
       <div className="container px-6">
-        {/* Section headline */}
+        {/* Headline */}
         <h2
-          className="font-black text-[#080808] uppercase leading-[0.9] tracking-tight mb-20 lg:mb-28"
-          style={{ fontSize: "clamp(2.5rem, 7vw, 6rem)" }}
+          className="font-black uppercase leading-[0.9] tracking-tight text-[#080808] mb-20 lg:mb-32"
+          style={{ fontSize: "clamp(2.5rem, 7vw, 6.5rem)" }}
         >
-          Everything<br />
-          <span style={{ color: "#1b76ff" }}>in one place.</span>
+          Your finances,
+          <br />
+          <span style={{ color: "#1b76ff" }}>crystal clear.</span>
         </h2>
 
-        {/* 3 browser mockups — more spacing, staggered heights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 items-end">
-          <Browser rotate={-3} delay={0}>
-            <DashboardScreen />
-          </Browser>
-          <Browser rotate={0} delay={120}>
-            <TransactionsScreen />
-          </Browser>
-          <Browser rotate={3} delay={240}>
-            <InvestmentsScreen />
-          </Browser>
-        </div>
+        {/* Mockup + floating cards */}
+        <div className="relative mx-auto lg:px-32" style={{ maxWidth: 900 }}>
 
-        {/* Labels below — minimal */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-10 lg:mt-14">
-          {[
-            { title: "Dashboard", sub: "Your full picture, at a glance." },
-            { title: "Transactions", sub: "Every movement, auto-categorized." },
-            { title: "Investments", sub: "Your portfolio, tracked." },
-          ].map((item) => (
-            <div key={item.title} className="text-[#080808]">
-              <div className="font-black text-xl uppercase leading-tight">{item.title}</div>
-              <div className="text-sm text-[#080808]/50 mt-1.5">{item.sub}</div>
+          {/* ── Floating cards (desktop only) ── */}
+
+          {/* Balance — top left */}
+          <FloatingCard
+            className="-top-10 left-0 lg:-left-8 z-20 hidden lg:block"
+            delay={300}
+            from="left"
+          >
+            <div className="px-5 py-4 min-w-[170px]">
+              <div className="text-[9px] text-[#9ca3af] font-medium uppercase tracking-wider mb-1">Balance</div>
+              <div className="text-2xl font-black text-[#080808]">€4,280</div>
+              <div className="text-[9px] text-[#16a34a] font-semibold mt-0.5">↑ +8.4% este mes</div>
             </div>
-          ))}
+          </FloatingCard>
+
+          {/* Salary income — top right */}
+          <FloatingCard
+            className="-top-10 right-0 lg:-right-8 z-20 hidden lg:block"
+            delay={420}
+            from="right"
+          >
+            <div className="px-4 py-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#1b76ff]/10 flex items-center justify-center shrink-0">
+                <div className="w-3 h-3 rounded-full bg-[#1b76ff]" />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-[#080808]">Salary</div>
+                <div className="text-[9px] text-[#9ca3af]">Income · March</div>
+              </div>
+              <div className="text-[12px] font-black text-[#16a34a] ml-1">+€3.200</div>
+            </div>
+          </FloatingCard>
+
+          {/* Top categories — bottom left */}
+          <FloatingCard
+            className="-bottom-10 left-0 lg:-left-8 z-20 hidden lg:block"
+            delay={540}
+            from="left"
+          >
+            <div className="px-5 py-4 min-w-[190px]">
+              <div className="text-[9px] text-[#9ca3af] font-medium uppercase tracking-wider mb-3">Top categories</div>
+              {[
+                { cat: "Groceries", pct: 42, color: "#16a34a" },
+                { cat: "Transport", pct: 28, color: "#1b76ff" },
+                { cat: "Housing", pct: 18, color: "#f97316" },
+              ].map((c) => (
+                <div key={c.cat} className="mb-2">
+                  <div className="flex justify-between text-[9px] mb-1">
+                    <span className="text-[#080808] font-semibold">{c.cat}</span>
+                    <span className="text-[#9ca3af]">{c.pct}%</span>
+                  </div>
+                  <div className="h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${c.pct}%`, background: c.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </FloatingCard>
+
+          {/* Savings rate — bottom right */}
+          <FloatingCard
+            className="-bottom-10 right-0 lg:-right-8 z-20 hidden lg:block"
+            delay={660}
+            from="right"
+          >
+            <div className="px-5 py-4 text-center">
+              <div className="text-[9px] text-[#9ca3af] font-medium uppercase tracking-wider mb-1">Savings rate</div>
+              <div className="text-3xl font-black text-[#1b76ff]">38%</div>
+              <div className="text-[9px] text-[#080808]/40 mt-0.5">of monthly income</div>
+            </div>
+          </FloatingCard>
+
+          {/* ── Central browser mockup ── */}
+          <div
+            className="relative z-10"
+            style={{
+              opacity: inView ? 1 : 0,
+              transform: inView ? "translateY(0) scale(1)" : "translateY(48px) scale(0.96)",
+              transition: "opacity 0.9s ease-out, transform 0.9s ease-out",
+              transitionDelay: "100ms",
+            }}
+          >
+            <BrowserFrame>
+              <DashboardPreview />
+            </BrowserFrame>
+          </div>
         </div>
       </div>
     </section>
