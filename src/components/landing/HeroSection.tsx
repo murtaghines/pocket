@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import pocketIcon from "@/assets/pocket-icon.png";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 
@@ -23,18 +22,25 @@ export function HeroSection() {
           className="font-black uppercase text-white leading-[0.8] tracking-tight"
           style={{ opacity: 0.14 }}
         >
-          {(["LIKE", "NEVER", "BEFORE"] as const).map((word, i) => (
-            <div
-              key={word}
-              className="will-change-transform"
-              style={{
-                fontSize: "clamp(4rem, 17vw, 16rem)",
-                transform: `translate3d(0, ${progress * (6 + i * 8)}px, 0)`,
-              }}
-            >
-              {word}
-            </div>
-          ))}
+          {/* LIKE NEVER on one line, BEFORE on the next */}
+          <div
+            className="will-change-transform"
+            style={{
+              fontSize: "clamp(4rem, 17vw, 16rem)",
+              transform: `translate3d(0, ${progress * 6}px, 0)`,
+            }}
+          >
+            LIKE NEVER
+          </div>
+          <div
+            className="will-change-transform"
+            style={{
+              fontSize: "clamp(4rem, 17vw, 16rem)",
+              transform: `translate3d(0, ${progress * 14}px, 0)`,
+            }}
+          >
+            BEFORE
+          </div>
         </div>
       </div>
 
@@ -107,17 +113,6 @@ export function HeroSection() {
         <p className="lg:hidden mt-6 text-white/75 text-base max-w-md leading-relaxed">
           Upload bank statements, auto-categorize every transaction and see your full financial picture.
         </p>
-
-        {/* CTA button */}
-        <div className="mt-10 lg:mt-12">
-          <Link
-            to="/auth"
-            className="inline-flex items-center gap-2 bg-white text-[#080808] font-semibold rounded-full px-7 py-4 text-base shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02]"
-          >
-            Get started for free
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
       </div>
     </section>
   );
