@@ -1,10 +1,25 @@
-import { Link } from "react-router-dom";
-import pocketIcon from "@/assets/pocket-icon.png";
+import { useState } from "react";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 
 export function HeroSection() {
   const { ref, progress } = useScrollProgress<HTMLElement>();
   const headlineY = progress * -60;
+
+  // Toggle state: 0 = Spend/Money, 1 = Save/Future
+  const [active, setActive] = useState(0);
+  const [word, setWord] = useState("Money");
+  const [wordOpacity, setWordOpacity] = useState(1);
+
+  const handleToggle = (next: 0 | 1) => {
+    if (next === active) return;
+    // Fade out → change word → fade in
+    setWordOpacity(0);
+    setTimeout(() => {
+      setActive(next);
+      setWord(next === 0 ? "Money" : "Future");
+      setWordOpacity(1);
+    }, 200);
+  };
 
   return (
     <section
@@ -13,7 +28,7 @@ export function HeroSection() {
       className="relative overflow-hidden flex flex-col"
       style={{ background: "#1b76ff", minHeight: "100vh" }}
     >
-      {/* Main content — top of section */}
+      {/* ── Main content ── */}
       <div
         className="container px-4 md:px-6 relative pt-24 lg:pt-32 pb-6"
         style={{ zIndex: 10 }}
@@ -29,7 +44,7 @@ export function HeroSection() {
           </p>
         </div>
 
-        {/* Headline + inline card */}
+        {/* Headline */}
         <div
           className="will-change-transform"
           style={{ transform: `translate3d(0, ${headlineY}px, 0)` }}
@@ -38,35 +53,69 @@ export function HeroSection() {
             className="font-black text-white tracking-tight uppercase"
             style={{ fontSize: "clamp(3rem, 10vw, 9.5rem)", lineHeight: 0.88 }}
           >
+            {/* Line 1 */}
             <span className="block">Track your</span>
-            <span className="flex items-center gap-5 lg:gap-7 flex-wrap lg:flex-nowrap">
-              <span>Money</span>
-              <Link
-                to="/auth"
-                className="inline-flex items-center gap-3 lg:gap-4 rounded-2xl p-3 lg:p-4 hover:bg-white/15 transition-colors duration-200 shrink-0"
+
+            {/* Line 2: word + toggle slider */}
+            <span className="flex items-center gap-5 lg:gap-6 flex-wrap lg:flex-nowrap mt-1">
+
+              {/* Animated headline word */}
+              <span
+                className="will-change-transform"
                 style={{
+                  opacity: wordOpacity,
+                  transition: "opacity 0.18s ease",
+                  display: "inline-block",
+                }}
+              >
+                {word}
+              </span>
+
+              {/* Toggle pill slider */}
+              <div
+                className="inline-flex items-center rounded-full shrink-0 relative cursor-pointer"
+                style={{
+                  background: "rgba(255,255,255,0.10)",
+                  border: "1px solid rgba(255,255,255,0.22)",
+                  backdropFilter: "blur(12px)",
+                  padding: "6px",
                   fontSize: "initial",
-                  lineHeight: "initial",
                   fontWeight: "initial",
                   textTransform: "none",
                   letterSpacing: "normal",
-                  background: "rgba(255,255,255,0.10)",
-                  border: "1px solid rgba(255,255,255,0.20)",
-                  backdropFilter: "blur(12px)",
+                  lineHeight: "initial",
+                  minWidth: "210px",
                 }}
               >
-                <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-white flex items-center justify-center shadow-lg shrink-0">
-                  <img src={pocketIcon} alt="Pocket" className="w-9 h-9 lg:w-10 lg:h-10" />
-                </div>
-                <div className="text-white">
-                  <div className="text-[9px] tracking-[0.24em] font-bold opacity-60 mb-1">FREE FOREVER</div>
-                  <div className="text-sm lg:text-base font-bold leading-tight opacity-95">
-                    Get started
-                    <br />
-                    in 30 seconds
-                  </div>
-                </div>
-              </Link>
+                {/* Sliding white pill */}
+                <div
+                  className="absolute rounded-full bg-white transition-all duration-300 ease-in-out"
+                  style={{
+                    height: "calc(100% - 12px)",
+                    width: "calc(50% - 3px)",
+                    top: "6px",
+                    left: active === 0 ? "6px" : "calc(50% - 3px)",
+                  }}
+                />
+
+                {/* Spend side */}
+                <button
+                  onClick={() => handleToggle(0)}
+                  className="relative z-10 w-1/2 text-center text-sm font-bold py-3 transition-colors duration-300 rounded-full"
+                  style={{ color: active === 0 ? "#1b76ff" : "rgba(255,255,255,0.5)" }}
+                >
+                  Spend
+                </button>
+
+                {/* Save side */}
+                <button
+                  onClick={() => handleToggle(1)}
+                  className="relative z-10 w-1/2 text-center text-sm font-bold py-3 transition-colors duration-300 rounded-full"
+                  style={{ color: active === 1 ? "#1b76ff" : "rgba(255,255,255,0.5)" }}
+                >
+                  Save
+                </button>
+              </div>
             </span>
           </h1>
         </div>
@@ -77,35 +126,37 @@ export function HeroSection() {
         </p>
       </div>
 
-      {/* Flexible spacer — pushes ghost text to bottom, shrinks proportionally */}
-      <div className="flex-1" style={{ minHeight: "1rem" }} />
+      {/* Flexible spacer — capped so ghost text stays close to content */}
+      <div className="flex-1" style={{ minHeight: "1rem", maxHeight: "2.5rem" }} />
 
-      {/* Ghost text — anchored at bottom of section, within the viewport */}
+      {/* ── Ghost text — same container padding as headline for left alignment ── */}
       <div
         className="overflow-hidden select-none pointer-events-none"
         style={{ zIndex: 0 }}
       >
-        <div
-          className="font-black uppercase text-white leading-[0.78] tracking-tight"
-          style={{ opacity: 0.14 }}
-        >
+        <div className="px-4 md:px-6">
           <div
-            className="will-change-transform"
-            style={{
-              fontSize: "clamp(4rem, 17vw, 16rem)",
-              transform: `translate3d(0, ${progress * 6}px, 0)`,
-            }}
+            className="font-black uppercase text-white tracking-tight"
+            style={{ opacity: 0.14, lineHeight: 0.78 }}
           >
-            LIKE NEVER
-          </div>
-          <div
-            className="will-change-transform"
-            style={{
-              fontSize: "clamp(4rem, 17vw, 16rem)",
-              transform: `translate3d(0, ${progress * 14}px, 0)`,
-            }}
-          >
-            BEFORE
+            <div
+              className="will-change-transform"
+              style={{
+                fontSize: "clamp(4rem, 17vw, 16rem)",
+                transform: `translate3d(0, ${progress * 6}px, 0)`,
+              }}
+            >
+              LIKE NEVER
+            </div>
+            <div
+              className="will-change-transform"
+              style={{
+                fontSize: "clamp(4rem, 17vw, 16rem)",
+                transform: `translate3d(0, ${progress * 14}px, 0)`,
+              }}
+            >
+              BEFORE
+            </div>
           </div>
         </div>
       </div>
