@@ -1,4 +1,4 @@
-import pocketIcon from "@/assets/pocket-icon.png";
+import pocketLogoWhite from "@/assets/pocket-logo-white.png";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 
 export function TransitionSection() {
@@ -67,10 +67,8 @@ export function TransitionSection() {
             />
           </svg>
 
-          {/* Pocket icon */}
-          <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center shadow-2xl">
-            <img src={pocketIcon} alt="Pocket" className="w-12 h-12" />
-          </div>
+          {/* Logo — bare white asterisk directly on blue */}
+          <img src={pocketLogoWhite} alt="Pocket" className="w-16 h-16" />
         </div>
 
         {/* Percentage counter */}
