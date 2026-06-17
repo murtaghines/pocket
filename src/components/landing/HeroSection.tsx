@@ -30,7 +30,7 @@ export function HeroSection() {
     >
       {/* ── Main content ── */}
       <div
-        className="container px-4 md:px-6 relative pt-24 lg:pt-32 pb-6"
+        className="container px-4 md:px-6 relative pt-20 lg:pt-24 pb-4"
         style={{ zIndex: 10 }}
       >
         {/* Top-right description */}
@@ -126,23 +126,24 @@ export function HeroSection() {
         </p>
       </div>
 
-      {/* Flexible spacer — capped so ghost text stays close to content */}
-      <div className="flex-1" style={{ minHeight: "1rem", maxHeight: "2.5rem" }} />
+      {/* Flexible spacer — tightly capped */}
+      <div className="flex-1" style={{ minHeight: "0.5rem", maxHeight: "1rem" }} />
 
-      {/* ── Ghost text — same container padding as headline for left alignment ── */}
+      {/* ── Ghost text — container px-4 md:px-6 matches headline left edge exactly ── */}
       <div
         className="overflow-hidden select-none pointer-events-none"
         style={{ zIndex: 0 }}
       >
-        <div className="px-4 md:px-6">
+        <div className="container px-4 md:px-6">
           <div
             className="font-black uppercase text-white tracking-tight"
-            style={{ opacity: 0.14, lineHeight: 0.78 }}
+            style={{ opacity: 0.14, lineHeight: 0.82 }}
           >
             <div
               className="will-change-transform"
               style={{
-                fontSize: "clamp(4rem, 17vw, 16rem)",
+                fontSize: "clamp(3rem, 13vw, 13rem)",
+                whiteSpace: "nowrap",
                 transform: `translate3d(0, ${progress * 6}px, 0)`,
               }}
             >
@@ -151,7 +152,8 @@ export function HeroSection() {
             <div
               className="will-change-transform"
               style={{
-                fontSize: "clamp(4rem, 17vw, 16rem)",
+                fontSize: "clamp(3rem, 13vw, 13rem)",
+                whiteSpace: "nowrap",
                 transform: `translate3d(0, ${progress * 14}px, 0)`,
               }}
             >
