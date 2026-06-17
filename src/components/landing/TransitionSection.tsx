@@ -9,7 +9,6 @@ export function TransitionSection() {
   const rotation = loadingProgress * 720;           // 2 full spins
   const scale    = 0.3 + loadingProgress * 0.9;    // 0.3 → 1.2  (grows as it spins)
   const opacity  = 0.4 + loadingProgress * 0.6;    // 0.4 → 1.0  (fades in)
-  const glow     = loadingProgress * 32;            // 0 → 32px white glow
 
   return (
     <section
@@ -28,7 +27,6 @@ export function TransitionSection() {
           style={{
             transform: `rotate(${rotation}deg) scale(${scale})`,
             opacity,
-            filter: `drop-shadow(0 0 ${glow}px rgba(255,255,255,0.45))`,
           }}
         />
       </div>
