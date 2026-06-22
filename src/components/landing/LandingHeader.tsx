@@ -34,11 +34,11 @@ export function LandingHeader() {
 
   const isDark = theme === "dark"; // dark = blue or black bg sections
 
-  // isologo-black = blue version (for light backgrounds)
+  // isologo-blue = blue version (for light/white backgrounds)
   // isologo-white = white version (for dark/blue backgrounds)
   const logoSrc = isDark
     ? "/logos/isologo-white.png"
-    : "/logos/isologo-black.png";
+    : "/logos/isologo-blue.png";
 
   // Buttons
   const loginText = isDark
