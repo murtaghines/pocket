@@ -41,8 +41,8 @@ function Statement({
       <div
         className="font-bold tabular-nums mb-8 transition-all duration-700"
         style={{
-          fontSize: "0.7rem",
-          letterSpacing: "0.22em",
+          fontSize: "1rem",
+          letterSpacing: "0.18em",
           color: "#1b76ff",
           opacity: inView ? 1 : 0,
           transform: inView ? "translateY(0)" : "translateY(20px)",
