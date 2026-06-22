@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import pocketLogoWhite from "@/assets/pocket-logo-white.png";
-import pocketLogo from "@/assets/pocket-logo.png";
 
 
 export function LandingHeader() {
@@ -36,8 +34,11 @@ export function LandingHeader() {
 
   const isDark = theme === "dark"; // dark = blue or black bg sections
 
-  const logoText = isDark ? "text-white" : "text-[#080808]";
-  const logoSrc = isDark ? pocketLogoWhite : pocketLogo;
+  // isologo-black = blue version (for light backgrounds)
+  // isologo-white = white version (for dark/blue backgrounds)
+  const logoSrc = isDark
+    ? "/logos/isologo-white.png"
+    : "/logos/isologo-black.png";
 
   // Buttons
   const loginText = isDark
@@ -51,16 +52,12 @@ export function LandingHeader() {
     <header className="fixed top-0 left-0 right-0 z-50 px-5 py-5 pointer-events-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo — no background, plain text + icon */}
-        <Link
-          to="/"
-          className={`pointer-events-auto inline-flex items-center gap-2.5 ${logoText} transition-colors duration-300`}
-        >
+        <Link to="/" className="pointer-events-auto inline-flex items-center">
           <img
             src={logoSrc}
             alt="pocket"
             className="h-7 w-auto transition-all duration-300"
           />
-          <span className="text-base font-black lowercase tracking-tight">pocket</span>
         </Link>
 
         {/* Right-side actions */}

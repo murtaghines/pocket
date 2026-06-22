@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import pocketLogoWhite from "@/assets/pocket-logo-white.png";
 
 export function LandingFooter() {
   return (
@@ -18,9 +17,8 @@ export function LandingFooter() {
       <div className="container px-6 relative z-10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5">
-            <img src={pocketLogoWhite} alt="pocket" className="w-7 h-7" />
-            <span className="text-lg font-black text-white lowercase tracking-tight">pocket</span>
+          <Link to="/" className="flex items-center">
+            <img src="/logos/isologo-white.png" alt="pocket" className="h-7 w-auto" />
           </Link>
 
           {/* Links */}
