@@ -54,8 +54,8 @@ function Statement({
 
       {/* Headline */}
       <h2
-        className="font-black text-white uppercase leading-[0.88] tracking-tight"
-        style={{ fontSize: "clamp(3.5rem, 10vw, 9.5rem)" }}
+        className="font-black text-[#080808] uppercase leading-[0.88] tracking-tight"
+        style={{ fontSize: "clamp(2.25rem, 6vw, 6rem)" }}
       >
         {headline.map((line, i) => (
           <span
@@ -78,7 +78,7 @@ function Statement({
         style={{
           fontSize: "clamp(0.95rem, 1.4vw, 1.15rem)",
           maxWidth: "36ch",
-          color: "rgba(255,255,255,0.42)",
+          color: "rgba(8,8,8,0.45)",
           opacity: inView ? 1 : 0,
           transform: inView ? "translateY(0)" : "translateY(24px)",
           transitionDelay: "280ms",
@@ -93,9 +93,9 @@ function Statement({
 export function AppShowcaseSection() {
   return (
     <section
-      data-nav-theme="dark"
+      data-nav-theme="light"
       style={{
-        background: "#080808",
+        background: "#ffffff",
         borderRadius: "2rem 2rem 0 0",
         position: "relative",
         zIndex: 1,
