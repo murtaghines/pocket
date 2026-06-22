@@ -2,7 +2,6 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { TransitionSection } from "@/components/landing/TransitionSection";
 import { AppShowcaseSection } from "@/components/landing/AppShowcaseSection";
-import { StatementSection } from "@/components/landing/StatementSection";
 import { ContactSection } from "@/components/landing/ContactSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -17,7 +16,6 @@ export default function Landing() {
         <TransitionSection />
         {/* White card slides up with rounded top corners */}
         <AppShowcaseSection />
-        <StatementSection />
         <ContactSection />
         <CTASection />
       </main>
