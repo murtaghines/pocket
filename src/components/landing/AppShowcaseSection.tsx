@@ -18,17 +18,17 @@ const STATEMENTS = [
   },
 ];
 
-const N         = STATEMENTS.length;
-const COOLDOWN  = 750;  // ms between step advances
-const SNAP_ZONE = 80;   // px — snap section into place when this close to the viewport top
+const N        = STATEMENTS.length;
+const COOLDOWN = 750; // ms between step advances
+const GRACE    = 600; // ms after unlock before re-snapping is allowed
 
 export function AppShowcaseSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [step, setStep] = useState(0);
   const stepRef  = useRef(0);
-  const locked   = useRef(false); // true while section owns the scroll
-  const cooldown = useRef(false); // true during step transition
-  const touchY   = useRef<number | null>(null);
+  const locked   = useRef(false);
+  const cooldown = useRef(false);
+  const grace    = useRef(false); // blocks re-snap right after exit
 
   useEffect(() => { stepRef.current = step; }, [step]);
 
@@ -41,65 +41,114 @@ export function AppShowcaseSection() {
       setTimeout(() => { cooldown.current = false; }, COOLDOWN);
     };
 
-    // Snap the section exactly to viewport top and lock it
-    const snapAndLock = () => {
-      const top = el.getBoundingClientRect().top;
-      if (top !== 0) window.scrollBy({ top });   // instant, no animation
-      locked.current = true;
-      startCooldown(); // absorb the momentum that brought us here
+    const snapTo = () => {
+      // scrollTo with exact integer px — eliminates sub-pixel drift
+      const exact = Math.round(el.getBoundingClientRect().top + window.scrollY);
+      window.scrollTo({ top: exact });
     };
 
-    // Core logic shared by wheel and touch
-    const handle = (dir: 1 | -1, prevent: () => void) => {
-      const top = el.getBoundingClientRect().top;
+    const unlock = () => {
+      locked.current = false;
+      grace.current  = true;
+      setTimeout(() => { grace.current = false; }, GRACE);
+    };
 
-      if (!locked.current) {
-        // Snap in when the section is within SNAP_ZONE of being fully visible
-        const entering =
-          (dir > 0 && top > 0 && top <= SNAP_ZONE) ||
-          (dir < 0 && top < 0 && top >= -SNAP_ZONE);
-        if (entering) { prevent(); snapAndLock(); }
+    let lastScrollY = window.scrollY;
+
+    // Scroll listener: snaps section into view when it enters the viewport.
+    // Fires AFTER the page moved, so rect.top is already up-to-date.
+    const onScroll = () => {
+      const currY = window.scrollY;
+      const dir   = currY >= lastScrollY ? 1 : -1;
+      lastScrollY = currY;
+
+      // While locked, keep section pinned exactly at the viewport top.
+      // This fixes any residual sub-pixel drift between scroll events.
+      if (locked.current) {
+        const drift = el.getBoundingClientRect().top;
+        if (Math.abs(drift) > 0.5) snapTo();
         return;
       }
 
-      // Section is locked — manage discrete steps
+      if (grace.current) return;
+
+      const top = el.getBoundingClientRect().top;
+      const vh  = window.innerHeight;
+
+      // Snap when section is partially inside the viewport and moving toward center
+      const entering =
+        (dir > 0 && top > 0 && top < vh) ||   // coming from below
+        (dir < 0 && top < 0 && top > -vh);    // coming from above
+
+      if (entering) {
+        // Reset step to match approach direction: 01 from below, 03 from above
+        const initial = dir > 0 ? 0 : N - 1;
+        stepRef.current = initial;
+        setStep(initial);
+        locked.current = true;
+        snapTo();
+        startCooldown();
+      }
+    };
+
+    // Wheel listener: advance steps one at a time while locked.
+    const onWheel = (e: WheelEvent) => {
+      if (!locked.current) return;
+
+      const dir: 1 | -1 = e.deltaY > 0 ? 1 : -1;
       const next = stepRef.current + dir;
 
       if (next < 0 || next >= N) {
-        // At boundary: unlock and let this scroll exit naturally
-        locked.current = false;
-        return; // don't prevent — outer page scrolls away
+        unlock(); // let this event scroll the outer page naturally
+        return;
       }
 
-      prevent();
+      e.preventDefault();
       if (!cooldown.current) {
         setStep(next);
         startCooldown();
       }
     };
 
-    const onWheel      = (e: WheelEvent)   => handle(e.deltaY > 0 ? 1 : -1, () => e.preventDefault());
-    const onTouchStart = (e: TouchEvent)   => { touchY.current = e.touches[0].clientY; };
-    const onTouchEnd   = ()                => { touchY.current = null; };
-    const onTouchMove  = (e: TouchEvent)   => {
-      if (touchY.current === null) return;
-      const dy = touchY.current - e.touches[0].clientY;
-      if (Math.abs(dy) < 30) return;
-      const dir: 1 | -1 = dy > 0 ? 1 : -1;
-      touchY.current = e.touches[0].clientY;
-      handle(dir, () => e.preventDefault());
+    // Touch support
+    let touchStartY = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
     };
 
+    const onTouchMove = (e: TouchEvent) => {
+      if (!locked.current) return;
+
+      const dy = touchStartY - e.touches[0].clientY;
+      if (Math.abs(dy) < 30) return;
+
+      const dir: 1 | -1 = dy > 0 ? 1 : -1;
+      touchStartY = e.touches[0].clientY;
+      const next = stepRef.current + dir;
+
+      if (next < 0 || next >= N) {
+        unlock();
+        return;
+      }
+
+      e.preventDefault();
+      if (!cooldown.current) {
+        setStep(next);
+        startCooldown();
+      }
+    };
+
+    window.addEventListener("scroll",     onScroll,     { passive: true  });
     window.addEventListener("wheel",      onWheel,      { passive: false });
     window.addEventListener("touchstart", onTouchStart, { passive: true  });
     window.addEventListener("touchmove",  onTouchMove,  { passive: false });
-    window.addEventListener("touchend",   onTouchEnd,   { passive: true  });
 
     return () => {
+      window.removeEventListener("scroll",     onScroll);
       window.removeEventListener("wheel",      onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove",  onTouchMove);
-      window.removeEventListener("touchend",   onTouchEnd);
     };
   }, []);
 
