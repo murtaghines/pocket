@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 const STATEMENTS = [
   {
     tag: "01",
@@ -17,8 +19,30 @@ const STATEMENTS = [
 ];
 
 export function AppShowcaseSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const innerRef   = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const inner   = innerRef.current;
+    if (!section || !inner) return;
+
+    const update = () => {
+      const rect = section.getBoundingClientRect();
+      // Only allow internal step scrolling once the section is fully in the viewport.
+      // Until then, keep overflow:hidden so outer-page scroll brings it fully into view.
+      // rect.top ≈ 0 means section top is flush with the viewport top.
+      inner.style.overflowY = Math.abs(rect.top) <= 5 ? "scroll" : "hidden";
+    };
+
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
   return (
     <section
+      ref={sectionRef}
       data-nav-theme="light"
       style={{
         background:   "#ffffff",
@@ -28,20 +52,15 @@ export function AppShowcaseSection() {
         height:       "100vh",
       }}
     >
-      {/*
-        Inner scroll container with mandatory snap.
-        The browser handles one-step-per-gesture natively — no JS needed.
-        At the first/last panel the scroll chains to the outer page
-        so the user can exit the section normally.
-      */}
       <div
+        ref={innerRef}
         className="[&::-webkit-scrollbar]:hidden"
         style={{
-          height:            "100%",
-          overflowY:         "scroll",
-          scrollSnapType:    "y mandatory",
-          scrollbarWidth:    "none",
-          msOverflowStyle:   "none",
+          height:          "100%",
+          overflowY:       "hidden",      // starts hidden; scroll listener enables when fully in view
+          scrollSnapType:  "y mandatory",
+          scrollbarWidth:  "none",
+          msOverflowStyle: "none",
         } as React.CSSProperties}
       >
         {STATEMENTS.map((stmt) => (
