@@ -19,47 +19,97 @@ const STATEMENTS = [
 ];
 
 const N = STATEMENTS.length;
-
-/**
- * localP: position of a statement within its own timeline
- *   < -0.5 → below viewport (invisible)
- *   -0.5→0 → ENTERING from below (100vh → 0)
- *    0→0.5 → RESTING at center (page feels static, user reads)
- *   0.5→1  → EXITING upward (0 → -100vh)
- *   > 1    → above viewport (invisible)
- *
- * The exit of statement i and entry of statement i+1 happen SIMULTANEOUSLY
- * because localP_{i+1} = localP_i - 1: when i starts exiting (localP=0.5),
- * i+1 starts entering (localP=-0.5). Both visible at the same time → push effect.
- */
-function getY(localP: number): number {
-  if (localP <= -0.5) return 100;
-  if (localP >= 1.0)  return -100;
-  if (localP < 0)     return -localP * 200;        // enter: 100vh → 0
-  if (localP < 0.5)   return 0;                    // rest
-  return -(localP - 0.5) * 200;                    // exit: 0 → -100vh
-}
+const COOLDOWN_MS = 700;
 
 export function AppShowcaseSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [p, setP] = useState(0);
+  const [step, setStep] = useState(0);
+  const stepRef   = useRef(0);
+  const cooldown  = useRef(false);
+  const touchY    = useRef<number | null>(null);
+
+  // Keep stepRef in sync so event-handler closures always read current step
+  useEffect(() => { stepRef.current = step; }, [step]);
 
   useEffect(() => {
-    let frame = 0;
-    const update = () => {
-      const el = sectionRef.current;
-      if (!el) return;
-      const rect        = el.getBoundingClientRect();
-      const vh          = window.innerHeight;
-      const stickyRange = el.offsetHeight - vh;
-      if (stickyRange <= 0) return;
-      setP(Math.min(1, Math.max(0, -rect.top / stickyRange)));
+    const el = sectionRef.current;
+    if (!el) return;
+
+    // Is section near/covering the viewport (within ±80px of being fully pinned)?
+    const isActive = () => {
+      const r = el.getBoundingClientRect();
+      return r.top <= 80 && r.top >= -80 && r.height >= window.innerHeight * 0.8;
     };
-    const onScroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(update); };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", update);
-    update();
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", update); };
+
+    // Is section snapped exactly to the viewport top?
+    const isSnapped = () => Math.abs(el.getBoundingClientRect().top) <= 2;
+
+    // Try to advance one step in direction dir.
+    // Returns true if the event was "consumed" (should be prevented), false if at boundary.
+    const advance = (dir: 1 | -1): boolean => {
+      const next = stepRef.current + dir;
+      if (next < 0 || next >= N) return false; // at boundary → let scroll exit
+      if (cooldown.current) return true;        // in cooldown → absorb but don't advance
+      cooldown.current = true;
+      setStep(next);
+      setTimeout(() => { cooldown.current = false; }, COOLDOWN_MS);
+      return true;
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (!isActive()) return;
+
+      const dir = e.deltaY > 0 ? 1 : -1;
+
+      // At boundary in this direction → let scroll pass through so page exits naturally
+      const atBoundary =
+        (dir === 1 && stepRef.current >= N - 1) ||
+        (dir === -1 && stepRef.current <= 0);
+      if (atBoundary) return;
+
+      e.preventDefault();
+
+      if (!isSnapped()) {
+        // Section drifted slightly → snap it to viewport first, advance on next event
+        window.scrollBy({ top: el.getBoundingClientRect().top });
+      } else {
+        advance(dir);
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchY.current = e.touches[0].clientY;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchY.current === null || !isActive()) return;
+      const dy = touchY.current - e.touches[0].clientY;
+      if (Math.abs(dy) < 40) return; // minimum swipe distance
+      const dir = dy > 0 ? 1 : -1;
+      touchY.current = e.touches[0].clientY; // reset for incremental swipes
+
+      const atBoundary =
+        (dir === 1 && stepRef.current >= N - 1) ||
+        (dir === -1 && stepRef.current <= 0);
+      if (atBoundary) return;
+
+      e.preventDefault();
+      if (isSnapped()) advance(dir);
+    };
+
+    const onTouchEnd = () => { touchY.current = null; };
+
+    window.addEventListener("wheel",      onWheel,      { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove",  onTouchMove,  { passive: false });
+    window.addEventListener("touchend",   onTouchEnd,   { passive: true });
+
+    return () => {
+      window.removeEventListener("wheel",      onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove",  onTouchMove);
+      window.removeEventListener("touchend",   onTouchEnd);
+    };
   }, []);
 
   return (
@@ -67,67 +117,59 @@ export function AppShowcaseSection() {
       ref={sectionRef}
       data-nav-theme="light"
       style={{
-        background: "#ffffff",
-        borderRadius: "2rem 2rem 0 0",
-        position: "relative",
-        zIndex: 1,
-        // 300vh → stickyRange = 200vh
-        // p timeline: [0,0.2] stmt0 rests · [0.2,0.4] 0 exits & 1 enters · [0.4,0.6] stmt1 rests · [0.6,0.8] 1 exits & 2 enters · [0.8,1] stmt2 rests
-        minHeight: "300vh",
+        background:    "#ffffff",
+        borderRadius:  "2rem 2rem 0 0",
+        position:      "relative",
+        zIndex:        1,
+        height:        "100vh",
+        overflow:      "hidden",
       }}
     >
-      <div
-        className="sticky top-0 h-screen overflow-hidden"
-        style={{ zIndex: 10 }}
-      >
-        {STATEMENTS.map((stmt, i) => {
-          // K = N - 0.5 = 2.5 ensures stmt 0 starts at rest (localP=0) when p=0,
-          // and stmt 2 finishes at rest (localP=0.5) when p=1.
-          const K      = N - 0.5;
-          const localP = p * K - i;
-          const yVh    = getY(localP);
+      {STATEMENTS.map((stmt, i) => {
+        // past → above (-100vh) · active → center (0) · future → below (+100vh)
+        const yVh = i < step ? -100 : i === step ? 0 : 100;
 
-          return (
+        return (
+          <div
+            key={stmt.tag}
+            className="absolute inset-0 flex flex-col justify-center"
+            style={{
+              transform:  `translateY(${yVh}vh)`,
+              transition: "transform 0.65s cubic-bezier(0.22, 1, 0.36, 1)",
+              willChange: "transform",
+              padding:    "0 clamp(2rem, 8vw, 9rem)",
+            }}
+          >
             <div
-              key={stmt.tag}
-              className="absolute inset-0 flex flex-col justify-center"
+              className="font-bold tabular-nums mb-8"
+              style={{ fontSize: "1rem", letterSpacing: "0.18em", color: "#1b76ff" }}
+            >
+              {stmt.tag}
+            </div>
+
+            <h2
+              className="font-black text-[#080808] uppercase leading-[0.88] tracking-tight"
+              style={{ fontSize: "clamp(2.25rem, 6vw, 6rem)" }}
+            >
+              {stmt.headline.map((line, li) => (
+                <span key={li} className="block">{line}</span>
+              ))}
+            </h2>
+
+            <p
               style={{
-                transform:   `translateY(${yVh}vh)`,
-                willChange:  "transform",
-                padding:     "0 clamp(2rem, 8vw, 9rem)",
+                marginTop:  "2.5rem",
+                fontSize:   "clamp(0.95rem, 1.4vw, 1.15rem)",
+                maxWidth:   "36ch",
+                color:      "rgba(8,8,8,0.45)",
+                lineHeight: 1.65,
               }}
             >
-              <div
-                className="font-bold tabular-nums mb-8"
-                style={{ fontSize: "1rem", letterSpacing: "0.18em", color: "#1b76ff" }}
-              >
-                {stmt.tag}
-              </div>
-
-              <h2
-                className="font-black text-[#080808] uppercase leading-[0.88] tracking-tight"
-                style={{ fontSize: "clamp(2.25rem, 6vw, 6rem)" }}
-              >
-                {stmt.headline.map((line, li) => (
-                  <span key={li} className="block">{line}</span>
-                ))}
-              </h2>
-
-              <p
-                style={{
-                  marginTop: "2.5rem",
-                  fontSize:  "clamp(0.95rem, 1.4vw, 1.15rem)",
-                  maxWidth:  "36ch",
-                  color:     "rgba(8,8,8,0.45)",
-                  lineHeight: 1.65,
-                }}
-              >
-                {stmt.body}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+              {stmt.body}
+            </p>
+          </div>
+        );
+      })}
     </section>
   );
 }
