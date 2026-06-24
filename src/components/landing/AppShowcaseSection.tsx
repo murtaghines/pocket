@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const STATEMENTS = [
   {
@@ -18,88 +18,125 @@ const STATEMENTS = [
   },
 ];
 
-const N = STATEMENTS.length;
+const N        = STATEMENTS.length;
+const COOLDOWN = 700; // ms — minimum time between step changes
+const GRACE    = 500; // ms — blocks re-lock right after exit
 
 export function AppShowcaseSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const innerRef   = useRef<HTMLDivElement>(null);
+  const [step, setStep] = useState(0);
+  const stepRef  = useRef(0);
+  const locked   = useRef(false);
+  const cooldown = useRef(false);
+  const grace    = useRef(false);
+
+  useEffect(() => { stepRef.current = step; }, [step]);
 
   useEffect(() => {
-    const section = sectionRef.current;
-    const inner   = innerRef.current;
-    if (!section || !inner) return;
+    const el = sectionRef.current;
+    if (!el) return;
 
-    let active     = false; // inner scroll enabled
-    let grace      = false; // blocks re-enable right after exit
-    let graceTimer = 0;
-    let exitTimer  = 0;
+    let lastScrollY = window.scrollY;
+    let prevTop     = el.getBoundingClientRect().top;
+    let graceTimer  = 0;
 
-    const startGrace = () => {
-      clearTimeout(graceTimer);
-      grace = true;
-      graceTimer = window.setTimeout(() => { grace = false; }, 400);
+    const startCooldown = () => {
+      cooldown.current = true;
+      setTimeout(() => { cooldown.current = false; }, COOLDOWN);
     };
 
-    const enable = () => {
-      if (active) return;
-      active = true;
-      inner.scrollTop = 0;            // always start at step 01
-      inner.style.overflowY = "scroll";
-      // Correct any sub-pixel offset so section fills the viewport exactly
-      const top = section.getBoundingClientRect().top;
+    const startGrace = () => {
+      grace.current = true;
+      clearTimeout(graceTimer);
+      graceTimer = window.setTimeout(() => { grace.current = false; }, GRACE);
+    };
+
+    // Snap section to exact viewport top (corrects sub-pixel drift)
+    const snapToTop = () => {
+      const top = el.getBoundingClientRect().top;
       if (Math.abs(top) > 0.5) {
         window.scrollTo({ top: Math.round(top + window.scrollY) });
       }
     };
 
-    const disable = () => {
-      if (!active) return;
-      active = false;
-      clearTimeout(exitTimer);
-      exitTimer = 0;
-      inner.style.overflowY = "hidden";
-      startGrace();
-      // Reset to step 01 after the section has time to leave the viewport
-      setTimeout(() => { inner.scrollTop = 0; }, 900);
+    const lock = (initialStep: number) => {
+      if (locked.current) return;
+      locked.current = true;
+      stepRef.current = initialStep;
+      setStep(initialStep);
+      snapToTop();
+      startCooldown(); // absorb arrival momentum
     };
 
-    // ── Window scroll: enable when section arrives at the viewport top ────────
-    const onWindowScroll = () => {
-      if (active || grace) return;
-      const top = section.getBoundingClientRect().top;
-      // Activate only once the section is within ±8px of the top —
-      // this lets it slide in naturally before we take control.
-      if (top > -8 && top < 8) enable();
+    const unlock = () => {
+      locked.current = false;
+      startGrace(); // prevent immediate re-lock during exit momentum
     };
 
-    // ── Wheel: detect boundary → schedule exit ────────────────────────────────
-    const onWheel = (e: WheelEvent) => {
-      if (!active) return;
-      const dir     = e.deltaY > 0 ? 1 : -1;
-      const vh      = window.innerHeight;
-      const atLast  = inner.scrollTop >= (N - 1) * vh - 60;
-      const atFirst = inner.scrollTop <= 60;
+    // ── Scroll listener: detects section entering the viewport ────────────────
+    // Uses "crossed the threshold" logic so fast swipes can't skip the section.
+    const onScroll = () => {
+      const currY = window.scrollY;
+      const dir   = currY >= lastScrollY ? 1 : -1;
+      lastScrollY = currY;
 
-      if ((dir > 0 && atLast) || (dir < 0 && atFirst)) {
-        // At a boundary: schedule exit so CSS snap can finish first
-        if (!exitTimer) {
-          exitTimer = window.setTimeout(disable, 550);
-        }
-      } else {
-        // User scrolled away from the boundary → cancel pending exit
-        clearTimeout(exitTimer);
-        exitTimer = 0;
+      if (locked.current) {
+        // While locked: correct any drift so section stays pinned at top
+        const drift = el.getBoundingClientRect().top;
+        if (Math.abs(drift) > 0.5) snapToTop();
+        return;
+      }
+
+      if (grace.current) return;
+
+      const top = el.getBoundingClientRect().top;
+
+      // "In zone": section is within ±40px of the viewport top
+      const inZone = Math.abs(top) < 40;
+
+      // "Crossed": one event jumped over the zone entirely (very fast scroll)
+      // prevTop and top straddle the ±40 threshold in the scroll direction
+      const crossed =
+        (dir > 0 && prevTop > 40  && top <= 40)  || // going down, section passed through
+        (dir < 0 && prevTop < -40 && top >= -40);   // going up, section passed through
+
+      prevTop = top;
+
+      if (inZone || crossed) {
+        // Start at step 01 when approaching from below, step 03 from above
+        lock(dir < 0 ? N - 1 : 0);
       }
     };
 
-    window.addEventListener("scroll", onWindowScroll, { passive: true });
-    window.addEventListener("wheel",  onWheel,        { passive: true });
+    // ── Wheel listener: advance steps while locked ────────────────────────────
+    const onWheel = (e: WheelEvent) => {
+      if (!locked.current) return;
+
+      const dir: 1 | -1 = e.deltaY > 0 ? 1 : -1;
+      const next = stepRef.current + dir;
+
+      if (next < 0 || next >= N) {
+        // At boundary: release lock and let the page scroll naturally
+        unlock();
+        return; // don't prevent — outer page handles the exit scroll
+      }
+
+      // Absorb this event so the outer page doesn't also scroll
+      e.preventDefault();
+
+      if (!cooldown.current) {
+        setStep(next);
+        startCooldown();
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true  });
+    window.addEventListener("wheel",  onWheel,  { passive: false });
 
     return () => {
-      window.removeEventListener("scroll", onWindowScroll);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel",  onWheel);
       clearTimeout(graceTimer);
-      clearTimeout(exitTimer);
     };
   }, []);
 
@@ -116,31 +153,19 @@ export function AppShowcaseSection() {
         overflow:     "hidden",
       }}
     >
-      {/* Inner scroll container — hidden until section is fully in view */}
-      <div
-        ref={innerRef}
-        className="[&::-webkit-scrollbar]:hidden"
-        style={{
-          height:             "100%",
-          overflowY:          "hidden",
-          scrollSnapType:     "y mandatory",
-          overscrollBehavior: "contain", // prevents chaining to outer page
-          scrollbarWidth:     "none",
-          msOverflowStyle:    "none",
-        } as React.CSSProperties}
-      >
-        {STATEMENTS.map((stmt) => (
+      {STATEMENTS.map((stmt, i) => {
+        // Steps below current sit at +100vh, current at 0, steps above at -100vh
+        const yVh = i < step ? -100 : i === step ? 0 : 100;
+        return (
           <div
             key={stmt.tag}
+            className="absolute inset-0 flex flex-col justify-center"
             style={{
-              height:          "100vh",
-              scrollSnapAlign: "start",
-              scrollSnapStop:  "always", // one step per gesture — no skipping
-              display:         "flex",
-              flexDirection:   "column",
-              justifyContent:  "center",
-              padding:         "0 clamp(2rem, 8vw, 9rem)",
-            } as React.CSSProperties}
+              transform:  `translateY(${yVh}vh)`,
+              transition: "transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+              willChange: "transform",
+              padding:    "0 clamp(2rem, 8vw, 9rem)",
+            }}
           >
             <div
               className="font-bold tabular-nums mb-8"
@@ -170,8 +195,8 @@ export function AppShowcaseSection() {
               {stmt.body}
             </p>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </section>
   );
 }
