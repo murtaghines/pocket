@@ -127,11 +127,11 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       {inv.type === 'deposit' ? (
-                        <ArrowUpCircle className="w-4 h-4 text-green-500" />
+                        <ArrowUpCircle className="w-4 h-4 text-success" />
                       ) : (
-                        <ArrowDownCircle className="w-4 h-4 text-red-500" />
+                        <ArrowDownCircle className="w-4 h-4 text-destructive" />
                       )}
-                      <span className={inv.type === 'deposit' ? 'text-green-600' : 'text-red-600'}>
+                      <span className={`tabular-nums ${inv.type === 'deposit' ? 'text-success' : 'text-destructive'}`}>
                         {inv.type === 'deposit' ? '+' : '-'}{formatCurrency(Math.abs(inv.amount))}
                       </span>
                     </div>

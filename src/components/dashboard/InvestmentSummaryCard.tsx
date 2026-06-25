@@ -26,7 +26,7 @@ export function InvestmentSummaryCard() {
 
         {hasData ? (
           <>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight text-primary">
+            <p className="text-2xl md:text-3xl font-bold tabular-nums tracking-tight text-primary">
               {formatCurrency(totalInvestedThisMonth)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -34,7 +34,7 @@ export function InvestmentSummaryCard() {
             </p>
             {totalCurrentValue > 0 && (
               <div className="flex items-center gap-1.5 mt-3">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success font-medium tabular-nums">
                   {t('investments.totalValue')}: {formatCurrency(totalCurrentValue)}
                 </span>
               </div>

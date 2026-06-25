@@ -13,7 +13,16 @@ interface InvestmentsByPlatformProps {
   data: Record<string, PlatformData>;
 }
 
-const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#84CC16'];
+const COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--category-investment))',
+  'hsl(var(--category-to-joint-account))',
+  'hsl(var(--category-salary))',
+  'hsl(var(--category-freelance))',
+  'hsl(var(--category-refunds))',
+  'hsl(var(--category-education))',
+  'hsl(var(--category-rents))',
+];
 
 export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
   const { t } = useTranslation('investments');

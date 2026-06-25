@@ -75,7 +75,7 @@ export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityC
           </p>
         )}
         {status === 'available' && (
-          <p className="flex items-center gap-2 text-sm text-emerald-600">
+          <p className="flex items-center gap-2 text-sm text-success">
             <CheckCircle2 className="w-4 h-4" />
             Email available
           </p>

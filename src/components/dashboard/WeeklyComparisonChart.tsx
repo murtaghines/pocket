@@ -116,8 +116,8 @@ export function WeeklyComparisonChart() {
                   <Cell 
                     key={`cell-${index}`}
                     fill={entry.isToday && entry.amount > 0
-                      ? 'hsl(242, 100%, 55%)' 
-                      : entry.amount > 0 
+                      ? 'hsl(var(--primary))'
+                      : entry.amount > 0
                         ? 'hsl(var(--muted-foreground) / 0.25)' 
                         : 'hsl(var(--muted))'
                     }

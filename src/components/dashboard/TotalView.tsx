@@ -231,8 +231,8 @@ export function TotalView({ monthlyData }: TotalViewProps) {
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={formatMonthLabel} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={45} />
                 <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="income" name={t('stats.income')} fill="hsl(160, 84%, 39%)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="expenses" name={t('stats.expenses')} fill="hsl(0, 72%, 51%)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="income" name={t('stats.income')} fill="hsl(var(--success))" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="expenses" name={t('stats.expenses')} fill="hsl(var(--destructive))" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -63,8 +63,8 @@ export function BalanceChart({ data }: BalanceChartProps) {
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="balanceGradientModern" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(242, 100%, 55%)" stopOpacity={0.2}/>
-                  <stop offset="100%" stopColor="hsl(242, 100%, 55%)" stopOpacity={0}/>
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <XAxis 
@@ -87,11 +87,11 @@ export function BalanceChart({ data }: BalanceChartProps) {
               <Area 
                 type="monotone" 
                 dataKey="balance" 
-                stroke="hsl(242, 100%, 55%)" 
+                stroke="hsl(var(--primary))" 
                 strokeWidth={2.5}
                 fill="url(#balanceGradientModern)"
-                dot={{ fill: 'hsl(242, 100%, 55%)', strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, fill: 'hsl(242, 100%, 55%)', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 3 }}
+                activeDot={{ r: 5, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
               />
             </AreaChart>
           </ResponsiveContainer>

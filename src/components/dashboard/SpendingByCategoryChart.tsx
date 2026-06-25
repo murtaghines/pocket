@@ -57,7 +57,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
                   <span className="text-sm font-medium text-foreground">
                     {entry.name}
                   </span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm tabular-nums text-muted-foreground">
                     {formatCurrency(entry.value)} ({percentage}%)
                   </span>
                 </div>

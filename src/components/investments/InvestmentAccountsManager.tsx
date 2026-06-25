@@ -137,7 +137,7 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="font-semibold text-green-600">
+                    <p className="font-semibold tabular-nums text-success">
                       {formatCurrency(account.current_value)}
                     </p>
                     <p className="text-xs text-muted-foreground">

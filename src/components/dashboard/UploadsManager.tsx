@@ -36,10 +36,10 @@ function UploadItem({ upload, onDelete, isDeleting, formatDate }: {
   formatDate: (d: string) => string;
 }) {
   const statusColors: Record<string, string> = {
-    pending: "bg-yellow-500/20 text-yellow-600",
-    processing: "bg-blue-500/20 text-blue-600",
-    completed: "bg-green-500/20 text-green-600",
-    failed: "bg-red-500/20 text-red-600",
+    pending:    "bg-muted text-muted-foreground",
+    processing: "bg-primary/15 text-primary",
+    completed:  "bg-success/15 text-success",
+    failed:     "bg-destructive/15 text-destructive",
   };
 
   const statusLabels: Record<string, string> = {

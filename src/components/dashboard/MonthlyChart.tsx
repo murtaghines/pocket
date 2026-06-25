@@ -81,12 +81,12 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                 <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="incomeGradientModern" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(160, 84%, 39%)" stopOpacity={0.3}/>
-                      <stop offset="100%" stopColor="hsl(160, 84%, 39%)" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.3}/>
+                      <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="expenseGradientModern" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0.3}/>
-                      <stop offset="100%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
+                      <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <XAxis 
@@ -109,7 +109,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                     type="monotone" 
                     dataKey="income" 
                     name={t('stats.income')}
-                    stroke="hsl(160, 84%, 39%)" 
+                    stroke="hsl(var(--success))" 
                     strokeWidth={2}
                     fill="url(#incomeGradientModern)"
                   />
@@ -117,7 +117,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                     type="monotone" 
                     dataKey="expenses" 
                     name={t('stats.expenses')}
-                    stroke="hsl(0, 72%, 51%)" 
+                    stroke="hsl(var(--destructive))" 
                     strokeWidth={2}
                     fill="url(#expenseGradientModern)"
                   />
@@ -149,13 +149,13 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   <Bar 
                     dataKey="income" 
                     name={t('stats.income')}
-                    fill="hsl(160, 84%, 39%)" 
+                    fill="hsl(var(--success))" 
                     radius={[6, 6, 0, 0]}
                   />
                   <Bar 
                     dataKey="expenses" 
                     name={t('stats.expenses')}
-                    fill="hsl(0, 72%, 51%)" 
+                    fill="hsl(var(--destructive))" 
                     radius={[6, 6, 0, 0]}
                   />
                 </BarChart>

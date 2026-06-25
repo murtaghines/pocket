@@ -14,13 +14,13 @@ interface InvestmentsByAssetTypeProps {
 }
 
 const ASSET_COLORS: Record<string, string> = {
-  'stocks': '#3B82F6',
-  'etf': '#8B5CF6',
-  'bonds': '#10B981',
-  'commodities': '#F59E0B',
-  'crypto': '#EF4444',
-  'savings': '#06B6D4',
-  'Unclassified': '#6B7280',
+  'stocks':       'hsl(var(--category-investment))',
+  'etf':          'hsl(var(--category-to-joint-account))',
+  'bonds':        'hsl(var(--category-education))',
+  'commodities':  'hsl(var(--category-salary))',
+  'crypto':       'hsl(var(--category-health))',
+  'savings':      'hsl(var(--category-refunds))',
+  'Unclassified': 'hsl(var(--category-other-expense))',
 };
 
 export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
