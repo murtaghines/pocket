@@ -7,12 +7,13 @@ export function LandingFooter() {
       style={{ background: "#1b76ff" }}
     >
       {/* Ghost brand mark */}
-      <div
-        className="absolute right-[-2rem] bottom-[-2rem] pointer-events-none select-none font-black uppercase text-white/[0.06] leading-none tracking-tight"
-        style={{ fontSize: "clamp(5rem, 18vw, 15rem)" }}
-      >
-        ✦
-      </div>
+      <img
+        src="/logos/isologo-white.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute right-[-2rem] bottom-[-2rem] pointer-events-none select-none"
+        style={{ width: "clamp(5rem, 18vw, 15rem)", opacity: 0.06 }}
+      />
 
       <div className="container px-6 relative z-10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">

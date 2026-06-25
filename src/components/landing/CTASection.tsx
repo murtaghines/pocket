@@ -24,12 +24,12 @@ export function CTASection() {
         </p>
 
         <h2
-          className="font-black text-white uppercase leading-[0.88] tracking-tight"
+          className="font-heading font-bold text-white uppercase leading-[0.88] tracking-tight"
           style={{ fontSize: "clamp(3rem, 13vw, 11rem)" }}
         >
           Start with
           <br />
-          <span style={{ color: "#FFBB03" }}>pocket</span>
+          <span style={{ color: "#FFD027" }}>pocket</span>
         </h2>
 
         <div className="mt-12 flex justify-center">

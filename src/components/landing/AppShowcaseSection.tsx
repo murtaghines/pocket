@@ -175,7 +175,7 @@ export function AppShowcaseSection() {
             </div>
 
             <h2
-              className="font-black text-[#080808] uppercase leading-[0.88] tracking-tight"
+              className="font-heading font-bold text-[#080808] uppercase leading-[0.88] tracking-tight"
               style={{ fontSize: "clamp(2.25rem, 6vw, 6rem)" }}
             >
               {stmt.headline.map((line, li) => (

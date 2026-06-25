@@ -73,8 +73,8 @@ function UploadVisual() {
 
       {/* Progress / result rows */}
       {[
-        { name: "Enero_2025.pdf", status: "Categorized", color: "#16a34a" },
-        { name: "Febrero_2025.pdf", status: "Categorized", color: "#16a34a" },
+        { name: "Enero_2025.pdf", status: "Categorized", color: "hsl(var(--success))" },
+        { name: "Febrero_2025.pdf", status: "Categorized", color: "hsl(var(--success))" },
         { name: "Marzo_2025.pdf", status: "Processing...", color: "#1b76ff" },
       ].map((f) => (
         <div key={f.name} className="bg-white rounded-xl px-4 py-2.5 flex items-center justify-between shadow-sm">
@@ -121,7 +121,7 @@ function InvestmentsVisual() {
       <div className="bg-white/5 rounded-2xl p-4">
         <div className="text-[9px] text-white/40 mb-1 font-medium uppercase tracking-wider">Portfolio</div>
         <div className="text-2xl font-black text-white">€24,800</div>
-        <div className="text-[10px] text-[#16a34a] font-semibold mt-0.5">↑ +4.2% this year</div>
+        <div className="text-[10px] font-semibold mt-0.5" style={{ color: "hsl(var(--success))" }}>↑ +4.2% this year</div>
 
         <div className="flex items-end gap-0.5 h-10 mt-3">
           {bars.map((h, i) => (
@@ -141,7 +141,7 @@ function InvestmentsVisual() {
         <div key={a.name} className="bg-white/5 rounded-xl px-4 py-2.5 flex items-center justify-between">
           <div className="text-[10px] font-semibold text-white/80">{a.name}</div>
           <div>
-            <div className="text-[9px] font-bold text-[#16a34a] text-right">{a.pct}</div>
+            <div className="text-[9px] font-bold text-right" style={{ color: "hsl(var(--success))" }}>{a.pct}</div>
             <div className="text-[10px] font-black text-white">{a.val}</div>
           </div>
         </div>
@@ -160,7 +160,7 @@ export function ContactSection() {
       <div className="container px-6">
         {/* Section headline */}
         <h2
-          className="font-black text-white uppercase leading-[0.9] tracking-tight mb-16 lg:mb-20"
+          className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-16 lg:mb-20"
           style={{ fontSize: "clamp(2.5rem, 7vw, 6.5rem)" }}
         >
           Built for<br />

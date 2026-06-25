@@ -51,7 +51,7 @@ export function HeroSection() {
           style={{ transform: `translate3d(0, ${headlineY}px, 0)` }}
         >
           <h1
-            className="font-black text-white tracking-tight uppercase"
+            className="font-heading font-bold text-white tracking-tight uppercase"
             style={{ fontSize: "clamp(3rem, 10vw, 9.5rem)", lineHeight: 0.88 }}
           >
             <span className="block">Track your</span>

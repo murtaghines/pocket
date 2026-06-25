@@ -17,6 +17,7 @@ export default {
         sans: ['Inter', 'sans-serif'],
         display: ['Inter', 'sans-serif'],
         nav: ['Inter', 'sans-serif'],
+        heading: ['Quicksand', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
