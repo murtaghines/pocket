@@ -57,13 +57,13 @@ function AuthBottomSections() {
   return (
     <>
       {/* Divider line */}
-      <div style={{ background: '#479bd3' }} className="w-full h-px">
+      <div style={{ background: '#1b76ff' }} className="w-full h-px">
         <div className="container max-w-7xl mx-auto px-6 md:px-12">
           <div className="h-px bg-white/20" />
         </div>
       </div>
       {/* Pre-footer CTA — solid blue */}
-      <section className="relative overflow-hidden" style={{ background: '#479bd3' }}>
+      <section className="relative overflow-hidden" style={{ background: '#1b76ff' }}>
         {/* Decorative cloud */}
         <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-10 pointer-events-none">
           <img src={pocketIcon} alt="" className="w-full h-full object-contain" />
@@ -80,7 +80,7 @@ function AuthBottomSections() {
             </p>
             <Link
               to="/auth"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-[#479bd3] transition-colors"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-[#1b76ff] transition-colors"
             >
               <span>Get started free</span>
               <ArrowRight className="w-4 h-4" />

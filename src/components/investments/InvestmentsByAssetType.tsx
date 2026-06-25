@@ -47,7 +47,7 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
       value: values.net,
       deposits: values.deposits,
       withdrawals: values.withdrawals,
-      color: ASSET_COLORS[type] || '#6B7280',
+      color: ASSET_COLORS[type] || 'hsl(var(--category-other-expense))',
     }))
     .filter(d => d.value > 0)
     .sort((a, b) => b.value - a.value);

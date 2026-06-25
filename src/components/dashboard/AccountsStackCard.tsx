@@ -256,11 +256,11 @@ export function AccountsStackCard({
                 style={{ marginTop, zIndex: totalCards - idx, minHeight: FRONT_HEIGHT }}
               >
                 <div className="absolute bottom-0 left-0 right-0 px-5 pb-2 flex items-center justify-between">
-                  <span className="text-sm font-medium text-[#1a1a1a] inline-flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground inline-flex items-center gap-2">
                     <LayoutList className="w-4 h-4" />
                     {t("charts.viewAllAccounts", { defaultValue: "View all" })} ({orderedAccounts.length})
                   </span>
-                  <span className="text-xs text-[#1a1a1a]/60">+{remaining}</span>
+                  <span className="text-xs text-foreground/60">+{remaining}</span>
                 </div>
               </button>
             );
