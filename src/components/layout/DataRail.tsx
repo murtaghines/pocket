@@ -224,10 +224,10 @@ function NavigationGroups({
                     aria-label={group.label}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "relative col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                      "relative col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] transition-colors",
                       active
-                        ? "text-primary-foreground bg-primary-foreground/10"
-                        : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
+                        ? "text-primary-foreground bg-primary-foreground/[0.22]"
+                        : "text-primary-foreground/[0.52] hover:text-primary-foreground hover:bg-primary-foreground/[0.22]",
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
@@ -247,10 +247,10 @@ function NavigationGroups({
                 <Link
                   to={target}
                   className={cn(
-                    "min-w-0 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors",
+                    "min-w-0 rounded-md px-2 py-1.5 text-sm transition-colors",
                     active
-                      ? "text-primary-foreground"
-                      : "text-primary-foreground/85 hover:text-primary-foreground",
+                      ? "text-primary-foreground font-semibold"
+                      : "text-primary-foreground/[0.52] font-normal hover:text-primary-foreground",
                   )}
                 >
                   <span className="block truncate">{group.label}</span>
@@ -269,8 +269,8 @@ function NavigationGroups({
                       className={cn(
                         "flex h-8 items-center rounded-md px-0 text-sm transition-colors",
                         childActive
-                          ? "bg-primary-foreground/10 text-primary-foreground font-medium"
-                          : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
+                          ? "bg-primary-foreground/[0.22] text-primary-foreground font-medium"
+                          : "text-primary-foreground/[0.52] hover:text-primary-foreground hover:bg-primary-foreground/[0.22]",
                       )}
                     >
                       <span className="truncate">{child.label}</span>
@@ -324,7 +324,7 @@ function SectionLabel({ expanded, children }: { expanded: boolean; children: Rea
   return (
     <div
       className={cn(
-        "mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary-foreground/50",
+        "mb-3 text-[9px] font-bold uppercase tracking-[0.14em] text-primary-foreground/[0.45]",
         expanded ? "px-2" : "text-center",
       )}
     >
@@ -361,10 +361,10 @@ function WorkspaceLinks({
                     to={item.to}
                     aria-label={item.label}
                     className={cn(
-                      "col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                      "col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] transition-colors",
                       active
-                        ? "text-primary-foreground bg-primary-foreground/10"
-                        : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10",
+                        ? "text-primary-foreground bg-primary-foreground/[0.22]"
+                        : "text-primary-foreground/[0.52] hover:text-primary-foreground hover:bg-primary-foreground/[0.22]",
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
@@ -383,8 +383,8 @@ function WorkspaceLinks({
                   className={cn(
                     "min-w-0 rounded-md px-2 py-1.5 text-sm transition-colors",
                     active
-                      ? "bg-primary-foreground/10 text-primary-foreground font-medium"
-                      : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/5",
+                      ? "bg-primary-foreground/[0.22] text-primary-foreground font-semibold"
+                      : "text-primary-foreground/[0.52] font-normal hover:text-primary-foreground hover:bg-primary-foreground/[0.22]",
                   )}
                 >
                   <span className="block truncate">{item.label}</span>

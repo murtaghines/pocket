@@ -57,7 +57,7 @@ export function SavingsRateGaugeCard({
 
         <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-1">
-            <span className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+            <span className="font-display text-2xl font-bold tabular-nums tracking-tight text-foreground md:text-3xl">
               {currentRate}
             </span>
             <span className="text-lg font-semibold text-muted-foreground/60 md:text-xl">

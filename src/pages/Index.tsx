@@ -214,7 +214,7 @@ export default function Index() {
                 {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
               </h1>
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm tabular-nums text-muted-foreground mt-1">
                   {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
                 </p>
               )}
