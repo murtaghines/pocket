@@ -43,7 +43,7 @@ export function HeroSection() {
       {/* Bottom-left anchored text block */}
       <div
         className="absolute bottom-0 left-0 right-0 overflow-hidden"
-        style={{ zIndex: 10 }}
+        style={{ zIndex: 10, paddingBottom: "clamp(1.5rem, 4vh, 3rem)" }}
       >
         {/* Headline — scroll parallax */}
         <div
@@ -51,8 +51,8 @@ export function HeroSection() {
           style={{ transform: `translate3d(0, ${headlineY}px, 0)` }}
         >
           <h1
-            className="font-heading font-bold text-white tracking-tight uppercase"
-            style={{ fontSize: "clamp(3rem, 10vw, 9.5rem)", lineHeight: 0.88 }}
+            className="font-heading font-bold text-white uppercase"
+            style={{ fontSize: "clamp(3.5rem, 11.5vw, 11rem)", lineHeight: 0.88, letterSpacing: "-0.01em" }}
           >
             <span className="block">Track your</span>
 
@@ -127,13 +127,13 @@ export function HeroSection() {
 
         {/* Ghost text — no horizontal padding, flush left, sits at very bottom */}
         <div
-          className="select-none pointer-events-none font-black uppercase text-white tracking-tight"
-          style={{ opacity: 0.14, lineHeight: 0.82 }}
+          className="select-none pointer-events-none font-black uppercase text-white"
+          style={{ opacity: 0.14, lineHeight: 0.82, letterSpacing: "-0.01em" }}
         >
           <div
             className="will-change-transform"
             style={{
-              fontSize: "clamp(3rem, 13vw, 13rem)",
+              fontSize: "clamp(3.5rem, 15vw, 15rem)",
               whiteSpace: "nowrap",
               transform: `translate3d(0, ${progress * 6}px, 0)`,
             }}
@@ -143,7 +143,7 @@ export function HeroSection() {
           <div
             className="will-change-transform"
             style={{
-              fontSize: "clamp(3rem, 13vw, 13rem)",
+              fontSize: "clamp(3.5rem, 15vw, 15rem)",
               whiteSpace: "nowrap",
               transform: `translate3d(0, ${progress * 14}px, 0)`,
             }}
