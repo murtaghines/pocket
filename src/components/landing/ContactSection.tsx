@@ -135,11 +135,10 @@ const STACK = [
 
 /* ── Section ─────────────────────────────────────────────────────────────── */
 export function ContactSection() {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
+  const outerRef  = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
+  const hasOpened = useRef(false); // once opened, cards never re-stack on scroll-up
 
-  // Initialise isDesktop synchronously — no flash of progress=1
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
   );
@@ -151,25 +150,21 @@ export function ContactSection() {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Once cards have opened, never close them on scroll-up
-  const hasOpened = useRef(false);
-
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!isDesktop || reduce) { setProgress(1); return; }
 
     let raf = 0;
     const update = () => {
-      const outer = outerRef.current;
-      const inner = innerRef.current;
-      if (!outer || !inner) return;
-      const outerRect  = outer.getBoundingClientRect();
-      const innerH     = inner.offsetHeight;
-      const scrollable = outerRect.height - innerH;
-      const scrolled   = Math.max(0, -outerRect.top);
-      const raw = scrollable > 0 ? Math.min(1, scrolled / scrollable) : 0;
-      // Once past 50% opened, lock permanently open
-      if (raw >= 0.5) hasOpened.current = true;
+      const el = outerRef.current;
+      if (!el) return;
+      const rect       = el.getBoundingClientRect();
+      // Sticky panel is 100vh, so animation window = outer_height - 100vh
+      const scrollable = rect.height - window.innerHeight;
+      const scrolled   = Math.max(0, -rect.top);
+      const raw        = scrollable > 0 ? Math.min(1, scrolled / scrollable) : 0;
+      // Lock open when visually ~99% spread (raw=0.65 → eased≈0.993)
+      if (raw >= 0.65) hasOpened.current = true;
       setProgress(hasOpened.current ? 1 : raw);
     };
 
@@ -179,34 +174,41 @@ export function ContactSection() {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", onScroll); };
   }, [isDesktop]);
 
-  // Ease-in-out, reach full spread at ~70% of scroll so cards stay visible for reading
-  const raw = Math.min(1, progress * 1.45);
-  const p   = raw < 0.5 ? 2 * raw * raw : -1 + (4 - 2 * raw) * raw;
+  // Ease-in-out, accelerated so cards fully open early in the scroll window
+  const eased = Math.min(1, progress * 1.45);
+  const p     = eased < 0.5 ? 2 * eased * eased : -1 + (4 - 2 * eased) * eased;
 
   return (
-    /* Outer div: 380vh gives a long animation window regardless of panel height */
+    /*
+     * Outer div: 190vh on desktop.
+     * Sticky panel = 100vh  →  animation window = 90vh.
+     * Cards reach ~99% open at 65% of 90vh ≈ 58vh of scroll.
+     * After that, 32vh of scroll with cards static before next section enters.
+     * Fast, no long wait.
+     */
     <div
       ref={outerRef}
       data-nav-theme="dark"
-      style={{ height: isDesktop ? "380vh" : "auto" }}
+      style={{ height: isDesktop ? "190vh" : "auto" }}
     >
-      {/* Sticky panel — natural height (not capped at 100vh) so content breathes */}
+      {/* Sticky viewport-filling panel */}
       <div
-        ref={innerRef}
         className="bg-[#080808]"
         style={{
           position: isDesktop ? "sticky" : "relative",
           top: 0,
+          height: isDesktop ? "100vh" : "auto",
           overflow: "hidden",
         }}
       >
         <div
-          style={{ padding: "clamp(7rem, 10vw, 10rem) clamp(1.5rem, 5vw, 4.5rem) clamp(5rem, 8vw, 8rem)" }}
+          className="h-full flex flex-col justify-center"
+          style={{ padding: "clamp(6rem, 8vw, 8rem) clamp(1.5rem, 5vw, 4.5rem) clamp(3rem, 5vw, 5rem)" }}
         >
           {/* Headline */}
           <h2
-            className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-12 lg:mb-16"
-            style={{ fontSize: "clamp(2.25rem, 5.5vw, 5.5rem)" }}
+            className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-10 lg:mb-12 shrink-0"
+            style={{ fontSize: "clamp(2rem, 4.5vw, 4.5rem)" }}
           >
             Built for<br />
             <span style={{ color: "#1b76ff" }}>real life.</span>
@@ -214,8 +216,9 @@ export function ContactSection() {
 
           {/* 2×2 grid — cards fan out from stack as progress increases */}
           <div
-            className="grid gap-3 lg:gap-4"
-            style={{ gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr" }}
+            className="grid gap-3 lg:gap-4 min-h-0 flex-1"
+            style={{ gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr",
+                     gridTemplateRows:    isDesktop ? "1fr 1fr" : "auto" }}
           >
             {CARDS.map((card, i) => {
               const s   = STACK[i];
@@ -231,8 +234,6 @@ export function ContactSection() {
                     transform,
                     zIndex: i + 1,
                     willChange: "transform",
-                    // Same height for every card — the number that makes them equal
-                    height: "clamp(300px, 38vh, 440px)",
                   }}
                 >
                   {/* Card */}
