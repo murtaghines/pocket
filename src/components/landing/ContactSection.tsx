@@ -136,8 +136,9 @@ const STACK = [
 /* ── Section ─────────────────────────────────────────────────────────────── */
 export function ContactSection() {
   const outerRef  = useRef<HTMLDivElement>(null);
+  const innerRef  = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
-  const hasOpened = useRef(false); // once opened, cards never re-stack on scroll-up
+  const hasOpened = useRef(false);
 
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
@@ -156,15 +157,15 @@ export function ContactSection() {
 
     let raf = 0;
     const update = () => {
-      const el = outerRef.current;
-      if (!el) return;
-      const rect       = el.getBoundingClientRect();
-      // Sticky panel is 100vh, so animation window = outer_height - 100vh
-      const scrollable = rect.height - window.innerHeight;
+      const outer = outerRef.current;
+      const inner = innerRef.current;
+      if (!outer || !inner) return;
+      const rect       = outer.getBoundingClientRect();
+      // Use measured inner height so progress is correct even if panel > 100vh
+      const scrollable = rect.height - inner.offsetHeight;
       const scrolled   = Math.max(0, -rect.top);
       const raw        = scrollable > 0 ? Math.min(1, scrolled / scrollable) : 0;
-      // Lock open when visually ~99% spread (raw=0.65 → eased≈0.993)
-      if (raw >= 0.65) hasOpened.current = true;
+      if (raw >= 0.62) hasOpened.current = true;
       setProgress(hasOpened.current ? 1 : raw);
     };
 
@@ -174,51 +175,49 @@ export function ContactSection() {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", onScroll); };
   }, [isDesktop]);
 
-  // Ease-in-out, accelerated so cards fully open early in the scroll window
   const eased = Math.min(1, progress * 1.45);
   const p     = eased < 0.5 ? 2 * eased * eased : -1 + (4 - 2 * eased) * eased;
 
+  // Card height: explicit equal value for all 4
+  const CARD_H = "clamp(320px, 40vh, 460px)";
+
   return (
     /*
-     * Outer div: 190vh on desktop.
-     * Sticky panel = 100vh  →  animation window = 90vh.
-     * Cards reach ~99% open at 65% of 90vh ≈ 58vh of scroll.
-     * After that, 32vh of scroll with cards static before next section enters.
-     * Fast, no long wait.
+     * Outer = 320vh, sticky panel ≈ 140vh (natural content height).
+     * Animation window ≈ 180vh. hasOpened fires at ~62% (≈112vh of scroll).
+     * Section exits cleanly after cards have been spread for ~68vh of reading.
      */
     <div
       ref={outerRef}
       data-nav-theme="dark"
-      style={{ height: isDesktop ? "190vh" : "auto" }}
+      style={{ height: isDesktop ? "320vh" : "auto" }}
     >
-      {/* Sticky viewport-filling panel */}
       <div
+        ref={innerRef}
         className="bg-[#080808]"
         style={{
           position: isDesktop ? "sticky" : "relative",
           top: 0,
-          height: isDesktop ? "100vh" : "auto",
           overflow: "hidden",
+          // No height cap — let content breathe naturally (~140vh)
         }}
       >
         <div
-          className="h-full flex flex-col justify-center"
-          style={{ padding: "clamp(6rem, 8vw, 8rem) clamp(1.5rem, 5vw, 4.5rem) clamp(3rem, 5vw, 5rem)" }}
+          style={{
+            padding: "clamp(7rem, 10vw, 10rem) clamp(1.5rem, 5vw, 4.5rem) clamp(6rem, 9vw, 9rem)",
+          }}
         >
-          {/* Headline */}
           <h2
-            className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-10 lg:mb-12 shrink-0"
-            style={{ fontSize: "clamp(2rem, 4.5vw, 4.5rem)" }}
+            className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-12 lg:mb-16 shrink-0"
+            style={{ fontSize: "clamp(2.25rem, 5.5vw, 5.5rem)" }}
           >
             Built for<br />
             <span style={{ color: "#1b76ff" }}>real life.</span>
           </h2>
 
-          {/* 2×2 grid — cards fan out from stack as progress increases */}
           <div
-            className="grid gap-3 lg:gap-4 min-h-0 flex-1"
-            style={{ gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr",
-                     gridTemplateRows:    isDesktop ? "1fr 1fr" : "auto" }}
+            className="grid gap-4 lg:gap-5"
+            style={{ gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr" }}
           >
             {CARDS.map((card, i) => {
               const s   = STACK[i];
@@ -234,31 +233,28 @@ export function ContactSection() {
                     transform,
                     zIndex: i + 1,
                     willChange: "transform",
+                    height: CARD_H,
                   }}
                 >
-                  {/* Card */}
                   <div
                     className="rounded-3xl overflow-hidden flex flex-col h-full"
                     style={{ background: card.bg }}
                   >
-                    {/* Visual — fills remaining space */}
-                    <div className="flex-1 px-5 pt-5 lg:px-6 lg:pt-6 flex items-center justify-center overflow-hidden">
+                    <div className="flex-1 px-6 pt-6 lg:px-8 lg:pt-8 flex items-center justify-center overflow-hidden">
                       {card.visual}
                     </div>
-
-                    {/* Text label at bottom */}
-                    <div className="px-5 py-4 lg:px-6 lg:py-5 shrink-0">
+                    <div className="px-6 py-5 lg:px-8 lg:py-6 shrink-0">
                       <h3
-                        className="font-black leading-tight mb-1"
+                        className="font-black leading-tight mb-1.5"
                         style={{
-                          fontSize: "clamp(1rem, 1.8vw, 1.4rem)",
+                          fontSize: "clamp(1.05rem, 1.9vw, 1.5rem)",
                           color: card.dark ? "#ffffff" : "#080808",
                         }}
                       >
                         {card.title}
                       </h3>
                       <p
-                        className="text-xs leading-relaxed"
+                        className="text-sm leading-relaxed"
                         style={{ color: card.dark ? "rgba(255,255,255,0.5)" : "rgba(8,8,8,0.45)" }}
                       >
                         {card.sub}
