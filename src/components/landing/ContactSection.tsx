@@ -135,15 +135,15 @@ const STACK = [
 
 /* ── Section ─────────────────────────────────────────────────────────────── */
 export function ContactSection() {
-  const outerRef   = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
 
-  // Initialise isDesktop synchronously so there's never a flash of progress=1
+  // Initialise isDesktop synchronously — no flash of progress=1
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
   );
 
-  // Track breakpoint changes
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
     const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
@@ -151,66 +151,57 @@ export function ContactSection() {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Scroll-driven progress
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!isDesktop || reduce) {
-      setProgress(1);
-      return;
-    }
+    if (!isDesktop || reduce) { setProgress(1); return; }
 
     let raf = 0;
     const update = () => {
-      const el = outerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const scrollable = rect.height - window.innerHeight;
-      const scrolled   = Math.max(0, -rect.top);
+      const outer = outerRef.current;
+      const inner = innerRef.current;
+      if (!outer || !inner) return;
+      const outerRect  = outer.getBoundingClientRect();
+      const innerH     = inner.offsetHeight;
+      // Animation window = space inside the outer div beyond the inner panel height
+      const scrollable = outerRect.height - innerH;
+      const scrolled   = Math.max(0, -outerRect.top);
       setProgress(scrollable > 0 ? Math.min(1, scrolled / scrollable) : 0);
     };
 
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(update);
-    };
-
+    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); };
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-    };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", onScroll); };
   }, [isDesktop]);
 
-  // Ease-in-out, accelerated: reach 1 at 75% of scroll so cards stay spread for reading
-  const raw = Math.min(1, progress * 1.35);
+  // Ease-in-out, reach full spread at ~70% of scroll so cards stay visible for reading
+  const raw = Math.min(1, progress * 1.45);
   const p   = raw < 0.5 ? 2 * raw * raw : -1 + (4 - 2 * raw) * raw;
 
   return (
-    /* Outer div: provides scroll room for the animation (240vh on desktop) */
+    /* Outer div: 380vh gives a long animation window regardless of panel height */
     <div
       ref={outerRef}
       data-nav-theme="dark"
-      style={{ height: isDesktop ? "240vh" : "auto" }}
+      style={{ height: isDesktop ? "380vh" : "auto" }}
     >
-      {/* Sticky viewport-filling panel */}
+      {/* Sticky panel — natural height (not capped at 100vh) so content breathes */}
       <div
+        ref={innerRef}
         className="bg-[#080808]"
         style={{
           position: isDesktop ? "sticky" : "relative",
           top: 0,
-          height: isDesktop ? "100vh" : "auto",
           overflow: "hidden",
         }}
       >
         <div
-          className="h-full flex flex-col justify-center"
-          style={{ padding: "clamp(2rem, 4vw, 3.5rem) clamp(1.5rem, 5vw, 4.5rem)" }}
+          style={{ padding: "clamp(3rem, 5vw, 5rem) clamp(1.5rem, 5vw, 4.5rem) clamp(4rem, 7vw, 7rem)" }}
         >
           {/* Headline */}
           <h2
-            className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-7 lg:mb-8"
-            style={{ fontSize: "clamp(2rem, 5vw, 5rem)" }}
+            className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-8 lg:mb-10"
+            style={{ fontSize: "clamp(2.25rem, 5.5vw, 5.5rem)" }}
           >
             Built for<br />
             <span style={{ color: "#1b76ff" }}>real life.</span>
@@ -219,12 +210,7 @@ export function ContactSection() {
           {/* 2×2 grid — cards fan out from stack as progress increases */}
           <div
             className="grid gap-3 lg:gap-4"
-            style={{
-              gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr",
-              gridTemplateRows:    isDesktop ? "1fr 1fr" : "auto",
-              flex: 1,
-              minHeight: 0,
-            }}
+            style={{ gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr" }}
           >
             {CARDS.map((card, i) => {
               const s   = STACK[i];
@@ -240,12 +226,14 @@ export function ContactSection() {
                     transform,
                     zIndex: i + 1,
                     willChange: "transform",
+                    // Same height for every card — the number that makes them equal
+                    height: "clamp(300px, 38vh, 440px)",
                   }}
                 >
-                  {/* Card — height: 100% fills its grid row equally */}
+                  {/* Card */}
                   <div
                     className="rounded-3xl overflow-hidden flex flex-col h-full"
-                    style={{ background: card.bg, minHeight: isDesktop ? 0 : "260px" }}
+                    style={{ background: card.bg }}
                   >
                     {/* Visual — fills remaining space */}
                     <div className="flex-1 px-5 pt-5 lg:px-6 lg:pt-6 flex items-center justify-center overflow-hidden">
