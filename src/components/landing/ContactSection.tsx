@@ -151,6 +151,9 @@ export function ContactSection() {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  // Once cards have opened, never close them on scroll-up
+  const hasOpened = useRef(false);
+
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!isDesktop || reduce) { setProgress(1); return; }
@@ -162,10 +165,12 @@ export function ContactSection() {
       if (!outer || !inner) return;
       const outerRect  = outer.getBoundingClientRect();
       const innerH     = inner.offsetHeight;
-      // Animation window = space inside the outer div beyond the inner panel height
       const scrollable = outerRect.height - innerH;
       const scrolled   = Math.max(0, -outerRect.top);
-      setProgress(scrollable > 0 ? Math.min(1, scrolled / scrollable) : 0);
+      const raw = scrollable > 0 ? Math.min(1, scrolled / scrollable) : 0;
+      // Once past 50% opened, lock permanently open
+      if (raw >= 0.5) hasOpened.current = true;
+      setProgress(hasOpened.current ? 1 : raw);
     };
 
     const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); };
@@ -196,11 +201,11 @@ export function ContactSection() {
         }}
       >
         <div
-          style={{ padding: "clamp(3rem, 5vw, 5rem) clamp(1.5rem, 5vw, 4.5rem) clamp(4rem, 7vw, 7rem)" }}
+          style={{ padding: "clamp(7rem, 10vw, 10rem) clamp(1.5rem, 5vw, 4.5rem) clamp(5rem, 8vw, 8rem)" }}
         >
           {/* Headline */}
           <h2
-            className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-8 lg:mb-10"
+            className="font-heading font-bold text-white uppercase leading-[0.9] tracking-tight mb-12 lg:mb-16"
             style={{ fontSize: "clamp(2.25rem, 5.5vw, 5.5rem)" }}
           >
             Built for<br />
