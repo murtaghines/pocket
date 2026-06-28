@@ -18,9 +18,10 @@ const STATEMENTS = [
   },
 ];
 
-const N        = STATEMENTS.length;
-const COOLDOWN = 700; // ms — minimum time between step changes
-const GRACE    = 500; // ms — blocks re-lock right after exit
+const N            = STATEMENTS.length;
+const COOLDOWN     = 700; // ms — minimum time between step changes
+const GRACE        = 800; // ms — blocks re-lock right after exit (increased for inertia)
+const EXIT_TRAVEL  = 200; // px of actual scroll travel before re-lock is possible
 
 export function AppShowcaseSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -36,9 +37,10 @@ export function AppShowcaseSection() {
     const el = sectionRef.current;
     if (!el) return;
 
-    let lastScrollY = window.scrollY;
-    let prevTop     = el.getBoundingClientRect().top;
-    let graceTimer  = 0;
+    let lastScrollY  = window.scrollY;
+    let prevTop      = el.getBoundingClientRect().top;
+    let graceTimer   = 0;
+    let unlockScrollY: number | null = null; // scroll position when we last unlocked
 
     const startCooldown = () => {
       cooldown.current = true;
@@ -70,6 +72,7 @@ export function AppShowcaseSection() {
 
     const unlock = () => {
       locked.current = false;
+      unlockScrollY = window.scrollY; // record position for the distance gate
       startGrace(); // prevent immediate re-lock during exit momentum
     };
 
@@ -88,6 +91,14 @@ export function AppShowcaseSection() {
       }
 
       if (grace.current) return;
+
+      // Distance gate: after grace expires, also block re-lock until the page
+      // has actually scrolled EXIT_TRAVEL px away from where we unlocked.
+      // Guards against rubber-band / momentum bouncing the section back in range.
+      if (unlockScrollY !== null) {
+        if (Math.abs(currY - unlockScrollY) < EXIT_TRAVEL) return;
+        unlockScrollY = null; // far enough away — allow re-lock normally
+      }
 
       const top = el.getBoundingClientRect().top;
 
