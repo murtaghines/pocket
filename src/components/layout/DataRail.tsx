@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -10,6 +10,8 @@ import {
   Tags,
   ChevronRight,
   ChevronLeft,
+  Settings,
+  Upload,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,381 +21,328 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import pocketLogoWhite from "@/assets/pocket-logo-white.png";
 
-type NavChild = {
-  label: string;
-  to: string;
-  icon?: LucideIcon;
-};
+/** 8-point asterisk — fill only, no stroke, matches brand spec */
+function AsteriskMark({ size = 24, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={cn("shrink-0", className)}
+      aria-hidden="true"
+    >
+      {[0, 45, 90, 135].map((deg) => (
+        <rect
+          key={deg}
+          x="10.7"
+          y="1.6"
+          width="2.6"
+          height="20.8"
+          rx="1.3"
+          fill="currentColor"
+          transform={deg === 0 ? undefined : `rotate(${deg} 12 12)`}
+        />
+      ))}
+    </svg>
+  );
+}
 
-type NavGroup = {
-  key: string;
+const MAIN_NAV = [
+  { key: "dashboard",   label: "Dashboard",   icon: LayoutDashboard, to: "/dashboard"              },
+  { key: "history",     label: "History",     icon: TrendingUp,      to: "/history"                },
+  { key: "investments", label: "Investments", icon: PiggyBank,       to: "/investments"            },
+  { key: "planning",    label: "Planning",    icon: Target,          to: "/planning"               },
+] as const;
+
+const DATA_NAV = [
+  { key: "bank",        label: "Bank statements",    icon: Landmark,  to: "/my-data?tab=bank"        },
+  { key: "invfiles",    label: "Investment files",   icon: LineChart, to: "/my-data?tab=investments" },
+  { key: "categories",  label: "Categories & rules", icon: Tags,      to: "/categories"              },
+] as const;
+
+interface NavRowProps {
   label: string;
   icon: LucideIcon;
-  to?: string;
-  children?: NavChild[];
-};
+  to: string;
+  active: boolean;
+  expanded: boolean;
+  group: string;
+  small?: boolean;
+}
 
-/**
- * Persistent left rail.
- * - Collapsed: logo at top, then group icons in the SAME vertical positions
- *   they occupy when expanded (no shifting). Workspace icons sit below,
- *   then the expand toggle (a slim chevron) at the very bottom.
- * - Expanded: grouped navigation with a thin vertical guide line under each
- *   group and a very subtle translucent highlight on the active route.
- */
+function NavRow({ label, icon: Icon, to, active, expanded, group, small = false }: NavRowProps) {
+  if (!expanded) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            to={to}
+            aria-label={label}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "relative flex items-center justify-center transition-colors rounded-[11px]",
+              small ? "min-h-[42px]" : "min-h-[46px]",
+              active ? "bg-white" : "hover:bg-white/10",
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center justify-center rounded-[10px] transition-all",
+                active
+                  ? cn("bg-primary text-white", small ? "w-[36px] h-[36px]" : "w-[42px] h-[42px]")
+                  : cn("text-white/[0.62]",      small ? "w-[26px] h-[26px]" : "w-[40px] h-[40px]"),
+              )}
+            >
+              <Icon className={small ? "w-[18px] h-[18px]" : "w-5 h-5"} strokeWidth={2} />
+            </div>
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={14} className="flex flex-col gap-0.5 py-2">
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            {group}
+          </span>
+          <span className="text-sm font-semibold">{label}</span>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Link
+      to={to}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-3 px-[11px] transition-colors rounded-[11px]",
+        small ? "min-h-[42px]" : "min-h-[44px]",
+        active ? "bg-white" : "hover:bg-white/10",
+      )}
+    >
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-[10px] shrink-0 transition-all",
+          active
+            ? cn("bg-primary text-white", small ? "w-[28px] h-[28px]" : "w-[34px] h-[34px]")
+            : cn("text-white/[0.62]",      "w-[26px] h-[26px]"),
+        )}
+      >
+        <Icon className={small ? "w-[18px] h-[18px]" : "w-[19px] h-[19px]"} strokeWidth={2} />
+      </div>
+      <span
+        className={cn(
+          "text-[14px] whitespace-nowrap",
+          active ? "font-semibold text-[hsl(216_70%_30%)]" : "font-normal text-white/70",
+        )}
+      >
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+function SettingsRow({ expanded }: { expanded: boolean }) {
+  const { pathname } = useLocation();
+  const active = pathname === "/profile";
+
+  if (!expanded) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            to="/profile"
+            className={cn(
+              "flex items-center justify-center mt-2.5 rounded-[12px] min-h-[46px] transition-colors",
+              active ? "bg-white" : "hover:bg-white/10",
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center justify-center w-[40px] h-[40px] rounded-[10px]",
+                active ? "bg-primary text-white" : "text-white/70",
+              )}
+            >
+              <Settings className="w-5 h-5" strokeWidth={2} />
+            </div>
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={14}>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold">Settings</span>
+            <span className="text-xs text-muted-foreground">Profile &amp; preferences</span>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Link
+      to="/profile"
+      className={cn(
+        "flex items-center gap-3 mt-3 px-[11px] rounded-[12px] min-h-[48px] transition-colors",
+        active ? "bg-white" : "hover:bg-white/10",
+      )}
+    >
+      <div
+        className={cn(
+          "flex items-center justify-center w-[26px] h-[26px] shrink-0",
+          active ? "text-primary" : "text-white/70",
+        )}
+      >
+        <Settings className="w-5 h-5" strokeWidth={2} />
+      </div>
+      <div className="flex flex-col min-w-0">
+        <span
+          className={cn(
+            "text-[13px] font-semibold",
+            active ? "text-[hsl(216_70%_30%)]" : "text-white",
+          )}
+        >
+          Settings
+        </span>
+        <span className="text-[11px] text-white/60 whitespace-nowrap">
+          Profile &amp; preferences
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 export function DataRail() {
   const location = useLocation();
   const [expanded, setExpanded] = useState(false);
 
+  // Push sidebar width as a CSS variable so DashboardLayout can adjust padding
+  useEffect(() => {
+    document.documentElement.style.setProperty("--rail-width", expanded ? "328px" : "118px");
+    return () => {
+      document.documentElement.style.removeProperty("--rail-width");
+    };
+  }, [expanded]);
+
   const isActive = (path: string) => {
-    const [base] = path.split("?");
+    const base = path.split("?")[0];
     return location.pathname === base || location.pathname.startsWith(base + "/");
   };
 
-  const groups: NavGroup[] = [
-    {
-      key: "dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      to: "/dashboard",
-    },
-    {
-      key: "history",
-      label: "History",
-      icon: TrendingUp,
-      to: "/history",
-    },
-    {
-      key: "investments",
-      label: "Investments",
-      icon: PiggyBank,
-      to: "/investments",
-    },
-    {
-      key: "planning",
-      label: "Planning",
-      icon: Target,
-      to: "/planning",
-    },
-  ];
-
-  const workspace: NavChild[] = [
-    { label: "Bank statements", to: "/my-data?tab=bank", icon: Landmark },
-    { label: "Investment files", to: "/my-data?tab=investments", icon: LineChart },
-    { label: "Categories & rules", to: "/categories", icon: Tags },
-  ];
-
-  const isWorkspaceActive = (item: NavChild) => {
-    if (item.to.startsWith("/categories")) {
-      return location.pathname === "/categories";
-    }
+  const isDataActive = (to: string) => {
+    if (to.startsWith("/categories")) return location.pathname === "/categories";
     if (location.pathname !== "/my-data") return false;
-    const wantTab = item.to.includes("investments") ? "investments" : "bank";
-    const currentTab = new URLSearchParams(location.search).get("tab") ?? "bank";
-    return currentTab === wantTab;
+    const wantTab = to.includes("investments") ? "investments" : "bank";
+    return (new URLSearchParams(location.search).get("tab") ?? "bank") === wantTab;
   };
-
-  const railWidth = expanded ? "w-64" : "w-24";
 
   return (
     <TooltipProvider delayDuration={200}>
       <aside
         className={cn(
-          "hidden md:flex fixed left-0 top-0 bottom-0 z-40 bg-primary text-primary-foreground flex-col py-5 transition-[width] duration-300 ease-out",
-          railWidth,
+          "hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col p-[14px]",
+          "transition-[width] duration-[220ms] ease-out",
+          expanded ? "w-[328px]" : "w-[118px]",
         )}
         aria-label="Primary navigation"
       >
-        {/* Top: brand */}
+        {/* Blue rounded pill card */}
         <div
-          className={cn(
-            "flex items-center px-4",
-            expanded ? "justify-between" : "justify-center",
-          )}
+          className="flex flex-col flex-1 bg-primary text-white rounded-3xl p-[18px] overflow-hidden"
+          style={{ boxShadow: "0 18px 40px -16px rgba(20,80,210,0.5)" }}
         >
-          <Link
-            to="/dashboard"
-            aria-label="Pocket — go to dashboard"
-            className="flex items-center gap-2"
-          >
-            <img src={pocketLogoWhite} alt="Pocket" className="h-12 w-12" />
-            {expanded && (
-              <span className="text-lg font-semibold tracking-tight">
-                Pocket
-              </span>
-            )}
-          </Link>
-        </div>
-
-        {/* Navigation — identical icon column and vertical rhythm in both states */}
-        <nav className="flex-1 mt-10 px-3 overflow-visible">
-          <SectionLabel expanded={expanded}>Main</SectionLabel>
-          <NavigationGroups groups={groups} expanded={expanded} isActive={isActive} />
-        </nav>
-
-        {/* Workspace cluster */}
-        <WorkspaceLinks
-          items={workspace}
-          expanded={expanded}
-          isWorkspaceActive={isWorkspaceActive}
-        />
-
-        {/* Expand / collapse — bottom of rail, slim chevron */}
-        <div
-          className={cn(
-            "mt-4 px-3 pt-3",
-            expanded ? "flex justify-end" : "flex justify-center",
-          )}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
+          {/* ── Logo zone ── */}
+          {!expanded ? (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              aria-label="Expand navigation"
+              className="flex flex-col items-center gap-1 pb-3 cursor-pointer group self-stretch"
+            >
+              <AsteriskMark size={26} />
+              <ChevronRight
+                className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                strokeWidth={2}
+              />
+            </button>
+          ) : (
+            <div className="flex items-center justify-between mb-4">
+              <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
+                <AsteriskMark size={24} />
+                <span
+                  className="text-[20px] tracking-[0.07em] text-white whitespace-nowrap"
+                  style={{ fontFamily: "Quicksand, sans-serif", fontWeight: 700 }}
+                >
+                  pocket
+                </span>
+              </Link>
               <button
                 type="button"
-                onClick={() => setExpanded((v) => !v)}
-                aria-label={expanded ? "Collapse navigation" : "Expand navigation"}
-                className="w-8 h-8 rounded-md flex items-center justify-center text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-colors"
+                onClick={() => setExpanded(false)}
+                aria-label="Collapse navigation"
+                className="w-[30px] h-[30px] flex items-center justify-center rounded-[9px] bg-white/10 text-white/80 hover:bg-white/20 transition-colors shrink-0"
               >
-                {expanded ? (
-                  <ChevronLeft className="w-4 h-4" strokeWidth={2} />
-                ) : (
-                  <ChevronRight className="w-4 h-4" strokeWidth={2} />
-                )}
+                <ChevronLeft className="w-[18px] h-[18px]" strokeWidth={2} />
               </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>
-              {expanded ? "Collapse" : "Expand"}
-            </TooltipContent>
-          </Tooltip>
+            </div>
+          )}
+
+          {/* ── MAIN nav ── */}
+          <nav className="mt-1.5 flex flex-col gap-1">
+            {expanded && (
+              <div className="text-[10px] font-bold tracking-[0.12em] text-white/50 uppercase px-[11px] mb-1.5">
+                MAIN
+              </div>
+            )}
+            {MAIN_NAV.map((item) => (
+              <NavRow
+                key={item.key}
+                label={item.label}
+                icon={item.icon}
+                to={item.to}
+                active={isActive(item.to)}
+                expanded={expanded}
+                group="Main"
+              />
+            ))}
+          </nav>
+
+          <div className="flex-1 min-h-4" />
+
+          {/* ── DATA · uploads panel ── */}
+          <div
+            className={cn(
+              "rounded-[18px] flex flex-col bg-white/10 border border-white/[0.13]",
+              expanded ? "p-3 gap-1" : "p-[10px_6px] gap-1.5",
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center gap-1.5 px-1.5 mb-0.5",
+                expanded ? "justify-start" : "justify-center",
+              )}
+            >
+              <Upload className="w-3.5 h-3.5 text-white/[0.62] shrink-0" strokeWidth={2} />
+              {expanded && (
+                <span className="text-[10px] font-bold tracking-[0.1em] text-white/[0.62] uppercase whitespace-nowrap">
+                  Data · uploads
+                </span>
+              )}
+            </div>
+            {DATA_NAV.map((item) => (
+              <NavRow
+                key={item.key}
+                label={item.label}
+                icon={item.icon}
+                to={item.to}
+                active={isDataActive(item.to)}
+                expanded={expanded}
+                group="Data"
+                small
+              />
+            ))}
+          </div>
+
+          {/* ── Settings footer ── */}
+          <SettingsRow expanded={expanded} />
         </div>
       </aside>
     </TooltipProvider>
-  );
-}
-
-/**
- * Collapsed-state group icons. Spacing is computed so each group icon sits
- * roughly in the vertical center of its expanded counterpart, preventing
- * the icons from "jumping" when the rail toggles.
- *
- * In expanded mode each group renders:
- *   - Header row (~28px tall) + children (each ~32px) + space-y-5 (20px) gap.
- * We approximate by placing each collapsed icon at a fixed height matching
- * the header row, and reserving extra space below proportional to children
- * count, so icon centers align with their expanded headers.
- */
-function NavigationGroups({
-  groups,
-  expanded,
-  isActive,
-}: {
-  groups: NavGroup[];
-  expanded: boolean;
-  isActive: (path: string) => boolean;
-}) {
-  const HEADER = 40;
-  const CHILD = 32;
-  const GAP = 20;
-
-  return (
-    <div className="relative">
-      {groups.map((group, idx) => {
-        const Icon = group.icon;
-        const target = group.to ?? group.children?.[0]?.to ?? "#";
-        const active =
-          Boolean(group.to && isActive(group.to)) ||
-          Boolean(group.children?.some((child) => isActive(child.to)));
-        const hasChildren = Boolean(group.children?.length);
-        const childrenCount = group.children?.length ?? 0;
-        const blockHeight = expanded
-          ? HEADER + childrenCount * CHILD + (idx < groups.length - 1 ? GAP : 0)
-          : HEADER + (idx < groups.length - 1 ? GAP : 0);
-
-        return (
-          <div
-            key={group.key}
-            style={{ height: blockHeight }}
-            className="group/nav relative w-full"
-          >
-            <div className="grid h-10 grid-cols-[72px_minmax(0,1fr)] items-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={target}
-                    aria-label={group.label}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "relative col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] transition-colors",
-                      active
-                        ? "text-primary-foreground bg-primary-foreground/[0.22]"
-                        : "text-primary-foreground/[0.52] hover:text-primary-foreground hover:bg-primary-foreground/[0.22]",
-                    )}
-                  >
-                    <Icon className="h-5 w-5 shrink-0" />
-                    {!expanded && hasChildren && active && (
-                      <span className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary-foreground" />
-                    )}
-                  </Link>
-                </TooltipTrigger>
-                {!expanded && !hasChildren && (
-                  <TooltipContent side="right" sideOffset={8}>
-                    {group.label}
-                  </TooltipContent>
-                )}
-              </Tooltip>
-
-              {expanded && (
-                <Link
-                  to={target}
-                  className={cn(
-                    "min-w-0 rounded-md px-2 py-1.5 text-sm transition-colors",
-                    active
-                      ? "text-primary-foreground font-semibold"
-                      : "text-primary-foreground/[0.52] font-normal hover:text-primary-foreground",
-                  )}
-                >
-                  <span className="block truncate">{group.label}</span>
-                </Link>
-              )}
-            </div>
-
-            {hasChildren && expanded && (
-              <div className="ml-[36px] border-l border-primary-foreground/15 pl-[44px]">
-                {group.children!.map((child) => {
-                  const childActive = isActive(child.to);
-                  return (
-                    <Link
-                      key={child.to}
-                      to={child.to}
-                      className={cn(
-                        "flex h-8 items-center rounded-md px-0 text-sm transition-colors",
-                        childActive
-                          ? "bg-primary-foreground/[0.22] text-primary-foreground font-medium"
-                          : "text-primary-foreground/[0.52] hover:text-primary-foreground hover:bg-primary-foreground/[0.22]",
-                      )}
-                    >
-                      <span className="truncate">{child.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-
-            {hasChildren && !expanded && (
-              <div
-                className={cn(
-                  "pointer-events-none absolute left-full top-0 z-50 pl-3",
-                  "opacity-0 -translate-x-1 transition-all duration-150",
-                  "group-hover/nav:pointer-events-auto group-hover/nav:opacity-100 group-hover/nav:translate-x-0",
-                )}
-              >
-                <div className="min-w-[160px] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-lg">
-                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {group.label}
-                  </div>
-                  {group.children!.map((child) => {
-                    const childActive = isActive(child.to);
-                    return (
-                      <Link
-                        key={child.to}
-                        to={child.to}
-                        className={cn(
-                          "flex h-8 items-center rounded-md px-2 text-sm transition-colors",
-                          childActive
-                            ? "bg-accent text-accent-foreground font-medium"
-                            : "text-popover-foreground hover:bg-accent hover:text-accent-foreground",
-                        )}
-                      >
-                        <span className="truncate">{child.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-
-function SectionLabel({ expanded, children }: { expanded: boolean; children: React.ReactNode }) {
-  return (
-    <div
-      className={cn(
-        "mb-3 text-[9px] font-bold uppercase tracking-[0.14em] text-primary-foreground/[0.45]",
-        expanded ? "px-2" : "text-center",
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function WorkspaceLinks({
-  items,
-  expanded,
-  isWorkspaceActive,
-}: {
-  items: NavChild[];
-  expanded: boolean;
-  isWorkspaceActive: (item: NavChild) => boolean;
-}) {
-  return (
-    <div className="mt-6 px-3 pt-4 border-t border-primary-foreground/15">
-      <SectionLabel expanded={expanded}>Data</SectionLabel>
-
-      <div className="space-y-2">
-        {items.map((item) => {
-          const Icon = item.icon!;
-          const active = isWorkspaceActive(item);
-          return (
-            <div
-              key={item.to}
-              className="grid h-10 grid-cols-[72px_minmax(0,1fr)] items-center"
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={item.to}
-                    aria-label={item.label}
-                    className={cn(
-                      "col-start-1 mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] transition-colors",
-                      active
-                        ? "text-primary-foreground bg-primary-foreground/[0.22]"
-                        : "text-primary-foreground/[0.52] hover:text-primary-foreground hover:bg-primary-foreground/[0.22]",
-                    )}
-                  >
-                    <Icon className="h-5 w-5 shrink-0" />
-                  </Link>
-                </TooltipTrigger>
-                {!expanded && (
-                  <TooltipContent side="right" sideOffset={8}>
-                    {item.label}
-                  </TooltipContent>
-                )}
-              </Tooltip>
-
-              {expanded && (
-                <Link
-                  to={item.to}
-                  className={cn(
-                    "min-w-0 rounded-md px-2 py-1.5 text-sm transition-colors",
-                    active
-                      ? "bg-primary-foreground/[0.22] text-primary-foreground font-semibold"
-                      : "text-primary-foreground/[0.52] font-normal hover:text-primary-foreground hover:bg-primary-foreground/[0.22]",
-                  )}
-                >
-                  <span className="block truncate">{item.label}</span>
-                </Link>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }

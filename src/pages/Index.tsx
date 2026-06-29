@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Minus } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { StatCard } from "@/components/dashboard/StatCard";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
@@ -11,7 +10,7 @@ import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
 import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
-
+import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 
@@ -221,7 +220,8 @@ export default function Index() {
             </div>
 
             {/* KPIs Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_0.75fr] gap-4 mb-4">
+            {/* KPI row: Income · Expenses · Savings rate · Net balance */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <TrendKpiCard
                 kind="income"
                 label={t('stats.income')}
@@ -250,10 +250,18 @@ export default function Index() {
                 positiveIsGood={false}
                 delay={100}
               />
+              <SavingsRateGaugeCard
+                income={convertedCurrentMonth.income}
+                expenses={convertedCurrentMonth.expenses}
+                previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                delay={200}
+              />
               <TrendKpiCard
                 kind="balance"
                 label={t('stats.balance')}
-                icon={<Wallet className="w-5 h-5 text-primary" strokeWidth={2.5} />}
+                filled
+                icon={<Wallet className="w-5 h-5" strokeWidth={2.5} />}
                 bgClass="bg-primary"
                 transactions={transactions}
                 monthKey={latestMonthLabel}
@@ -262,24 +270,13 @@ export default function Index() {
                 convert={convertToUserCurrency}
                 formatCurrency={formatCurrency}
                 positiveIsGood
-                delay={200}
-              />
-              <SavingsRateGaugeCard
-                income={convertedCurrentMonth.income}
-                expenses={convertedCurrentMonth.expenses}
-                previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
                 delay={300}
               />
             </div>
 
-            {/* Weekly Flow + Daily Heatmap */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_400px] gap-4 mb-4">
-              <DailyFlowChart
-                transactions={transactions}
-                monthKey={latestMonthLabel}
-                convert={convertToUserCurrency}
-              />
+            {/* Row 2: Income vs Expenses chart + Daily view heatmap */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-4 mb-4">
+              <MonthlyChart data={convertedMonthlyData} />
               <DailyHeatmapCard
                 transactions={transactions}
                 monthKey={latestMonthLabel}
@@ -287,20 +284,13 @@ export default function Index() {
               />
             </div>
 
-            {/* Investment & Income Breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-              <InvestmentSummaryCard />
-              <CategoryChart data={convertedIncomeCategoryData} />
-            </div>
-
-            {/* Expense Charts Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <SpendingByCategoryChart data={convertedCategoryData} />
-              <TopExpensesCard transactions={monthTransactions} />
-            </div>
-
-            {/* Accounts stack (moved below) */}
-            <div className="mb-4">
+            {/* Row 3: Daily balance chart + Accounts list */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-4 mb-4">
+              <DailyFlowChart
+                transactions={transactions}
+                monthKey={latestMonthLabel}
+                convert={convertToUserCurrency}
+              />
               <AccountsStackCard
                 transactions={transactions}
                 monthKey={latestMonthLabel}
@@ -309,8 +299,20 @@ export default function Index() {
               />
             </div>
 
-            {/* Transactions */}
-            <div className="bg-card rounded-lg p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
+            {/* Row 4: Spending by category + Top expenses */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <SpendingByCategoryChart data={convertedCategoryData} />
+              <TopExpensesCard transactions={monthTransactions} />
+            </div>
+
+            {/* Row 5: Income analysis */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+              <InvestmentSummaryCard />
+              <CategoryChart data={convertedIncomeCategoryData} />
+            </div>
+
+            {/* Row 6: Transactions table */}
+            <div className="bg-card rounded-xl p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
               <div className="max-h-[500px] overflow-y-auto">
                 <TransactionTable transactions={monthTransactions} />
               </div>

@@ -94,9 +94,9 @@
     --sidebar-ring: 216 100% 55%;
   }
 
-  /* Dashboard light theme - New Pocket brand: #1b76ff blue, #ffd027 yellow, #ebebeb bg */
+  /* Dashboard light theme - New Pocket brand: #1b76ff blue, #ffd027 yellow, blue-tinted bg */
   .dashboard-theme {
-    --background: 0 0% 97%;
+    --background: 220 24% 96%;
     --foreground: 0 0% 3%;
 
     --card: 0 0% 100%;
