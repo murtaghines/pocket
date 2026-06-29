@@ -214,7 +214,7 @@ export function DataRail() {
 
   // Push sidebar width as a CSS variable so DashboardLayout can adjust padding
   useEffect(() => {
-    document.documentElement.style.setProperty("--rail-width", expanded ? "328px" : "118px");
+    document.documentElement.style.setProperty("--rail-width", expanded ? "248px" : "122px");
     return () => {
       document.documentElement.style.removeProperty("--rail-width");
     };
@@ -236,9 +236,9 @@ export function DataRail() {
     <TooltipProvider delayDuration={200}>
       <aside
         className={cn(
-          "hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col p-[14px]",
+          "hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col",
           "transition-[width] duration-[220ms] ease-out",
-          expanded ? "w-[328px]" : "w-[118px]",
+          expanded ? "w-[248px] p-[18px_14px]" : "w-[122px] p-4",
         )}
         aria-label="Primary navigation"
       >

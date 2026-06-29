@@ -219,102 +219,94 @@ export default function Index() {
               )}
             </div>
 
-            {/* KPIs Row */}
-            {/* KPI row: Income · Expenses · Savings rate · Net balance */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <TrendKpiCard
-                kind="income"
-                label={t('stats.income')}
-                icon={<Plus className="w-5 h-5" strokeWidth={2.5} />}
-                bgClass="bg-success"
-                transactions={transactions}
-                monthKey={latestMonthLabel}
-                total={convertedCurrentMonth.income}
-                previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                convert={convertToUserCurrency}
-                formatCurrency={formatCurrency}
-                positiveIsGood
-                delay={0}
-              />
-              <TrendKpiCard
-                kind="expense"
-                label={t('stats.expenses')}
-                icon={<Minus className="w-5 h-5" strokeWidth={2.5} />}
-                bgClass="bg-destructive"
-                transactions={transactions}
-                monthKey={latestMonthLabel}
-                total={convertedCurrentMonth.expenses}
-                previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
-                convert={convertToUserCurrency}
-                formatCurrency={formatCurrency}
-                positiveIsGood={false}
-                delay={100}
-              />
-              <SavingsRateGaugeCard
-                income={convertedCurrentMonth.income}
-                expenses={convertedCurrentMonth.expenses}
-                previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
-                delay={200}
-              />
-              <TrendKpiCard
-                kind="balance"
-                label={t('stats.balance')}
-                filled
-                icon={<Wallet className="w-5 h-5" strokeWidth={2.5} />}
-                bgClass="bg-primary"
-                transactions={transactions}
-                monthKey={latestMonthLabel}
-                total={convertedCurrentMonth.balance}
-                previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
-                convert={convertToUserCurrency}
-                formatCurrency={formatCurrency}
-                positiveIsGood
-                delay={300}
-              />
-            </div>
+            <div className="flex flex-col gap-[18px]">
+              {/* KPI row: Income · Expenses · Savings rate · Net balance */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px]">
+                <TrendKpiCard
+                  kind="income"
+                  label={t('stats.income')}
+                  icon={<Plus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-success"
+                  monthKey={latestMonthLabel}
+                  total={convertedCurrentMonth.income}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood
+                />
+                <TrendKpiCard
+                  kind="expense"
+                  label={t('stats.expenses')}
+                  icon={<Minus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-destructive"
+                  monthKey={latestMonthLabel}
+                  total={convertedCurrentMonth.expenses}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood={false}
+                />
+                <SavingsRateGaugeCard
+                  income={convertedCurrentMonth.income}
+                  expenses={convertedCurrentMonth.expenses}
+                />
+                <TrendKpiCard
+                  kind="balance"
+                  label="Net balance"
+                  filled
+                  icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-primary"
+                  monthKey={latestMonthLabel}
+                  total={convertedCurrentMonth.balance}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood
+                />
+              </div>
 
-            {/* Row 2: Income vs Expenses chart + Daily view heatmap */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-4 mb-4">
-              <MonthlyChart data={convertedMonthlyData} />
-              <DailyHeatmapCard
-                transactions={transactions}
-                monthKey={latestMonthLabel}
-                convert={convertToUserCurrency}
-              />
-            </div>
+              {/* Row 2: Income vs Expenses chart + Daily view heatmap */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+                <MonthlyChart data={convertedMonthlyData} />
+                <DailyHeatmapCard
+                  transactions={transactions}
+                  monthKey={latestMonthLabel}
+                  convert={convertToUserCurrency}
+                />
+              </div>
 
-            {/* Row 3: Daily balance chart + Accounts list */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-4 mb-4">
-              <DailyFlowChart
-                transactions={transactions}
-                monthKey={latestMonthLabel}
-                convert={convertToUserCurrency}
-              />
-              <AccountsStackCard
-                transactions={transactions}
-                monthKey={latestMonthLabel}
-                convert={convertToUserCurrency}
-                formatCurrency={formatCurrency}
-              />
-            </div>
+              {/* Row 3: Daily balance chart + Accounts list */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+                <DailyFlowChart
+                  transactions={transactions}
+                  monthKey={latestMonthLabel}
+                  convert={convertToUserCurrency}
+                />
+                <AccountsStackCard
+                  transactions={transactions}
+                  monthKey={latestMonthLabel}
+                  convert={convertToUserCurrency}
+                  formatCurrency={formatCurrency}
+                />
+              </div>
 
-            {/* Row 4: Spending by category + Top expenses */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <SpendingByCategoryChart data={convertedCategoryData} />
-              <TopExpensesCard transactions={monthTransactions} />
-            </div>
+              {/* Row 4: Spending by category + Top expenses */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+                <SpendingByCategoryChart data={convertedCategoryData} />
+                <TopExpensesCard transactions={monthTransactions} />
+              </div>
 
-            {/* Row 5: Income analysis */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-              <InvestmentSummaryCard />
-              <CategoryChart data={convertedIncomeCategoryData} />
-            </div>
+              {/* Row 5: Income analysis */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
+                <InvestmentSummaryCard />
+                <CategoryChart data={convertedIncomeCategoryData} />
+              </div>
 
-            {/* Row 6: Transactions table */}
-            <div className="bg-card rounded-xl p-3 md:p-4 border border-border" style={{ boxShadow: 'var(--shadow-section)' }}>
-              <div className="max-h-[500px] overflow-y-auto">
-                <TransactionTable transactions={monthTransactions} />
+              {/* Row 6: Transactions table */}
+              <div
+                className="bg-card rounded-[18px] p-[20px_22px_10px] border border-[rgba(13,30,70,.07)]"
+                style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
+              >
+                <div className="max-h-[500px] overflow-y-auto">
+                  <TransactionTable transactions={monthTransactions} />
+                </div>
               </div>
             </div>
           </>
