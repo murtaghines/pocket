@@ -80,13 +80,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   })();
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme relative md:pl-24">
-      {/* Persistent vertical rail (desktop) handles all navigation + utilities */}
+    <div
+      className="min-h-screen bg-background dashboard-theme relative transition-[padding-left] duration-[220ms] ease-out"
+      style={{ paddingLeft: "var(--rail-width, 118px)" }}
+    >
+      {/* Persistent vertical rail (desktop) */}
       <DataRail />
 
-      {/* Top utility bar (desktop) — month selector or page title on left, theme + profile on right */}
-      <header className="hidden md:flex sticky top-0 z-30 h-16 items-center justify-between gap-3 px-6 bg-background/80 backdrop-blur-sm">
+      {/* Top utility bar (desktop) */}
+      <header className="hidden md:flex sticky top-0 z-30 h-[74px] items-center justify-between gap-3 px-7 bg-background/85 backdrop-blur-sm border-b border-border/40">
         <div className="flex items-center min-w-0 gap-4">
+          {location.pathname === "/dashboard" && (
+            <span className="text-[22px] font-semibold tracking-tight text-foreground whitespace-nowrap">
+              Dashboard
+            </span>
+          )}
           <HeaderMonthSelector />
           {pageHeader && (
             <div className="min-w-0">

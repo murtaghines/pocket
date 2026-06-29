@@ -22,24 +22,17 @@ export type TrendKind = "income" | "expense" | "balance";
 
 interface TrendKpiCardProps {
   kind: TrendKind;
-  /** Label (e.g. "Income", "Expenses", "Balance") */
   label: string;
-  /** Icon shown in the top-right circle (already styled in white) */
   icon: ReactNode;
-  /** Background color CSS (Tailwind bg-*) */
   bgClass: string;
-  /** All transactions for the period */
+  /** When true: filled brand-blue card (used for Net Balance) */
+  filled?: boolean;
   transactions: Array<{ date: string; amount: number; type: string }>;
-  /** YYYY-MM */
   monthKey: string | null;
-  /** Total month value already converted (signed for balance) */
   total: number;
-  /** Previous month total (for comparison) */
   previousTotal?: number;
-  /** Currency conversion (raw EUR -> user currency) */
   convert: (amount: number) => number;
   formatCurrency: (n: number) => string;
-  /** Higher is better (income, balance) vs lower is better (expense) */
   positiveIsGood?: boolean;
   delay?: number;
 }
@@ -49,6 +42,7 @@ export function TrendKpiCard({
   label,
   icon,
   bgClass,
+  filled = false,
   transactions,
   monthKey,
   total,
@@ -135,75 +129,41 @@ export function TrendKpiCard({
 
   const gradientId = `trend-fill-${kind}`;
 
-  // All three KPIs share the inverted style: white card, very light tint
-  // border, accent-colored text/chart driven by the kind.
+  // ── Filled variant (Net Balance card): brand-blue background, all white text
+  // ── Default variant: white card, dark value text, colored icon badge + delta
   const accentVar =
-    kind === "income"
-      ? "--success"
-      : kind === "expense"
-        ? "--destructive"
-        : "--primary";
+    kind === "income" ? "--success" : kind === "expense" ? "--destructive" : "--primary";
   const accent = `hsl(var(${accentVar}))`;
 
-  // Tailwind class shorthands per accent (kept as static literals so the
-  // JIT picks them up at build time).
-  const accentClasses =
-    kind === "income"
-      ? {
-          card: "bg-card border border-success/20",
-          label: "text-success/80",
-          iconBg: "bg-success/10",
-          iconColor: "text-success",
-          value: "bg-gradient-to-r from-success to-success/60 bg-clip-text text-transparent",
-          chip: "bg-success/10 text-success",
-          chipMuted: "text-success/60",
-          hoverText: "text-success/70",
-        }
-      : kind === "expense"
-        ? {
-            card: "bg-card border border-destructive/20",
-            label: "text-destructive/80",
-            iconBg: "bg-destructive/10",
-            iconColor: "text-destructive",
-            value: "bg-gradient-to-r from-destructive to-destructive/60 bg-clip-text text-transparent",
-            chip: "bg-destructive/10 text-destructive",
-            chipMuted: "text-destructive/60",
-            hoverText: "text-destructive/70",
-          }
-        : {
-            card: "bg-card border border-primary/20",
-            label: "text-primary/70",
-            iconBg: "bg-primary/10",
-            iconColor: "text-primary",
-            value: "bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent",
-            chip: "bg-primary/10 text-primary",
-            chipMuted: "text-primary/60",
-            hoverText: "text-primary/70",
-          };
+  const cardClasses = filled
+    ? "bg-primary border-primary/0 shadow-[0_12px_26px_-12px_rgba(20,80,210,0.6)]"
+    : "bg-card border border-border/60";
 
-  const cardClasses = accentClasses.card;
-  const labelClass = accentClasses.label;
-  const iconBgClass = accentClasses.iconBg;
-  const iconColorClass = accentClasses.iconColor;
-  const valueClass = accentClasses.value;
-  const chipClass = accentClasses.chip;
-  const chipMutedClass = accentClasses.chipMuted;
-  const hoverTextClass = accentClasses.hoverText;
+  const labelClass = filled ? "text-white/78" : "text-muted-foreground";
+  const iconBgClass = filled ? "bg-white/18" : (
+    kind === "income" ? "bg-success/10" : kind === "expense" ? "bg-destructive/10" : "bg-primary/10"
+  );
+  const iconColorClass = filled ? "text-white" : (
+    kind === "income" ? "text-success" : kind === "expense" ? "text-destructive" : "text-primary"
+  );
+  const valueClass = filled ? "text-white" : "text-foreground";
+  const chipClass = filled
+    ? "bg-white/18 text-white"
+    : kind === "income" ? "bg-success/10 text-success"
+    : kind === "expense" ? "bg-destructive/10 text-destructive"
+    : "bg-primary/10 text-primary";
+  const chipMutedClass = filled ? "text-white/60" : "text-muted-foreground";
+  const hoverTextClass = filled ? "text-white/60" : "text-muted-foreground";
 
-  // Chart colors all driven by the accent token
-  const chartStroke = accent;
-  const chartGradColor = accent;
-  const chartGradStartOp = 0.35;
-  const cursorStroke = accent;
-  const dotFill = accent;
-  const dotStroke = accent;
+  const chartStroke = filled ? "rgba(255,255,255,0.7)" : accent;
+  const chartGradColor = filled ? "#fff" : accent;
+  const chartGradStartOp = filled ? 0.25 : 0.35;
+  const cursorStroke = chartStroke;
+  const dotFill = chartStroke;
+  const dotStroke = chartStroke;
 
-  const tintOverlayClass =
-    kind === "income"
-      ? "bg-success/5"
-      : kind === "expense"
-        ? "bg-destructive/5"
-        : "";
+  const tintOverlayClass = filled ? "" :
+    kind === "income" ? "bg-success/5" : kind === "expense" ? "bg-destructive/5" : "";
 
   return (
     <Card
