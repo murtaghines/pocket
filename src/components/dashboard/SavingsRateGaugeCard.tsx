@@ -1,7 +1,5 @@
-import { useTranslation } from "react-i18next";
-import { Card } from "@/components/ui/card";
-import { ArrowDown, ArrowUp } from "lucide-react";
-import { SavingsRateGauge } from "./SavingsRateGauge";
+import { PiggyBank } from "lucide-react";
+import { useLocalization } from "@/hooks/useLocalization";
 
 interface SavingsRateGaugeCardProps {
   income: number;
@@ -11,99 +9,40 @@ interface SavingsRateGaugeCardProps {
   delay?: number;
 }
 
-const computeRate = (inc: number, exp: number) =>
-  inc > 0 ? Math.round(((inc - exp) / inc) * 100) : 0;
-
 export function SavingsRateGaugeCard({
   income,
   expenses,
-  previousIncome,
-  previousExpenses,
   delay = 0,
 }: SavingsRateGaugeCardProps) {
-  const { t } = useTranslation("dashboard");
+  const { formatCurrency } = useLocalization();
 
-  const currentRate = computeRate(income, expenses);
-  const hasPrevious =
-    previousIncome !== undefined && previousExpenses !== undefined;
-  const previousRate = hasPrevious
-    ? computeRate(previousIncome as number, previousExpenses as number)
-    : 0;
-
-  const delta = currentRate - previousRate;
-
-  const getRatingLabel = () => {
-    if (currentRate <= 0) {
-      return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
-    }
-    if (currentRate >= 30) {
-      return t("stats.excellent", { defaultValue: "Excellent" });
-    }
-    if (currentRate >= 15) {
-      return t("stats.good", { defaultValue: "Good" });
-    }
-    return t("stats.needsImprovement", { defaultValue: "Needs improvement" });
-  };
+  const rate = income > 0 ? Math.round(((income - expenses) / income) * 100) : 0;
+  const saved = Math.max(0, income - expenses);
 
   return (
-    <Card
-      variant="bento"
-      className="relative flex h-[200px] flex-col overflow-hidden border border-border/70 bg-card text-foreground shadow-sm"
+    <div
+      className="rounded-[18px] bg-card border border-[rgba(13,30,70,.07)] p-[18px_18px_16px]"
+      style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)", animationDelay: `${delay}ms` }}
     >
-      <div className="relative flex h-full flex-col p-4 md:p-5">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {t("stats.savingsRate")}
-        </p>
-
-        <div className="flex items-center gap-3">
-          <div className="flex items-baseline gap-1">
-            <span className="font-display text-2xl font-bold tabular-nums tracking-tight text-foreground md:text-3xl">
-              {currentRate}
-            </span>
-            <span className="text-lg font-semibold text-muted-foreground/60 md:text-xl">
-              %
-            </span>
-          </div>
-          {hasPrevious && (
-            <div className="flex flex-col items-start justify-center gap-0.5 text-[11px] leading-tight">
-              <span className="text-muted-foreground">
-                {t("stats.previousMonthShort", {
-                  defaultValue: "prev: {{rate}}%",
-                  rate: previousRate,
-                })}
-              </span>
-              <span
-                className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold ${
-                  delta >= 0
-                    ? "bg-primary/10 text-primary"
-                    : "bg-destructive/10 text-destructive"
-                }`}
-              >
-                {delta >= 0 ? (
-                  <ArrowUp className="h-3 w-3" strokeWidth={2.5} />
-                ) : (
-                  <ArrowDown className="h-3 w-3" strokeWidth={2.5} />
-                )}
-                {Math.abs(delta)} pp
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="relative -mt-2 flex flex-1 flex-col justify-end overflow-hidden">
-          <SavingsRateGauge
-            currentRate={currentRate}
-            previousRate={previousRate}
-            hasPrevious={hasPrevious}
-          />
-
-          {!hasPrevious && (
-            <p className="mt-2 text-center text-[11px] leading-4 text-muted-foreground">
-              {getRatingLabel()}
-            </p>
-          )}
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-[14px]">
+        <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-[#79839a]">
+          Savings rate
+        </span>
+        <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-[hsl(216_100%_95%)] text-[hsl(216_100%_50%)]">
+          <PiggyBank className="w-[17px] h-[17px]" strokeWidth={2.2} />
         </div>
       </div>
-    </Card>
+
+      {/* Rate value */}
+      <div className="text-[25px] font-bold tracking-[-0.02em] tabular-nums leading-none text-[#0d1220]">
+        {rate}%
+      </div>
+
+      {/* Saved amount subtext */}
+      <div className="text-[12px] mt-[5px] text-[#79839a]">
+        {formatCurrency(saved)} saved this month
+      </div>
+    </div>
   );
 }
