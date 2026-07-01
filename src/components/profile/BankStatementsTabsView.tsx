@@ -1731,15 +1731,12 @@ function InlineTransactionsEditor({
           afterDiff[key] = next;
         }
         if (fields.length > 0) {
-          await supabase.from("audit_log").insert([
-            {
-              user_id: user.id,
-              entity_type: "transaction",
-              entity_id: id,
-              action,
-              diff_json: { fields, before: beforeDiff, after: afterDiff } as never,
-            },
-          ]);
+          await supabase.rpc("log_audit_event", {
+            _entity_type: "transaction",
+            _entity_id: id,
+            _action: action,
+            _diff: { fields, before: beforeDiff, after: afterDiff } as never,
+          });
         }
       }
       return id;

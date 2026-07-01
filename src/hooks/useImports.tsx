@@ -220,14 +220,13 @@ export function useImports(domain?: AppDomain) {
 
       if (error) throw error;
 
-      // Log to audit
+      // Log to audit (server-validated)
       if (user?.id) {
-        await supabase.from('audit_log').insert({
-          user_id: user.id,
-          entity_type: 'import',
-          entity_id: importId,
-          action: 'delete',
-          diff_json: { deleted_at: new Date().toISOString() }
+        await supabase.rpc('log_audit_event', {
+          _entity_type: 'import',
+          _entity_id: importId,
+          _action: 'delete',
+          _diff: { deleted_at: new Date().toISOString() },
         });
       }
     },

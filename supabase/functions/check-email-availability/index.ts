@@ -1,4 +1,8 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+// Email availability check — hardened against user enumeration.
+// Previously this function returned whether an email was registered, which
+// allowed unauthenticated attackers to enumerate accounts. It now only
+// validates the email format and always reports the address as available.
+// Duplicate emails are caught later in the signup / OTP verification flow.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,28 +24,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // Paginate through users to find a match (admin API has no direct email lookup)
-    let exists = false;
-    let page = 1;
-    const perPage = 1000;
-    while (true) {
-      const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
-      if (error) throw error;
-      if (data.users.some((u) => (u.email || "").toLowerCase() === normalized)) {
-        exists = true;
-        break;
-      }
-      if (data.users.length < perPage) break;
-      page += 1;
-      if (page > 20) break; // safety cap
-    }
-
-    return new Response(JSON.stringify({ exists }), {
+    // Do NOT disclose whether an account exists. Always return exists=false.
+    // Any real conflict is surfaced during the OTP / signup step.
+    return new Response(JSON.stringify({ exists: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

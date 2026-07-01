@@ -59,14 +59,13 @@ export function usePeriods(domain?: AppDomain) {
 
       if (error) throw error;
 
-      // Log to audit
+      // Log to audit (server-validated)
       if (user?.id) {
-        await supabase.from('audit_log').insert({
-          user_id: user.id,
-          entity_type: 'period',
-          entity_id: periodId,
-          action: 'close_period',
-          diff_json: { closed_at: new Date().toISOString() }
+        await supabase.rpc('log_audit_event', {
+          _entity_type: 'period',
+          _entity_id: periodId,
+          _action: 'close_period',
+          _diff: { closed_at: new Date().toISOString() },
         });
       }
     },
@@ -92,14 +91,13 @@ export function usePeriods(domain?: AppDomain) {
 
       if (error) throw error;
 
-      // Log to audit
+      // Log to audit (server-validated)
       if (user?.id) {
-        await supabase.from('audit_log').insert({
-          user_id: user.id,
-          entity_type: 'period',
-          entity_id: periodId,
-          action: 'reopen_period',
-          diff_json: { reopened_at: new Date().toISOString() }
+        await supabase.rpc('log_audit_event', {
+          _entity_type: 'period',
+          _entity_id: periodId,
+          _action: 'reopen_period',
+          _diff: { reopened_at: new Date().toISOString() },
         });
       }
     },
