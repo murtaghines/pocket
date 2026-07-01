@@ -22,6 +22,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+export const RAIL_WIDTH_COLLAPSED = "104px";
+export const RAIL_WIDTH_EXPANDED = "264px";
+
 /** 8-point asterisk — fill only, no stroke, matches brand spec */
 function AsteriskMark({ size = 24, className }: { size?: number; className?: string }) {
   return (
@@ -44,6 +47,22 @@ function AsteriskMark({ size = 24, className }: { size?: number; className?: str
           transform={deg === 0 ? undefined : `rotate(${deg} 12 12)`}
         />
       ))}
+    </svg>
+  );
+}
+
+/** Sharp triangular "folded corner" accent — pinned to the rail's bottom-right corner */
+function PocketFold() {
+  return (
+    <svg
+      width="34"
+      height="34"
+      viewBox="0 0 34 34"
+      className="absolute bottom-0 right-0 pointer-events-none"
+      aria-hidden="true"
+    >
+      <polygon points="34,0 34,34 0,34" fill="hsl(216 100% 70%)" />
+      <line x1="34" y1="0" x2="0" y2="34" stroke="rgba(10,42,94,0.16)" strokeWidth="1" />
     </svg>
   );
 }
@@ -81,19 +100,19 @@ function NavRow({ label, icon: Icon, to, active, expanded, group, small = false 
             aria-label={label}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "relative flex items-center justify-center transition-colors rounded-[11px]",
-              small ? "min-h-[42px]" : "min-h-[46px]",
+              "relative flex items-center justify-center transition-colors rounded-[12px]",
+              small ? "min-h-[44px]" : "min-h-[50px]",
               active ? "bg-white/[0.18]" : "hover:bg-white/10",
             )}
           >
             <div
               className={cn(
                 "flex items-center justify-center transition-all",
-                small ? "w-[26px] h-[26px]" : "w-[40px] h-[40px]",
+                small ? "w-[30px] h-[30px]" : "w-[44px] h-[44px]",
                 active ? "text-white" : "text-white/[0.55]",
               )}
             >
-              <Icon className={small ? "w-[18px] h-[18px]" : "w-5 h-5"} strokeWidth={active ? 2.4 : 2} />
+              <Icon className={small ? "w-[19px] h-[19px]" : "w-[22px] h-[22px]"} strokeWidth={active ? 2.4 : 2} />
             </div>
           </Link>
         </TooltipTrigger>
@@ -112,22 +131,22 @@ function NavRow({ label, icon: Icon, to, active, expanded, group, small = false 
       to={to}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 px-[11px] transition-colors rounded-[11px]",
-        small ? "min-h-[42px]" : "min-h-[44px]",
+        "flex items-center gap-3 px-[12px] transition-colors rounded-[12px]",
+        small ? "min-h-[44px]" : "min-h-[48px]",
         active ? "bg-white/[0.18]" : "hover:bg-white/10",
       )}
     >
       <div
         className={cn(
-          "flex items-center justify-center w-[26px] h-[26px] shrink-0 transition-all",
+          "flex items-center justify-center w-[28px] h-[28px] shrink-0 transition-all",
           active ? "text-white" : "text-white/[0.55]",
         )}
       >
-        <Icon className={small ? "w-[18px] h-[18px]" : "w-[19px] h-[19px]"} strokeWidth={active ? 2.4 : 2} />
+        <Icon className={small ? "w-[19px] h-[19px]" : "w-[20px] h-[20px]"} strokeWidth={active ? 2.4 : 2} />
       </div>
       <span
         className={cn(
-          "text-[14px] whitespace-nowrap",
+          "text-[14.5px] whitespace-nowrap",
           active ? "font-semibold text-white" : "font-normal text-white/70",
         )}
       >
@@ -148,17 +167,17 @@ function SettingsRow({ expanded }: { expanded: boolean }) {
           <Link
             to="/profile"
             className={cn(
-              "flex items-center justify-center mt-2.5 rounded-[12px] min-h-[46px] transition-colors",
+              "flex items-center justify-center mt-2.5 rounded-[13px] min-h-[50px] transition-colors",
               active ? "bg-white/[0.18]" : "hover:bg-white/10",
             )}
           >
             <div
               className={cn(
-                "flex items-center justify-center w-[40px] h-[40px]",
+                "flex items-center justify-center w-[44px] h-[44px]",
                 active ? "text-white" : "text-white/[0.55]",
               )}
             >
-              <Settings className="w-5 h-5" strokeWidth={active ? 2.4 : 2} />
+              <Settings className="w-[21px] h-[21px]" strokeWidth={active ? 2.4 : 2} />
             </div>
           </Link>
         </TooltipTrigger>
@@ -176,25 +195,20 @@ function SettingsRow({ expanded }: { expanded: boolean }) {
     <Link
       to="/profile"
       className={cn(
-        "flex items-center gap-3 mt-3 px-[11px] rounded-[12px] min-h-[48px] transition-colors",
+        "flex items-center gap-3 mt-3 px-[12px] rounded-[13px] min-h-[50px] transition-colors",
         active ? "bg-white/[0.18]" : "hover:bg-white/10",
       )}
     >
       <div
         className={cn(
-          "flex items-center justify-center w-[26px] h-[26px] shrink-0",
+          "flex items-center justify-center w-[28px] h-[28px] shrink-0",
           active ? "text-white" : "text-white/[0.55]",
         )}
       >
-        <Settings className="w-5 h-5" strokeWidth={active ? 2.4 : 2} />
+        <Settings className="w-[20px] h-[20px]" strokeWidth={active ? 2.4 : 2} />
       </div>
       <div className="flex flex-col min-w-0">
-        <span
-          className={cn(
-            "text-[13px] font-semibold",
-            active ? "text-white" : "text-white",
-          )}
-        >
+        <span className="text-[13.5px] font-semibold text-white">
           Settings
         </span>
         <span className="text-[11px] text-white/60 whitespace-nowrap">
@@ -209,9 +223,13 @@ export function DataRail() {
   const location = useLocation();
   const [expanded, setExpanded] = useState(false);
 
-  // Push sidebar width as a CSS variable so DashboardLayout can adjust padding
+  // Push sidebar width as a CSS variable so DashboardLayout / full-bleed pages
+  // can size their left padding to exactly match the fixed rail.
   useEffect(() => {
-    document.documentElement.style.setProperty("--rail-width", expanded ? "248px" : "122px");
+    document.documentElement.style.setProperty(
+      "--rail-width",
+      expanded ? RAIL_WIDTH_EXPANDED : RAIL_WIDTH_COLLAPSED,
+    );
     return () => {
       document.documentElement.style.removeProperty("--rail-width");
     };
@@ -231,114 +249,118 @@ export function DataRail() {
 
   return (
     <TooltipProvider delayDuration={200}>
+      {/* Full-bleed rail: flush to the viewport's left edge, top to bottom,
+          always fixed regardless of page scroll height. Square corners —
+          no outer gutter, no rounded card — the blue fills the entire side. */}
       <aside
         className={cn(
-          "hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col",
-          "transition-[width] duration-[220ms] ease-out",
-          expanded ? "w-[248px] p-[18px_14px]" : "w-[122px] p-4",
+          "hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col overflow-hidden",
+          "bg-primary text-white transition-[width] duration-[220ms] ease-out",
+          expanded ? "p-[20px_18px]" : "p-4",
         )}
+        style={{
+          width: expanded ? RAIL_WIDTH_EXPANDED : RAIL_WIDTH_COLLAPSED,
+          boxShadow: "4px 0 24px -8px rgba(20,80,210,.35)",
+        }}
         aria-label="Primary navigation"
       >
-        {/* Blue rounded pill card */}
-        <div
-          className="flex flex-col flex-1 bg-primary text-white rounded-3xl p-[18px] overflow-hidden"
-          style={{ boxShadow: "0 18px 40px -16px rgba(20,80,210,0.5)" }}
-        >
-          {/* ── Logo zone ── */}
-          {!expanded ? (
+        {/* ── Logo zone ── */}
+        {!expanded ? (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            aria-label="Expand navigation"
+            className="flex flex-col items-center gap-1 pb-3 cursor-pointer group self-stretch"
+          >
+            <AsteriskMark size={28} />
+            <ChevronRight
+              className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+              strokeWidth={2}
+            />
+          </button>
+        ) : (
+          <div className="flex items-center justify-between mb-4">
+            <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
+              <AsteriskMark size={26} />
+              <span
+                className="text-[21px] tracking-[0.07em] text-white whitespace-nowrap"
+                style={{ fontFamily: "Quicksand, sans-serif", fontWeight: 700 }}
+              >
+                pocket
+              </span>
+            </Link>
             <button
               type="button"
-              onClick={() => setExpanded(true)}
-              aria-label="Expand navigation"
-              className="flex flex-col items-center gap-1 pb-3 cursor-pointer group self-stretch"
+              onClick={() => setExpanded(false)}
+              aria-label="Collapse navigation"
+              className="w-[30px] h-[30px] flex items-center justify-center rounded-[9px] bg-white/10 text-white/80 hover:bg-white/20 transition-colors shrink-0"
             >
-              <AsteriskMark size={26} />
-              <ChevronRight
-                className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                strokeWidth={2}
-              />
+              <ChevronLeft className="w-[18px] h-[18px]" strokeWidth={2} />
             </button>
-          ) : (
-            <div className="flex items-center justify-between mb-4">
-              <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
-                <AsteriskMark size={24} />
-                <span
-                  className="text-[20px] tracking-[0.07em] text-white whitespace-nowrap"
-                  style={{ fontFamily: "Quicksand, sans-serif", fontWeight: 700 }}
-                >
-                  pocket
-                </span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => setExpanded(false)}
-                aria-label="Collapse navigation"
-                className="w-[30px] h-[30px] flex items-center justify-center rounded-[9px] bg-white/10 text-white/80 hover:bg-white/20 transition-colors shrink-0"
-              >
-                <ChevronLeft className="w-[18px] h-[18px]" strokeWidth={2} />
-              </button>
+          </div>
+        )}
+
+        {/* ── MAIN nav ── */}
+        <nav className="mt-1.5 flex flex-col gap-1">
+          {expanded && (
+            <div className="text-[10px] font-bold tracking-[0.12em] text-white/50 uppercase px-[12px] mb-1.5">
+              MAIN
             </div>
           )}
+          {MAIN_NAV.map((item) => (
+            <NavRow
+              key={item.key}
+              label={item.label}
+              icon={item.icon}
+              to={item.to}
+              active={isActive(item.to)}
+              expanded={expanded}
+              group="Main"
+            />
+          ))}
+        </nav>
 
-          {/* ── MAIN nav ── */}
-          <nav className="mt-1.5 flex flex-col gap-1">
-            {expanded && (
-              <div className="text-[10px] font-bold tracking-[0.12em] text-white/50 uppercase px-[11px] mb-1.5">
-                MAIN
-              </div>
-            )}
-            {MAIN_NAV.map((item) => (
-              <NavRow
-                key={item.key}
-                label={item.label}
-                icon={item.icon}
-                to={item.to}
-                active={isActive(item.to)}
-                expanded={expanded}
-                group="Main"
-              />
-            ))}
-          </nav>
+        <div className="flex-1 min-h-4" />
 
-          <div className="flex-1 min-h-4" />
-
-          {/* ── DATA · uploads panel ── */}
+        {/* ── DATA · uploads panel ── */}
+        <div
+          className={cn(
+            "rounded-[18px] flex flex-col bg-white/10 border border-white/[0.13]",
+            expanded ? "p-3 gap-1" : "p-[10px_6px] gap-1.5",
+          )}
+        >
           <div
             className={cn(
-              "rounded-[18px] flex flex-col bg-white/10 border border-white/[0.13]",
-              expanded ? "p-3 gap-1" : "p-[10px_6px] gap-1.5",
+              "flex items-center gap-1.5 px-1.5 mb-0.5",
+              expanded ? "justify-start" : "justify-center",
             )}
           >
-            <div
-              className={cn(
-                "flex items-center gap-1.5 px-1.5 mb-0.5",
-                expanded ? "justify-start" : "justify-center",
-              )}
-            >
-              <Upload className="w-3.5 h-3.5 text-white/[0.62] shrink-0" strokeWidth={2} />
-              {expanded && (
-                <span className="text-[10px] font-bold tracking-[0.1em] text-white/[0.62] uppercase whitespace-nowrap">
-                  Data · uploads
-                </span>
-              )}
-            </div>
-            {DATA_NAV.map((item) => (
-              <NavRow
-                key={item.key}
-                label={item.label}
-                icon={item.icon}
-                to={item.to}
-                active={isDataActive(item.to)}
-                expanded={expanded}
-                group="Data"
-                small
-              />
-            ))}
+            <Upload className="w-3.5 h-3.5 text-white/[0.62] shrink-0" strokeWidth={2} />
+            {expanded && (
+              <span className="text-[10px] font-bold tracking-[0.1em] text-white/[0.62] uppercase whitespace-nowrap">
+                Data · uploads
+              </span>
+            )}
           </div>
-
-          {/* ── Settings footer ── */}
-          <SettingsRow expanded={expanded} />
+          {DATA_NAV.map((item) => (
+            <NavRow
+              key={item.key}
+              label={item.label}
+              icon={item.icon}
+              to={item.to}
+              active={isDataActive(item.to)}
+              expanded={expanded}
+              group="Data"
+              small
+            />
+          ))}
         </div>
+
+        {/* ── Settings footer ── */}
+        <SettingsRow expanded={expanded} />
+
+        {/* ── Decorative folded corner ── */}
+        <PocketFold />
       </aside>
     </TooltipProvider>
   );

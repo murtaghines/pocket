@@ -23,10 +23,14 @@
     "openingBalance": "Opening balance"
   },
   "charts": {
-    "monthlyBalance": "Monthly Balance",
+    "monthlyBalance": "Income vs expenses",
     "categoryBreakdown": "Category Breakdown",
     "spendingByCategory": "Spending by Category",
     "incomeByCategory": "Income by Category",
+    "dailyBalance": "Daily balance",
+    "dailyBalanceSubtitle": "How your balance moved through {{month}}",
+    "lastMonths": "Last {{n}} months",
+    "other": "Other",
     "expensesByBank": "Expenses by Bank",
     "weeklyComparison": "This Week",
     "yearlyBalance": "Yearly Balance",

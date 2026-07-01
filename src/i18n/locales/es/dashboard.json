@@ -23,10 +23,14 @@
     "openingBalance": "Saldo inicial"
   },
   "charts": {
-    "monthlyBalance": "Balance Mensual",
+    "monthlyBalance": "Ingresos vs gastos",
     "categoryBreakdown": "Desglose por Categoría",
     "spendingByCategory": "Gastos por Categoría",
     "incomeByCategory": "Ingresos por Categoría",
+    "dailyBalance": "Balance diario",
+    "dailyBalanceSubtitle": "Cómo evolucionó tu saldo durante {{month}}",
+    "lastMonths": "Últimos {{n}} meses",
+    "other": "Otros",
     "expensesByBank": "Gastos por Banco",
     "weeklyComparison": "Esta Semana",
     "yearlyBalance": "Balance Anual",

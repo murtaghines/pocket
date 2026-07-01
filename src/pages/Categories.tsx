@@ -12,7 +12,7 @@ export default function Categories() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme md:pl-24">
+    <div className="min-h-screen bg-background dashboard-theme md:pl-[var(--rail-width,104px)] md:transition-[padding-left] md:duration-[220ms] md:ease-out">
       <DataRail />
       <main className="w-full bg-card min-h-screen pb-20 md:pb-0">
         <CategoriesEditor />
