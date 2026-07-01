@@ -49,32 +49,32 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
       className="bg-card rounded-[18px] p-[20px_22px_18px]"
       style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
     >
-      {/* Header */}
-      <div className="mb-1">
-        <p className="text-[15px] font-semibold text-foreground">
-          {t('charts.monthlyBalance', 'Income vs expenses')}
-        </p>
-        <p className="text-[12px] text-muted-foreground mt-0.5">
-          {t('charts.lastMonths', 'Last {{n}} months', { n: data.length })}
-        </p>
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-5 mb-3 mt-3">
-        <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-          <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-          {t('stats.income', 'Income')}
-        </span>
-        <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(220 14% 76%)' }} />
-          {t('stats.expenses', 'Expenses')}
-        </span>
+      {/* Header row: title + legend */}
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <p className="text-[15px] font-semibold text-foreground leading-tight">
+            {t('charts.monthlyBalance', 'Income vs expenses')}
+          </p>
+          <p className="text-[12px] text-muted-foreground mt-[3px]">
+            {t('charts.lastMonths', 'Last {{n}} months', { n: data.length })}
+          </p>
+        </div>
+        <div className="flex items-center gap-[14px] text-[12px] text-[#5a6478] shrink-0">
+          <span className="flex items-center gap-[6px]">
+            <span className="w-[10px] h-[10px] rounded-[3px] bg-primary" />
+            {t('stats.income', 'Income')}
+          </span>
+          <span className="flex items-center gap-[6px]">
+            <span className="w-[10px] h-[10px] rounded-[3px]" style={{ background: 'hsl(216 35% 82%)' }} />
+            {t('stats.expenses', 'Expenses')}
+          </span>
+        </div>
       </div>
 
       {!hasData ? (
-        <EmptyState height="h-[230px]" />
+        <EmptyState height="h-[180px]" />
       ) : (
-        <div className="h-[230px]">
+        <div className="h-[180px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
@@ -110,7 +110,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
               <Bar
                 dataKey="expenses"
                 name={t('stats.expenses', 'Expenses')}
-                fill="hsl(220 14% 76%)"
+                fill="hsl(216 35% 82%)"
                 radius={[5, 5, 0, 0]}
                 maxBarSize={28}
                 isAnimationActive={false}

@@ -1,8 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useInvestments } from "@/hooks/useInvestments";
 import { useLocalization } from "@/hooks/useLocalization";
-import { PiggyBank, ArrowRight } from "lucide-react";
+import { TrendingUp, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -11,48 +9,74 @@ export function InvestmentSummaryCard() {
   const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
 
+  const gain = totalCurrentValue - totalInvestedThisMonth;
+  const gainPct = totalInvestedThisMonth > 0
+    ? ((gain / totalInvestedThisMonth) * 100).toFixed(1)
+    : null;
+  const isPositive = gain >= 0;
+
   return (
-    <Card variant="bento" className="">
-      <CardContent className="p-5">
-        {/* Icon badge - blue diffused */}
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-          <PiggyBank className="w-5 h-5 text-primary" />
+    <div
+      className="bg-card rounded-[18px] p-[20px_22px_18px] flex flex-col h-full"
+      style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
+    >
+      {/* Icon + label */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-[38px] h-[38px] rounded-[11px] bg-primary/10 flex items-center justify-center shrink-0">
+          <TrendingUp className="w-[19px] h-[19px] text-primary" strokeWidth={2} />
         </div>
-
-        {/* Label */}
-        <p className="text-sm font-medium text-muted-foreground mb-1">
-          {t('investments.title')}
+        <p className="text-[13px] font-semibold text-muted-foreground">
+          {t('investments.title', 'Investments')}
         </p>
+      </div>
 
-        {hasData ? (
-          <>
-            <p className="text-2xl md:text-3xl font-bold tabular-nums tracking-tight text-primary">
-              {formatCurrency(totalInvestedThisMonth)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('investments.investedThisMonth')}
-            </p>
-            {totalCurrentValue > 0 && (
-              <div className="flex items-center gap-1.5 mt-3">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success font-medium tabular-nums">
-                  {t('investments.totalValue')}: {formatCurrency(totalCurrentValue)}
-                </span>
+      {hasData ? (
+        <>
+          {/* Main value */}
+          <p className="text-[28px] font-bold tabular-nums tracking-tight text-foreground leading-tight">
+            {formatCurrency(totalCurrentValue)}
+          </p>
+          <p className="text-[12px] text-muted-foreground mt-1">
+            {t('investments.totalValue', 'Current portfolio value')}
+          </p>
+
+          {/* Stats row */}
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex-1 rounded-[11px] bg-muted/50 px-3 py-2">
+              <p className="text-[11px] text-muted-foreground mb-0.5">{t('investments.investedThisMonth', 'Invested this month')}</p>
+              <p className="text-[13px] font-semibold tabular-nums text-foreground">{formatCurrency(totalInvestedThisMonth)}</p>
+            </div>
+            {gainPct !== null && (
+              <div className="flex-1 rounded-[11px] bg-muted/50 px-3 py-2">
+                <p className="text-[11px] text-muted-foreground mb-0.5">{t('investments.return', 'Return')}</p>
+                <p
+                  className="text-[13px] font-semibold tabular-nums"
+                  style={{ color: isPositive ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}
+                >
+                  {isPositive ? '+' : ''}{gainPct}%
+                </p>
               </div>
             )}
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {t('investments.noInvestments')}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-[28px] font-bold text-foreground/30 leading-tight">—</p>
+          <p className="text-[13px] text-muted-foreground mt-1">
+            {t('investments.noInvestments', 'No investment data yet')}
           </p>
-        )}
-        
-        <Link to="/investments" className="block mt-4">
-          <Button variant="ghost" size="sm" className="w-full rounded-xl text-primary hover:bg-primary/5">
-            {t('investments.viewInvestments')}
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+        </>
+      )}
+
+      <div className="mt-auto pt-4">
+        <Link
+          to="/investments"
+          className="flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:opacity-70 transition-opacity"
+        >
+          {t('investments.viewInvestments', 'View investments')}
+          <ArrowRight className="w-[14px] h-[14px]" strokeWidth={2} />
         </Link>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
