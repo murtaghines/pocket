@@ -1,282 +1,142 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 
 interface DailyFlowChartProps {
-  transactions: Array<{ date: string; amount: number; type: string }>;
+  transactions: Array<{ date: string; amount: number; type: string; movement?: string }>;
   monthKey: string | null;
   convert: (amount: number) => number;
 }
 
-interface FlowPoint {
-  key: string;
-  label: string;
-  rangeLabel: string;
-  income: number;
-  expense: number;
-}
-
-type ViewMode = "week" | "weekday";
-
-const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
-  const [view, setView] = useState<ViewMode>("week");
-  // Always use logarithmic scale — visually nicer for comparing weeks with very
-  // different magnitudes. Tooltip still shows the real (non-log) value.
-  const scale: "log" = "log";
 
-  const data: FlowPoint[] = useMemo(() => {
-    if (!monthKey) return [];
+  const { points, monthName, netChange } = useMemo(() => {
+    if (!monthKey) return { points: [], monthName: '', netChange: 0 };
     const [y, m] = monthKey.split("-").map(Number);
     const daysInMonth = new Date(y, m, 0).getDate();
+    const name = MONTH_NAMES[m - 1] || monthKey;
 
-    if (view === "week") {
-      const bucketCount = Math.ceil(daysInMonth / 7);
-      const buckets: FlowPoint[] = Array.from({ length: bucketCount }, (_, i) => {
-        const startDay = i * 7 + 1;
-        const endDay = Math.min(startDay + 6, daysInMonth);
-        return {
-          key: `W${i + 1}`,
-          label: `W${i + 1}`,
-          rangeLabel: `${String(startDay).padStart(2, "0")}–${String(endDay).padStart(2, "0")}/${String(m).padStart(2, "0")}`,
-          income: 0,
-          expense: 0,
-        };
-      });
-
-      transactions.forEach((tx) => {
-        if (!tx.date.startsWith(monthKey)) return;
-        const d = parseInt(tx.date.slice(8, 10), 10);
-        if (!d) return;
-        const idx = Math.min(Math.floor((d - 1) / 7), bucketCount - 1);
-        const amt = Math.abs(convert(tx.amount));
-        if (tx.type === "income") buckets[idx].income += amt;
-        else if (tx.type === "expense") buckets[idx].expense += amt;
-      });
-
-      return buckets;
-    }
-
-    // Weekday view: Mon..Sun aggregating all matching weekdays of the month
-    const weekdayBuckets: FlowPoint[] = WEEKDAY_KEYS.map((k) => ({
-      key: k,
-      label: t(`weekdays.${k}`, {
-        defaultValue: k.charAt(0).toUpperCase() + k.slice(1),
-      }),
-      rangeLabel: t(`weekdays.full.${k}`, {
-        defaultValue: k.charAt(0).toUpperCase() + k.slice(1),
-      }),
-      income: 0,
-      expense: 0,
-    }));
-
+    const dailyNet: Record<number, number> = {};
     transactions.forEach((tx) => {
       if (!tx.date.startsWith(monthKey)) return;
-      const [yy, mm, dd] = tx.date.split("-").map(Number);
-      if (!yy || !mm || !dd) return;
-      // JS getDay: 0=Sun..6=Sat. Convert to Mon=0..Sun=6
-      const jsDay = new Date(yy, mm - 1, dd).getDay();
-      const idx = (jsDay + 6) % 7;
-      const amt = Math.abs(convert(tx.amount));
-      if (tx.type === "income") weekdayBuckets[idx].income += amt;
-      else if (tx.type === "expense") weekdayBuckets[idx].expense += amt;
+      const day = parseInt(tx.date.slice(8, 10), 10);
+      if (!day) return;
+      const isIncome = tx.type === "income" || tx.movement === "INCOME";
+      const isExpense = tx.type === "expense" || tx.movement === "EXPENSE";
+      const raw = Math.abs(convert(tx.amount));
+      if (isIncome) dailyNet[day] = (dailyNet[day] || 0) + raw;
+      else if (isExpense) dailyNet[day] = (dailyNet[day] || 0) - raw;
     });
 
-    return weekdayBuckets;
-  }, [transactions, monthKey, convert, view, t]);
+    let cumulative = 0;
+    const pts = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      cumulative += dailyNet[day] || 0;
+      return { day, label: `${MONTH_SHORT[m - 1]} ${day}`, balance: Math.round(cumulative * 100) / 100 };
+    });
 
-  const hasData = data.some((d) => d.income > 0 || d.expense > 0);
-  const incomeLabel = t("stats.income", "Income");
-  const expenseLabel = t("stats.expenses", "Expenses");
+    return { points: pts, monthName: name, netChange: cumulative };
+  }, [transactions, monthKey, convert]);
 
-  // For log scale, recharts can't handle 0/negative. Compute a sensible min and
-  // remap zeros to it so bars render small but visible without distorting reads.
-  const allValues = data.flatMap((d) => [d.income, d.expense]).filter((v) => v > 0);
-  const minPositive = allValues.length ? Math.min(...allValues) : 1;
-  const logMin = Math.max(1, Math.floor(minPositive / 2));
-  const maxValue = allValues.length ? Math.max(...allValues) : 1;
+  const hasData = points.some(p => p.balance !== 0);
+  const isPositive = netChange >= 0;
 
-  const chartData =
-    scale === "log"
-      ? data.map((d) => ({
-          ...d,
-          income: d.income > 0 ? d.income : logMin,
-          expense: d.expense > 0 ? d.expense : logMin,
-        }))
-      : data;
+  // Only tick every ~7 days to keep x-axis readable
+  const tickDays = new Set([1, 8, 15, 22, points.length]);
 
-  const titleText =
-    view === "week"
-      ? t("charts.weeklyFlow", "Weekly Flow")
-      : t("charts.weekdayFlow", "Weekday Flow");
-
-  const ToggleButtons = (
-    <div className="flex items-center gap-2">
-      <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs">
-        <button
-          type="button"
-          onClick={() => setView("week")}
-          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-            view === "week"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {t("charts.toggleWeek", { defaultValue: "Week" })}
-        </button>
-        <button
-          type="button"
-          onClick={() => setView("weekday")}
-          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-            view === "weekday"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {t("charts.toggleWeekday", { defaultValue: "Weekday" })}
-        </button>
-      </div>
-    </div>
-  );
-
-  if (!hasData) {
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const { label, balance } = payload[0].payload;
     return (
-      <Card variant="bento" className="">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-lg font-semibold">{titleText}</CardTitle>
-            {ToggleButtons}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <EmptyState height="h-[260px]" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload || !payload.length) return null;
-    const point = data.find((d) => d.label === label);
-    const incomeVal = point?.income ?? 0;
-    const expenseVal = point?.expense ?? 0;
-    return (
-      <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[180px]">
-        <p className="text-xs font-medium text-foreground">{point?.label}</p>
-        {point?.rangeLabel && point.rangeLabel !== point.label && (
-          <p className="text-xs text-muted-foreground mb-2">{point.rangeLabel}</p>
-        )}
-        <div className="flex items-center justify-between gap-3 text-sm mt-1">
-          <span className="flex items-center gap-1.5 text-foreground">
-            <span className="w-2 h-2 rounded-full bg-success" /> {incomeLabel}
-          </span>
-          <span className="font-semibold text-success">{formatCurrency(incomeVal)}</span>
-        </div>
-        <div className="flex items-center justify-between gap-3 text-sm mt-1">
-          <span className="flex items-center gap-1.5 text-foreground">
-            <span className="w-2 h-2 rounded-full bg-destructive" /> {expenseLabel}
-          </span>
-          <span className="font-semibold text-destructive">{formatCurrency(expenseVal)}</span>
-        </div>
+      <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[150px]">
+        <p className="text-xs text-muted-foreground mb-1">{label}</p>
+        <p className="text-sm font-semibold" style={{ color: balance >= 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))' }}>
+          {balance >= 0 ? '+' : ''}{formatCurrency(balance)}
+        </p>
       </div>
     );
   };
 
   return (
-    <Card variant="bento" className="">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <CardTitle className="text-lg font-semibold">{titleText}</CardTitle>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-success" /> {incomeLabel}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-destructive" /> {expenseLabel}
-              </span>
-            </div>
-            {ToggleButtons}
-          </div>
+    <div
+      className="bg-card rounded-[18px] p-[20px_22px_18px]"
+      style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <p className="text-[15px] font-semibold text-foreground">
+            {t('charts.dailyBalance', 'Daily balance')}
+          </p>
+          <p className="text-[12px] text-muted-foreground mt-0.5">
+            {t('charts.dailyBalanceSubtitle', 'How your balance moved through {{month}}', { month: monthName })}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="w-full h-[260px]">
+        {hasData && (
+          <span
+            className="text-[13px] font-semibold whitespace-nowrap"
+            style={{ color: isPositive ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}
+          >
+            {isPositive ? '+' : ''}{formatCurrency(netChange)} this month
+          </span>
+        )}
+      </div>
+
+      {!hasData ? (
+        <EmptyState height="h-[230px]" />
+      ) : (
+        <div className="h-[230px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 12, right: 12, bottom: 8, left: 0 }}
-              barCategoryGap="20%"
-              barGap={4}
-            >
-              <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
+            <AreaChart data={points} margin={{ top: 8, right: 4, left: -14, bottom: 0 }}>
+              <defs>
+                <linearGradient id="balanceGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.35} vertical={false} />
               <XAxis
-                dataKey="label"
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                dataKey="day"
                 axisLine={false}
                 tickLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                tickFormatter={(d) => {
+                  if (!monthKey) return '';
+                  const [, m] = monthKey.split('-');
+                  return tickDays.has(d) ? `${MONTH_SHORT[parseInt(m) - 1]} ${d}` : '';
+                }}
+                interval={0}
+                dy={8}
               />
               <YAxis
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => {
-                  if (v >= 1000) return `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k`;
-                  return `${Math.round(v)}`;
-                }}
-                width={44}
-                scale={scale === "log" ? "log" : "auto"}
-                domain={
-                  scale === "log" ? [logMin, Math.ceil(maxValue * 1.2)] : [0, "auto"]
-                }
-                allowDataOverflow={scale === "log"}
-                ticks={
-                  scale === "log"
-                    ? Array.from(
-                        { length: Math.ceil(Math.log10(maxValue / logMin)) + 1 },
-                        (_, i) => logMin * Math.pow(10, i),
-                      )
-                    : undefined
-                }
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v < -1000 ? `-${Math.abs(v / 1000).toFixed(0)}k` : `${Math.round(v)}`}
+                width={38}
               />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.3 }}
-              />
-              <Bar
-                dataKey="income"
-                name={incomeLabel}
-                fill="hsl(var(--success))"
-                radius={[6, 6, 0, 0]}
-                maxBarSize={36}
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '4 2' }} />
+              <Area
+                type="monotone"
+                dataKey="balance"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                fill="url(#balanceGrad)"
+                dot={false}
+                activeDot={{ r: 4, fill: 'hsl(var(--primary))', strokeWidth: 0 }}
                 isAnimationActive={false}
               />
-              <Bar
-                dataKey="expense"
-                name={expenseLabel}
-                fill="hsl(var(--destructive))"
-                radius={[6, 6, 0, 0]}
-                maxBarSize={36}
-                isAnimationActive={false}
-              />
-            </BarChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

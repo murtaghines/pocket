@@ -83,18 +83,17 @@ function NavRow({ label, icon: Icon, to, active, expanded, group, small = false 
             className={cn(
               "relative flex items-center justify-center transition-colors rounded-[11px]",
               small ? "min-h-[42px]" : "min-h-[46px]",
-              active ? "bg-white" : "hover:bg-white/10",
+              active ? "bg-white/[0.18]" : "hover:bg-white/10",
             )}
           >
             <div
               className={cn(
-                "flex items-center justify-center rounded-[10px] transition-all",
-                active
-                  ? cn("bg-primary text-white", small ? "w-[36px] h-[36px]" : "w-[42px] h-[42px]")
-                  : cn("text-white/[0.62]",      small ? "w-[26px] h-[26px]" : "w-[40px] h-[40px]"),
+                "flex items-center justify-center transition-all",
+                small ? "w-[26px] h-[26px]" : "w-[40px] h-[40px]",
+                active ? "text-white" : "text-white/[0.55]",
               )}
             >
-              <Icon className={small ? "w-[18px] h-[18px]" : "w-5 h-5"} strokeWidth={2} />
+              <Icon className={small ? "w-[18px] h-[18px]" : "w-5 h-5"} strokeWidth={active ? 2.4 : 2} />
             </div>
           </Link>
         </TooltipTrigger>
@@ -152,16 +151,16 @@ function SettingsRow({ expanded }: { expanded: boolean }) {
             to="/profile"
             className={cn(
               "flex items-center justify-center mt-2.5 rounded-[12px] min-h-[46px] transition-colors",
-              active ? "bg-white" : "hover:bg-white/10",
+              active ? "bg-white/[0.18]" : "hover:bg-white/10",
             )}
           >
             <div
               className={cn(
-                "flex items-center justify-center w-[40px] h-[40px] rounded-[10px]",
-                active ? "bg-primary text-white" : "text-white/70",
+                "flex items-center justify-center w-[40px] h-[40px]",
+                active ? "text-white" : "text-white/[0.55]",
               )}
             >
-              <Settings className="w-5 h-5" strokeWidth={2} />
+              <Settings className="w-5 h-5" strokeWidth={active ? 2.4 : 2} />
             </div>
           </Link>
         </TooltipTrigger>

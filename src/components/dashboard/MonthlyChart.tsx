@@ -1,10 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useLocalization } from "@/hooks/useLocalization";
-import { BarChart3 } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface MonthlyData {
   month: string;
@@ -17,6 +14,12 @@ interface MonthlyChartProps {
   data: MonthlyData[];
 }
 
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const monthLabel = (val: string) => {
+  const [, m] = val.split('-');
+  return MONTH_NAMES[parseInt(m) - 1] || val;
+};
+
 export function MonthlyChart({ data }: MonthlyChartProps) {
   const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
@@ -24,158 +27,98 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   const hasData = data.length > 0 && data.some(d => d.income !== 0 || d.expenses !== 0);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-card border border-border/50 rounded-xl shadow-lg p-4">
-          <p className="font-semibold text-foreground mb-2">{(() => { const [,m] = (label || '').split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || label; })()}</p>
-          {payload.map((item: any, index: number) => (
-            <div key={index} className="flex items-center gap-2 text-sm">
-              <div 
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-muted-foreground">{item.name}:</span>
-              <span className="font-medium text-foreground">
-                {formatCurrency(item.value)}
-              </span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[160px]">
+        <p className="text-xs font-semibold text-foreground mb-2">{monthLabel(label)}</p>
+        {payload.map((item: any, i: number) => (
+          <div key={i} className="flex items-center justify-between gap-3 text-sm mt-1">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="w-2 h-2 rounded-full" style={{ background: item.fill }} />
+              {item.name}
+            </span>
+            <span className="font-semibold text-foreground">{formatCurrency(item.value)}</span>
+          </div>
+        ))}
+      </div>
+    );
   };
 
-  if (!hasData) {
-    return (
-      <Card variant="bento" className="">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">
-            {t('charts.monthlyBalance')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EmptyState height="h-[280px]" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card variant="bento" className="">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">
-          {t('charts.monthlyBalance')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="area" className="w-full">
-          <TabsList className="mb-4 bg-muted/50 p-1 rounded-xl">
-            <TabsTrigger value="area" className="rounded-lg text-xs">Area</TabsTrigger>
-            <TabsTrigger value="bar" className="rounded-lg text-xs">Bar</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="area">
-            <div className="h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="incomeGradientModern" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.3}/>
-                      <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="expenseGradientModern" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
-                      <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                    tickFormatter={(val) => { const [,m] = val.split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || val; }}
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                    width={40}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="income" 
-                    name={t('stats.income')}
-                    stroke="hsl(var(--success))" 
-                    strokeWidth={2}
-                    fill="url(#incomeGradientModern)"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="expenses" 
-                    name={t('stats.expenses')}
-                    stroke="hsl(var(--destructive))" 
-                    strokeWidth={2}
-                    fill="url(#expenseGradientModern)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="bar">
-            <div className="h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }} barGap={4}>
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                    tickFormatter={(val) => { const [,m] = val.split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || val; }}
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                    width={40}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="income" 
-                    name={t('stats.income')}
-                    fill="hsl(var(--success))" 
-                    radius={[6, 6, 0, 0]}
-                  />
-                  <Bar 
-                    dataKey="expenses" 
-                    name={t('stats.expenses')}
-                    fill="hsl(var(--destructive))" 
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
+    <div
+      className="bg-card rounded-[18px] p-[20px_22px_18px]"
+      style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
+    >
+      {/* Header */}
+      <div className="mb-1">
+        <p className="text-[15px] font-semibold text-foreground">
+          {t('charts.monthlyBalance', 'Income vs expenses')}
+        </p>
+        <p className="text-[12px] text-muted-foreground mt-0.5">
+          {t('charts.lastMonths', 'Last {{n}} months', { n: data.length })}
+        </p>
+      </div>
 
-          {/* Legend */}
-          <div className="flex justify-center gap-6 mt-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-success" />
-              <span className="text-sm text-muted-foreground">{t('stats.income')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-destructive" />
-              <span className="text-sm text-muted-foreground">{t('stats.expenses')}</span>
-            </div>
-          </div>
-        </Tabs>
-      </CardContent>
-    </Card>
+      {/* Legend */}
+      <div className="flex items-center gap-5 mb-3 mt-3">
+        <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+          {t('stats.income', 'Income')}
+        </span>
+        <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(220 14% 76%)' }} />
+          {t('stats.expenses', 'Expenses')}
+        </span>
+      </div>
+
+      {!hasData ? (
+        <EmptyState height="h-[230px]" />
+      ) : (
+        <div className="h-[230px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              margin={{ top: 4, right: 4, left: -14, bottom: 0 }}
+              barGap={3}
+              barCategoryGap="28%"
+            >
+              <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.35} vertical={false} />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                tickFormatter={monthLabel}
+                dy={8}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
+                width={38}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.3 }} />
+              <Bar
+                dataKey="income"
+                name={t('stats.income', 'Income')}
+                fill="hsl(var(--primary))"
+                radius={[5, 5, 0, 0]}
+                maxBarSize={28}
+                isAnimationActive={false}
+              />
+              <Bar
+                dataKey="expenses"
+                name={t('stats.expenses', 'Expenses')}
+                fill="hsl(220 14% 76%)"
+                radius={[5, 5, 0, 0]}
+                maxBarSize={28}
+                isAnimationActive={false}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
   );
 }
