@@ -81,10 +81,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   })();
 
   return (
-    <div
-      className="min-h-screen bg-background dashboard-theme relative transition-[padding-left] duration-[220ms] ease-out"
-      style={{ paddingLeft: "var(--rail-width, 118px)" }}
-    >
+    <div className="min-h-screen bg-background dashboard-theme relative md:pl-[var(--rail-width,104px)] md:transition-[padding-left] md:duration-[220ms] md:ease-out">
       {/* Persistent vertical rail (desktop) */}
       <DataRail />
 
