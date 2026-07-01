@@ -114,23 +114,21 @@ function NavRow({ label, icon: Icon, to, active, expanded, group, small = false 
       className={cn(
         "flex items-center gap-3 px-[11px] transition-colors rounded-[11px]",
         small ? "min-h-[42px]" : "min-h-[44px]",
-        active ? "bg-white" : "hover:bg-white/10",
+        active ? "bg-white/[0.18]" : "hover:bg-white/10",
       )}
     >
       <div
         className={cn(
-          "flex items-center justify-center rounded-[10px] shrink-0 transition-all",
-          active
-            ? cn("bg-primary text-white", small ? "w-[28px] h-[28px]" : "w-[34px] h-[34px]")
-            : cn("text-white/[0.62]",      "w-[26px] h-[26px]"),
+          "flex items-center justify-center w-[26px] h-[26px] shrink-0 transition-all",
+          active ? "text-white" : "text-white/[0.55]",
         )}
       >
-        <Icon className={small ? "w-[18px] h-[18px]" : "w-[19px] h-[19px]"} strokeWidth={2} />
+        <Icon className={small ? "w-[18px] h-[18px]" : "w-[19px] h-[19px]"} strokeWidth={active ? 2.4 : 2} />
       </div>
       <span
         className={cn(
           "text-[14px] whitespace-nowrap",
-          active ? "font-semibold text-[hsl(216_70%_30%)]" : "font-normal text-white/70",
+          active ? "font-semibold text-white" : "font-normal text-white/70",
         )}
       >
         {label}
@@ -179,22 +177,22 @@ function SettingsRow({ expanded }: { expanded: boolean }) {
       to="/profile"
       className={cn(
         "flex items-center gap-3 mt-3 px-[11px] rounded-[12px] min-h-[48px] transition-colors",
-        active ? "bg-white" : "hover:bg-white/10",
+        active ? "bg-white/[0.18]" : "hover:bg-white/10",
       )}
     >
       <div
         className={cn(
           "flex items-center justify-center w-[26px] h-[26px] shrink-0",
-          active ? "text-primary" : "text-white/70",
+          active ? "text-white" : "text-white/[0.55]",
         )}
       >
-        <Settings className="w-5 h-5" strokeWidth={2} />
+        <Settings className="w-5 h-5" strokeWidth={active ? 2.4 : 2} />
       </div>
       <div className="flex flex-col min-w-0">
         <span
           className={cn(
             "text-[13px] font-semibold",
-            active ? "text-[hsl(216_70%_30%)]" : "text-white",
+            active ? "text-white" : "text-white",
           )}
         >
           Settings
