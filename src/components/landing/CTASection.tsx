@@ -1,5 +1,10 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+const DEMO_EMAIL = import.meta.env.VITE_DEMO_EMAIL as string | undefined;
+const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD as string | undefined;
 
 const FEATURES = [
   "Upload any bank statement — PDF, CSV, Excel",
@@ -15,6 +20,20 @@ const STATS = [
 ];
 
 export function CTASection() {
+  const navigate = useNavigate();
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleViewDemo = async () => {
+    if (!DEMO_EMAIL || !DEMO_PASSWORD) return;
+    setDemoLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: DEMO_EMAIL,
+      password: DEMO_PASSWORD,
+    });
+    setDemoLoading(false);
+    if (!error) navigate("/dashboard");
+  };
+
   return (
     <section
       data-nav-theme="dark"
@@ -104,6 +123,23 @@ export function CTASection() {
           <p className="mt-4 text-white/45 text-xs text-center w-full max-w-[280px]">
             No credit card required
           </p>
+
+          {DEMO_EMAIL && DEMO_PASSWORD && (
+            <button
+              type="button"
+              onClick={handleViewDemo}
+              disabled={demoLoading}
+              className="mt-5 w-full max-w-[280px] flex items-center justify-center gap-2 font-semibold rounded-2xl transition-all hover:bg-white/10 disabled:opacity-60"
+              style={{
+                border: "1px solid rgba(255,255,255,0.35)",
+                color: "#ffffff",
+                fontSize: "0.95rem",
+                padding: "1rem 2rem",
+              }}
+            >
+              {demoLoading ? "Loading demo…" : "View live demo"}
+            </button>
+          )}
 
           {/* Stats */}
           <div className="mt-14 space-y-5 w-full max-w-[280px]">
