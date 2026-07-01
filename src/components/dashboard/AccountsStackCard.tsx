@@ -31,6 +31,15 @@ type AccountDisplay = {
   isPrimary: boolean;
 };
 
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function AccountTypeIcon({ name }: { name: string }) {
   const lower = name.toLowerCase();
   if (lower.includes('sav') || lower.includes('ahorro') || lower.includes('piggy'))
@@ -149,10 +158,13 @@ export function AccountsStackCard({
                     onClick={() => setDetail(acc)}
                     className="flex items-center gap-3 w-full text-left group"
                   >
-                    {/* Icon badge */}
+                    {/* Icon badge — light tint bg + full color icon */}
                     <div
                       className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center shrink-0"
-                      style={{ background: v.bg, color: v.text }}
+                      style={{
+                        background: hexToRgba(acc.color, 0.12),
+                        color: acc.color,
+                      }}
                     >
                       <AccountTypeIcon name={acc.name} />
                     </div>

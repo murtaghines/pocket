@@ -1,17 +1,19 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Transaction } from "@/lib/mockData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { useTranslation } from "react-i18next";
+import { CategoryIcon } from "@/components/ui/category-icon";
 
 interface TopExpensesCardProps {
   transactions: Transaction[];
 }
 
 export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatDayMonth } = useLocalization();
   const { t } = useTranslation('dashboard');
-  const { getCategoryColor } = useCategoryTranslations();
+  const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
   const topExpenses = transactions
     .filter(tx => tx.type === 'expense' && tx.category !== 'investment')
@@ -19,49 +21,60 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
     .slice(0, 5);
 
   const hasData = topExpenses.length > 0;
-  const maxAmount = hasData ? Math.abs(topExpenses[0].amount) : 1;
+
+  if (!hasData) {
+    return (
+      <Card variant="bento" className="">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">
+            {t('topExpenses.title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EmptyState height="h-[220px]" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div
-      className="bg-card rounded-[18px] p-[20px_22px_18px]"
-      style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
-    >
-      <p className="text-[15px] font-semibold text-foreground mb-4">
-        {t('topExpenses.title', 'Top expenses')}
-      </p>
-
-      {!hasData ? (
-        <EmptyState height="h-[200px]" />
-      ) : (
-        <div className="flex flex-col gap-[14px]">
-          {topExpenses.map((expense) => {
-            const categorySlug = expense.categorySlug || expense.category;
-            const colorVar = getCategoryColor(categorySlug);
-            const barPct = (Math.abs(expense.amount) / maxAmount) * 100;
-            return (
-              <div key={expense.id}>
-                <div className="flex items-center justify-between text-[13px] mb-[5px]">
-                  <span className="font-[500] text-foreground truncate pr-3">
-                    {expense.description}
-                  </span>
-                  <span className="font-[700] tabular-nums shrink-0 text-foreground">
-                    {formatCurrency(Math.abs(expense.amount))}
-                  </span>
-                </div>
-                <div className="h-[6px] rounded-[4px] bg-[#eef1f5]">
-                  <div
-                    className="h-[6px] rounded-[4px] transition-all"
-                    style={{
-                      width: `${barPct}%`,
-                      backgroundColor: `hsl(var(${colorVar}))`,
-                    }}
-                  />
-                </div>
+    <Card variant="bento" className="">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold">
+          {t('topExpenses.title')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {topExpenses.map((expense, index) => {
+          const categorySlug = expense.categorySlug || expense.category;
+          return (
+            <div
+              key={expense.id}
+              className="flex items-center gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/80 text-sm font-medium text-muted-foreground shrink-0">
+                {index + 1}
               </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+              <CategoryIcon
+                iconName={getCategoryIcon(categorySlug)}
+                colorVar={getCategoryColor(categorySlug)}
+                size="md"
+                showBackground
+                className="flex-shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{expense.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDayMonth(expense.date)} • {getCategoryLabel(categorySlug)}
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-destructive flex-shrink-0">
+                -{formatCurrency(Math.abs(expense.amount))}
+              </span>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
