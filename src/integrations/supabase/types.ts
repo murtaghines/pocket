@@ -171,30 +171,6 @@ export type Database = {
           },
         ]
       }
-      deletion_confirmations: {
-        Row: {
-          code: string
-          created_at: string
-          expires_at: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          expires_at: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       email_otps: {
         Row: {
           attempts: number
@@ -876,7 +852,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      log_audit_event: {
+        Args: {
+          _action: string
+          _diff?: Json
+          _entity_id: string
+          _entity_type: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       account_role: "CASH" | "INVESTMENT"
