@@ -1,231 +1,201 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { StepLanguage } from './StepLanguage';
-import { StepCountry } from './StepCountry';
-import { StepInvestments } from './StepInvestments';
-import { StepJointAccount } from './StepJointAccount';
-import { StepAccounts } from './StepAccounts';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { useAccounts } from '@/hooks/useAccounts';
+import { useProfile, type OnboardingAnswers } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
-import { COUNTRY_CURRENCY_MAP } from '@/lib/onboardingConstants';
+import { ChevronLeft, ChevronRight, Check, Loader2, Search, PiggyBank, TrendingUp, Wallet } from 'lucide-react';
 
 interface OnboardingModalProps {
   open: boolean;
   onComplete: () => void;
 }
 
-export interface OnboardingData {
-  country: string;
-  currency: string;
-  language: string;
-  investmentPlatforms: string[];
-  jointAccountNames: string[];
-  accountNames: string[];
-}
+const TOTAL_STEPS = 2;
 
-const TOTAL_STEPS = 5;
-
-function detectBrowserLanguage(): SupportedLanguage {
-  const browserLang = navigator.language || 'en';
-  const baseLang = browserLang.split('-')[0];
-  const supported = SUPPORTED_LANGUAGES.find(l => l.code === baseLang);
-  return (supported?.code || 'en') as SupportedLanguage;
-}
+const GOALS = [
+  { id: 'understand_spending', label: 'Understand where my money goes', icon: Search },
+  { id: 'save',                label: 'Save toward a goal',              icon: PiggyBank },
+  { id: 'investments',         label: 'Track my investments',           icon: TrendingUp },
+  { id: 'budget',              label: 'Build a budget',                 icon: Wallet },
+] as const;
 
 export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
-  const { t } = useTranslation('common');
-  const [step, setStep] = useState(1);
-  const [saving, setSaving] = useState(false);
-  const { updatePreferences } = useUserPreferences();
-  const { createAccount } = useAccounts();
+  const { preferences, updatePreferences } = useUserPreferences();
+  const { updateProfile } = useProfile();
   const { toast } = useToast();
 
-  const [data, setData] = useState<OnboardingData>(() => ({
-    country: '',
-    currency: 'EUR',
-    language: detectBrowserLanguage(),
-    investmentPlatforms: [],
-    jointAccountNames: [],
-    accountNames: [],
-  }));
+  const currency = preferences?.base_currency || 'EUR';
 
-  const updateData = (updates: Partial<OnboardingData>) => {
-    setData((prev) => ({ ...prev, ...updates }));
-  };
+  const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
 
-  const handleNext = () => {
-    if (step < TOTAL_STEPS) {
-      setStep(step + 1);
-    }
-  };
+  const [primaryGoal, setPrimaryGoal] = useState<string>('');
+  const [hasSavingsGoal, setHasSavingsGoal] = useState(false);
+  const [savingsAmount, setSavingsAmount] = useState<string>('');
+  const [savingsDate, setSavingsDate] = useState<string>('');
 
-  const handleBack = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
-  };
-
-  const handleComplete = async () => {
+  const finish = async (skipped: boolean) => {
     setSaving(true);
     try {
-      const localeMap: Record<string, string> = {
-        en: 'en-US',
-        es: 'es-ES',
-      };
-
-      await updatePreferences({
-        country: data.country,
-        base_currency: data.currency,
-        language: data.language,
-        locale: localeMap[data.language] || 'en-US',
-        onboarding_completed: true,
-        investment_platforms: data.investmentPlatforms,
-        joint_account_names: data.jointAccountNames,
-      } as any);
-
-      // Create accounts from onboarding
-      for (const name of data.accountNames) {
-        createAccount({ name, account_role: 'CASH', domain_default: 'CASHFLOW' });
+      if (!skipped) {
+        const answers: OnboardingAnswers = {};
+        if (primaryGoal) answers.primary_goal = primaryGoal;
+        if (hasSavingsGoal && savingsAmount) {
+          answers.savings_goal = {
+            amount: Number(savingsAmount),
+            currency,
+            target_date: savingsDate || null,
+          };
+        }
+        if (Object.keys(answers).length > 0) {
+          updateProfile({ onboarding_answers: answers });
+        }
       }
-      
-      localStorage.setItem('i18nextLng', data.language);
-
-      toast({
-        title: t('success'),
-        description: t('saved', { defaultValue: 'Preferences saved successfully' }),
-      });
+      updatePreferences({ onboarding_completed: true });
       onComplete();
     } catch (error) {
-      console.error('Error saving preferences:', error);
+      console.error('Error saving onboarding:', error);
       toast({
-        title: t('error'),
-        description: t('saveFailed', { defaultValue: 'Failed to save preferences. Please try again.' }),
+        title: 'Something went wrong',
+        description: 'We could not save your answers. You can set them later in your profile.',
         variant: 'destructive',
       });
+      // Still close so the user is never trapped.
+      onComplete();
     } finally {
       setSaving(false);
     }
   };
 
-  const canProceed = () => {
-    switch (step) {
-      case 1:
-        return !!data.language;
-      case 2:
-        return !!data.country && !!data.currency;
-      case 3:
-        return true;
-      case 4:
-        return true;
-      case 5:
-        return true;
-      default:
-        return true;
-    }
-  };
+  const canProceed = step === 1 ? !!primaryGoal : true;
 
   const renderStep = () => {
-    switch (step) {
-      case 1:
-        return <StepLanguage data={data} updateData={updateData} />;
-      case 2:
-        return (
-          <StepCountry 
-            country={data.country}
-            currency={data.currency}
-            onCountryChange={(country) => {
-              updateData({ country });
-              const mapped = COUNTRY_CURRENCY_MAP[country];
-              if (mapped) updateData({ country, currency: mapped });
-            }}
-            onCurrencyChange={(currency) => updateData({ currency })}
-          />
-        );
-      case 3:
-        return (
-          <StepAccounts
-            accountNames={data.accountNames}
-            onAccountNamesChange={(names) => updateData({ accountNames: names })}
-          />
-        );
-      case 4:
-        return (
-          <StepInvestments
-            country={data.country}
-            selectedPlatforms={data.investmentPlatforms}
-            onPlatformsChange={(platforms) => updateData({ investmentPlatforms: platforms })}
-          />
-        );
-      case 5:
-        return (
-          <StepJointAccount
-            jointAccountNames={data.jointAccountNames}
-            onJointAccountNamesChange={(names) => updateData({ jointAccountNames: names })}
-          />
-        );
-      default:
-        return null;
+    if (step === 1) {
+      return (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            We tailor your dashboard to what matters most to you.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {GOALS.map(({ id, label, icon: Icon }) => {
+              const active = primaryGoal === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setPrimaryGoal(id)}
+                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
+                    active
+                      ? 'border-primary bg-primary/5'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`shrink-0 flex items-center justify-center rounded-lg w-9 h-9 ${
+                      active ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </span>
+                  <span className="text-sm font-medium text-gray-800">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
     }
-  };
 
-  const getStepTitle = () => {
-    switch (step) {
-      case 1:
-        return t('onboarding.welcome', 'Welcome to wallet! 👋');
-      case 2:
-        return t('onboarding.yourCountry', 'Your Country & Currency');
-      case 3:
-        return t('onboarding.accounts', 'Your accounts');
-      case 4:
-        return t('onboarding.investments', 'Do you invest?');
-      case 5:
-        return t('onboarding.jointAccount', 'Shared finances?');
-      default:
-        return '';
-    }
+    return (
+      <div className="space-y-5">
+        <p className="text-sm text-muted-foreground">
+          We'll show your progress toward it in your planning view. Totally optional.
+        </p>
+
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+          <span className="text-sm font-medium text-gray-700">I have a savings goal</span>
+          <Switch checked={hasSavingsGoal} onCheckedChange={setHasSavingsGoal} />
+        </div>
+
+        {hasSavingsGoal && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                How much? ({currency})
+              </label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                placeholder="5000"
+                value={savingsAmount}
+                onChange={(e) => setSavingsAmount(e.target.value)}
+                className="h-11 text-base border border-gray-200 rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                By when? <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <Input
+                type="date"
+                value={savingsDate}
+                onChange={(e) => setSavingsDate(e.target.value)}
+                className="h-11 text-base border border-gray-200 rounded-xl"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-display">{getStepTitle()}</DialogTitle>
+          <DialogTitle className="text-2xl font-display">
+            {step === 1 ? 'What brings you to pocket?' : 'Set a savings goal'}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-4">
+        <div className="mt-2">
           <Progress value={(step / TOTAL_STEPS) * 100} className="h-2" />
-          <p className="text-sm text-muted-foreground mt-2">
-            {step} / {TOTAL_STEPS}
-          </p>
+          <p className="text-sm text-muted-foreground mt-2">{step} / {TOTAL_STEPS}</p>
         </div>
 
-        <div className="py-6 min-h-[300px]">{renderStep()}</div>
+        <div className="py-6 min-h-[260px]">{renderStep()}</div>
 
-        <div className="flex justify-between pt-4 border-t">
-          <Button variant="outline" onClick={handleBack} disabled={step === 1 || saving}>
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            {t('back')}
-          </Button>
+        <div className="flex items-center justify-between pt-4 border-t">
+          {step > 1 ? (
+            <Button variant="outline" onClick={() => setStep(step - 1)} disabled={saving}>
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => finish(true)}
+              disabled={saving}
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+            >
+              Skip for now
+            </button>
+          )}
 
           {step < TOTAL_STEPS ? (
-            <Button onClick={handleNext} disabled={!canProceed()}>
-              {t('next')}
+            <Button onClick={() => setStep(step + 1)} disabled={!canProceed}>
+              Next
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button onClick={handleComplete} disabled={!canProceed() || saving}>
-              {saving ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Check className="w-4 h-4 mr-2" />
-              )}
-              {t('confirm')}
+            <Button onClick={() => finish(false)} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+              Finish
             </Button>
           )}
         </div>

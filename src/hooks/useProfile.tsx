@@ -1,14 +1,34 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import type { Json } from "@/integrations/supabase/types";
+
+export interface OnboardingAnswers {
+  primary_goal?: string;
+  savings_goal?: {
+    amount: number;
+    currency: string;
+    target_date: string | null;
+  } | null;
+}
 
 export interface Profile {
   id: string;
   user_id: string;
+  email: string | null;
   first_name: string | null;
   last_name: string | null;
+  last_seen_at: string | null;
+  onboarding_answers: OnboardingAnswers | null;
   created_at: string;
   updated_at: string;
+}
+
+interface ProfileUpdate {
+  first_name?: string;
+  last_name?: string;
+  onboarding_answers?: OnboardingAnswers;
+  last_seen_at?: string;
 }
 
 export function useProfile() {
@@ -33,12 +53,12 @@ export function useProfile() {
   });
 
   const updateProfile = useMutation({
-    mutationFn: async (updates: { first_name?: string; last_name?: string }) => {
+    mutationFn: async (updates: ProfileUpdate) => {
       if (!user?.id) throw new Error('No user');
-      
+
       const { data, error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(updates as Record<string, Json>)
         .eq('user_id', user.id)
         .select()
         .single();

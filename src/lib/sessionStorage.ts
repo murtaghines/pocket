@@ -1,5 +1,8 @@
 const REMEMBER_SESSION_KEY = "wallet_remember_session";
-const AUTH_KEY = "sb-oqngrwevaazcxeotyrdg-auth-token";
+// Supabase persists the session in localStorage under `sb-<project-ref>-auth-token`.
+// Derive it from the configured project so this never drifts from the real key.
+const PROJECT_REF = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
+const AUTH_KEY = `sb-${PROJECT_REF ?? ""}-auth-token`;
 
 export const setRememberPreference = (remember: boolean): void => {
   localStorage.setItem(REMEMBER_SESSION_KEY, JSON.stringify(remember));
