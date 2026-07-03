@@ -412,12 +412,13 @@ export default function Auth() {
       }
 
       try {
+        // investment_platforms / joint_account_names live in user_preferences
+        // (single source of truth); profiles only holds identity fields.
         await supabase.from('profiles').upsert({
           user_id: userId,
+          email: normalizedEmail,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
-          investment_platforms: investmentPlatforms,
-          joint_account_names: jointAccountNames,
         }, { onConflict: 'user_id' });
       } catch (profileError) {
         console.error('Error updating profile:', profileError);

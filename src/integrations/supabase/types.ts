@@ -464,33 +464,39 @@ export type Database = {
         Row: {
           created_at: string
           custom_category_rules: Json | null
+          deleted_at: string | null
+          email: string | null
           first_name: string | null
           id: string
-          investment_platforms: string[] | null
-          joint_account_names: string[] | null
           last_name: string | null
+          last_seen_at: string | null
+          onboarding_answers: Json
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           custom_category_rules?: Json | null
+          deleted_at?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
-          investment_platforms?: string[] | null
-          joint_account_names?: string[] | null
           last_name?: string | null
+          last_seen_at?: string | null
+          onboarding_answers?: Json
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           custom_category_rules?: Json | null
+          deleted_at?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
-          investment_platforms?: string[] | null
-          joint_account_names?: string[] | null
           last_name?: string | null
+          last_seen_at?: string | null
+          onboarding_answers?: Json
           updated_at?: string
           user_id?: string
         }
