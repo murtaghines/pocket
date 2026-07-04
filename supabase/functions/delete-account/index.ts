@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get the authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -21,16 +20,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create a client with the user's token to get the user ID
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+    // Identify the caller from their own token.
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-
-    // Get the authenticated user
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     if (userError || !user) {
       return new Response(
@@ -42,53 +39,24 @@ Deno.serve(async (req) => {
     const userId = user.id;
     console.log(`Deleting account for user: ${userId}`);
 
-    // Create admin client with service role key
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Delete user data from all tables in the correct order (respecting foreign keys)
-    const tablesToDelete = [
-      "investments",
-      "transactions",
-      "import_rows",
-      "imports",
-      "uploads",
-      "investment_accounts",
-      "categorization_rules",
-      "accounts",
-      "periods",
-      "audit_log",
-      "user_preferences",
-      "profiles",
-    ];
-
-    for (const table of tablesToDelete) {
-      const { error } = await adminClient
-        .from(table)
-        .delete()
-        .eq("user_id", userId);
-      
-      if (error) {
-        console.error(`Error deleting from ${table}:`, error);
-        // Continue with other tables even if one fails
-      } else {
-        console.log(`Deleted user data from ${table}`);
-      }
-    }
-
-    // Delete files from storage
+    // 1) Remove the user's stored files. Storage is NOT covered by DB cascades,
+    //    so it must be cleaned explicitly.
     const { data: files } = await adminClient.storage
       .from("financial-files")
       .list(userId);
-
     if (files && files.length > 0) {
       const filePaths = files.map((file) => `${userId}/${file.name}`);
       await adminClient.storage.from("financial-files").remove(filePaths);
       console.log(`Deleted ${files.length} files from storage`);
     }
 
-    // Finally, delete the auth user
+    // 2) Delete the auth user. Every user-owned row in public.* is removed
+    //    automatically via ON DELETE CASCADE foreign keys to auth.users, so we
+    //    don't maintain a per-table delete list that could drift as the schema
+    //    grows.
     const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(userId);
-
     if (deleteAuthError) {
       console.error("Error deleting auth user:", deleteAuthError);
       return new Response(
@@ -98,7 +66,6 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Successfully deleted account for user: ${userId}`);
-
     return new Response(
       JSON.stringify({ success: true, message: "Account deleted successfully" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
