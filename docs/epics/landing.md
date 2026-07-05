@@ -1,16 +1,16 @@
 # Epic: Landing page
 
-## Archivos principales
+## Main files
 - src/pages/Landing.tsx
 - src/components/landing/: HeroSection, FeaturesSection, HowItWorksSection,
   AppShowcaseSection, StatementSection, StickyStack, TransitionSection,
   MarqueeSection, CTASection, ContactSection, LandingHeader, LandingFooter
 
-## Estado actual
-<!-- completar: qué está terminado, qué falta pulir -->
+## Current state
+<!-- fill in: what's done, what still needs polish -->
 
-## Decisiones tomadas
-<!-- se va llenando a medida que trabajamos -->
+## Decisions made
+<!-- filled in as we work -->
 
-## Próximo paso
-<!-- la primera tarea concreta -->
+## Next step
+<!-- the first concrete task -->

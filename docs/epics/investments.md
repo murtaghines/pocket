@@ -1,16 +1,16 @@
 # Epic: Investments
 
-## Archivos principales
+## Main files
 - src/pages/Investments.tsx
 - src/components/investments/: InvestmentAccountsManager, InvestmentsByAssetType,
   InvestmentsByPlatform, InvestmentsHistory, InvestmentsTable
 - Hooks: useInvestments
-- Relacionado con uploads-imports: process-investment-file
+- Related to uploads & imports: process-investment-file (see docs/epics/uploads.md)
 
-## Estado actual
-
-
-## Decisiones tomadas
+## Current state
 
 
-## Próximo paso
+## Decisions made
+
+
+## Next step

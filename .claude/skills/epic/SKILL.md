@@ -1,18 +1,18 @@
 ---
-description: Retomar el trabajo de un epic de Pocket por nombre
-argument-hint: [nombre-del-epic]
+description: Resume work on a Pocket epic by name
+argument-hint: [epic-name]
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
-## Estado del epic
-!`cat docs/epics/$ARGUMENTS.md 2>/dev/null || echo "No existe docs/epics/$ARGUMENTS.md — avisame antes de asumir nada"`
+## Epic state
+!`cat docs/epics/$ARGUMENTS.md 2>/dev/null || echo "docs/epics/$ARGUMENTS.md does not exist — tell me before assuming anything"`
 
-## Últimos commits relacionados
+## Recent related commits
 !`git log --oneline -8 -- "src/**/*$ARGUMENTS*" "src/components/$ARGUMENTS" 2>/dev/null`
 
-## Instrucciones
-Estás retomando el epic "$ARGUMENTS" de Pocket.
-1. Usá el estado de arriba como contexto — no me pidas que te cuente qué se hizo, ya lo tenés
-2. Las reglas de .claude/rules/ para este módulo se cargan solas cuando tocás los archivos correspondientes — no las repitas acá
-3. Si el archivo de estado no existía, creá uno nuevo en docs/epics/$ARGUMENTS.md siguiendo el formato de docs/epics/_template.md
-4. Antes de terminar la sesión, actualizá docs/epics/$ARGUMENTS.md con: qué se hizo, decisiones tomadas, próximo paso
+## Instructions
+You are resuming the "$ARGUMENTS" epic of Pocket.
+1. Use the state above as context — don't ask me to recap what's been done, you already have it
+2. The .claude/rules/ rules for this module load on their own when you touch the matching files — don't repeat them here
+3. If the state file didn't exist, create a new one at docs/epics/$ARGUMENTS.md following the format of docs/epics/_template.md
+4. Before ending the session, update docs/epics/$ARGUMENTS.md with: what was done, decisions made, next step

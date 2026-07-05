@@ -7,8 +7,8 @@ paths:
   - "src/hooks/useCategorizationRules.tsx"
 ---
 # Categories & rules
-- Cambios en reglas de categorización impactan directo el pipeline de imports
-  (categorizer, apply-rules-retroactive) — ver .claude/rules/imports.md
-- Colores custom de categoría: nunca negro, blanco, verde de income, rojo de expense,
-  azul/amarillo de marca, ni gris/plateado/dorado (reservados por el design system)
-- CreateCategoryDialog es solo UI — no tocar lógica de guardado sin revisar el hook
+- Changes to categorization rules directly affect the imports pipeline
+  (`categorizer`, `apply-rules-retroactive`) — see .claude/rules/imports.md
+- Custom category colors: never black, white, income green, expense red, brand
+  blue/yellow, or grey/silver/gold (reserved by the design system)
+- `CreateCategoryDialog` is UI only — don't touch save logic without checking the hook

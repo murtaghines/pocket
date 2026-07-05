@@ -1,16 +1,16 @@
 # Epic: Users & login
 
-## Archivos principales
+## Main files
 - src/pages/Auth.tsx
 - src/hooks/useAuth.tsx
 - src/components/onboarding/: OnboardingModal, StepAccounts, StepCountry,
   StepEmail, StepInvestments, StepJointAccount, StepName, StepPassword
 - Edge functions: check-email-availability, send-otp-code, verify-otp-code, delete-account
 
-## Estado actual
-<!-- completar -->
+## Current state
+<!-- fill in -->
 
-## Decisiones tomadas
+## Decisions made
 
 
-## Próximo paso
+## Next step

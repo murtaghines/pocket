@@ -4,7 +4,7 @@ paths:
   - "src/components/dashboard/**"
 ---
 # Dashboard
-- Todo chart/KPI usa `hsl(var(--success))` / `hsl(var(--destructive))` — nunca color crudo
-- Los datos del mes vienen de `useMonthSelection` + `useTransactions`, no dupliques ese estado en el componente
-- `TransactionTable` y `TransactionCardList` se comparten con History — si cambiás columnas o props, revisá ese uso también
-- Nuevas stat cards siguen el patrón de `StatCard.tsx` (label + KPI + sparkline, mismo token para los tres)
+- Every chart/KPI uses `hsl(var(--success))` / `hsl(var(--destructive))` — never a raw color
+- Month data comes from `useMonthSelection` + `useTransactions` — don't duplicate that state in the component
+- `TransactionTable` and `TransactionCardList` are shared with History — if you change columns or props, check that usage too
+- New stat cards follow the `StatCard.tsx` pattern (label + KPI + sparkline, same token for all three)

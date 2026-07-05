@@ -1,6 +1,6 @@
 # Epic: Dashboard
 
-## Archivos principales
+## Main files
 - src/pages/Index.tsx
 - src/components/dashboard/: StatCard, TrendKpiCard, BalanceChart, MonthlyChart,
   CategoryChart, SpendingByCategoryChart, DailyFlowChart, DailyHeatmapCard,
@@ -9,10 +9,10 @@
   InvestmentSummaryCard, TransactionTable, TransactionCardList, PeriodManager
 - Hooks: useTransactions, useMonthSelection, useAccounts
 
-## Estado actual
-<!-- completar -->
+## Current state
+<!-- fill in -->
 
-## Decisiones tomadas
+## Decisions made
 
 
-## Próximo paso
+## Next step

@@ -5,7 +5,7 @@ paths:
   - "src/hooks/useInvestments.tsx"
 ---
 # Investments
-- Mismo patrón de charts que Dashboard: tokens semánticos, nunca color crudo
-- InvestmentsTable/InvestmentsHistory alimentan también InvestmentSummaryCard en
-  Dashboard — si cambiás el shape de datos, revisar ese uso
-- Los uploads de este módulo pasan por process-investment-file (ver rules/imports.md)
+- Same chart pattern as Dashboard: semantic tokens, never a raw color
+- `InvestmentsTable`/`InvestmentsHistory` also feed `InvestmentSummaryCard` on the
+  Dashboard — if you change the data shape, check that usage
+- This module's uploads go through `process-investment-file` (see rules/imports.md)

@@ -1,18 +1,18 @@
 # Epic: Categories & rules
 
-## Archivos principales
+## Main files
 - src/pages/Categories.tsx
 - src/components/settings/: CategoriesEditor, CategoryRulesList, AddRuleDialog,
   CreateCategoryDialog, CustomCategoriesManager, ColorIconPicker, AccountsManager,
   PreferencesForm
 - Hooks: useCategories, useCustomCategories, useCategorizationRules
-- Comparte lógica con imports (apply-rules-retroactive, fix-categorization) —
-  ver docs/epics/uploads-imports.md
+- Shares logic with imports (apply-rules-retroactive, fix-categorization) —
+  see docs/epics/uploads.md
 
-## Estado actual
-
-
-## Decisiones tomadas
+## Current state
 
 
-## Próximo paso
+## Decisions made
+
+
+## Next step
