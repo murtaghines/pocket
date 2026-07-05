@@ -13,8 +13,8 @@ excelParser.ts (Excel) / pdfjs-dist (PDF)
   → supabase/functions/_shared/categorizer.ts (uses rules from useCategorizationRules)
 
 Downstream consumers of the parsed/categorized shape:
-- src/components/imports/MonthReviewModal.tsx
-- src/components/imports/MonthUploadSlot.tsx
+- src/components/imports/BankStatementsTabsView.tsx (the actual review/edit table — a
+  now-removed MonthReviewModal + MonthUploadSlot were dead legacy UI, deleted 2026-07-05)
 - src/hooks/useImports.tsx, useMonthlyFileUpload.tsx, useMonthlyInvestmentUpload.tsx
 - Retroactive/repair paths: apply-rules-retroactive, fix-categorization
 
@@ -24,8 +24,8 @@ Downstream consumers of the parsed/categorized shape:
    could silently mis-parse another already-supported bank format. Note there are NO automated
    tests — recommend verifying against ≥2 real sample files from different banks.
 2. **Data-shape contracts.** If the object returned by an edge function or the parser changed
-   shape, confirm MonthReviewModal, MonthUploadSlot and the upload hooks still read the fields
-   they expect. List any field renamed/removed and its consumers.
+   shape, confirm BankStatementsTabsView and the upload hooks still read the fields they
+   expect. List any field renamed/removed and its consumers.
 3. **Categorization coupling.** If categorizer or its rule inputs changed, verify
    apply-rules-retroactive and fix-categorization aren't broken (they share the logic).
 4. **Dedup / transfer detection.** Confirm changes don't reintroduce double-counting or break
