@@ -5,7 +5,7 @@ paths:
   - "src/components/onboarding/**"
 ---
 # Users & login
-- El onboarding es un wizard de steps (Step*.tsx) — cada step es un componente independiente, no metas lógica de otro step ahí
-- La disponibilidad de email se valida contra la edge function `check-email-availability`, no contra una query directa
-- OTP: `send-otp-code` / `verify-otp-code` son dos funciones separadas, mantenelas así
-- Cualquier cambio en el flujo de auth: probar tanto signup como el flujo de recuperación de contraseña (hay lógica especial de `isResetFlow` en App.tsx)
+- Onboarding is a step wizard (`Step*.tsx`) — each step is an independent component; don't put another step's logic in it
+- Email availability is validated against the `check-email-availability` edge function, not a direct query
+- OTP: `send-otp-code` / `verify-otp-code` are two separate functions — keep them that way
+- Any change to the auth flow: test both signup and the password-recovery flow (there's special `isResetFlow` logic in `App.tsx`)

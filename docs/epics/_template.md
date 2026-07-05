@@ -1,12 +1,12 @@
-# Epic: [nombre]
+# Epic: [name]
 
-## Archivos principales
-- 
+## Main files
+-
 
-## Estado actual
-
-
-## Decisiones tomadas
+## Current state
 
 
-## Próximo paso
+## Decisions made
+
+
+## Next step

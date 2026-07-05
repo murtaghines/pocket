@@ -1,15 +1,15 @@
 # Epic: History
 
-## Archivos principales
+## Main files
 - src/pages/History.tsx
-- Comparte TransactionTable / TransactionCardList con Dashboard
-  (revisar ambos usos si se cambia algo ahí)
+- Shares TransactionTable / TransactionCardList with Dashboard
+  (check both usages if you change anything there)
 - Hooks: useTransactions
 
-## Estado actual
-<!-- completar -->
+## Current state
+<!-- fill in -->
 
-## Decisiones tomadas
+## Decisions made
 
 
-## Próximo paso
+## Next step

@@ -1,14 +1,14 @@
 # Epic: Planning
 
-## Archivos principales
+## Main files
 - src/pages/Planning.tsx
-- Nota: /planning/planned y /planning/budgets redirigen a /planning — revisar si
-  esas sub-secciones ya están consolidadas o siguen pendientes
+- Note: /planning/planned and /planning/budgets redirect to /planning — check whether
+  those sub-sections are already consolidated or still pending
 
-## Estado actual
-Módulo en etapa temprana — confirmar alcance real antes de planificar trabajo.
+## Current state
+Early stage — confirm the real scope before planning work.
 
-## Decisiones tomadas
+## Decisions made
 
 
-## Próximo paso
+## Next step

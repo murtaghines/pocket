@@ -1,24 +1,25 @@
 ---
-description: Trabajar en el pipeline de imports (parsing + categorización) con chequeos de seguridad extra
+description: Work on the imports pipeline (parsing + categorization) with extra safety checks
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
-## Estado del epic
-!`cat docs/epics/uploads-imports.md 2>/dev/null`
+## Epic state
+!`cat docs/epics/uploads.md 2>/dev/null || echo "docs/epics/uploads.md not found"`
 
-## Pipeline completo
+## Full pipeline
 excelParser.ts (Excel) / pdfjs-dist (PDF) → process-import / process-financial-file /
-process-investment-file → categorizer (usa reglas de useCategorizationRules)
+process-investment-file → categorizer (shared module in
+supabase/functions/_shared/categorizer.ts, uses rules from useCategorizationRules)
 
-## Antes de tocar cualquier parte del pipeline
-1. No hay tests automáticos sobre el parsing — si no tenés un archivo real de ejemplo
-   del banco afectado, pedímelo antes de cambiar nada
-2. Un cambio en el parser puede romper silenciosamente otros formatos de banco ya
-   soportados — verificá con al menos 2 ejemplos de bancos distintos si tocás excelParser.ts
-3. Cambios en categorización automática impactan apply-rules-retroactive y
-   fix-categorization — revisar esos dos antes de dar por terminado un cambio en reglas
-4. Cambios en el shape de datos de una edge function: verificar que MonthReviewModal
-   y MonthUploadSlot sigan consumiendo el shape correcto
+## Before touching any part of the pipeline
+1. There are no automated tests on parsing — if you don't have a real sample file from
+   the affected bank, ask me for one before changing anything
+2. A change in the parser can silently break other already-supported bank formats —
+   verify with at least 2 examples from different banks if you touch excelParser.ts
+3. Changes to automatic categorization affect apply-rules-retroactive and
+   fix-categorization — review those two before calling a rules change done
+4. Changes to an edge function's data shape: verify that MonthReviewModal and
+   MonthUploadSlot still consume the correct shape
 
-## Al terminar
-Actualizá docs/epics/uploads-imports.md con lo que se hizo, decisiones y qué falta.
+## When done
+Update docs/epics/uploads.md with what was done, decisions, and what's left.
