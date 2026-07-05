@@ -59,9 +59,8 @@
     "lastYear": "Año pasado"
   },
   "network": {
-    "offline": "Estás sin conexión. Algunas funciones pueden no estar disponibles.",
-    "reconnecting": "Reconectando...",
-    "online": "De vuelta en línea"
+    "offline": "Sin conexión a internet. Las subidas no funcionarán.",
+    "online": "Conexión restablecida"
   },
   "validation": {
     "required": "Este campo es obligatorio",

@@ -35,6 +35,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-i18n-parity.cjs",
+            "timeout": 15
+          }
+        ]
+      }
     ]
   }
 }

@@ -1,9 +1,11 @@
 import { WifiOff, Wifi } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { cn } from "@/lib/utils";
 
 export function NetworkStatusBanner() {
   const { isOnline, wasOffline } = useNetworkStatus();
+  const { t } = useTranslation("common");
 
   // Show nothing if always online
   if (isOnline && !wasOffline) return null;
@@ -20,12 +22,12 @@ export function NetworkStatusBanner() {
       {isOnline ? (
         <>
           <Wifi className="w-4 h-4" />
-          <span>Connection restored</span>
+          <span>{t("network.online")}</span>
         </>
       ) : (
         <>
           <WifiOff className="w-4 h-4" />
-          <span>No internet connection. Uploads won't work.</span>
+          <span>{t("network.offline")}</span>
         </>
       )}
     </div>
