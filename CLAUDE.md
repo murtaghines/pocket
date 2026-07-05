@@ -1,3 +1,33 @@
+# Pocket — Contexto del proyecto
+
+## Stack
+Vite + React + TypeScript + shadcn/ui + Tailwind + Supabase + TanStack Query + react-router-dom + i18next.
+
+Comandos:
+- `npm run dev` — servidor local (puerto 5174)
+- `npm run lint` — antes de dar por terminada cualquier tarea
+- `npm run build` — build de producción
+
+## Estructura de carpetas
+- `src/pages/` — una página por ruta: Index (=Dashboard), History, Investments, Planning, Profile, MyData, Categories, Auth, Landing
+- `src/components/{dashboard,investments,landing,layout,onboarding,profile,settings}/` — componentes agrupados por módulo
+- `src/components/ui/` — primitivos de shadcn, no modificar la lógica base, solo estilos vía tokens
+- `src/hooks/` — TODA la lógica de datos vive acá (un hook por entidad: useTransactions, useAccounts, useCategories, useImports, useInvestments...). Los componentes nunca hacen fetch directo.
+- `src/integrations/supabase/` — cliente y `types.ts` generado. **Nunca editar types.ts a mano**, se regenera desde el schema.
+- `src/lib/` — utilidades puras (excelParser, currencies, categoryTranslations)
+- `src/i18n/locales/{en,es}/` — namespaces: auth, categories, common, dashboard, investments, profile, settings. **Siempre actualizar ambos idiomas en el mismo cambio**, nunca dejar un idioma desactualizado.
+- `supabase/functions/` — edge functions. Naming en kebab-case, una carpeta por función.
+- `supabase/migrations/` — **nunca editar una migración ya aplicada**, siempre crear una nueva.
+
+## Convenciones generales
+- Formularios: react-hook-form + zod para validación
+- Datos: TanStack Query sobre los hooks custom, no fetch/axios directo
+- Nunca hardcodear strings de UI — siempre `useTranslation()` con el namespace correcto
+- TransactionTable y TransactionCardList se comparten entre Dashboard y History — si se cambia una, revisar el otro uso
+- Antes de tocar `process-import`, `process-financial-file` o `categorizer`, pedir un archivo real de ejemplo si no se tiene — no hay tests automáticos sobre el parsing
+
+---
+
 # Pocket — Design System Reference
 
 This file is the single source of truth for how Pocket looks, reads and behaves.
