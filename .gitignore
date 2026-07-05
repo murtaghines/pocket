@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# npm is the package manager in use; ignore stray bun lockfiles
+bun.lock
+bun.lockb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
