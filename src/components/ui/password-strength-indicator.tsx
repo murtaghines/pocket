@@ -12,7 +12,7 @@ const requirements = [
   { key: "lowercase", test: (pw: string) => /[a-z]/.test(pw), label: "One lowercase letter" },
   { key: "uppercase", test: (pw: string) => /[A-Z]/.test(pw), label: "One uppercase letter" },
   { key: "number", test: (pw: string) => /[0-9]/.test(pw), label: "One number" },
-  { key: "special", test: (pw: string) => /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/'`;~]/.test(pw), label: "One special character" },
+  { key: "special", test: (pw: string) => /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\/'`;~]/.test(pw), label: "One special character" },
 ];
 
 const strengthLabels: Record<number, string> = {
