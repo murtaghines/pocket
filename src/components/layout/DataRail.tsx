@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AsteriskMark, Wordmark } from "@/components/brand";
 import {
   Tooltip,
   TooltipContent,
@@ -24,32 +25,6 @@ import {
 
 export const RAIL_WIDTH_COLLAPSED = "104px";
 export const RAIL_WIDTH_EXPANDED = "264px";
-
-/** 8-point asterisk — fill only, no stroke, matches brand spec */
-function AsteriskMark({ size = 24, className }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      className={cn("shrink-0", className)}
-      aria-hidden="true"
-    >
-      {[0, 45, 90, 135].map((deg) => (
-        <rect
-          key={deg}
-          x="10.7"
-          y="1.6"
-          width="2.6"
-          height="20.8"
-          rx="1.3"
-          fill="currentColor"
-          transform={deg === 0 ? undefined : `rotate(${deg} 12 12)`}
-        />
-      ))}
-    </svg>
-  );
-}
 
 /** Sharp triangular "folded corner" accent — pinned to the rail's bottom-right corner */
 function PocketFold() {
@@ -282,12 +257,7 @@ export function DataRail() {
           <div className="flex items-center justify-between mb-4">
             <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
               <AsteriskMark size={26} />
-              <span
-                className="text-[21px] tracking-[0.07em] text-white whitespace-nowrap"
-                style={{ fontFamily: "Quicksand, sans-serif", fontWeight: 700 }}
-              >
-                pocket
-              </span>
+              <Wordmark className="text-[21px] text-white whitespace-nowrap" />
             </Link>
             <button
               type="button"

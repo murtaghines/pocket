@@ -83,7 +83,7 @@ import {
 } from "@/lib/categoryTranslations";
 import { buildRuleFromCorrection, ruleMatchesDescription } from "@/lib/userRules";
 import type { MatchType } from "@/lib/userRules";
-import walletIconWhite from "@/assets/wallet-icon-blue.png";
+import { AsteriskMark } from "@/components/brand";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
@@ -1077,7 +1077,7 @@ export function MonthReviewModal({
           {/* ============= Left sidebar (brand) ============= */}
           <aside className="hidden md:flex w-[72px] shrink-0 bg-primary flex-col items-center py-5 gap-6">
             <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 ring-1 ring-white/20">
-              <img src={walletIconWhite} alt="pocket" className="h-6 w-auto brightness-0 invert" />
+              <AsteriskMark size={24} className="text-white" />
             </div>
             <div className="flex-1 flex flex-col items-center gap-2 mt-2">
               <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/15 text-white">

@@ -12,7 +12,7 @@ import { PasswordStrengthIndicator } from "@/components/ui/password-strength-ind
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
 import { LandingHeader } from "@/components/landing/LandingHeader";
-import pocketLogoWhite from "@/assets/pocket-logo-white.png";
+import { Logo } from "@/components/brand";
 import pocketIcon from "@/assets/pocket-icon.png";
 
 import { StepName } from "@/components/onboarding/StepName";
@@ -112,9 +112,8 @@ function AuthBottomSections() {
           <div className="flex flex-col md:flex-row justify-between gap-12 mb-16">
             {/* Logo */}
             <div className="flex-shrink-0">
-              <Link to="/" className="inline-flex items-center gap-2">
-                <img src={pocketLogoWhite} alt="pocket" className="h-7 w-auto opacity-90" />
-                <span className="text-lg font-bold text-white lowercase tracking-tight">pocket</span>
+              <Link to="/" className="inline-flex items-center">
+                <Logo size={28} className="text-white text-lg opacity-90" />
               </Link>
             </div>
 

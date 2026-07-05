@@ -13,8 +13,8 @@ excelParser.ts (Excel) / pdfjs-dist (PDF)
   → supabase/functions/_shared/categorizer.ts (uses rules from useCategorizationRules)
 
 Downstream consumers of the parsed/categorized shape:
-- src/components/profile/MonthReviewModal.tsx
-- src/components/profile/MonthUploadSlot.tsx
+- src/components/imports/MonthReviewModal.tsx
+- src/components/imports/MonthUploadSlot.tsx
 - src/hooks/useImports.tsx, useMonthlyFileUpload.tsx, useMonthlyInvestmentUpload.tsx
 - Retroactive/repair paths: apply-rules-retroactive, fix-categorization
 

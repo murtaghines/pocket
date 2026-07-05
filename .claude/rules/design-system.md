@@ -14,6 +14,12 @@ Follow these rules in every component, page and PR — no exceptions.
 - **Wordmark:** `pocket` in lowercase, Quicksand 700, letter-spacing 0.07em
 - **Logo rule:** Blue mark → white background only. White mark → blue, black, or yellow bg.
 - **Never:** blue mark on black, blue mark on yellow, recolor the mark, rotate/stretch, add effects
+- **Never hand-assemble the logo.** No raw `<img>` + `<span>` pairs, ever. Always
+  `<Logo>` / `<AsteriskMark>` / `<Wordmark>` from `src/components/brand/`. There are
+  no logo image files in this codebase — the mark is an SVG component and the
+  wordmark is styled text; color comes from `className` (`currentColor`), never a
+  separate raster per color. Changing the mark or wordmark means editing those 3
+  files once — every usage site updates automatically.
 
 ---
 

@@ -2,17 +2,20 @@
 
 ## Main files
 - src/pages/Index.tsx
-- src/components/dashboard/: StatCard, TrendKpiCard, BalanceChart, MonthlyChart,
+- src/components/dashboard/: TrendKpiCard, MonthlyChart, YearlyBalanceChart,
   CategoryChart, SpendingByCategoryChart, DailyFlowChart, DailyHeatmapCard,
-  WeeklyComparisonChart, YearlyBalanceChart, MonthComparisonCard,
-  SavingsRateCard/Gauge, TopExpensesCard, AccountsStackCard, BankDistributionChart,
-  InvestmentSummaryCard, TransactionTable, TransactionCardList, PeriodManager
+  IncomeCategoryReferenceCard, TopExpensesCard, AccountsStackCard,
+  InvestmentSummaryCard, TransactionTable, TransactionCardList, TotalView,
+  SavingsRateGaugeCard, EmptyStateBanner
 - Hooks: useTransactions, useMonthSelection, useAccounts
 
 ## Current state
 <!-- fill in -->
 
 ## Decisions made
-
+- 2026-07-05: removed 9 dead components that were never wired into the dashboard
+  (BalanceChart, BankDistributionChart, DateDisplay, MonthComparisonCard,
+  PeriodManager, SavingsRateCard, SavingsRateGauge, StatCard, WeeklyComparisonChart).
+  The stat-card pattern is `TrendKpiCard.tsx`, not `StatCard.tsx`.
 
 ## Next step

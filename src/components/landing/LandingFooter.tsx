@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Logo } from "@/components/brand";
 
 export function LandingFooter() {
   return (
@@ -7,19 +8,18 @@ export function LandingFooter() {
       style={{ background: "#1b76ff" }}
     >
       {/* Ghost brand mark */}
-      <img
-        src="/logos/isologo-white.png"
-        alt=""
-        aria-hidden="true"
-        className="absolute right-[-2rem] bottom-[-2rem] pointer-events-none select-none"
+      <Logo
+        variant="full"
+        className="absolute right-[-2rem] bottom-[-2rem] pointer-events-none select-none text-white w-full h-full"
         style={{ width: "clamp(5rem, 18vw, 15rem)", opacity: 0.06 }}
+        aria-hidden="true"
       />
 
       <div className="container px-6 relative z-10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img src="/logos/isologo-white.png" alt="pocket" className="h-7 w-auto" />
+            <Logo size={28} className="text-white" />
           </Link>
 
           {/* Links */}

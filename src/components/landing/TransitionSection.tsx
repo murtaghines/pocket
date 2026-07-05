@@ -1,4 +1,4 @@
-import pocketLogoWhite from "@/assets/pocket-logo-white.png";
+import { AsteriskMark } from "@/components/brand";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 
 export function TransitionSection() {
@@ -20,10 +20,9 @@ export function TransitionSection() {
         className="sticky top-0 h-screen flex items-center justify-center"
         style={{ zIndex: 10 }}
       >
-        <img
-          src={pocketLogoWhite}
-          alt="Pocket"
-          className="w-28 h-28"
+        <AsteriskMark
+          size={112}
+          className="text-white"
           style={{
             transform: `rotate(${rotation}deg) scale(${scale})`,
             opacity,

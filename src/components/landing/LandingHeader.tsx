@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/brand";
 
 
 export function LandingHeader() {
@@ -34,12 +35,6 @@ export function LandingHeader() {
 
   const isDark = theme === "dark"; // dark = blue or black bg sections
 
-  // isologo-blue = blue version (for light/white backgrounds)
-  // isologo-white = white version (for dark/blue backgrounds)
-  const logoSrc = isDark
-    ? "/logos/isologo-white.png"
-    : "/logos/isologo-blue.png";
-
   // Buttons
   const loginText = isDark
     ? "text-white/80 hover:text-white"
@@ -53,10 +48,9 @@ export function LandingHeader() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo — no background, plain text + icon */}
         <Link to="/" className="pointer-events-auto inline-flex items-center">
-          <img
-            src={logoSrc}
-            alt="pocket"
-            className="h-7 w-auto transition-all duration-300"
+          <Logo
+            size={28}
+            className={`transition-all duration-300 ${isDark ? "text-white" : "text-primary"}`}
           />
         </Link>
 

@@ -1,13 +1,7 @@
 ---
 paths:
   - "src/pages/MyData.tsx"
-  - "src/components/profile/BankStatementsTabsView.tsx"
-  - "src/components/profile/InvestmentTabsView.tsx"
-  - "src/components/profile/InvestmentUploadsOrganizer.tsx"
-  - "src/components/profile/MonthUploadSlot.tsx"
-  - "src/components/profile/MonthReviewModal.tsx"
-  - "src/components/profile/RuleEditorDialog.tsx"
-  - "src/components/profile/AccountSelectDialog.tsx"
+  - "src/components/imports/**"
   - "src/hooks/useImports.tsx"
   - "src/hooks/useMonthlyFileUpload.tsx"
   - "src/hooks/useMonthlyInvestmentUpload.tsx"

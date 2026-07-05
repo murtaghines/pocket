@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DataRail } from "@/components/layout/DataRail";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
-import { BankStatementsTabsView } from "@/components/profile/BankStatementsTabsView";
-import { InvestmentTabsView } from "@/components/profile/InvestmentTabsView";
+import { BankStatementsTabsView } from "@/components/imports/BankStatementsTabsView";
+import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
 
 type Tab = "bank" | "investments";
 

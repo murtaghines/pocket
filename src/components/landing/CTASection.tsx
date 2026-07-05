@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { AsteriskMark } from "@/components/brand";
 
 const DEMO_EMAIL = import.meta.env.VITE_DEMO_EMAIL as string | undefined;
 const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD as string | undefined;
@@ -98,11 +99,7 @@ export function CTASection() {
         >
           {/* App mark */}
           <div className="mb-10">
-            <img
-              src="/logos/isologo-white.png"
-              alt="pocket"
-              style={{ width: 52, height: 52, opacity: 0.9, objectFit: "contain" }}
-            />
+            <AsteriskMark size={52} className="text-white" style={{ opacity: 0.9 }} />
           </div>
 
           {/* CTA button */}

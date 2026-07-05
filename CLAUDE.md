@@ -12,7 +12,13 @@ Commands:
 - `src/pages/` — one page per route: `Index` (=Dashboard, `/dashboard`), `History`,
   `Investments`, `Planning`, `Profile` (account settings), `MyData` (uploads hub),
   `Categories`, `Auth`, `Landing`, `ComingSoon`, `NotFound`. Routes are wired in `App.tsx`.
-- `src/components/{dashboard,investments,landing,layout,onboarding,profile,settings}/` — components grouped by module
+- `src/components/{dashboard,investments,landing,layout,onboarding,settings}/` — components grouped by module
+- `src/components/profile/` — account settings only (profile info, delete account).
+  Uploads live in `src/components/imports/`, not here.
+- `src/components/imports/` — the uploads/imports pipeline UI (bank statements,
+  investment files, month review, categorization rules)
+- `src/components/brand/` — `AsteriskMark`/`Wordmark`/`Logo`, the single source of truth
+  for Pocket's branding. Never hand-assemble the logo elsewhere (see design-system rule).
 - `src/components/ui/` — shadcn primitives; don't modify base logic, only styles via tokens
 - `src/hooks/` — ALL data logic lives here (one hook per entity: `useTransactions`,
   `useAccounts`, `useCategories`, `useImports`, `useInvestments`…). Components never fetch directly.
@@ -23,7 +29,7 @@ Commands:
 - `supabase/migrations/` — SQL migrations
 
 ## Global conventions
-- Forms: react-hook-form + zod for validation
+- Forms: plain `useState` + manual validation (no form library in use)
 - Data: TanStack Query on top of the custom hooks — no direct fetch/axios in components
 - Never hardcode UI strings — always use `useTranslation()` with the right namespace,
   and **update both `en` and `es` in the same change**, never leave one out of date

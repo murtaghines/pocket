@@ -11,8 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import walletIconBlue from "@/assets/wallet-icon-blue.png";
-import walletTextBlack from "@/assets/wallet-text-black.png";
+import { Logo } from "@/components/brand";
 
 interface NavItem {
   label: string;
@@ -50,11 +49,10 @@ export function DashboardSidebar() {
       {/* Desktop: Logo + inline navigation with text */}
       <div className="hidden lg:flex items-center gap-6">
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
-          <span className="text-lg font-bold text-foreground lowercase tracking-tight">pocket</span>
+        <Link to="/dashboard" className="flex items-center">
+          <Logo size={28} className="text-primary text-lg" />
         </Link>
-        
+
         {/* Inline navigation with text */}
         <nav className="flex items-center gap-1">
           {navItems.map((item) => (
@@ -78,11 +76,10 @@ export function DashboardSidebar() {
       {/* Tablet: Logo + inline navigation with icons only */}
       <div className="hidden md:flex lg:hidden items-center gap-4">
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <img src={walletIconBlue} alt="pocket" className="h-6 w-auto" />
-          <span className="text-base font-bold text-foreground lowercase tracking-tight">pocket</span>
+        <Link to="/dashboard" className="flex items-center">
+          <Logo size={24} className="text-primary text-base" />
         </Link>
-        
+
         {/* Inline navigation with icons only */}
         <nav className="flex items-center gap-1">
           {navItems.map((item) => (
@@ -114,9 +111,8 @@ export function DashboardSidebar() {
           <Menu className="w-5 h-5" />
         </Button>
         
-        <Link to="/dashboard" className="flex items-center gap-1.5">
-          <img src={walletIconBlue} alt="pocket" className="h-5 w-auto" />
-          <span className="text-sm font-bold text-foreground lowercase tracking-tight">pocket</span>
+        <Link to="/dashboard" className="flex items-center">
+          <Logo size={20} gap="gap-1.5" className="text-primary text-sm" />
         </Link>
       </div>
       
@@ -135,9 +131,8 @@ export function DashboardSidebar() {
       )}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <img src={walletIconBlue} alt="pocket" className="h-7 w-auto" />
-            <span className="text-base font-bold text-foreground lowercase tracking-tight">pocket</span>
+          <div className="flex items-center">
+            <Logo size={28} className="text-primary text-base" />
           </div>
           <Button
             variant="ghost"
@@ -176,7 +171,7 @@ export function DashboardSidebar() {
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
           <p className="text-xs text-muted-foreground text-center">
-            © 2026 wallet
+            © 2026 pocket
           </p>
         </div>
       </div>
