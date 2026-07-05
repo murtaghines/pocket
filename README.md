@@ -1,73 +1,73 @@
-# Welcome to your Lovable project
+# Pocket
 
-## Project info
+Pocket is a personal finance app for understanding and controlling your money
+without manually logging every expense. You upload your bank statements
+(Excel/CSV) month by month, and Pocket turns that chaos of transactions into
+a clear picture of your financial life.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## What it does
 
-## How can I edit this code?
+- **Automatic transaction ingestion** — upload your bank statement (from one
+  or several banks / joint accounts) and Pocket parses it, cleans it, and
+  deduplicates it so no expense is ever counted twice.
+- **Smart categorization** — every transaction is classified through a
+  cascading engine: first your personal rules, then pattern matching (regex),
+  and AI as a last-resort fallback. It learns from your corrections: if you
+  recategorize a transaction, it gets it right on its own next time.
+- **Transfer detection** between your own accounts, so they don't inflate
+  either your income or your expenses.
+- **Multi-account, multi-currency, and joint accounts** — several accounts,
+  conversion to your base currency, and percentage splitting of shared
+  expenses (e.g. 50/50 with your partner).
+- **Investments** — a separate section for your portfolio, with performance
+  by platform and asset type.
 
-There are several ways of editing your application.
+## Main sections
 
-**Use Lovable**
+| Section | What it shows |
+|---|---|
+| **Dashboard** | The current month's snapshot: income, expenses, balance, savings rate, daily flow, spending by category, top expenses, accounts |
+| **History** | Historical view combining all months, to spot trends over time |
+| **Investments** | Tracking of invested net worth |
+| **Planning** | *(in progress)* Planned payments and category budgets |
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Why it beats a spreadsheet
 
-Changes made via Lovable will be committed automatically to this repo.
+- Zero manual entry: you work with the statements your bank already gives you
+- Learns from you: the more you use it, the more accurate the categorization gets
+- Unified view: all your accounts, currencies, and investments in one place
+- Your data is yours: edit categories and rules, or delete your account, whenever you want
 
-**Use your preferred IDE**
+## Tech stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Vite · TypeScript · React · shadcn/ui · Tailwind CSS · Supabase (auth,
+database, and edge functions) · TanStack Query · react-i18next (ES/EN)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Running it locally
 
-Follow these steps:
+Requirement: Node.js and npm ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)).
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+\`\`\`sh
+git clone <REPO_URL>
+cd pocket
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
-```
+\`\`\`
 
-**Edit a file directly in GitHub**
+Other useful commands:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+\`\`\`sh
+npm run lint      # linting check
+npm run build     # production build
+\`\`\`
 
-**Use GitHub Codespaces**
+## Deploy
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Every push to `main` deploys automatically via Vercel.
 
-## What technologies are used for this project?
+## Working on the project
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+The design system, architecture, and conventions are documented in
+`CLAUDE.md` (repo root). The state of each module lives in `docs/epics/`. If
+you're using Claude Code, `.claude/rules/` and `.claude/skills/` already have
+per-module context loaded automatically.

@@ -1,30 +1,30 @@
-# Pocket — Contexto del proyecto
+# Pocket — Project context
 
 ## Stack
 Vite + React + TypeScript + shadcn/ui + Tailwind + Supabase + TanStack Query + react-router-dom + i18next.
 
-Comandos:
-- `npm run dev` — servidor local (puerto 5174)
-- `npm run lint` — antes de dar por terminada cualquier tarea
-- `npm run build` — build de producción
+Commands:
+- `npm run dev` — local dev server
+- `npm run lint` — run before considering any task done
+- `npm run build` — production build
 
-## Estructura de carpetas
-- `src/pages/` — una página por ruta: Index (=Dashboard), History, Investments, Planning, Profile, MyData, Categories, Auth, Landing
-- `src/components/{dashboard,investments,landing,layout,onboarding,profile,settings}/` — componentes agrupados por módulo
-- `src/components/ui/` — primitivos de shadcn, no modificar la lógica base, solo estilos vía tokens
-- `src/hooks/` — TODA la lógica de datos vive acá (un hook por entidad: useTransactions, useAccounts, useCategories, useImports, useInvestments...). Los componentes nunca hacen fetch directo.
-- `src/integrations/supabase/` — cliente y `types.ts` generado. **Nunca editar types.ts a mano**, se regenera desde el schema.
-- `src/lib/` — utilidades puras (excelParser, currencies, categoryTranslations)
-- `src/i18n/locales/{en,es}/` — namespaces: auth, categories, common, dashboard, investments, profile, settings. **Siempre actualizar ambos idiomas en el mismo cambio**, nunca dejar un idioma desactualizado.
-- `supabase/functions/` — edge functions. Naming en kebab-case, una carpeta por función.
-- `supabase/migrations/` — **nunca editar una migración ya aplicada**, siempre crear una nueva.
+## Folder structure
+- `src/pages/` — one page per route: Index (=Dashboard), History, Investments, Planning, Profile, MyData, Categories, Auth, Landing
+- `src/components/{dashboard,investments,landing,layout,onboarding,profile,settings}/` — components grouped by module
+- `src/components/ui/` — shadcn primitives; don't modify base logic, only styles via tokens
+- `src/hooks/` — ALL data logic lives here (one hook per entity: useTransactions, useAccounts, useCategories, useImports, useInvestments...). Components never fetch data directly.
+- `src/integrations/supabase/` — client and generated `types.ts`. **Never edit types.ts by hand**, it's regenerated from the schema.
+- `src/lib/` — pure utilities (excelParser, currencies, categoryTranslations)
+- `src/i18n/locales/{en,es}/` — namespaces: auth, categories, common, dashboard, investments, profile, settings. **Always update both languages in the same change**, never leave one out of date.
+- `supabase/functions/` — edge functions. kebab-case naming, one folder per function.
+- `supabase/migrations/` — **never edit a migration that's already been applied**, always create a new one.
 
-## Convenciones generales
-- Formularios: react-hook-form + zod para validación
-- Datos: TanStack Query sobre los hooks custom, no fetch/axios directo
-- Nunca hardcodear strings de UI — siempre `useTranslation()` con el namespace correcto
-- TransactionTable y TransactionCardList se comparten entre Dashboard y History — si se cambia una, revisar el otro uso
-- Antes de tocar `process-import`, `process-financial-file` o `categorizer`, pedir un archivo real de ejemplo si no se tiene — no hay tests automáticos sobre el parsing
+## General conventions
+- Forms: react-hook-form + zod for validation
+- Data: TanStack Query on top of the custom hooks, no direct fetch/axios
+- Never hardcode UI strings — always use `useTranslation()` with the right namespace
+- TransactionTable and TransactionCardList are shared between Dashboard and History — if you change one, check the other usage too
+- Before touching `process-import`, `process-financial-file`, or `categorizer`, ask for a real sample file if you don't have one — there are no automated tests on parsing
 
 ---
 
