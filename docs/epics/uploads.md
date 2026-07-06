@@ -78,7 +78,26 @@ Still pending in Fase 1 (need real sample files + a Supabase deploy):
 - `mapCategorySlug` unmapped-slug guard (add a test).
 - **Deploy `process-import` to Supabase + smoke-test with ≥2 real bank files; run
   `imports-reviewer` before considering Fase 1 closed.**
-- Later phases: dead-code/consolidation (Fase 2), Lovable→Anthropic migration (Fase 3),
-  split the monoliths — `BankStatementsTabsView.tsx` 3083 / `InvestmentTabsView.tsx` 1327 /
-  `useMonthlyFileUpload.tsx` 573 (Fase 4), hardening incl. the `Function()` amount eval
-  (`BankStatementsTabsView.tsx:1866`) and investment-flow preview parity (Fase 5).
+- Later phases: split the monoliths — `BankStatementsTabsView.tsx` 3083 /
+  `InvestmentTabsView.tsx` 1327 / `useMonthlyFileUpload.tsx` 573 (Fase 4), hardening incl.
+  the `Function()` amount eval (`BankStatementsTabsView.tsx:1866`) and investment-flow
+  preview parity (Fase 5).
+
+## Fase 3 progress (2026-07-06)
+- `process-import` + `process-investment-file` migrated off Lovable → **Anthropic Messages
+  API** (`claude-haiku-4-5` → `claude-sonnet-5` on escalation, thinking disabled). Read new
+  secret `ANTHROPIC_API_KEY`. Committed, **NOT deployed** — blocked on the user setting the
+  secret in Supabase, then deploy + smoke-test with real files (see [[project-edge-functions]]).
+
+## Fase 2 progress (2026-07-06)
+- Deleted `process-financial-file` (dead, zero callers, superseded by `process-import`).
+- Unified duplicated utilities into `src/lib/fileExtract.ts` — `extractPdfText` (was ×3),
+  `getMonthKey` (×2), `VALID_EXTS` (×2). Build + lint clean.
+- **Orphan functions — NOT deleted (investigated, decision deferred):**
+  `apply-rules-retroactive` and `fix-categorization` have zero frontend callers (grep) and
+  were never deployed to the own project. BUT `RuleEditorDialog` only previews + delegates
+  via `onConfirm`; it does NOT itself apply rules retroactively, so it's unconfirmed whether
+  retroactive rule application currently works at all or was meant to go through
+  `apply-rules-retroactive`. Deleting data-repair tooling under that uncertainty is unsafe.
+  Next: trace the `onConfirm` handler in `BankStatementsTabsView` to see how a new rule is
+  applied to existing transactions, THEN decide wire-up vs delete.
