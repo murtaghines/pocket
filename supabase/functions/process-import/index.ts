@@ -3,6 +3,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { categorize, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
+import {
+  type MovementType,
+  INCOME_SLUGS,
+  EXPENSE_SLUGS,
+  TRANSFER_SLUGS,
+  mapCategorySlug,
+  validateCategorySlug,
+} from "../_shared/categoryMap.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,38 +22,8 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // ========== MOVEMENT TYPES ==========
-type MovementType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
-
-// ========== CATEGORY SLUGS BY MOVEMENT (app-level) ==========
-const INCOME_SLUGS = ['salary', 'refunds', 'transfers', 'other_income', 'investment', 'freelance', 'rents'];
-const EXPENSE_SLUGS = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
-const TRANSFER_SLUGS = ['own_transfer', 'to_investment'];
-
-// ========== EXTENDED → APP CATEGORY MAPPING ==========
-// The advanced categorizer uses more categories than the app.
-// This maps extended categories to app-level categories.
-const CATEGORY_SLUG_MAP: Record<string, string> = {
-  // Income extended → app
-  'investments_income': 'investment',
-  'rental_income': 'rents',
-  'transfers_in': 'transfers',
-  'gifts_received': 'other_income',
-  'sales': 'other_income',
-  // Expense extended → app
-  'gifts_given': 'other_expense',
-  'insurance': 'other_expense',
-  'family': 'other_expense',
-  'donations': 'other_expense',
-  'personal_services': 'other_expense',
-  'taxes': 'other_expense',
-};
-
-/** Map an extended category slug to an app-level slug */
-function mapCategorySlug(slug: string): string {
-  // Handle custom_ prefixed categories from the categorizer
-  if (slug.startsWith('custom_')) return slug;
-  return CATEGORY_SLUG_MAP[slug] || slug;
-}
+// Category-slug resolution (MovementType, slug lists, mapCategorySlug, validateCategorySlug)
+// now lives in ../_shared/categoryMap.ts (unit-tested in tests/categoryMap.test.ts).
 
 // ========== TX_TYPE to MOVEMENT MAPPING ==========
 const TX_TYPE_TO_MOVEMENT: Record<string, MovementType> = {
@@ -255,29 +233,6 @@ function validateMovement(movement: string | null): MovementType {
     return upper as MovementType;
   }
   return 'EXPENSE';
-}
-
-function validateCategorySlug(slug: string | null, movement: MovementType): string {
-  if (!slug) {
-    switch (movement) {
-      case 'INCOME': return 'other_income';
-      case 'EXPENSE': return 'other_expense';
-      case 'TRANSFER': return 'own_transfer';
-    }
-  }
-  
-  const normalizedSlug = slug!.toLowerCase().replace(/\s+/g, '_');
-  // Map extended categories to app categories
-  const mappedSlug = mapCategorySlug(normalizedSlug);
-  
-  switch (movement) {
-    case 'INCOME':
-      return INCOME_SLUGS.includes(mappedSlug) ? mappedSlug : 'other_income';
-    case 'EXPENSE':
-      return EXPENSE_SLUGS.includes(mappedSlug) ? mappedSlug : 'other_expense';
-    case 'TRANSFER':
-      return TRANSFER_SLUGS.includes(mappedSlug) ? mappedSlug : 'own_transfer';
-  }
 }
 
 function getLegacyType(movement: MovementType): string {

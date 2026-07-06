@@ -101,3 +101,19 @@ Still pending in Fase 1 (need real sample files + a Supabase deploy):
   `apply-rules-retroactive`. Deleting data-repair tooling under that uncertainty is unsafe.
   Next: trace the `onConfirm` handler in `BankStatementsTabsView` to see how a new rule is
   applied to existing transactions, THEN decide wire-up vs delete.
+
+## Coverage expansion (2026-07-06) — 48 tests total
+Extracted the category-slug resolution layer (`MovementType`, slug lists, `mapCategorySlug`,
+`validateCategorySlug`) from `process-import` into `_shared/categoryMap.ts` (rewired + unit-
+tested — closes the Fase 1 `mapCategorySlug` guard). Broadened `categorizer` tests to the
+batch/dashboard routing and more merchants. Two real findings surfaced (both locked in tests,
+fix TBD):
+- **`to_joint_account` collapses to `own_transfer`**: categorizer emits it on a joint-account
+  name match, but `TRANSFER_SLUGS` lacks it and there's no `CATEGORY_SLUG_MAP` entry →
+  `validateCategorySlug` downgrades it. Joint-account transfers become indistinguishable from
+  own transfers. Fix: add `to_joint_account` as a real app transfer slug (+ category row) or
+  map it deliberately.
+- **`\b`-anchored rules miss `.COM`-style descriptors**: `normalize("NETFLIX.COM")` →
+  `"NETFLIXCOM"`, and rule `'NETFLIX\\b'` needs a boundary after NETFLIX → no match. Hits many
+  online/subscription merchants whose bank descriptor appends `.COM`/`.ES` with no space.
+  Fix: relax the trailing boundary or strip common TLDs in `normalize`.

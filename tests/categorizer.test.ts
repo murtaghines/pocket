@@ -110,13 +110,60 @@ describe('categorize — unmatched descriptions defer to ML (null)', () => {
   });
 });
 
-describe('categorizeBatch — reports coverage stats', () => {
-  it('categorizes a batch and returns per-row output', () => {
-    const rows = [
-      { description: 'AMAZON PRIME VIDEO', amount: -12.99 },
-      { description: 'ZZZQXWV UNKNOWN GIBBERISH 9182', amount: -10 },
-    ];
-    const out = categorizeBatch(rows);
-    expect(Array.isArray(out.results ?? out)).toBe(true);
+describe('categorize — more canonical merchants', () => {
+  it('classifies common Spanish merchants', () => {
+    expect(categorize('NOMINA EMPRESA SL', 1800)?.category).toBe('salary');
+    expect(categorize('MERCADONA MADRID', -54.2)?.category).toBe('groceries');
+    expect(categorize('NETFLIX', -12.99)?.category).toBe('subscriptions');
+    expect(categorize('SPOTIFY P0A1B2', -9.99)?.category).toBe('subscriptions');
+  });
+
+  it('routes REVOLUT vault/savings to an investment transfer', () => {
+    const r = categorize('REVOLUT VAULT', -200);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('to_investment');
+  });
+});
+
+describe('KNOWN GAP — trailing-\\b rules miss ".COM"-style descriptors', () => {
+  it('NETFLIX matches but NETFLIX.COM does not (normalize joins X.C → XC, killing \\b)', () => {
+    // normalize("NETFLIX.COM") → "NETFLIXCOM"; the rule 'NETFLIX\\b' needs a boundary after
+    // NETFLIX, which "NETFLIXCOM" doesn't have, so the match is lost. This hits many online
+    // merchants whose bank descriptor appends .COM/.ES with no space. Flagged for the epic;
+    // test locks in today's behavior (fix likely: relax the boundary or normalize TLDs).
+    expect(categorize('NETFLIX', -12.99)?.category).toBe('subscriptions');
+    expect(categorize('NETFLIX.COM', -12.99)).toBeNull();
+  });
+});
+
+describe('categorizeBatch — coverage stats + dashboard routing', () => {
+  const ctx: UserContext = { firstName: 'Juan', lastName: 'Pérez' };
+
+  it('maps each row to the right dashboardTarget', () => {
+    const { results } = categorizeBatch(
+      [
+        { description: 'TRANSFERENCIA A JUAN PEREZ', amount: -500 }, // own_transfer → hidden
+        { description: 'REVOLUT VAULT', amount: -200 },              // to_investment → investments
+        { description: 'MERCADONA', amount: -30 },                   // expense
+        { description: 'ZZZQXWV GIBBERISH 9182', amount: -10 },      // no match → pending
+      ],
+      ctx,
+    );
+    expect(results[0].dashboardTarget).toBe('hidden');
+    expect(results[1].dashboardTarget).toBe('investments');
+    expect(results[2].dashboardTarget).toBe('expense');
+    expect(results[3].dashboardTarget).toBe('pending');
+    expect(results[3].needsML).toBe(true);
+  });
+
+  it('reports coverage percent over matched rows', () => {
+    const { stats } = categorizeBatch([
+      { description: 'MERCADONA', amount: -30 },
+      { description: 'NETFLIX', amount: -12.99 },
+      { description: 'ZZZQXWV GIBBERISH 9182', amount: -10 },
+    ]);
+    expect(stats.total).toBe(3);
+    expect(stats.needsML).toBe(1);
+    expect(stats.coveragePercent).toBe(67);
   });
 });
