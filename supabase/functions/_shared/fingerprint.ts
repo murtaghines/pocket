@@ -54,14 +54,22 @@ export async function calculateFingerprint(
 }
 
 export function extractMonthKey(dateStr: string): string {
-  // Parse YYYY-MM-DD directly to avoid timezone issues with new Date()
-  const match = dateStr.match(/^(\d{4})-(\d{2})/);
-  if (match) {
-    return `${match[1]}-${match[2]}`;
-  }
-  // Fallback for other formats
-  const date = new Date(dateStr + 'T12:00:00Z');
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
+  const s = (dateStr || '').trim();
+
+  // Strict ISO YYYY-MM(-DD…) — parsed directly to avoid timezone drift.
+  const iso = s.match(/^(\d{4})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}`;
+
+  // Year-first with slash/dot separators: 2024/03/09 or 2024.03.09
+  const ymd = s.match(/^(\d{4})[/.](\d{1,2})/);
+  if (ymd) return `${ymd[1]}-${ymd[2].padStart(2, '0')}`;
+
+  // Fallback: let Date parse it at noon UTC to avoid month rollover at the day boundary.
+  // Guard against NaN — the old code returned a bogus "NaN-NaN" key for any non-ISO date,
+  // which silently dropped those rows into the skipped-month bucket.
+  const parsed = new Date(s.includes('T') ? s : `${s}T12:00:00Z`);
+  const usable = isNaN(parsed.getTime()) ? new Date(s) : parsed;
+  if (isNaN(usable.getTime())) return '';
+
+  return `${usable.getUTCFullYear()}-${String(usable.getUTCMonth() + 1).padStart(2, '0')}`;
 }

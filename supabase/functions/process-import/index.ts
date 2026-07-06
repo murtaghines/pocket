@@ -1,8 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
-import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 import { categorize, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
+import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -232,61 +232,8 @@ Example output:
 ]`;
 
 // ========== UTILITY FUNCTIONS ==========
-
-async function sha256(text: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function normalizeDescription(desc: string): string {
-  return (desc || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/ref\.?\s*\d+/gi, '')
-    .replace(/\*{4}\d{4}/g, '')
-    .replace(/\d{10,}/g, '')
-    .trim()
-    .substring(0, 200);
-}
-
-async function calculateFingerprint(
-  userId: string,
-  accountId: string | null,
-  sourceTransactionId: string | null,
-  postedDate: string,
-  amountSigned: number,
-  currency: string,
-  descriptionRaw: string,
-  runningBalance: number | null
-): Promise<string> {
-  if (sourceTransactionId) {
-    const input = `${userId}|${accountId || 'no-account'}|${sourceTransactionId}`;
-    return await sha256(input);
-  }
-  
-  const normalizedDesc = normalizeDescription(descriptionRaw);
-  const balancePart = runningBalance !== null ? `|${runningBalance.toFixed(2)}` : '';
-  const input = `${userId}|${accountId || 'no-account'}|${postedDate}|${amountSigned.toFixed(2)}|${currency}|${normalizedDesc}${balancePart}`;
-  return await sha256(input);
-}
-
-function extractMonthKey(dateStr: string): string {
-  // Parse YYYY-MM-DD directly to avoid timezone issues with new Date()
-  const match = dateStr.match(/^(\d{4})-(\d{2})/);
-  if (match) {
-    return `${match[1]}-${match[2]}`;
-  }
-  // Fallback for other formats
-  const date = new Date(dateStr + 'T12:00:00Z');
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
-}
+// sha256 / normalizeDescription / calculateFingerprint / extractMonthKey now live in
+// ../_shared/fingerprint.ts (unit-tested in tests/fingerprint.test.ts). Imported above.
 
 function normalizeTargetMonth(targetMonth: string): string {
   if (targetMonth.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -1160,7 +1107,8 @@ serve(async (req) => {
       expenses: 0,
       categorizedByRule: 0,
       categorizedByCategorizer: 0,
-      categorizedByAI: 0
+      categorizedByAI: 0,
+      failed: 0
     };
     const monthsDistribution: Record<string, { new: number; duplicates: number }> = {};
     for (const m of Object.keys(periodIdByMonth)) {
@@ -1446,10 +1394,12 @@ serve(async (req) => {
     }
 
     // Batch insert transactions
+    let insertFailedCount = 0;
+    const insertErrorSamples: string[] = [];
     if (newTransactions.length > 0) {
       let successCount = 0;
       let duplicateCount = 0;
-      
+
       for (const tx of newTransactions) {
         const txMonthKey: string = tx._month_key;
         // Strip our internal helper field before inserting.
@@ -1464,6 +1414,10 @@ serve(async (req) => {
             if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
             monthsDistribution[txMonthKey].duplicates++;
           } else {
+            // A real insert failure (not a duplicate). Previously this was only logged and
+            // the import was still reported as NORMALIZED, silently dropping the row.
+            insertFailedCount++;
+            if (insertErrorSamples.length < 5) insertErrorSamples.push(insertError.message);
             console.error('[process-import] Error inserting transaction:', insertError);
           }
         } else {
@@ -1472,25 +1426,35 @@ serve(async (req) => {
           monthsDistribution[txMonthKey].new++;
         }
       }
-      
+
       stats.newTransactions = successCount;
       stats.duplicatesIgnored += duplicateCount;
-      
-      console.log(`[process-import] Inserted ${successCount} transactions, ${duplicateCount} duplicates skipped`);
-      
-      if (successCount === 0 && duplicateCount === newTransactions.length) {
-        await supabase.from('imports').update({ 
-          status: 'NORMALIZED',
-          transactions_count: 0,
-          error_message: 'All transactions already existed'
-        }).eq('id', importId);
-      }
+      stats.failed = insertFailedCount;
+
+      console.log(`[process-import] Inserted ${successCount} transactions, ${duplicateCount} duplicates skipped, ${insertFailedCount} failed`);
     }
 
-    // Update import status
-    await supabase.from('imports').update({ 
-      status: 'NORMALIZED',
-      transactions_count: stats.newTransactions
+    // Finalize import status — surface partial/total failures instead of always
+    // reporting NORMALIZED (which used to mask silently-dropped rows).
+    const insertedCount = stats.newTransactions;
+    let importStatus: 'NORMALIZED' | 'FAILED' = 'NORMALIZED';
+    let importErrorMessage: string | null = null;
+
+    if (insertFailedCount > 0 && insertedCount === 0) {
+      // Nothing landed and at least one row errored (not just duplicates) → hard failure.
+      importStatus = 'FAILED';
+      importErrorMessage = `All ${insertFailedCount} transaction insert(s) failed. First errors: ${insertErrorSamples.join(' | ')}`;
+    } else if (insertFailedCount > 0) {
+      // Some rows landed, some errored → partial import; keep the data but flag it.
+      importErrorMessage = `${insertFailedCount} of ${insertFailedCount + insertedCount} transaction(s) failed to insert. First errors: ${insertErrorSamples.join(' | ')}`;
+    } else if (insertedCount === 0 && stats.duplicatesIgnored > 0) {
+      importErrorMessage = 'All transactions already existed';
+    }
+
+    await supabase.from('imports').update({
+      status: importStatus,
+      transactions_count: insertedCount,
+      error_message: importErrorMessage
     }).eq('id', importId);
 
     // Log to audit
@@ -1523,7 +1487,10 @@ serve(async (req) => {
     if (stats.categorizedByCategorizer > 0) {
       message += `, ${stats.categorizedByCategorizer} by categorizer`;
     }
-    
+    if (insertFailedCount > 0) {
+      message += `, ${insertFailedCount} failed to save`;
+    }
+
     // Log categorization savings
     const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer;
     const aiSavingsPercent = stats.newTransactions > 0 
@@ -1532,10 +1499,14 @@ serve(async (req) => {
     console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, categorizer=${stats.categorizedByCategorizer}, AI=${stats.categorizedByAI}, local_coverage=${aiSavingsPercent}%`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message,
         importId,
+        status: importStatus,
+        failed: insertFailedCount,
+        partial: insertFailedCount > 0 && insertedCount > 0,
+        errorMessage: importErrorMessage,
         stats,
         monthsDistribution,
         skippedMonths,

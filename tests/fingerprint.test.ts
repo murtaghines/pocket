@@ -64,11 +64,13 @@ describe('extractMonthKey', () => {
     expect(extractMonthKey('2024-12-31')).toBe('2024-12');
   });
 
-  it('KNOWN BUG (Fase 1): the non-ISO fallback yields "NaN-NaN"', () => {
-    // The fallback does `new Date('2024/03/09' + 'T12:00:00Z')`, which is an invalid date,
-    // so any date that is not already strict YYYY-MM-DD produces "NaN-NaN". This test locks
-    // in today's broken behavior; fix it in Fase 1 (parse slash/other formats properly) and
-    // update this expectation deliberately.
-    expect(extractMonthKey('2024/03/09')).toBe('NaN-NaN');
+  it('handles year-first slash/dot separators (Fase 1 fix)', () => {
+    expect(extractMonthKey('2024/03/09')).toBe('2024-03');
+    expect(extractMonthKey('2024.03.09')).toBe('2024-03');
+  });
+
+  it('returns "" (not "NaN-NaN") for unparseable dates so callers skip them cleanly', () => {
+    expect(extractMonthKey('not-a-date')).toBe('');
+    expect(extractMonthKey('')).toBe('');
   });
 });
