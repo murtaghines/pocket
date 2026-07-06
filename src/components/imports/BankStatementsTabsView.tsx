@@ -34,6 +34,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VALID_EXTS } from "@/lib/fileExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,7 +123,6 @@ interface MonthTransaction {
   import_id: string | null;
 }
 
-const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"];
 const DEFAULT_MONTHS = 6;
 const MIN_MONTHS = 5;
 const MONTHS_INCREMENT = 1;

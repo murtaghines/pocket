@@ -25,6 +25,7 @@ import {
   Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VALID_EXTS } from "@/lib/fileExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +68,6 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
 import { useToast } from "@/hooks/use-toast";
 
-const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"];
 const DEFAULT_MONTHS = 6;
 const MIN_MONTHS = 6;
 const MONTHS_INCREMENT = 1;

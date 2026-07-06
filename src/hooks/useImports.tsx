@@ -2,10 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
-import * as pdfjsLib from "pdfjs-dist";
-import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+import { extractPdfText } from "@/lib/fileExtract";
 
 export type ImportStatus = 'UPLOADED' | 'PARSED' | 'NORMALIZED' | 'FAILED';
 export type SourceType = 'BANK' | 'BROKER' | 'SAVINGS' | 'CARD' | 'OTHER';
@@ -256,30 +253,6 @@ export function useImports(domain?: AppDomain) {
       toast.error('Could not update file lock');
     }
   });
-
-  // Helper to extract PDF text
-  const extractPdfText = async (arrayBuffer: ArrayBuffer): Promise<string> => {
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
-    const maxPages = Math.min(pdf.numPages, 30);
-    let content = "";
-
-    for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      const pageText = (textContent.items as any[])
-        .map((item) => (typeof item?.str === "string" ? item.str : ""))
-        .filter(Boolean)
-        .join(" ");
-      content += `\n\n--- Page ${pageNum} ---\n${pageText}`;
-    }
-
-    const trimmed = content.trim();
-    if (trimmed.length < 50) {
-      throw new Error("PDF has no selectable text (probably scanned).");
-    }
-    return trimmed;
-  };
 
   // Auto-delete failed imports
   const autoDeleteFailedImport = async (importId: string) => {

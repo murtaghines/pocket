@@ -4,40 +4,7 @@ import { useAuth } from "./useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { parseExcelFile } from "@/lib/excelParser";
-import * as pdfjsLib from "pdfjs-dist";
-import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
-
-async function extractPdfText(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-  const pdf = await loadingTask.promise;
-
-  const maxPages = Math.min(pdf.numPages, 30);
-  let content = "";
-
-  for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
-    const page = await pdf.getPage(pageNum);
-    const textContent = await page.getTextContent();
-
-    const pageText = (textContent.items as any[])
-      .map((item) => (typeof item?.str === "string" ? item.str : ""))
-      .filter(Boolean)
-      .join(" ");
-
-    content += `\n\n--- Page ${pageNum} ---\n${pageText}`;
-  }
-
-  const trimmed = content.trim();
-  if (trimmed.length < 50) {
-    throw new Error(
-      "This PDF has no selectable text (probably scanned). Try a PDF with text or an Excel/CSV file."
-    );
-  }
-
-  return trimmed;
-}
+import { extractPdfText, getMonthKey } from "@/lib/fileExtract";
 
 interface PendingFile {
   id: string;
@@ -50,10 +17,6 @@ interface PendingFile {
 }
 
 type PendingFilesByMonth = Record<string, PendingFile[]>;
-
-function getMonthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
 
 export function useMonthlyInvestmentUpload() {
   const [pendingFilesByMonth, setPendingFilesByMonth] = useState<PendingFilesByMonth>({});
