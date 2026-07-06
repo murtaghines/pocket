@@ -9,7 +9,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -611,49 +611,64 @@ async function callAIWithRetry(
   retryCount = 0
 ): Promise<{ transactions: any[] | null; error: string | null }> {
   const maxRetries = 2;
-  
+
   const effectivePrompt = isLargeFile ? SIMPLE_EXTRACTION_PROMPT : prompt;
-  const model = (isLargeFile || retryCount > 0) ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash';
-  
+  // Escalate to the stronger model for large files and on retry; Haiku is the fast/cheap
+  // default for a first pass on a normal-sized chunk. (Migrated off Lovable's Gemini gateway.)
+  const model = (isLargeFile || retryCount > 0) ? 'claude-sonnet-5' : 'claude-haiku-4-5';
+
   console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, contentLength=${content.length}, isLargeFile=${isLargeFile}`);
-  
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'x-api-key': ANTHROPIC_API_KEY ?? '',
+      'anthropic-version': '2023-06-01',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: model,
+      model,
+      max_tokens: 16000,
+      // Extraction is a structured task — no thinking, keeps output deterministic and
+      // within max_tokens (Sonnet 5 runs adaptive thinking by default otherwise).
+      thinking: { type: 'disabled' },
+      system: effectivePrompt,
       messages: [
-        { role: 'system', content: effectivePrompt },
-        { role: 'user', content: `Extract ALL transactions from this financial data:\n\n${content}` }
+        { role: 'user', content: `Extract ALL transactions from this financial data:\n\n${content}` },
       ],
-      temperature: 0.1,
-      max_tokens: 32000,
     }),
   });
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`[process-import] AI API error: ${response.status}`, errorText);
-    
-    if (response.status === 429 || response.status === 402) {
+
+    // 429 (rate limited) and 400/401/403 (bad request / auth / billing) are not worth
+    // retrying blindly — surface them so the UI can show the right message.
+    if (response.status === 429 || (response.status >= 400 && response.status < 500)) {
       return { transactions: null, error: `API error: ${response.status}` };
     }
-    
+
+    // 5xx / 529 (overloaded) — retry with backoff.
     if (retryCount < maxRetries) {
       console.log(`[process-import] Retrying AI call...`);
       await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
       return callAIWithRetry(content, prompt, isLargeFile, retryCount + 1);
     }
-    
+
     return { transactions: null, error: `AI API error after retries: ${response.status}` };
   }
-  
+
   const aiData = await response.json();
-  const rawContent = aiData.choices?.[0]?.message?.content;
-  
+
+  if (aiData.stop_reason === 'refusal') {
+    return { transactions: null, error: 'AI declined to process the file' };
+  }
+
+  const rawContent = Array.isArray(aiData.content)
+    ? aiData.content.find((b: any) => b.type === 'text')?.text
+    : undefined;
+
   if (!rawContent) {
     return { transactions: null, error: 'No content in AI response' };
   }
@@ -963,7 +978,7 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ 
               error: 'payment_required',
-              message: 'No AI credits. Please add credits in Lovable to continue.'
+              message: 'The AI service is unavailable (billing). Please check the account and try again.'
             }),
             { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );

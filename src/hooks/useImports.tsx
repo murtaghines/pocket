@@ -189,8 +189,8 @@ export function useImports(domain?: AppDomain) {
       const message = error?.message || "Error processing file";
       
       if (code === "payment_required") {
-        toast.error("No AI credits", {
-          description: "Top up credits in Lovable to continue processing files.",
+        toast.error("AI service unavailable", {
+          description: "The AI service is temporarily unavailable. Please try again later.",
         });
       } else if (code === "rate_limited") {
         toast.error("Too many requests", {

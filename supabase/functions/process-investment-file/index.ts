@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -156,27 +156,29 @@ serve(async (req) => {
       .update({ status: 'PARSED' })
       .eq('id', recordId);
 
-    // Call Lovable AI to analyze the investment data
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Call the Anthropic Messages API to analyze the investment data (migrated off Lovable).
+    const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY ?? '',
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'claude-haiku-4-5',
+        max_tokens: 16000,
+        thinking: { type: 'disabled' },
+        system: INVESTMENT_ANALYSIS_PROMPT,
         messages: [
-          { role: 'system', content: INVESTMENT_ANALYSIS_PROMPT },
           { role: 'user', content: `Analyze this financial data and extract ONLY investment/savings related transactions. Look for keywords like: ${INVESTMENT_KEYWORDS.slice(0, 15).join(', ')}.\n\nData:\n${fileContent}` }
         ],
-        temperature: 0.1,
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('AI API error:', aiResponse.status, errorText);
-      
+
       if (aiResponse.status === 429) {
         await supabase
           .from('imports')
@@ -188,23 +190,26 @@ serve(async (req) => {
         );
       }
 
-      if (aiResponse.status === 402) {
-        await supabase
-          .from('imports')
-          .update({ status: 'FAILED', error_message: 'AI credits exhausted. Please add credits.' })
-          .eq('id', recordId);
-        return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
       throw new Error(`AI API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content;
-    
+
+    if (aiData.stop_reason === 'refusal') {
+      await supabase
+        .from('imports')
+        .update({ status: 'FAILED', error_message: 'AI declined to process the file.' })
+        .eq('id', recordId);
+      return new Response(
+        JSON.stringify({ error: 'AI declined to process the file.' }),
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const rawContent = Array.isArray(aiData.content)
+      ? aiData.content.find((b: any) => b.type === 'text')?.text
+      : undefined;
+
     console.log('AI response received, length:', rawContent?.length);
 
     if (!rawContent) {
