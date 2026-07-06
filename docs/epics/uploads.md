@@ -60,12 +60,24 @@ Verified pipeline map:
   - `running_balance` inside the fingerprint makes the same tx with a different balance dedup
     as new (false negatives).
 
-## Next step
-- **Fase 1 — correctness bugs** (tests now cover the pure logic): silent half-fail in
-  `process-import` insert loop (`:1449-1488`), the fake `categorized_by='ai'` sign fallback
-  (`:~1305-1325`), fingerprint-NULL dedup gap (rewire process-import to import
-  `_shared/fingerprint.ts` here), UI retry on failed import, and the `extractMonthKey` fix.
-  Run `imports-reviewer` + redeploy `process-import` before merging.
+## Fase 1 progress (2026-07-06)
+Done (committed to main, **NOT yet deployed to Supabase**):
+- `process-import` now imports the 4 hashing/dedup primitives from `_shared/fingerprint.ts`
+  (private copies removed; `crypto` std import dropped).
+- Half-fail reporting: real (non-dup) insert errors are counted; import is marked `FAILED`
+  when nothing lands, or `NORMALIZED` + `error_message` on a partial; response now carries
+  `status` / `failed` / `partial` / `errorMessage`.
+- `extractMonthKey` no longer returns "NaN-NaN" for non-ISO dates (parses slash/dot, `''`
+  when unparseable).
+
+Still pending in Fase 1 (need real sample files + a Supabase deploy):
+- Honest labeling of the sign-derived fallback (today mislabeled `categorized_by='ai'`) —
+  check `categorized_by` consumers (dashboards, `apply-rules-retroactive`) before changing.
+- Fingerprint NOT-NULL / dedup gap; add file-level dedup to the investment flow.
+- Frontend **retry** button consuming the new `failed`/`partial` response fields.
+- `mapCategorySlug` unmapped-slug guard (add a test).
+- **Deploy `process-import` to Supabase + smoke-test with ≥2 real bank files; run
+  `imports-reviewer` before considering Fase 1 closed.**
 - Later phases: dead-code/consolidation (Fase 2), Lovable→Anthropic migration (Fase 3),
   split the monoliths — `BankStatementsTabsView.tsx` 3083 / `InvestmentTabsView.tsx` 1327 /
   `useMonthlyFileUpload.tsx` 573 (Fase 4), hardening incl. the `Function()` amount eval
