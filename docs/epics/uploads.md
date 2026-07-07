@@ -309,6 +309,13 @@ every caller already assumed `upload_id` held an import id. Migration
 Supabase Management API `database/query` endpoint (no `SUPABASE_DB_PASSWORD` available locally
 for a CLI `db push`).
 
+**Verified end-to-end (2026-07-07):** ran a real insert against the live DB — created an
+`imports` row (domain `INVESTING`) for the demo user, then inserted an `investments` row with
+`upload_id` set to that import's id, exactly what `process-investment-file` does. Insert
+succeeded with no FK violation (previously this would have failed). Cleaned up both test rows
+after. This closes the loop on "confirm the actual failure mode" — the fix works for the real
+code path, not just in theory.
+
 ## Fase 3 progress (2026-07-06)
 - `process-import` + `process-investment-file` migrated off Lovable → **Anthropic Messages
   API** (`claude-haiku-4-5` → `claude-sonnet-5` on escalation, thinking disabled). Read new
