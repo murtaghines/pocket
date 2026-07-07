@@ -143,6 +143,16 @@ describe('FIXED — trailing-\\b rules now handle ".COM"-style descriptors', () 
     expect(normalize('NETFLIX.COMPANY')).toBe('NETFLIXCOMPANY');
   });
 
+  it('regression: CRYPTO.COM still categorizes (rule depended on the glued form)', () => {
+    // The rule table had 'CRYPTOCOM\\b', which relied on normalize() gluing "CRYPTO.COM" into
+    // one token — the exact behavior this fix removes. Caught by imports-reviewer before
+    // shipping: after the TLD split, "CRYPTO.COM" -> "CRYPTO COM", so the glued-form rule no
+    // longer matched. Fixed by changing the rule to 'CRYPTO\\s*COM\\b' (same style already used
+    // for 'PUBLIC\\s*COM'), which matches both the space-separated and glued forms.
+    expect(categorize('CRYPTO.COM', -100)?.category).toBe('to_investment');
+    expect(categorize('CRYPTO.COM PURCHASE', -100)?.category).toBe('to_investment');
+  });
+
   it('still merges genuine H&M-style joins untouched by the TLD split', () => {
     expect(normalize('H&M')).toBe('HM');
     expect(normalize('7-Eleven')).toBe('7ELEVEN');

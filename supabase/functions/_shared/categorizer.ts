@@ -83,6 +83,9 @@ export interface CategorizationResult {
 // AMAZON.ES). Split out with a space BEFORE the H&M-style merge below, so the
 // merge doesn't glue the merchant name to the TLD (NETFLIX.COM -> NETFLIXCOM,
 // which breaks \b-anchored rules like 'NETFLIX\b' -- no boundary left to match).
+// CAUTION when adding new rule patterns below: a rule like 'CRYPTOCOM\b' (glued
+// form) will NOT match anymore now that the TLD splits out -- use 'CRYPTO\s*COM\b'
+// style instead (imports-reviewer caught this exact regression for Crypto.com).
 const GLUED_TLD = /\.(COM|NET|ORG|INFO|APP|IO|CO|ES|AR|CL|UY|MX)\b/g;
 
 export function normalize(raw: string): string {
@@ -485,7 +488,7 @@ const RULE_BUCKETS: RuleBucket[] = [
       'KUCOIN\\b',
       'BYBIT\\b',
       'OKEX\\b',
-      'CRYPTOCOM\\b',
+      'CRYPTO\\s*COM\\b', // was 'CRYPTOCOM\b' (glued form); "CRYPTO.COM" normalizes to "CRYPTO COM" now
       'GEMINI\\s*CRYPTO',
       'HUOBI\\b',
       'BITFINEX\\b',

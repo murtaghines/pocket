@@ -63,8 +63,20 @@ Correctness (categorization / dedup):
   `normalize`-shaped functions in the repo (`src/lib/userRules.ts` and
   `_shared/fingerprint.ts`'s `normalizeDescription`) and neither has the H&M-merge step that
   causes this, so neither had the bug. Also fixed the stale docstring example at the top of the
-  file (line 79) while in there. Deployed `process-import`. Reviewed by `imports-reviewer`
-  subagent for rule collisions before considering this closed. (test: `tests/categorizer.test.ts`)
+  file (line 79) while in there. Reviewed by `imports-reviewer` subagent for rule collisions,
+  which caught a real mirror-image regression before it shipped to real users: the rule table
+  had `'CRYPTOCOM\b'` (Crypto.com exchange, `to_investment`) relying on the exact glued form
+  this fix removes — after the TLD split, `"CRYPTO.COM"` → `"CRYPTO COM"`, so the glued-form
+  rule stopped matching entirely. Fixed by changing it to `'CRYPTO\s*COM\b'` (same style already
+  used for `'PUBLIC\s*COM'`, which was never at risk). Reviewer also confirmed: no other rule
+  in the ~2500-pattern table assumes a glued TLD form; the `\b` anchor correctly refuses to
+  fire mid-word; and `BOOKING\.COM` (`categorizer.ts:2333`) is pre-existing dead code unrelated
+  to this change — a literal `\.` in a rule pattern can never match since `normalize()` strips
+  dots before any rule runs (the working rule right next to it, `BOOKING\s*COM`, is what
+  actually fires). Left as a separate, low-priority cleanup item, not fixed here. Added a
+  regression test (`tests/categorizer.test.ts`) and a warning comment next to `GLUED_TLD` for
+  future rule authors. Deployed `process-import` twice (once for the base fix, once for the
+  regression fix). (test: `tests/categorizer.test.ts`)
 - [x] **`running_balance` in the fingerprint** — fixed 2026-07-07. Removed from dedup formula
   because it's dynamic (changes on reimport when earlier-dated transactions appear). Recalculated
   all 12 existing demo fingerprints with new formula: `hash(account_id | date | amount |
