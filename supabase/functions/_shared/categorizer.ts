@@ -76,14 +76,21 @@ export interface CategorizationResult {
 // ─────────────────────────────────────────────────────────────
 // NORMALIZATION
 // Mirrors what every bank does before we see the description.
-// "Café & Bar Peña-Nieto 123" → "CAFE BAR PENA NIETO 123"
+// "Café & Bar Peña-Nieto 123" → "CAFE BAR PENANIETO 123" (hyphen between letters merges, doesn't space)
 // ─────────────────────────────────────────────────────────────
+
+// TLDs that show up glued to merchant names in bank descriptors (NETFLIX.COM,
+// AMAZON.ES). Split out with a space BEFORE the H&M-style merge below, so the
+// merge doesn't glue the merchant name to the TLD (NETFLIX.COM -> NETFLIXCOM,
+// which breaks \b-anchored rules like 'NETFLIX\b' -- no boundary left to match).
+const GLUED_TLD = /\.(COM|NET|ORG|INFO|APP|IO|CO|ES|AR|CL|UY|MX)\b/g;
 
 export function normalize(raw: string): string {
   return raw
     .toUpperCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')                          // strip accents: é→e, ñ→n
+    .replace(GLUED_TLD, ' $1')                                // NETFLIX.COM -> NETFLIX COM
     .replace(/(?<=[A-Z0-9])[^A-Z0-9\s]+(?=[A-Z0-9])/g, '')   // H&M→HM, 7-Eleven→7ELEVEN
     .replace(/[^A-Z0-9\s]/g, ' ')                             // remaining specials → space
     .replace(/\s+/g, ' ')

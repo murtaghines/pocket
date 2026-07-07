@@ -52,10 +52,19 @@ Correctness (categorization / dedup):
 - [ ] **`to_joint_account` collapses to `own_transfer`** — no app transfer slug / map entry for
   joint-account transfers, so they become indistinguishable from own transfers. Fix: add the
   slug (+ `categories` row) or map it deliberately. (test: `tests/categoryMap.test.ts`)
-- [ ] **`\b`-anchored rules miss `.COM`-style descriptors** — `normalize("NETFLIX.COM")` →
-  `"NETFLIXCOM"`, so `'NETFLIX\b'` never matches; hits many online/subscription merchants.
-  Fix: relax the trailing boundary or strip common TLDs in `normalize`. Touches `normalize()`
-  globally → run `imports-reviewer`. (test: `tests/categorizer.test.ts`)
+- [x] **`\b`-anchored rules miss `.COM`-style descriptors** — fixed 2026-07-07.
+  `normalize("NETFLIX.COM")` used to produce `"NETFLIXCOM"` (the existing H&M-merge regex
+  glued the dot-separated halves together), so `'NETFLIX\b'` never matched. Fix: a new
+  `GLUED_TLD` regex (`\.(COM|NET|ORG|INFO|APP|IO|CO|ES|AR|CL|UY|MX)\b`) runs BEFORE the
+  H&M-merge step and splits recognized TLDs out with a space — `"NETFLIX.COM"` →
+  `"NETFLIX COM"` — so the merge no longer touches them and the boundary survives.
+  The `\b` after the TLD group means it doesn't fire mid-word (`"NETFLIX.COMPANY"` stays
+  `"NETFLIXCOMPANY"`, not split). Only `categorizer.ts` needed the fix — checked the two other
+  `normalize`-shaped functions in the repo (`src/lib/userRules.ts` and
+  `_shared/fingerprint.ts`'s `normalizeDescription`) and neither has the H&M-merge step that
+  causes this, so neither had the bug. Also fixed the stale docstring example at the top of the
+  file (line 79) while in there. Deployed `process-import`. Reviewed by `imports-reviewer`
+  subagent for rule collisions before considering this closed. (test: `tests/categorizer.test.ts`)
 - [x] **`running_balance` in the fingerprint** — fixed 2026-07-07. Removed from dedup formula
   because it's dynamic (changes on reimport when earlier-dated transactions appear). Recalculated
   all 12 existing demo fingerprints with new formula: `hash(account_id | date | amount |
@@ -118,10 +127,6 @@ Cleanliness / product:
 - [ ] **UI retry** button consuming the new `failed`/`partial` response fields. (Fase 1)
 - [ ] **`import_status` has no PARTIAL** — partial imports are marked NORMALIZED + `error_message`;
   a real `PARTIAL` enum value (migration) would be cleaner.
-
-Docs nit:
-- [ ] `categorizer.ts:79` docstring example is wrong (`normalize` yields `PENANIETO`, not
-  `PENA NIETO`).
 
 Fixed already: `extractMonthKey` "NaN-NaN" (Fase 1); `mapCategorySlug` completeness guard added;
 `userContext` always-undefined bug and the `categorization_rules` N+1 (both below, 2026-07-07).

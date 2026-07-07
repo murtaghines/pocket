@@ -125,14 +125,27 @@ describe('categorize — more canonical merchants', () => {
   });
 });
 
-describe('KNOWN GAP — trailing-\\b rules miss ".COM"-style descriptors', () => {
-  it('NETFLIX matches but NETFLIX.COM does not (normalize joins X.C → XC, killing \\b)', () => {
-    // normalize("NETFLIX.COM") → "NETFLIXCOM"; the rule 'NETFLIX\\b' needs a boundary after
-    // NETFLIX, which "NETFLIXCOM" doesn't have, so the match is lost. This hits many online
-    // merchants whose bank descriptor appends .COM/.ES with no space. Flagged for the epic;
-    // test locks in today's behavior (fix likely: relax the boundary or normalize TLDs).
+describe('FIXED — trailing-\\b rules now handle ".COM"-style descriptors', () => {
+  it('splits glued TLDs before the H&M-style merge, preserving the \\b boundary', () => {
+    // normalize("NETFLIX.COM") used to produce "NETFLIXCOM" (the H&M-style merge glued the
+    // dot-separated letters together), so 'NETFLIX\\b' lost its boundary and never matched.
+    // Fixed: known TLDs (.COM/.ES/.NET/...) are split out with a space BEFORE that merge runs,
+    // so "NETFLIX.COM" -> "NETFLIX COM" and the merchant name keeps its own boundary.
+    expect(normalize('NETFLIX.COM')).toBe('NETFLIX COM');
+    expect(normalize('AMAZON.ES')).toBe('AMAZON ES');
     expect(categorize('NETFLIX', -12.99)?.category).toBe('subscriptions');
-    expect(categorize('NETFLIX.COM', -12.99)).toBeNull();
+    expect(categorize('NETFLIX.COM', -12.99)?.category).toBe('subscriptions');
+  });
+
+  it('does not split TLD-looking substrings mid-word (NETFLIX.COMPANY stays intact)', () => {
+    // \b after the TLD group requires a real boundary, so this must NOT match COM inside
+    // COMPANY — the merge behaves exactly as it did before for non-TLD-suffixed text.
+    expect(normalize('NETFLIX.COMPANY')).toBe('NETFLIXCOMPANY');
+  });
+
+  it('still merges genuine H&M-style joins untouched by the TLD split', () => {
+    expect(normalize('H&M')).toBe('HM');
+    expect(normalize('7-Eleven')).toBe('7ELEVEN');
   });
 });
 
