@@ -10,6 +10,25 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 /** File extensions accepted by the bank-statement and investment upload flows. */
 export const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"] as const;
 
+/** Hard cap on upload size — keeps huge files from hitting storage and the AI extractor. */
+export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15 MB
+
+/**
+ * Validate a picked file for upload. Returns a human-readable reason when it should be
+ * rejected (bad extension or too large), or `null` when it's OK to upload.
+ */
+export function uploadFileRejection(file: File): string | null {
+  const ext = "." + (file.name.split(".").pop()?.toLowerCase() || "");
+  if (!(VALID_EXTS as readonly string[]).includes(ext)) {
+    return `unsupported type (use ${VALID_EXTS.join(", ")})`;
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    const mb = (file.size / 1024 / 1024).toFixed(1);
+    return `too large (${mb} MB, max ${MAX_UPLOAD_BYTES / 1024 / 1024} MB)`;
+  }
+  return null;
+}
+
 /** `YYYY-MM` key for a Date in local time — matches how the app buckets months. */
 export function getMonthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;

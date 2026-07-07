@@ -25,7 +25,8 @@ import {
   Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { VALID_EXTS } from "@/lib/fileExtract";
+import { uploadFileRejection } from "@/lib/fileExtract";
+import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -207,9 +208,12 @@ export function InvestmentTabsView() {
 
   const handleFilesPicked = (files: FileList | null, monthDate: Date) => {
     if (!files) return;
-    const valid = Array.from(files).filter((f) =>
-      VALID_EXTS.includes("." + (f.name.split(".").pop()?.toLowerCase() || "")),
-    );
+    const valid: File[] = [];
+    for (const f of Array.from(files)) {
+      const reason = uploadFileRejection(f);
+      if (reason) sonnerToast.error(`Skipped ${f.name}`, { description: reason });
+      else valid.push(f);
+    }
     if (valid.length) {
       addFilesForMonth(valid, monthDate);
       // Auto-process immediately after adding (mirrors bank flow).

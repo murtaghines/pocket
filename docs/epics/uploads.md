@@ -68,8 +68,8 @@ Cleanliness / product:
 - [ ] **Orphan edge functions** `apply-rules-retroactive` + `fix-categorization` — zero callers;
   trace how rules apply retroactively (`onConfirm` in `BankStatementsTabsView`) before
   deleting vs wiring. (spawned as its own task)
-- [ ] **`Function()` amount eval** (`BankStatementsTabsView.tsx:1866`) — replace with a safe
-  arithmetic parser. (Fase 5)
+- [x] **`Function()` amount eval** — replaced with `src/lib/safeMath.ts` (recursive-descent
+  parser, no eval), 11 tests. (Fase 5, done 2026-07-06)
 - [ ] **Investment flow** auto-processes with no preview + weaker dedup — add review parity with
   the bank flow. (Fase 5)
 - [ ] **UI retry** button consuming the new `failed`/`partial` response fields. (Fase 1)
@@ -140,6 +140,15 @@ Still pending in Fase 1 (need real sample files + a Supabase deploy):
   `apply-rules-retroactive`. Deleting data-repair tooling under that uncertainty is unsafe.
   Next: trace the `onConfirm` handler in `BankStatementsTabsView` to see how a new rule is
   applied to existing transactions, THEN decide wire-up vs delete.
+
+## Fase 5 progress (2026-07-06)
+- Replaced the `Function()` amount-editor eval with `src/lib/safeMath.ts` (safe parser, tested).
+- Added an upload guard `uploadFileRejection` + `MAX_UPLOAD_BYTES` (15 MB) in
+  `src/lib/fileExtract.ts`; both tab views now skip oversized/wrong-type files AND toast the
+  reason (was a silent filter). NOTE: `fileExtract.ts` isn't unit-testable under the current
+  Vitest config because it imports pdfjs' worker via `?url` (no Vite plugin in vitest.config);
+  split the pure helpers out if we want them covered.
+- Still pending in Fase 5: investment-flow preview parity (auto-processes with no review step).
 
 ## Coverage expansion (2026-07-06) — 48 tests total
 Extracted the category-slug resolution layer (`MovementType`, slug lists, `mapCategorySlug`,

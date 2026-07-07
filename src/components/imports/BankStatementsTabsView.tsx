@@ -34,7 +34,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { VALID_EXTS } from "@/lib/fileExtract";
+import { uploadFileRejection } from "@/lib/fileExtract";
 import { evalArithmetic } from "@/lib/safeMath";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -334,11 +334,20 @@ export function BankStatementsTabsView() {
   const [pendingDate, setPendingDate] = useState<Date | null>(new Date());
   const globalFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Keep only uploadable files; tell the user why any were skipped (bad type / too large).
+  const filterUploadable = (files: FileList): File[] => {
+    const valid: File[] = [];
+    for (const f of Array.from(files)) {
+      const reason = uploadFileRejection(f);
+      if (reason) sonnerToast.error(`Skipped ${f.name}`, { description: reason });
+      else valid.push(f);
+    }
+    return valid;
+  };
+
   const handleFilesPicked = (files: FileList | null, monthDate: Date) => {
     if (!files) return;
-    const valid = Array.from(files).filter((f) =>
-      VALID_EXTS.includes("." + (f.name.split(".").pop()?.toLowerCase() || "")),
-    );
+    const valid = filterUploadable(files);
     if (valid.length) {
       setPendingFiles(valid);
       setPendingDate(monthDate);
@@ -349,9 +358,7 @@ export function BankStatementsTabsView() {
   // Global "Add bank statement" — no forced month, backend distributes.
   const handleGlobalFilesPicked = (files: FileList | null) => {
     if (!files) return;
-    const valid = Array.from(files).filter((f) =>
-      VALID_EXTS.includes("." + (f.name.split(".").pop()?.toLowerCase() || "")),
-    );
+    const valid = filterUploadable(files);
     if (valid.length) {
       setPendingFiles(valid);
       setPendingDate(null);
