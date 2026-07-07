@@ -429,9 +429,9 @@ export function InlineTransactionsEditor({
   };
 
   // Commit a row's pending edits: run validations, then persist via saveMutation.
-  // When `withRule` is true and the category changed, automatically create a
-  // categorization rule (CONTAINS match on the cleaned description) instead
-  // of asking the user — that's what the second "Sparkles tick" does.
+  // When `withRule` is true and the category changed, open RuleEditorDialog so the
+  // user can fine-tune the pattern and confirm — that's what the second "Sparkles
+  // tick" does.
   const commitRow = (tx: MonthTransaction, withRule = false) => {
     const pending = pendingByTx[tx.id];
     if (!pending) return;
@@ -478,7 +478,9 @@ export function InlineTransactionsEditor({
       { id: tx.id, payload, before },
       {
         onSuccess: async () => {
-          // 3) After saving, handle rule creation depending on the tick used.
+          // 3) After saving, offer to turn this correction into a rule. The row is
+          // already saved either way — the dialog only decides whether future (and
+          // matching past) transactions get the same treatment.
           if (pending.category && pending.category !== tx.category && pending.category_id) {
             const cleanDesc = (tx.description_norm || tx.description || "")
               .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
@@ -487,33 +489,13 @@ export function InlineTransactionsEditor({
               ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
 
             if (cleanDesc && withRule && user) {
-              // Auto-create rule using a CONTAINS match on the cleaned description.
-              const { error } = await supabase.from("user_rules").insert({
-                user_id: user.id,
-                source: "user_correction",
-                match_type: "CONTAINS",
-                pattern: cleanDesc,
-                tokens: null,
-                movement: targetMovement,
-                category: pending.category,
-                confidence: 0.99,
-                original_description: cleanDesc,
-                is_active: true,
+              setCategoryRulePrompt({
+                tx,
+                newSlug: pending.category,
+                newCategoryId: pending.category_id,
+                cleanDesc,
+                targetMovement,
               });
-              if (error) {
-                toast({
-                  title: "Saved, but couldn't create rule",
-                  description: error.message,
-                  variant: "destructive",
-                });
-              } else {
-                toast({
-                  title: "✓ Saved + rule created",
-                  description: `Future transactions matching “${cleanDesc.slice(0, 40)}${cleanDesc.length > 40 ? "…" : ""}” will be categorized as ${getCategoryLabel(pending.category)}.`,
-                });
-                queryClient.invalidateQueries({ queryKey: ["user_rules"] });
-                queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
-              }
             }
             // If withRule is false, we just save quietly — no prompt.
           }
@@ -1158,7 +1140,7 @@ export function InlineTransactionsEditor({
         onSkip={() => setCategoryRulePrompt(null)}
         skipLabel="Don't create rule"
         onConfirm={async (payload) => {
-          if (!user) {
+          if (!user || !categoryRulePrompt) {
             setCategoryRulePrompt(null);
             return;
           }
@@ -1180,14 +1162,42 @@ export function InlineTransactionsEditor({
               description: error.message,
               variant: "destructive",
             });
-          } else {
-            toast({
-              title: "✓ Rule saved",
-              description: `Future transactions matching “${payload.pattern.slice(0, 40)}${payload.pattern.length > 40 ? "…" : ""}” will be categorized as ${getCategoryLabel(payload.category)}.`,
-            });
-            queryClient.invalidateQueries({ queryKey: ["user_rules"] });
-            queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+            setCategoryRulePrompt(null);
+            return;
           }
+
+          // Retroactive apply: the dialog's live preview already computed the exact
+          // set of past transactions this rule matches (same matcher, same data) —
+          // apply to that same set so the count shown is what actually changes.
+          let retroCount = 0;
+          if (payload.matchingTransactionIds.length > 0) {
+            const { error: retroError } = await supabase
+              .from("transactions")
+              .update({
+                movement: payload.movement,
+                category: payload.category,
+                category_id: categoryRulePrompt.newCategoryId,
+                category_source: "USER_RULE",
+                categorized_by: "user_rule",
+              })
+              .in("id", payload.matchingTransactionIds);
+            if (!retroError) {
+              retroCount = payload.matchingTransactionIds.length;
+            } else {
+              console.error("Retroactive rule apply failed:", retroError);
+            }
+          }
+
+          toast({
+            title: retroCount > 0 ? "✓ Rule saved + history updated" : "✓ Rule saved",
+            description:
+              retroCount > 0
+                ? `${retroCount} past transaction${retroCount === 1 ? "" : "s"} matching “${payload.pattern.slice(0, 40)}${payload.pattern.length > 40 ? "…" : ""}” updated to ${getCategoryLabel(payload.category)}. Future ones will match too.`
+                : `Future transactions matching “${payload.pattern.slice(0, 40)}${payload.pattern.length > 40 ? "…" : ""}” will be categorized as ${getCategoryLabel(payload.category)}.`,
+          });
+          queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+          queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
           setCategoryRulePrompt(null);
         }}
       />

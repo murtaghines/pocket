@@ -7,8 +7,9 @@
   actual review/edit table lives inline in BankStatementsTabsView)
 - Hooks: useImports, useMonthlyFileUpload, useMonthlyInvestmentUpload
 - src/lib/excelParser.ts
-- Edge functions: process-import, process-financial-file, process-investment-file,
-  apply-rules-retroactive, fix-categorization, check-data-integrity
+- Edge functions: process-import, process-financial-file (dead, slated for deletion),
+  process-investment-file, check-data-integrity. (`apply-rules-retroactive` and
+  `fix-categorization` deleted 2026-07-07 — see Fase 4 notes below.)
 - Shared module: supabase/functions/_shared/categorizer.ts (categorization engine — not
   a deployed function)
 
@@ -76,9 +77,33 @@ Correctness (categorization / dedup):
   file-level dedup to the investment flow (only `process-import` has it).
 
 Cleanliness / product:
-- [ ] **Orphan edge functions** `apply-rules-retroactive` + `fix-categorization` — zero callers;
-  trace how rules apply retroactively (`onConfirm` in `BankStatementsTabsView`) before
-  deleting vs wiring. (spawned as its own task)
+- [x] **Orphan edge functions** `apply-rules-retroactive` + `fix-categorization` — investigated
+  and resolved 2026-07-07. Neither was ever deployed to the own project (confirmed via
+  `list_edge_functions` — only 6 functions exist there, these two aren't among them) and
+  grep found zero callers anywhere in the repo, confirming both were genuinely dead.
+  `fix-categorization` was also **actively broken**: it wrote to `transactions.type`, a column
+  dropped in the Fase 4 migration, and read `joint_account_names`/`investment_platforms` from
+  `profiles` instead of `user_preferences` — the exact bug already found and fixed in
+  `process-import` (see Fase 3 notes below) but never applied here. Deleted outright — it was a
+  one-off migration script (`categorized_by: 'fix_script_v2'`), not a reusable capability.
+  `apply-rules-retroactive` was well-built but its only plausible caller, `RuleEditorDialog`
+  (rendered in `InlineTransactionsEditor.tsx`, imported and wired to a `categoryRulePrompt`
+  state), turned out to be **dead code too** — `setCategoryRulePrompt` was never called with a
+  real value anywhere, only reset to `null`, so the dialog could never open. Its "Live preview:
+  Will retroactively match transactions in your history" copy was a promise the app never kept:
+  the actual live "save as rule" flow (the second Sparkles-tick path in `commitRow`) silently
+  auto-created a CONTAINS-only `user_rules` row with copy correctly saying "Future transactions"
+  — forward-only, no retroactive apply, which was honest but blunt (no control over match type).
+  Fix: wired `RuleEditorDialog` into the live flow (`commitRow`'s `withRule=true` branch now opens
+  it via `setCategoryRulePrompt` instead of silently inserting), and made the retroactive promise
+  real — `RuleEditorDialog`'s preview query now returns the matched transaction ids (not just a
+  count), excluding rows already `categorized_by IN ('user','user_rule')`, and `onConfirm` bulk-
+  updates exactly that set after inserting the `user_rules` row. Applying the *same* ids that were
+  previewed (not a second server-side re-match) guarantees the shown count can never drift from
+  what actually changes — this is why the two edge functions were deleted rather than fixed: their
+  SQL `ilike`-based matching doesn't understand the fuzzy/starts_with/ends_with/exact match types
+  the client's `ruleMatchesDescription` supports, so keeping both matchers in sync forever was the
+  wrong shape for this fix. Verified: tsc clean, eslint clean, 56/56 tests green, Vite build clean.
 - [x] **`Function()` amount eval** — replaced with `src/lib/safeMath.ts` (recursive-descent
   parser, no eval), 11 tests. (Fase 5, done 2026-07-06)
 - [x] **Investment flow** auto-processes with no preview — fixed 2026-07-07: added a
