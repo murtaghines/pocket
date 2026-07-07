@@ -37,9 +37,6 @@ const TX_TYPE_TO_MOVEMENT: Record<string, MovementType> = {
   'OTHER': 'EXPENSE',
 };
 
-// ========== VALID VALUES ==========
-const VALID_TX_TYPES = ['INCOME', 'EXPENSE', 'TRANSFER_INTERNAL', 'SAVINGS_MOVE', 'INTEREST', 'FEE', 'REFUND', 'OTHER'];
-const VALID_PAYMENT_CHANNELS = ['CARD', 'TRANSFER', 'BIZUM', 'QR', 'CASH', 'DIRECT_DEBIT', 'OTHER'];
 
 // ========== CHUNKING CONFIG ==========
 const CHUNK_SIZE_THRESHOLD = 6000;
@@ -220,36 +217,11 @@ function normalizeTargetMonth(targetMonth: string): string {
   return targetMonth;
 }
 
-function validatePaymentChannel(channel: string | null): string | null {
-  if (!channel) return null;
-  const upper = channel.toUpperCase();
-  return VALID_PAYMENT_CHANNELS.includes(upper) ? upper : 'OTHER';
-}
-
 function validateMovement(movement: string | null): MovementType {
   if (!movement) return 'EXPENSE';
   const upper = movement.toUpperCase();
   if (upper === 'INCOME' || upper === 'EXPENSE' || upper === 'TRANSFER') {
     return upper as MovementType;
-  }
-  return 'EXPENSE';
-}
-
-function getLegacyType(movement: MovementType): string {
-  switch (movement) {
-    case 'INCOME': return 'income';
-    case 'EXPENSE': return 'expense';
-    case 'TRANSFER': return 'transfer';
-  }
-}
-
-function getLegacyTxType(movement: MovementType, categorySlug: string): string {
-  if (movement === 'TRANSFER') {
-    return categorySlug === 'to_investment' ? 'SAVINGS_MOVE' : 'TRANSFER_INTERNAL';
-  }
-  if (movement === 'INCOME') {
-    if (categorySlug === 'refunds') return 'REFUND';
-    return 'INCOME';
   }
   return 'EXPENSE';
 }
@@ -1118,13 +1090,11 @@ serve(async (req) => {
       const t = allTransactions[i];
       
       const postedDate = t.posted_date || t.date;
-      const valueDate = t.value_date || null;
       const descriptionRaw = t.description_raw || t.description || '';
       const descriptionClean = t.description_clean || normalizeDescription(descriptionRaw);
       const amountSigned = t.amount_signed ?? t.amount;
       const runningBalance = t.running_balance ?? null;
       const sourceTransactionId = t.source_transaction_id || null;
-      const paymentChannel = t.payment_channel || null;
       const counterpartyRaw = t.counterparty_raw || null;
       const currency = t.currency || 'EUR';
       
@@ -1344,13 +1314,13 @@ serve(async (req) => {
         console.log(`[process-import] Sign correction: negative amount ${amountSigned} re-classified INCOME→EXPENSE for "${descriptionRaw.substring(0, 40)}"`);
       }
 
-      const legacyType = getLegacyType(movement);
-      const legacyTxType = getLegacyTxType(movement, categorySlug);
-
       if (movement === 'INCOME') stats.income++;
       else if (movement === 'EXPENSE') stats.expenses++;
       else if (movement === 'TRANSFER') stats.transfers++;
 
+      // Canonical transactions row (Fase 4 schema cleanup). Legacy columns
+      // (type, tx_type, bank, posted_date, value_date, description_raw, payment_channel)
+      // were dropped — `movement` and `account_id` are the single sources of truth.
       const txRecord: any = {
         user_id: userId,
         domain: domain,
@@ -1359,27 +1329,20 @@ serve(async (req) => {
         import_id: importId,
         account_id: accountId,
         date: postedDate,
-        posted_date: postedDate,
-        value_date: valueDate,
         amount: amountSigned,
         currency: currency,
         running_balance: runningBalance,
         description: descriptionClean || 'Sin descripción',
-        description_raw: descriptionRaw,
         description_norm: normalizeDescription(descriptionRaw),
         description_clean: descriptionClean,
         movement: movement,
+        category: categorySlug,
         category_id: categoryId,
         categorization_rule_id: categorizationRuleId,
         category_source: categorySource,
         categorized_by: categorizedBy,
-        tx_type: legacyTxType,
-        payment_channel: validatePaymentChannel(paymentChannel),
         source_transaction_id: sourceTransactionId,
         counterparty_raw: counterpartyRaw,
-        type: legacyType,
-        category: categorySlug,
-        bank: domain === 'INVESTING' ? t.platform : t.bank,
         fingerprint: fingerprint,
         source_row_hash: rowHash,
       };

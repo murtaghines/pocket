@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       accounts: {
@@ -506,10 +531,6 @@ export type Database = {
         Row: {
           account_id: string | null
           amount: number
-          amount_base: number | null
-          auth_date: string | null
-          auto_recategorized: boolean | null
-          bank: string | null
           categorization_rule_id: string | null
           categorized_by: string | null
           category: string
@@ -522,40 +543,23 @@ export type Database = {
           description: string
           description_clean: string | null
           description_norm: string | null
-          description_raw: string | null
           domain: Database["public"]["Enums"]["app_domain"] | null
-          fingerprint: string | null
-          fx_rate: number | null
+          fingerprint: string
           id: string
           import_id: string | null
           is_hidden: boolean
-          linked_transaction_id: string | null
-          merchant_norm: string | null
-          movement: Database["public"]["Enums"]["movement_type"] | null
+          movement: Database["public"]["Enums"]["movement_type"]
           original_text: string | null
-          payment_channel: string | null
           period_id: string | null
-          posted_date: string | null
-          rule_id_applied: string | null
           running_balance: number | null
           source_row_hash: string | null
           source_transaction_id: string | null
-          subcategory_id: string | null
-          transaction_hash: string | null
-          tx_type: string | null
-          type: string
-          upload_id: string | null
           user_corrected: boolean | null
           user_id: string
-          value_date: string | null
         }
         Insert: {
           account_id?: string | null
           amount: number
-          amount_base?: number | null
-          auth_date?: string | null
-          auto_recategorized?: boolean | null
-          bank?: string | null
           categorization_rule_id?: string | null
           categorized_by?: string | null
           category: string
@@ -568,40 +572,23 @@ export type Database = {
           description: string
           description_clean?: string | null
           description_norm?: string | null
-          description_raw?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
-          fingerprint?: string | null
-          fx_rate?: number | null
+          fingerprint: string
           id?: string
           import_id?: string | null
           is_hidden?: boolean
-          linked_transaction_id?: string | null
-          merchant_norm?: string | null
-          movement?: Database["public"]["Enums"]["movement_type"] | null
+          movement: Database["public"]["Enums"]["movement_type"]
           original_text?: string | null
-          payment_channel?: string | null
           period_id?: string | null
-          posted_date?: string | null
-          rule_id_applied?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
           source_transaction_id?: string | null
-          subcategory_id?: string | null
-          transaction_hash?: string | null
-          tx_type?: string | null
-          type: string
-          upload_id?: string | null
           user_corrected?: boolean | null
           user_id: string
-          value_date?: string | null
         }
         Update: {
           account_id?: string | null
           amount?: number
-          amount_base?: number | null
-          auth_date?: string | null
-          auto_recategorized?: boolean | null
-          bank?: string | null
           categorization_rule_id?: string | null
           categorized_by?: string | null
           category?: string
@@ -614,32 +601,19 @@ export type Database = {
           description?: string
           description_clean?: string | null
           description_norm?: string | null
-          description_raw?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
-          fingerprint?: string | null
-          fx_rate?: number | null
+          fingerprint?: string
           id?: string
           import_id?: string | null
           is_hidden?: boolean
-          linked_transaction_id?: string | null
-          merchant_norm?: string | null
-          movement?: Database["public"]["Enums"]["movement_type"] | null
+          movement?: Database["public"]["Enums"]["movement_type"]
           original_text?: string | null
-          payment_channel?: string | null
           period_id?: string | null
-          posted_date?: string | null
-          rule_id_applied?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
           source_transaction_id?: string | null
-          subcategory_id?: string | null
-          transaction_hash?: string | null
-          tx_type?: string | null
-          type?: string
-          upload_id?: string | null
           user_corrected?: boolean | null
           user_id?: string
-          value_date?: string | null
         }
         Relationships: [
           {
@@ -671,31 +645,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "transactions_linked_transaction_id_fkey"
-            columns: ["linked_transaction_id"]
-            isOneToOne: false
-            referencedRelation: "transactions"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "transactions_period_id_fkey"
             columns: ["period_id"]
             isOneToOne: false
             referencedRelation: "periods"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_subcategory_id_fkey"
-            columns: ["subcategory_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_upload_id_fkey"
-            columns: ["upload_id"]
-            isOneToOne: false
-            referencedRelation: "uploads"
             referencedColumns: ["id"]
           },
         ]
@@ -1000,6 +953,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       account_role: ["CASH", "INVESTMENT"],

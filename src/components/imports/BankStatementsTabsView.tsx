@@ -114,11 +114,9 @@ interface MonthTransaction {
   description: string;
   description_norm: string | null;
   amount: number;
-  type: string;
   movement: MovementType | null;
   category: string;
   category_id: string | null;
-  bank: string | null;
   account_id: string | null;
   is_hidden: boolean;
   import_id: string | null;
@@ -698,11 +696,10 @@ function ManualEntryFooter({
       const category = categories.find((c) => c.slug === entry.categorySlug);
       const sign = entry.movement === "EXPENSE" ? -1 : 1;
       const signedAmount = sign * Math.abs(entry.amount);
-      const typeLegacy =
-        entry.movement === "INCOME" ? "income" :
-        entry.movement === "TRANSFER" ? "transfer" : "expense";
       const cleanDesc = entry.description.trim();
       const descNorm = cleanDesc.toLowerCase();
+      // Manual entries have no source file, so we mint a unique fingerprint/row-hash to
+      // satisfy the NOT NULL dedup key without colliding with imported rows.
       const uniqHash = `manual-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
       const { error: insertError } = await supabase.from("transactions").insert({
@@ -713,22 +710,17 @@ function ManualEntryFooter({
         description_norm: descNorm,
         description_clean: cleanDesc,
         amount: signedAmount,
-        amount_base: signedAmount,
-        fx_rate: 1,
         currency: account?.currency_base || "EUR",
-        type: typeLegacy,
         movement: entry.movement,
         category: entry.categorySlug,
         category_id: category?.id || null,
         account_id: entry.accountId,
-        bank: account?.name || null,
         period_id: periodId,
         import_id: importId || null,
         category_source: "MANUAL",
         categorized_by: "user",
         user_corrected: true,
         is_hidden: false,
-        transaction_hash: uniqHash,
         fingerprint: uniqHash,
         source_row_hash: uniqHash,
       });
@@ -1664,7 +1656,7 @@ function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, amount, type, movement, category, category_id, bank, account_id, is_hidden, import_id",
+          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -2187,7 +2179,7 @@ function InlineTransactionsEditor({
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {accountName(tx.account_id) || tx.bank || "—"}
+                      {accountName(tx.account_id) || "—"}
                     </TableCell>
                     <TableCell className="text-sm">
                       {isLocked ? (

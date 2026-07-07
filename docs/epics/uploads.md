@@ -223,6 +223,47 @@ Still pending in Fase 1 (need real sample files + a Supabase deploy):
   the `Function()` amount eval (`BankStatementsTabsView.tsx:1866`) and investment-flow
   preview parity (Fase 5).
 
+## Fase 4 progress (2026-07-07) — data-model canonicalization + module boundary
+
+Reframed with the user: Fase 4 leads with **transactions data integrity** (the app's
+foundation), not just component splitting. Decisions: (1) data model first, (2) **aggressive**
+cleanup — migrate + physically DROP the legacy columns.
+
+**Diagnosis (SQL + grep against `ertwmshiupmickhfbaue`):** `transactions` had ~45 columns with
+two parallel lineages. The live pipeline writes `movement`/`account_id`/`category_id`/
+`fingerprint`/`description_clean|norm`; the Lovable-era legacy set (`type`+CHECK, `tx_type`,
+`bank`, `upload_id`, `description_raw`, `transaction_hash`, `amount_base`, `fx_rate`,
+`posted_date`/`auth_date`/`value_date`, `payment_channel`, `subcategory_id`, `rule_id_applied`,
+`linked_transaction_id`, `auto_recategorized`, `merchant_norm`) was dead or redundant.
+
+**Done + verified:**
+- **Migration `fase4_canonical_transactions_cleanup`**: `movement` + `fingerprint` → NOT NULL;
+  dropped the 17 legacy columns; replaced the partial fingerprint unique index with a total
+  `UNIQUE (user_id, domain, fingerprint)`. Table now **27 canonical columns** (was ~45).
+- **Readers/writers migrated** off legacy cols: `useTransactions.tsx` (derives app `type` from
+  `movement`, reads `amount`/account from canonical cols only), `BankStatementsTabsView.tsx`
+  (manual-entry insert + inline select + account display), `process-import/index.ts` (txRecord
+  writes canonical subset; removed `getLegacyType`/`getLegacyTxType`/`validatePaymentChannel`
+  + the `VALID_*` consts). `import_id` kept **nullable** (seed + manual entries have no import).
+- Regenerated `src/integrations/supabase/types.ts` (0 legacy refs). tsc + lint clean; 56 tests
+  green. `process-import` **redeployed**. Runtime contract-insert + dedup rejection verified via
+  SQL, test row cleaned up.
+- **Module boundary (Etapa D):** confirmed no cross-imports cashflow⟂investments; investment
+  components never query `transactions`; `investments.upload_id` left intact (its own FK).
+
+**Decisions that revised the plan:**
+- **`running_balance` KEPT** (not dropped): `useTransactions` uses it for `openingBalanceByMonth`.
+  The epic's note was about excluding it from the *fingerprint*, a separate change.
+- **Fingerprint formula NOT changed this batch.** `calculateFingerprint` still includes
+  `running_balance` (`fingerprint.ts:51`). Changing it would break dedup continuity for already-
+  imported files (stored fingerprints would no longer match) → needs its own migration that
+  recomputes all existing fingerprints. Deferred.
+- `original_text` (nullable) left in place — harmless provenance, not worth another migration.
+
+**Still pending:** Etapa E (split the monoliths `BankStatementsTabsView` 3079 /
+`InvestmentTabsView` 1330 into `cashflow/` + `investments/` subfolders) — mechanical, low-risk,
+deferred to its own batch.
+
 ## Fase 3 progress (2026-07-06)
 - `process-import` + `process-investment-file` migrated off Lovable → **Anthropic Messages
   API** (`claude-haiku-4-5` → `claude-sonnet-5` on escalation, thinking disabled). Read new
