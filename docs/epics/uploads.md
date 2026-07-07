@@ -80,7 +80,76 @@ Docs nit:
 - [ ] `categorizer.ts:79` docstring example is wrong (`normalize` yields `PENANIETO`, not
   `PENA NIETO`).
 
-Fixed already: `extractMonthKey` "NaN-NaN" (Fase 1); `mapCategorySlug` completeness guard added.
+Fixed already: `extractMonthKey` "NaN-NaN" (Fase 1); `mapCategorySlug` completeness guard added;
+`userContext` always-undefined bug and the `categorization_rules` N+1 (both below, 2026-07-07).
+
+## Fase 3 deploy + real-file smoke-test (2026-07-07)
+Deployed `process-import` + `process-investment-file` to Supabase (project ertwmshiupmickhfbaue)
+for the first time, with the ANTHROPIC_API_KEY secret now set. Smoke-tested against real
+anonymized Revolut statements (personal checking, joint account, investment CSV) via direct
+edge-function calls (demo user, real JWT) since browser login in the dev server wasn't working.
+Found and fixed two production bugs live during this pass:
+
+- [x] **P0 — `userContext` was `undefined` for every user, always.** `process-import` loaded
+  the profile with `.from('profiles').select('first_name, last_name, joint_account_names,
+  investment_platforms, custom_category_rules')` — but `joint_account_names` and
+  `investment_platforms` live in `user_preferences`, not `profiles` (confirmed via direct
+  REST query: `column profiles.joint_account_names does not exist`, and a comment in
+  `src/pages/Auth.tsx:433` documenting the correct table). Since the code destructured
+  `{ data: userProfile }` without checking `error`, the whole profiles fetch silently failed
+  and `userProfile` was `undefined` — collapsing `userContext` to `undefined` for 100% of
+  imports. This silently disabled: name-based `own_transfer` detection, joint-account
+  detection, custom categories, and category-rule overrides, for every user, always.
+  **Fix (deployed):** split the query correctly — `profiles` now selects only
+  `first_name, last_name, custom_category_rules`; `user_preferences` now selects
+  `country, base_currency, joint_account_names` (dropped `investment_platforms`, unused).
+  Verified live: joint-account transfers between the demo user and her co-holder went from
+  100% miscategorized as `other_income`/`other_expense` to correctly detected as `TRANSFER`
+  once `user_preferences.joint_account_names` was populated (10-row synthetic test, 6/10
+  correctly flagged as transfers vs 0/10 before the fix). They land as `own_transfer` rather
+  than `to_joint_account` — that's the already-tracked collapse bug above, now confirmed live.
+- [x] **P0 — N+1 query on `categorization_rules` caused `WORKER_RESOURCE_LIMIT` timeouts.**
+  `applyCategoryRules()` re-queried `categorization_rules` from the DB on *every single
+  transaction* inside the main loop, instead of loading it once like `user_rules` already
+  did. A real 11-page joint-account statement (197 transactions) reliably failed with
+  `{"code":"WORKER_RESOURCE_LIMIT","message":"...not having enough compute resources"}` —
+  confirmed by edge-function logs showing one `GET .../categorization_rules` per transaction.
+  **Fix (deployed):** `categoryRules` is now loaded once per import (alongside `userRules`),
+  and `applyCategoryRules()` is a pure sync function over the pre-loaded array. Confirmed via
+  logs: the repeated `GET .../categorization_rules` is gone after the fix.
+- [ ] **NEW — still hits `WORKER_RESOURCE_LIMIT` at ~200 rows once `userContext` is populated.**
+  With the N+1 fix ALONE (userContext still accidentally undefined, see above), the 197-row
+  joint statement completed successfully end-to-end in ~3.5 min. After ALSO fixing the
+  `userContext` bug (so name/joint-account matching actually runs now), the *same* file
+  started failing again with `WORKER_RESOURCE_LIMIT`, cutting off mid-loop (66/197 rows
+  inserted, import stuck at `PARSED`). A 10-row synthetic file with the same joint-account
+  content processed fine in ~10s and correctly detected 6/10 transfers, so the fix itself is
+  correct — the issue is that the additional per-transaction work now done (name/joint fuzzy
+  matching in `categorize()` / `detectAccountTransfer()`) is CPU-time-expensive enough that
+  it exceeds the edge runtime's resource budget once multiplied across ~200 rows. This is a
+  distinct problem from the N+1 (that was network round-trips; this is CPU-time), likely
+  compounded by the still-sequential per-row inserts (see below). **Not yet fixed** — needs
+  profiling of `categorize()`/`detectAccountTransfer()` and/or batching before larger
+  real-world statements (multi-month files easily hit 150-300+ rows) can process reliably.
+- **Dangerous side-effect of the half-fail bug (already tracked above):** when either
+  resource-limit failure hits mid-loop, it leaves **orphaned transactions already committed**
+  (seen: 18 rows, 72 rows, 66 rows across different runs) while the `imports` row stays at
+  `PARSED` with `transactions_count: 0`. Because dedup only trusts `status = NORMALIZED`, a
+  retry after a partial failure would NOT detect these as duplicates and could double-insert
+  them. Cleaned up manually for this test; underscores the priority of the existing
+  "half-fail" fix AND makes the resource-limit bug above higher priority than it would
+  otherwise be (it's not just slow — it corrupts state on every occurrence).
+- **`process-investment-file` is not for broker/portfolio statements.** Tested with a real
+  investment-platform CSV (dividends: V, MSFT, NVDA...) — it returned `success, 0 investments`
+  (200 OK, no error). Root cause: the function's whole design is to scan a *bank* statement
+  for cash movements INTO/OUT OF investment platforms (`"To Cocos"`, `"To MyInvestor"`, etc.),
+  not to ingest a broker's own portfolio/dividend export. Not a bug per se, but confirms the
+  Fase 5 "investment flow parity" item is really "investment flow scope" — worth deciding
+  explicitly whether broker-native imports are in scope before building preview parity.
+- **Still open, lower priority:** the per-row insert pattern (`import_rows` then
+  `transactions`, one row at a time, ~40 sequential requests/sec observed) is the likely
+  reason processing 197 rows still took ~3.5 minutes even after the N+1 fix. Batch inserting
+  would make this much faster and further reduce WORKER_RESOURCE_LIMIT risk on larger files.
 
 ## Decisions made (2026-07-06)
 - Adopted a 5-phase plan for the whole pipeline; agreed to **start with tests** (safety net)

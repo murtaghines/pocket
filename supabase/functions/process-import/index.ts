@@ -339,32 +339,28 @@ function detectInternalTransfer(
   return { isTransfer: false, categorySlug: '' };
 }
 
-async function applyCategoryRules(
-  supabase: any,
-  userId: string,
-  domain: string,
+interface CategoryRuleRow {
+  id: string;
+  category_id: string;
+  pattern: string;
+  match_field: string;
+  match_type: string;
+  categories: { slug: string } | null;
+}
+
+// Pure matcher over a pre-loaded rule set — the caller loads categorization_rules ONCE
+// before the per-transaction loop (see loop below) rather than re-querying it for every
+// row, which used to cause N+1 queries and WORKER_RESOURCE_LIMIT timeouts on statements
+// with many transactions.
+function applyCategoryRules(
+  rules: CategoryRuleRow[],
   descriptionClean: string,
   counterpartyRaw: string | null
-): Promise<{ categoryId: string | null; categorySlug: string | null; ruleId: string | null } | null> {
-  
-  const { data: rules, error } = await supabase
-    .from('categorization_rules')
-    .select(`
-      id, 
-      category_id,
-      pattern, 
-      match_field, 
-      match_type,
-      categories!inner(slug)
-    `)
-    .eq('user_id', userId)
-    .eq('domain', domain)
-    .order('priority', { ascending: false });
-  
-  if (error || !rules || rules.length === 0) {
+): { categoryId: string | null; categorySlug: string | null; ruleId: string | null } | null {
+  if (!rules || rules.length === 0) {
     return null;
   }
-  
+
   for (const rule of rules) {
     const textToMatch = rule.match_field === 'counterparty' 
       ? (counterpartyRaw || '').toLowerCase()
@@ -775,15 +771,19 @@ serve(async (req) => {
     const accountsForDetection = userAccounts || [];
 
     // ========== BUILD USER CONTEXT FOR ADVANCED CATEGORIZER ==========
+    // NOTE: joint_account_names lives in user_preferences, not profiles (schema drift from
+    // an earlier migration) — a prior version of this query selected it from profiles, which
+    // doesn't have that column, so the whole profiles fetch silently failed (unchecked error)
+    // and userContext was undefined for every user. See docs/epics/uploads.md.
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('first_name, last_name, joint_account_names, investment_platforms, custom_category_rules')
+      .select('first_name, last_name, custom_category_rules')
       .eq('user_id', userId)
       .maybeSingle();
-    
+
     const { data: userPrefs } = await supabase
       .from('user_preferences')
-      .select('country, base_currency')
+      .select('country, base_currency, joint_account_names')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -810,7 +810,7 @@ serve(async (req) => {
           lastName: userProfile.last_name,
           country: (userPrefs?.country as UserContext['country']) || undefined,
           currency: (userPrefs?.base_currency as UserContext['currency']) || undefined,
-          jointAccountNames: userProfile.joint_account_names || undefined,
+          jointAccountNames: userPrefs?.joint_account_names || undefined,
           customCategories: customCategories.length > 0 ? customCategories : undefined,
           categoryRuleOverrides: categoryRuleOverrides.length > 0 ? categoryRuleOverrides : undefined,
         }
@@ -846,6 +846,26 @@ serve(async (req) => {
       .order('created_at', { ascending: false });  // newest first
     const userRules: UserRuleRow[] = (userRulesRaw || []) as UserRuleRow[];
     console.log(`[process-import] Loaded ${userRules.length} active user_rules`);
+
+    // Load categorization_rules (Settings rules) ONCE for the whole batch — previously this
+    // was re-queried per transaction inside applyCategoryRules, which meant an N+1 query
+    // pattern (one round-trip per row) that caused WORKER_RESOURCE_LIMIT timeouts on
+    // statements with many transactions.
+    const { data: categoryRulesRaw } = await supabase
+      .from('categorization_rules')
+      .select(`
+        id,
+        category_id,
+        pattern,
+        match_field,
+        match_type,
+        categories!inner(slug)
+      `)
+      .eq('user_id', userId)
+      .eq('domain', domain)
+      .order('priority', { ascending: false });
+    const categoryRules: CategoryRuleRow[] = (categoryRulesRaw || []) as CategoryRuleRow[];
+    console.log(`[process-import] Loaded ${categoryRules.length} categorization_rules`);
 
     // Create import record
     const { data: importRecord, error: importError } = await supabase
@@ -1264,7 +1284,7 @@ serve(async (req) => {
       // ── Priority 1b: categorization_rules (Settings rules) — only if no user_rule matched ──
       const ruleMatch = userRuleHit
         ? null
-        : await applyCategoryRules(supabase, userId, domain, descriptionClean, counterpartyRaw);
+        : applyCategoryRules(categoryRules, descriptionClean, counterpartyRaw);
 
       if (userRuleHit) {
         const mappedCat = mapCategorySlug(userRuleHit.category);
