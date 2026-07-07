@@ -1301,16 +1301,23 @@ serve(async (req) => {
       }
 
       // ── Sign sanity check: amount sign must agree with movement (except TRANSFER) ──
-      // A positive amount cannot be an EXPENSE; a negative amount cannot be INCOME.
+      // A positive amount cannot be an EXPENSE; a negative amount cannot be INCOME. When this
+      // fires, the category is decided by this fallback, not by whichever classifier ran above —
+      // relabel honestly so categorized_by/category_source don't falsely credit the AI/categorizer/
+      // rule with a guess it never made (was previously left as whatever the prior stage set).
       if (movement === 'EXPENSE' && amountSigned > 0) {
         movement = 'INCOME';
         categorySlug = 'other_income';
         categoryId = categorySlugToId[categorySlug] || null;
+        categorySource = 'SIGN_FALLBACK';
+        categorizedBy = 'sign_fallback';
         console.log(`[process-import] Sign correction: positive amount ${amountSigned} re-classified EXPENSE→INCOME for "${descriptionRaw.substring(0, 40)}"`);
       } else if (movement === 'INCOME' && amountSigned < 0) {
         movement = 'EXPENSE';
         categorySlug = 'other_expense';
         categoryId = categorySlugToId[categorySlug] || null;
+        categorySource = 'SIGN_FALLBACK';
+        categorizedBy = 'sign_fallback';
         console.log(`[process-import] Sign correction: negative amount ${amountSigned} re-classified INCOME→EXPENSE for "${descriptionRaw.substring(0, 40)}"`);
       }
 

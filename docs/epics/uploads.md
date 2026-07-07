@@ -57,12 +57,18 @@ Correctness (categorization / dedup):
   globally → run `imports-reviewer`. (test: `tests/categorizer.test.ts`)
 - [ ] **`running_balance` in the fingerprint** — same tx with a different balance dedups as new
   (false negatives). (test: `tests/fingerprint.test.ts`)
-- [ ] **Sign fallback mislabeled `categorized_by='ai'`** — when the categorizer is rejected by
-  the sign guardrail, the row is dumped into `other_*` but tagged `ai`. Relabel honestly
-  (`sign_fallback`/`PENDING`); check `categorized_by` consumers (dashboards,
-  `apply-rules-retroactive`) first. (process-import ~`:1305-1325`)
-- [ ] **Fingerprint can be NULL** → dedup silently skipped; also add file-level dedup to the
-  investment flow (only `process-import` has it).
+- [x] **Sign fallback mislabeled `categorized_by='ai'`** — fixed 2026-07-07: the sign guardrail
+  (`process-import/index.ts:~1303-1320`) now sets `categorized_by = 'sign_fallback'` and
+  `category_source = 'SIGN_FALLBACK'` when it overrides the movement, instead of leaving
+  whatever the prior classifier stage had set. Checked consumers first: no frontend UI reads
+  `categorized_by` for display/filtering (only writes `'user'` on manual edits); the two
+  zero-caller edge functions (`apply-rules-retroactive`, `fix-categorization`) only check
+  `categorized_by NOT IN ('user','user_rule')` to decide reprocessing eligibility — a
+  `sign_fallback` row correctly stays eligible under that check, so no consumer breaks. No DB
+  constraint restricts the column's values. Deployed.
+- [x] **Fingerprint can be NULL** → fixed in Fase 4 (2026-07-07): `fingerprint` is now `NOT NULL`
+  with a total `UNIQUE (user_id, domain, fingerprint)` index, DB-enforced. Still open: add
+  file-level dedup to the investment flow (only `process-import` has it).
 
 Cleanliness / product:
 - [ ] **Orphan edge functions** `apply-rules-retroactive` + `fix-categorization` — zero callers;
