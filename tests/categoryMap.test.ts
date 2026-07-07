@@ -80,14 +80,16 @@ describe('completeness guard — every categorizer category resolves to a valid 
   });
 });
 
-describe('KNOWN LOSSY MAPPING — to_joint_account collapses to own_transfer', () => {
-  it('has no TRANSFER slug or map entry for joint-account transfers', () => {
-    // The categorizer emits `to_joint_account` when a joint-account name matches, but the app
-    // has no such transfer slug and no CATEGORY_SLUG_MAP entry, so it collapses to own_transfer —
-    // joint-account transfers become indistinguishable from the user's own transfers.
-    // Flagged for the epic; test locks in today's behavior.
+describe('FIXED — to_joint_account no longer collapses to own_transfer', () => {
+  it('has its own TRANSFER slug, distinct from own_transfer', () => {
+    // The categorizer emits `to_joint_account` when a joint-account name matches. It used to
+    // collapse to own_transfer because TRANSFER_SLUGS didn't list it and no `categories` row
+    // existed for it — joint-account transfers were indistinguishable from the user's own
+    // inter-account transfers. Fixed 2026-07-07: added the category row (migration
+    // 20260707200000_add_to_joint_account_category.sql) and the TRANSFER_SLUGS entry. The
+    // frontend (categoryTranslations.ts) already had the label/icon/color wired for this slug.
     expect(mapCategorySlug('to_joint_account')).toBe('to_joint_account');
-    expect(TRANSFER_SLUGS).not.toContain('to_joint_account');
-    expect(validateCategorySlug('to_joint_account', 'TRANSFER')).toBe('own_transfer');
+    expect(TRANSFER_SLUGS).toContain('to_joint_account');
+    expect(validateCategorySlug('to_joint_account', 'TRANSFER')).toBe('to_joint_account');
   });
 });

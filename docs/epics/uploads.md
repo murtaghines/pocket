@@ -49,9 +49,14 @@ Canonical list of things surfaced but not yet fixed — keep this updated as new
 Each is locked in a characterization test where noted, so a fix is a deliberate test update.
 
 Correctness (categorization / dedup):
-- [ ] **`to_joint_account` collapses to `own_transfer`** — no app transfer slug / map entry for
-  joint-account transfers, so they become indistinguishable from own transfers. Fix: add the
-  slug (+ `categories` row) or map it deliberately. (test: `tests/categoryMap.test.ts`)
+- [x] **`to_joint_account` collapses to `own_transfer`** — fixed 2026-07-07. Added the missing
+  `categories` row (migration `20260707200000_add_to_joint_account_category.sql`) and added
+  `'to_joint_account'` to `TRANSFER_SLUGS` in `_shared/categoryMap.ts`. The frontend
+  (`categoryTranslations.ts`: label, icon, color CSS var, `TRANSFER_CATEGORIES` dropdown
+  option) was already fully wired for this slug and needed zero changes — only the DB row and
+  the backend allow-list were missing. Verified via a smoke-test insert (real FK to the new
+  category row resolves, then deleted). Deployed `process-import`. (test:
+  `tests/categoryMap.test.ts`)
 - [x] **`\b`-anchored rules miss `.COM`-style descriptors** — fixed 2026-07-07.
   `normalize("NETFLIX.COM")` used to produce `"NETFLIXCOM"` (the existing H&M-merge regex
   glued the dot-separated halves together), so `'NETFLIX\b'` never matched. Fix: a new
