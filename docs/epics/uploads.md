@@ -117,20 +117,22 @@ Found and fixed two production bugs live during this pass:
   **Fix (deployed):** `categoryRules` is now loaded once per import (alongside `userRules`),
   and `applyCategoryRules()` is a pure sync function over the pre-loaded array. Confirmed via
   logs: the repeated `GET .../categorization_rules` is gone after the fix.
-- [ ] **NEW — still hits `WORKER_RESOURCE_LIMIT` at ~200 rows once `userContext` is populated.**
-  With the N+1 fix ALONE (userContext still accidentally undefined, see above), the 197-row
-  joint statement completed successfully end-to-end in ~3.5 min. After ALSO fixing the
-  `userContext` bug (so name/joint-account matching actually runs now), the *same* file
-  started failing again with `WORKER_RESOURCE_LIMIT`, cutting off mid-loop (66/197 rows
-  inserted, import stuck at `PARSED`). A 10-row synthetic file with the same joint-account
-  content processed fine in ~10s and correctly detected 6/10 transfers, so the fix itself is
-  correct — the issue is that the additional per-transaction work now done (name/joint fuzzy
-  matching in `categorize()` / `detectAccountTransfer()`) is CPU-time-expensive enough that
-  it exceeds the edge runtime's resource budget once multiplied across ~200 rows. This is a
-  distinct problem from the N+1 (that was network round-trips; this is CPU-time), likely
-  compounded by the still-sequential per-row inserts (see below). **Not yet fixed** — needs
-  profiling of `categorize()`/`detectAccountTransfer()` and/or batching before larger
-  real-world statements (multi-month files easily hit 150-300+ rows) can process reliably.
+- [x] **P0 — sequential per-row inserts (`import_rows` + `transactions`) caused
+  `WORKER_RESOURCE_LIMIT`.** After fixing the `userContext` bug above (so name/joint-account
+  matching actually runs), the same 197-row joint statement started failing again — same
+  error, cutting off mid-loop (66/197 rows inserted, import stuck at `PARSED`). Root cause:
+  both `import_rows.upsert()` and `transactions.insert()` were each awaited one row at a time
+  inside the main loop — ~400 sequential HTTP round-trips total, on top of the now-heavier
+  per-row categorization work. **Fix (deployed):** `import_rows` upserts are now fired
+  without blocking the dedup loop (they don't affect dedup decisions, only audit) and awaited
+  together afterward in chunks of 25; `transactions` inserts are parallelized in chunks of 25
+  with identical per-row error/duplicate counting logic (just rescheduled, not changed).
+  **Confirmed fixed end-to-end**: same 197-row joint file, all four fixes deployed together
+  (userContext, rules N+1, parallel inserts) → 196 new transactions, 1 in-file duplicate,
+  0 failed, **9/9 Ignacio transfers correctly detected as `own_transfer`** (were 0/9 before
+  session start), completed in 2:09 (vs. timeout, or 3:23 with only the N+1 fix and
+  userContext still broken). Demo data cleaned up afterward; `user_preferences.
+  joint_account_names` reset to `[]` (the test value that was set to verify the fix).
 - **Dangerous side-effect of the half-fail bug (already tracked above):** when either
   resource-limit failure hits mid-loop, it leaves **orphaned transactions already committed**
   (seen: 18 rows, 72 rows, 66 rows across different runs) while the `imports` row stays at

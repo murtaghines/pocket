@@ -1109,6 +1109,10 @@ serve(async (req) => {
     // Per-month dedupe trackers (so identical txs in different months stay distinct).
     const seenFingerprintsByMonth: Record<string, Set<string>> = {};
     const seenNaturalKeysByMonth: Record<string, Set<string>> = {};
+    // import_rows upserts don't affect dedup decisions (audit-only), so they're fired without
+    // blocking the loop and awaited together afterwards — was one sequential round-trip per
+    // row, a major contributor to WORKER_RESOURCE_LIMIT on large statements.
+    const importRowPromises: Promise<unknown>[] = [];
 
     for (let i = 0; i < allTransactions.length; i++) {
       const t = allTransactions[i];
@@ -1158,23 +1162,25 @@ serve(async (req) => {
 
       const rowHash = await sha256(JSON.stringify(t));
 
-      try {
-        await supabase.from('import_rows').upsert({
-          import_id: importId,
-          row_index: i,
-          raw_json: t,
-          row_hash_sha256: rowHash,
-          parsed_date: postedDate,
-          parsed_amount: amountSigned,
-          parsed_currency: currency,
-          parsed_description: descriptionClean
-        }, { 
-          onConflict: 'import_id,row_hash_sha256',
-          ignoreDuplicates: true 
-        });
-      } catch (rowError) {
-        console.log(`[process-import] Row already exists, skipping: ${rowHash.substring(0, 8)}`);
-      }
+      importRowPromises.push((async () => {
+        try {
+          await supabase.from('import_rows').upsert({
+            import_id: importId,
+            row_index: i,
+            raw_json: t,
+            row_hash_sha256: rowHash,
+            parsed_date: postedDate,
+            parsed_amount: amountSigned,
+            parsed_currency: currency,
+            parsed_description: descriptionClean
+          }, {
+            onConflict: 'import_id,row_hash_sha256',
+            ignoreDuplicates: true
+          });
+        } catch {
+          console.log(`[process-import] Row already exists, skipping: ${rowHash.substring(0, 8)}`);
+        }
+      })());
 
       if (existingFingerprints.has(fingerprint) || seenFingerprints.has(fingerprint)) {
         stats.duplicatesIgnored++;
@@ -1383,37 +1389,52 @@ serve(async (req) => {
       newTransactions.push(txRecord);
     }
 
-    // Batch insert transactions
+    // Wait for the import_rows audit upserts fired during the loop above — chunked so we
+    // don't open hundreds of concurrent connections at once on large statements.
+    const INSERT_CHUNK_SIZE = 25;
+    for (let start = 0; start < importRowPromises.length; start += INSERT_CHUNK_SIZE) {
+      await Promise.all(importRowPromises.slice(start, start + INSERT_CHUNK_SIZE));
+    }
+
+    // Insert transactions in parallel chunks instead of one awaited request per row — the
+    // per-row insert/error-counting logic is unchanged, only the scheduling. This plus the
+    // categorization_rules N+1 fix were the two biggest contributors to WORKER_RESOURCE_LIMIT
+    // on real multi-page statements (~200 rows previously meant ~200 sequential round-trips).
     let insertFailedCount = 0;
     const insertErrorSamples: string[] = [];
     if (newTransactions.length > 0) {
       let successCount = 0;
       let duplicateCount = 0;
 
-      for (const tx of newTransactions) {
-        const txMonthKey: string = tx._month_key;
-        // Strip our internal helper field before inserting.
-        const { _month_key, ...txClean } = tx;
-        const { error: insertError } = await supabase
-          .from('transactions')
-          .insert(txClean);
+      for (let start = 0; start < newTransactions.length; start += INSERT_CHUNK_SIZE) {
+        const chunk = newTransactions.slice(start, start + INSERT_CHUNK_SIZE);
+        const results = await Promise.all(
+          chunk.map(async (tx) => {
+            const txMonthKey: string = tx._month_key;
+            const { _month_key, ...txClean } = tx;
+            const { error } = await supabase.from('transactions').insert(txClean);
+            return { txMonthKey, error };
+          })
+        );
 
-        if (insertError) {
-          if (insertError.code === '23505') {
-            duplicateCount++;
-            if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
-            monthsDistribution[txMonthKey].duplicates++;
+        for (const { txMonthKey, error: insertError } of results) {
+          if (insertError) {
+            if (insertError.code === '23505') {
+              duplicateCount++;
+              if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
+              monthsDistribution[txMonthKey].duplicates++;
+            } else {
+              // A real insert failure (not a duplicate). Previously this was only logged and
+              // the import was still reported as NORMALIZED, silently dropping the row.
+              insertFailedCount++;
+              if (insertErrorSamples.length < 5) insertErrorSamples.push(insertError.message);
+              console.error('[process-import] Error inserting transaction:', insertError);
+            }
           } else {
-            // A real insert failure (not a duplicate). Previously this was only logged and
-            // the import was still reported as NORMALIZED, silently dropping the row.
-            insertFailedCount++;
-            if (insertErrorSamples.length < 5) insertErrorSamples.push(insertError.message);
-            console.error('[process-import] Error inserting transaction:', insertError);
+            successCount++;
+            if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
+            monthsDistribution[txMonthKey].new++;
           }
-        } else {
-          successCount++;
-          if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
-          monthsDistribution[txMonthKey].new++;
         }
       }
 
