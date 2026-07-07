@@ -133,6 +133,26 @@ Found and fixed two production bugs live during this pass:
   session start), completed in 2:09 (vs. timeout, or 3:23 with only the N+1 fix and
   userContext still broken). Demo data cleaned up afterward; `user_preferences.
   joint_account_names` reset to `[]` (the test value that was set to verify the fix).
+- [ ] **NEW — real ~150s hard execution-time ceiling, not a gradual resource leak.** Tested
+  the larger real personal-checking statement (18 pages, ~62KB extracted text vs 38KB for the
+  197-row joint file) with all fixes deployed — failed again
+  (`WORKER_RESOURCE_LIMIT`/`500`, 0 rows landed this time). Edge-function logs show execution
+  times clustering right at a ceiling: 150271ms (fail), 148918ms (the joint file succeeding at
+  2:09), 138397ms (this failure), 9629ms (10-row synthetic, no contention). This strongly
+  suggests **Supabase Edge Functions has a hard wall-clock limit around 150s** for this
+  project's plan — not something that degrades gracefully with load, a cliff. The 197-row
+  joint file already ran at 129s, uncomfortably close to that ceiling; a bigger file (more
+  rows to categorize + a bigger AI extraction call) pushes total time past it.
+  **Practical takeaway:** multi-month statements (this personal account's file covered
+  Apr–Jun, ~300+ rows) are now the realistic failure mode, not an edge case — this matters
+  because the user explicitly said uploads won't always be month-by-month. **Not yet fixed.**
+  Real fixes require either (a) reducing per-row/per-file work further (batch multi-row
+  inserts instead of chunked single-row inserts; investigate whether `categorize()`'s regex
+  matching cost can be cut, e.g. skip the second raw/clean pass when they're near-identical),
+  or (b) an architectural change — process asynchronously (return immediately, keep working
+  in the background / a queue) instead of doing extraction+categorization+insert all inside
+  one request-response cycle. (b) is the more robust fix but a bigger change; worth deciding
+  deliberately rather than patching further under time pressure this session.
 - **Dangerous side-effect of the half-fail bug (already tracked above):** when either
   resource-limit failure hits mid-loop, it leaves **orphaned transactions already committed**
   (seen: 18 rows, 72 rows, 66 rows across different runs) while the `imports` row stays at
