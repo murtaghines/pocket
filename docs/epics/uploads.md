@@ -43,6 +43,45 @@ Verified pipeline map:
   earlier logo-system audit couldn't visually confirm that fix through the live app — the
   code was correct but unreachable.
 
+## Known issues / pending review
+Canonical list of things surfaced but not yet fixed — keep this updated as new ones appear.
+Each is locked in a characterization test where noted, so a fix is a deliberate test update.
+
+Correctness (categorization / dedup):
+- [ ] **`to_joint_account` collapses to `own_transfer`** — no app transfer slug / map entry for
+  joint-account transfers, so they become indistinguishable from own transfers. Fix: add the
+  slug (+ `categories` row) or map it deliberately. (test: `tests/categoryMap.test.ts`)
+- [ ] **`\b`-anchored rules miss `.COM`-style descriptors** — `normalize("NETFLIX.COM")` →
+  `"NETFLIXCOM"`, so `'NETFLIX\b'` never matches; hits many online/subscription merchants.
+  Fix: relax the trailing boundary or strip common TLDs in `normalize`. Touches `normalize()`
+  globally → run `imports-reviewer`. (test: `tests/categorizer.test.ts`)
+- [ ] **`running_balance` in the fingerprint** — same tx with a different balance dedups as new
+  (false negatives). (test: `tests/fingerprint.test.ts`)
+- [ ] **Sign fallback mislabeled `categorized_by='ai'`** — when the categorizer is rejected by
+  the sign guardrail, the row is dumped into `other_*` but tagged `ai`. Relabel honestly
+  (`sign_fallback`/`PENDING`); check `categorized_by` consumers (dashboards,
+  `apply-rules-retroactive`) first. (process-import ~`:1305-1325`)
+- [ ] **Fingerprint can be NULL** → dedup silently skipped; also add file-level dedup to the
+  investment flow (only `process-import` has it).
+
+Cleanliness / product:
+- [ ] **Orphan edge functions** `apply-rules-retroactive` + `fix-categorization` — zero callers;
+  trace how rules apply retroactively (`onConfirm` in `BankStatementsTabsView`) before
+  deleting vs wiring. (spawned as its own task)
+- [ ] **`Function()` amount eval** (`BankStatementsTabsView.tsx:1866`) — replace with a safe
+  arithmetic parser. (Fase 5)
+- [ ] **Investment flow** auto-processes with no preview + weaker dedup — add review parity with
+  the bank flow. (Fase 5)
+- [ ] **UI retry** button consuming the new `failed`/`partial` response fields. (Fase 1)
+- [ ] **`import_status` has no PARTIAL** — partial imports are marked NORMALIZED + `error_message`;
+  a real `PARTIAL` enum value (migration) would be cleaner.
+
+Docs nit:
+- [ ] `categorizer.ts:79` docstring example is wrong (`normalize` yields `PENANIETO`, not
+  `PENA NIETO`).
+
+Fixed already: `extractMonthKey` "NaN-NaN" (Fase 1); `mapCategorySlug` completeness guard added.
+
 ## Decisions made (2026-07-06)
 - Adopted a 5-phase plan for the whole pipeline; agreed to **start with tests** (safety net)
   before touching anything, **migrate extraction Lovable AI → Anthropic/Claude**, and **delete
