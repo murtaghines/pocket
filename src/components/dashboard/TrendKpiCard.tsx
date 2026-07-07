@@ -2,7 +2,7 @@ import { useMemo, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
-export type TrendKind = "income" | "expense" | "balance";
+export type TrendKind = "income" | "expense" | "balance" | "invest";
 
 interface TrendKpiCardProps {
   kind: TrendKind;
@@ -66,6 +66,8 @@ export function TrendKpiCard({
     ? "bg-[hsl(152_60%_94%)] text-[hsl(152_64%_36%)]"
     : kind === "expense"
     ? "bg-[hsl(8_80%_95%)] text-[hsl(8_72%_52%)]"
+    : kind === "invest"
+    ? "bg-[hsl(216_75%_94%)] text-[hsl(216_75%_42%)]"
     : "bg-[hsl(216_100%_95%)] text-[hsl(216_100%_50%)]";
 
   const deltaColor =

@@ -15,6 +15,7 @@
   "stats": {
     "income": "Income",
     "expenses": "Expenses",
+    "sentToInvest": "Sent to invest",
     "balance": "Balance",
     "savingsRate": "Savings Rate",
     "vsLastMonth": "vs last month",

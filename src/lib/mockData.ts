@@ -57,4 +57,6 @@ export interface MonthlyData {
   income: number;
   expenses: number;
   balance: number;
+  /** Money moved out via `to_investment` TRANSFERs this month — not spent, not idle either. */
+  sentToInvest: number;
 }

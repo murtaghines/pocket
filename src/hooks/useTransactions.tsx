@@ -256,26 +256,36 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     (t) => t.categorySlug === "to_investment"
   );
 
-  // Calculate monthly data from transactions (excluding transfers)
+  // Calculate monthly data from transactions (excluding transfers).
+  // `sentToInvest` is tracked separately from `financialTransactions`, computed from the
+  // to_investment TRANSFERs directly — it's neither income nor expense (the money is still
+  // yours, just moved), but it's not idle/leftover cash either, so it needs its own bucket
+  // to answer "how much of what I didn't spend did I choose to invest, vs just sitting idle."
   const monthlyData: MonthlyData[] = (() => {
-    if (!financialTransactions.length) return [];
+    if (!financialTransactions.length && !investmentMovements.length) return [];
 
-    const monthlyTotals: Record<string, { income: number; expenses: number }> = {};
-    
+    const monthKeyOf = (dateStr: string) => {
+      const date = new Date(dateStr);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    };
+
+    const monthlyTotals: Record<string, { income: number; expenses: number; sentToInvest: number }> = {};
+    const ensure = (key: string) => {
+      if (!monthlyTotals[key]) monthlyTotals[key] = { income: 0, expenses: 0, sentToInvest: 0 };
+      return monthlyTotals[key];
+    };
+
     financialTransactions.forEach((t) => {
-      const date = new Date(t.date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      
-      if (!monthlyTotals[monthKey]) {
-        monthlyTotals[monthKey] = { income: 0, expenses: 0 };
-      }
-      
-      const isIncome = t.movement === "INCOME";
-      if (isIncome) {
-        monthlyTotals[monthKey].income += Math.abs(t.amount);
+      const bucket = ensure(monthKeyOf(t.date));
+      if (t.movement === "INCOME") {
+        bucket.income += Math.abs(t.amount);
       } else {
-        monthlyTotals[monthKey].expenses += Math.abs(t.amount);
+        bucket.expenses += Math.abs(t.amount);
       }
+    });
+
+    investmentMovements.forEach((t) => {
+      ensure(monthKeyOf(t.date)).sentToInvest += Math.abs(t.amount);
     });
 
     return Object.entries(monthlyTotals)
@@ -286,6 +296,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           income: Math.round(data.income * 100) / 100,
           expenses: Math.round(data.expenses * 100) / 100,
           balance: Math.round((data.income - data.expenses) * 100) / 100,
+          sentToInvest: Math.round(data.sentToInvest * 100) / 100,
         };
       });
   })();
@@ -356,6 +367,16 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     }));
   })();
 
+  // Current-month slice of the to_investment transfers, mirroring how
+  // currentMonthTransactions filters financialTransactions above.
+  const currentMonthInvestmentMovements = latestMonthKey
+    ? investmentMovements.filter((t) => {
+        const date = new Date(t.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        return monthKey === latestMonthKey;
+      })
+    : investmentMovements;
+
   // Calculate month summary (excluding transfers) - current month only
   const summary = (() => {
     const income = currentMonthTransactions
@@ -365,11 +386,15 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     const expenses = currentMonthTransactions
       .filter((t) => t.movement === "EXPENSE")
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    
+
+    const sentToInvest = currentMonthInvestmentMovements
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
     return {
       income: Math.round(income * 100) / 100,
       expenses: Math.round(expenses * 100) / 100,
       balance: Math.round((income - expenses) * 100) / 100,
+      sentToInvest: Math.round(sentToInvest * 100) / 100,
     };
   })();
 

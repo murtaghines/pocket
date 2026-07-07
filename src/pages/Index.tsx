@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
@@ -96,17 +96,18 @@ export default function Index() {
   const currentMonth =
     currentIndex >= 0
       ? monthlyData[currentIndex]
-      : { month: '', income: 0, expenses: 0, balance: 0 };
+      : { month: '', income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
   const previousMonth =
     currentIndex > 0
       ? monthlyData[currentIndex - 1]
-      : { month: '', income: 0, expenses: 0, balance: 0 };
+      : { month: '', income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
   
   const convertedCurrentMonth = {
     ...currentMonth,
     income: convertToUserCurrency(currentMonth.income),
     expenses: convertToUserCurrency(currentMonth.expenses),
     balance: convertToUserCurrency(currentMonth.balance),
+    sentToInvest: convertToUserCurrency(currentMonth.sentToInvest ?? 0),
   };
 
   const convertedPreviousMonth = {
@@ -114,6 +115,7 @@ export default function Index() {
     income: convertToUserCurrency(previousMonth.income),
     expenses: convertToUserCurrency(previousMonth.expenses),
     balance: convertToUserCurrency(previousMonth.balance),
+    sentToInvest: convertToUserCurrency(previousMonth.sentToInvest ?? 0),
   };
 
   const hasPreviousData = monthlyData.length >= 2;
@@ -220,8 +222,8 @@ export default function Index() {
             </div>
 
             <div className="flex flex-col gap-[18px]">
-              {/* KPI row: Income · Expenses · Savings rate · Net balance */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px]">
+              {/* KPI row: Income · Expenses · Sent to invest · Savings rate · Net balance */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-[16px]">
                 <TrendKpiCard
                   kind="income"
                   label={t('stats.income')}
@@ -243,6 +245,17 @@ export default function Index() {
                   previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
                   formatCurrency={formatCurrency}
                   positiveIsGood={false}
+                />
+                <TrendKpiCard
+                  kind="invest"
+                  label={t('stats.sentToInvest')}
+                  icon={<TrendingUp className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-primary"
+                  monthKey={latestMonthLabel}
+                  total={convertedCurrentMonth.sentToInvest}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.sentToInvest : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood
                 />
                 <SavingsRateGaugeCard
                   income={convertedCurrentMonth.income}
