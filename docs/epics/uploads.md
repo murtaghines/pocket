@@ -13,6 +13,42 @@
 - Shared module: supabase/functions/_shared/categorizer.ts (categorization engine — not
   a deployed function)
 
+## Shared finances (2026-07-07)
+Investigated how the app should handle shared/joint finances — the user lives with a partner
+and wanted to know if uploading a partner's own bank statement (not a joint account) was
+supported, so shared costs (rent, groceries) could count as "their share" even though they
+didn't make the payment. Findings, before deciding on scope:
+
+- `user_preferences.joint_account_split` (a %, editable in Settings) is **completely dead** —
+  saved but never read by any calculation anywhere in the app. Same class of issue as the
+  `RuleEditorDialog` "will retroactively match" promise found earlier this session: a setting
+  that implies a capability that doesn't exist.
+- `accounts` has no ownership dimension at all (`account_role` is only `CASH | INVESTMENT`) —
+  every account is implicitly assumed to be 100% the logged-in user's. `AccountSelectDialog`
+  only ever asks "which account is this file from," never "whose account is this."
+- The two specific multi-person scenarios the user was most worried about — a parent's account
+  with a child's sub-account, and an authorized additional cardholder on a shared credit card —
+  are actually a **different, simpler problem** than importing a genuinely separate person's
+  full statement: they're both "attribution within an account you already own" (a bank
+  sub-account is usually its own section in the same PDF → just create a second `accounts` row;
+  an authorized cardholder is just text in the description, closer to needing a `cardholder` tag
+  than a shared-ownership model). Neither requires solving the harder "two people's separate
+  finances" problem.
+- Decided NOT to build automatic multi-person statement import (schema for account ownership +
+  UI to cherry-pick which lines of someone else's statement are "shared" + deciding what happens
+  to the rest of their spending) — disproportionate build cost for a case the user themselves
+  doubted many people would use. A joint account (both names on one real account) already works
+  today via the `to_joint_account` fix above — no split needed, it's the household's money, not
+  divided.
+- Implemented instead: a "Shared expense" toggle in `AddManualEntryDialog` (in
+  `MonthReviewModal.tsx`). Off by default. When on, replaces the single Amount field with
+  "Total amount paid" + "Your share (%)" (default 50), computes your share, and appends a
+  self-documenting note to the description (`"Alquiler (50% of 1.200,00 €)"`) — **zero schema
+  change**, the split is fully derivable from the saved description text. Verified live: typed
+  Alquiler / 1200 total / 50% → correctly showed "You'll save this as 600,00 €" → submitted →
+  DB row confirmed `amount: -600.00`, `description: "Alquiler (50% of 1.200,00 €)"`. Deleted the
+  test row after. Files: `src/components/imports/MonthReviewModal.tsx`.
+
 ## Current state
 Full audit done (2026-07-06) + a **test safety net now exists** (Vitest, 33 tests). The
 5-phase action plan lives in the approved plan file; Fase 0 (safety net) is complete.

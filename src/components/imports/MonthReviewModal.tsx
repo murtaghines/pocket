@@ -29,9 +29,11 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
 import { useAccounts } from "@/hooks/useAccounts";
+import { useLocalization } from "@/hooks/useLocalization";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 import {
@@ -68,6 +70,7 @@ export function AddManualEntryDialog({
 }: AddManualEntryDialogProps) {
   const { accounts } = useAccounts();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+  const { formatCurrency } = useLocalization();
 
   const [year, monthNum] = monthKey.split("-").map(Number);
   const firstDay = `${year}-${String(monthNum).padStart(2, "0")}-01`;
@@ -82,6 +85,14 @@ export function AddManualEntryDialog({
   const [amountStr, setAmountStr] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Shared-expense split: e.g. your partner paid the full rent, but only your
+  // share should count as your expense. Off by default — pure convenience calculator,
+  // no schema change: we just save your share as the amount and note the split in the
+  // description, so it's self-documenting without a new column.
+  const [isShared, setIsShared] = useState(false);
+  const [totalAmountStr, setTotalAmountStr] = useState<string>("");
+  const [sharePercentStr, setSharePercentStr] = useState<string>("50");
+
   // Reset on open
   useEffect(() => {
     if (open) {
@@ -91,6 +102,9 @@ export function AddManualEntryDialog({
       setMovement("EXPENSE");
       setCategorySlug(EXPENSE_CATEGORIES[0]);
       setAmountStr("");
+      setIsShared(false);
+      setTotalAmountStr("");
+      setSharePercentStr("50");
     }
   }, [open]);
 
@@ -108,11 +122,23 @@ export function AddManualEntryDialog({
     movement === "TRANSFER" ? TRANSFER_CATEGORIES :
     EXPENSE_CATEGORIES;
 
-  const parsedAmount = (() => {
-    const s = amountStr.replace(",", ".").trim();
-    const n = parseFloat(s);
-    return isNaN(n) ? NaN : Math.abs(n);
-  })();
+  const parseNum = (s: string) => {
+    const n = parseFloat(s.replace(",", ".").trim());
+    return isNaN(n) ? NaN : n;
+  };
+
+  const totalAmount = parseNum(totalAmountStr);
+  const sharePercent = parseNum(sharePercentStr);
+  const directAmount = Math.abs(parseNum(amountStr));
+
+  // When splitting a shared expense, the amount actually saved is your share of the
+  // total someone else paid (or you paid but only part is "yours") — never the full total.
+  const sharedAmount =
+    !isNaN(totalAmount) && !isNaN(sharePercent)
+      ? Math.round(Math.abs(totalAmount) * (sharePercent / 100) * 100) / 100
+      : NaN;
+
+  const parsedAmount = isShared ? sharedAmount : directAmount;
 
   const dateValid = date >= firstDay && date <= lastDay;
   const canSubmit =
@@ -120,6 +146,7 @@ export function AddManualEntryDialog({
     description.trim().length > 0 &&
     !isNaN(parsedAmount) &&
     parsedAmount > 0 &&
+    (!isShared || (sharePercent > 0 && sharePercent <= 100)) &&
     dateValid &&
     !submitting;
 
@@ -127,9 +154,15 @@ export function AddManualEntryDialog({
     if (!canSubmit) return;
     setSubmitting(true);
     try {
+      // Self-documenting: the split shows up in the description itself (no schema change),
+      // so it's still visible later in the transaction list / audit history.
+      const finalDescription = isShared
+        ? `${description.trim()} (${sharePercent}% of ${formatCurrency(Math.abs(totalAmount))})`
+        : description.trim();
+
       await onSubmit({
         date,
-        description: description.trim(),
+        description: finalDescription,
         accountId,
         movement,
         categorySlug,
@@ -298,19 +331,70 @@ export function AddManualEntryDialog({
           </div>
 
           {/* Amount */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
-              Amount {movement === "EXPENSE" ? "(will be saved as a negative value)" : ""}
-            </Label>
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
-              placeholder="0,00"
-              className="h-9 text-right tabular-nums"
-            />
+          {!isShared && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">
+                Amount {movement === "EXPENSE" ? "(will be saved as a negative value)" : ""}
+              </Label>
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={amountStr}
+                onChange={(e) => setAmountStr(e.target.value)}
+                placeholder="0,00"
+                className="h-9 text-right tabular-nums"
+              />
+            </div>
+          )}
+
+          {/* Shared expense toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+            <div className="space-y-0.5 pr-3">
+              <Label className="text-xs font-medium">Shared expense</Label>
+              <p className="text-[11px] text-muted-foreground">
+                Someone else paid the full amount — only your share counts.
+              </p>
+            </div>
+            <Switch checked={isShared} onCheckedChange={setIsShared} />
           </div>
+
+          {isShared && (
+            <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Total amount paid
+                  </Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={totalAmountStr}
+                    onChange={(e) => setTotalAmountStr(e.target.value)}
+                    placeholder="0,00"
+                    className="h-9 text-right tabular-nums"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Your share (%)
+                  </Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={sharePercentStr}
+                    onChange={(e) => setSharePercentStr(e.target.value)}
+                    placeholder="50"
+                    className="h-9 text-right tabular-nums"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {!isNaN(sharedAmount) && sharedAmount > 0
+                  ? <>You'll save this as <span className="font-semibold text-foreground">{formatCurrency(sharedAmount)}</span>.</>
+                  : "Enter the total and your share to see the amount."}
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
