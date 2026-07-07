@@ -42,19 +42,23 @@ describe('calculateFingerprint', () => {
     expect(withDesc).toBe(differentEverythingElse);
   });
 
-  it('falls back to date+amount+desc(+balance) when no source id', async () => {
+  it('falls back to account+date+amount+currency+desc when no source id', async () => {
     const a = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', 100);
     const b = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', 100);
     const cDifferentAmount = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -11, 'EUR', 'Mercadona', 100);
+    const dDifferentAccount = await calculateFingerprint('u1', 'a2', null, '2024-01-01', -10, 'EUR', 'Mercadona', 100);
     expect(a).toBe(b);
     expect(a).not.toBe(cDifferentAmount);
+    expect(a).not.toBe(dDifferentAccount); // Different account = different fingerprint (fixed)
   });
 
-  it('running balance participates in the fingerprint (documented dedup weakness)', async () => {
+  it('running_balance is excluded from the fingerprint (fixes dedup on reimport)', async () => {
     const withBalance = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', 100);
     const noBalance = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', null);
-    // Same transaction, different balance → different fingerprint (a known false-negative source).
-    expect(withBalance).not.toBe(noBalance);
+    const differentBalance = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', 999);
+    // Same transaction with different running_balance values → SAME fingerprint (dedup survives reimport).
+    expect(withBalance).toBe(noBalance);
+    expect(withBalance).toBe(differentBalance);
   });
 });
 

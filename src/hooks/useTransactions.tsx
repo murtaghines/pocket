@@ -174,52 +174,56 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     enabled: !!user,
   });
 
-  // Compute opening balance per month from running_balance data
+  // Compute opening balance per month from running_balance data.
+  // For each account in each month, reverse-engineer the opening balance from the
+  // first transaction's running_balance minus its amount. Sum across all accounts
+  // to get total wallet opening balance.
   const openingBalanceByMonth: Record<string, number> = (() => {
     if (!transactions.length) return {};
-    
-    // Group by month -> bank -> transactions
-    const byMonthBank: Record<string, Record<string, Transaction[]>> = {};
+
+    // Group by month -> account -> transactions
+    const byMonthAccount: Record<string, Record<string, Transaction[]>> = {};
     for (const tx of transactions) {
       const monthKey = tx.date.substring(0, 7);
-      if (!byMonthBank[monthKey]) byMonthBank[monthKey] = {};
-      if (!byMonthBank[monthKey][tx.bank]) byMonthBank[monthKey][tx.bank] = [];
-      byMonthBank[monthKey][tx.bank].push(tx);
+      const accountKey = tx.account_id || 'unknown';
+      if (!byMonthAccount[monthKey]) byMonthAccount[monthKey] = {};
+      if (!byMonthAccount[monthKey][accountKey]) byMonthAccount[monthKey][accountKey] = [];
+      byMonthAccount[monthKey][accountKey].push(tx);
     }
     
     const result: Record<string, number> = {};
-    
-    for (const [monthKey, banks] of Object.entries(byMonthBank)) {
+
+    for (const [monthKey, accounts] of Object.entries(byMonthAccount)) {
       let totalOpening = 0;
       let hasAnyBalance = false;
-      
-      for (const [, txs] of Object.entries(banks)) {
+
+      for (const [, txs] of Object.entries(accounts)) {
         // Get transactions with running_balance on the earliest date
-        const withBalance = txs.filter(t => t.runningBalance != null);
+        const withBalance = txs.filter(t => t.running_balance != null);
         if (!withBalance.length) continue;
-        
-        // Find the earliest date for this bank in this month
+
+        // Find the earliest date for this account in this month
         const earliestDate = withBalance.reduce((min, t) => t.date < min ? t.date : min, withBalance[0].date);
         const txsOnEarliestDate = withBalance.filter(t => t.date === earliestDate);
         
         // Build set of all running_balance values (as integers to avoid float issues)
-        const balanceSet = new Set(txsOnEarliestDate.map(t => Math.round(t.runningBalance! * 100)));
-        
+        const balanceSet = new Set(txsOnEarliestDate.map(t => Math.round(t.running_balance! * 100)));
+
         // Find the first transaction: its (running_balance - amount) is NOT in the balance set
         const firstTx = txsOnEarliestDate.find(t => {
-          const candidateOpening = Math.round((t.runningBalance! - t.amount) * 100);
+          const candidateOpening = Math.round((t.running_balance! - t.amount) * 100);
           return !balanceSet.has(candidateOpening);
         });
-        
+
         if (firstTx) {
-          totalOpening += firstTx.runningBalance! - firstTx.amount;
+          totalOpening += firstTx.running_balance! - firstTx.amount;
         } else {
           // Fallback: pick the transaction with max (running_balance - amount)
           const fallback = txsOnEarliestDate.reduce((best, t) => {
-            const opening = t.runningBalance! - t.amount;
-            return opening > (best.runningBalance! - best.amount) ? t : best;
+            const opening = t.running_balance! - t.amount;
+            return opening > (best.running_balance! - best.amount) ? t : best;
           });
-          totalOpening += fallback.runningBalance! - fallback.amount;
+          totalOpening += fallback.running_balance! - fallback.amount;
         }
         hasAnyBalance = true;
       }

@@ -55,8 +55,13 @@ Correctness (categorization / dedup):
   `"NETFLIXCOM"`, so `'NETFLIX\b'` never matches; hits many online/subscription merchants.
   Fix: relax the trailing boundary or strip common TLDs in `normalize`. Touches `normalize()`
   globally → run `imports-reviewer`. (test: `tests/categorizer.test.ts`)
-- [ ] **`running_balance` in the fingerprint** — same tx with a different balance dedups as new
-  (false negatives). (test: `tests/fingerprint.test.ts`)
+- [x] **`running_balance` in the fingerprint** — fixed 2026-07-07. Removed from dedup formula
+  because it's dynamic (changes on reimport when earlier-dated transactions appear). Recalculated
+  all 12 existing demo fingerprints with new formula: `hash(account_id | date | amount |
+  currency | description_norm)` — also added account_id explicitly (same transaction in two
+  accounts = different fingerprint). Updated test `tests/fingerprint.test.ts` to verify new
+  behavior. Deployed `process-import` and fixed `useTransactions.tsx` bug: opening balance
+  calculation used stale `tx.bank` (dropped in Fase 4) instead of `tx.account_id`.
 - [x] **Sign fallback mislabeled `categorized_by='ai'`** — fixed 2026-07-07: the sign guardrail
   (`process-import/index.ts:~1303-1320`) now sets `categorized_by = 'sign_fallback'` and
   `category_source = 'SIGN_FALLBACK'` when it overrides the movement, instead of leaving
@@ -291,14 +296,18 @@ UI. Fixed, then re-verified live: table renders, category edit + save + audit-lo
 **Takeaway: for this codebase, tsc/lint passing is necessary but not sufficient for JSX
 refactors — a real browser render-through is required.**
 
-**Found, NOT fixed (separate bug, out of today's scope):** `investments.upload_id` has a hard
-FK to the legacy `uploads` table, but `process-investment-file/index.ts:291` writes an
-`imports.id` into it (comment there even says "legacy field name"). This FK mismatch means a
-real investment file upload likely fails at the DB insert step, or `upload_id` silently never
-matches — the demo's 4 investment rows have `upload_id: NULL` because they were seeded directly
-via SQL, so this path has probably never been exercised for real through the actual upload
-pipeline. Needs its own investigation: either migrate `upload_id` to reference `imports` (like
-`transactions.import_id` does) or fix the edge function to look up the right id.
+**Fixed (2026-07-07):** `investments.upload_id` had a hard FK to the legacy `uploads` table, but
+`process-investment-file/index.ts:291` writes an `imports.id` into it (comment there even says
+"legacy field name"), and all app code (`useInvestments`, `UploadedFilesHistoryList`) already
+read/matched `upload_id` as an `imports.id`. Confirmed via the Management API against the live
+DB (`ertwmshiupmickhfbaue`) that the constraint really did point at `uploads(id)`, and that all
+4 seeded demo investment rows have `upload_id: NULL` (seeded directly via SQL, so this path had
+never been exercised through the real upload pipeline). Retargeted the FK to `imports(id)` with
+`ON DELETE CASCADE` (matching the original delete behavior) — no app code changes needed since
+every caller already assumed `upload_id` held an import id. Migration
+`20260707140000_fix_investments_upload_id_fk.sql`, applied directly to the live DB via the
+Supabase Management API `database/query` endpoint (no `SUPABASE_DB_PASSWORD` available locally
+for a CLI `db push`).
 
 ## Fase 3 progress (2026-07-06)
 - `process-import` + `process-investment-file` migrated off Lovable → **Anthropic Messages

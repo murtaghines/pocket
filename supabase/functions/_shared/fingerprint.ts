@@ -40,16 +40,18 @@ export async function calculateFingerprint(
   amountSigned: number,
   currency: string,
   descriptionRaw: string,
-  runningBalance: number | null,
+  _runningBalance?: number | null, // Kept for backwards-compat but NOT used in hash
 ): Promise<string> {
   if (sourceTransactionId) {
     const input = `${userId}|${accountId || 'no-account'}|${sourceTransactionId}`;
     return await sha256(input);
   }
 
+  // Dedup key: date, amount, currency, description, and ACCOUNT.
+  // NOT running_balance — it's dynamic (changes when reimporting with earlier-dated txs),
+  // causing false negatives on dedup. ALSO NOT user_id — already enforced by DB uniqueness.
   const normalizedDesc = normalizeDescription(descriptionRaw);
-  const balancePart = runningBalance !== null ? `|${runningBalance.toFixed(2)}` : '';
-  const input = `${userId}|${accountId || 'no-account'}|${postedDate}|${amountSigned.toFixed(2)}|${currency}|${normalizedDesc}${balancePart}`;
+  const input = `${accountId || 'no-account'}|${postedDate}|${amountSigned.toFixed(2)}|${currency}|${normalizedDesc}`;
   return await sha256(input);
 }
 
