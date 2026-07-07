@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VALID_EXTS } from "@/lib/fileExtract";
+import { evalArithmetic } from "@/lib/safeMath";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1857,21 +1858,10 @@ function InlineTransactionsEditor({
 
   const handleAmountChange = (tx: MonthTransaction, raw: string) => {
     const sanitized = raw.replace(/\s/g, "").replace(",", ".");
-    let parsed: number;
-    if (/^-?[\d.]+$/.test(sanitized)) {
-      parsed = parseFloat(sanitized);
-    } else if (/^-?[\d+\-*/.()]+$/.test(sanitized)) {
-      try {
-        // eslint-disable-next-line no-new-func
-        const result = Function(`"use strict"; return (${sanitized});`)();
-        parsed = typeof result === "number" && isFinite(result) ? result : NaN;
-      } catch {
-        return;
-      }
-    } else {
-      return;
-    }
-    if (isNaN(parsed)) return;
+    // Accepts a plain number or a simple arithmetic expression (e.g. "50*2"), evaluated by a
+    // safe parser — no eval/Function. Returns null on anything malformed.
+    const parsed = evalArithmetic(sanitized);
+    if (parsed === null) return;
     const pending = pendingByTx[tx.id] || {};
     const movement = (pending.movement || tx.movement || "EXPENSE") as MovementType;
     const sign = movement === "EXPENSE" ? -1 : 1;
