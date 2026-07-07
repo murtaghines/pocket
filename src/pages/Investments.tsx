@@ -20,6 +20,7 @@ export default function Investments() {
     accounts,
     isLoading,
     hasData,
+    currentMonth,
     totalInvestedThisMonth,
     netInvestedAllTime,
     totalCurrentValue,
@@ -30,7 +31,10 @@ export default function Investments() {
 
   const { formatCurrency, formatMonth } = useLocalization();
 
-  const currentMonthName = formatMonth(new Date());
+  // currentMonth is the most recent month WITH investment data, not wall-clock "today" —
+  // see useInvestments.tsx. Historical/demo data would otherwise always show "this month"
+  // figures for a month that has no data at all.
+  const currentMonthName = formatMonth(`${currentMonth}-01`);
 
   const profitLoss = totalCurrentValue - netInvestedAllTime;
   const profitLossPercent = netInvestedAllTime > 0 

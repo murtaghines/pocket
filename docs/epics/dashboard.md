@@ -17,13 +17,10 @@ and to_investment transfers were never counted as expenses. What was missing: no
 internally (`investmentMovements` / `investmentMovementsCount`, filtered on
 `categorySlug === 'to_investment'`) but wasn't rendered anywhere on the dashboard.
 
-Also found: `InvestmentSummaryCard` (row 5 of Index.tsx) shows `totalInvestedThisMonth` from
-`useInvestments.tsx`, which hardcodes `new Date().toISOString().slice(0, 7)` as "this month" —
-the real wall-clock month, NOT the dashboard's selected/latest-data month. Looking at any
-historical month (or demo data, which lives in the past relative to "today") shows €0 there
-regardless of what's actually selected. This is a separate, pre-existing bug in the
-investments-side portfolio card — NOT touched by the fix below, which uses the correct
-per-selected-month data from the cashflow side instead. Worth fixing separately.
+`InvestmentSummaryCard` (row 5 of Index.tsx) and the whole `/investments` page had a separate
+bug, fixed 2026-07-07 (see Decisions below): both derived "this month" from
+`new Date().toISOString().slice(0, 7)` / `formatMonth(new Date())` — real wall-clock time, not
+the dashboard's selected/latest-data month.
 
 ## Decisions made
 - 2026-07-05: removed 9 dead components that were never wired into the dashboard
@@ -42,10 +39,24 @@ per-selected-month data from the cashflow side instead. Worth fixing separately.
   directly. Files: `src/hooks/useTransactions.tsx`, `src/pages/Index.tsx`,
   `src/components/dashboard/TrendKpiCard.tsx`, `src/lib/mockData.ts` (added `sentToInvest` to
   `MonthlyData`).
+- 2026-07-07: fixed the wall-clock "this month" bug in `useInvestments.tsx`. `currentMonth`
+  is now the most recent month WITH actual investment data (`investments.reduce` over
+  `date.slice(0, 7)`, mirroring how `useTransactions` derives `latestMonthKey` the same way),
+  not `new Date()`. Exposed `currentMonth` from the hook's return so
+  `src/pages/Investments.tsx` could stop hardcoding `formatMonth(new Date())` for its header
+  subtitle too — that page has no month selector at all, so it was ALWAYS showing wall-clock
+  "today" regardless of what data existed. Verified live against demo data (logged in as
+  `demo@pocket.app`): before the fix, "This month" on `/investments` showed €0,00 (today is
+  July 2026, which has zero investment rows); after, it correctly shows "December 2025" +
+  "996,81 €" (December's 2 real deposits: 500 + 496.81). No behavior change for real users
+  who only ever look at the actual current month — this only fixes historical/demo browsing.
+  Files: `src/hooks/useInvestments.tsx`, `src/pages/Investments.tsx`.
 
 ## Next step
-- Fix `useInvestments.tsx`'s wall-clock "this month" bug (see Current state above) so
-  `InvestmentSummaryCard` reflects the selected month, not always the real current date.
 - Consider whether Net Balance should get a breakdown/tooltip distinguishing "idle leftover
   cash" from "money already earmarked to invest" (`balance - sentToInvest`), per the original
   ask: understanding what's truly idle vs deliberately invested.
+- `useInvestments.tsx`'s "this month" is still not connected to `Index.tsx`'s month selector —
+  if the user picks a different month in the top nav, `/investments` and `InvestmentSummaryCard`
+  won't follow it (they independently pick "latest month with data"). Wiring a real shared
+  month-selector across cashflow and investments is a bigger feature, not a bug fix.

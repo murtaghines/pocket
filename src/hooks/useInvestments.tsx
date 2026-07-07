@@ -102,9 +102,17 @@ export function useInvestments() {
     },
   });
 
-  // Calculate aggregates
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  
+  // "This month" = the most recent month with actual investment activity, NOT the real
+  // wall-clock date. Historical/demo data lives in the past relative to today, so anchoring
+  // to new Date() silently showed 0 for every "this month" figure regardless of what data
+  // actually existed. Mirrors how useTransactions derives latestMonthKey the same way.
+  const currentMonth = investments.length > 0
+    ? investments.reduce((latest, inv) => {
+        const monthKey = inv.date.slice(0, 7);
+        return monthKey > latest ? monthKey : latest;
+      }, investments[0].date.slice(0, 7))
+    : new Date().toISOString().slice(0, 7); // No data at all — value is moot either way.
+
   const monthlyInvestments = investments.filter(
     inv => inv.date.startsWith(currentMonth)
   );
@@ -187,7 +195,8 @@ export function useInvestments() {
     isLoading: isLoadingInvestments || isLoadingAccounts,
     hasData: investments.length > 0 || accounts.length > 0,
     
-    // Current month
+    // Current month (most recent month with data — see comment above, not wall-clock "today")
+    currentMonth,
     totalInvestedThisMonth,
     totalWithdrawnThisMonth,
     netInvestedThisMonth,
