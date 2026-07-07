@@ -80,25 +80,24 @@ serve(async (req) => {
 
     console.log(`Checking integrity of ${transactions.length} transactions`);
 
+    // NOTE (Fase 4, 2026-07-07): `transaction_hash` and `linked_transaction_id` columns
+    // were dropped from `transactions` — the real dedup key is now the DB-enforced
+    // UNIQUE(user_id, domain, fingerprint) index, computed once at import time from
+    // immutable source fields (never from user edits). This residual pass is a secondary
+    // safety net over (date, amount, description) for rows that predate that index or came
+    // in through a path that doesn't set a fingerprint; it no longer persists a hash column,
+    // it just recomputes in-memory each run. Transfer-pair linking is disabled (no column to
+    // store it in) — see docs/epics/uploads.md Fase 4 for the split/link redesign this needs.
     const duplicatesToDelete: string[] = [];
-    const hashUpdates: { id: string; hash: string }[] = [];
-    const transferPairs: { id1: string; id2: string }[] = [];
     const seenHashes = new Map<string, string>(); // hash -> transaction id
 
-    // Pass 1: Check/generate hashes and find duplicates
+    // Pass 1: find residual duplicates by (date, amount, normalized description)
     for (const t of transactions) {
-      // Generate hash if missing
-      let hash = t.transaction_hash;
-      if (!hash) {
-        const dateStr = (t.date || '').replace(/-/g, '');
-        const amountStr = Math.abs(t.amount || 0).toFixed(2);
-        const normalizedDesc = normalizeDescription(t.description);
-        const hashSource = `${dateStr}|${amountStr}|${normalizedDesc}`;
-        hash = generateHash(hashSource);
-        hashUpdates.push({ id: t.id, hash });
-      }
+      const dateStr = (t.date || '').replace(/-/g, '');
+      const amountStr = Math.abs(t.amount || 0).toFixed(2);
+      const normalizedDesc = normalizeDescription(t.description);
+      const hash = generateHash(`${dateStr}|${amountStr}|${normalizedDesc}`);
 
-      // Check for duplicates
       if (seenHashes.has(hash)) {
         duplicatesToDelete.push(t.id);
         console.log(`Duplicate found: ${t.description} (${t.date})`);
@@ -107,56 +106,8 @@ serve(async (req) => {
       }
     }
 
-    // Pass 2: Detect transfer pairs (unlinked transfers)
-    const transfers = transactions.filter(t => 
-      t.type === 'transfer' && 
-      !t.linked_transaction_id &&
-      !duplicatesToDelete.includes(t.id)
-    );
-
-    // Group by absolute amount for faster matching
-    const transfersByAmount = new Map<string, typeof transactions>();
-    for (const t of transfers) {
-      const key = Math.abs(t.amount).toFixed(2);
-      if (!transfersByAmount.has(key)) {
-        transfersByAmount.set(key, []);
-      }
-      transfersByAmount.get(key)!.push(t);
-    }
-
-    // Find matching pairs (opposite amounts, different banks, within 48h)
-    for (const [amountKey, sameAmountTransfers] of transfersByAmount) {
-      const outgoing = sameAmountTransfers.filter(t => t.amount < 0);
-      const incoming = sameAmountTransfers.filter(t => t.amount > 0);
-
-      for (const out of outgoing) {
-        if (transferPairs.some(p => p.id1 === out.id || p.id2 === out.id)) continue;
-
-        const outDate = new Date(out.date).getTime();
-        
-        for (const inc of incoming) {
-          if (transferPairs.some(p => p.id1 === inc.id || p.id2 === inc.id)) continue;
-          
-          // Different banks
-          if (out.bank && inc.bank && out.bank === inc.bank) continue;
-          
-          // Within 48 hours
-          const incDate = new Date(inc.date).getTime();
-          const hoursDiff = Math.abs(outDate - incDate) / (1000 * 60 * 60);
-          
-          if (hoursDiff <= 48) {
-            transferPairs.push({ id1: out.id, id2: inc.id });
-            console.log(`Transfer pair found: ${out.description} <-> ${inc.description}`);
-            break;
-          }
-        }
-      }
-    }
-
     // Apply updates
     let duplicatesRemoved = 0;
-    let hashesUpdated = 0;
-    let transfersLinked = 0;
 
     // Delete duplicates
     if (duplicatesToDelete.length > 0) {
@@ -164,7 +115,7 @@ serve(async (req) => {
         .from('transactions')
         .delete()
         .in('id', duplicatesToDelete);
-      
+
       if (error) {
         console.error('Error deleting duplicates:', error);
       } else {
@@ -172,45 +123,17 @@ serve(async (req) => {
       }
     }
 
-    // Update missing hashes
-    for (const { id, hash } of hashUpdates) {
-      if (duplicatesToDelete.includes(id)) continue;
-      
-      const { error } = await supabase
-        .from('transactions')
-        .update({ transaction_hash: hash })
-        .eq('id', id);
-      
-      if (!error) hashesUpdated++;
-    }
-
-    // Link transfer pairs
-    for (const { id1, id2 } of transferPairs) {
-      // Update both transactions to link to each other
-      const { error: err1 } = await supabase
-        .from('transactions')
-        .update({ linked_transaction_id: id2 })
-        .eq('id', id1);
-
-      const { error: err2 } = await supabase
-        .from('transactions')
-        .update({ linked_transaction_id: id1 })
-        .eq('id', id2);
-
-      if (!err1 && !err2) transfersLinked++;
-    }
-
-    const message = `Integrity verified: ${duplicatesRemoved} duplicates removed, ${transfersLinked} transfer pairs linked, ${hashesUpdated} hashes updated`;
+    const message = `Integrity verified: ${duplicatesRemoved} duplicates removed`;
     console.log(message);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message,
         stats: {
           duplicatesRemoved,
-          transfersLinked,
-          hashesUpdated,
+          transfersLinked: 0,
+          hashesUpdated: 0,
           totalChecked: transactions.length
         }
       }),

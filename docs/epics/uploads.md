@@ -260,9 +260,39 @@ two parallel lineages. The live pipeline writes `movement`/`account_id`/`categor
   recomputes all existing fingerprints. Deferred.
 - `original_text` (nullable) left in place — harmless provenance, not worth another migration.
 
-**Still pending:** Etapa E (split the monoliths `BankStatementsTabsView` 3079 /
-`InvestmentTabsView` 1330 into `cashflow/` + `investments/` subfolders) — mechanical, low-risk,
-deferred to its own batch.
+**Etapa E — DONE (2026-07-07):** split both monoliths into per-component files, verbatim
+(extracted with `sed` line ranges, not retyped, to avoid transcription risk in ~4400 lines of
+JSX). `BankStatementsTabsView.tsx` 3079→265 lines, rest moved into
+`src/components/imports/cashflow/{types,helpers,MonthTabStrip,ManualEntryFooter,MonthWorkspace,
+UploadedFiles,InlineTransactionsEditor,AmountEditButton,RowEditIndicator,
+RevertToOriginalButton,ProcessingPanel}`. `InvestmentTabsView.tsx` 1330→214 lines, rest into
+`src/components/imports/investments/{types,MonthTabStrip,MonthWorkspace,UploadedFiles,
+InlineInvestmentsEditor,ProcessingPanel}`. Deleted `FileChipsBar` (dead code, zero call sites,
+found while mapping the file — not caught by cross-file grep since it was private/unexported).
+
+**Verification caught a real bug tsc/eslint both missed:** this repo's tsconfig
+(`strict: false`, `noImplicitAny: false`) does not flag an unresolved JSX component identifier
+as a compile error, and `eslint-plugin-react` (which owns `react/jsx-no-undef`) isn't installed
+— confirmed empirically by deliberately removing an import and re-running both with a clean
+exit. `InlineTransactionsEditor.tsx` shipped with a missing `Button` import that only surfaced
+as a runtime crash (blank screen, whole React root unmounted — no error boundary anywhere in
+the app) once real transaction rows rendered. Caught by inserting a temporary test `imports` +
+3 `transactions` rows for the demo account via SQL (demo data has no real `imports` rows, so
+every month showed the harmless empty-state — masking the bug) and clicking through the actual
+UI. Fixed, then re-verified live: table renders, category edit + save + audit-log diff popover
+(`RowEditIndicator`) + revert button (`RevertToOriginalButton`) + split popover
+(`AmountEditButton`) all confirmed working end-to-end. Test rows cleaned up after.
+**Takeaway: for this codebase, tsc/lint passing is necessary but not sufficient for JSX
+refactors — a real browser render-through is required.**
+
+**Found, NOT fixed (separate bug, out of today's scope):** `investments.upload_id` has a hard
+FK to the legacy `uploads` table, but `process-investment-file/index.ts:291` writes an
+`imports.id` into it (comment there even says "legacy field name"). This FK mismatch means a
+real investment file upload likely fails at the DB insert step, or `upload_id` silently never
+matches — the demo's 4 investment rows have `upload_id: NULL` because they were seeded directly
+via SQL, so this path has probably never been exercised for real through the actual upload
+pipeline. Needs its own investigation: either migrate `upload_id` to reference `imports` (like
+`transactions.import_id` does) or fix the edge function to look up the right id.
 
 ## Fase 3 progress (2026-07-06)
 - `process-import` + `process-investment-file` migrated off Lovable → **Anthropic Messages

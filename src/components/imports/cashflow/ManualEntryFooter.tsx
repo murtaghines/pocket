@@ -1,0 +1,183 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Plus, Minus, ArrowRightLeft, EyeOff, PlusCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useCategories } from "@/hooks/useCategories";
+import { useLocalization } from "@/hooks/useLocalization";
+import { useToast } from "@/hooks/use-toast";
+import { AddManualEntryDialog } from "../MonthReviewModal";
+import type { MovementType } from "./types";
+
+export interface ManualEntryFooterProps {
+  monthKey: string;
+  monthLabel: string;
+  importId?: string | null;
+  isLocked: boolean;
+  summary: {
+    total: number;
+    income: number;
+    expenses: number;
+    transfers: number;
+    hidden?: number;
+  };
+  rightSlot?: React.ReactNode;
+}
+
+export function ManualEntryFooter({
+  monthKey,
+  monthLabel,
+  importId,
+  isLocked,
+  summary,
+  rightSlot,
+}: ManualEntryFooterProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { accounts } = useAccounts();
+  const { categories } = useCategories("CASHFLOW");
+  const { formatCurrency } = useLocalization();
+  const [open, setOpen] = useState(false);
+
+  const handleSubmit = async (entry: {
+    date: string;
+    description: string;
+    accountId: string;
+    movement: MovementType;
+    categorySlug: string;
+    amount: number;
+  }) => {
+    if (!user) return;
+    try {
+      // Resolve or create CASHFLOW period for this month
+      let periodId: string | null = null;
+      const { data: existingPeriod } = await supabase
+        .from("periods")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("month_key", monthKey)
+        .eq("domain", "CASHFLOW")
+        .maybeSingle();
+      if (existingPeriod) {
+        periodId = existingPeriod.id;
+      } else {
+        const { data: newPeriod } = await supabase
+          .from("periods")
+          .insert({ user_id: user.id, month_key: monthKey, domain: "CASHFLOW", status: "OPEN" })
+          .select("id")
+          .single();
+        periodId = newPeriod?.id ?? null;
+      }
+
+      const account = accounts.find((a) => a.id === entry.accountId);
+      const category = categories.find((c) => c.slug === entry.categorySlug);
+      const sign = entry.movement === "EXPENSE" ? -1 : 1;
+      const signedAmount = sign * Math.abs(entry.amount);
+      const cleanDesc = entry.description.trim();
+      const descNorm = cleanDesc.toLowerCase();
+      // Manual entries have no source file, so we mint a unique fingerprint/row-hash to
+      // satisfy the NOT NULL dedup key without colliding with imported rows.
+      const uniqHash = `manual-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      const { error: insertError } = await supabase.from("transactions").insert({
+        user_id: user.id,
+        domain: "CASHFLOW",
+        date: entry.date,
+        description: cleanDesc,
+        description_norm: descNorm,
+        description_clean: cleanDesc,
+        amount: signedAmount,
+        currency: account?.currency_base || "EUR",
+        movement: entry.movement,
+        category: entry.categorySlug,
+        category_id: category?.id || null,
+        account_id: entry.accountId,
+        period_id: periodId,
+        import_id: importId || null,
+        category_source: "MANUAL",
+        categorized_by: "user",
+        user_corrected: true,
+        is_hidden: false,
+        fingerprint: uniqHash,
+        source_row_hash: uniqHash,
+      });
+
+      if (insertError) throw insertError;
+
+      await queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user.id] });
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
+      toast({ title: "Entry added", duration: 2500 });
+      setOpen(false);
+    } catch (err) {
+      console.error("[ManualEntryFooter] insert error", err);
+      toast({
+        title: "Error",
+        description: "Could not add entry. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 flex flex-wrap items-center gap-3 text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+          onClick={() => setOpen(true)}
+          disabled={isLocked}
+          title={isLocked ? "Unlock the month to add entries" : "Add a manual entry (cash, etc.)"}
+        >
+          <PlusCircle className="w-3.5 h-3.5" />
+          Add entry
+        </Button>
+        <span className="text-border">|</span>
+        <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
+          row{summary.total !== 1 ? "s" : ""}
+        </div>
+        <div className="inline-flex items-center gap-1.5">
+          <Plus className="w-3.5 h-3.5 text-success" />
+          <span className="text-success font-semibold tabular-nums">
+            {formatCurrency(summary.income)}
+          </span>
+        </div>
+        <div className="inline-flex items-center gap-1.5">
+          <Minus className="w-3.5 h-3.5 text-destructive" />
+          <span className="text-destructive font-semibold tabular-nums">
+            {formatCurrency(summary.expenses)}
+          </span>
+        </div>
+        <div className="inline-flex items-center gap-1.5">
+          <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
+          <span className="text-warning font-semibold tabular-nums">
+            {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
+          </span>
+        </div>
+        {summary.hidden !== undefined && summary.hidden > 0 && (
+          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <EyeOff className="w-3.5 h-3.5" />
+            <span className="tabular-nums">
+              {summary.hidden} excluded from analysis
+            </span>
+          </div>
+        )}
+        {rightSlot && (
+          <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
+            {rightSlot}
+          </div>
+        )}
+      <AddManualEntryDialog
+        open={open}
+        onOpenChange={setOpen}
+        monthKey={monthKey}
+        monthLabel={monthLabel}
+        onSubmit={handleSubmit}
+      />
+    </div>
+  );
+}
