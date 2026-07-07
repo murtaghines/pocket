@@ -55,6 +55,29 @@ export async function calculateFingerprint(
   return await sha256(input);
 }
 
+// Investments dedup key: mirrors calculateFingerprint's design (identity fields only,
+// never a classification output). `platform` stands in for `accountId` here — investments
+// don't have an accounts table FK, but the same deposit/withdrawal on two different
+// platforms (Revolut Savings vs MyInvestor) must NOT collide as duplicates. `type`
+// (deposit/withdrawal) is deliberately excluded, same reasoning as movement/category for
+// transactions: it's a classification of the row, not an immutable fact about it.
+//
+// Computed ENTIRELY from server-validated fields — never trust an AI-provided hash string
+// (process-investment-file used to ask the model for one), since an LLM's formatting of the
+// same input isn't guaranteed byte-identical across two runs, which would silently break
+// dedup on reimport (the same class of bug running_balance caused in calculateFingerprint).
+export async function calculateInvestmentFingerprint(
+  platform: string,
+  date: string,
+  amount: number,
+  description: string,
+): Promise<string> {
+  const normalizedDesc = normalizeDescription(description);
+  const normalizedPlatform = (platform || 'unknown-platform').trim().toLowerCase();
+  const input = `${normalizedPlatform}|${date}|${Math.abs(amount).toFixed(2)}|${normalizedDesc}`;
+  return await sha256(input);
+}
+
 export function extractMonthKey(dateStr: string): string {
   const s = (dateStr || '').trim();
 

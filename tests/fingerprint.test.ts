@@ -3,6 +3,7 @@ import {
   sha256,
   normalizeDescription,
   calculateFingerprint,
+  calculateInvestmentFingerprint,
   extractMonthKey,
 } from '../supabase/functions/_shared/fingerprint';
 
@@ -59,6 +60,46 @@ describe('calculateFingerprint', () => {
     // Same transaction with different running_balance values → SAME fingerprint (dedup survives reimport).
     expect(withBalance).toBe(noBalance);
     expect(withBalance).toBe(differentBalance);
+  });
+});
+
+describe('calculateInvestmentFingerprint', () => {
+  // process-investment-file used to trust an AI-generated `hash_source` string, hashed with
+  // a weak custom rolling hash — an LLM's formatting of the same input isn't guaranteed
+  // byte-identical across two runs, which silently broke dedup on reimport (the same class
+  // of bug running_balance caused in calculateFingerprint). This is now computed entirely
+  // from validated fields with the same SHA-256 primitive used for transactions.
+  it('is deterministic for identical inputs', async () => {
+    const a = await calculateInvestmentFingerprint('Revolut', '2025-10-10', 500, 'ETF deposit');
+    const b = await calculateInvestmentFingerprint('Revolut', '2025-10-10', 500, 'ETF deposit');
+    expect(a).toBe(b);
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('differs when platform differs (same date/amount/desc on two platforms is NOT a dup)', async () => {
+    const revolut = await calculateInvestmentFingerprint('Revolut', '2025-10-10', 500, 'Deposit');
+    const myInvestor = await calculateInvestmentFingerprint('MyInvestor', '2025-10-10', 500, 'Deposit');
+    expect(revolut).not.toBe(myInvestor);
+  });
+
+  it('differs when date or amount differs', async () => {
+    const base = await calculateInvestmentFingerprint('Revolut', '2025-10-10', 500, 'Deposit');
+    const otherDate = await calculateInvestmentFingerprint('Revolut', '2025-10-11', 500, 'Deposit');
+    const otherAmount = await calculateInvestmentFingerprint('Revolut', '2025-10-10', 501, 'Deposit');
+    expect(base).not.toBe(otherDate);
+    expect(base).not.toBe(otherAmount);
+  });
+
+  it('ignores sign (deposit/withdrawal share the same amount magnitude convention)', async () => {
+    const positive = await calculateInvestmentFingerprint('Revolut', '2025-10-10', 500, 'Deposit');
+    const negative = await calculateInvestmentFingerprint('Revolut', '2025-10-10', -500, 'Deposit');
+    expect(positive).toBe(negative);
+  });
+
+  it('platform matching is case/whitespace-insensitive (AI wording variance shouldn\'t fragment dedup)', async () => {
+    const a = await calculateInvestmentFingerprint('Revolut Savings', '2025-10-10', 500, 'Deposit');
+    const b = await calculateInvestmentFingerprint('  revolut savings  ', '2025-10-10', 500, 'Deposit');
+    expect(a).toBe(b);
   });
 });
 

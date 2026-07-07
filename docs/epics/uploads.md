@@ -94,8 +94,33 @@ Correctness (categorization / dedup):
   `sign_fallback` row correctly stays eligible under that check, so no consumer breaks. No DB
   constraint restricts the column's values. Deployed.
 - [x] **Fingerprint can be NULL** → fixed in Fase 4 (2026-07-07): `fingerprint` is now `NOT NULL`
-  with a total `UNIQUE (user_id, domain, fingerprint)` index, DB-enforced. Still open: add
-  file-level dedup to the investment flow (only `process-import` has it).
+  with a total `UNIQUE (user_id, domain, fingerprint)` index, DB-enforced.
+- [x] **Investment dedup was weaker than transactions'** — fixed 2026-07-07. Two real gaps
+  closed:
+  1. `process-investment-file` trusted an AI-generated `hash_source` string, hashed with a
+     weak custom rolling hash (not SHA-256). An LLM's formatting of the same statement isn't
+     guaranteed byte-identical across two runs — the exact class of bug `running_balance`
+     caused for transactions — so dedup could silently break on reimport. The hash is now
+     computed entirely server-side from validated fields via a new
+     `calculateInvestmentFingerprint(platform, date, amount, description)` in
+     `_shared/fingerprint.ts` (mirrors `calculateFingerprint`'s design: identity fields only,
+     `type` deposit/withdrawal excluded same as movement/category are for transactions).
+     Removed `hash_source` from the AI prompt/schema entirely — it was never needed once the
+     hash is computed independently.
+  2. The old hash didn't include the platform, so the same deposit reported on two different
+     platforms (e.g. Revolut vs MyInvestor) would have collided as a false duplicate — same
+     gap `account_id` fixed for transactions. `platform` is now hashed after
+     `normalizePlatform()` runs (not the AI's raw wording), so "Savings" vs "Revolut Savings"
+     for the same real platform doesn't fragment dedup either.
+  3. DB: `investments.transaction_hash` was a nullable column behind a **partial** unique
+     index (`WHERE transaction_hash IS NOT NULL`) — NULL silently bypassed dedup, same gap
+     transactions had pre-Fase-4. Migration `20260707190000_investments_strong_dedup.sql` sets
+     `transaction_hash SET NOT NULL` and replaces the partial index with a total
+     `UNIQUE(user_id, transaction_hash)`. Backfilled all 4 existing demo rows with the new
+     formula (computed via the real deployed function, not hand-derived, to guarantee byte
+     parity) before applying the constraint — verified 4 rows → 4 distinct hashes after.
+  New tests in `tests/fingerprint.test.ts` (`calculateInvestmentFingerprint` describe block).
+  Deployed `process-investment-file`.
 
 Cleanliness / product:
 - [x] **Orphan edge functions** `apply-rules-retroactive` + `fix-categorization` — investigated
@@ -134,8 +159,8 @@ Cleanliness / product:
   `previewOnly: true` on upload → shows `InvestmentPreviewDialog` (date/description/
   platform/type/amount table + deposit/withdrawal counts) → user confirms →
   `previewOnly: false` re-runs the same parse+dedup and persists. New:
-  `src/components/imports/investments/InvestmentPreviewDialog.tsx`. Deployed.
-  Weaker dedup (file-level, not fingerprint-based like process-import) still open.
+  `src/components/imports/investments/InvestmentPreviewDialog.tsx`. Deployed. (Dedup strength
+  parity — see "Investment dedup was weaker than transactions'" above — fixed separately.)
 - [ ] **UI retry** button consuming the new `failed`/`partial` response fields. (Fase 1)
 - [ ] **`import_status` has no PARTIAL** — partial imports are marked NORMALIZED + `error_message`;
   a real `PARTIAL` enum value (migration) would be cleaner.

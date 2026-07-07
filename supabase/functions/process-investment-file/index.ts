@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
+import { calculateInvestmentFingerprint } from "../_shared/fingerprint.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,7 +48,6 @@ For each INVESTMENT transaction, extract:
 - type: "deposit" (money going to investment) or "withdrawal" (money coming back from investment)
 - platform: The investment platform name (e.g., "Revolut Savings", "Cocos", "MyInvestor", "Trade Republic")
 - asset_type: Type of asset if identifiable (e.g., "Savings", "ETF", "Stocks", "Bonds", "Crypto", "Mixed", null if unknown)
-- hash_source: String combining date|amount|normalizedDescription for duplicate detection
 
 TYPE DETECTION RULES:
 - DEPOSIT: Money leaving bank account TO investment platform (negative in bank statement)
@@ -61,30 +61,15 @@ IMPORTANT:
 - The amount should always be positive (use type to indicate direction)
 - Normalize platform names (e.g., "instant access savings" → "Revolut Savings")
 
-HASH_SOURCE FORMAT:
-"YYYYMMDD|amount|NORMALIZED_DESC"
-Example: "20241215|500.00|TRANSFERENCIA A COCOS CAPITAL"
-
 Example output:
 [
-  {"date":"2024-12-15","description":"Transferencia a Cocos Capital","amount":500.00,"type":"deposit","platform":"Cocos","asset_type":"Mixed","hash_source":"20241215|500.00|TRANSFERENCIA A COCOS CAPITAL"},
-  {"date":"2024-12-10","description":"To Instant Access Savings","amount":200.00,"type":"deposit","platform":"Revolut Savings","asset_type":"Savings","hash_source":"20241210|200.00|TO INSTANT ACCESS SAVINGS"},
-  {"date":"2024-12-05","description":"Aportación MyInvestor ETF","amount":300.00,"type":"deposit","platform":"MyInvestor","asset_type":"ETF","hash_source":"20241205|300.00|APORTACION MYINVESTOR ETF"},
-  {"date":"2024-12-01","description":"Rescate parcial Indexa","amount":1000.00,"type":"withdrawal","platform":"Indexa","asset_type":"Mixed","hash_source":"20241201|1000.00|RESCATE PARCIAL INDEXA"}
+  {"date":"2024-12-15","description":"Transferencia a Cocos Capital","amount":500.00,"type":"deposit","platform":"Cocos","asset_type":"Mixed"},
+  {"date":"2024-12-10","description":"To Instant Access Savings","amount":200.00,"type":"deposit","platform":"Revolut Savings","asset_type":"Savings"},
+  {"date":"2024-12-05","description":"Aportación MyInvestor ETF","amount":300.00,"type":"deposit","platform":"MyInvestor","asset_type":"ETF"},
+  {"date":"2024-12-01","description":"Rescate parcial Indexa","amount":1000.00,"type":"withdrawal","platform":"Indexa","asset_type":"Mixed"}
 ]
 
 If no investment transactions are found, return: []`;
-
-// Simple hash function for duplicate detection
-function generateHash(hashSource: string): string {
-  let hash = 0;
-  for (let i = 0; i < hashSource.length; i++) {
-    const char = hashSource.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16);
-}
 
 // Normalize platform names
 function normalizePlatform(platform: string): string {
@@ -256,21 +241,18 @@ serve(async (req) => {
     const seenHashesInBatch = new Set<string>();
 
     for (const inv of investments) {
-      // Generate hash from AI-provided hash_source or create one
-      let hashSource = inv.hash_source;
-      if (!hashSource) {
-        const normalizedDesc = (inv.description || '')
-          .toUpperCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^A-Z0-9]/g, '')
-          .substring(0, 30);
-        const dateStr = (inv.date || '').replace(/-/g, '');
-        const amountStr = Math.abs(inv.amount || 0).toFixed(2);
-        hashSource = `${dateStr}|${amountStr}|${normalizedDesc}`;
-      }
-      
-      const hash = generateHash(hashSource);
+      // Dedup key computed entirely server-side from validated fields \u2014 never trust the
+      // AI's own text for hashing (it isn't guaranteed byte-identical across two runs on
+      // the same statement, which would silently break dedup on reimport). Hash the
+      // ALREADY-normalized platform so AI wording variance ("Savings" vs "Revolut Savings")
+      // doesn't fragment the same real platform into different dedup buckets.
+      const platform = normalizePlatform(inv.platform || 'Unknown');
+      const hash = await calculateInvestmentFingerprint(
+        platform,
+        inv.date,
+        inv.amount,
+        inv.description || '',
+      );
 
       // Check for duplicates
       if (existingHashes.has(hash) || seenHashesInBatch.has(hash)) {
@@ -293,7 +275,7 @@ serve(async (req) => {
         description: inv.description || 'No description',
         amount: Math.abs(inv.amount),
         type,
-        platform: normalizePlatform(inv.platform || 'Unknown'),
+        platform,
         asset_type: inv.asset_type || null,
         original_text: null,
         transaction_hash: hash,

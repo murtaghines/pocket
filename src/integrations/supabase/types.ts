@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       accounts: {
@@ -412,7 +387,7 @@ export type Database = {
           id: string
           original_text: string | null
           platform: string
-          transaction_hash: string | null
+          transaction_hash: string
           type: string
           upload_id: string | null
           user_id: string
@@ -426,7 +401,7 @@ export type Database = {
           id?: string
           original_text?: string | null
           platform: string
-          transaction_hash?: string | null
+          transaction_hash: string
           type: string
           upload_id?: string | null
           user_id: string
@@ -440,7 +415,7 @@ export type Database = {
           id?: string
           original_text?: string | null
           platform?: string
-          transaction_hash?: string | null
+          transaction_hash?: string
           type?: string
           upload_id?: string | null
           user_id?: string
@@ -450,7 +425,7 @@ export type Database = {
             foreignKeyName: "investments_upload_id_fkey"
             columns: ["upload_id"]
             isOneToOne: false
-            referencedRelation: "uploads"
+            referencedRelation: "imports"
             referencedColumns: ["id"]
           },
         ]
@@ -953,9 +928,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       account_role: ["CASH", "INVESTMENT"],
