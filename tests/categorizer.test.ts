@@ -136,6 +136,26 @@ describe('KNOWN GAP — trailing-\\b rules miss ".COM"-style descriptors', () =>
   });
 });
 
+describe('categorize — determinism guarantee for the raw/clean double-pass optimization', () => {
+  // process-import calls categorize(descriptionRaw) then falls back to
+  // categorize(descriptionClean) only if the two normalize differently — skipping a
+  // redundant full 2500+-rule scan when it would be guaranteed to repeat. This only holds
+  // if categorize() is a pure function of normalize(description) (plus amount/ctx), which
+  // this test locks in: any two inputs that normalize identically MUST categorize identically.
+  it('gives identical results for two descriptions that normalize the same', () => {
+    const ctx: UserContext = { firstName: 'Juan', lastName: 'Pérez' };
+    const pairs: [string, string][] = [
+      ['NETFLIX', 'netflix'],
+      ['  MERCADONA   MADRID  ', 'Mercadona Madrid'],
+      ['H&M Kids', 'HM Kids'],
+    ];
+    for (const [a, b] of pairs) {
+      expect(normalize(a)).toBe(normalize(b));
+      expect(categorize(a, -20, ctx)).toEqual(categorize(b, -20, ctx));
+    }
+  });
+});
+
 describe('categorizeBatch — coverage stats + dashboard routing', () => {
   const ctx: UserContext = { firstName: 'Juan', lastName: 'Pérez' };
 

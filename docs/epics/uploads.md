@@ -133,26 +133,36 @@ Found and fixed two production bugs live during this pass:
   session start), completed in 2:09 (vs. timeout, or 3:23 with only the N+1 fix and
   userContext still broken). Demo data cleaned up afterward; `user_preferences.
   joint_account_names` reset to `[]` (the test value that was set to verify the fix).
-- [ ] **NEW — real ~150s hard execution-time ceiling, not a gradual resource leak.** Tested
-  the larger real personal-checking statement (18 pages, ~62KB extracted text vs 38KB for the
-  197-row joint file) with all fixes deployed — failed again
-  (`WORKER_RESOURCE_LIMIT`/`500`, 0 rows landed this time). Edge-function logs show execution
-  times clustering right at a ceiling: 150271ms (fail), 148918ms (the joint file succeeding at
-  2:09), 138397ms (this failure), 9629ms (10-row synthetic, no contention). This strongly
-  suggests **Supabase Edge Functions has a hard wall-clock limit around 150s** for this
-  project's plan — not something that degrades gracefully with load, a cliff. The 197-row
-  joint file already ran at 129s, uncomfortably close to that ceiling; a bigger file (more
-  rows to categorize + a bigger AI extraction call) pushes total time past it.
-  **Practical takeaway:** multi-month statements (this personal account's file covered
-  Apr–Jun, ~300+ rows) are now the realistic failure mode, not an edge case — this matters
-  because the user explicitly said uploads won't always be month-by-month. **Not yet fixed.**
-  Real fixes require either (a) reducing per-row/per-file work further (batch multi-row
-  inserts instead of chunked single-row inserts; investigate whether `categorize()`'s regex
-  matching cost can be cut, e.g. skip the second raw/clean pass when they're near-identical),
-  or (b) an architectural change — process asynchronously (return immediately, keep working
-  in the background / a queue) instead of doing extraction+categorization+insert all inside
-  one request-response cycle. (b) is the more robust fix but a bigger change; worth deciding
-  deliberately rather than patching further under time pressure this session.
+- [x] **P1 — real ~150s hard execution-time ceiling confirmed; two more safe optimizations
+  applied, both real but not sufficient to clear it for very large files.**
+  Edge-function logs showed execution times clustering right at a ceiling regardless of what
+  else changed: 150271ms, 148918ms, 138397ms, 150271ms again — all near the same wall,
+  distinct from the earlier gradual-slowdown symptoms. The idle-timeout response even names
+  it explicitly: `{"code":"IDLE_TIMEOUT","message":"Request idle timeout limit (150s) reached"}`.
+  This is a **hard Supabase Edge Functions wall-clock limit around 150s** on this project's
+  plan, not something that degrades gracefully — a cliff.
+  Two more fixes applied on top of the userContext/N+1/parallel-insert fixes above:
+  1. **Real multi-row batch inserts** (`transactions.upsert(batch, {ignoreDuplicates:true})`
+     on the `(user_id, domain, fingerprint)` partial unique index, `import_rows.upsert(batch)`
+     on its plain unique constraint) instead of chunked-but-still-one-request-per-row inserts.
+     Cuts a 300-row statement from ~300+ HTTP round-trips to ~12. A useful side effect: a
+     mid-batch failure now leaves at most one batch (≤50 rows) uncommitted instead of
+     leaving individual orphaned rows scattered across the whole file — reduces (but doesn't
+     eliminate) the half-fail orphan risk documented above.
+  2. **Skip the redundant raw/clean `categorize()` second pass** when both normalize to the
+     same string — guaranteed identical result since `categorize()` is a pure function of
+     `normalize(description)` (locked in by a new determinism test in
+     `tests/categorizer.test.ts`). Was running the full 2500+-rule scan twice for every
+     unmatched transaction; now only runs twice when raw/clean genuinely differ.
+  **Result:** the 197-row joint file (already fixed by the prior 3 bugs) still works. The
+  18-page personal statement (~300+ rows, 62KB extracted text) **still hits the 150s ceiling**
+  even with all 5 optimizations applied — confirms the safe, low-risk optimization budget is
+  exhausted for files this size. **Not fixed for large files.** The two remaining paths are
+  both bigger changes, deliberately not attempted this session: (a) further categorize()
+  optimization (would mean changing matching logic itself, not just call scheduling — riskier
+  for a 2500+-rule, well-tested engine), or (b) an architectural change to asynchronous /
+  background processing (return immediately, keep working outside the request-response
+  cycle) — the more robust fix, but a bigger scope deserving its own session.
 - **Dangerous side-effect of the half-fail bug (already tracked above):** when either
   resource-limit failure hits mid-loop, it leaves **orphaned transactions already committed**
   (seen: 18 rows, 72 rows, 66 rows across different runs) while the `imports` row stays at

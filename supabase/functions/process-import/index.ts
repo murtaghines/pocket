@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
-import { categorize, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
+import { categorize, normalize as normalizeForCategorizer, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
 import {
   type MovementType,
@@ -1109,10 +1109,10 @@ serve(async (req) => {
     // Per-month dedupe trackers (so identical txs in different months stay distinct).
     const seenFingerprintsByMonth: Record<string, Set<string>> = {};
     const seenNaturalKeysByMonth: Record<string, Set<string>> = {};
-    // import_rows upserts don't affect dedup decisions (audit-only), so they're fired without
-    // blocking the loop and awaited together afterwards — was one sequential round-trip per
-    // row, a major contributor to WORKER_RESOURCE_LIMIT on large statements.
-    const importRowPromises: Promise<unknown>[] = [];
+    // import_rows records don't affect dedup decisions (audit-only), so they're collected
+    // here and batch-upserted after the loop instead of one round-trip per row — was a major
+    // contributor to WORKER_RESOURCE_LIMIT on large statements.
+    const importRowRecords: Record<string, unknown>[] = [];
 
     for (let i = 0; i < allTransactions.length; i++) {
       const t = allTransactions[i];
@@ -1162,25 +1162,16 @@ serve(async (req) => {
 
       const rowHash = await sha256(JSON.stringify(t));
 
-      importRowPromises.push((async () => {
-        try {
-          await supabase.from('import_rows').upsert({
-            import_id: importId,
-            row_index: i,
-            raw_json: t,
-            row_hash_sha256: rowHash,
-            parsed_date: postedDate,
-            parsed_amount: amountSigned,
-            parsed_currency: currency,
-            parsed_description: descriptionClean
-          }, {
-            onConflict: 'import_id,row_hash_sha256',
-            ignoreDuplicates: true
-          });
-        } catch {
-          console.log(`[process-import] Row already exists, skipping: ${rowHash.substring(0, 8)}`);
-        }
-      })());
+      importRowRecords.push({
+        import_id: importId,
+        row_index: i,
+        raw_json: t,
+        row_hash_sha256: rowHash,
+        parsed_date: postedDate,
+        parsed_amount: amountSigned,
+        parsed_currency: currency,
+        parsed_description: descriptionClean
+      });
 
       if (existingFingerprints.has(fingerprint) || seenFingerprints.has(fingerprint)) {
         stats.duplicatesIgnored++;
@@ -1242,9 +1233,16 @@ serve(async (req) => {
       
       // ── Priority 2: Advanced Categorizer (2500+ regex patterns) ──
       // Uses the description_raw for best matching against bank descriptions.
-      // Also tries description_clean as fallback.
+      // Also tries description_clean as fallback — but only when it would actually differ:
+      // categorize() normalizes its input internally, so if raw and clean normalize to the
+      // same string the second pass is guaranteed to repeat the same 2500+ rule scan for an
+      // identical result. Skipping it in that (common) case doesn't change any outcome, and
+      // was a real contributor to CPU-time timeouts on large statements (each full unmatched
+      // pass over RULE_BUCKETS is the expensive case, and it used to always run twice).
       const rawMatch = categorize(descriptionRaw, amountSigned, userContext)
-                    || categorize(descriptionClean, amountSigned, userContext);
+                    || (normalizeForCategorizer(descriptionRaw) !== normalizeForCategorizer(descriptionClean)
+                          ? categorize(descriptionClean, amountSigned, userContext)
+                          : null);
 
       // Sign-first guardrail: reject categorizer matches whose movement
       // contradicts the amount sign (TRANSFER is exempt — it can be ±).
@@ -1389,52 +1387,80 @@ serve(async (req) => {
       newTransactions.push(txRecord);
     }
 
-    // Wait for the import_rows audit upserts fired during the loop above — chunked so we
-    // don't open hundreds of concurrent connections at once on large statements.
-    const INSERT_CHUNK_SIZE = 25;
-    for (let start = 0; start < importRowPromises.length; start += INSERT_CHUNK_SIZE) {
-      await Promise.all(importRowPromises.slice(start, start + INSERT_CHUNK_SIZE));
+    // Batch-upsert the import_rows audit records collected during the loop above — real
+    // multi-row upserts (matches the plain UNIQUE (import_id, row_hash_sha256) constraint),
+    // not one request per row.
+    const IMPORT_ROW_BATCH_SIZE = 50;
+    for (let start = 0; start < importRowRecords.length; start += IMPORT_ROW_BATCH_SIZE) {
+      const batch = importRowRecords.slice(start, start + IMPORT_ROW_BATCH_SIZE);
+      const { error } = await supabase.from('import_rows').upsert(batch, {
+        onConflict: 'import_id,row_hash_sha256',
+        ignoreDuplicates: true
+      });
+      if (error) console.log(`[process-import] import_rows batch upsert error: ${error.message}`);
     }
 
-    // Insert transactions in parallel chunks instead of one awaited request per row — the
-    // per-row insert/error-counting logic is unchanged, only the scheduling. This plus the
-    // categorization_rules N+1 fix were the two biggest contributors to WORKER_RESOURCE_LIMIT
-    // on real multi-page statements (~200 rows previously meant ~200 sequential round-trips).
+    // Insert transactions as real multi-row batches (upsert + ignoreDuplicates on the
+    // (user_id, domain, fingerprint) partial unique index) instead of one HTTP request per
+    // row — cuts a 300-row statement from ~300 round-trips to ~6. A batch-level duplicate
+    // (23505-equivalent) is handled by ignoreDuplicates without failing the whole batch; we
+    // detect which rows landed by comparing returned fingerprints against what we sent. If
+    // the batch itself errors for a real reason (not a duplicate), fall back to inserting
+    // that one batch row-by-row so a single bad row doesn't sink otherwise-good ones and we
+    // keep the existing failed-vs-duplicate accounting.
+    const TX_BATCH_SIZE = 50;
     let insertFailedCount = 0;
     const insertErrorSamples: string[] = [];
     if (newTransactions.length > 0) {
       let successCount = 0;
       let duplicateCount = 0;
 
-      for (let start = 0; start < newTransactions.length; start += INSERT_CHUNK_SIZE) {
-        const chunk = newTransactions.slice(start, start + INSERT_CHUNK_SIZE);
-        const results = await Promise.all(
-          chunk.map(async (tx) => {
+      const recordDuplicate = (txMonthKey: string) => {
+        duplicateCount++;
+        if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
+        monthsDistribution[txMonthKey].duplicates++;
+      };
+      const recordSuccess = (txMonthKey: string) => {
+        successCount++;
+        if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
+        monthsDistribution[txMonthKey].new++;
+      };
+      const recordFailure = (message: string) => {
+        insertFailedCount++;
+        if (insertErrorSamples.length < 5) insertErrorSamples.push(message);
+        console.error('[process-import] Error inserting transaction:', message);
+      };
+
+      for (let start = 0; start < newTransactions.length; start += TX_BATCH_SIZE) {
+        const batch = newTransactions.slice(start, start + TX_BATCH_SIZE);
+        const batchClean = batch.map(({ _month_key, ...rest }) => rest);
+
+        const { data: inserted, error: batchError } = await supabase
+          .from('transactions')
+          .upsert(batchClean, { onConflict: 'user_id,domain,fingerprint', ignoreDuplicates: true })
+          .select('fingerprint');
+
+        if (batchError) {
+          // Real error somewhere in this batch — isolate it row-by-row so one bad row
+          // doesn't sink the other 49, and so we can still tell duplicate from failure.
+          for (const tx of batch) {
             const txMonthKey: string = tx._month_key;
             const { _month_key, ...txClean } = tx;
             const { error } = await supabase.from('transactions').insert(txClean);
-            return { txMonthKey, error };
-          })
-        );
-
-        for (const { txMonthKey, error: insertError } of results) {
-          if (insertError) {
-            if (insertError.code === '23505') {
-              duplicateCount++;
-              if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
-              monthsDistribution[txMonthKey].duplicates++;
+            if (error) {
+              if (error.code === '23505') recordDuplicate(txMonthKey);
+              else recordFailure(error.message);
             } else {
-              // A real insert failure (not a duplicate). Previously this was only logged and
-              // the import was still reported as NORMALIZED, silently dropping the row.
-              insertFailedCount++;
-              if (insertErrorSamples.length < 5) insertErrorSamples.push(insertError.message);
-              console.error('[process-import] Error inserting transaction:', insertError);
+              recordSuccess(txMonthKey);
             }
-          } else {
-            successCount++;
-            if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
-            monthsDistribution[txMonthKey].new++;
           }
+          continue;
+        }
+
+        const insertedFingerprints = new Set((inserted || []).map((r: { fingerprint: string }) => r.fingerprint));
+        for (const tx of batch) {
+          if (insertedFingerprints.has(tx.fingerprint)) recordSuccess(tx._month_key);
+          else recordDuplicate(tx._month_key);
         }
       }
 
