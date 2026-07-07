@@ -132,9 +132,9 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const { fileContent, importId, uploadId } = await req.json();
+    const { fileContent, importId, uploadId, previewOnly } = await req.json();
     const userId = authData.user.id;
-    
+
     // Support both importId (new) and uploadId (legacy) for backwards compatibility
     const recordId = importId || uploadId;
 
@@ -302,26 +302,29 @@ serve(async (req) => {
 
     console.log(`New investments to insert: ${newInvestments.length}, Duplicates: ${duplicateCount.count}`);
 
-    // Insert only new investments
-    if (newInvestments.length > 0) {
-      const { error: insertError } = await supabase
-        .from('investments')
-        .insert(newInvestments);
+    // If previewOnly, skip persistence and return preview data
+    if (!previewOnly) {
+      // Insert only new investments
+      if (newInvestments.length > 0) {
+        const { error: insertError } = await supabase
+          .from('investments')
+          .insert(newInvestments);
 
-      if (insertError) {
-        console.error('Error inserting investments:', insertError);
-        throw new Error(`Failed to insert investments: ${insertError.message}`);
+        if (insertError) {
+          console.error('Error inserting investments:', insertError);
+          throw new Error(`Failed to insert investments: ${insertError.message}`);
+        }
       }
-    }
 
-    // Update import status to NORMALIZED
-    await supabase
-      .from('imports')
-      .update({ 
-        status: 'NORMALIZED', 
-        transactions_count: newInvestments.length,
-      })
-      .eq('id', recordId);
+      // Update import status to NORMALIZED
+      await supabase
+        .from('imports')
+        .update({
+          status: 'NORMALIZED',
+          transactions_count: newInvestments.length,
+        })
+        .eq('id', recordId);
+    }
 
     const message = `Processed ${newInvestments.length} investments` +
       (depositCount.count > 0 ? ` (${depositCount.count} deposits` : '') +
@@ -331,9 +334,11 @@ serve(async (req) => {
     console.log(`Successfully processed investment import ${recordId}: ${message}`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message,
+        previewMode: previewOnly,
+        data: previewOnly ? newInvestments : undefined,
         stats: {
           newInvestments: newInvestments.length,
           deposits: depositCount.count,

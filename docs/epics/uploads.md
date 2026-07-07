@@ -81,8 +81,15 @@ Cleanliness / product:
   deleting vs wiring. (spawned as its own task)
 - [x] **`Function()` amount eval** — replaced with `src/lib/safeMath.ts` (recursive-descent
   parser, no eval), 11 tests. (Fase 5, done 2026-07-06)
-- [ ] **Investment flow** auto-processes with no preview + weaker dedup — add review parity with
-  the bank flow. (Fase 5)
+- [x] **Investment flow** auto-processes with no preview — fixed 2026-07-07: added a
+  preview step matching the bank flow. `process-investment-file` now takes `previewOnly`
+  (parses + dedups against existing hashes, returns the would-be-inserted rows, skips the
+  `investments` insert and the `imports` status update). Frontend does two calls:
+  `previewOnly: true` on upload → shows `InvestmentPreviewDialog` (date/description/
+  platform/type/amount table + deposit/withdrawal counts) → user confirms →
+  `previewOnly: false` re-runs the same parse+dedup and persists. New:
+  `src/components/imports/investments/InvestmentPreviewDialog.tsx`. Deployed.
+  Weaker dedup (file-level, not fingerprint-based like process-import) still open.
 - [ ] **UI retry** button consuming the new `failed`/`partial` response fields. (Fase 1)
 - [ ] **`import_status` has no PARTIAL** — partial imports are marked NORMALIZED + `error_message`;
   a real `PARTIAL` enum value (migration) would be cleaner.

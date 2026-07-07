@@ -12,6 +12,7 @@ import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
 import { UploadedFilesDropdown } from "./investments/UploadedFiles";
 import { MonthTabStrip } from "./investments/MonthTabStrip";
 import { MonthWorkspace } from "./investments/MonthWorkspace";
+import { InvestmentPreviewDialog } from "./investments/InvestmentPreviewDialog";
 import type { PendingInvEdit } from "./investments/types";
 
 const DEFAULT_MONTHS = 6;
@@ -30,6 +31,11 @@ export function InvestmentTabsView() {
     processFilesForMonth,
     isProcessingMonth,
     getPendingCountForMonth,
+    showPreview,
+    previewInvestments,
+    isConfirming,
+    confirmPreview,
+    cancelPreview,
   } = useMonthlyInvestmentUpload();
 
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
@@ -209,6 +215,14 @@ export function InvestmentTabsView() {
           setPendingByInv={setPendingByInv}
         />
       )}
+
+      <InvestmentPreviewDialog
+        isOpen={showPreview}
+        investments={previewInvestments}
+        isConfirming={isConfirming}
+        onConfirm={confirmPreview}
+        onCancel={cancelPreview}
+      />
     </div>
   );
 }

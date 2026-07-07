@@ -20,6 +20,10 @@ type PendingFilesByMonth = Record<string, PendingFile[]>;
 
 export function useMonthlyInvestmentUpload() {
   const [pendingFilesByMonth, setPendingFilesByMonth] = useState<PendingFilesByMonth>({});
+  const [previewInvestments, setPreviewInvestments] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [pendingImportId, setPendingImportId] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -138,49 +142,40 @@ export function useMonthlyInvestmentUpload() {
 
         if (insertError) throw insertError;
 
-        const { data, error } = await supabase.functions.invoke(
+        // First pass: preview only (don't persist yet)
+        const { data: previewData, error: previewError } = await supabase.functions.invoke(
           "process-investment-file",
           {
             body: {
               fileContent,
               importId: importRecord.id,
               userId: user.id,
+              previewOnly: true,
             },
           }
         );
 
-        if (error) throw error;
+        if (previewError) throw previewError;
 
-        const stats = data.stats;
-        
+        // Show preview dialog
+        const previewInvestments = previewData.data || [];
+        setPreviewInvestments(previewInvestments);
+        setPendingImportId(importRecord.id);
+        setShowPreview(true);
+
+        // Mark file as ready for preview
         setPendingFilesByMonth((prev) => ({
           ...prev,
           [monthKey]: (prev[monthKey] || []).map((f) =>
             f.id === uploadFile.id
-              ? { ...f, status: "completed" as const, transactionsCount: stats?.newInvestments || 0 }
+              ? {
+                  ...f,
+                  status: "completed" as const,
+                  transactionsCount: previewInvestments.length,
+                }
               : f
           ),
         }));
-
-        let description = `${stats?.newInvestments || 0} movements processed`;
-        if (stats?.duplicatesIgnored > 0) {
-          description += `, ${stats.duplicatesIgnored} duplicates ignored`;
-        }
-
-        toast({
-          title: "File processed",
-          description: `${uploadFile.name}: ${description}`,
-        });
-
-        queryClient.invalidateQueries({ queryKey: ["investments"] });
-        queryClient.invalidateQueries({ queryKey: ["imports"] });
-
-        setTimeout(() => {
-          setPendingFilesByMonth((prev) => ({
-            ...prev,
-            [monthKey]: (prev[monthKey] || []).filter((f) => f.id !== uploadFile.id),
-          }));
-        }, 2000);
 
       } catch (error: any) {
         console.error("Error processing investment file:", error);
@@ -212,6 +207,60 @@ export function useMonthlyInvestmentUpload() {
     ).length;
   }, [pendingFilesByMonth]);
 
+  const confirmPreview = useCallback(async () => {
+    if (!pendingImportId || !user) return;
+
+    setIsConfirming(true);
+    try {
+      // Second pass: persist (previewOnly=false or omitted)
+      const { data, error } = await supabase.functions.invoke(
+        "process-investment-file",
+        {
+          body: {
+            importId: pendingImportId,
+            userId: user.id,
+            previewOnly: false,
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      const stats = data.stats;
+      let description = `${stats?.newInvestments || 0} movements saved`;
+      if (stats?.duplicatesIgnored > 0) {
+        description += `, ${stats.duplicatesIgnored} duplicates ignored`;
+      }
+
+      toast({
+        title: "Investments saved",
+        description,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["investments"] });
+      queryClient.invalidateQueries({ queryKey: ["imports"] });
+
+      setShowPreview(false);
+      setPreviewInvestments([]);
+      setPendingImportId(null);
+    } catch (error: any) {
+      console.error("Error confirming investments:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Could not save investments",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConfirming(false);
+    }
+  }, [pendingImportId, user, queryClient, toast]);
+
+  const cancelPreview = useCallback(() => {
+    setShowPreview(false);
+    setPreviewInvestments([]);
+    setPendingImportId(null);
+  }, []);
+
   return {
     pendingFilesByMonth,
     addFilesForMonth,
@@ -219,5 +268,11 @@ export function useMonthlyInvestmentUpload() {
     processFilesForMonth,
     isProcessingMonth,
     getPendingCountForMonth,
+    // Preview dialog state and handlers
+    showPreview,
+    previewInvestments,
+    isConfirming,
+    confirmPreview,
+    cancelPreview,
   };
 }
