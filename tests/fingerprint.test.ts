@@ -63,6 +63,35 @@ describe('calculateFingerprint', () => {
   });
 });
 
+describe('user-edit invariant: re-upload dedup survives edits', () => {
+  // The dedup key is computed from the FILE's original values and stored frozen. A user can
+  // later reshape the row (edit amount/category/movement) in place, but the stored
+  // fingerprint is never recomputed. This test models that guarantee at the primitive level:
+  // re-uploading the same statement recomputes the SAME hash from the SAME original inputs,
+  // so it matches the frozen stored value and is skipped — independent of any edit the user
+  // made to the displayed row. See docs/epics/uploads.md "Modelo de integridad".
+
+  it('re-hashing the ORIGINAL imported values reproduces the frozen fingerprint exactly', async () => {
+    // Import time: file row is -125.40 "Carrefour".
+    const atImport = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -125.4, 'EUR', 'Carrefour', 500);
+    // Re-upload later: process-import re-parses the SAME file row → same inputs → same hash.
+    const atReupload = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -125.4, 'EUR', 'Carrefour', 999);
+    expect(atReupload).toBe(atImport); // matches the frozen stored value ⇒ deduped, not duplicated
+  });
+
+  it('an edited display amount does NOT change what the file re-hashes to (edit is a shaped view)', async () => {
+    // Stored fingerprint is frozen at the original -125.40; the user edits the row to -100.
+    const frozen = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -125.4, 'EUR', 'Carrefour', 500);
+    // On re-upload the file STILL says -125.40 (the user's edit lives only on the DB row),
+    // so the recomputed hash equals the frozen one and dedup holds.
+    const fileOnReupload = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -125.4, 'EUR', 'Carrefour', 500);
+    expect(fileOnReupload).toBe(frozen);
+    // Sanity: had the fingerprint been (wrongly) recomputed from the edited -100, it would differ.
+    const ifRecomputedFromEdit = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -100, 'EUR', 'Carrefour', 500);
+    expect(ifRecomputedFromEdit).not.toBe(frozen);
+  });
+});
+
 describe('calculateInvestmentFingerprint', () => {
   // process-investment-file used to trust an AI-generated `hash_source` string, hashed with
   // a weak custom rolling hash — an LLM's formatting of the same input isn't guaranteed

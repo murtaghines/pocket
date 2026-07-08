@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { Transaction, MonthlyData, Category } from "@/lib/mockData";
@@ -85,7 +85,6 @@ interface UseTransactionsOptions {
 export function useTransactions(options: UseTransactionsOptions = {}) {
   const { domain = "CASHFLOW", periodId } = options;
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
   const { data: transactions = [], isLoading, error } = useQuery({
     queryKey: ["transactions", user?.id, domain, periodId],
@@ -126,20 +125,13 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           ''
         ).trim() || rawDesc;
 
-        // Determine movement: trust DB movement, but fix mismatches
-        // If amount is positive and movement says EXPENSE, override to INCOME
-        // If amount is negative and movement says INCOME, override to EXPENSE
-        let movement = t.movement;
-        let categoryOverride: string | null = null;
-        if (t.amount > 0 && movement === 'EXPENSE') {
-          movement = 'INCOME';
-          // Original category was an expense category; reset to a sensible income default
-          categoryOverride = 'other_income';
-        } else if (t.amount < 0 && movement === 'INCOME') {
-          movement = 'EXPENSE';
-          // Original category was an income category; reset to a sensible expense default
-          categoryOverride = 'other_expense';
-        }
+        // `movement` is the DB's single source of truth — display it exactly as stored.
+        // We deliberately do NOT silently "fix" sign/movement mismatches here: doing so made
+        // the dashboard show numbers that diverged from both the saved data and the inline
+        // editor. Residual mismatches (amount sign vs movement) are surfaced and corrected
+        // explicitly in the editor's mismatch banner, so there is one source of truth for the
+        // shaped view. See docs/epics/uploads.md "Modelo de integridad".
+        const movement = t.movement;
 
         // Derive the app-level `type` (income/expense/transfer) from `movement`, the DB's
         // single source of truth. The legacy `type` DB column was dropped in Fase 4.
@@ -151,7 +143,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
         const type = movement ? movementToType[movement] : "expense";
 
-        const finalCategory = categoryOverride || t.category;
+        const finalCategory = t.category;
         const accountName = t.account_id ? accountMap[t.account_id] || "Unknown" : "Unknown";
 
         return {
@@ -236,18 +228,10 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     return result;
   })();
 
-  const deleteTransaction = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    },
-  });
+  // NOTE: there is intentionally no hard-delete for transactions. Excluding a row from
+  // analysis is done via the soft `is_hidden` flag (reversible, audited, still deduped on
+  // re-upload). A hard DELETE would both lose the row's history and let it silently reappear
+  // on the next re-import (no row ⇒ no fingerprint ⇒ re-inserted). See docs/epics/uploads.md.
 
   // Filter out transfers for financial calculations (movement is the source of truth)
   const financialTransactions = transactions.filter((t) => t.movement !== "TRANSFER");
@@ -410,7 +394,6 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     openingBalanceByMonth,
     isLoading,
     error,
-    deleteTransaction,
     hasData: transactions.length > 0,
     transfersCount: transfers.length,
     investmentMovementsCount: investmentMovements.length,

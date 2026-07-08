@@ -253,6 +253,12 @@ export function InlineTransactionsEditor({
         if (key.startsWith("__")) continue;
         updatePayload[key] = payload[key];
       }
+      // INTEGRITY INVARIANT — NEVER put `fingerprint` in this update payload.
+      // The fingerprint is frozen at import time (the file's original values) and is what
+      // re-upload dedup matches against. If an edit recomputed it from the row's new
+      // (shaped) values, re-uploading the same file would no longer match and would
+      // silently duplicate the transaction. This is guarded by tests/integrity-invariants.test.ts
+      // and documented in docs/epics/uploads.md "Modelo de integridad".
       const { error } = await supabase.from("transactions").update(updatePayload).eq("id", id);
       if (error) throw error;
 

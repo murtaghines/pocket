@@ -13,6 +13,70 @@
 - Shared module: supabase/functions/_shared/categorizer.ts (categorization engine — not
   a deployed function)
 
+## Modelo de integridad: dato real vs. vista del usuario (2026-07-08)
+
+Principio central: **el dato importado real es inmutable para efectos de deduplicación; los
+cambios del usuario son una capa de "forma" encima.** Esto permite que re-subir el mismo
+archivo (p. ej. junio otra vez, por error) **no duplique** transacciones, aunque el usuario
+haya editado categorías, montos, movimientos u ocultado filas. Verificado end-to-end
+(código + DB en vivo) el 2026-07-08.
+
+**Qué es "el dato real":**
+- La fila importada + su `fingerprint`. El fingerprint = SHA-256 de los valores ORIGINALES del
+  archivo (`accountId | date | amount(2dp) | currency | normDesc`, o `userId | accountId |
+  sourceTxId` si el banco da un id). Se calcula **una sola vez, al importar (INSERT)** en
+  `supabase/functions/_shared/fingerprint.ts:35-56` (llamado en `process-import/index.ts`).
+- El staging crudo en `import_rows.raw_json` — la extracción original completa, se conserva
+  (solo se borra por CASCADE si se elimina el `import` padre).
+
+**Qué es "la vista/forma del usuario":**
+- Ediciones de categoría/movimiento/monto y el flag `is_hidden` se escriben **in-place** sobre
+  columnas de la fila de `transactions` (`InlineTransactionsEditor.tsx` `saveMutation`). No hay
+  tabla de overrides.
+- `is_hidden` es un soft-hide: la fila se conserva, se puede revertir, y el dashboard la excluye
+  en la query (`useTransactions.tsx`, `.eq("is_hidden", false)`). **No existe borrado duro** de
+  transacciones (se quitó `deleteTransaction` sin uso el 2026-07-08): un DELETE perdería el
+  historial y la fila reaparecería al re-subir.
+
+**Por qué re-subir no duplica (la invariante crítica):**
+- El `fingerprint` **nunca se recalcula en UPDATE**. No hay trigger de UPDATE en `transactions`,
+  y ningún payload de edición incluye `fingerprint`. Así queda congelado con los valores
+  originales.
+- Al re-subir, `process-import` recomputa el fingerprint **desde el archivo** (valores
+  originales) → coincide con el fingerprint congelado → la fila se salta. Enforcement:
+  índice único total `idx_transactions_fingerprint (user_id, domain, fingerprint)` +
+  `upsert(..., { onConflict, ignoreDuplicates: true })` (= `ON CONFLICT DO NOTHING`,
+  nunca sobrescribe) + short-circuit por hash del archivo (HTTP 409). Ver
+  `process-import/index.ts:671-690, 1038-1163, 1408-1425`.
+- Entradas manuales (sin archivo) reciben un fingerprint único propio, así que nunca colisionan
+  ni deduplican (`ManualEntryFooter.tsx`).
+
+**Historial y reversión:**
+- Cada edición registra un evento en `audit_log` vía el RPC `log_audit_event` (`{fields, before,
+  after}`, acción `edit`/`revert`). Campos rastreados: movement, category, category_id, amount,
+  `is_hidden` (`helpers.tsx` `USER_TRACKED_FIELDS`).
+- El "original" de un campo editado se reconstruye del `before` más antiguo del audit_log
+  (`buildOriginalSnapshot`). "Undo" y "Restore original" reescriben los valores viejos como un
+  UPDATE nuevo con acción `revert` (no borran filas de audit).
+- **El dato real (fingerprint congelado + import_rows) NO depende del audit_log**: aunque se
+  perdiera el historial, la dedup de re-subida sigue funcionando.
+
+**Dashboard = vista con forma, no dato crudo:**
+- `useTransactions.tsx` lee el estado ACTUAL de la fila y excluye ocultas y transferencias de
+  los totales. Ya **no** hay auto-corrección silenciosa de signo→movimiento (se quitó el
+  2026-07-08): el dashboard muestra el `movement` tal como está guardado; los desajustes de
+  signo se marcan y corrigen explícitamente en la tabla de edición (banner `mismatchedIds`),
+  una sola fuente de verdad.
+
+**Guardas anti-regresión** (para que esto no se rompa en el futuro):
+- Comentario en `InlineTransactionsEditor.tsx` saveMutation: nunca poner `fingerprint` en un
+  payload de UPDATE.
+- `COMMENT ON COLUMN public.transactions.fingerprint` en la DB (migración
+  `20260708115502_document_fingerprint_invariant.sql`).
+- `tests/integrity-invariants.test.ts`: falla en CI si aparece un trigger de UPDATE en
+  `transactions` o si un `.update()` sobre `transactions` incluye `fingerprint`.
+- `tests/fingerprint.test.ts`: bloque "user-edit invariant" que modela editar → re-subir → dedup.
+
 ## Shared finances (2026-07-07)
 Investigated how the app should handle shared/joint finances — the user lives with a partner
 and wanted to know if uploading a partner's own bank statement (not a joint account) was
