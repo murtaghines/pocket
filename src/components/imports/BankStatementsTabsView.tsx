@@ -30,6 +30,8 @@ export function BankStatementsTabsView() {
     isProcessingMonth,
     isProcessingAny,
     pendingFilesByMonth,
+    retryImport,
+    retryingImportIds,
   } = useMonthlyFileUpload();
 
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
@@ -214,6 +216,8 @@ export function BankStatementsTabsView() {
             isDeleting={isDeleting}
             toggleLockImport={toggleLockImport}
             pendingImportIds={pendingImportIds}
+            retryImport={retryImport}
+            retryingImportIds={retryingImportIds}
           />
         </div>
       </div>

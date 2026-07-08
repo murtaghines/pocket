@@ -799,7 +799,7 @@ export type Database = {
     Enums: {
       account_role: "CASH" | "INVESTMENT"
       app_domain: "CASHFLOW" | "INVESTING"
-      import_status: "UPLOADED" | "PARSED" | "NORMALIZED" | "FAILED"
+      import_status: "UPLOADED" | "PARSED" | "NORMALIZED" | "FAILED" | "PARTIAL"
       movement_type: "INCOME" | "EXPENSE" | "TRANSFER"
       period_status: "OPEN" | "READY_TO_CLOSE" | "CLOSED"
       source_type: "BANK" | "BROKER" | "SAVINGS" | "CARD" | "OTHER"
@@ -932,7 +932,7 @@ export const Constants = {
     Enums: {
       account_role: ["CASH", "INVESTMENT"],
       app_domain: ["CASHFLOW", "INVESTING"],
-      import_status: ["UPLOADED", "PARSED", "NORMALIZED", "FAILED"],
+      import_status: ["UPLOADED", "PARSED", "NORMALIZED", "FAILED", "PARTIAL"],
       movement_type: ["INCOME", "EXPENSE", "TRANSFER"],
       period_status: ["OPEN", "READY_TO_CLOSE", "CLOSED"],
       source_type: ["BANK", "BROKER", "SAVINGS", "CARD", "OTHER"],

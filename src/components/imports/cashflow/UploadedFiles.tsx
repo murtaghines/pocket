@@ -10,6 +10,8 @@ import {
   Sheet as SheetIcon,
   FileType,
   File as FileIcon,
+  RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +53,8 @@ export interface UploadedFilesDropdownProps {
   isDeleting: boolean;
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   pendingImportIds: Set<string>;
+  retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
+  retryingImportIds?: Set<string>;
 }
 
 export function UploadedFilesDropdown({
@@ -60,6 +64,8 @@ export function UploadedFilesDropdown({
   isDeleting,
   toggleLockImport,
   pendingImportIds,
+  retryImport,
+  retryingImportIds,
 }: UploadedFilesDropdownProps) {
   const count = imports.length;
   const pendingCount = imports.filter((i) => pendingImportIds.has(i.id)).length;
@@ -105,6 +111,8 @@ export function UploadedFilesDropdown({
           isDeleting={isDeleting}
           toggleLockImport={toggleLockImport}
           pendingImportIds={pendingImportIds}
+          retryImport={retryImport}
+          retryingImportIds={retryingImportIds}
         />
       </SheetContent>
     </Sheet>
@@ -120,6 +128,8 @@ export interface UploadedFilesHistoryListProps {
   isDeleting: boolean;
   toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   pendingImportIds: Set<string>;
+  retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
+  retryingImportIds?: Set<string>;
 }
 
 export function UploadedFilesHistoryList({
@@ -129,6 +139,8 @@ export function UploadedFilesHistoryList({
   isDeleting,
   toggleLockImport,
   pendingImportIds,
+  retryImport,
+  retryingImportIds,
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
   const queryClient = useQueryClient();
@@ -259,6 +271,7 @@ export function UploadedFilesHistoryList({
 
   // Subtle status indicator. Order of priority (highest first):
   //   FAILED  → red badge
+  //   PARTIAL → amber badge (some rows landed, some didn't — distinct from a clean NORMALIZED)
   //   PARSED / UPLOADED → amber "processing" badge
   //   has unsaved (pending) edits → amber dot
   //   has mismatched rows → amber warning icon
@@ -267,6 +280,13 @@ export function UploadedFilesHistoryList({
   const statusIndicator = (imp: Import) => {
     if (imp.status === "FAILED") {
       return <PillBadge tone="red">Failed</PillBadge>;
+    }
+    if (imp.status === "PARTIAL") {
+      return (
+        <PillBadge tone="amber" title={imp.error_message || undefined}>
+          Partial
+        </PillBadge>
+      );
     }
     if (imp.status === "PARSED" || imp.status === "UPLOADED") {
       return (
@@ -450,7 +470,31 @@ export function UploadedFilesHistoryList({
                         </span>
                       </>
                     )}
-                  <div className="ml-auto shrink-0 pl-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                  {(imp.status === "FAILED" || imp.status === "PARTIAL") && retryImport && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-auto shrink-0 h-7 gap-1 px-2 text-[11px]"
+                      disabled={retryingImportIds?.has(imp.id)}
+                      title={imp.status === "PARTIAL" ? "Retry the rows that failed" : "Retry processing this file"}
+                      onClick={() =>
+                        retryImport(imp.id, imp.file_storage_url, imp.file_name, imp.account_id)
+                      }
+                    >
+                      {retryingImportIds?.has(imp.id) ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-3 h-3" />
+                      )}
+                      Retry
+                    </Button>
+                  )}
+                  <div
+                    className={cn(
+                      "shrink-0 pl-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity",
+                      !(imp.status === "FAILED" || imp.status === "PARTIAL") && "ml-auto",
+                    )}
+                  >
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button

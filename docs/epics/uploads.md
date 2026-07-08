@@ -202,9 +202,30 @@ Cleanliness / product:
   `previewOnly: false` re-runs the same parse+dedup and persists. New:
   `src/components/imports/investments/InvestmentPreviewDialog.tsx`. Deployed. (Dedup strength
   parity — see "Investment dedup was weaker than transactions'" above — fixed separately.)
-- [ ] **UI retry** button consuming the new `failed`/`partial` response fields. (Fase 1)
-- [ ] **`import_status` has no PARTIAL** — partial imports are marked NORMALIZED + `error_message`;
-  a real `PARTIAL` enum value (migration) would be cleaner.
+- [x] **`import_status` has no PARTIAL** — fixed 2026-07-08. Added `PARTIAL` to the
+  `import_status` Postgres enum (migration `20260708000000_add_partial_import_status.sql`,
+  `ALTER TYPE ... ADD VALUE`). `process-import`'s finalize step now sets `PARTIAL` (not
+  `NORMALIZED`) when some rows landed and some failed — previously indistinguishable from a
+  clean success unless you separately checked `error_message`.
+- [x] **UI retry button** — fixed 2026-07-08, alongside PARTIAL. Added `retryImport()` to
+  `useMonthlyFileUpload.tsx`: re-downloads the original file from Storage (`file_storage_url`,
+  kept forever from the initial upload) and re-invokes `process-import` on it. Safe to just
+  re-run wholesale — the DB-enforced fingerprint uniqueness (Fase 4) silently skips rows that
+  already landed, so a retry only inserts what's genuinely missing; the server-side duplicate-
+  file check only blocks a re-upload when a PRIOR import with the same hash is `NORMALIZED`, so
+  a FAILED/PARTIAL hash never blocks its own retry. The old FAILED/PARTIAL import row is left
+  as-is (harmless history) rather than mutated in place — the retry creates its own new import
+  row. UI: a "Retry" button next to Delete in `UploadedFilesHistoryList`
+  (`cashflow/UploadedFiles.tsx`), shown only for `FAILED`/`PARTIAL` imports, with a spinner
+  while in flight; new amber "Partial" badge distinct from the red "Failed" one. Verified live
+  against seeded test FAILED/PARTIAL import rows (deleted after): both badges render correctly,
+  Retry button appears only on those two statuses, and clicking it on a row with a deliberately
+  broken storage path correctly surfaces "Retry failed — Could not re-download the original
+  file" (proves the download → extract → re-invoke → error-handling wiring end-to-end; couldn't
+  test the full success path without a real broken upload to fix). Deployed `process-import`.
+  Files: `src/hooks/useMonthlyFileUpload.tsx`, `src/hooks/useImports.tsx`,
+  `src/components/imports/cashflow/UploadedFiles.tsx`,
+  `src/components/imports/BankStatementsTabsView.tsx`.
 
 Fixed already: `extractMonthKey` "NaN-NaN" (Fase 1); `mapCategorySlug` completeness guard added;
 `userContext` always-undefined bug and the `categorization_rules` N+1 (both below, 2026-07-07).

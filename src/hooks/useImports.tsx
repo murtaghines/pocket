@@ -4,7 +4,7 @@ import { useAuth } from "./useAuth";
 import { toast } from "sonner";
 import { extractPdfText } from "@/lib/fileExtract";
 
-export type ImportStatus = 'UPLOADED' | 'PARSED' | 'NORMALIZED' | 'FAILED';
+export type ImportStatus = 'UPLOADED' | 'PARSED' | 'NORMALIZED' | 'FAILED' | 'PARTIAL';
 export type SourceType = 'BANK' | 'BROKER' | 'SAVINGS' | 'CARD' | 'OTHER';
 export type AppDomain = 'CASHFLOW' | 'INVESTING';
 

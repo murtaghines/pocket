@@ -1444,7 +1444,7 @@ serve(async (req) => {
     // Finalize import status — surface partial/total failures instead of always
     // reporting NORMALIZED (which used to mask silently-dropped rows).
     const insertedCount = stats.newTransactions;
-    let importStatus: 'NORMALIZED' | 'FAILED' = 'NORMALIZED';
+    let importStatus: 'NORMALIZED' | 'FAILED' | 'PARTIAL' = 'NORMALIZED';
     let importErrorMessage: string | null = null;
 
     if (insertFailedCount > 0 && insertedCount === 0) {
@@ -1452,7 +1452,11 @@ serve(async (req) => {
       importStatus = 'FAILED';
       importErrorMessage = `All ${insertFailedCount} transaction insert(s) failed. First errors: ${insertErrorSamples.join(' | ')}`;
     } else if (insertFailedCount > 0) {
-      // Some rows landed, some errored → partial import; keep the data but flag it.
+      // Some rows landed, some errored → partial import; keep the data, flag it as PARTIAL
+      // (not NORMALIZED) so it's distinguishable at the status level, not just via
+      // error_message. Retrying re-processes the same file — already-inserted rows are
+      // silently skipped by the fingerprint uniqueness constraint, only the missing ones land.
+      importStatus = 'PARTIAL';
       importErrorMessage = `${insertFailedCount} of ${insertFailedCount + insertedCount} transaction(s) failed to insert. First errors: ${insertErrorSamples.join(' | ')}`;
     } else if (insertedCount === 0 && stats.duplicatesIgnored > 0) {
       importErrorMessage = 'All transactions already existed';

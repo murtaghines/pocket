@@ -72,6 +72,7 @@ async function pollForImportSuccess(
 
 export function useMonthlyFileUpload() {
   const [pendingFilesByMonth, setPendingFilesByMonth] = useState<PendingFilesByMonth>({});
+  const [retryingImportIds, setRetryingImportIds] = useState<Set<string>>(new Set());
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -501,6 +502,101 @@ export function useMonthlyFileUpload() {
     }
   };
 
+  /**
+   * Retry a FAILED or PARTIAL import: re-download the original file from storage
+   * (uploaded once, kept forever at `file_storage_url`) and re-run process-import on it.
+   * This is safe to just re-run wholesale — the DB-enforced fingerprint uniqueness
+   * (Fase 4) silently skips rows that already landed, so only the genuinely missing
+   * ones get inserted. The old FAILED/PARTIAL import row is left as-is (harmless
+   * history — it contributed 0 or partial transactions either way); the retry creates
+   * its own new import row rather than mutating the old one in place.
+   */
+  const retryImport = useCallback(async (
+    importId: string,
+    fileStorageUrl: string | null,
+    fileName: string,
+    accountId: string | null,
+  ) => {
+    if (!user) return;
+    if (!fileStorageUrl) {
+      toast({
+        title: "Can't retry",
+        description: "The original file is no longer available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setRetryingImportIds((prev) => new Set(prev).add(importId));
+    try {
+      const { data: blob, error: downloadError } = await supabase.storage
+        .from("financial-files")
+        .download(fileStorageUrl);
+      if (downloadError || !blob) {
+        throw new Error("Could not re-download the original file.");
+      }
+
+      const file = new File([blob], fileName);
+      const fileContent = await extractFileContent(file);
+      if (!fileContent.trim()) {
+        throw new Error("The file is empty");
+      }
+
+      const encoder = new TextEncoder();
+      const data = encoder.encode(fileContent);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const fileHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      const { data: processData, error } = await supabase.functions.invoke(
+        "process-import",
+        {
+          body: {
+            fileContent,
+            userId: user.id,
+            domain: "CASHFLOW",
+            fileHash,
+            fileName,
+            fileSize: blob.size,
+            fileMime: blob.type || "application/octet-stream",
+            fileStorageUrl,
+            sourceType: "BANK",
+            accountId: accountId || null,
+          },
+        }
+      );
+
+      if (error) {
+        throw new Error(error.message || "Retry failed");
+      }
+
+      const stats = processData?.stats;
+      toast({
+        title: "Retry complete",
+        description: `${stats?.newTransactions || 0} new transaction(s) added${
+          stats?.duplicatesIgnored ? `, ${stats.duplicatesIgnored} already existed` : ""
+        }.`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["imports"] });
+      queryClient.invalidateQueries({ queryKey: ["periods"] });
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+    } catch (err: any) {
+      toast({
+        title: "Retry failed",
+        description: err.message || "Could not retry this import.",
+        variant: "destructive",
+      });
+    } finally {
+      setRetryingImportIds((prev) => {
+        const next = new Set(prev);
+        next.delete(importId);
+        return next;
+      });
+    }
+  }, [user, toast, queryClient]);
+
   // Keep for backwards compatibility but now it's a no-op since files auto-process
   const processFilesForMonth = useCallback(async (_targetMonth: Date) => {
     // Files are now auto-processed when added, this is kept for API compatibility
@@ -531,5 +627,7 @@ export function useMonthlyFileUpload() {
     isProcessingMonth,
     getPendingCountForMonth,
     isProcessingAny,
+    retryImport,
+    retryingImportIds,
   };
 }
