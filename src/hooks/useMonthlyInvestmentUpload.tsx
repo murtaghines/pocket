@@ -28,7 +28,10 @@ export function useMonthlyInvestmentUpload() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const addFilesForMonth = useCallback((files: File[], targetMonth: Date) => {
+  // Returns the created PendingFile entries so a caller that wants to auto-process
+  // immediately (see processFilesForMonth's `filesOverride`) doesn't have to read them back
+  // out of `pendingFilesByMonth` state, which may not have committed yet.
+  const addFilesForMonth = useCallback((files: File[], targetMonth: Date): PendingFile[] => {
     const monthKey = getMonthKey(targetMonth);
     const newFiles: PendingFile[] = files.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -42,6 +45,7 @@ export function useMonthlyInvestmentUpload() {
       ...prev,
       [monthKey]: [...(prev[monthKey] || []), ...newFiles],
     }));
+    return newFiles;
   }, []);
 
   const removeFileFromMonth = useCallback((monthKey: string, fileId: string) => {
@@ -73,7 +77,12 @@ export function useMonthlyInvestmentUpload() {
     }
   };
 
-  const processFilesForMonth = useCallback(async (targetMonth: Date) => {
+  // `filesOverride` lets a caller that just added files via addFilesForMonth process
+  // exactly those files immediately, instead of reading pendingFilesByMonth back out of
+  // this hook's closure — that state update may not have committed/re-rendered yet, which
+  // previously made auto-process-after-add silently no-op (found zero pending files and
+  // returned before ever calling the AI). Falls back to reading state for any other caller.
+  const processFilesForMonth = useCallback(async (targetMonth: Date, filesOverride?: PendingFile[]) => {
     if (!user) {
       toast({
         title: "Error",
@@ -84,10 +93,10 @@ export function useMonthlyInvestmentUpload() {
     }
 
     const monthKey = getMonthKey(targetMonth);
-    const pendingFiles = (pendingFilesByMonth[monthKey] || []).filter(
+    const pendingFiles = filesOverride ?? (pendingFilesByMonth[monthKey] || []).filter(
       (f) => f.status === "pending"
     );
-    
+
     if (pendingFiles.length === 0) return;
 
     const targetMonthStr = `${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}-01`;
@@ -102,9 +111,43 @@ export function useMonthlyInvestmentUpload() {
 
       try {
         const fileContent = await extractFileContent(uploadFile.file);
-        
+
         if (!fileContent.trim()) {
           throw new Error("The file is empty");
+        }
+
+        // Generate file hash BEFORE uploading, so an exact re-upload short-circuits with a
+        // clean message instead of hitting imports' UNIQUE(user_id, file_hash_sha256) as a
+        // raw Postgres error. Mirrors useMonthlyFileUpload.tsx's bank-statement flow.
+        const encoder = new TextEncoder();
+        const hashData = encoder.encode(fileContent);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', hashData);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        const { data: existingImport } = await supabase
+          .from('imports')
+          .select('id, file_name, transactions_count')
+          .eq('user_id', user.id)
+          .eq('file_hash_sha256', fileHash)
+          .eq('status', 'NORMALIZED')
+          .maybeSingle();
+
+        if (existingImport) {
+          toast({
+            title: "Duplicate file",
+            description: `This file was already processed (${existingImport.file_name}, ${existingImport.transactions_count || 0} investments).`,
+            variant: "destructive",
+          });
+          setPendingFilesByMonth((prev) => ({
+            ...prev,
+            [monthKey]: (prev[monthKey] || []).map((f) =>
+              f.id === uploadFile.id
+                ? { ...f, status: "error" as const, error: "Duplicate file" }
+                : f
+            ),
+          }));
+          continue;
         }
 
         const filePath = `${user.id}/investments/${Date.now()}_${uploadFile.name}`;
@@ -115,13 +158,6 @@ export function useMonthlyInvestmentUpload() {
         if (uploadError) {
           console.error("Storage upload error:", uploadError);
         }
-
-        // Generate file hash for imports table
-        const encoder = new TextEncoder();
-        const hashData = encoder.encode(fileContent);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', hashData);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
         // Create import record (unified system)
         const { data: importRecord, error: insertError } = await supabase
@@ -212,7 +248,10 @@ export function useMonthlyInvestmentUpload() {
 
     setIsConfirming(true);
     try {
-      // Second pass: persist (previewOnly=false or omitted)
+      // Second pass: persist. Sends back the exact array the first pass already parsed and
+      // returned (previewInvestments) instead of fileContent — the edge function skips the
+      // AI call entirely on this path, so what gets saved is guaranteed to match what was
+      // shown in the preview, with no second AI round-trip.
       const { data, error } = await supabase.functions.invoke(
         "process-investment-file",
         {
@@ -220,6 +259,7 @@ export function useMonthlyInvestmentUpload() {
             importId: pendingImportId,
             userId: user.id,
             previewOnly: false,
+            investments: previewInvestments,
           },
         }
       );
@@ -253,7 +293,7 @@ export function useMonthlyInvestmentUpload() {
     } finally {
       setIsConfirming(false);
     }
-  }, [pendingImportId, user, queryClient, toast]);
+  }, [pendingImportId, user, queryClient, toast, previewInvestments]);
 
   const cancelPreview = useCallback(() => {
     setShowPreview(false);

@@ -12,6 +12,7 @@ export interface Investment {
   asset_type: string | null;
   description: string;
   type: string;
+  is_hidden: boolean;
   created_at: string;
   import_id?: string | null;
 }
@@ -24,7 +25,21 @@ export type PendingInvEdit = {
   description?: string;
   amount?: number;
   date?: string;
+  is_hidden?: boolean;
 };
+
+/** One audit_log row for an investment edit/revert, as read back for the history popover. */
+export interface AuditEntry {
+  id: string;
+  entity_id: string;
+  action: string;
+  created_at: string;
+  diff_json: {
+    fields?: string[];
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
+  } | null;
+}
 
 /** Mirror of the PendingFile shape exposed by useMonthlyInvestmentUpload. */
 export interface PendingFileInfo {

@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
-import { calculateInvestmentFingerprint } from "../_shared/fingerprint.ts";
+import { calculateInvestmentFingerprint, sha256 } from "../_shared/fingerprint.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -117,108 +117,145 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const { fileContent, importId, uploadId, previewOnly } = await req.json();
+    const { fileContent, importId, uploadId, previewOnly, investments: reviewedInvestments } = await req.json();
     const userId = authData.user.id;
 
     // Support both importId (new) and uploadId (legacy) for backwards compatibility
     const recordId = importId || uploadId;
 
-    if (!fileContent || !recordId || !userId) {
-      console.error('Missing required fields:', { hasContent: !!fileContent, recordId, userId });
+    // Two ways to reach this function: (1) a first pass with `fileContent` — parses via AI,
+    // used for both the preview call and one-shot processing; or (2) a confirm pass with
+    // `investments` — the exact array the client already previewed (returned by pass 1),
+    // sent back as-is. This skips a second AI call entirely and guarantees what gets saved
+    // is exactly what the user reviewed. See docs/epics/uploads.md investments section.
+    if (!recordId || !userId || (!fileContent && !reviewedInvestments)) {
+      console.error('Missing required fields:', { hasContent: !!fileContent, hasReviewed: !!reviewedInvestments, recordId, userId });
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: fileContent, importId/uploadId, userId' }),
+        JSON.stringify({ error: 'Missing required fields: fileContent or investments, plus importId/uploadId, userId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Processing investment file for import ${recordId}, content length: ${fileContent.length}`);
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Update import status to PARSED
-    await supabase
-      .from('imports')
-      .update({ status: 'PARSED' })
-      .eq('id', recordId);
+    let investments: any[];
 
-    // Call the Anthropic Messages API to analyze the investment data (migrated off Lovable).
-    const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_API_KEY ?? '',
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 16000,
-        thinking: { type: 'disabled' },
-        system: INVESTMENT_ANALYSIS_PROMPT,
-        messages: [
-          { role: 'user', content: `Analyze this financial data and extract ONLY investment/savings related transactions. Look for keywords like: ${INVESTMENT_KEYWORDS.slice(0, 15).join(', ')}.\n\nData:\n${fileContent}` }
-        ],
-      }),
-    });
+    if (reviewedInvestments) {
+      // Confirm pass — reuse the previewed set, no AI call.
+      if (!Array.isArray(reviewedInvestments)) {
+        throw new Error('investments must be an array');
+      }
+      investments = reviewedInvestments;
+      console.log(`Confirm pass for import ${recordId}: reusing ${investments.length} previewed investments`);
+    } else {
+      console.log(`Processing investment file for import ${recordId}, content length: ${fileContent.length}`);
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('AI API error:', aiResponse.status, errorText);
+      // Update import status to PARSED
+      await supabase
+        .from('imports')
+        .update({ status: 'PARSED' })
+        .eq('id', recordId);
 
-      if (aiResponse.status === 429) {
+      // Call the Anthropic Messages API to analyze the investment data (migrated off Lovable).
+      const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': ANTHROPIC_API_KEY ?? '',
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5',
+          max_tokens: 16000,
+          thinking: { type: 'disabled' },
+          system: INVESTMENT_ANALYSIS_PROMPT,
+          messages: [
+            { role: 'user', content: `Analyze this financial data and extract ONLY investment/savings related transactions. Look for keywords like: ${INVESTMENT_KEYWORDS.slice(0, 15).join(', ')}.\n\nData:\n${fileContent}` }
+          ],
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error('AI API error:', aiResponse.status, errorText);
+
+        if (aiResponse.status === 429) {
+          await supabase
+            .from('imports')
+            .update({ status: 'FAILED', error_message: 'Rate limit exceeded. Please try again later.' })
+            .eq('id', recordId);
+          return new Response(
+            JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        throw new Error(`AI API error: ${aiResponse.status}`);
+      }
+
+      const aiData = await aiResponse.json();
+
+      if (aiData.stop_reason === 'refusal') {
         await supabase
           .from('imports')
-          .update({ status: 'FAILED', error_message: 'Rate limit exceeded. Please try again later.' })
+          .update({ status: 'FAILED', error_message: 'AI declined to process the file.' })
           .eq('id', recordId);
         return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'AI declined to process the file.' }),
+          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      throw new Error(`AI API error: ${aiResponse.status}`);
-    }
+      const rawContent = Array.isArray(aiData.content)
+        ? aiData.content.find((b: any) => b.type === 'text')?.text
+        : undefined;
 
-    const aiData = await aiResponse.json();
+      console.log('AI response received, length:', rawContent?.length);
 
-    if (aiData.stop_reason === 'refusal') {
-      await supabase
-        .from('imports')
-        .update({ status: 'FAILED', error_message: 'AI declined to process the file.' })
-        .eq('id', recordId);
-      return new Response(
-        JSON.stringify({ error: 'AI declined to process the file.' }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const rawContent = Array.isArray(aiData.content)
-      ? aiData.content.find((b: any) => b.type === 'text')?.text
-      : undefined;
-
-    console.log('AI response received, length:', rawContent?.length);
-
-    if (!rawContent) {
-      throw new Error('No content in AI response');
-    }
-
-    // Parse the AI response - handle markdown code blocks
-    let investments;
-    try {
-      let jsonString = rawContent.trim();
-      if (jsonString.startsWith('```')) {
-        jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+      if (!rawContent) {
+        throw new Error('No content in AI response');
       }
-      investments = JSON.parse(jsonString);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', rawContent.substring(0, 500));
-      throw new Error('Failed to parse AI response as JSON');
-    }
 
-    if (!Array.isArray(investments)) {
-      throw new Error('AI response is not an array');
-    }
+      // Parse the AI response - handle markdown code blocks
+      try {
+        let jsonString = rawContent.trim();
+        if (jsonString.startsWith('```')) {
+          jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+        }
+        investments = JSON.parse(jsonString);
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', rawContent.substring(0, 500));
+        throw new Error('Failed to parse AI response as JSON');
+      }
 
-    console.log(`Parsed ${investments.length} investment transactions from AI`);
+      if (!Array.isArray(investments)) {
+        throw new Error('AI response is not an array');
+      }
+
+      console.log(`Parsed ${investments.length} investment transactions from AI`);
+
+      // Durable raw staging (audit/reprocessing trail), mirroring process-import's
+      // import_rows. Only written on the AI-parse pass — that's the only place we have the
+      // model's true raw per-row output. Batch-upserted; ignoreDuplicates since a retried
+      // preview call for the same import would otherwise collide on (import_id, row_hash).
+      if (investments.length > 0) {
+        const importRowRecords = await Promise.all(investments.map(async (inv: any, idx: number) => ({
+          import_id: recordId,
+          row_index: idx,
+          raw_json: inv,
+          row_hash_sha256: await sha256(JSON.stringify(inv)),
+          parsed_date: inv.date || null,
+          parsed_amount: typeof inv.amount === 'number' ? inv.amount : null,
+          parsed_currency: 'EUR',
+          parsed_description: inv.description || null,
+        })));
+        const { error: rowsError } = await supabase.from('import_rows').upsert(importRowRecords, {
+          onConflict: 'import_id,row_hash_sha256',
+          ignoreDuplicates: true,
+        });
+        if (rowsError) console.log(`[process-investment-file] import_rows upsert error: ${rowsError.message}`);
+      }
+    }
 
     // Get existing investment hashes for this user to detect duplicates
     const { data: existingInvestments } = await supabase
@@ -286,11 +323,15 @@ serve(async (req) => {
 
     // If previewOnly, skip persistence and return preview data
     if (!previewOnly) {
-      // Insert only new investments
+      // Insert only new investments. Upsert with ignoreDuplicates (=> ON CONFLICT DO
+      // NOTHING) instead of a plain insert: the app-level pre-check above already filters
+      // out known duplicates, but this is the DB-level backstop — if it's ever raced (e.g.
+      // two concurrent uploads) a hash collision is silently skipped instead of throwing a
+      // raw unique-violation that fails the entire batch. Mirrors process-import's transactions upsert.
       if (newInvestments.length > 0) {
         const { error: insertError } = await supabase
           .from('investments')
-          .insert(newInvestments);
+          .upsert(newInvestments, { onConflict: 'user_id,transaction_hash', ignoreDuplicates: true });
 
         if (insertError) {
           console.error('Error inserting investments:', insertError);

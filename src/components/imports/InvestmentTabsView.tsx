@@ -115,9 +115,11 @@ export function InvestmentTabsView() {
       else valid.push(f);
     }
     if (valid.length) {
-      addFilesForMonth(valid, monthDate);
-      // Auto-process immediately after adding (mirrors bank flow).
-      setTimeout(() => processFilesForMonth(monthDate), 50);
+      // Process the exact files just added, passed directly rather than read back out of
+      // pendingFilesByMonth state — that update may not have committed yet, which made this
+      // silently no-op (see useMonthlyInvestmentUpload.tsx processFilesForMonth).
+      const added = addFilesForMonth(valid, monthDate);
+      processFilesForMonth(monthDate, added);
     }
   };
 

@@ -12,6 +12,7 @@ interface Investment {
   asset_type: string | null;
   description: string;
   type: 'deposit' | 'withdrawal';
+  is_hidden: boolean;
   created_at: string;
 }
 
@@ -37,6 +38,7 @@ export function useInvestments() {
         .from('investments')
         .select('*')
         .eq('user_id', user!.id)
+        .eq('is_hidden', false)
         .order('date', { ascending: false });
 
       if (error) throw error;

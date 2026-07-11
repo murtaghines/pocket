@@ -8,7 +8,8 @@ import {
   Plus,
   Check,
   X,
-  Trash2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,28 +31,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PillBadge } from "@/components/ui/pill-badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
 import type { Import } from "@/hooks/useImports";
 import { ProcessingPanel } from "./ProcessingPanel";
+import { RowEditIndicator } from "./RowEditIndicator";
+import { RevertToOriginalButton } from "./RevertToOriginalButton";
+import { USER_TRACKED_FIELDS, buildOriginalSnapshot, isBackToOriginal } from "./helpers";
 import {
   INVESTMENT_TYPES,
   ASSET_TYPES,
   getTypeMeta,
 } from "./types";
-import type { Investment, PendingInvEdit, PendingFileInfo } from "./types";
+import type { Investment, PendingInvEdit, PendingFileInfo, AuditEntry } from "./types";
 
 export interface InlineInvestmentsEditorProps {
   monthKey: string;
@@ -84,6 +77,7 @@ export function InlineInvestmentsEditor({
   const { formatCurrency, formatDate } = useLocalization();
 
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
 
   const setPendingFor = (id: string, patch: PendingInvEdit) => {
     setPendingByInv((prev) => ({
@@ -122,21 +116,81 @@ export function InlineInvestmentsEditor({
     enabled: !!user,
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: PendingInvEdit }) => {
-      const payload: Record<string, unknown> = {};
-      if (patch.type !== undefined) payload.type = patch.type;
-      if (patch.asset_type !== undefined) payload.asset_type = patch.asset_type;
-      if (patch.platform !== undefined) payload.platform = patch.platform;
-      if (patch.description !== undefined) payload.description = patch.description;
-      if (patch.amount !== undefined) payload.amount = patch.amount;
-      if (patch.date !== undefined) payload.date = patch.date;
-      const { error } = await supabase.from("investments").update(payload).eq("id", id);
+  // Edit history for every investment in this month, grouped by row id (newest first).
+  // Mirrors InlineTransactionsEditor's tx-audit query.
+  const { data: auditByInv = {} } = useQuery({
+    queryKey: ["inv-audit", monthKey, user?.id],
+    queryFn: async () => {
+      if (!user || investments.length === 0) return {};
+      const ids = investments.map((i) => i.id);
+      const { data, error } = await supabase
+        .from("audit_log")
+        .select("id, entity_id, action, created_at, diff_json")
+        .eq("user_id", user.id)
+        .eq("entity_type", "investment")
+        .in("entity_id", ids)
+        .order("created_at", { ascending: false });
       if (error) throw error;
+      const grouped: Record<string, AuditEntry[]> = {};
+      for (const row of (data || []) as AuditEntry[]) {
+        (grouped[row.entity_id] ||= []).push(row);
+      }
+      return grouped;
+    },
+    enabled: !!user && investments.length > 0,
+  });
+
+  // Single auto-save mutation: applies a partial update and logs the diff to audit_log,
+  // same shape as InlineTransactionsEditor's saveMutation.
+  const saveMutation = useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+      before,
+    }: {
+      id: string;
+      payload: Record<string, unknown>;
+      before?: Record<string, unknown>;
+    }) => {
+      const action = (payload as { __action?: string }).__action ?? "edit";
+      const updatePayload: Record<string, unknown> = {};
+      for (const key of Object.keys(payload)) {
+        if (key.startsWith("__")) continue;
+        updatePayload[key] = payload[key];
+      }
+      // Same invariant as transactions: never write transaction_hash here — it's frozen at
+      // import and re-upload dedup depends on it staying that way. See docs/epics/uploads.md.
+      const { error } = await supabase.from("investments").update(updatePayload).eq("id", id);
+      if (error) throw error;
+
+      if (user?.id && before) {
+        const fields: string[] = [];
+        const beforeDiff: Record<string, unknown> = {};
+        const afterDiff: Record<string, unknown> = {};
+        for (const key of Object.keys(updatePayload)) {
+          if (!USER_TRACKED_FIELDS.has(key)) continue;
+          const prev = before[key] ?? null;
+          const next = updatePayload[key] ?? null;
+          if (prev === next) continue;
+          fields.push(key);
+          beforeDiff[key] = prev;
+          afterDiff[key] = next;
+        }
+        if (fields.length > 0) {
+          await supabase.rpc("log_audit_event", {
+            _entity_type: "investment",
+            _entity_id: id,
+            _action: action,
+            _diff: { fields, before: beforeDiff, after: afterDiff } as never,
+          });
+        }
+      }
+      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       queryClient.invalidateQueries({ queryKey: ["month-investments-inline"] });
+      queryClient.invalidateQueries({ queryKey: ["inv-audit", monthKey, user?.id] });
     },
   });
 
@@ -145,7 +199,11 @@ export function InlineInvestmentsEditor({
     if (!pending) return;
     setSavingIds((s) => new Set(s).add(inv.id));
     try {
-      await saveMutation.mutateAsync({ id: inv.id, patch: pending });
+      const before: Record<string, unknown> = {};
+      for (const key of Object.keys(pending)) {
+        before[key] = (inv as unknown as Record<string, unknown>)[key];
+      }
+      await saveMutation.mutateAsync({ id: inv.id, payload: pending, before });
       clearPendingFor(inv.id);
       toast({ title: "Saved", description: "Movement updated." });
     } catch (e: any) {
@@ -163,17 +221,15 @@ export function InlineInvestmentsEditor({
     }
   };
 
-  const deleteRow = async (inv: Investment) => {
-    try {
-      const { error } = await supabase.from("investments").delete().eq("id", inv.id);
-      if (error) throw error;
-      clearPendingFor(inv.id);
-      queryClient.invalidateQueries({ queryKey: ["investments"] });
-      queryClient.invalidateQueries({ queryKey: ["month-investments-inline"] });
-      toast({ title: "Deleted", description: "Movement removed." });
-    } catch (e: any) {
-      toast({ title: "Error", description: e?.message || "Could not delete", variant: "destructive" });
-    }
+  // Hide/show stays immediate — not part of the pending-edit flow, same as
+  // InlineTransactionsEditor's handleToggleHidden. Reversible (audited above), and excluded
+  // from all dashboard aggregates in useInvestments.tsx once hidden.
+  const handleToggleHidden = (inv: Investment) => {
+    saveMutation.mutate({
+      id: inv.id,
+      payload: { is_hidden: !inv.is_hidden },
+      before: { is_hidden: inv.is_hidden },
+    });
   };
 
   // Distinct platforms from existing investments to populate the selector
@@ -184,13 +240,15 @@ export function InlineInvestmentsEditor({
   }, [investments]);
 
   const summary = useMemo(() => {
+    const visible = investments.filter((i) => !i.is_hidden);
     let deposits = 0;
     let withdrawals = 0;
-    investments.forEach((i) => {
+    visible.forEach((i) => {
       if (i.type === "deposit") deposits += Math.abs(i.amount);
       else if (i.type === "withdrawal") withdrawals += Math.abs(i.amount);
     });
-    return { count: investments.length, deposits, withdrawals, net: deposits - withdrawals };
+    const hidden = investments.length - visible.length;
+    return { count: visible.length, deposits, withdrawals, net: deposits - withdrawals, hidden };
   }, [investments]);
 
   if (isLoading) {
@@ -256,7 +314,7 @@ export function InlineInvestmentsEditor({
                 <TableHead className="w-[12%] text-xs uppercase tracking-wide text-muted-foreground font-medium">Type</TableHead>
                 <TableHead className="w-[14%] text-xs uppercase tracking-wide text-muted-foreground font-medium">Asset</TableHead>
                 <TableHead className="w-[14%] text-right text-xs uppercase tracking-wide text-muted-foreground font-medium">Amount</TableHead>
-                <TableHead className="w-[88px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">Actions</TableHead>
+                <TableHead className="w-[104px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -264,6 +322,15 @@ export function InlineInvestmentsEditor({
                 const pending = pendingByInv[inv.id];
                 const isPending = !!pending;
                 const isSaving = savingIds.has(inv.id);
+                const isHidden = inv.is_hidden;
+                const invHistory = auditByInv[inv.id] || [];
+                const editEntries = invHistory.filter((h) => h.action !== "revert");
+                const hasEditHistory = editEntries.length > 0;
+                const snapshot = hasEditHistory ? buildOriginalSnapshot(invHistory) : null;
+                const isEdited =
+                  hasEditHistory &&
+                  !(snapshot && isBackToOriginal(inv as unknown as Record<string, unknown>, snapshot.values));
+                const originalSnapshot = isEdited ? snapshot : null;
                 const type = (pending?.type ?? inv.type) || "deposit";
                 const meta = getTypeMeta(type);
                 const TypeIcon = meta.icon;
@@ -278,16 +345,35 @@ export function InlineInvestmentsEditor({
                     key={inv.id}
                     className={cn(
                       "border-b border-border/40 hover:bg-muted/30 transition-colors",
+                      isEdited && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
                       isPending && "bg-warning/10 hover:bg-warning/15",
+                      isHidden && "opacity-50 bg-muted/20",
                     )}
                   >
                     <TableCell className="text-center text-xs text-muted-foreground/60 tabular-nums">
-                      {idx + 1}
+                      <RowEditIndicator
+                        index={idx + 1}
+                        history={isEdited ? invHistory : []}
+                        open={openHistoryFor === inv.id}
+                        onOpenChange={(o) => setOpenHistoryFor(o ? inv.id : null)}
+                        onRevert={(entry) => {
+                          if (!entry.diff_json?.before) return;
+                          const before = entry.diff_json.before as Record<string, unknown>;
+                          const after = (entry.diff_json.after || {}) as Record<string, unknown>;
+                          saveMutation.mutate({
+                            id: inv.id,
+                            payload: { ...before, __action: "revert" },
+                            before: after,
+                          });
+                        }}
+                        formatCurrency={formatCurrency}
+                      />
                     </TableCell>
                     <TableCell className="text-xs tabular-nums">
                       <Input
                         type="date"
                         value={date}
+                        disabled={isHidden}
                         onChange={(e) => {
                           if (e.target.value === inv.date) {
                             const next = { ...(pendingByInv[inv.id] || {}) };
@@ -304,6 +390,7 @@ export function InlineInvestmentsEditor({
                     <TableCell className="text-sm">
                       <Input
                         value={description}
+                        disabled={isHidden}
                         onChange={(e) => {
                           if (e.target.value === (inv.description || "")) {
                             const next = { ...(pendingByInv[inv.id] || {}) };
@@ -314,13 +401,17 @@ export function InlineInvestmentsEditor({
                             setPendingFor(inv.id, { description: e.target.value });
                           }
                         }}
-                        className="h-7 px-1.5 text-sm bg-transparent border-0 hover:border focus:border focus-visible:ring-0"
+                        className={cn(
+                          "h-7 px-1.5 text-sm bg-transparent border-0 hover:border focus:border focus-visible:ring-0",
+                          isHidden && "line-through",
+                        )}
                       />
                     </TableCell>
                     <TableCell className="text-sm">
                       <Input
                         list={`platforms-${monthKey}`}
                         value={platform}
+                        disabled={isHidden}
                         onChange={(e) => {
                           if (e.target.value === (inv.platform || "")) {
                             const next = { ...(pendingByInv[inv.id] || {}) };
@@ -342,6 +433,7 @@ export function InlineInvestmentsEditor({
                     <TableCell>
                       <Select
                         value={type}
+                        disabled={isHidden}
                         onValueChange={(v) => {
                           if (v === inv.type) {
                             const next = { ...(pendingByInv[inv.id] || {}) };
@@ -371,6 +463,7 @@ export function InlineInvestmentsEditor({
                     <TableCell>
                       <Select
                         value={asset || "__none__"}
+                        disabled={isHidden}
                         onValueChange={(v) => {
                           const next = v === "__none__" ? null : v;
                           if (next === (inv.asset_type || null)) {
@@ -403,6 +496,7 @@ export function InlineInvestmentsEditor({
                         type="number"
                         step="0.01"
                         value={amount}
+                        disabled={isHidden}
                         onChange={(e) => {
                           const v = parseFloat(e.target.value);
                           if (Number.isNaN(v)) return;
@@ -444,35 +538,36 @@ export function InlineInvestmentsEditor({
                             </Button>
                           </>
                         ) : (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                title="Delete movement"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete movement?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently remove this investment movement.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteRow(inv)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleToggleHidden(inv)}
+                              title={isHidden ? "Show — include in totals again" : "Hide from totals"}
+                            >
+                              {isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </Button>
+                            {originalSnapshot && (
+                              <RevertToOriginalButton
+                                original={originalSnapshot.values}
+                                fields={originalSnapshot.fields}
+                                current={inv as unknown as Record<string, unknown>}
+                                formatCurrency={formatCurrency}
+                                onConfirm={() => {
+                                  const payload: Record<string, unknown> = {
+                                    ...originalSnapshot.values,
+                                    __action: "revert",
+                                  };
+                                  const before: Record<string, unknown> = {};
+                                  for (const key of originalSnapshot.fields) {
+                                    before[key] = (inv as unknown as Record<string, unknown>)[key];
+                                  }
+                                  saveMutation.mutate({ id: inv.id, payload, before });
+                                }}
+                              />
+                            )}
+                          </>
                         )}
                       </div>
                     </TableCell>
