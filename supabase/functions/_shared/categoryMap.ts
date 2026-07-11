@@ -54,6 +54,11 @@ export function validateCategorySlug(slug: string | null, movement: MovementType
   // Map extended categories to app categories
   const mappedSlug = mapCategorySlug(normalizedSlug);
 
+  // Custom user-defined categories (custom_*) live in profiles.custom_category_rules, not in
+  // the categories table. They're resolved to their id downstream via userContext, so let the
+  // slug pass through here — otherwise every custom category silently demotes to other_*.
+  if (mappedSlug.startsWith('custom_')) return mappedSlug;
+
   switch (movement) {
     case 'INCOME':
       return INCOME_SLUGS.includes(mappedSlug) ? mappedSlug : 'other_income';

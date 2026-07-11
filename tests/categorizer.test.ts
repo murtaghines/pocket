@@ -4,7 +4,6 @@ import {
   extractTokens,
   fuzzyMatch,
   categorize,
-  categorizeBatch,
   type UserContext,
 } from '../supabase/functions/_shared/categorizer';
 
@@ -179,34 +178,8 @@ describe('categorize — determinism guarantee for the raw/clean double-pass opt
   });
 });
 
-describe('categorizeBatch — coverage stats + dashboard routing', () => {
-  const ctx: UserContext = { firstName: 'Juan', lastName: 'Pérez' };
-
-  it('maps each row to the right dashboardTarget', () => {
-    const { results } = categorizeBatch(
-      [
-        { description: 'TRANSFERENCIA A JUAN PEREZ', amount: -500 }, // own_transfer → hidden
-        { description: 'REVOLUT VAULT', amount: -200 },              // to_investment → investments
-        { description: 'MERCADONA', amount: -30 },                   // expense
-        { description: 'ZZZQXWV GIBBERISH 9182', amount: -10 },      // no match → pending
-      ],
-      ctx,
-    );
-    expect(results[0].dashboardTarget).toBe('hidden');
-    expect(results[1].dashboardTarget).toBe('investments');
-    expect(results[2].dashboardTarget).toBe('expense');
-    expect(results[3].dashboardTarget).toBe('pending');
-    expect(results[3].needsML).toBe(true);
-  });
-
-  it('reports coverage percent over matched rows', () => {
-    const { stats } = categorizeBatch([
-      { description: 'MERCADONA', amount: -30 },
-      { description: 'NETFLIX', amount: -12.99 },
-      { description: 'ZZZQXWV GIBBERISH 9182', amount: -10 },
-    ]);
-    expect(stats.total).toBe(3);
-    expect(stats.needsML).toBe(1);
-    expect(stats.coveragePercent).toBe(67);
-  });
-});
+// The BATCH PROCESSING section (categorizeBatch / splitByCategorizationNeed / dashboardSplit /
+// computeMonthlyKPIs) was removed in Fase 3 cleanup — it was a zero-caller helper API added
+// speculatively for a "Capa 2 ML" flow that never materialized. Tests deleted along with it.
+// The remaining tests here cover single-row categorization, which is what process-import
+// actually uses via `categorize()`.

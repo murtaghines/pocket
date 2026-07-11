@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Pencil, ChevronRight, Palette, Sparkles, Smile } from 'lucide-react';
-import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { CategoryIcon } from '@/components/ui/category-icon';
@@ -9,10 +8,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { Database } from '@/integrations/supabase/types';
 import { ColorIconPicker } from '@/components/settings/ColorIconPicker';
 import type { CustomCategoryRule, VisualOverride } from '@/hooks/useCustomCategories';
+import type { Rule } from '@/hooks/useCategorizationRules';
+import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
 
 type Category = Database['public']['Tables']['categories']['Row'];
-type Rule = Database['public']['Tables']['categorization_rules']['Row'];
 
 interface Props {
   categories: Category[];
@@ -29,6 +29,7 @@ interface Props {
 const matchTypeLabel = (mt: string, t: (k: string) => string) => {
   if (mt === 'SMART') return t('categories.smartMatch');
   if (mt === 'STARTS_WITH') return t('categories.startsWith');
+  if (mt === 'ENDS_WITH') return t('categories.endsWith');
   if (mt === 'REGEX') return t('categories.regex');
   if (mt === 'EXACT') return t('categories.exact');
   return t('categories.contains');
@@ -56,14 +57,8 @@ const EXAMPLE_PATTERNS: Record<string, { type: string; pattern: string }> = {
 };
 
 function renderLucide(iconName: string, size = 18) {
-  if (!iconName) return null;
-  const pascal = iconName
-    .split('-')
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join('');
-  const I = icons[pascal as keyof typeof icons];
-  if (!I) return null;
-  return <I size={size} strokeWidth={2} />;
+  const I = getLucideIcon(iconName);
+  return I ? <I size={size} strokeWidth={2} /> : null;
 }
 
 interface GroupShellProps {

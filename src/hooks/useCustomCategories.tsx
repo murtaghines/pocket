@@ -2,13 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export interface RuleOverride {
-  type: "rule_override";
-  targetCategoryId: string;
-  targetCategorySlug: string;
-  keywords: string[];
-}
-
 export interface CustomCategoryRule {
   type: "custom_category";
   slug: string;
@@ -26,7 +19,10 @@ export interface VisualOverride {
   icon?: string;
 }
 
-export type CategoryRule = RuleOverride | CustomCategoryRule | VisualOverride;
+// The `rule_override` shape existed but the UI never wrote it and the two consumers
+// (useCustomCategories.addRuleOverride + process-import categoryRuleOverrides parsing)
+// were dead — dropped in Fase 3 cleanup along with `ruleOverrides` and `updateRule` here.
+export type CategoryRule = CustomCategoryRule | VisualOverride;
 
 export function useCustomCategories() {
   const { user } = useAuth();
@@ -62,11 +58,6 @@ export function useCustomCategories() {
     },
   });
 
-  const addRuleOverride = (override: Omit<RuleOverride, "type">) => {
-    const newRules = [...rules, { type: "rule_override" as const, ...override }];
-    return saveRules.mutateAsync(newRules);
-  };
-
   const addCustomCategory = (category: Omit<CustomCategoryRule, "type">) => {
     const newRules = [...rules, { type: "custom_category" as const, ...category }];
     return saveRules.mutateAsync(newRules);
@@ -77,13 +68,6 @@ export function useCustomCategories() {
     return saveRules.mutateAsync(newRules);
   };
 
-  const updateRule = (index: number, updated: CategoryRule) => {
-    const newRules = [...rules];
-    newRules[index] = updated;
-    return saveRules.mutateAsync(newRules);
-  };
-
-  const ruleOverrides = rules.filter((r): r is RuleOverride => r.type === "rule_override");
   const customCategories = rules.filter((r): r is CustomCategoryRule => r.type === "custom_category");
   const visualOverrides = rules.filter((r): r is VisualOverride => r.type === "visual_override");
 
@@ -103,15 +87,12 @@ export function useCustomCategories() {
 
   return {
     rules,
-    ruleOverrides,
     customCategories,
     visualOverrides,
     isLoading,
     isSaving: saveRules.isPending,
-    addRuleOverride,
     addCustomCategory,
     removeRule,
-    updateRule,
     getVisualOverride,
     setVisualOverride,
   };

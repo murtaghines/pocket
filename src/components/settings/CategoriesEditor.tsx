@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 
 import { useCategories } from '@/hooks/useCategories';
-import { useCategorizationRules } from '@/hooks/useCategorizationRules';
+import { useCategorizationRules, type Rule } from '@/hooks/useCategorizationRules';
 import { useCustomCategories, type CustomCategoryRule } from '@/hooks/useCustomCategories';
 import { CategoryRulesList } from './CategoryRulesList';
 import { AddRuleDialog } from './AddRuleDialog';
@@ -12,9 +12,6 @@ import { CreateCategoryDialog } from './CreateCategoryDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { cn } from '@/lib/utils';
-import type { Database } from '@/integrations/supabase/types';
-
-type Rule = Database["public"]["Tables"]["categorization_rules"]["Row"];
 
 type TabKey = 'income' | 'expense' | 'transfer';
 

@@ -1,39 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
-import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/lib/utils';
-
-// Same palette as CreateCategoryDialog — 2 rows of 12, anchored to Pocket blue
-const CURATED_COLORS = [
-  // Row 1 — Cool / brand family
-  '203 60% 51%',
-  '210 70% 60%',
-  '220 65% 55%',
-  '230 55% 60%',
-  '250 55% 62%',
-  '270 50% 60%',
-  '190 65% 48%',
-  '180 55% 45%',
-  '170 55% 42%',
-  '155 50% 45%',
-  '140 45% 48%',
-  '120 40% 50%',
-  // Row 2 — Warm / earth / neutrals
-  '50 85% 55%',
-  '40 90% 55%',
-  '30 85% 55%',
-  '20 80% 55%',
-  '10 75% 55%',
-  '355 70% 58%',
-  '335 60% 58%',
-  '315 50% 55%',
-  '25 40% 45%',
-  '35 35% 40%',
-  '210 15% 50%',
-  '215 20% 35%',
-];
+import { CURATED_COLORS } from '@/lib/categoryPalette';
+import { getLucideIcon } from '@/lib/lucideIcon';
 
 const CURATED_ICONS = [
   'briefcase', 'rotate-ccw', 'arrow-down-left', 'circle-plus', 'trending-up',
@@ -61,12 +31,8 @@ export function ColorIconPicker({ currentColor, currentIcon, onSave, mode = 'bot
   const [icon, setIcon] = useState(currentIcon);
   const { t } = useTranslation('settings');
 
-  const toPascalCase = (name: string) =>
-    name.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-
   const renderIcon = (iconName: string, size = 16) => {
-    const key = toPascalCase(iconName);
-    const Ic = icons[key as keyof typeof icons];
+    const Ic = getLucideIcon(iconName);
     return Ic ? <Ic size={size} strokeWidth={1.8} /> : null;
   };
 

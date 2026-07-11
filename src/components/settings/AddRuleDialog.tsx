@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Sparkles, Search, AlignLeft, Type, Code2, Check } from 'lucide-react';
-import { icons as lucideIcons } from 'lucide-react';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
+import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
 
 interface EditingRule {
@@ -93,14 +93,7 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
   };
 
   const accent = category?.color ? `hsl(${category.color})` : 'hsl(var(--primary))';
-  const CategoryIconCmp = category?.icon
-    ? (lucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[
-        category.icon
-          .split('-')
-          .map(s => s.charAt(0).toUpperCase() + s.slice(1))
-          .join('')
-      ]
-    : null;
+  const CategoryIconCmp = category?.icon ? getLucideIcon(category.icon) : null;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>

@@ -38,6 +38,7 @@
     "smartMatch": "Smart Match",
     "contains": "Contains",
     "startsWith": "Starts With",
+    "endsWith": "Ends With",
     "exact": "Exact Match",
     "regex": "Regex (Advanced)",
     "advancedOptions": "Advanced options",

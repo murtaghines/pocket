@@ -100,24 +100,6 @@ export function normalize(raw: string): string {
     .trim();
 }
 
-/**
- * Generate a URL-safe slug from a user-defined category name.
- * Use this both in the frontend and backend so the slug is always consistent.
- *
- * @example
- * generateSlug("Ropa Bebé")      → "ropa_bebe"
- * generateSlug("Gastos Mascota") → "gastos_mascota"
- */
-export function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s]/g, '')
-    .trim()
-    .replace(/\s+/g, '_');
-}
-
 // ─────────────────────────────────────────────────────────────
 // FUZZY TOKEN MATCHING
 //
@@ -2333,7 +2315,9 @@ const RULE_BUCKETS: RuleBucket[] = [
       'SINGAPORE\\s*AIRLINES',
       'JAPAN\\s*AIRLINES',
       // ── Booking platforms ─────────────────────────────────
-      'BOOKING\\.COM',
+      // No 'BOOKING\.COM' literal here: normalize() strips dots before matching,
+      // so a rule with `\.` in it could never fire. 'BOOKING\s*COM' below covers
+      // both "BOOKING COM" and the pre-normalize form.
       'BOOKING\\s*COM',
       'BOOKING(?!.*PAYOUT)(?!.*DEPOSIT)',  // generic booking ≠ host payout
       'AIRBNB(?!.*PAYOUT)(?!.*DEPOSIT)',
@@ -3098,7 +3082,6 @@ const RULE_BUCKETS: RuleBucket[] = [
  *   firstName:        user.first_name,
  *   lastName:         user.last_name,
  *   country:          user.country,          // from onboarding step 7
- *   currency:         user.currency,         // from onboarding step 7
  *   customCategories: user.custom_categories, // from profile settings
  *   jointAccountNames: user.joint_account_names,
  * };
@@ -3122,12 +3105,6 @@ export interface UserContext {
    */
   country?: 'ES' | 'AR' | 'CL' | 'UY' | 'US';
 
-  /**
-   * User's primary currency — from onboarding step 7.
-   * Used for amount-based heuristics (e.g. a 3.50 ARS charge
-   * has different category probability than a 3.50 EUR charge).
-   */
-  currency?: 'EUR' | 'ARS' | 'CLP' | 'UYU' | 'USD';
 
   /**
    * Optional extra name aliases for the same person.
@@ -3192,19 +3169,6 @@ export interface UserContext {
    *   custom_categories: jsonb  -- array of CustomCategory objects
    */
   customCategories?: CustomCategory[];
-
-  /**
-   * Rule overrides — extra keywords injected into existing standard categories.
-   * These are checked AFTER custom categories but BEFORE standard rule buckets,
-   * allowing the user to force specific transactions into a standard category.
-   *
-   * @example
-   * // User adds "WOSAP" → entertainment (their dance studio)
-   * categoryRuleOverrides: [
-   *   { targetCategory: 'entertainment', keywords: ['WOSAP', 'STUDIO DE BAILE'] }
-   * ]
-   */
-  categoryRuleOverrides?: { targetCategory: string; keywords: string[] }[];
 }
 
 /**
@@ -3258,20 +3222,6 @@ function buildPersonalNamePatterns(ctx: UserContext): RegExp[] {
       const a = normalize(alias);
       patterns.push(new RegExp(`${a}\\s+${last}`, 'i'));
       patterns.push(new RegExp(`${last}\\s+${a}`, 'i'));
-    }
-  }
-
-  return patterns;
-}
-
-/** @deprecated Use buildPersonalNamePatterns instead. Kept for backward compat. */
-function buildNamePatterns(ctx: UserContext): RegExp[] {
-  const patterns = buildPersonalNamePatterns(ctx);
-
-  if (ctx.jointAccountNames) {
-    for (const name of ctx.jointAccountNames) {
-      const normName = normalize(name);
-      patterns.push(new RegExp(`${normName}`, 'i'));
     }
   }
 
@@ -3411,29 +3361,6 @@ export function categorize(
     }
   }
 
-  // ── Step 2.5: User-defined rule overrides on standard categories ──
-  // These let users add keywords that force transactions into an
-  // existing standard category, overriding the normal regex rules.
-  // e.g. "WOSAP" → entertainment (user's dance studio)
-  if (ctx?.categoryRuleOverrides?.length) {
-    for (const override of ctx.categoryRuleOverrides) {
-      for (const keyword of override.keywords) {
-        const { matched } = fuzzyMatch(keyword, norm);
-        if (matched) {
-          // Determine movement from the target category
-          const bucket = RULE_BUCKETS.find(b => b.category === override.targetCategory);
-          const movement: Movement = bucket?.movement ?? (amount > 0 ? 'INCOME' : 'EXPENSE');
-          return {
-            movement,
-            category:    override.targetCategory as Category,
-            confidence:  0.95,
-            matchedRule: `OVERRIDE:${override.targetCategory}:${keyword}`,
-          };
-        }
-      }
-    }
-  }
-
   // ── Step 3: Standard rule buckets ─────────────────────────
   // country from ctx is used to boost confidence on matches
   // from country-specific patterns (see confidence values in buckets).
@@ -3454,245 +3381,4 @@ export function categorize(
 
   // No rule fired → send to Capa 2 (ML model)
   return null;
-}
-
-// ─────────────────────────────────────────────────────────────
-// BATCH PROCESSING
-// ─────────────────────────────────────────────────────────────
-
-export interface TransactionInput {
-  description: string;
-  amount: number;
-  [key: string]: unknown;
-}
-
-export interface CategorizationOutput {
-  movement: Movement | null;
-  category: Category | null;
-  confidence: number;
-  matchedRule: string | null;
-  needsML: boolean;
-
-  /**
-   * Where this transaction should appear in the UI.
-   *
-   * ┌─────────────────┬───────────────────────────────────────────────────┐
-   * │ dashboardTarget │ Meaning                                           │
-   * ├─────────────────┼───────────────────────────────────────────────────┤
-   * │ 'expense'       │ Show in main dashboard (INCOME or EXPENSE KPI)    │
-   * │                 │ Contributes to BALANCE formula                    │
-   * ├─────────────────┼───────────────────────────────────────────────────┤
-   * │ 'investments'   │ Show ONLY in Investments module                   │
-   * │                 │ category = 'to_investment'                        │
-   * │                 │ Contributes to INVESTMENTS KPI and BALANCE        │
-   * │                 │ (BALANCE = INCOME - EXPENSES - INVESTMENTS)       │
-   * ├─────────────────┼───────────────────────────────────────────────────┤
-   * │ 'hidden'        │ Own-account move — invisible everywhere           │
-   * │                 │ category = 'own_transfer'                         │
-   * │                 │ No impact on any KPI                              │
-   * │                 │ Example: Santander → Revolut (moving money to pay │
-   * │                 │ with a different account; the actual spend shows  │
-   * │                 │ up as an EXPENSE later when Revolut charges it)   │
-   * ├─────────────────┼───────────────────────────────────────────────────┤
-   * │ 'pending'       │ Not yet categorized — waiting for ML / AI        │
-   * └─────────────────┴───────────────────────────────────────────────────┘
-   *
-   * BALANCE FORMULA:
-   *   BALANCE = INCOME - EXPENSES - INVESTMENTS
-   *
-   *   Example — Nov 2025:
-   *     INCOME      =  2.069,69 €  (salary + other income)
-   *     EXPENSES    =  3.732,06 €  (housing + groceries + transport + …)
-   *     INVESTMENTS =      0,00 €  (nothing sent to invest this month)
-   *     BALANCE     = -1.662,37 €  ← "lo que te quedó líquido"
-   *
-   *   Example with investments:
-   *     INCOME      =  3.500,00 €
-   *     EXPENSES    =  2.000,00 €
-   *     INVESTMENTS =    500,00 €  (sent to COCOS / BALANZ)
-   *     BALANCE     =  1.000,00 €  ← liquid cash remaining
-   *
-   * NOTE: investments_income (dividends, returns, staking) counts as
-   * INCOME — it is new money, not a movement of existing capital.
-   */
-  dashboardTarget: 'expense' | 'investments' | 'hidden' | 'pending';
-
-  /** @deprecated use dashboardTarget === 'hidden' */
-  isNeutralTransfer: boolean;
-  /** @deprecated use dashboardTarget === 'investments' */
-  isInvestmentMove: boolean;
-}
-
-export function categorizeBatch(
-  transactions: TransactionInput[],
-  ctx?: UserContext,
-): {
-  results: (TransactionInput & CategorizationOutput)[];
-  stats: {
-    total: number;
-    matchedByRules: number;
-    needsML: number;
-    coveragePercent: number;
-    byCategory: Record<string, number>;
-  };
-} {
-  const byCategory: Record<string, number> = {};
-
-  const results = transactions.map(tx => {
-    const match = categorize(tx.description, tx.amount, ctx);
-    const category = match?.category ?? null;
-    if (category) byCategory[category] = (byCategory[category] ?? 0) + 1;
-
-    const isNeutralTransfer = category === 'own_transfer' || category === 'to_joint_account';
-    const isInvestmentMove  = category === 'to_investment';
-    const needsML           = match === null;
-
-    const dashboardTarget: CategorizationOutput['dashboardTarget'] =
-      needsML          ? 'pending'
-      : isNeutralTransfer ? 'hidden'
-      : isInvestmentMove  ? 'investments'
-      : 'expense';
-
-    return {
-      ...tx,
-      movement:          match?.movement ?? null,
-      category,
-      confidence:        match?.confidence ?? 0,
-      matchedRule:       match?.matchedRule ?? null,
-      needsML,
-      dashboardTarget,
-      isNeutralTransfer,
-      isInvestmentMove,
-    };
-  });
-
-  const matchedByRules = results.filter(r => !r.needsML).length;
-
-  return {
-    results,
-    stats: {
-      total: transactions.length,
-      matchedByRules,
-      needsML: transactions.length - matchedByRules,
-      coveragePercent: Math.round(
-        (matchedByRules / Math.max(transactions.length, 1)) * 100,
-      ),
-      byCategory,
-    },
-  };
-}
-
-/**
- * Split transactions for the pipeline:
- *   ruleMatched → already categorized, ready to save
- *   needsML     → send to Capa 2 ML model
- *
- * Both arrays preserve all original transaction fields.
- */
-export function splitByCategorizationNeed(
-  transactions: TransactionInput[],
-  ctx?: UserContext,
-): {
-  ruleMatched: (TransactionInput & CategorizationOutput)[];
-  needsML: TransactionInput[];
-} {
-  const { results } = categorizeBatch(transactions, ctx);
-  return {
-    ruleMatched: results.filter(r => !r.needsML),
-    needsML: results
-      .filter(r => r.needsML)
-      .map(({ movement, category, confidence, matchedRule, needsML: _, isNeutralTransfer: __, isInvestmentMove: ___, ...original }) =>
-        original as TransactionInput,
-      ),
-  };
-}
-
-/**
- * Split categorized transactions by their dashboard destination.
- * Use this to feed each section of the UI without extra logic.
- *
- * @example
- * const { forExpenseDashboard, forInvestments, neutral } =
- *   dashboardSplit(results);
- *
- * // KPI cards:
- * const kpis = computeMonthlyKPIs(results);
- * // kpis.income, kpis.expenses, kpis.investments, kpis.balance
- */
-export function dashboardSplit(results: (TransactionInput & CategorizationOutput)[]): {
-  /** INCOME + EXPENSE transactions → main dashboard */
-  forExpenseDashboard: (TransactionInput & CategorizationOutput)[];
-  /** to_investment transfers → Investments module only */
-  forInvestments: (TransactionInput & CategorizationOutput)[];
-  /** own_transfer moves → hidden from all views */
-  neutral: (TransactionInput & CategorizationOutput)[];
-  /** No category yet → waiting for ML / AI */
-  unclassified: (TransactionInput & CategorizationOutput)[];
-} {
-  return {
-    forExpenseDashboard: results.filter(r => r.dashboardTarget === 'expense'),
-    forInvestments:      results.filter(r => r.dashboardTarget === 'investments'),
-    neutral:             results.filter(r => r.dashboardTarget === 'hidden'),
-    unclassified:        results.filter(r => r.dashboardTarget === 'pending'),
-  };
-}
-
-/**
- * Compute the 4 KPI values shown in the dashboard header.
- *
- * BALANCE = INCOME − EXPENSES − INVESTMENTS
- *
- * "lo que te quedó líquido al día 31":
- *   - INCOME: all money received (salary, freelance, refunds, etc.)
- *   - EXPENSES: all money spent on goods and services
- *   - INVESTMENTS: money allocated to invest (still yours, but not liquid)
- *   - BALANCE: what's left in your bank account
- *
- * investments_income (dividends, returns) counts as INCOME — it is new
- * money generated by your portfolio, not a capital movement.
- *
- * own_transfer (Santander → Revolut) is excluded entirely — it has
- * zero net effect on your financial position.
- *
- * @example
- * const kpis = computeMonthlyKPIs(results);
- * // {
- * //   income:      2069.69,
- * //   expenses:    3732.06,
- * //   investments: 0,
- * //   balance:     -1662.37   ← INCOME - EXPENSES - INVESTMENTS
- * // }
- */
-export function computeMonthlyKPIs(
-  results: (TransactionInput & CategorizationOutput)[],
-): {
-  income:      number;
-  expenses:    number;
-  investments: number;
-  balance:     number;
-} {
-  let income = 0;
-  let expenses = 0;
-  let investments = 0;
-
-  for (const tx of results) {
-    if (tx.dashboardTarget === 'hidden' || tx.dashboardTarget === 'pending') continue;
-
-    const amount = Math.abs(tx.amount as number);
-
-    if (tx.dashboardTarget === 'investments') {
-      investments += amount;
-    } else if (tx.movement === 'INCOME') {
-      income += amount;
-    } else if (tx.movement === 'EXPENSE') {
-      expenses += amount;
-    }
-  }
-
-  return {
-    income:      Math.round(income      * 100) / 100,
-    expenses:    Math.round(expenses    * 100) / 100,
-    investments: Math.round(investments * 100) / 100,
-    balance:     Math.round((income - expenses - investments) * 100) / 100,
-  };
 }

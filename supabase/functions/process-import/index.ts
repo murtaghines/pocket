@@ -5,12 +5,10 @@ import { categorize, normalize as normalizeForCategorizer, type UserContext, typ
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
 import {
   type MovementType,
-  INCOME_SLUGS,
-  EXPENSE_SLUGS,
-  TRANSFER_SLUGS,
   mapCategorySlug,
   validateCategorySlug,
 } from "../_shared/categoryMap.ts";
+import { type MatchType, ruleMatchesDescription } from "../_shared/userRules.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -279,19 +277,19 @@ function detectInternalTransfer(
   }
   
   // Check if the user's own name appears in the description/counterparty
-  // If so, it's a transfer between own accounts (sending money to yourself)
-  if (userName) {
+  // If so, it's a transfer between own accounts (sending money to yourself).
+  // Word boundaries (\b) are required \u2014 plain `.includes()` used to match e.g. "Ana" inside
+  // "PALANCA" or "Ivo" inside "IVOOX", spuriously flagging merchant descriptions as own transfers.
+  if (userName?.firstName && userName?.lastName &&
+      userName.firstName.length >= 3 && userName.lastName.length >= 3) {
     const descNorm = textToCheck.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    
-    if (userName.firstName && userName.firstName.length >= 3) {
-      const firstNorm = userName.firstName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      if (userName.lastName && userName.lastName.length >= 3) {
-        const lastNorm = userName.lastName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        // Both first AND last name must appear to avoid false positives
-        if (descNorm.includes(firstNorm) && descNorm.includes(lastNorm)) {
-          return { isTransfer: true, categorySlug: 'own_transfer' };
-        }
-      }
+    const firstNorm = userName.firstName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const lastNorm  = userName.lastName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const firstRe = new RegExp(`\\b${escapeRe(firstNorm)}\\b`, 'i');
+    const lastRe  = new RegExp(`\\b${escapeRe(lastNorm)}\\b`, 'i');
+    if (firstRe.test(descNorm) && lastRe.test(descNorm)) {
+      return { isTransfer: true, categorySlug: 'own_transfer' };
     }
   }
   
@@ -311,65 +309,12 @@ function detectInternalTransfer(
   return { isTransfer: false, categorySlug: '' };
 }
 
-interface CategoryRuleRow {
-  id: string;
-  category_id: string;
-  pattern: string;
-  match_field: string;
-  match_type: string;
-  categories: { slug: string } | null;
-}
-
-// Pure matcher over a pre-loaded rule set — the caller loads categorization_rules ONCE
-// before the per-transaction loop (see loop below) rather than re-querying it for every
-// row, which used to cause N+1 queries and WORKER_RESOURCE_LIMIT timeouts on statements
-// with many transactions.
-function applyCategoryRules(
-  rules: CategoryRuleRow[],
-  descriptionClean: string,
-  counterpartyRaw: string | null
-): { categoryId: string | null; categorySlug: string | null; ruleId: string | null } | null {
-  if (!rules || rules.length === 0) {
-    return null;
-  }
-
-  for (const rule of rules) {
-    const textToMatch = rule.match_field === 'counterparty' 
-      ? (counterpartyRaw || '').toLowerCase()
-      : descriptionClean.toLowerCase();
-    
-    let matches = false;
-    const mt = rule.match_type.toUpperCase();
-    
-    if (mt === 'CONTAINS') {
-      matches = textToMatch.includes(rule.pattern.toLowerCase());
-    } else if (mt === 'STARTS_WITH') {
-      matches = textToMatch.startsWith(rule.pattern.toLowerCase());
-    } else if (mt === 'REGEX') {
-      try {
-        const regex = new RegExp(rule.pattern, 'i');
-        matches = regex.test(textToMatch);
-      } catch {
-        // Invalid regex, skip
-      }
-    } else if (mt === 'EXACT') {
-      matches = textToMatch === rule.pattern.toLowerCase();
-    }
-    
-    if (matches) {
-      return { 
-        categoryId: rule.category_id, 
-        categorySlug: rule.categories?.slug || null,
-        ruleId: rule.id 
-      };
-    }
-  }
-  
-  return null;
-}
-
-// ========== USER RULES (learned from corrections in My Data) ==========
-// These take priority over Settings rules and over the generic categorizer.
+// ========== USER RULES (learned from corrections in My Data + Settings) ==========
+// Single source of truth for user-authored rules. Both the imports flow (RuleEditorDialog)
+// and the Categories page (AddRuleDialog) write into `user_rules`. Takes priority over the
+// generic categorizer. Replaced the previous `categorization_rules` table (dropped in the
+// same change) which had a divergent match_type set and no UI for editing rules created via
+// the imports flow.
 interface UserRuleRow {
   id: string;
   match_type: string;
@@ -380,37 +325,13 @@ interface UserRuleRow {
   source: string;
 }
 
-function normalizeForRule(text: string): string {
-  return (text || '')
-    .toUpperCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 function applyUserRulesMatch(
   description: string,
   rules: UserRuleRow[],
 ): { movement: string; category: string; ruleId: string } | null {
-  const norm = normalizeForRule(description);
   for (const rule of rules) {
-    let matched = false;
-    const mt = (rule.match_type || '').toLowerCase();
-    if (mt === 'fuzzy') {
-      const tokens: string[] = rule.tokens || [];
-      matched = tokens.length > 0 && tokens.every((t) => norm.includes(t.toUpperCase()));
-    } else if (mt === 'contains') {
-      matched = norm.includes((rule.pattern || '').toUpperCase());
-    } else if (mt === 'starts_with') {
-      matched = norm.startsWith((rule.pattern || '').toUpperCase());
-    } else if (mt === 'ends_with') {
-      matched = norm.endsWith((rule.pattern || '').toUpperCase());
-    } else if (mt === 'exact') {
-      matched = norm === (rule.pattern || '').toUpperCase();
-    } else if (mt === 'regex') {
-      try { matched = new RegExp(rule.pattern, 'i').test(description); } catch { /* ignore */ }
-    }
+    const mt = (rule.match_type || '').toLowerCase() as MatchType;
+    const matched = ruleMatchesDescription(mt, rule.pattern || '', rule.tokens || [], description);
     if (matched) {
       return { movement: rule.movement, category: rule.category, ruleId: rule.id };
     }
@@ -755,11 +676,13 @@ serve(async (req) => {
 
     const { data: userPrefs } = await supabase
       .from('user_preferences')
-      .select('country, base_currency, joint_account_names')
+      .select('country, joint_account_names')
       .eq('user_id', userId)
       .maybeSingle();
 
-    // Parse custom_category_rules from profile
+    // Parse custom_category_rules from profile. Only the `custom_category` shape is live —
+    // the old `rule_override` shape had no UI writer and was dropped along with the dead
+    // categorizer step that consumed it.
     const customRules = (userProfile?.custom_category_rules as any[]) || [];
     const customCategories = customRules
       .filter((r: any) => r.type === 'custom_category')
@@ -769,22 +692,14 @@ serve(async (req) => {
         movement: r.movement as 'INCOME' | 'EXPENSE',
         keywords: r.keywords as string[],
       }));
-    const categoryRuleOverrides = customRules
-      .filter((r: any) => r.type === 'rule_override')
-      .map((r: any) => ({
-        targetCategory: r.targetCategorySlug,
-        keywords: r.keywords as string[],
-      }));
 
     const userContext: UserContext | undefined = (userProfile?.first_name && userProfile?.last_name)
       ? {
           firstName: userProfile.first_name,
           lastName: userProfile.last_name,
           country: (userPrefs?.country as UserContext['country']) || undefined,
-          currency: (userPrefs?.base_currency as UserContext['currency']) || undefined,
           jointAccountNames: userPrefs?.joint_account_names || undefined,
           customCategories: customCategories.length > 0 ? customCategories : undefined,
-          categoryRuleOverrides: categoryRuleOverrides.length > 0 ? categoryRuleOverrides : undefined,
         }
       : undefined;
 
@@ -818,26 +733,6 @@ serve(async (req) => {
       .order('created_at', { ascending: false });  // newest first
     const userRules: UserRuleRow[] = (userRulesRaw || []) as UserRuleRow[];
     console.log(`[process-import] Loaded ${userRules.length} active user_rules`);
-
-    // Load categorization_rules (Settings rules) ONCE for the whole batch — previously this
-    // was re-queried per transaction inside applyCategoryRules, which meant an N+1 query
-    // pattern (one round-trip per row) that caused WORKER_RESOURCE_LIMIT timeouts on
-    // statements with many transactions.
-    const { data: categoryRulesRaw } = await supabase
-      .from('categorization_rules')
-      .select(`
-        id,
-        category_id,
-        pattern,
-        match_field,
-        match_type,
-        categories!inner(slug)
-      `)
-      .eq('user_id', userId)
-      .eq('domain', domain)
-      .order('priority', { ascending: false });
-    const categoryRules: CategoryRuleRow[] = (categoryRulesRaw || []) as CategoryRuleRow[];
-    console.log(`[process-import] Loaded ${categoryRules.length} categorization_rules`);
 
     // Create import record
     const { data: importRecord, error: importError } = await supabase
@@ -1251,14 +1146,10 @@ serve(async (req) => {
         categoryId = categorySlugToId[categorySlug] || null;
       }
       
-      // ── Priority 1a: user_rules (learned corrections from My Data) ──
+      // ── Priority 1: user_rules (unified rule table — both Categories page and
+      //    "save as rule" flow in imports write here) ──
       const userRuleHit = applyUserRulesMatch(descriptionRaw, userRules)
                        || applyUserRulesMatch(descriptionClean, userRules);
-
-      // ── Priority 1b: categorization_rules (Settings rules) — only if no user_rule matched ──
-      const ruleMatch = userRuleHit
-        ? null
-        : applyCategoryRules(categoryRules, descriptionClean, counterpartyRaw);
 
       if (userRuleHit) {
         const mappedCat = mapCategorySlug(userRuleHit.category);
@@ -1274,51 +1165,29 @@ serve(async (req) => {
         stats.categorizedByRule++;
         console.log(`[process-import] user_rule match: "${descriptionRaw.substring(0, 40)}" → ${userRuleHit.movement}/${categorySlug} (rule=${userRuleHit.ruleId})`);
       }
-      
-      if (ruleMatch) {
-        categoryId = ruleMatch.categoryId;
-        if (ruleMatch.categorySlug) {
-          if (INCOME_SLUGS.includes(ruleMatch.categorySlug)) {
-            movement = 'INCOME';
-          } else if (EXPENSE_SLUGS.includes(ruleMatch.categorySlug)) {
-            movement = 'EXPENSE';
-          } else if (TRANSFER_SLUGS.includes(ruleMatch.categorySlug)) {
-            movement = 'TRANSFER';
-          }
-          categorySlug = ruleMatch.categorySlug;
-        }
-        categorizationRuleId = ruleMatch.ruleId;
-        categorySource = 'RULE';
-        categorizedBy = 'user_rule';
-        
-        // Adjust stats
-        if (categorizerMatch) {
-          stats.categorizedByCategorizer--;
-        } else {
-          stats.categorizedByAI--;
-        }
-        stats.categorizedByRule++;
-      }
 
       // ── Sign sanity check: amount sign must agree with movement (except TRANSFER) ──
       // A positive amount cannot be an EXPENSE; a negative amount cannot be INCOME. When this
       // fires, the category is decided by this fallback, not by whichever classifier ran above —
       // relabel honestly so categorized_by/category_source don't falsely credit the AI/categorizer/
-      // rule with a guess it never made (was previously left as whatever the prior stage set).
+      // rule with a guess it never made. The log now names the prior stage that got demoted
+      // (ex-USER_RULE, ex-RULE, ex-CATEGORIZER, ex-AI) so a user asking "why did my rule stop
+      // applying" is answerable from logs alone.
+      const priorSource = categorySource;
       if (movement === 'EXPENSE' && amountSigned > 0) {
         movement = 'INCOME';
         categorySlug = 'other_income';
         categoryId = categorySlugToId[categorySlug] || null;
         categorySource = 'SIGN_FALLBACK';
         categorizedBy = 'sign_fallback';
-        console.log(`[process-import] Sign correction: positive amount ${amountSigned} re-classified EXPENSE→INCOME for "${descriptionRaw.substring(0, 40)}"`);
+        console.log(`[process-import] Sign correction (ex-${priorSource}): positive amount ${amountSigned} re-classified EXPENSE→INCOME for "${descriptionRaw.substring(0, 40)}"`);
       } else if (movement === 'INCOME' && amountSigned < 0) {
         movement = 'EXPENSE';
         categorySlug = 'other_expense';
         categoryId = categorySlugToId[categorySlug] || null;
         categorySource = 'SIGN_FALLBACK';
         categorizedBy = 'sign_fallback';
-        console.log(`[process-import] Sign correction: negative amount ${amountSigned} re-classified INCOME→EXPENSE for "${descriptionRaw.substring(0, 40)}"`);
+        console.log(`[process-import] Sign correction (ex-${priorSource}): negative amount ${amountSigned} re-classified INCOME→EXPENSE for "${descriptionRaw.substring(0, 40)}"`);
       }
 
       if (movement === 'INCOME') stats.income++;

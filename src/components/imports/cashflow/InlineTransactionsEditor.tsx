@@ -1202,7 +1202,6 @@ export function InlineTransactionsEditor({
                 : `Future transactions matching “${payload.pattern.slice(0, 40)}${payload.pattern.length > 40 ? "…" : ""}” will be categorized as ${getCategoryLabel(payload.category)}.`,
           });
           queryClient.invalidateQueries({ queryKey: ["user_rules"] });
-          queryClient.invalidateQueries({ queryKey: ["categorization_rules"] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           setCategoryRulePrompt(null);
         }}

@@ -1,5 +1,11 @@
 // Category translations - English only for now
 // Full i18n support will be added later
+//
+// NOTE: `useCategoryTranslations` (backed by i18n/locales/{en,es}/categories.json) is the
+// translated path for anything user-facing that needs es/en parity. `getCategoryLabel` /
+// `getMovementLabel` below are still live — imports.tsx / MonthReviewModal / useTransactions /
+// Index.tsx import them directly rather than via the hook, hardcoded to English. Not dead code:
+// confirmed via grep before restoring (were mistakenly deleted in Fase 3 cleanup, 2026-07-11).
 
 // Category labels (English)
 export const categoryLabels: Record<string, string> = {

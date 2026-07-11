@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, X, Loader2, Check } from 'lucide-react';
-import { icons } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CustomCategoryRule } from '@/hooks/useCustomCategories';
+import { CURATED_COLORS } from '@/lib/categoryPalette';
+import { getLucideIcon } from '@/lib/lucideIcon';
 
 function generateSlug(name: string): string {
   return name
@@ -20,35 +21,8 @@ function generateSlug(name: string): string {
     .replace(/\s+/g, '_');
 }
 
-const CURATED_COLORS = [
-  // Row 1 — Cool / brand family
-  '203 60% 51%', // Pocket blue (default)
-  '210 70% 60%',
-  '220 65% 55%',
-  '230 55% 60%',
-  '250 55% 62%',
-  '270 50% 60%',
-  '190 65% 48%',
-  '180 55% 45%',
-  '170 55% 42%',
-  '155 50% 45%',
-  '140 45% 48%',
-  '120 40% 50%',
-  // Row 2 — Warm / earth / neutrals
-  '50 85% 55%',
-  '40 90% 55%',
-  '30 85% 55%',
-  '20 80% 55%',
-  '10 75% 55%',
-  '355 70% 58%',
-  '335 60% 58%',
-  '315 50% 55%',
-  '25 40% 45%',
-  '35 35% 40%',
-  '210 15% 50%',
-  '215 20% 35%',
-];
-
+// Small curated set for a NEW category's initial icon pick — the fuller icon
+// library is available later via the visual-override popover in ColorIconPicker.
 const CURATED_ICONS = [
   'coffee', 'gift', 'baby', 'music', 'book', 'wrench',
   'scissors', 'palette', 'flame', 'zap', 'sparkles', 'crown',
@@ -108,7 +82,7 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
   };
 
   const renderIcon = (iconName: string, size = 16) => {
-    const IconComponent = icons[iconName as keyof typeof icons];
+    const IconComponent = getLucideIcon(iconName);
     if (!IconComponent) return null;
     return <IconComponent size={size} />;
   };

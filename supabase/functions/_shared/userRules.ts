@@ -1,44 +1,24 @@
-/**
- * userRules.ts — Client-side rule generation from transaction corrections.
- *
- * When a user edits a transaction's movement/category in My Data,
- * this module generates a learned rule and provides matching logic
- * for retroactive application.
- *
- * This is the canonical implementation. supabase/functions/_shared/userRules.ts is a
- * byte-identical Deno-side copy (same reason _shared/fingerprint.ts duplicates instead of
- * importing across the browser/Deno boundary) — process-import imports from there so the
- * "will match N transactions" preview shown by RuleEditorDialog can never drift from what
- * actually matches on the next import. Keep the two in sync; tests/userRules-parity.test.ts
- * locks it.
- */
+// Rule generation + matching for learned corrections (user_rules table).
+//
+// Copied verbatim from src/lib/userRules.ts so it can run in Deno (mirrors the pattern
+// already used by _shared/fingerprint.ts for the same reason). Keep the two implementations
+// byte-identical — tests/userRules-parity.test.ts locks this.
+//
+// Consolidating this closed a real divergence: process-import used to have its own inline
+// 'fuzzy' matcher that did a plain substring check (`norm.includes(token)`), while the
+// RuleEditorDialog preview (src/lib/userRules.ts) required an exact whole-token match
+// (`descTokens.has(token)`). A rule's preview count could silently disagree with what it
+// actually matched on the next import. Both now call the same `ruleMatchesDescription`.
 
 export type MatchType = 'fuzzy' | 'contains' | 'starts_with' | 'ends_with' | 'exact' | 'regex';
 export type RuleSource = 'user_correction' | 'manual';
-
-export interface UserRule {
-  id: string;
-  user_id: string;
-  source: RuleSource;
-  match_type: MatchType;
-  pattern: string;
-  tokens: string[];
-  movement: string;
-  category: string;
-  confidence: number;
-  created_at: string;
-  applied_count: number;
-  last_applied_at: string | null;
-  original_description: string | null;
-  is_active: boolean;
-}
 
 // ─── Text normalization ───
 
 export function normalize(raw: string): string {
   return raw
     .toUpperCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // strip accents
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')   // strip accents
     .replace(/[^A-Z0-9\s]/g, ' ')                       // non-alphanum → space
     .replace(/\s+/g, ' ')                                // collapse spaces
     .trim();

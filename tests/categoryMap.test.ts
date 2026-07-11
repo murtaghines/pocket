@@ -80,6 +80,25 @@ describe('completeness guard — every categorizer category resolves to a valid 
   });
 });
 
+describe('FIXED — custom_ slugs are not demoted to other_*', () => {
+  // Categorías custom (creadas por el usuario desde CreateCategoryDialog) emiten slugs con
+  // prefijo `custom_`. Antes se degradaban a `other_expense`/`other_income` porque el switch
+  // en validateCategorySlug requería que estuvieran en EXPENSE_SLUGS/INCOME_SLUGS. Toda
+  // categoría custom se perdía en cada import. Fijado permitiendo pasar-through `custom_*` en
+  // validateCategorySlug — el consumo downstream ya resuelve el id via userContext.
+  it('preserves a custom expense slug as-is', () => {
+    expect(validateCategorySlug('custom_ropa_bebe', 'EXPENSE')).toBe('custom_ropa_bebe');
+  });
+
+  it('preserves a custom income slug as-is', () => {
+    expect(validateCategorySlug('custom_bonus_anual', 'INCOME')).toBe('custom_bonus_anual');
+  });
+
+  it('still normalizes case for custom slugs', () => {
+    expect(validateCategorySlug('CUSTOM_Ropa_Bebe', 'EXPENSE')).toBe('custom_ropa_bebe');
+  });
+});
+
 describe('FIXED — to_joint_account no longer collapses to own_transfer', () => {
   it('has its own TRANSFER slug, distinct from own_transfer', () => {
     // The categorizer emits `to_joint_account` when a joint-account name matches. It used to

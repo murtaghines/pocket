@@ -127,50 +127,6 @@ export type Database = {
           },
         ]
       }
-      categorization_rules: {
-        Row: {
-          category_id: string | null
-          created_at: string | null
-          domain: Database["public"]["Enums"]["app_domain"]
-          id: string
-          match_field: string
-          match_type: string
-          pattern: string
-          priority: number
-          user_id: string
-        }
-        Insert: {
-          category_id?: string | null
-          created_at?: string | null
-          domain: Database["public"]["Enums"]["app_domain"]
-          id?: string
-          match_field: string
-          match_type: string
-          pattern: string
-          priority?: number
-          user_id: string
-        }
-        Update: {
-          category_id?: string | null
-          created_at?: string | null
-          domain?: Database["public"]["Enums"]["app_domain"]
-          id?: string
-          match_field?: string
-          match_type?: string
-          pattern?: string
-          priority?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "categorization_rules_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       email_otps: {
         Row: {
           attempts: number
@@ -385,6 +341,7 @@ export type Database = {
           date: string
           description: string
           id: string
+          is_hidden: boolean
           original_text: string | null
           platform: string
           transaction_hash: string
@@ -399,6 +356,7 @@ export type Database = {
           date: string
           description: string
           id?: string
+          is_hidden?: boolean
           original_text?: string | null
           platform: string
           transaction_hash: string
@@ -413,6 +371,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          is_hidden?: boolean
           original_text?: string | null
           platform?: string
           transaction_hash?: string
@@ -596,13 +555,6 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_categorization_rule_id_fkey"
-            columns: ["categorization_rule_id"]
-            isOneToOne: false
-            referencedRelation: "categorization_rules"
             referencedColumns: ["id"]
           },
           {

@@ -11,7 +11,26 @@
   process-investment-file, check-data-integrity. (`apply-rules-retroactive` and
   `fix-categorization` deleted 2026-07-07 — see Fase 4 notes below.)
 - Shared module: supabase/functions/_shared/categorizer.ts (categorization engine — not
-  a deployed function)
+  a deployed function), _shared/userRules.ts (Deno-side copy of src/lib/userRules.ts,
+  added 2026-07-11), _shared/categoryMap.ts, _shared/fingerprint.ts
+
+## Categories & rules unification (2026-07-11)
+
+`categorization_rules` (the table the Categories page wrote to) was migrated into
+`user_rules` (the table the imports "save as rule" flow writes to) and dropped — see
+docs/epics/categories.md for the full writeup. Effects on this module:
+- `process-import/index.ts` no longer loads or applies `categorization_rules`
+  (`applyCategoryRules` deleted); `applyUserRulesMatch` is the only rule-matching path now,
+  and it imports `ruleMatchesDescription` from the new `_shared/userRules.ts` instead of a
+  private inline matcher — this also fixed a real divergence where the inline matcher's
+  `fuzzy` type did a substring check while `RuleEditorDialog`'s preview required an exact
+  token match.
+- `RuleEditorDialog`'s retroactive-apply preview and process-import's categorization of
+  future imports are now guaranteed to agree on what a `fuzzy` rule matches (see
+  tests/userRules-parity.test.ts).
+- Historical notes below that mention `categorization_rules` (Fase 3's N+1 fix, in
+  particular) describe work against the table before this migration — accurate as history,
+  not as current schema.
 
 ## Modelo de integridad: dato real vs. vista del usuario (2026-07-08)
 
