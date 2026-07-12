@@ -54,6 +54,11 @@ Hub is at `/account` with URL-driven tabs (?tab=overview|accounts|preferences|se
 - Cross-device theme sync: write `user_preferences.theme` on change, read on login
   (currently only localStorage-backed — the DB column exists but isn't wired).
 - Drop the deprecated DB columns in a future explicit migration.
-- MyData workspace account filter chips (plan item Bloque 8 — account chips in
-  MonthWorkspace InlineTransactionsEditor not yet implemented; file grouping in
-  UploadedFiles.tsx and download buttons are done).
+
+## Decisions made (continued)
+- 2026-07-12: removed dead DB writes from Auth.tsx onboarding: `selected_categories`,
+  `investment_platforms`, and `locale` are no longer written (all were write-only; none
+  are read anywhere in the app). `joint_account_names` kept (read by process-import).
+- 2026-07-12: added account filter chips to MonthWorkspace — shows when 2+ accounts have
+  imports in the active month. Chip state via URL `?account=<id>`; resets on month switch.
+  `InlineTransactionsEditor` receives filtered imports based on selected chip.
