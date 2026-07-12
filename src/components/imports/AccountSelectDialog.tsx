@@ -26,6 +26,8 @@ interface AccountSelectDialogProps {
   onOpenChange: (open: boolean) => void;
   onConfirm: (accountId: string) => void;
   fileName?: string;
+  accountRole?: 'CASH' | 'INVESTMENT';
+  domainDefault?: 'CASHFLOW' | 'INVESTING';
 }
 
 export function AccountSelectDialog({
@@ -33,10 +35,12 @@ export function AccountSelectDialog({
   onOpenChange,
   onConfirm,
   fileName,
+  accountRole = 'CASH',
+  domainDefault = 'CASHFLOW',
 }: AccountSelectDialogProps) {
   const { accounts, createAccount, isCreating } = useAccounts();
   const { t } = useTranslation('profile');
-  const cashAccounts = accounts.filter(a => a.account_role === 'CASH');
+  const filteredAccounts = accounts.filter(a => a.account_role === accountRole);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [showNewForm, setShowNewForm] = useState(false);
@@ -50,7 +54,7 @@ export function AccountSelectDialog({
 
   const handleCreateAccount = (values: AccountFormValues) => {
     createAccount(
-      { institution: values.institution, name: values.name, color: values.color, account_role: 'CASH', domain_default: 'CASHFLOW' },
+      { institution: values.institution, name: values.name, color: values.color, account_role: accountRole, domain_default: domainDefault },
       {
         onSuccess: (data) => {
           setSelectedAccountId(data.id);
@@ -60,7 +64,7 @@ export function AccountSelectDialog({
     );
   };
 
-  const hasAccounts = cashAccounts.length > 0;
+  const hasAccounts = filteredAccounts.length > 0;
 
   return (
     <>
@@ -85,7 +89,7 @@ export function AccountSelectDialog({
                     <SelectValue placeholder={t('accounts.selectPlaceholder', 'Select an account...')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {cashAccounts.map((account) => (
+                    {filteredAccounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
                         <div className="flex items-center gap-2">
                           <Building2 className="w-3.5 h-3.5 text-muted-foreground" />

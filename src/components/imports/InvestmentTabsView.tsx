@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useImports, type Import } from "@/hooks/useImports";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
+import { AccountSelectDialog } from "./AccountSelectDialog";
 import { UploadedFilesDropdown } from "./investments/UploadedFiles";
 import { MonthTabStrip } from "./investments/MonthTabStrip";
 import { MonthWorkspace } from "./investments/MonthWorkspace";
@@ -106,6 +107,12 @@ export function InvestmentTabsView() {
 
   const globalFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Account-linking dialog state — files are held here until the user picks an account,
+  // then addFilesForMonth + processFilesForMonth run with the confirmed accountId.
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
+  const [pendingRawFiles, setPendingRawFiles] = useState<File[]>([]);
+  const [pendingUploadDate, setPendingUploadDate] = useState<Date | null>(null);
+
   const handleFilesPicked = (files: FileList | null, monthDate: Date) => {
     if (!files) return;
     const valid: File[] = [];
@@ -115,11 +122,26 @@ export function InvestmentTabsView() {
       else valid.push(f);
     }
     if (valid.length) {
-      // Process the exact files just added, passed directly rather than read back out of
-      // pendingFilesByMonth state — that update may not have committed yet, which made this
-      // silently no-op (see useMonthlyInvestmentUpload.tsx processFilesForMonth).
-      const added = addFilesForMonth(valid, monthDate);
-      processFilesForMonth(monthDate, added);
+      setPendingRawFiles(valid);
+      setPendingUploadDate(monthDate);
+      setAccountDialogOpen(true);
+    }
+  };
+
+  const handleAccountConfirm = (accountId: string) => {
+    setAccountDialogOpen(false);
+    if (!pendingUploadDate || !pendingRawFiles.length) return;
+    const added = addFilesForMonth(pendingRawFiles, pendingUploadDate);
+    processFilesForMonth(pendingUploadDate, added, accountId);
+    setPendingRawFiles([]);
+    setPendingUploadDate(null);
+  };
+
+  const handleAccountDialogClose = (open: boolean) => {
+    setAccountDialogOpen(open);
+    if (!open) {
+      setPendingRawFiles([]);
+      setPendingUploadDate(null);
     }
   };
 
@@ -217,6 +239,15 @@ export function InvestmentTabsView() {
           setPendingByInv={setPendingByInv}
         />
       )}
+
+      <AccountSelectDialog
+        open={accountDialogOpen}
+        onOpenChange={handleAccountDialogClose}
+        onConfirm={handleAccountConfirm}
+        accountRole="INVESTMENT"
+        domainDefault="INVESTING"
+        fileName={pendingRawFiles.length === 1 ? pendingRawFiles[0].name : undefined}
+      />
 
       <InvestmentPreviewDialog
         isOpen={showPreview}

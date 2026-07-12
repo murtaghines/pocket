@@ -82,7 +82,7 @@ export function useMonthlyInvestmentUpload() {
   // this hook's closure — that state update may not have committed/re-rendered yet, which
   // previously made auto-process-after-add silently no-op (found zero pending files and
   // returned before ever calling the AI). Falls back to reading state for any other caller.
-  const processFilesForMonth = useCallback(async (targetMonth: Date, filesOverride?: PendingFile[]) => {
+  const processFilesForMonth = useCallback(async (targetMonth: Date, filesOverride?: PendingFile[], accountId?: string) => {
     if (!user) {
       toast({
         title: "Error",
@@ -172,6 +172,7 @@ export function useMonthlyInvestmentUpload() {
             status: "UPLOADED",
             domain: "INVESTING",
             source_type: "BROKER",
+            account_id: accountId || null,
           })
           .select()
           .single();
