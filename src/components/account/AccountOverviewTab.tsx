@@ -25,7 +25,7 @@ function OverviewStatCard({ label, value, sub, icon: Icon, loading }: OverviewSt
       {loading ? (
         <div className="h-8 w-16 rounded bg-muted animate-pulse" />
       ) : (
-        <p className="text-[28px] font-bold tracking-[-0.02em] text-foreground leading-none">{value}</p>
+        <p className="text-[28px] font-bold tracking-[-0.02em] text-foreground leading-none tabular-nums">{value}</p>
       )}
       {sub && !loading && (
         <p className="text-xs text-muted-foreground">{sub}</p>
@@ -36,11 +36,11 @@ function OverviewStatCard({ label, value, sub, icon: Icon, loading }: OverviewSt
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; class: string }> = {
-    NORMALIZED: { label: "Done", class: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-    PARSED:     { label: "Done", class: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-    UPLOADED:   { label: "Processing", class: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
-    PARTIAL:    { label: "Partial", class: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" },
-    FAILED:     { label: "Failed", class: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+    NORMALIZED: { label: "Done",       class: "bg-success/15 text-success" },
+    PARSED:     { label: "Done",       class: "bg-success/15 text-success" },
+    UPLOADED:   { label: "Processing", class: "bg-warning/15 text-warning-foreground" },
+    PARTIAL:    { label: "Partial",    class: "bg-warning/15 text-warning-foreground" },
+    FAILED:     { label: "Failed",     class: "bg-destructive/15 text-destructive" },
   };
   const s = map[status] || { label: status, class: "bg-muted text-muted-foreground" };
   return (

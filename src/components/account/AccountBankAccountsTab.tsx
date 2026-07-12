@@ -200,7 +200,7 @@ export function AccountBankAccountsTab() {
                 {/* Header row */}
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span
-                    className="w-3 h-3 rounded-full shrink-0 border border-black/10"
+                    className="w-3 h-3 rounded-full shrink-0 border border-foreground/10"
                     style={{ backgroundColor: color }}
                   />
                   <span className="text-sm font-semibold text-foreground truncate flex-1">
@@ -230,6 +230,7 @@ export function AccountBankAccountsTab() {
                     size="sm"
                     className={`h-7 w-7 p-0 ${account.is_primary ? "text-secondary" : "text-muted-foreground hover:text-secondary"}`}
                     onClick={() => handleTogglePrimary(account)}
+                    aria-label={account.is_primary ? t("accounts.unsetPrimary", "Remove primary") : t("accounts.setPrimary", "Set as primary")}
                     title={account.is_primary ? t("accounts.unsetPrimary", "Remove primary") : t("accounts.setPrimary", "Set as primary")}
                   >
                     <Star className="w-3.5 h-3.5" fill={account.is_primary ? "currentColor" : "none"} />
@@ -239,6 +240,7 @@ export function AccountBankAccountsTab() {
                     size="sm"
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                     onClick={() => handleOpenEdit(account)}
+                    aria-label={t("accounts.edit", "Edit")}
                     title={t("accounts.edit", "Edit")}
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -248,6 +250,11 @@ export function AccountBankAccountsTab() {
                     size="sm"
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                     onClick={() => handleToggleHide(account)}
+                    aria-label={
+                      account.hidden_from_dashboard
+                        ? t("accounts.showInDashboard", "Show in dashboard")
+                        : t("accounts.hideFromDashboard", "Hide from dashboard")
+                    }
                     title={
                       account.hidden_from_dashboard
                         ? t("accounts.showInDashboard", "Show in dashboard")
@@ -266,6 +273,7 @@ export function AccountBankAccountsTab() {
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive ml-auto"
                     onClick={() => handleDeleteClick(account)}
                     disabled={isDeleting}
+                    aria-label={t("accounts.delete", "Delete")}
                     title={t("accounts.delete", "Delete")}
                   >
                     <Trash2 className="w-3.5 h-3.5" />

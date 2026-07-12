@@ -23,8 +23,7 @@ export function AccountHeader() {
   return (
     <div className="flex items-center gap-4 pb-2">
       <div
-        className="w-14 h-14 rounded-full flex items-center justify-center text-white text-[18px] font-bold shrink-0"
-        style={{ background: "linear-gradient(135deg,hsl(216 100% 60%),hsl(216 100% 42%))" }}
+        className="w-14 h-14 rounded-full flex items-center justify-center bg-primary text-primary-foreground text-[18px] font-bold shrink-0"
       >
         {initials}
       </div>
