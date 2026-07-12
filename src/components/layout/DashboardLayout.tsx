@@ -1,22 +1,16 @@
 import { ReactNode, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  PiggyBank,
-  TrendingUp,
-  Target,
-  FileSpreadsheet,
   User,
   LogOut,
   Search,
   ChevronDown,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 import { DataRail } from "./DataRail";
+import { MobileBottomNav } from "./MobileBottomNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTransactions } from "@/hooks/useTransactions";
@@ -53,18 +47,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       document.body.classList.remove("dashboard-theme");
     };
   }, []);
-
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + "/");
-
-  const mobileNavItems = [
-    { label: t("navigation.dashboard", "Home"), path: "/dashboard", icon: LayoutDashboard },
-    { label: t("navigation.history", "History"), path: "/history", icon: TrendingUp },
-    { label: t("navigation.investments", "Invest"), path: "/investments", icon: PiggyBank },
-    { label: "Plan", path: "/planning", icon: Target },
-    { label: "Data", path: "/my-data?tab=bank", icon: FileSpreadsheet },
-    { label: t("navigation.profile", "Me"), path: "/profile", icon: User },
-  ];
 
   // Page header shown in the desktop top bar for non-dashboard routes
   const pageHeader = (() => {
@@ -146,9 +128,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem asChild>
-                <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                <Link to="/account" className="flex items-center gap-2 cursor-pointer">
                   <User className="w-4 h-4" />
-                  {t("navigation.profile", "Profile")}
+                  {t("navigation.account", "Account")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -165,28 +147,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </header>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
-        <div className="flex items-stretch justify-between h-14 px-1">
-          {mobileNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.path.split("?")[0]);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-xl transition-all flex-1 min-w-0",
-                  active ? "text-primary" : "text-muted-foreground",
-                )}
-              >
-                <Icon className="w-5 h-5 shrink-0" />
-                <span className="text-[10px] font-medium leading-none truncate max-w-full">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-        <div className="h-[env(safe-area-inset-bottom,0)] bg-card" />
-      </nav>
+      <MobileBottomNav />
 
       {/* Main content */}
       <main className="w-full px-4 md:px-[30px] pt-4 md:pt-[8px] pb-20 md:pb-[40px] relative z-10">

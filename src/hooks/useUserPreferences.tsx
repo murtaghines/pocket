@@ -14,6 +14,8 @@ export interface UserPreferences {
   selected_categories?: string[];
   onboarding_completed?: boolean;
   joint_account_split?: number;
+  joint_account_names?: string[];
+  theme?: string;
   created_at: string;
   updated_at: string;
 }

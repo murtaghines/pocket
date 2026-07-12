@@ -17,6 +17,7 @@ export interface Account {
   created_at: string;
   color: string | null;
   is_primary: boolean;
+  hidden_from_dashboard?: boolean;
 }
 
 interface CreateAccountParams {
@@ -221,13 +222,33 @@ export function useAccounts() {
   });
 
   const getLinkedDataCount = async (accountId: string) => {
-    const [imports, transactions] = await Promise.all([
-      supabase.from('imports').select('id', { count: 'exact', head: true }).eq('account_id', accountId),
-      supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('account_id', accountId),
+    const [importsResult, transactionsResult] = await Promise.all([
+      supabase
+        .from('imports')
+        .select('id, uploaded_at, periods(month_key)')
+        .eq('account_id', accountId),
+      supabase
+        .from('transactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('account_id', accountId),
     ]);
+
+    const importsData = importsResult.data || [];
+    const monthKeys = importsData
+      .map((i) => (i.periods as { month_key?: string } | null)?.month_key)
+      .filter((m): m is string => !!m)
+      .sort();
+
+    const sortedByDate = [...importsData].sort((a, b) =>
+      (b.uploaded_at || '').localeCompare(a.uploaded_at || '')
+    );
+
     return {
-      importsCount: imports.count || 0,
-      transactionsCount: transactions.count || 0,
+      importsCount: importsData.length,
+      transactionsCount: transactionsResult.count || 0,
+      firstMonth: monthKeys[0] || null,
+      lastMonth: monthKeys[monthKeys.length - 1] || null,
+      lastImportAt: sortedByDate[0]?.uploaded_at || null,
     };
   };
 
@@ -235,8 +256,10 @@ export function useAccounts() {
     return accounts.find(a => a.name.toLowerCase() === name.toLowerCase());
   };
 
-  const getCashAccounts = (): Account[] => {
-    return accounts.filter(a => a.account_role === 'CASH');
+  const getCashAccounts = ({ includeHidden = false }: { includeHidden?: boolean } = {}): Account[] => {
+    return accounts.filter(
+      (a) => a.account_role === 'CASH' && (includeHidden || !a.hidden_from_dashboard)
+    );
   };
 
   const getInvestmentAccounts = (): Account[] => {

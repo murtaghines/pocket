@@ -10,7 +10,7 @@ import {
   Tags,
   ChevronRight,
   ChevronLeft,
-  Settings,
+  User,
   Upload,
   type LucideIcon,
 } from "lucide-react";
@@ -131,16 +131,16 @@ function NavRow({ label, icon: Icon, to, active, expanded, group, small = false 
   );
 }
 
-function SettingsRow({ expanded }: { expanded: boolean }) {
+function AccountRow({ expanded }: { expanded: boolean }) {
   const { pathname } = useLocation();
-  const active = pathname === "/profile";
+  const active = pathname === "/account";
 
   if (!expanded) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            to="/profile"
+            to="/account"
             className={cn(
               "flex items-center justify-center mt-2.5 rounded-[13px] min-h-[50px] transition-colors",
               active ? "bg-white/[0.18]" : "hover:bg-white/10",
@@ -152,14 +152,14 @@ function SettingsRow({ expanded }: { expanded: boolean }) {
                 active ? "text-white" : "text-white/[0.55]",
               )}
             >
-              <Settings className="w-[21px] h-[21px]" strokeWidth={active ? 2.4 : 2} />
+              <User className="w-[21px] h-[21px]" strokeWidth={active ? 2.4 : 2} />
             </div>
           </Link>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={14}>
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-semibold">Settings</span>
-            <span className="text-xs text-muted-foreground">Profile &amp; preferences</span>
+            <span className="text-sm font-semibold">Account</span>
+            <span className="text-xs text-muted-foreground">Overview, accounts &amp; preferences</span>
           </div>
         </TooltipContent>
       </Tooltip>
@@ -168,7 +168,7 @@ function SettingsRow({ expanded }: { expanded: boolean }) {
 
   return (
     <Link
-      to="/profile"
+      to="/account"
       className={cn(
         "flex items-center gap-3 mt-3 px-[12px] rounded-[13px] min-h-[50px] transition-colors",
         active ? "bg-white/[0.18]" : "hover:bg-white/10",
@@ -180,14 +180,14 @@ function SettingsRow({ expanded }: { expanded: boolean }) {
           active ? "text-white" : "text-white/[0.55]",
         )}
       >
-        <Settings className="w-[20px] h-[20px]" strokeWidth={active ? 2.4 : 2} />
+        <User className="w-[20px] h-[20px]" strokeWidth={active ? 2.4 : 2} />
       </div>
       <div className="flex flex-col min-w-0">
         <span className="text-[13.5px] font-semibold text-white">
-          Settings
+          Account
         </span>
         <span className="text-[11px] text-white/60 whitespace-nowrap">
-          Profile &amp; preferences
+          Overview &amp; preferences
         </span>
       </div>
     </Link>
@@ -326,8 +326,8 @@ export function DataRail() {
           ))}
         </div>
 
-        {/* ── Settings footer ── */}
-        <SettingsRow expanded={expanded} />
+        {/* ── Account footer ── */}
+        <AccountRow expanded={expanded} />
 
         {/* ── Decorative folded corner ── */}
         <PocketFold />

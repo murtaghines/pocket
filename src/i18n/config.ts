@@ -17,6 +17,8 @@ import investmentsEs from './locales/es/investments.json';
 import profileEn from './locales/en/profile.json';
 import profileEs from './locales/es/profile.json';
 
+import accountEn from './locales/en/account.json';
+
 import settingsEn from './locales/en/settings.json';
 import settingsEs from './locales/es/settings.json';
 
@@ -38,6 +40,7 @@ const resources = {
     dashboard: dashboardEn,
     investments: investmentsEn,
     profile: profileEn,
+    account: accountEn,
     settings: settingsEn,
     categories: categoriesEn,
   },
@@ -47,6 +50,7 @@ const resources = {
     dashboard: dashboardEs,
     investments: investmentsEs,
     profile: profileEs,
+    account: accountEn,
     settings: settingsEs,
     categories: categoriesEs,
   },
@@ -70,7 +74,7 @@ i18n
     fallbackLng: 'en',
     supportedLngs: ['en'],
     defaultNS: 'common',
-    ns: ['common', 'auth', 'dashboard', 'investments', 'profile', 'settings', 'categories'],
+    ns: ['common', 'auth', 'dashboard', 'investments', 'profile', 'account', 'settings', 'categories'],
     interpolation: {
       escapeValue: false,
     },

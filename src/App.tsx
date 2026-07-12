@@ -16,7 +16,7 @@ import History from "./pages/History";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
-import Profile from "./pages/Profile";
+import Account from "./pages/Account";
 import MyData from "./pages/MyData";
 import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
@@ -126,11 +126,13 @@ const App = () => (
                 <Investments />
               </ProtectedRoute>
             } />
-            <Route path="/profile" element={
+            <Route path="/account" element={
               <ProtectedRoute>
-                <Profile />
+                <Account />
               </ProtectedRoute>
             } />
+            {/* Backwards-compatible redirect from the old /profile route */}
+            <Route path="/profile" element={<Navigate to="/account" replace />} />
             <Route path="/my-data" element={
               <ProtectedRoute>
                 <MyData />

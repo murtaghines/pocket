@@ -27,7 +27,7 @@ export function MobileBottomNav() {
     { label: t("navigation.investments", "Invest"), path: "/investments", icon: PiggyBank },
     { label: "Plan", path: "/planning/budgets", icon: Target },
     { label: "Data", path: "/my-data?tab=bank", icon: FileSpreadsheet },
-    { label: t("navigation.profile", "Me"), path: "/profile", icon: User },
+    { label: t("navigation.account", "Account"), path: "/account", icon: User },
   ];
 
   return (
