@@ -10,10 +10,13 @@ Commands:
 
 ## Folder structure
 - `src/pages/` — one page per route: `Index` (=Dashboard, `/dashboard`), `History`,
-  `Investments`, `Planning`, `Profile` (account settings), `MyData` (uploads hub),
-  `Categories`, `Auth`, `Landing`, `ComingSoon`, `NotFound`. Routes are wired in `App.tsx`.
+  `Investments`, `Planning`, `Account` (user hub at `/account`), `MyData` (uploads hub),
+  `Categories`, `Auth`, `Landing`, `ComingSoon`, `NotFound`. Routes in `App.tsx`. `/profile`
+  redirects to `/account`.
 - `src/components/{dashboard,investments,landing,layout,onboarding,settings}/` — components grouped by module
-- `src/components/profile/` — account settings only (profile info, delete account).
+- `src/components/account/` — account hub tabs: `AccountHeader`, `AccountOverviewTab`,
+  `AccountBankAccountsTab`, `AccountPreferencesTab`, `AccountSecurityTab`.
+  `src/components/profile/` keeps `DeleteAccountDialog` (used by Security tab).
   Uploads live in `src/components/imports/`, not here.
 - `src/components/imports/` — the uploads/imports pipeline UI (bank statements,
   investment files, month review, categorization rules)
@@ -24,7 +27,7 @@ Commands:
   `useAccounts`, `useCategories`, `useImports`, `useInvestments`…). Components never fetch directly.
 - `src/integrations/supabase/` — client and generated `types.ts`
 - `src/lib/` — pure utilities (`excelParser`, `currencies`, `categoryTranslations`…)
-- `src/i18n/locales/{en,es}/` — namespaces: auth, categories, common, dashboard, investments, profile, settings
+- `src/i18n/locales/{en,es}/` — namespaces: account, auth, categories, common, dashboard, investments, profile, settings
 - `supabase/functions/` — edge functions, kebab-case, one folder per function; shared logic in `_shared/`
 - `supabase/migrations/` — SQL migrations
 

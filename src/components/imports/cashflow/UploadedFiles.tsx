@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Trash2,
   FileText,
+  Download,
   Sheet as SheetIcon,
   FileType,
   File as FileIcon,
@@ -201,6 +202,22 @@ export function UploadedFilesHistoryList({
   const acctName = (id: string | null) =>
     (id && cashAccounts.find((a) => a.id === id)?.name) || "—";
 
+  // Group imports by account_id, sorted by file count descending
+  const groupedImports = (() => {
+    const map = new Map<string, Import[]>();
+    for (const imp of imports) {
+      const key = imp.account_id || "__unassigned__";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(imp);
+    }
+    // Sort groups: most files first, unassigned last
+    return [...map.entries()].sort(([aId, aImps], [bId, bImps]) => {
+      if (aId === "__unassigned__") return 1;
+      if (bId === "__unassigned__") return -1;
+      return bImps.length - aImps.length;
+    });
+  })();
+
   const changeAcct = async (importId: string, newId: string) => {
     await supabase.from("imports").update({ account_id: newId }).eq("id", importId);
     await supabase.from("transactions").update({ account_id: newId }).eq("import_id", importId);
@@ -375,8 +392,33 @@ export function UploadedFilesHistoryList({
           No files uploaded yet.
         </p>
       ) : (
-        <div className="flex-1 min-h-0 overflow-auto divide-y divide-border">
-          {imports.map((imp) => (
+        <div className="flex-1 min-h-0 overflow-auto">
+          {groupedImports.map(([accountId, groupImports]) => {
+            const account = accountId !== "__unassigned__"
+              ? cashAccounts.find((a) => a.id === accountId)
+              : null;
+            const groupSortedImports = [...groupImports].sort(
+              (a, b) => b.uploaded_at.localeCompare(a.uploaded_at)
+            );
+            return (
+              <div key={accountId}>
+                {/* Account group header */}
+                <div className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm px-6 py-2 flex items-center gap-2 border-b border-border">
+                  {account?.color && (
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: account.color }}
+                    />
+                  )}
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                    {account ? (account.name !== account.institution ? `${account.institution} · ${account.name}` : account.name) : "Unassigned"}
+                  </span>
+                  <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">
+                    {groupSortedImports.length} {groupSortedImports.length === 1 ? "file" : "files"}
+                  </span>
+                </div>
+                <div className="divide-y divide-border">
+          {groupSortedImports.map((imp) => (
             <div
               key={imp.id}
               className={cn(
@@ -470,6 +512,22 @@ export function UploadedFilesHistoryList({
                         </span>
                       </>
                     )}
+                  {imp.file_storage_url && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <a
+                        href={imp.file_storage_url}
+                        download
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Download original file"
+                        className="inline-flex items-center gap-1 text-primary hover:underline shrink-0"
+                      >
+                        <Download className="w-3 h-3" />
+                        Download
+                      </a>
+                    </>
+                  )}
                   {(imp.status === "FAILED" || imp.status === "PARTIAL") && retryImport && (
                     <Button
                       variant="outline"
@@ -534,6 +592,10 @@ export function UploadedFilesHistoryList({
 
             </div>
           ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

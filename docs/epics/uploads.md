@@ -3,8 +3,8 @@
 ## Main files
 - src/pages/MyData.tsx (uploads hub — bank statements + investments tabs)
 - src/components/imports/: BankStatementsTabsView, InvestmentTabsView, RuleEditorDialog,
-  AccountSelectDialog, MonthReviewModal.tsx (now just `AddManualEntryDialog` — the
-  actual review/edit table lives inline in BankStatementsTabsView)
+  AccountSelectDialog, AddManualEntryDialog.tsx (renamed from MonthReviewModal.tsx —
+  the actual review/edit table lives inline in BankStatementsTabsView)
 - Hooks: useImports, useMonthlyFileUpload, useMonthlyInvestmentUpload
 - src/lib/excelParser.ts
 - Edge functions: process-import, process-financial-file (dead, slated for deletion),

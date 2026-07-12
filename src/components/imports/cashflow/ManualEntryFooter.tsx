@@ -8,7 +8,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
-import { AddManualEntryDialog } from "../MonthReviewModal";
+import { AddManualEntryDialog } from "../AddManualEntryDialog";
 import type { MovementType } from "./types";
 
 export interface ManualEntryFooterProps {
