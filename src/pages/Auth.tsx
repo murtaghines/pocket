@@ -23,10 +23,7 @@ import { StepInvestments } from "@/components/onboarding/StepInvestments";
 import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
 import { StepPassword } from "@/components/onboarding/StepPassword";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
-import {
-  DEFAULT_INCOME_CATEGORIES,
-  DEFAULT_EXPENSE_CATEGORIES,
-} from "@/lib/categoryTranslations";
+
 
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
@@ -404,25 +401,16 @@ export default function Auth() {
       userId = signInData.user?.id || userId;
     }
 
-    const allCategories = [...DEFAULT_INCOME_CATEGORIES, ...DEFAULT_EXPENSE_CATEGORIES];
-    const localeMap: Record<string, string> = {
-      en: 'en-US',
-      es: 'es-ES',
-    };
-
     if (userId) {
       try {
         await supabase.from('user_preferences').upsert({
           user_id: userId,
           country,
           base_currency: currency,
-          selected_categories: allCategories,
           language,
-          locale: localeMap[language] || 'en-US',
           // Signup collects config only; the behavior questions run once inside
           // the dashboard, so leave this false to trigger that onboarding.
           onboarding_completed: false,
-          investment_platforms: investmentPlatforms,
           joint_account_names: jointAccountNames,
         });
       } catch (prefError) {
