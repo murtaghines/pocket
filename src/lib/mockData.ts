@@ -46,8 +46,11 @@ export interface Transaction {
   movement?: MovementType | null;
   category: Category;
   categorySlug?: string;
+  /** Bank + nickname display string, e.g. "Revolut · Personal". */
   account: string;
   bank: string;
+  /** Real FK to accounts.id — prefer this over string-matching `account`/`bank`. */
+  account_id?: string | null;
   runningBalance?: number | null;
   userCorrected?: boolean;
 }

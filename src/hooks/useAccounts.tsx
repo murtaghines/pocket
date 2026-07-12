@@ -10,7 +10,7 @@ export interface Account {
   id: string;
   user_id: string;
   name: string;
-  institution: string | null;
+  institution: string;
   account_role: AccountRole;
   domain_default: AppDomain | null;
   currency_base: string;
@@ -20,8 +20,12 @@ export interface Account {
 }
 
 interface CreateAccountParams {
-  name: string;
-  institution?: string;
+  /** The bank/platform, e.g. "Revolut", "Santander". */
+  institution: string;
+  /** Optional nickname to tell apart two accounts at the same bank, e.g. "Personal",
+   *  "Shared". Defaults to `institution` when left blank. */
+  name?: string;
+  color?: string;
   account_role?: AccountRole;
   domain_default?: AppDomain;
   currency_base?: string;
@@ -56,12 +60,16 @@ export function useAccounts() {
     mutationFn: async (params: CreateAccountParams) => {
       if (!user?.id) throw new Error('User not authenticated');
 
+      const institution = params.institution.trim();
+      const name = params.name?.trim() || institution;
+
       const { data, error } = await supabase
         .from('accounts')
         .insert({
           user_id: user.id,
-          name: params.name,
-          institution: params.institution,
+          name,
+          institution,
+          color: params.color,
           account_role: params.account_role || 'CASH',
           domain_default: params.domain_default,
           currency_base: params.currency_base || 'EUR'
@@ -79,7 +87,7 @@ export function useAccounts() {
     onError: (error) => {
       console.error('Error creating account:', error);
       if (error.message.includes('unique')) {
-        toast.error('An account with that name already exists');
+        toast.error('You already have an account with that bank and nickname');
       } else {
         toast.error('Error creating account');
       }

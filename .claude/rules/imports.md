@@ -14,11 +14,18 @@ paths:
 # Uploads & imports — sensitive module
 - The uploads hub is `src/pages/MyData.tsx` (`BankStatementsTabsView` /
   `InvestmentTabsView`), not `Profile.tsx` — `Profile.tsx` is account settings now
-- There are no automated tests on parsing. Before touching extraction logic,
-  ask for a real sample file if you don't have one at hand
+- There are a handful of automated tests (`npm test`, `tests/*.test.ts`) covering
+  `userRules`, `categorizer`, `fingerprint`, `excelParser`, `categoryMap`, and
+  integrity invariants — run them after touching extraction/categorization logic. They
+  don't cover every bank format, so for parser changes specifically, still ask for a
+  real sample file if you don't have one at hand
 - The pipeline is: `excelParser.ts` (or pdfjs for PDF) → `process-import` /
   `process-financial-file` → `categorizer` (shared module in
-  `supabase/functions/_shared/categorizer.ts`, not a deployed function). Don't skip
-  or merge steps without flagging it
-- Changes to automatic categorization: verify they don't break `apply-rules-retroactive`
-  or `fix-categorization`, which depend on the same logic
+  `supabase/functions/_shared/categorizer.ts`, not a deployed function) → `user_rules`
+  for categorization (single rules table, unified 2026-07-11 — see
+  docs/epics/categories.md). Don't skip or merge steps without flagging it
+- `AccountSelectDialog.tsx` (in this folder) creates/picks bank accounts during
+  upload — it goes through `useAccounts().createAccount` and the shared
+  `AccountFormDialog`, same as the settings page. See `.claude/rules/settings.md` for
+  the bank/nickname account model; don't reintroduce a direct
+  `supabase.from('accounts').insert()` here

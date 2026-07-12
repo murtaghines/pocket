@@ -106,6 +106,11 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
                   {formatDate(tx.date)}
                 </span>
               </div>
+              {tx.account && (
+                <div className="text-[11px] text-muted-foreground/80 truncate mt-0.5">
+                  {tx.account}
+                </div>
+              )}
             </div>
 
             {/* Amount */}

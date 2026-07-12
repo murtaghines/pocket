@@ -38,7 +38,16 @@
     "spent": "gastado",
     "dailyAverage": "Promedio diario",
     "total": "Total",
-    "totalSavings": "Ahorro Total"
+    "totalSavings": "Ahorro Total",
+    "accounts": "Cuentas",
+    "addAccount": "Agregar cuenta",
+    "addAccountDescription": "Creá una cuenta bancaria nueva. Vas a poder subirle extractos.",
+    "accountNamePlaceholder": "Ej: Santander, BBVA, Revolut...",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "txCount": "mov.",
+    "currentBalance": "Balance",
+    "netFlow": "Flujo neto"
   },
   "transactions": {
     "title": "Transacciones",

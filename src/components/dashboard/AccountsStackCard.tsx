@@ -2,13 +2,11 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/lib/mockData";
-import { Plus, Loader2, Landmark, PiggyBank, Users, CreditCard } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { getAccountColorStyle, getDefaultAccountColor } from "@/lib/accountColors";
+import { Plus, Landmark, PiggyBank, Users, CreditCard } from "lucide-react";
+import { getAccountColorStyle, getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
+import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 
 interface AccountsStackCardProps {
   transactions: Transaction[];
@@ -20,7 +18,8 @@ interface AccountsStackCardProps {
 type AccountDisplay = {
   id: string;
   name: string;
-  institution: string | null;
+  institution: string;
+  displayName: string;
   currency: string;
   balance: number;
   hasRunningBalance: boolean;
@@ -40,8 +39,8 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function AccountTypeIcon({ name }: { name: string }) {
-  const lower = name.toLowerCase();
+function AccountTypeIcon({ institution, name }: { institution: string; name: string }) {
+  const lower = `${institution} ${name}`.toLowerCase();
   if (lower.includes('sav') || lower.includes('ahorro') || lower.includes('piggy'))
     return <PiggyBank className="w-[19px] h-[19px]" strokeWidth={2} />;
   if (lower.includes('joint') || lower.includes('conjunt') || lower.includes('shared') || lower.includes('compartid'))
@@ -61,7 +60,6 @@ export function AccountsStackCard({
   const { accounts, getCashAccounts, createAccount, isCreating } = useAccounts();
   const [detail, setDetail] = useState<AccountDisplay | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [newName, setNewName] = useState("");
 
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
 
@@ -69,9 +67,12 @@ export function AccountsStackCard({
     if (!monthKey) return [];
 
     const mapped = cashAccounts.map((acc) => {
-      const monthTxs = transactions.filter(
-        (tx) => tx.bank === acc.name && tx.date.startsWith(monthKey)
-      );
+      // Prefer the real account_id FK; fall back to display-name matching only for
+      // rows that somehow predate it, so an account never silently shows zero data.
+      const monthTxs = transactions.filter((tx) => {
+        const matches = tx.account_id ? tx.account_id === acc.id : tx.bank === getAccountDisplayName(acc);
+        return matches && tx.date.startsWith(monthKey);
+      });
       const withBalance = monthTxs.filter((tx) => tx.runningBalance != null);
       let balance = 0;
       let hasRunningBalance = false;
@@ -91,6 +92,7 @@ export function AccountsStackCard({
         id: acc.id,
         name: acc.name,
         institution: acc.institution,
+        displayName: getAccountDisplayName(acc),
         currency: acc.currency_base,
         balance: convert(balance),
         hasRunningBalance,
@@ -115,11 +117,14 @@ export function AccountsStackCard({
     return primary ? [primary, ...rest] : rest;
   }, [accountsData]);
 
-  const handleAdd = () => {
-    const trimmed = newName.trim();
-    if (!trimmed) return;
-    createAccount({ name: trimmed, account_role: "CASH", domain_default: "CASHFLOW" });
-    setNewName("");
+  const handleAdd = (values: AccountFormValues) => {
+    createAccount({
+      institution: values.institution,
+      name: values.name,
+      color: values.color,
+      account_role: "CASH",
+      domain_default: "CASHFLOW",
+    });
     setAddOpen(false);
   };
 
@@ -127,7 +132,7 @@ export function AccountsStackCard({
     <>
       <div
         className="bg-card rounded-[18px] p-[20px_22px_18px] h-full"
-        style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
+        style={{ boxShadow: "var(--shadow-card)" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -152,7 +157,7 @@ export function AccountsStackCard({
               const v = getAccountColorStyle(acc.color);
               return (
                 <div key={acc.id}>
-                  {idx > 0 && <div className="h-px bg-[#f0f2f6] my-3" />}
+                  {idx > 0 && <div className="h-px bg-border my-3" />}
                   <button
                     type="button"
                     onClick={() => setDetail(acc)}
@@ -166,15 +171,14 @@ export function AccountsStackCard({
                         color: acc.color,
                       }}
                     >
-                      <AccountTypeIcon name={acc.name} />
+                      <AccountTypeIcon institution={acc.institution} name={acc.name} />
                     </div>
-                    {/* Name + institution */}
+                    {/* Bank · nickname */}
                     <div className="flex-1 min-w-0">
                       <p className="text-[13.5px] font-semibold text-foreground truncate">
-                        {acc.name}
-                        {acc.institution ? ` · ${acc.institution}` : ''}
+                        {acc.displayName}
                       </p>
-                      <p className="text-[11.5px] text-[#9aa3b2] truncate">
+                      <p className="text-[11.5px] text-muted-foreground truncate">
                         {acc.transactionCount} {t('charts.txCount', 'tx')}
                       </p>
                     </div>
@@ -196,10 +200,7 @@ export function AccountsStackCard({
           {detail && (
             <>
               <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
-                <SheetTitle className="text-xl font-semibold text-foreground">{detail.name}</SheetTitle>
-                {detail.institution && (
-                  <p className="text-sm text-muted-foreground">{detail.institution}</p>
-                )}
+                <SheetTitle className="text-xl font-semibold text-foreground">{detail.displayName}</SheetTitle>
               </SheetHeader>
               <div className="grid grid-cols-3 gap-4 px-6 py-4 border-b border-border">
                 <div>
@@ -244,38 +245,13 @@ export function AccountsStackCard({
         </SheetContent>
       </Sheet>
 
-      {/* Add account dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5 text-primary" />
-              {t('charts.addAccount', 'Add account')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('charts.addAccountDescription', "Create a new bank account. You'll be able to upload statements to it.")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-2">
-            <Input
-              placeholder={t('charts.accountNamePlaceholder', 'e.g. Santander, BBVA, Revolut...')}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setAddOpen(false); setNewName(""); }}>
-              {t('charts.cancel', 'Cancel')}
-            </Button>
-            <Button onClick={handleAdd} disabled={!newName.trim() || isCreating} className="bg-primary hover:bg-primary/90">
-              {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-              {t('charts.create', 'Create')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AccountFormDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        mode="create"
+        isSubmitting={isCreating}
+        onSubmit={handleAdd}
+      />
     </>
   );
 }

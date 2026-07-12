@@ -39,7 +39,16 @@
     "dailyAverage": "Daily average",
     "total": "Total",
     "totalSavings": "Total Savings",
-    "average": "Avg"
+    "average": "Avg",
+    "accounts": "Accounts",
+    "addAccount": "Add account",
+    "addAccountDescription": "Create a new bank account. You'll be able to upload statements to it.",
+    "accountNamePlaceholder": "e.g. Santander, BBVA, Revolut...",
+    "cancel": "Cancel",
+    "create": "Create",
+    "txCount": "tx",
+    "currentBalance": "Balance",
+    "netFlow": "Net flow"
   },
   "transactions": {
     "title": "Transactions",

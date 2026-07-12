@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAccounts } from "@/hooks/useAccounts";
-import { Input } from "@/components/ui/input";
+import { useAccounts, type Account } from "@/hooks/useAccounts";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,32 +17,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Building2, Loader2, Pencil, Check, X } from "lucide-react";
-import { ACCOUNT_COLOR_PALETTE, getDefaultAccountColor } from "@/lib/accountColors";
+import { Plus, Trash2, Building2, Loader2, Pencil, Star } from "lucide-react";
+import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
+import { AccountFormDialog, type AccountFormValues } from "./AccountFormDialog";
 
 export function AccountsManager({ className }: { className?: string }) {
   const { t } = useTranslation('profile');
   const {
     accounts,
+    isLoading,
+    error,
     createAccount,
     updateAccount,
     deleteAccount,
     reassignAndDelete,
-    updateAccountColor,
     setPrimaryAccount,
     unsetPrimaryAccount,
     isCreating,
+    isUpdating,
     isDeleting,
     getLinkedDataCount,
   } = useAccounts();
   const cashAccounts = accounts
     .filter(a => a.account_role === 'CASH')
     .sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0));
-  const [newName, setNewName] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editColor, setEditColor] = useState<string>("");
-  const [editIsPrimary, setEditIsPrimary] = useState<boolean>(false);
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -51,43 +51,43 @@ export function AccountsManager({ className }: { className?: string }) {
   const [reassignToId, setReassignToId] = useState("");
   const [checkingLinks, setCheckingLinks] = useState(false);
 
-  const handleAdd = () => {
-    const trimmed = newName.trim();
-    if (!trimmed) return;
-    createAccount({ name: trimmed, account_role: 'CASH', domain_default: 'CASHFLOW' });
-    setNewName("");
+  const handleOpenCreate = () => {
+    setEditingAccount(null);
+    setFormOpen(true);
   };
 
-  const handleStartEdit = (id: string, currentName: string, currentColor: string, isPrimary: boolean) => {
-    setEditingId(id);
-    setEditName(currentName);
-    setEditColor(currentColor);
-    setEditIsPrimary(isPrimary);
+  const handleOpenEdit = (account: Account) => {
+    setEditingAccount(account);
+    setFormOpen(true);
   };
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditName("");
-    setEditColor("");
-    setEditIsPrimary(false);
+  const handleFormSubmit = (values: AccountFormValues) => {
+    if (editingAccount) {
+      updateAccount({
+        id: editingAccount.id,
+        institution: values.institution,
+        name: values.name || values.institution,
+        color: values.color,
+      });
+    } else {
+      createAccount({
+        institution: values.institution,
+        name: values.name,
+        color: values.color,
+        account_role: 'CASH',
+        domain_default: 'CASHFLOW',
+      });
+    }
+    setFormOpen(false);
+    setEditingAccount(null);
   };
 
-  const handleSaveEdit = (id: string) => {
-    const account = accounts.find(a => a.id === id);
-    if (!account) { handleCancelEdit(); return; }
-    const trimmed = editName.trim();
-    if (trimmed && trimmed !== account.name) {
-      updateAccount({ id, name: trimmed });
+  const handleTogglePrimary = (account: Account) => {
+    if (account.is_primary) {
+      unsetPrimaryAccount(account.id);
+    } else {
+      setPrimaryAccount(account.id);
     }
-    if (editColor && editColor.toLowerCase() !== (account.color || '').toLowerCase()) {
-      updateAccountColor({ id, color: editColor });
-    }
-    if (editIsPrimary && !account.is_primary) {
-      setPrimaryAccount(id);
-    } else if (!editIsPrimary && account.is_primary) {
-      unsetPrimaryAccount(id);
-    }
-    handleCancelEdit();
   };
 
   const handleDeleteClick = async (account: { id: string; name: string }) => {
@@ -118,94 +118,23 @@ export function AccountsManager({ className }: { className?: string }) {
   return (
     <>
       <div className={`bg-card border rounded-xl p-5 md:p-6 space-y-4 ${className || ''}`} style={{ boxShadow: 'var(--shadow-card)' }}>
-        <p className="text-xs text-muted-foreground">
-          {t('accounts.managerDescription', 'Manage your bank accounts and cards. These appear when uploading files.')}
-        </p>
-
-        {cashAccounts.length > 0 ? (
+        {isLoading ? (
+          <ul className="space-y-1.5" aria-busy="true">
+            {[0, 1, 2].map((i) => (
+              <li key={i} className="flex items-center gap-3 rounded-lg px-2 py-2">
+                <span className="w-4 h-4 rounded-full bg-muted animate-pulse shrink-0" />
+                <span className="h-4 w-32 rounded bg-muted animate-pulse" />
+              </li>
+            ))}
+          </ul>
+        ) : error ? (
+          <p className="text-sm text-destructive text-center py-4">
+            {t('accounts.loadError', "Couldn't load your accounts. Try refreshing the page.")}
+          </p>
+        ) : cashAccounts.length > 0 ? (
           <ul className="space-y-1.5">
             {cashAccounts.map((account, idx) => {
               const resolvedColor = account.color || getDefaultAccountColor(idx);
-              if (editingId === account.id) {
-                return (
-                  <li key={account.id} className="rounded-lg border border-border bg-background/40 p-3">
-                    <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-6 h-6 rounded-full border border-border shrink-0"
-                        style={{ backgroundColor: editColor || resolvedColor }}
-                      />
-                      <Input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveEdit(account.id);
-                          if (e.key === 'Escape') handleCancelEdit();
-                        }}
-                        className="h-8 text-sm flex-1"
-                        autoFocus
-                      />
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-primary" onClick={() => handleSaveEdit(account.id)}>
-                        <Check className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCancelEdit}>
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-
-                    <div className="space-y-2 pl-1">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {t('accounts.color', 'Color')}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {ACCOUNT_COLOR_PALETTE.blues.map((c) => (
-                          <button
-                            key={c}
-                            type="button"
-                            onClick={() => setEditColor(c)}
-                            className={`w-7 h-7 rounded-full border transition-transform hover:scale-110 ${
-                              (editColor || resolvedColor).toLowerCase() === c.toLowerCase()
-                                ? 'ring-2 ring-offset-2 ring-foreground'
-                                : 'border-border'
-                            }`}
-                            style={{ backgroundColor: c }}
-                            aria-label={c}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {ACCOUNT_COLOR_PALETTE.yellows.map((c) => (
-                          <button
-                            key={c}
-                            type="button"
-                            onClick={() => setEditColor(c)}
-                            className={`w-7 h-7 rounded-full border transition-transform hover:scale-110 ${
-                              (editColor || resolvedColor).toLowerCase() === c.toLowerCase()
-                                ? 'ring-2 ring-offset-2 ring-foreground'
-                                : 'border-border'
-                            }`}
-                            style={{ backgroundColor: c }}
-                            aria-label={c}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <label className="flex items-center gap-2 pl-1 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={editIsPrimary}
-                        onChange={(e) => setEditIsPrimary(e.target.checked)}
-                        className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
-                      />
-                      <span className="text-xs text-foreground">
-                        {t('accounts.setPrimary', 'Set as primary account')}
-                      </span>
-                    </label>
-                    </div>
-                  </li>
-                );
-              }
               return (
                 <li
                   key={account.id}
@@ -217,29 +146,41 @@ export function AccountsManager({ className }: { className?: string }) {
                     aria-hidden
                   />
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="text-sm font-medium truncate text-foreground">{account.name}</span>
-                    {account.is_primary && (
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium shrink-0">
-                        {t('accounts.primaryBadge', 'Primary')}
-                      </span>
-                    )}
+                    <span className="text-sm font-medium truncate text-foreground">
+                      {getAccountDisplayName(account)}
+                    </span>
                   </div>
-                  <div className="inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="inline-flex items-center gap-0.5">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                      onClick={() => handleStartEdit(account.id, account.name, resolvedColor, account.is_primary)}
-                      aria-label="Edit"
+                      className={`h-7 w-7 p-0 transition-opacity ${
+                        account.is_primary
+                          ? 'text-secondary opacity-100'
+                          : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-secondary'
+                      }`}
+                      onClick={() => handleTogglePrimary(account)}
+                      aria-label={account.is_primary ? t('accounts.primary', 'Primary') : t('accounts.setPrimary', 'Set as primary account')}
+                      title={account.is_primary ? t('accounts.primary', 'Primary') : t('accounts.setPrimary', 'Set as primary account')}
+                    >
+                      <Star className="w-3.5 h-3.5" fill={account.is_primary ? 'currentColor' : 'none'} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleOpenEdit(account)}
+                      aria-label={t('accounts.editAccount', 'Edit account')}
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => handleDeleteClick(account)}
                       disabled={isDeleting}
+                      aria-label={t('accounts.delete', 'Delete')}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -254,20 +195,25 @@ export function AccountsManager({ className }: { className?: string }) {
           </p>
         )}
 
-        <div className="flex gap-2">
-          <Input
-            placeholder={t('accounts.namePlaceholder', 'e.g. Santander, BBVA, Revolut...')}
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            className="flex-1"
-          />
-          <Button size="sm" onClick={handleAdd} disabled={!newName.trim() || isCreating}>
-            {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
-            {t('accounts.addAccount', 'Add')}
-          </Button>
-        </div>
+        <Button size="sm" variant="outline" className="w-full" onClick={handleOpenCreate}>
+          <Plus className="w-4 h-4 mr-1" />
+          {t('accounts.addAccount', 'Add account')}
+        </Button>
       </div>
+
+      <AccountFormDialog
+        key={editingAccount?.id ?? 'create'}
+        open={formOpen}
+        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingAccount(null); }}
+        mode={editingAccount ? 'edit' : 'create'}
+        initialValues={editingAccount ? {
+          institution: editingAccount.institution,
+          name: editingAccount.name === editingAccount.institution ? '' : editingAccount.name,
+          color: editingAccount.color || getDefaultAccountColor(cashAccounts.findIndex(a => a.id === editingAccount.id)),
+        } : undefined}
+        isSubmitting={isCreating || isUpdating}
+        onSubmit={handleFormSubmit}
+      />
 
       {/* Delete confirmation dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setLinkedData(null); setReassignToId(""); } }}>
@@ -313,7 +259,7 @@ export function AccountsManager({ className }: { className?: string }) {
                       <SelectItem key={a.id} value={a.id}>
                         <div className="flex items-center gap-2">
                           <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span>{a.name}</span>
+                          <span>{getAccountDisplayName(a)}</span>
                         </div>
                       </SelectItem>
                     ))}

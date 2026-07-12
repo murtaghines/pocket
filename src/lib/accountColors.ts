@@ -2,6 +2,18 @@
 // Used by AccountsStackCard (dashboard) and AccountsManager (settings) so the user
 // can pick a color and see it consistently in both places.
 
+/**
+ * Single source of truth for how an account's bank + nickname combine into display
+ * text (e.g. "Revolut · Personal"). If the nickname is blank or identical to the
+ * bank, shows just the bank name — never a redundant "Revolut · Revolut".
+ */
+export function getAccountDisplayName(account: { institution: string; name: string }): string {
+  const institution = account.institution?.trim() || "";
+  const name = account.name?.trim() || "";
+  if (!name || name.toLowerCase() === institution.toLowerCase()) return institution;
+  return `${institution} · ${name}`;
+}
+
 export const ACCOUNT_COLOR_PALETTE = {
   blues: [
     "#cde7f7",

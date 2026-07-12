@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { Transaction, MonthlyData, Category } from "@/lib/mockData";
 import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import { getAccountDisplayName } from "@/lib/accountColors";
 import type { Database } from "@/integrations/supabase/types";
 
 // Helper function to get HSL color from CSS variable name
@@ -91,14 +92,14 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     queryFn: async () => {
       if (!user) return [];
       
-      // Fetch accounts for this user to map account_id -> name
+      // Fetch accounts for this user to map account_id -> "Bank · Nickname"
       const { data: accountsData } = await supabase
         .from("accounts")
-        .select("id, name")
+        .select("id, name, institution")
         .eq("user_id", user.id);
-      
+
       const accountMap: Record<string, string> = {};
-      (accountsData || []).forEach(a => { accountMap[a.id] = a.name; });
+      (accountsData || []).forEach(a => { accountMap[a.id] = getAccountDisplayName(a); });
 
       let query = supabase
         .from("transactions")
@@ -158,6 +159,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           categorySlug: finalCategory,
           account: accountName,
           bank: accountName,
+          account_id: t.account_id,
           runningBalance: t.running_balance,
           userCorrected: t.user_corrected ?? false,
         };

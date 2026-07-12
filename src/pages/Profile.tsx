@@ -73,9 +73,9 @@ export default function Profile() {
 
           {/* Banking Accounts */}
           <div className="bg-card rounded-xl p-5 md:p-6">
-            <SectionHeader icon={Landmark} title={t('accounts.title', { defaultValue: 'Banking Accounts' })} />
+            <SectionHeader icon={Landmark} title={t('accounts.title')} />
             <p className="text-xs text-muted-foreground mt-2 mb-4">
-              {t('accounts.managerDescription', { defaultValue: 'Manage your bank accounts and cards. These appear when uploading files.' })}
+              {t('accounts.managerDescription')}
             </p>
             <AccountsManager className="!shadow-none !p-0 !border-0 !bg-transparent" />
           </div>

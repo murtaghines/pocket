@@ -22,7 +22,7 @@ export type Database = {
           currency_base: string
           domain_default: Database["public"]["Enums"]["app_domain"] | null
           id: string
-          institution: string | null
+          institution: string
           is_primary: boolean
           name: string
           user_id: string
@@ -34,7 +34,7 @@ export type Database = {
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
           id?: string
-          institution?: string | null
+          institution: string
           is_primary?: boolean
           name: string
           user_id: string
@@ -46,7 +46,7 @@ export type Database = {
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
           id?: string
-          institution?: string | null
+          institution?: string
           is_primary?: boolean
           name?: string
           user_id?: string
