@@ -491,15 +491,20 @@ export function InlineTransactionsEditor({
       { id: tx.id, payload, before },
       {
         onSuccess: async () => {
-          if (pending.category && pending.category !== tx.category && pending.category_id && withRule && user) {
+          const categoryChanged = pending.category && pending.category !== tx.category && pending.category_id;
+          const movementChangedTransfer = pending.movement && pending.movement !== tx.movement &&
+            (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER');
+          if ((categoryChanged || movementChangedTransfer) && withRule && user) {
             const cleanDesc = (tx.description_norm || tx.description || "")
               .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
               .trim();
             const targetMovement =
               ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
+            const ruleCategory = (pending.category ?? tx.category) || (targetMovement === 'INCOME' ? 'other_income' : targetMovement === 'TRANSFER' ? 'own_transfer' : 'other_expense');
+            const ruleCategoryId = pending.category_id ?? tx.category_id ?? null;
 
             if (cleanDesc) {
-              const built = buildRuleFromCorrection(cleanDesc, targetMovement, pending.category);
+              const built = buildRuleFromCorrection(cleanDesc, targetMovement, ruleCategory);
 
               // Dedup: check if an identical active rule already exists
               const { data: existing } = await supabase
@@ -507,7 +512,7 @@ export function InlineTransactionsEditor({
                 .select("id")
                 .eq("user_id", user.id)
                 .eq("pattern", built.pattern)
-                .eq("category", pending.category)
+                .eq("category", ruleCategory)
                 .eq("is_active", true)
                 .limit(1);
 
@@ -524,7 +529,7 @@ export function InlineTransactionsEditor({
                     pattern: built.pattern,
                     tokens: built.tokens,
                     movement: targetMovement,
-                    category: pending.category,
+                    category: ruleCategory,
                     confidence: 0.99,
                     original_description: cleanDesc,
                     is_active: true,
@@ -548,7 +553,6 @@ export function InlineTransactionsEditor({
 
                   const matchingIds: string[] = [];
                   for (const row of allTx || []) {
-                    if (row.movement && row.movement !== targetMovement) continue;
                     if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
                     const desc = (row.description_norm || row.description || "") as string;
                     if (ruleMatchesDescription(built.match_type as MatchType, built.pattern, built.tokens, desc)) {
@@ -560,9 +564,9 @@ export function InlineTransactionsEditor({
                   const patternShort = built.pattern.length > 30
                     ? built.pattern.slice(0, 30) + "…"
                     : built.pattern;
-                  const catLabel = getCategoryLabel(pending.category);
-                  const savedPendingCategory = pending.category;
-                  const savedPendingCategoryId = pending.category_id;
+                  const catLabel = getCategoryLabel(ruleCategory);
+                  const savedPendingCategory = ruleCategory;
+                  const savedPendingCategoryId = ruleCategoryId;
 
                   toast({
                     title: `Rule saved: "${patternShort}" → ${catLabel}`,
@@ -947,7 +951,10 @@ export function InlineTransactionsEditor({
                         (() => {
                           const categoryChanged =
                             !!pending?.category && pending.category !== tx.category;
-                          if (!categoryChanged) return null;
+                          const movementChangedTransfer =
+                            !!pending?.movement && pending.movement !== tx.movement &&
+                            (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER');
+                          if (!categoryChanged && !movementChangedTransfer) return null;
                           return (
                             <Button
                               type="button"
