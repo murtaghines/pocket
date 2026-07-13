@@ -129,3 +129,43 @@ round-trip (rule inserted with `source: 'user_correction'`, then `is_active: fal
 that `CategoryRulesList` renders the badge. All test data cleaned from the demo account after
 verification. 76/76 tests green, tsc/lint clean (0 errors, pre-existing warnings only), build
 clean. `process-import` deployed (v18: sign_fallback fix + rule-stats tracking).
+
+## Suggested rules from recurring AI-fallback patterns (2026-07-13)
+
+Closes the deferred "Fase 5" from the plan: surfaces transactions that repeatedly fall through
+to the AI baseline (`categorized_by = 'ai'` — neither the local categorizer nor a user_rule
+matched) so the user can convert a recurring pattern into a rule with one click, instead of
+correcting the same merchant every month.
+
+New hook `src/hooks/useSuggestedRules.tsx`: queries the user's `categorized_by = 'ai'`
+transactions, groups them client-side by normalized description + movement
+(`src/lib/userRules.ts:normalize`), and returns groups with 3+ occurrences (top 10 by
+frequency). No new backend/query needed on the categorization side — `categorized_by = 'ai'`
+already implies the transaction is sitting in `other_expense`/`other_income` (or, rarely, a
+`detectInternalTransfer`-set TRANSFER subtype that never got categorizer/user_rule
+confirmation), so grouping by description alone is enough.
+
+New component `src/components/settings/SuggestedRulesSection.tsx`, rendered at the top of
+`CategoriesEditor`'s workspace (all tabs, not tab-scoped): each suggestion shows the pattern,
+occurrence count, and movement, plus a category `<Select>` (filtered to the suggestion's
+movement) and a "Create rule" button. Clicking it calls the *existing* `addRule` mutation
+(`useCategorizationRules.tsx`, extended in the Fase 4 pass) with the group's transaction IDs as
+`matchingTransactionIds` — reuses the same insert + retroactive-apply path `AddRuleDialog`
+already uses, no new backend logic. A suggestion has no separate dismiss-tracking: once its
+rule is created, its transactions flip to `categorized_by = 'user_rule'` and it naturally drops
+out of the query on the next fetch (a manual "×" dismiss is also offered, client-side only, for
+patterns the user wants to leave as `other_*`).
+
+**Live-verified** against the demo account: inserted 4 synthetic `categorized_by='ai'`
+transactions sharing a description ("Pago WOSAP Klindt") directly via SQL (the AI's own
+extraction/natural-key dedup collapsed repeated near-identical CSV rows when tested through the
+real upload path — an orthogonal AI-extraction behavior, not something this feature or the
+Fase-4/5 changes touch). The suggestions section rendered it alongside two patterns already
+present in the real demo data (`METRO MENSUAL`, `NETFLIX`, 3 occurrences each) — confirming the
+query surfaces genuine existing gaps, not just the synthetic test case. Picked "Subscriptions",
+clicked Create rule → toast "Rule created — 4 transactions updated" → confirmed in DB: rule
+inserted (`pattern: "WOSAP KLINDT"`, tokens correctly stripped "PAGO" as a stopword,
+`category: subscriptions`), all 4 transactions flipped to `categorized_by: 'user_rule'`, and the
+suggestion disappeared from the list on refetch with no manual dismiss. Test data removed after
+verification. 76/76 tests green, tsc/lint clean, build clean. Frontend-only change — no edge
+function redeploy needed.

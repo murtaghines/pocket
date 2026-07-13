@@ -9,6 +9,7 @@ import { useCustomCategories, type CustomCategoryRule } from '@/hooks/useCustomC
 import { CategoryRulesList } from './CategoryRulesList';
 import { AddRuleDialog } from './AddRuleDialog';
 import { CreateCategoryDialog } from './CreateCategoryDialog';
+import { SuggestedRulesSection } from './SuggestedRulesSection';
 import { useToast } from '@/hooks/use-toast';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { cn } from '@/lib/utils';
@@ -208,6 +209,13 @@ export function CategoriesEditor() {
       {/* ============= Workspace ============= */}
       <div className="flex-1 px-6 md:px-10 py-6 md:py-8 space-y-4">
 
+        {!isLoading && (
+          <SuggestedRulesSection
+            incomeCategories={incomeCategories}
+            expenseCategories={expenseCategories}
+            transferCategories={transferCategories}
+          />
+        )}
 
         {isLoading ? (
           <div className="rounded-xl border border-border bg-card py-12 text-center text-sm text-muted-foreground">
