@@ -285,6 +285,256 @@ function detectInternalTransfer(
   return { isTransfer: false, categorySlug: '' };
 }
 
+// ========== CROSS-ACCOUNT TRANSFER RECONCILIATION ==========
+// After inserting new transactions, scan for transfer pairs across accounts.
+// Conservative: better to miss a genuine transfer than falsely mark an expense.
+
+const TRANSFER_WORDS = /\b(traspaso|transferencia|transfer|movimiento\s*interno|internal\s*transfer|own\s*account|entre\s*cuentas)\b/i;
+
+interface ReconciliationCandidate {
+  id: string;
+  account_id: string;
+  date: string;
+  amount: number;
+  currency: string;
+  movement: string;
+  categorized_by: string | null;
+  counterparty_raw: string | null;
+  description: string;
+  description_norm: string | null;
+  transfer_pair_id: string | null;
+}
+
+async function reconcileTransferPairs(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  accountId: string,
+  insertedFingerprints: Set<string>,
+  userAccounts: Array<{ id: string; name: string; institution: string | null; account_role: string }>,
+  userName: { firstName: string | null; lastName: string | null } | undefined,
+  categorySlugToId: Record<string, string>,
+): Promise<number> {
+  if (userAccounts.length < 2) return 0;
+
+  // 1. Fetch newly inserted transactions for THIS import
+  const { data: newTxs } = await supabase
+    .from('transactions')
+    .select('id, account_id, date, amount, currency, movement, categorized_by, counterparty_raw, description, description_norm, transfer_pair_id')
+    .eq('user_id', userId)
+    .eq('account_id', accountId)
+    .in('fingerprint', [...insertedFingerprints].slice(0, 500))
+    .is('transfer_pair_id', null);
+  if (!newTxs || newTxs.length === 0) return 0;
+
+  // 2. Compute date window: [minDate - 2 days, maxDate + 2 days]
+  const dates = newTxs.map(t => t.date).sort();
+  const minDate = new Date(dates[0]);
+  const maxDate = new Date(dates[dates.length - 1]);
+  minDate.setDate(minDate.getDate() - 2);
+  maxDate.setDate(maxDate.getDate() + 2);
+  const windowStart = minDate.toISOString().split('T')[0];
+  const windowEnd = maxDate.toISOString().split('T')[0];
+
+  // 3. Fetch unmatched candidates on OTHER accounts within the date window
+  const otherAccountIds = userAccounts.filter(a => a.id !== accountId).map(a => a.id);
+  const { data: candidates } = await supabase
+    .from('transactions')
+    .select('id, account_id, date, amount, currency, movement, categorized_by, counterparty_raw, description, description_norm, transfer_pair_id')
+    .eq('user_id', userId)
+    .in('account_id', otherAccountIds)
+    .is('transfer_pair_id', null)
+    .gte('date', windowStart)
+    .lte('date', windowEnd);
+  if (!candidates || candidates.length === 0) return 0;
+
+  const usedCandidateIds = new Set<string>();
+  const pairsToUpdate: Array<{ id1: string; id2: string; categorySlug: string }> = [];
+
+  for (const tx of newTxs as ReconciliationCandidate[]) {
+    // Hard reject: user already decided
+    if (tx.categorized_by === 'user' || tx.categorized_by === 'user_rule') continue;
+
+    // Hard reject: has a third-party counterparty
+    if (isThirdPartyCounterparty(tx.counterparty_raw, userAccounts, userName)) continue;
+
+    const bestMatch = findBestMatch(tx, candidates as ReconciliationCandidate[], userAccounts, userName, usedCandidateIds);
+    if (bestMatch) {
+      usedCandidateIds.add(bestMatch.candidate.id);
+      pairsToUpdate.push({
+        id1: tx.id,
+        id2: bestMatch.candidate.id,
+        categorySlug: bestMatch.categorySlug,
+      });
+    }
+  }
+
+  // 4. Apply pair updates
+  let pairsMatched = 0;
+  for (const pair of pairsToUpdate) {
+    const pairId = crypto.randomUUID();
+    const categoryId = categorySlugToId[pair.categorySlug] || null;
+    const { error } = await supabase
+      .from('transactions')
+      .update({
+        transfer_pair_id: pairId,
+        movement: 'TRANSFER' as MovementType,
+        category: pair.categorySlug,
+        category_id: categoryId,
+        categorized_by: 'reconciler',
+        category_source: 'RECONCILER',
+      })
+      .in('id', [pair.id1, pair.id2]);
+    if (!error) {
+      pairsMatched++;
+      console.log(`[process-import] Reconciled transfer pair: ${pair.id1} ↔ ${pair.id2} → ${pair.categorySlug}`);
+    }
+  }
+  return pairsMatched;
+}
+
+function isThirdPartyCounterparty(
+  counterpartyRaw: string | null,
+  userAccounts: Array<{ name: string; institution: string | null }>,
+  userName: { firstName: string | null; lastName: string | null } | undefined,
+): boolean {
+  if (!counterpartyRaw || counterpartyRaw.trim().length === 0) return false;
+  const cp = counterpartyRaw.toLowerCase();
+
+  // Check if counterparty matches any of the user's account names or institutions
+  for (const account of userAccounts) {
+    if (account.name && cp.includes(account.name.toLowerCase())) return false;
+    if (account.institution && cp.includes(account.institution.toLowerCase())) return false;
+  }
+  // Check if counterparty matches user's own name
+  if (userName?.firstName && userName?.lastName &&
+      userName.firstName.length >= 3 && userName.lastName.length >= 3) {
+    const cpNorm = cp.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const firstNorm = userName.firstName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const lastNorm = userName.lastName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`\\b${escapeRe(firstNorm)}\\b`, 'i').test(cpNorm) &&
+        new RegExp(`\\b${escapeRe(lastNorm)}\\b`, 'i').test(cpNorm)) {
+      return false;
+    }
+  }
+  // Has a counterparty that doesn't match user's accounts or name → third party
+  return true;
+}
+
+function findBestMatch(
+  tx: ReconciliationCandidate,
+  candidates: ReconciliationCandidate[],
+  userAccounts: Array<{ id: string; name: string; institution: string | null; account_role: string }>,
+  userName: { firstName: string | null; lastName: string | null } | undefined,
+  usedIds: Set<string>,
+): { candidate: ReconciliationCandidate; categorySlug: string } | null {
+  const accountById = new Map(userAccounts.map(a => [a.id, a]));
+  type ScoredMatch = { candidate: ReconciliationCandidate; score: number; categorySlug: string };
+  const scored: ScoredMatch[] = [];
+
+  for (const c of candidates) {
+    if (usedIds.has(c.id)) continue;
+    if (c.account_id === tx.account_id) continue;
+
+    // Hard reject: user already decided on this candidate
+    if (c.categorized_by === 'user' || c.categorized_by === 'user_rule') continue;
+    // Hard reject: already paired
+    if (c.transfer_pair_id) continue;
+    // Hard reject: third-party counterparty on candidate
+    if (isThirdPartyCounterparty(c.counterparty_raw, userAccounts, userName)) continue;
+
+    // Opposite signs
+    if ((tx.amount > 0 && c.amount > 0) || (tx.amount < 0 && c.amount < 0)) continue;
+    if (tx.amount === 0 || c.amount === 0) continue;
+
+    // Same currency, exact amount match
+    const txCurrency = (tx.currency || 'EUR').toUpperCase();
+    const cCurrency = (c.currency || 'EUR').toUpperCase();
+    if (txCurrency !== cCurrency) continue;
+    if (Math.abs(Math.abs(tx.amount) - Math.abs(c.amount)) > 0.01) continue;
+
+    // Date proximity: <= 2 calendar days
+    const txDate = new Date(tx.date);
+    const cDate = new Date(c.date);
+    const dayDiff = Math.abs((txDate.getTime() - cDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (dayDiff > 2) continue;
+
+    // Confirmatory signal required
+    let signals = 0;
+
+    // Signal: either already classified as TRANSFER
+    if (tx.movement === 'TRANSFER') signals++;
+    if (c.movement === 'TRANSFER') signals++;
+
+    // Signal: counterparty matches the other account's name/institution
+    const txAccount = accountById.get(tx.account_id);
+    const cAccount = accountById.get(c.account_id);
+    if (tx.counterparty_raw && cAccount) {
+      const cpLower = tx.counterparty_raw.toLowerCase();
+      if ((cAccount.name && cpLower.includes(cAccount.name.toLowerCase())) ||
+          (cAccount.institution && cpLower.includes(cAccount.institution.toLowerCase()))) {
+        signals++;
+      }
+    }
+    if (c.counterparty_raw && txAccount) {
+      const cpLower = c.counterparty_raw.toLowerCase();
+      if ((txAccount.name && cpLower.includes(txAccount.name.toLowerCase())) ||
+          (txAccount.institution && cpLower.includes(txAccount.institution.toLowerCase()))) {
+        signals++;
+      }
+    }
+
+    // Signal: user's own name in either description
+    if (userName?.firstName && userName?.lastName &&
+        userName.firstName.length >= 3 && userName.lastName.length >= 3) {
+      const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const firstNorm = userName.firstName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      const lastNorm = userName.lastName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      const firstRe = new RegExp(`\\b${escapeRe(firstNorm)}\\b`, 'i');
+      const lastRe = new RegExp(`\\b${escapeRe(lastNorm)}\\b`, 'i');
+      for (const desc of [tx.description, tx.description_norm, c.description, c.description_norm]) {
+        if (!desc) continue;
+        const descNorm = desc.normalize('NFD').replace(/[̀-ͯ]/g, '');
+        if (firstRe.test(descNorm) && lastRe.test(descNorm)) {
+          signals++;
+          break;
+        }
+      }
+    }
+
+    // Signal: BOTH descriptions contain transfer-indicative words
+    const txText = `${tx.description} ${tx.description_norm || ''}`;
+    const cText = `${c.description} ${c.description_norm || ''}`;
+    if (TRANSFER_WORDS.test(txText) && TRANSFER_WORDS.test(cText)) {
+      signals++;
+    }
+
+    if (signals === 0) continue;
+
+    // Determine category: to_investment if either account is INVESTMENT
+    let categorySlug = 'own_transfer';
+    if (txAccount?.account_role === 'INVESTMENT' || cAccount?.account_role === 'INVESTMENT') {
+      categorySlug = 'to_investment';
+    }
+
+    // Score: prefer closer date + more signals
+    const score = signals * 10 + (2 - dayDiff);
+    scored.push({ candidate: c, score, categorySlug });
+  }
+
+  if (scored.length === 0) return null;
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // Ambiguity guard: if top two candidates have the same score, don't match
+  if (scored.length >= 2 && scored[0].score === scored[1].score) {
+    console.log(`[process-import] Reconciliation ambiguity: ${scored.length} equal-score candidates for tx ${tx.id}, skipping`);
+    return null;
+  }
+
+  return scored[0];
+}
+
 // ========== USER RULES (learned from corrections in My Data + Settings) ==========
 // Single source of truth for user-authored rules. Both the imports flow (RuleEditorDialog)
 // and the Categories page (AddRuleDialog) write into `user_rules`. Takes priority over the
@@ -1240,6 +1490,7 @@ serve(async (req) => {
     const TX_BATCH_SIZE = 50;
     let insertFailedCount = 0;
     const insertErrorSamples: string[] = [];
+    const allInsertedFingerprints = new Set<string>();
     if (newTransactions.length > 0) {
       let successCount = 0;
       let duplicateCount = 0;
@@ -1281,15 +1532,20 @@ serve(async (req) => {
               else recordFailure(error.message);
             } else {
               recordSuccess(txMonthKey);
+              allInsertedFingerprints.add(tx.fingerprint);
             }
           }
           continue;
         }
 
-        const insertedFingerprints = new Set((inserted || []).map((r: { fingerprint: string }) => r.fingerprint));
+        const batchInsertedFps = new Set((inserted || []).map((r: { fingerprint: string }) => r.fingerprint));
         for (const tx of batch) {
-          if (insertedFingerprints.has(tx.fingerprint)) recordSuccess(tx._month_key);
-          else recordDuplicate(tx._month_key);
+          if (batchInsertedFps.has(tx.fingerprint)) {
+            recordSuccess(tx._month_key);
+            allInsertedFingerprints.add(tx.fingerprint);
+          } else {
+            recordDuplicate(tx._month_key);
+          }
         }
       }
 
@@ -1298,6 +1554,28 @@ serve(async (req) => {
       stats.failed = insertFailedCount;
 
       console.log(`[process-import] Inserted ${successCount} transactions, ${duplicateCount} duplicates skipped, ${insertFailedCount} failed`);
+    }
+
+    // Cross-account transfer reconciliation: after all transactions are inserted,
+    // scan for matching pairs across the user's different accounts.
+    let reconcilerPairs = 0;
+    if (allInsertedFingerprints.size > 0 && accountsForDetection.length >= 2) {
+      try {
+        reconcilerPairs = await reconcileTransferPairs(
+          supabase,
+          userId,
+          accountId,
+          allInsertedFingerprints,
+          accountsForDetection,
+          userContext ? { firstName: userContext.firstName, lastName: userContext.lastName } : undefined,
+          categorySlugToId,
+        );
+        if (reconcilerPairs > 0) {
+          console.log(`[process-import] Reconciled ${reconcilerPairs} cross-account transfer pair(s)`);
+        }
+      } catch (e) {
+        console.error(`[process-import] Reconciliation error (non-fatal):`, e);
+      }
     }
 
     // Activate applied_count/last_applied_at on matched user_rules (batched — one RPC
@@ -1360,8 +1638,9 @@ serve(async (req) => {
     if (stats.duplicatesIgnored > 0) {
       message += `, ${stats.duplicatesIgnored} duplicates ignored`;
     }
-    if (stats.transfers > 0) {
+    if (stats.transfers > 0 || reconcilerPairs > 0) {
       message += `, ${stats.transfers} transfers`;
+      if (reconcilerPairs > 0) message += ` (${reconcilerPairs} reconciled)`;
     }
     if (stats.categorizedByRule > 0) {
       message += `, ${stats.categorizedByRule} by rules`;

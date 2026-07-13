@@ -21,6 +21,7 @@ export type Database = {
           created_at: string | null
           currency_base: string
           domain_default: Database["public"]["Enums"]["app_domain"] | null
+          hidden_from_dashboard: boolean
           id: string
           institution: string
           is_primary: boolean
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string | null
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
+          hidden_from_dashboard?: boolean
           id?: string
           institution: string
           is_primary?: boolean
@@ -45,6 +47,7 @@ export type Database = {
           created_at?: string | null
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
+          hidden_from_dashboard?: boolean
           id?: string
           institution?: string
           is_primary?: boolean
@@ -488,6 +491,7 @@ export type Database = {
           running_balance: number | null
           source_row_hash: string | null
           source_transaction_id: string | null
+          transfer_pair_id: string | null
           user_corrected: boolean | null
           user_id: string
         }
@@ -517,6 +521,7 @@ export type Database = {
           running_balance?: number | null
           source_row_hash?: string | null
           source_transaction_id?: string | null
+          transfer_pair_id?: string | null
           user_corrected?: boolean | null
           user_id: string
         }
@@ -546,6 +551,7 @@ export type Database = {
           running_balance?: number | null
           source_row_hash?: string | null
           source_transaction_id?: string | null
+          transfer_pair_id?: string | null
           user_corrected?: boolean | null
           user_id?: string
         }
@@ -642,6 +648,7 @@ export type Database = {
           locale: string
           onboarding_completed: boolean | null
           selected_categories: string[] | null
+          theme: string
           updated_at: string | null
           user_id: string
         }
@@ -658,6 +665,7 @@ export type Database = {
           locale?: string
           onboarding_completed?: boolean | null
           selected_categories?: string[] | null
+          theme?: string
           updated_at?: string | null
           user_id: string
         }
@@ -674,6 +682,7 @@ export type Database = {
           locale?: string
           onboarding_completed?: boolean | null
           selected_categories?: string[] | null
+          theme?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -738,6 +747,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_rule_stats: {
+        Args: { _hit_count: number; _rule_id: string }
+        Returns: undefined
+      }
       log_audit_event: {
         Args: {
           _action: string
