@@ -15,7 +15,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
-import { Plus, Pencil, Star, Trash2, Eye, EyeOff, Building2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Star, Trash2, Eye, EyeOff, Building2, TrendingUp, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface AccountCardStatsProps {
@@ -98,10 +98,15 @@ export function AccountBankAccountsTab() {
     .filter((a) => a.account_role === "CASH")
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
 
+  const investmentAccounts = accounts
+    .filter((a) => a.account_role === "INVESTMENT")
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+
   const [formOpen, setFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [creatingRole, setCreatingRole] = useState<"CASH" | "INVESTMENT">("CASH");
 
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
   const [linkedData, setLinkedData] = useState<{
     importsCount: number;
     transactionsCount: number;
@@ -112,14 +117,24 @@ export function AccountBankAccountsTab() {
   const [reassignToId, setReassignToId] = useState("");
   const [checkingLinks, setCheckingLinks] = useState(false);
 
-  const handleOpenCreate = () => { setEditingAccount(null); setFormOpen(true); };
+  const handleOpenCreate = (role: "CASH" | "INVESTMENT" = "CASH") => {
+    setCreatingRole(role);
+    setEditingAccount(null);
+    setFormOpen(true);
+  };
   const handleOpenEdit = (account: Account) => { setEditingAccount(account); setFormOpen(true); };
 
   const handleFormSubmit = (values: AccountFormValues) => {
     if (editingAccount) {
       updateAccount({ id: editingAccount.id, institution: values.institution, name: values.name || values.institution, color: values.color });
     } else {
-      createAccount({ institution: values.institution, name: values.name, color: values.color, account_role: "CASH", domain_default: "CASHFLOW" });
+      createAccount({
+        institution: values.institution,
+        name: values.name,
+        color: values.color,
+        account_role: creatingRole,
+        domain_default: creatingRole === "INVESTMENT" ? "INVESTING" : "CASHFLOW",
+      });
     }
     setFormOpen(false);
     setEditingAccount(null);
@@ -134,7 +149,7 @@ export function AccountBankAccountsTab() {
     updateAccount({ id: account.id, hidden_from_dashboard: !account.hidden_from_dashboard });
   };
 
-  const handleDeleteClick = async (account: { id: string; name: string }) => {
+  const handleDeleteClick = async (account: Account) => {
     setCheckingLinks(true);
     setDeleteTarget(account);
     const data = await getLinkedDataCount(account.id);
@@ -156,40 +171,13 @@ export function AccountBankAccountsTab() {
   };
 
   const hasLinkedData = linkedData && (linkedData.importsCount > 0 || linkedData.transactionsCount > 0);
-  const otherAccounts = cashAccounts.filter((a) => a.id !== deleteTarget?.id);
+  const otherAccounts = accounts.filter(
+    (a) => a.id !== deleteTarget?.id && a.account_role === deleteTarget?.account_role,
+  );
 
-  return (
-    <div className="space-y-4">
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="bg-card rounded-xl p-5 animate-pulse" style={{ minHeight: 100 }}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-3 h-3 rounded-full bg-muted" />
-                <div className="h-4 w-32 rounded bg-muted" />
-              </div>
-              <div className="h-3 w-48 rounded bg-muted mt-2" />
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <p className="text-sm text-destructive text-center py-8">
-          Couldn't load your accounts. Try refreshing the page.
-        </p>
-      ) : cashAccounts.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <Building2 className="w-10 h-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">
-            {t("accounts.noAccounts", "No accounts yet. Create one to get started.")}
-          </p>
-          <Button variant="outline" size="sm" onClick={handleOpenCreate}>
-            <Plus className="w-4 h-4 mr-1" />
-            {t("accounts.addAccount", "Add account")}
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cashAccounts.map((account, idx) => {
+  const renderAccountCards = (list: Account[], offset = 0) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {list.map((account, idx) => {
             const color = account.color || getDefaultAccountColor(idx);
             return (
               <div
@@ -282,16 +270,79 @@ export function AccountBankAccountsTab() {
               </div>
             );
           })}
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="bg-card rounded-xl p-5 animate-pulse" style={{ minHeight: 100 }}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-3 h-3 rounded-full bg-muted" />
+                <div className="h-4 w-32 rounded bg-muted" />
+              </div>
+              <div className="h-3 w-48 rounded bg-muted mt-2" />
+            </div>
+          ))}
         </div>
       )}
 
-      <Button variant="outline" size="sm" className="w-full" onClick={handleOpenCreate}>
-        <Plus className="w-4 h-4 mr-1" />
-        {t("accounts.addAccount", "Add account")}
-      </Button>
+      {!isLoading && error && (
+        <p className="text-sm text-destructive text-center py-8">
+          Couldn't load your accounts. Try refreshing the page.
+        </p>
+      )}
+
+      {!isLoading && !error && (
+        <>
+          {/* ── Bank accounts ── */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">
+              {t("accounts.bankAccountsTitle", "Bank accounts")}
+            </h2>
+            {cashAccounts.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center rounded-xl border border-dashed border-border">
+                <Building2 className="w-8 h-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">
+                  {t("accounts.noBankAccounts", "No bank accounts yet.")}
+                </p>
+              </div>
+            ) : (
+              renderAccountCards(cashAccounts)
+            )}
+            <Button variant="outline" size="sm" className="w-full" onClick={() => handleOpenCreate("CASH")}>
+              <Plus className="w-4 h-4 mr-1" />
+              {t("accounts.addBankAccount", "Add bank account")}
+            </Button>
+          </div>
+
+          {/* ── Investment accounts ── */}
+          <div className="space-y-4 pt-4 border-t border-border">
+            <h2 className="text-sm font-semibold text-foreground">
+              {t("accounts.investmentAccountsTitle", "Investment accounts")}
+            </h2>
+            {investmentAccounts.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center rounded-xl border border-dashed border-border">
+                <TrendingUp className="w-8 h-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">
+                  {t("accounts.noInvestmentAccounts", "No investment accounts yet.")}
+                </p>
+              </div>
+            ) : (
+              renderAccountCards(investmentAccounts)
+            )}
+            <Button variant="outline" size="sm" className="w-full" onClick={() => handleOpenCreate("INVESTMENT")}>
+              <Plus className="w-4 h-4 mr-1" />
+              {t("accounts.addInvestmentAccount", "Add investment account")}
+            </Button>
+          </div>
+        </>
+      )}
 
       <AccountFormDialog
-        key={editingAccount?.id ?? "create"}
+        key={editingAccount?.id ?? `create-${creatingRole}`}
         open={formOpen}
         onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingAccount(null); }}
         mode={editingAccount ? "edit" : "create"}
@@ -300,7 +351,7 @@ export function AccountBankAccountsTab() {
             ? {
                 institution: editingAccount.institution,
                 name: editingAccount.name === editingAccount.institution ? "" : editingAccount.name,
-                color: editingAccount.color || getDefaultAccountColor(cashAccounts.findIndex((a) => a.id === editingAccount.id)),
+                color: editingAccount.color || getDefaultAccountColor(accounts.findIndex((a) => a.id === editingAccount.id)),
               }
             : undefined
         }

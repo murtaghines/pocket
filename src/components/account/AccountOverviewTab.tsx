@@ -59,6 +59,8 @@ export function AccountOverviewTab({ onNavigateTab }: AccountOverviewTabProps) {
   const { data: stats, isLoading } = useAccountOverviewStats();
   const { accounts } = useAccounts();
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
+  const investmentAccounts = accounts.filter((a) => a.account_role === "INVESTMENT");
+  const allAccountsSorted = [...cashAccounts, ...investmentAccounts];
 
   const coverageLabel = (() => {
     if (!stats?.minMonth || !stats.maxMonth) return "—";
@@ -206,10 +208,10 @@ export function AccountOverviewTab({ onNavigateTab }: AccountOverviewTabProps) {
             </button>
           </div>
 
-          {cashAccounts.length === 0 ? (
+          {allAccountsSorted.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
               <p className="text-sm text-muted-foreground">
-                {t("overview.noAccounts", "No bank accounts yet")}
+                {t("overview.noAccounts", "No accounts yet")}
               </p>
               <Button
                 variant="outline"
@@ -222,7 +224,7 @@ export function AccountOverviewTab({ onNavigateTab }: AccountOverviewTabProps) {
             </div>
           ) : (
             <ul className="space-y-2">
-              {cashAccounts.slice(0, 6).map((account, idx) => {
+              {allAccountsSorted.slice(0, 6).map((account, idx) => {
                 const color = account.color || getDefaultAccountColor(idx);
                 const fileCount = stats?.accountFileMap[account.id] || 0;
                 return (
@@ -233,6 +235,9 @@ export function AccountOverviewTab({ onNavigateTab }: AccountOverviewTabProps) {
                     />
                     <span className="text-sm font-medium truncate flex-1 text-foreground">
                       {getAccountDisplayName(account)}
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/60 shrink-0">
+                      {account.account_role === "INVESTMENT" ? "INV" : "BANK"}
                     </span>
                     <span className="text-xs text-muted-foreground shrink-0">
                       {fileCount > 0

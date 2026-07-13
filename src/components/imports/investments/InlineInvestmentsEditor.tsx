@@ -57,6 +57,7 @@ export interface InlineInvestmentsEditorProps {
   pendingFiles?: PendingFileInfo[];
   pendingByInv: Record<string, PendingInvEdit>;
   setPendingByInv: React.Dispatch<React.SetStateAction<Record<string, PendingInvEdit>>>;
+  filterUploadIds?: Set<string>;
 }
 
 export function InlineInvestmentsEditor({
@@ -70,6 +71,7 @@ export function InlineInvestmentsEditor({
   pendingFiles,
   pendingByInv,
   setPendingByInv,
+  filterUploadIds,
 }: InlineInvestmentsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -115,6 +117,10 @@ export function InlineInvestmentsEditor({
     },
     enabled: !!user,
   });
+
+  const displayedInvestments = filterUploadIds
+    ? investments.filter((inv) => inv.upload_id != null && filterUploadIds.has(inv.upload_id))
+    : investments;
 
   // Edit history for every investment in this month, grouped by row id (newest first).
   // Mirrors InlineTransactionsEditor's tx-audit query.
@@ -235,21 +241,21 @@ export function InlineInvestmentsEditor({
   // Distinct platforms from existing investments to populate the selector
   const knownPlatforms = useMemo(() => {
     const set = new Set<string>();
-    investments.forEach((i) => i.platform && set.add(i.platform));
+    displayedInvestments.forEach((i) => i.platform && set.add(i.platform));
     return Array.from(set).sort();
-  }, [investments]);
+  }, [displayedInvestments]);
 
   const summary = useMemo(() => {
-    const visible = investments.filter((i) => !i.is_hidden);
+    const visible = displayedInvestments.filter((i) => !i.is_hidden);
     let deposits = 0;
     let withdrawals = 0;
     visible.forEach((i) => {
       if (i.type === "deposit") deposits += Math.abs(i.amount);
       else if (i.type === "withdrawal") withdrawals += Math.abs(i.amount);
     });
-    const hidden = investments.length - visible.length;
+    const hidden = displayedInvestments.length - visible.length;
     return { count: visible.length, deposits, withdrawals, net: deposits - withdrawals, hidden };
-  }, [investments]);
+  }, [displayedInvestments]);
 
   if (isLoading) {
     return (
@@ -298,7 +304,7 @@ export function InlineInvestmentsEditor({
         </div>
       )}
 
-      {investments.length === 0 ? (
+      {displayedInvestments.length === 0 ? (
         <div className="p-12 text-center text-sm text-muted-foreground">
           No movements parsed yet for {monthLabel}.
         </div>
@@ -318,7 +324,7 @@ export function InlineInvestmentsEditor({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {investments.map((inv, idx) => {
+              {displayedInvestments.map((inv, idx) => {
                 const pending = pendingByInv[inv.id];
                 const isPending = !!pending;
                 const isSaving = savingIds.has(inv.id);

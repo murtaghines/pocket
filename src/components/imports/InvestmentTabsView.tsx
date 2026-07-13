@@ -6,6 +6,7 @@ import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
@@ -26,6 +27,8 @@ export function InvestmentTabsView() {
   const { user } = useAuth();
   const { formatMonth } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting } = useImports("INVESTING");
+  const { getInvestmentAccounts } = useAccounts();
+  const investmentAccounts = getInvestmentAccounts();
   const {
     pendingFilesByMonth,
     addFilesForMonth,
@@ -225,6 +228,7 @@ export function InvestmentTabsView() {
           monthLabel={activeSlot.label}
           monthDate={activeSlot.date}
           imports={importsByMonth[activeSlot.key] || []}
+          investmentAccounts={investmentAccounts}
           onPickFiles={handleFilesPicked}
           deleteImport={deleteImport}
           isDeleting={isDeleting}

@@ -1,7 +1,10 @@
-import { useRef } from "react";
+import { useRef, useState, useMemo } from "react";
 import { Loader2, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { Import } from "@/hooks/useImports";
+import type { Account } from "@/hooks/useAccounts";
+import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColors";
 import { InlineInvestmentsEditor } from "./InlineInvestmentsEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
 import type { PendingFileInfo, PendingInvEdit } from "./types";
@@ -11,6 +14,7 @@ export interface MonthWorkspaceProps {
   monthLabel: string;
   monthDate: Date;
   imports: Import[];
+  investmentAccounts: Account[];
   onPickFiles: (files: FileList | null, monthDate: Date) => void;
   deleteImport: (id: string) => void;
   isDeleting: boolean;
@@ -25,6 +29,7 @@ export function MonthWorkspace({
   monthLabel,
   monthDate,
   imports,
+  investmentAccounts,
   onPickFiles,
   deleteImport,
   isDeleting,
@@ -34,6 +39,39 @@ export function MonthWorkspace({
   setPendingByInv,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  const accountChips = useMemo(() => {
+    const seen = new Map<string, { id: string; label: string; color: string | null; count: number }>();
+    imports.forEach((imp) => {
+      if (!imp.account_id) return;
+      const account = investmentAccounts.find((a) => a.id === imp.account_id);
+      if (!account) return;
+      const existing = seen.get(imp.account_id);
+      if (existing) {
+        existing.count++;
+      } else {
+        const idx = investmentAccounts.indexOf(account);
+        seen.set(imp.account_id, {
+          id: imp.account_id,
+          label: getAccountDisplayName(account),
+          color: account.color || getDefaultAccountColor(idx),
+          count: 1,
+        });
+      }
+    });
+    return Array.from(seen.values());
+  }, [imports, investmentAccounts]);
+
+  const filteredImports = useMemo(
+    () => (selectedAccountId ? imports.filter((i) => i.account_id === selectedAccountId) : imports),
+    [imports, selectedAccountId],
+  );
+
+  const filterUploadIds = useMemo(
+    () => (selectedAccountId ? new Set(filteredImports.map((i) => i.id)) : undefined),
+    [selectedAccountId, filteredImports],
+  );
 
   const activePending = (pendingFiles || []).filter(
     (f) => f.status === "processing" || f.status === "pending",
@@ -97,6 +135,39 @@ export function MonthWorkspace({
         accept=".xlsx,.xls,.csv,.pdf"
         onChange={(e) => onPickFiles(e.target.files, monthDate)}
       />
+      {accountChips.length > 1 && (
+        <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-muted/20 overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => setSelectedAccountId(null)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors shrink-0",
+              !selectedAccountId
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            )}
+          >
+            All <span className="opacity-60">{imports.length}</span>
+          </button>
+          {accountChips.map((chip) => (
+            <button
+              key={chip.id}
+              onClick={() => setSelectedAccountId(chip.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors shrink-0",
+                selectedAccountId === chip.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: chip.color ?? "hsl(var(--muted-foreground))" }}
+              />
+              {chip.label} <span className="opacity-60">{chip.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <InlineInvestmentsEditor
         monthKey={monthKey}
         monthLabel={monthLabel}
@@ -108,6 +179,7 @@ export function MonthWorkspace({
         pendingFiles={activePending}
         pendingByInv={pendingByInv}
         setPendingByInv={setPendingByInv}
+        filterUploadIds={filterUploadIds}
       />
     </div>
   );
