@@ -24,6 +24,7 @@ export interface MonthTransaction {
   account_id: string | null;
   is_hidden: boolean;
   import_id: string | null;
+  transfer_pair_id: string | null;
 }
 
 export interface AuditEntry {

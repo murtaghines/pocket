@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PillBadge } from "@/components/ui/pill-badge";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import {
   AlertDialog,
@@ -205,7 +206,7 @@ export function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id",
+          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, transfer_pair_id",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -907,6 +908,7 @@ export function InlineTransactionsEditor({
                       {accountName(tx.account_id) || "—"}
                     </TableCell>
                     <TableCell className="text-sm">
+                      <div className="flex items-center gap-1">
                       {isLocked ? (
                         <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
                           {getMovementLabel(movement)}
@@ -943,6 +945,19 @@ export function InlineTransactionsEditor({
                           </SelectContent>
                         </Select>
                       )}
+                      {tx.transfer_pair_id && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-amber-500">
+                              <ArrowRightLeft className="w-3.5 h-3.5" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            Paired with another account
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm">
                       {isLocked ? (
