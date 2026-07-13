@@ -14,6 +14,41 @@
   a deployed function), _shared/userRules.ts (Deno-side copy of src/lib/userRules.ts,
   added 2026-07-11), _shared/categoryMap.ts, _shared/fingerprint.ts
 
+## AI extraction cost reduction (2026-07-13)
+
+`process-import` asks Claude to extract AND pre-categorize transactions in the same call, but
+tracing the categorization pipeline (`CASHFLOW_ANALYSIS_PROMPT` → categorizer → user_rules →
+sign_fallback) showed the AI's `category_slug` guess for INCOME/EXPENSE **never survives to the
+DB**: it's always overwritten either by the local categorizer's match, or forced to
+`other_income`/`other_expense` when nothing matches (see the "Priority 2 / no match" branch in
+`process-import/index.ts`). It only matters for TRANSFER movement (own_transfer vs
+to_investment), where local detection sometimes can't disambiguate on its own. Grep also
+confirmed `bank`, `payment_channel`, and `value_date` (the INVESTING prompt's `platform`/
+`asset_type` too) are extracted by the AI but **never read anywhere downstream** — dead output
+tokens on every transaction of every import.
+
+Trimmed all three prompts (`CASHFLOW_ANALYSIS_PROMPT`, `INVESTING_ANALYSIS_PROMPT`,
+`SIMPLE_EXTRACTION_PROMPT`) to drop those fields, and replaced the 32-line per-category
+"CATEGORY ASSIGNMENT" instruction block with a 3-line rule: category_slug is null for
+INCOME/EXPENSE, own_transfer/to_investment for TRANSFER. The MOVEMENT CLASSIFICATION and
+TRANSFER vs EXPENSE/INCOME sections (the guidance that's actually load-bearing, since sign
+alone can't identify a transfer) are untouched.
+
+Added token-usage tracking: `callAIWithRetry` returns Anthropic's `usage.{input_tokens,
+output_tokens}`, accumulated across chunks into `stats.aiInputTokens`/`aiOutputTokens` and
+logged per-import (`AI token usage total: input=X, output=Y`) — the audit had flagged that
+there was no way to measure AI cost per import at all.
+
+**Verified with a real before/after A/B** against the live DB (not just theory): called
+`process-import` directly (curl + a demo-user JWT) with an identical 8-transaction synthetic
+CSV before and after the prompt trim. Baseline: 2222 input / 874 output tokens. Trimmed: 1770
+input / 731 output tokens — **20% fewer input tokens, 16% fewer output tokens**, same call.
+Then ran a second, non-duplicate test file through the trimmed prompt and confirmed
+categorization is unaffected: all 7 transactions (including two TRANSFER cases — one negative-
+signed "traspaso entre cuentas propias", one "Trade Republic" contribution) landed with the
+correct `movement`/`category`, same as before the change. Test imports/transactions removed
+from the demo account after verification. 76/76 tests green, tsc/lint clean, deployed.
+
 ## Categories & rules unification (2026-07-11)
 
 `categorization_rules` (the table the Categories page wrote to) was migrated into

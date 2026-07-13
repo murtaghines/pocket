@@ -51,34 +51,33 @@ For each transaction, extract ONLY these essential fields:
 - amount_signed: Numeric value (positive for deposits/income, negative for withdrawals/expenses)
 - running_balance: Balance after transaction if shown, otherwise null
 - currency: Currency code if visible (EUR, USD, etc.)
-- bank: Bank name if identifiable
 
 Example output:
 [
-  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA MERCADONA","amount_signed":-87.43,"running_balance":1234.56,"currency":"EUR","bank":"Santander"},
-  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE","amount_signed":2850.00,"running_balance":3084.56,"currency":"EUR","bank":"Santander"}
+  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA MERCADONA","amount_signed":-87.43,"running_balance":1234.56,"currency":"EUR"},
+  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE","amount_signed":2850.00,"running_balance":3084.56,"currency":"EUR"}
 ]
 
 Extract ALL transactions visible in the data. Do not skip any.`;
 
 // ========== FULL PROMPT (for smaller files) ==========
+// bank/payment_channel/value_date/full category_slug removed below: none of them survive
+// downstream (grep-verified dead reads; category_slug for non-TRANSFER is always overwritten
+// by the local categorizer) — cutting them saves prompt + output tokens with no behavior change.
 const CASHFLOW_ANALYSIS_PROMPT = `You are a financial data extraction expert specialized in bank statements from any country. Your task is to analyze messy, unstructured financial data and extract clean transaction data.
 
 CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
 
 For each transaction, extract:
 - posted_date: ISO format (YYYY-MM-DD). This is the main transaction date shown on the statement.
-- value_date: ISO format (YYYY-MM-DD) if available as a separate "value date" or "fecha valor", otherwise null.
 - description_raw: Original raw description from the statement.
 - description_clean: Clean, readable description removing reference numbers and noise.
 - amount_signed: Numeric value (positive for income, negative for expenses/transfers out).
 - running_balance: Balance after transaction if shown, otherwise null.
 - source_transaction_id: External transaction ID/reference if visible (e.g., MercadoPago ID), otherwise null.
-- payment_channel: One of: CARD, TRANSFER, BIZUM, QR, CASH, DIRECT_DEBIT, OTHER
 - counterparty_raw: Name of the other party if identifiable (beneficiary, payer, merchant), otherwise null.
 - movement: One of: INCOME, EXPENSE, TRANSFER (the fundamental type of money movement)
-- category_slug: The specific category slug from the list below
-- bank: Bank name if identifiable
+- category_slug: See CATEGORY_SLUG rule below — null for INCOME/EXPENSE, required for TRANSFER.
 - currency: Currency code (EUR, USD, GBP, ARS, MXN, etc.) - detect from symbols or context
 
 === MOVEMENT CLASSIFICATION (Step 1 - CRITICAL) ===
@@ -132,76 +131,53 @@ CRITICAL - These are NOT TRANSFER:
 If UNCERTAIN whether a transfer goes to own account or third party:
 → Use the amount sign: positive = INCOME, negative = EXPENSE
 
-=== CATEGORY ASSIGNMENT (Step 2) ===
+=== CATEGORY_SLUG (Step 2) ===
 
-After determining movement, assign the specific category_slug:
+The app assigns detailed INCOME/EXPENSE categories (groceries, salary, subscriptions, etc.)
+automatically using its own rules engine after extraction — do NOT guess these. Set
+category_slug to null for INCOME and EXPENSE movements.
 
-INCOME categories:
-- salary: Payroll, wages, regular employment income (Nómina, Sueldo, Payroll)
-- refunds: Returns, refunds, chargebacks (Devolución, Refund)
-- freelance: Freelance, contract payments, consulting fees
-- rents: Rental income from property
-- investment: Investment returns, dividends, interest
-- transfers: Money received from own accounts
-- other_income: Other income not fitting above categories
-
-EXPENSE categories:
-- housing: Rent, mortgage, utilities (luz, gas, agua), home services, internet
-- groceries: Supermarket, grocery stores, food shopping (Mercadona, Lidl, Carrefour)
-- restaurants: Restaurants, bars, cafes, delivery, take-away (Glovo, UberEats)
-- transport: Public transport, taxi, Uber, fuel, tolls, parking
-- health: Medical, pharmacy, health insurance, treatments
-- entertainment: Events, cinema, games, recreational activities, hobbies
-- shopping: Clothing, technology, home goods, non-food purchases (Amazon, Zara)
-- education: Courses, books, training, tuition (Udemy, Coursera)
-- subscriptions: Streaming, software, recurring memberships (Netflix, Spotify)
-- travel: Flights, hotels, tourism, vacation expenses
-- sports: Gym, sports equipment, sports activities
-- pets: Veterinary, pet shops, pet food
-- other_expense: Expenses not fitting above categories, transfers to third parties
-
-TRANSFER categories:
-- own_transfer: Transfer between user's own accounts
-- to_investment: Transfer to user's investment/savings accounts
+For TRANSFER movements only, set category_slug to:
+- own_transfer: transfer between the user's own bank accounts
+- to_investment: transfer to the user's own investment/savings account
 
 Example output:
 [
-  {"posted_date":"2024-12-15","value_date":null,"description_raw":"COMPRA TARJETA *1234 MERCADONA","description_clean":"Supermercado Mercadona","amount_signed":-87.43,"running_balance":1234.56,"source_transaction_id":null,"payment_channel":"CARD","counterparty_raw":"MERCADONA","movement":"EXPENSE","category_slug":"groceries","bank":"Santander","currency":"EUR"},
-  {"posted_date":"2024-12-14","value_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE EMPRESA SA","description_clean":"Nómina Diciembre","amount_signed":2850.00,"running_balance":3084.56,"source_transaction_id":null,"payment_channel":"TRANSFER","counterparty_raw":"EMPRESA SA","movement":"INCOME","category_slug":"salary","bank":"Santander","currency":"EUR"},
-  {"posted_date":"2024-12-13","value_date":null,"description_raw":"TRF A CTA PROPIA REVOLUT","description_clean":"Traspaso a Revolut","amount_signed":-500.00,"running_balance":2584.56,"source_transaction_id":null,"payment_channel":"TRANSFER","counterparty_raw":null,"movement":"TRANSFER","category_slug":"own_transfer","bank":"Santander","currency":"EUR"},
-  {"posted_date":"2024-12-12","value_date":null,"description_raw":"BIZUM A JUAN GARCIA","description_clean":"Bizum a Juan García","amount_signed":-30.00,"running_balance":2554.56,"source_transaction_id":null,"payment_channel":"BIZUM","counterparty_raw":"JUAN GARCIA","movement":"EXPENSE","category_slug":"other_expense","bank":"Santander","currency":"EUR"}
+  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA *1234 MERCADONA","description_clean":"Supermercado Mercadona","amount_signed":-87.43,"running_balance":1234.56,"source_transaction_id":null,"counterparty_raw":"MERCADONA","movement":"EXPENSE","category_slug":null,"currency":"EUR"},
+  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE EMPRESA SA","description_clean":"Nómina Diciembre","amount_signed":2850.00,"running_balance":3084.56,"source_transaction_id":null,"counterparty_raw":"EMPRESA SA","movement":"INCOME","category_slug":null,"currency":"EUR"},
+  {"posted_date":"2024-12-13","description_raw":"TRF A CTA PROPIA REVOLUT","description_clean":"Traspaso a Revolut","amount_signed":-500.00,"running_balance":2584.56,"source_transaction_id":null,"counterparty_raw":null,"movement":"TRANSFER","category_slug":"own_transfer","currency":"EUR"},
+  {"posted_date":"2024-12-12","description_raw":"BIZUM A JUAN GARCIA","description_clean":"Bizum a Juan García","amount_signed":-30.00,"running_balance":2554.56,"source_transaction_id":null,"counterparty_raw":"JUAN GARCIA","movement":"EXPENSE","category_slug":null,"currency":"EUR"}
 ]`;
 
+// platform/asset_type/value_date removed: this prompt feeds process-import's shared
+// txRecord loop (not process-investment-file), which has no columns for them — dead reads.
 const INVESTING_ANALYSIS_PROMPT = `You are an investment data extraction expert. Analyze investment platform statements and extract transaction data.
 
 CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
 
 For each transaction, extract:
 - posted_date: ISO format (YYYY-MM-DD)
-- value_date: ISO format if available, otherwise null
 - description_raw: Original description
 - description_clean: Clean description of the investment activity
 - amount_signed: Numeric value (positive for contributions/dividends, negative for withdrawals/fees)
 - source_transaction_id: Platform transaction ID if visible
 - movement: One of: INCOME, EXPENSE, TRANSFER
-- category_slug: See below
-- platform: Platform name (Cocos, Trade Republic, DEGIRO, Revolut, etc.)
-- asset_type: Type of asset (stocks, etf, bonds, crypto, fund, savings, other)
+- category_slug: For TRANSFER only — 'to_investment' (contribution/buy) or 'own_transfer'
+  (withdrawal to own account). Null for INCOME/EXPENSE — the app assigns detailed categories
+  automatically.
 - currency: Currency code (EUR, USD, etc.)
 
-Movement/Category mapping for investments:
-- Contributions/deposits: TRANSFER + to_investment
-- Withdrawals to own account: TRANSFER + own_transfer
-- Dividends: INCOME + investment
-- Interest: INCOME + investment
-- Platform fees: EXPENSE + other_expense
-- Buy/Sell trades: TRANSFER + to_investment (internal platform movement)
+Movement guide:
+- Contributions/deposits, buy/sell trades: TRANSFER (category_slug: to_investment)
+- Withdrawals to own account: TRANSFER (category_slug: own_transfer)
+- Dividends, interest received: INCOME (category_slug: null)
+- Platform fees: EXPENSE (category_slug: null)
 
 Example output:
 [
-  {"posted_date":"2024-12-15","value_date":null,"description_raw":"Aporte mensual","description_clean":"Aporte mensual","amount_signed":500.00,"source_transaction_id":"TX123456","movement":"TRANSFER","category_slug":"to_investment","platform":"Cocos","asset_type":"fund","currency":"EUR"},
-  {"posted_date":"2024-12-10","value_date":"2024-12-11","description_raw":"Dividendo Apple Inc AAPL","description_clean":"Dividendo Apple Inc","amount_signed":12.50,"source_transaction_id":null,"movement":"INCOME","category_slug":"investment","platform":"DEGIRO","asset_type":"stocks","currency":"USD"},
-  {"posted_date":"2024-12-05","value_date":null,"description_raw":"Comisión custodia","description_clean":"Comisión custodia mensual","amount_signed":-1.50,"source_transaction_id":null,"movement":"EXPENSE","category_slug":"other_expense","platform":"Trade Republic","asset_type":"other","currency":"EUR"}
+  {"posted_date":"2024-12-15","description_raw":"Aporte mensual","description_clean":"Aporte mensual","amount_signed":500.00,"source_transaction_id":"TX123456","movement":"TRANSFER","category_slug":"to_investment","currency":"EUR"},
+  {"posted_date":"2024-12-10","description_raw":"Dividendo Apple Inc AAPL","description_clean":"Dividendo Apple Inc","amount_signed":12.50,"source_transaction_id":null,"movement":"INCOME","category_slug":null,"currency":"USD"},
+  {"posted_date":"2024-12-05","description_raw":"Comisión custodia","description_clean":"Comisión custodia mensual","amount_signed":-1.50,"source_transaction_id":null,"movement":"EXPENSE","category_slug":null,"currency":"EUR"}
 ]`;
 
 // ========== UTILITY FUNCTIONS ==========
@@ -453,7 +429,7 @@ async function callAIWithRetry(
   prompt: string,
   isLargeFile: boolean,
   retryCount = 0
-): Promise<{ transactions: any[] | null; error: string | null }> {
+): Promise<{ transactions: any[] | null; error: string | null; usage?: { input_tokens: number; output_tokens: number } }> {
   const maxRetries = 2;
 
   const effectivePrompt = isLargeFile ? SIMPLE_EXTRACTION_PROMPT : prompt;
@@ -518,19 +494,22 @@ async function callAIWithRetry(
   }
   
   console.log(`[process-import] AI response length: ${rawContent.length}`);
-  
+  if (aiData.usage) {
+    console.log(`[process-import] AI token usage: input=${aiData.usage.input_tokens}, output=${aiData.usage.output_tokens}, model=${model}`);
+  }
+
   const result = parseJsonFromAIResponse(rawContent);
-  
+
   if (result.error && retryCount < maxRetries) {
     console.log(`[process-import] Parse failed (${result.error}), retrying with pro model...`);
     console.log(`[process-import] Raw content preview: START>>>>${rawContent.substring(0, 300)}<<<<END`);
     console.log(`[process-import] Raw content end: START>>>>${rawContent.substring(Math.max(0, rawContent.length - 300))}<<<<END`);
-    
+
     await new Promise(r => setTimeout(r, 1000));
     return callAIWithRetry(content, prompt, true, retryCount + 1);
   }
-  
-  return result;
+
+  return { ...result, usage: aiData.usage };
 }
 
 // ========== MAIN HANDLER ==========
@@ -766,8 +745,10 @@ serve(async (req) => {
     // ========== DETERMINE PROCESSING STRATEGY ==========
     const isLargeFile = fileContent.length > CHUNK_SIZE_THRESHOLD;
     const prompt = domain === 'INVESTING' ? INVESTING_ANALYSIS_PROMPT : CASHFLOW_ANALYSIS_PROMPT;
-    
+
     let allTransactions: any[] = [];
+    let aiInputTokens = 0;
+    let aiOutputTokens = 0;
     
     if (isLargeFile) {
       console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
@@ -778,12 +759,14 @@ serve(async (req) => {
         console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
         
         const result = await callAIWithRetry(chunks[i], prompt, true);
-        
+        aiInputTokens += result.usage?.input_tokens || 0;
+        aiOutputTokens += result.usage?.output_tokens || 0;
+
         if (result.error) {
           console.error(`[process-import] Chunk ${i + 1} failed: ${result.error}`);
           continue;
         }
-        
+
         if (result.transactions && result.transactions.length > 0) {
           allTransactions = allTransactions.concat(result.transactions);
           console.log(`[process-import] Chunk ${i + 1} extracted ${result.transactions.length} transactions (total: ${allTransactions.length})`);
@@ -806,7 +789,9 @@ serve(async (req) => {
       console.log(`[process-import] Small file (${fileContent.length} chars), using single AI call`);
       
       const result = await callAIWithRetry(fileContent, prompt, false);
-      
+      aiInputTokens += result.usage?.input_tokens || 0;
+      aiOutputTokens += result.usage?.output_tokens || 0;
+
       if (result.error) {
         console.error(`[process-import] AI processing failed: ${result.error}`);
         
@@ -965,6 +950,8 @@ serve(async (req) => {
       categorizedByRule: 0,
       categorizedByCategorizer: 0,
       categorizedByAI: 0,
+      aiInputTokens,
+      aiOutputTokens,
       failed: 0
     };
     const monthsDistribution: Record<string, { new: number; duplicates: number }> = {};
@@ -1392,6 +1379,7 @@ serve(async (req) => {
       ? Math.round((totalCategorized / stats.newTransactions) * 100) 
       : 0;
     console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, categorizer=${stats.categorizedByCategorizer}, AI=${stats.categorizedByAI}, local_coverage=${aiSavingsPercent}%`);
+    console.log(`[process-import] AI token usage total: input=${stats.aiInputTokens}, output=${stats.aiOutputTokens}`);
 
     return new Response(
       JSON.stringify({
