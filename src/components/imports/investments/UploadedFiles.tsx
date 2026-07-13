@@ -4,6 +4,7 @@ import {
   ChevronRight,
   CheckCircle2,
   Trash2,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -291,6 +292,18 @@ export function UploadedFilesHistoryList({
               </div>
 
               <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                {imp.file_storage_url && (
+                  <a
+                    href={imp.file_storage_url}
+                    download
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Download original file"
+                    className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </a>
+                )}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button

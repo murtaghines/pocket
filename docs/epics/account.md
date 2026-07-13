@@ -33,8 +33,9 @@ Hub is at `/account` with URL-driven tabs (?tab=overview|accounts|preferences|se
   - Overview tab: 4 stat cards (files, month coverage, transactions, categorization %)
     fed by `useAccountOverviewStats`; recent files with download links; accounts summary.
   - Bank accounts tab: rich cards per account with file/month/last-upload metrics, inline
-    edit/primary/hide/delete. New `accounts.hidden_from_dashboard bool NOT NULL DEFAULT false`
-    migration applied. `getCashAccounts({ includeHidden })` filters hidden from dashboard.
+    edit/primary/hide/delete. `getCashAccounts({ includeHidden })` filters hidden from dashboard.
+    UI for hide toggle is wired; DB column `accounts.hidden_from_dashboard` NOT YET MIGRATED
+    (pending explicit confirmation — toggle silently no-ops until migration runs).
   - Preferences tab: reorganized into Regional / Money / Appearance sections. Country
     field now editable post-signup (was write-only at onboarding). Theme toggle persists
     to localStorage via `useTheme` (DB column `user_preferences.theme text DEFAULT 'system'`
@@ -50,10 +51,12 @@ Hub is at `/account` with URL-driven tabs (?tab=overview|accounts|preferences|se
 - `user_preferences.investment_platforms` — written at onboarding, never read. Safe to drop.
 - `user_preferences.locale` — dead; `useLocalization` derives from `country`. Safe to drop.
 
-## Next step
+## Next steps
+- **Migration pending**: `ALTER TABLE accounts ADD COLUMN hidden_from_dashboard boolean NOT NULL DEFAULT false;`
+  on project `ertwmshiupmickhfbaue`. After applying: regenerate types, hide toggle becomes live.
 - Cross-device theme sync: write `user_preferences.theme` on change, read on login
-  (currently only localStorage-backed — the DB column exists but isn't wired).
-- Drop the deprecated DB columns in a future explicit migration.
+  (currently only localStorage-backed).
+- Drop deprecated DB columns in a future explicit migration.
 
 ## Decisions made (continued)
 - 2026-07-12: removed dead DB writes from Auth.tsx onboarding: `selected_categories`,
@@ -62,3 +65,11 @@ Hub is at `/account` with URL-driven tabs (?tab=overview|accounts|preferences|se
 - 2026-07-12: added account filter chips to MonthWorkspace — shows when 2+ accounts have
   imports in the active month. Chip state via URL `?account=<id>`; resets on month switch.
   `InlineTransactionsEditor` receives filtered imports based on selected chip.
+- 2026-07-13: investment account linking — AccountSelectDialog extended with `accountRole` /
+  `domainDefault` props; investment uploads now require account selection (same flow as bank
+  statements). InvestmentTabsView wires the dialog before processFilesForMonth.
+- 2026-07-13: investment accounts visible in hub — AccountBankAccountsTab split into Bank /
+  Investment sections; AccountOverviewTab shows both roles with BANK/INV badge; Account tab
+  renamed "Accounts"; es/account.json created; investment MonthWorkspace adds account filter
+  chips; InlineInvestmentsEditor accepts filterUploadIds for post-filter without re-fetch.
+- 2026-07-13: investments UploadedFiles: added download button (was missing; cashflow had it).
