@@ -646,6 +646,60 @@ export function InlineTransactionsEditor({
               }
             }
           }
+          if (!withRule && pending.movement && pending.movement !== tx.movement &&
+              (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER') && user) {
+            const nudgeMovement = (pending.movement || 'EXPENSE') as MovementType;
+            const nudgeLabel = nudgeMovement === 'INCOME' ? 'Income' : nudgeMovement === 'TRANSFER' ? 'Transfer' : 'Expense';
+            const fromLabel = tx.movement === 'TRANSFER' ? 'Transfer' : tx.movement === 'INCOME' ? 'Income' : 'Expense';
+            const capturedDesc = (tx.description_norm || tx.description || "")
+              .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+              .trim();
+            const capturedCategory = (pending.category ?? tx.category) || (nudgeMovement === 'INCOME' ? 'other_income' : nudgeMovement === 'TRANSFER' ? 'own_transfer' : 'other_expense');
+            const capturedUserId = user.id;
+
+            if (capturedDesc) {
+              const capturedBuilt = buildRuleFromCorrection(capturedDesc, nudgeMovement, capturedCategory);
+              toast({
+                title: `Changed from ${fromLabel} → ${nudgeLabel}`,
+                description: (
+                  <div className="space-y-1">
+                    <p className="text-xs opacity-80">Save a rule so this pattern is always classified correctly?</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={async () => {
+                        const { data: existing } = await supabase
+                          .from("user_rules").select("id")
+                          .eq("user_id", capturedUserId).eq("pattern", capturedBuilt.pattern)
+                          .eq("category", capturedCategory).eq("is_active", true).limit(1);
+                        if (existing && existing.length > 0) {
+                          toast({ title: "Rule already exists for this pattern" });
+                          return;
+                        }
+                        const { error: ruleError } = await supabase.from("user_rules").insert({
+                          user_id: capturedUserId, source: "user_correction",
+                          match_type: capturedBuilt.match_type, pattern: capturedBuilt.pattern,
+                          tokens: capturedBuilt.tokens, movement: nudgeMovement,
+                          category: capturedCategory, confidence: 0.99,
+                          original_description: capturedDesc, is_active: true,
+                        });
+                        if (ruleError) {
+                          toast({ title: "Couldn't save rule", description: ruleError.message, variant: "destructive" });
+                        } else {
+                          const catLabel = getCategoryLabel(capturedCategory);
+                          toast({ title: `Rule saved: "${capturedBuilt.pattern.slice(0, 30)}" → ${catLabel}` });
+                          queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+                        }
+                      }}
+                    >
+                      Save rule
+                    </Button>
+                  </div>
+                ),
+              });
+            }
+          }
           clearPendingFor(tx.id);
         },
       },

@@ -32,7 +32,7 @@ export function useSuggestedRules() {
         .from("transactions")
         .select("id, description, description_norm, movement")
         .eq("user_id", user!.id)
-        .eq("categorized_by", "ai")
+        .in("categorized_by", ["ai", "sign_fallback"])
         .order("date", { ascending: false })
         .limit(1000);
       if (error) throw error;
