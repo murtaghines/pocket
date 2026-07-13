@@ -24,6 +24,8 @@
     "noAccounts": "Aún no hay cuentas",
     "noData": "Sube tu primer archivo en Mis datos para ver estadísticas aquí",
     "uploadCta": "Ir a Mis datos"
+    "noData": "Sube tu primer archivo en Mis datos para ver estadísticas aquí",
+    "uploadCta": "Ir a Mis datos"
   },
   "accounts": {
     "title": "Cuentas bancarias",
@@ -36,6 +38,12 @@
     "months_other": "{{count}} meses",
     "lastUpload": "última subida {{relative}}",
     "noUploads": "sin archivos aún",
+    "bankAccountsTitle": "Cuentas bancarias",
+    "noBankAccounts": "Aún no hay cuentas bancarias.",
+    "addBankAccount": "Añadir cuenta bancaria",
+    "investmentAccountsTitle": "Cuentas de inversión",
+    "noInvestmentAccounts": "Aún no hay cuentas de inversión.",
+    "addInvestmentAccount": "Añadir cuenta de inversión",
     "hideFromDashboard": "Ocultar del panel",
     "showInDashboard": "Mostrar en panel",
     "hiddenBadge": "Oculta",

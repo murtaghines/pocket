@@ -150,8 +150,8 @@ export function AccountOverviewTab({ onNavigateTab }: AccountOverviewTabProps) {
           ) : (
             <ul className="space-y-2">
               {stats.recentFiles.map((file) => {
-                const account = cashAccounts.find((a) => a.id === file.account_id);
-                const idx = cashAccounts.findIndex((a) => a.id === file.account_id);
+                const account = allAccountsSorted.find((a) => a.id === file.account_id);
+                const idx = allAccountsSorted.findIndex((a) => a.id === file.account_id);
                 const color = account?.color || getDefaultAccountColor(idx);
 
                 return (
