@@ -13,15 +13,18 @@ export interface Rule {
   pattern: string;
   match_type: string;
   match_field: string;
+  applied_count: number;
+  last_applied_at: string | null;
 }
 
 // UI match_types (uppercase, historical) → user_rules match_types (lowercase).
 // SMART is the recommended default: it stores tokens and matches when all
 // meaningful tokens appear in the description.
-const UI_TO_DB_MATCH_TYPE: Record<string, string> = {
+export const UI_TO_DB_MATCH_TYPE: Record<string, string> = {
   SMART: 'fuzzy',
   CONTAINS: 'contains',
   STARTS_WITH: 'starts_with',
+  ENDS_WITH: 'ends_with',
   EXACT: 'exact',
   REGEX: 'regex',
 };
@@ -34,6 +37,29 @@ const DB_TO_UI_MATCH_TYPE: Record<string, string> = {
   exact: 'EXACT',
   regex: 'REGEX',
 };
+
+/** Resolves a UI match type + raw pattern into the fields user_rules actually stores.
+ *  Shared by the addRule mutation and AddRuleDialog's live preview so the preview's
+ *  "will match N transactions" count is computed against the exact pattern/tokens that
+ *  end up saved — never a divergent approximation. */
+export function buildDbRuleFields(pattern: string, uiMatchType: string, movement: string, categorySlug: string) {
+  const dbType = UI_TO_DB_MATCH_TYPE[uiMatchType] || uiMatchType.toLowerCase();
+  let builtPattern = pattern;
+  let tokens: string[] = [];
+  if (dbType === 'fuzzy') {
+    const mv = movement === 'INCOME' || movement === 'TRANSFER' ? movement : 'EXPENSE';
+    const built = buildRuleFromCorrection(pattern, mv as 'INCOME' | 'EXPENSE' | 'TRANSFER', categorySlug);
+    builtPattern = built.pattern;
+    tokens = built.tokens;
+    // Fall back to a contains-normalized pattern if nothing meaningful was extracted —
+    // the row would otherwise never match (fuzzy requires >0 tokens).
+    if (tokens.length === 0) {
+      builtPattern = normalize(pattern);
+      tokens = extractKeyTokens(pattern);
+    }
+  }
+  return { dbType, pattern: builtPattern, tokens };
+}
 
 export function useCategorizationRules() {
   const { user } = useAuth();
@@ -53,7 +79,7 @@ export function useCategorizationRules() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_rules")
-        .select("id, pattern, match_type, category")
+        .select("id, pattern, match_type, category, applied_count, last_applied_at")
         .eq("user_id", user!.id)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -64,6 +90,8 @@ export function useCategorizationRules() {
         pattern: r.pattern,
         match_type: DB_TO_UI_MATCH_TYPE[r.match_type] || r.match_type.toUpperCase(),
         match_field: 'description_norm',
+        applied_count: r.applied_count ?? 0,
+        last_applied_at: r.last_applied_at,
       }));
     },
     enabled: !!user?.id && allCategories.length > 0,
@@ -75,25 +103,12 @@ export function useCategorizationRules() {
       pattern: string;
       match_type: string;
       match_field?: string;
+      /** IDs of existing transactions the rule matches, for retroactive apply. */
+      matchingTransactionIds?: string[];
     }) => {
       const cat = idToCategory[rule.category_id];
       if (!cat) throw new Error(`Unknown category id: ${rule.category_id}`);
-      const dbType = UI_TO_DB_MATCH_TYPE[rule.match_type] || rule.match_type.toLowerCase();
-
-      let pattern = rule.pattern;
-      let tokens: string[] = [];
-      if (dbType === 'fuzzy') {
-        const movement = cat.movement === 'INCOME' || cat.movement === 'TRANSFER' ? cat.movement : 'EXPENSE';
-        const built = buildRuleFromCorrection(rule.pattern, movement as 'INCOME' | 'EXPENSE' | 'TRANSFER', cat.slug);
-        pattern = built.pattern;
-        tokens = built.tokens;
-        // Fall back to a contains-normalized pattern if nothing meaningful was extracted —
-        // the row would otherwise never match (fuzzy requires >0 tokens).
-        if (tokens.length === 0) {
-          pattern = normalize(rule.pattern);
-          tokens = extractKeyTokens(rule.pattern);
-        }
-      }
+      const { dbType, pattern, tokens } = buildDbRuleFields(rule.pattern, rule.match_type, cat.movement, cat.slug);
 
       const { error } = await supabase.from("user_rules").insert({
         user_id: user!.id,
@@ -106,8 +121,25 @@ export function useCategorizationRules() {
         confidence: 0.99,
       });
       if (error) throw error;
+
+      if (rule.matchingTransactionIds && rule.matchingTransactionIds.length > 0) {
+        const { error: retroError } = await supabase
+          .from("transactions")
+          .update({
+            movement: cat.movement,
+            category: cat.slug,
+            category_id: rule.category_id,
+            category_source: "USER_RULE",
+            categorized_by: "user_rule",
+          })
+          .in("id", rule.matchingTransactionIds);
+        if (retroError) throw retroError;
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user_rules"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
   });
 
   const updateRule = useMutation({

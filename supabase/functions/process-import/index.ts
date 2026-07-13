@@ -976,6 +976,9 @@ serve(async (req) => {
     // Per-month dedupe trackers (so identical txs in different months stay distinct).
     const seenFingerprintsByMonth: Record<string, Set<string>> = {};
     const seenNaturalKeysByMonth: Record<string, Set<string>> = {};
+    // Accumulates user_rule hits during the loop, batch-applied via increment_rule_stats
+    // after the loop instead of one round-trip per matched transaction.
+    const ruleHitCounts = new Map<string, number>();
     // import_rows records don't affect dedup decisions (audit-only), so they're collected
     // here and batch-upserted after the loop instead of one round-trip per row — was a major
     // contributor to WORKER_RESOURCE_LIMIT on large statements.
@@ -1163,31 +1166,31 @@ serve(async (req) => {
         if (categorizerMatch) stats.categorizedByCategorizer--;
         else stats.categorizedByAI--;
         stats.categorizedByRule++;
+        ruleHitCounts.set(userRuleHit.ruleId, (ruleHitCounts.get(userRuleHit.ruleId) || 0) + 1);
         console.log(`[process-import] user_rule match: "${descriptionRaw.substring(0, 40)}" → ${userRuleHit.movement}/${categorySlug} (rule=${userRuleHit.ruleId})`);
       }
 
-      // ── Sign sanity check: amount sign must agree with movement (except TRANSFER) ──
-      // A positive amount cannot be an EXPENSE; a negative amount cannot be INCOME. When this
-      // fires, the category is decided by this fallback, not by whichever classifier ran above —
-      // relabel honestly so categorized_by/category_source don't falsely credit the AI/categorizer/
-      // rule with a guess it never made. The log now names the prior stage that got demoted
-      // (ex-USER_RULE, ex-RULE, ex-CATEGORIZER, ex-AI) so a user asking "why did my rule stop
-      // applying" is answerable from logs alone.
-      const priorSource = categorySource;
-      if (movement === 'EXPENSE' && amountSigned > 0) {
-        movement = 'INCOME';
-        categorySlug = 'other_income';
-        categoryId = categorySlugToId[categorySlug] || null;
-        categorySource = 'SIGN_FALLBACK';
-        categorizedBy = 'sign_fallback';
-        console.log(`[process-import] Sign correction (ex-${priorSource}): positive amount ${amountSigned} re-classified EXPENSE→INCOME for "${descriptionRaw.substring(0, 40)}"`);
-      } else if (movement === 'INCOME' && amountSigned < 0) {
-        movement = 'EXPENSE';
-        categorySlug = 'other_expense';
-        categoryId = categorySlugToId[categorySlug] || null;
-        categorySource = 'SIGN_FALLBACK';
-        categorizedBy = 'sign_fallback';
-        console.log(`[process-import] Sign correction (ex-${priorSource}): negative amount ${amountSigned} re-classified INCOME→EXPENSE for "${descriptionRaw.substring(0, 40)}"`);
+      // ── Sign sanity check: amount sign must agree with movement (except TRANSFER
+      //    and user_rule — when the user explicitly authored a rule, trust it even if
+      //    the sign contradicts; refunds, chargebacks and bank corrections are valid
+      //    reasons for the mismatch) ──
+      if (categorizedBy !== 'user_rule') {
+        const priorSource = categorySource;
+        if (movement === 'EXPENSE' && amountSigned > 0) {
+          movement = 'INCOME';
+          categorySlug = 'other_income';
+          categoryId = categorySlugToId[categorySlug] || null;
+          categorySource = 'SIGN_FALLBACK';
+          categorizedBy = 'sign_fallback';
+          console.log(`[process-import] Sign correction (ex-${priorSource}): positive amount ${amountSigned} re-classified EXPENSE→INCOME for "${descriptionRaw.substring(0, 40)}"`);
+        } else if (movement === 'INCOME' && amountSigned < 0) {
+          movement = 'EXPENSE';
+          categorySlug = 'other_expense';
+          categoryId = categorySlugToId[categorySlug] || null;
+          categorySource = 'SIGN_FALLBACK';
+          categorizedBy = 'sign_fallback';
+          console.log(`[process-import] Sign correction (ex-${priorSource}): negative amount ${amountSigned} re-classified INCOME→EXPENSE for "${descriptionRaw.substring(0, 40)}"`);
+        }
       }
 
       if (movement === 'INCOME') stats.income++;
@@ -1308,6 +1311,18 @@ serve(async (req) => {
       stats.failed = insertFailedCount;
 
       console.log(`[process-import] Inserted ${successCount} transactions, ${duplicateCount} duplicates skipped, ${insertFailedCount} failed`);
+    }
+
+    // Activate applied_count/last_applied_at on matched user_rules (batched — one RPC
+    // call per distinct rule instead of per transaction).
+    for (const [ruleId, hitCount] of ruleHitCounts) {
+      const { error: statsError } = await supabase.rpc('increment_rule_stats', {
+        _rule_id: ruleId,
+        _hit_count: hitCount,
+      });
+      if (statsError) {
+        console.error(`[process-import] Failed to update rule stats for ${ruleId}:`, statsError);
+      }
     }
 
     // Finalize import status — surface partial/total failures instead of always

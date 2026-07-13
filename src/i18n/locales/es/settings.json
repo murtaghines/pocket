@@ -45,6 +45,7 @@
     "matchHelp_SMART": "Funciona aunque la descripción del banco varíe un poco. Recomendado.",
     "matchHelp_CONTAINS": "La descripción debe incluir este texto exactamente como está escrito.",
     "matchHelp_STARTS_WITH": "La descripción debe empezar con este texto.",
+    "matchHelp_ENDS_WITH": "La descripción debe terminar con este texto.",
     "matchHelp_EXACT": "Coincide solo si la descripción es exactamente este texto, palabra por palabra.",
     "matchHelp_REGEX": "Avanzado: usá una expresión regular. Ejemplo: 'amazon|amzn' coincide con 'AMAZON' y 'AMZN MKTP'.",
     "addCustomCategory": "Agregar Categoría Personalizada",

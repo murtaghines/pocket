@@ -58,11 +58,17 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
 import type { Import } from "@/hooks/useImports";
 import { RuleEditorDialog } from "../RuleEditorDialog";
+import type { RuleEditorPayload } from "../RuleEditorDialog";
 import {
   getCategoryLabel,
   getMovementLabel,
   normalizeCategory,
 } from "@/lib/categoryTranslations";
+import {
+  buildRuleFromCorrection,
+  ruleMatchesDescription,
+  type MatchType,
+} from "@/lib/userRules";
 import {
   USER_TRACKED_FIELDS,
   ROW_THRESHOLD,
@@ -138,13 +144,14 @@ export function InlineTransactionsEditor({
     newMovement: MovementType;
   } | null>(null);
 
-  // Category change → "save as rule?" prompt
+  // Category change → post-hoc "Edit" rule dialog (opened from toast action)
   const [categoryRulePrompt, setCategoryRulePrompt] = useState<{
     tx: MonthTransaction;
     newSlug: string;
     newCategoryId: string | null;
     cleanDesc: string;
     targetMovement: MovementType;
+    existingRuleId?: string;
   } | null>(null);
 
   // Edit-history popover open state (one tx at a time)
@@ -484,26 +491,156 @@ export function InlineTransactionsEditor({
       { id: tx.id, payload, before },
       {
         onSuccess: async () => {
-          // 3) After saving, offer to turn this correction into a rule. The row is
-          // already saved either way — the dialog only decides whether future (and
-          // matching past) transactions get the same treatment.
-          if (pending.category && pending.category !== tx.category && pending.category_id) {
+          if (pending.category && pending.category !== tx.category && pending.category_id && withRule && user) {
             const cleanDesc = (tx.description_norm || tx.description || "")
               .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
               .trim();
             const targetMovement =
               ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
 
-            if (cleanDesc && withRule && user) {
-              setCategoryRulePrompt({
-                tx,
-                newSlug: pending.category,
-                newCategoryId: pending.category_id,
-                cleanDesc,
-                targetMovement,
-              });
+            if (cleanDesc) {
+              const built = buildRuleFromCorrection(cleanDesc, targetMovement, pending.category);
+
+              // Dedup: check if an identical active rule already exists
+              const { data: existing } = await supabase
+                .from("user_rules")
+                .select("id")
+                .eq("user_id", user.id)
+                .eq("pattern", built.pattern)
+                .eq("category", pending.category)
+                .eq("is_active", true)
+                .limit(1);
+
+              if (existing && existing.length > 0) {
+                toast({ title: "Rule already exists for this pattern" });
+              } else {
+                // Auto-create rule
+                const { data: insertedRule, error: ruleError } = await supabase
+                  .from("user_rules")
+                  .insert({
+                    user_id: user.id,
+                    source: "user_correction",
+                    match_type: built.match_type,
+                    pattern: built.pattern,
+                    tokens: built.tokens,
+                    movement: targetMovement,
+                    category: pending.category,
+                    confidence: 0.99,
+                    original_description: cleanDesc,
+                    is_active: true,
+                  })
+                  .select("id")
+                  .single();
+
+                if (ruleError) {
+                  toast({
+                    title: "Couldn't save rule",
+                    description: ruleError.message,
+                    variant: "destructive",
+                  });
+                } else {
+                  // Find similar past transactions for retroactive apply
+                  const { data: allTx } = await supabase
+                    .from("transactions")
+                    .select("id, description, description_norm, movement, categorized_by")
+                    .eq("user_id", user.id)
+                    .limit(1500);
+
+                  const matchingIds: string[] = [];
+                  for (const row of allTx || []) {
+                    if (row.movement && row.movement !== targetMovement) continue;
+                    if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
+                    const desc = (row.description_norm || row.description || "") as string;
+                    if (ruleMatchesDescription(built.match_type as MatchType, built.pattern, built.tokens, desc)) {
+                      matchingIds.push(row.id);
+                    }
+                  }
+
+                  const ruleId = insertedRule.id;
+                  const patternShort = built.pattern.length > 30
+                    ? built.pattern.slice(0, 30) + "…"
+                    : built.pattern;
+                  const catLabel = getCategoryLabel(pending.category);
+                  const savedPendingCategory = pending.category;
+                  const savedPendingCategoryId = pending.category_id;
+
+                  toast({
+                    title: `Rule saved: "${patternShort}" → ${catLabel}`,
+                    description: (
+                      <div className="space-y-2">
+                        <p className="text-sm opacity-90">
+                          {matchingIds.length > 0
+                            ? `${matchingIds.length} similar past transaction${matchingIds.length === 1 ? "" : "s"} found.`
+                            : "Future matching transactions will be categorized automatically."}
+                        </p>
+                        <div className="flex gap-1.5">
+                          {matchingIds.length > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={async () => {
+                                const { error: retroErr } = await supabase
+                                  .from("transactions")
+                                  .update({
+                                    movement: targetMovement,
+                                    category: savedPendingCategory,
+                                    category_id: savedPendingCategoryId,
+                                    category_source: "USER_RULE",
+                                    categorized_by: "user_rule",
+                                  })
+                                  .in("id", matchingIds);
+                                if (!retroErr) {
+                                  toast({
+                                    title: `${matchingIds.length} transaction${matchingIds.length === 1 ? "" : "s"} updated`,
+                                  });
+                                  queryClient.invalidateQueries({ queryKey: ["transactions"] });
+                                }
+                              }}
+                            >
+                              Apply to all
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              setCategoryRulePrompt({
+                                tx,
+                                newSlug: savedPendingCategory!,
+                                newCategoryId: savedPendingCategoryId ?? null,
+                                cleanDesc,
+                                targetMovement,
+                                existingRuleId: ruleId,
+                              });
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-muted-foreground"
+                            onClick={async () => {
+                              await supabase
+                                .from("user_rules")
+                                .update({ is_active: false, deleted_at: new Date().toISOString() })
+                                .eq("id", ruleId);
+                              toast({ title: "Rule undone" });
+                              queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+                            }}
+                          >
+                            Undo
+                          </Button>
+                        </div>
+                      </div>
+                    ),
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+                }
+              }
             }
-            // If withRule is false, we just save quietly — no prompt.
           }
           clearPendingFor(tx.id);
         },
@@ -1127,7 +1264,7 @@ export function InlineTransactionsEditor({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Category change → optional "save as rule" */}
+      {/* Post-hoc rule editor — opened via "Edit" in the auto-rule toast */}
       <RuleEditorDialog
         open={!!categoryRulePrompt}
         onOpenChange={(o) => !o && setCategoryRulePrompt(null)}
@@ -1144,37 +1281,51 @@ export function InlineTransactionsEditor({
           categoryRulePrompt ? getCategoryIcon(categoryRulePrompt.newSlug) : undefined
         }
         onSkip={() => setCategoryRulePrompt(null)}
-        skipLabel="Don't create rule"
+        skipLabel={categoryRulePrompt?.existingRuleId ? "Cancel" : "Don't create rule"}
         onConfirm={async (payload) => {
           if (!user || !categoryRulePrompt) {
             setCategoryRulePrompt(null);
             return;
           }
-          const { error } = await supabase.from("user_rules").insert({
-            user_id: user.id,
-            source: "user_correction",
-            match_type: payload.match_type,
-            pattern: payload.pattern,
-            tokens: payload.tokens,
-            movement: payload.movement,
-            category: payload.category,
-            confidence: 0.99,
-            original_description: payload.original_description,
-            is_active: true,
-          });
-          if (error) {
-            toast({
-              title: "Couldn't save rule",
-              description: error.message,
-              variant: "destructive",
+
+          if (categoryRulePrompt.existingRuleId) {
+            // Post-hoc edit: UPDATE the auto-created rule
+            const { error } = await supabase
+              .from("user_rules")
+              .update({
+                match_type: payload.match_type,
+                pattern: payload.pattern,
+                tokens: payload.tokens,
+              })
+              .eq("id", categoryRulePrompt.existingRuleId);
+            if (error) {
+              toast({ title: "Couldn't update rule", description: error.message, variant: "destructive" });
+            } else {
+              toast({ title: "Rule updated" });
+            }
+          } else {
+            // Fresh insert (fallback — shouldn't happen in the new auto-create flow,
+            // but kept for backwards compatibility)
+            const { error } = await supabase.from("user_rules").insert({
+              user_id: user.id,
+              source: "user_correction",
+              match_type: payload.match_type,
+              pattern: payload.pattern,
+              tokens: payload.tokens,
+              movement: payload.movement,
+              category: payload.category,
+              confidence: 0.99,
+              original_description: payload.original_description,
+              is_active: true,
             });
-            setCategoryRulePrompt(null);
-            return;
+            if (error) {
+              toast({ title: "Couldn't save rule", description: error.message, variant: "destructive" });
+              setCategoryRulePrompt(null);
+              return;
+            }
           }
 
-          // Retroactive apply: the dialog's live preview already computed the exact
-          // set of past transactions this rule matches (same matcher, same data) —
-          // apply to that same set so the count shown is what actually changes.
+          // Retroactive apply from the dialog's live preview
           let retroCount = 0;
           if (payload.matchingTransactionIds.length > 0) {
             const { error: retroError } = await supabase
@@ -1189,18 +1340,14 @@ export function InlineTransactionsEditor({
               .in("id", payload.matchingTransactionIds);
             if (!retroError) {
               retroCount = payload.matchingTransactionIds.length;
-            } else {
-              console.error("Retroactive rule apply failed:", retroError);
             }
           }
 
-          toast({
-            title: retroCount > 0 ? "✓ Rule saved + history updated" : "✓ Rule saved",
-            description:
-              retroCount > 0
-                ? `${retroCount} past transaction${retroCount === 1 ? "" : "s"} matching “${payload.pattern.slice(0, 40)}${payload.pattern.length > 40 ? "…" : ""}” updated to ${getCategoryLabel(payload.category)}. Future ones will match too.`
-                : `Future transactions matching “${payload.pattern.slice(0, 40)}${payload.pattern.length > 40 ? "…" : ""}” will be categorized as ${getCategoryLabel(payload.category)}.`,
-          });
+          if (retroCount > 0) {
+            toast({
+              title: `${retroCount} transaction${retroCount === 1 ? "" : "s"} updated`,
+            });
+          }
           queryClient.invalidateQueries({ queryKey: ["user_rules"] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           setCategoryRulePrompt(null);

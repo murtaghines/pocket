@@ -67,7 +67,7 @@ export function CategoriesEditor() {
     });
   };
 
-  const handleSave = (pattern: string, matchType: string) => {
+  const handleSave = (pattern: string, matchType: string, matchingTransactionIds?: string[]) => {
     if (!dialogState) return;
     const editing = dialogState.editingRule;
     if (editing) {
@@ -77,8 +77,15 @@ export function CategoriesEditor() {
       );
     } else {
       addRule.mutate(
-        { category_id: dialogState.category.id, pattern, match_type: matchType, match_field: 'description_norm' },
-        { onSuccess: () => setDialogState(null) }
+        { category_id: dialogState.category.id, pattern, match_type: matchType, match_field: 'description_norm', matchingTransactionIds },
+        {
+          onSuccess: () => {
+            if (matchingTransactionIds && matchingTransactionIds.length > 0) {
+              toast({ title: `${matchingTransactionIds.length} past transaction${matchingTransactionIds.length === 1 ? '' : 's'} updated` });
+            }
+            setDialogState(null);
+          },
+        }
       );
     }
   };

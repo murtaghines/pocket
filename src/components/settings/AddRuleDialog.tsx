@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Sparkles, Search, AlignLeft, Type, Code2, Check } from 'lucide-react';
+import { Loader2, Sparkles, Search, AlignLeft, AlignRight, Type, Code2, Check } from 'lucide-react';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
+import { buildDbRuleFields } from '@/hooks/useCategorizationRules';
+import { useRulePreview } from '@/hooks/useRulePreview';
+import type { MatchType } from '@/lib/userRules';
 
 interface EditingRule {
   id: string;
@@ -29,7 +32,7 @@ interface Props {
   category: DialogCategory | null;
   editingRule?: EditingRule | null;
   onClose: () => void;
-  onSave: (pattern: string, matchType: string) => void;
+  onSave: (pattern: string, matchType: string, matchingTransactionIds?: string[]) => void;
   isSaving: boolean;
 }
 
@@ -37,6 +40,7 @@ const MATCH_TYPES: Array<{ value: string; icon: typeof Sparkles; recommended?: b
   { value: 'SMART', icon: Sparkles, recommended: true },
   { value: 'CONTAINS', icon: Search },
   { value: 'STARTS_WITH', icon: AlignLeft },
+  { value: 'ENDS_WITH', icon: AlignRight },
   { value: 'EXACT', icon: Type },
   { value: 'REGEX', icon: Code2 },
 ];
@@ -45,6 +49,7 @@ const LABEL_KEY: Record<string, string> = {
   SMART: 'smartMatch',
   CONTAINS: 'contains',
   STARTS_WITH: 'startsWith',
+  ENDS_WITH: 'endsWith',
   EXACT: 'exact',
   REGEX: 'regex',
 };
@@ -53,6 +58,7 @@ const HELP_KEY: Record<string, string> = {
   SMART: 'matchHelp_SMART',
   CONTAINS: 'matchHelp_CONTAINS',
   STARTS_WITH: 'matchHelp_STARTS_WITH',
+  ENDS_WITH: 'matchHelp_ENDS_WITH',
   EXACT: 'matchHelp_EXACT',
   REGEX: 'matchHelp_REGEX',
 };
@@ -81,9 +87,26 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
 
   const isEditing = !!editingRule;
 
+  // Preview uses the exact pattern/tokens/match_type that will actually be saved
+  // (same builder the addRule mutation uses), so the count shown here can never
+  // drift from what the retroactive apply on save actually updates.
+  const { dbType, pattern: builtPattern, tokens: builtTokens } = buildDbRuleFields(
+    pattern.trim(),
+    matchType,
+    category?.movement || 'EXPENSE',
+    category?.slug || '',
+  );
+  const { matchingIds, count: matchCount, isLoading: previewLoading } = useRulePreview({
+    matchType: dbType as MatchType,
+    pattern: builtPattern,
+    tokens: builtTokens,
+    movement: category?.movement || 'EXPENSE',
+    enabled: open && !isEditing && pattern.trim().length > 0,
+  });
+
   const handleSave = () => {
     if (!pattern.trim()) return;
-    onSave(pattern.trim(), matchType);
+    onSave(pattern.trim(), matchType, isEditing ? undefined : matchingIds);
   };
 
   const handleClose = () => {
@@ -125,6 +148,15 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
               placeholder={placeholderFor(category?.movement)}
               autoFocus
             />
+            {!isEditing && pattern.trim().length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {previewLoading
+                  ? 'Checking existing transactions…'
+                  : matchCount > 0
+                    ? `Will match ${matchCount} existing transaction${matchCount === 1 ? '' : 's'}.`
+                    : 'No existing transactions match yet.'}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

@@ -79,3 +79,53 @@ only — see docs/epics/uploads.md for the ledger). `process-import` deployed (v
   import containing a custom-category keyword and a short name to confirm bugs 2 and 3 stay
   fixed against real data (not just the demo seed).
 - i18n audit flagged above, if/when prioritized.
+
+## Auto-learning + rule-precedence follow-up (2026-07-13)
+
+Second pass focused on making user categorization always win, and making the app learn from
+corrections instead of requiring the user to discover the rule-creation flow.
+
+**User rules now beat sign_fallback.** The sign sanity check in `process-import/index.ts`
+(positive amount can't be EXPENSE, negative can't be INCOME) used to run unconditionally after
+user_rules, silently overriding a rule the user explicitly created (refunds, chargebacks, bank
+corrections are legitimate sign/movement mismatches). Now skipped entirely when
+`categorizedBy === 'user_rule'`.
+
+**Sparkles button auto-creates the rule — no intermediate dialog.** Previously "Sparkles" in
+`InlineTransactionsEditor` opened `RuleEditorDialog` for fine-tuning before saving anything.
+Now it saves the correction AND immediately inserts a `user_rules` row via
+`buildRuleFromCorrection()`, then shows a toast: `Rule saved: "PATTERN" → Category` with
+**Apply to all** (retroactive, reuses the same matcher/data as the preview so the count can't
+drift), **Edit** (opens `RuleEditorDialog` pre-loaded, UPDATEs the just-created rule instead of
+inserting a new one), and **Undo** (soft-deletes the auto-created rule). Dedup check before
+insert: skips creating a duplicate if an identical active rule (same pattern + category) exists.
+
+**`applied_count`/`last_applied_at` activated.** These `user_rules` columns existed since the
+original schema but were never written. New Postgres RPC `increment_rule_stats(rule_id, hit_count)`
+(migration `20260713160000_increment_rule_stats_rpc.sql`), called once per distinct matched rule
+per import (batched via a `Map<ruleId, count>` accumulated during the transaction loop, not once
+per transaction). `CategoryRulesList` now shows `· applied N×` / `· never applied` next to each
+rule's pattern.
+
+**`AddRuleDialog` (Settings → Categories) reached parity with `RuleEditorDialog` (imports flow).**
+Extracted the preview query from `RuleEditorDialog` into a shared hook `useRulePreview`
+(`src/hooks/useRulePreview.ts`) so both dialogs use the identical matcher. `AddRuleDialog` now
+shows a live "Will match N existing transactions" count under the pattern input and, on save,
+retroactively applies to that same set via an extended `addRule` mutation
+(`useCategorizationRules.tsx`, accepts optional `matchingTransactionIds`). Also added
+`ENDS_WITH` as a selectable match type (was missing from this dialog's `MATCH_TYPES` even
+though `user_rules` and `RuleEditorDialog` already supported it) — added `matchHelp_ENDS_WITH`
+i18n keys (en/es). New exported `buildDbRuleFields()` in `useCategorizationRules.tsx` is the
+single source of truth for turning a UI pattern + match type into the DB-shaped
+`{ dbType, pattern, tokens }`, used by both the mutation and the dialog's preview so they can
+never compute a different match set for the same input.
+
+Live-verified against the demo account (`ertwmshiupmickhfbaue`): created a rule from
+`AddRuleDialog` with default Smart Match on "carrefour" → preview showed "Will match 3 existing
+transactions" → saved → toast "3 past transactions updated" → confirmed in DB all 3 CARREFOUR*
+transactions flipped to `categorized_by = 'user_rule'`. Verified Sparkles auto-create + Undo
+round-trip (rule inserted with `source: 'user_correction'`, then `is_active: false` +
+`deleted_at` set after Undo). Verified `increment_rule_stats` RPC updates `applied_count` and
+that `CategoryRulesList` renders the badge. All test data cleaned from the demo account after
+verification. 76/76 tests green, tsc/lint clean (0 errors, pre-existing warnings only), build
+clean. `process-import` deployed (v18: sign_fallback fix + rule-stats tracking).

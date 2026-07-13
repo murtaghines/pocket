@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Wand2, Sparkles, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -19,9 +17,9 @@ import {
   buildRuleFromCorrection,
   extractTokens,
   normalize,
-  ruleMatchesDescription,
   type MatchType,
 } from "@/lib/userRules";
+import { useRulePreview } from "@/hooks/useRulePreview";
 
 /**
  * Professional rule editor dialog.
@@ -156,45 +154,13 @@ export function RuleEditorDialog({
     );
   };
 
-  // Live preview: which existing tx would this rule match? Also drives the
-  // retroactive apply on save — the applied set is always exactly what was
-  // previewed here (same matcher, same data), so the "will match" count in
-  // the UI can never drift from what actually gets updated.
-  const { data: matchingTransactions = [], isFetching: countLoading } = useQuery({
-    queryKey: [
-      "rule-preview",
-      matchType,
-      effectivePattern,
-      effectiveTokens.join("|"),
-      movement,
-    ],
-    enabled: open && effectivePattern.trim().length > 0,
-    staleTime: 30_000,
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [] as string[];
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("id, description, description_norm, movement, categorized_by")
-        .eq("user_id", user.id)
-        .limit(1500);
-      if (error) return [] as string[];
-      const matched: string[] = [];
-      for (const row of data || []) {
-        if (row.movement && row.movement !== movement) continue;
-        // Don't clobber rows the user (or a prior rule) already deliberately set.
-        if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
-        const desc = (row.description_norm || row.description || "") as string;
-        if (
-          ruleMatchesDescription(matchType, effectivePattern, effectiveTokens, desc)
-        ) {
-          matched.push(row.id);
-        }
-      }
-      return matched;
-    },
+  const { matchingIds: matchingTransactions, count: matchCount, isLoading: countLoading } = useRulePreview({
+    matchType,
+    pattern: effectivePattern,
+    tokens: effectiveTokens,
+    movement,
+    enabled: open,
   });
-  const matchCount = matchingTransactions.length;
 
   const canSave = effectivePattern.trim().length > 0;
 

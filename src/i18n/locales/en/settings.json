@@ -45,6 +45,7 @@
     "matchHelp_SMART": "Works even if the bank description varies slightly. Recommended.",
     "matchHelp_CONTAINS": "Description must include this text exactly as written.",
     "matchHelp_STARTS_WITH": "Description must begin with this text.",
+    "matchHelp_ENDS_WITH": "Description must end with this text.",
     "matchHelp_EXACT": "Matches only if the description is exactly this text, word for word.",
     "matchHelp_REGEX": "Advanced: use a regular expression pattern. Example: 'amazon|amzn' matches both 'AMAZON' and 'AMZN MKTP'.",
     "addCustomCategory": "Add Custom Category",

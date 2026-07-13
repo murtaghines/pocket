@@ -201,9 +201,10 @@ interface RuleRowProps {
   onEdit?: () => void;
   onDelete?: () => void;
   placeholder?: boolean;
+  appliedCount?: number;
 }
 
-function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder }: RuleRowProps) {
+function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder, appliedCount }: RuleRowProps) {
   return (
     <div
       className={cn(
@@ -232,6 +233,16 @@ function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder }: 
         >
           {placeholder ? `e.g. "${pattern}"` : pattern}
         </code>
+        {!placeholder && (
+          <span
+            className={cn(
+              'text-[10px] shrink-0 tabular-nums',
+              appliedCount ? 'text-muted-foreground' : 'text-muted-foreground/50',
+            )}
+          >
+            {appliedCount ? `· applied ${appliedCount}×` : '· never applied'}
+          </span>
+        )}
       </div>
       <div className="flex items-center justify-end gap-0.5">
         {!placeholder && onEdit && (
@@ -372,6 +383,7 @@ export function CategoryRulesList({
                   accent={accent}
                   onEdit={() => onEditRule(rule, cat)}
                   onDelete={() => onDeleteRule(rule.id)}
+                  appliedCount={rule.applied_count}
                 />
               ))
             )}
