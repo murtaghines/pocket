@@ -473,6 +473,7 @@ export type Database = {
           category: string
           category_id: string | null
           category_source: string | null
+          confidence: number | null
           counterparty_raw: string | null
           created_at: string
           currency: string | null
@@ -503,6 +504,7 @@ export type Database = {
           category: string
           category_id?: string | null
           category_source?: string | null
+          confidence?: number | null
           counterparty_raw?: string | null
           created_at?: string
           currency?: string | null
@@ -533,6 +535,7 @@ export type Database = {
           category?: string
           category_id?: string | null
           category_source?: string | null
+          confidence?: number | null
           counterparty_raw?: string | null
           created_at?: string
           currency?: string | null

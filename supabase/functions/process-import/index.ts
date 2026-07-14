@@ -382,6 +382,7 @@ async function reconcileTransferPairs(
         category_id: categoryId,
         categorized_by: 'reconciler',
         category_source: 'RECONCILER',
+        confidence: 0.95,
       })
       .in('id', [pair.id1, pair.id2]);
     if (!error) {
@@ -1437,6 +1438,12 @@ serve(async (req) => {
       // Canonical transactions row (Fase 4 schema cleanup). Legacy columns
       // (type, tx_type, bank, posted_date, value_date, description_raw, payment_channel)
       // were dropped — `movement` and `account_id` are the single sources of truth.
+      const confidenceMap: Record<string, number> = {
+        user: 1.0, user_rule: 0.99, reconciler: 0.95,
+        categorizer: 0.85, ai: 0.50, sign_fallback: 0.20,
+      };
+      const confidence = confidenceMap[categorizedBy] ?? 0.50;
+
       const txRecord: any = {
         user_id: userId,
         domain: domain,
@@ -1457,6 +1464,7 @@ serve(async (req) => {
         categorization_rule_id: categorizationRuleId,
         category_source: categorySource,
         categorized_by: categorizedBy,
+        confidence: confidence,
         source_transaction_id: sourceTransactionId,
         counterparty_raw: counterpartyRaw,
         fingerprint: fingerprint,
