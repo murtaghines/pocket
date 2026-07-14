@@ -212,34 +212,36 @@ export function CategoriesEditor() {
       {/* ============= Workspace ============= */}
       <div className="flex-1 px-6 md:px-10 py-6 md:py-8 space-y-4">
 
-        {!isLoading && (
-          {coverage && coverage.total > 0 && (
-            <div className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-foreground">Categorization coverage</span>
-                  <span className="text-sm font-semibold text-foreground">{coverage.percent}%</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-500",
-                      coverage.percent >= 90 ? "bg-green-500" : coverage.percent >= 70 ? "bg-amber-500" : "bg-red-500",
-                    )}
-                    style={{ width: `${coverage.percent}%` }}
-                  />
-                </div>
-                <span className="text-xs text-muted-foreground mt-1 block">
-                  {coverage.highConfidence} of {coverage.total} transactions have high-confidence categorization
-                </span>
+        {!isLoading && coverage && coverage.total > 0 && (
+          <div className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-foreground">Categorization coverage</span>
+                <span className="text-sm font-semibold text-foreground">{coverage.percent}%</span>
               </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    coverage.percent >= 90 ? "bg-green-500" : coverage.percent >= 70 ? "bg-amber-500" : "bg-red-500",
+                  )}
+                  style={{ width: `${coverage.percent}%` }}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground mt-1 block">
+                {coverage.highConfidence} of {coverage.total} transactions have high-confidence categorization
+              </span>
             </div>
-          )}
+          </div>
+        )}
+        {!isLoading && (
           <ReviewQueueSection
             incomeCategories={incomeCategories}
             expenseCategories={expenseCategories}
             transferCategories={transferCategories}
           />
+        )}
+        {!isLoading && (
           <SuggestedRulesSection
             incomeCategories={incomeCategories}
             expenseCategories={expenseCategories}
