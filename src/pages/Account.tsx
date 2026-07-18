@@ -13,6 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 type TabKey = "overview" | "accounts" | "preferences" | "security";
+
+const UNDERLINE_TAB = "rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm";
 const TAB_KEYS: TabKey[] = ["overview", "accounts", "preferences", "security"];
 
 export default function Account() {
@@ -56,28 +58,16 @@ export default function Account() {
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto">
-              <TabsTrigger
-                value="overview"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm"
-              >
+              <TabsTrigger value="overview" className={UNDERLINE_TAB}>
                 {t("tabs.overview", "Overview")}
               </TabsTrigger>
-              <TabsTrigger
-                value="accounts"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm"
-              >
+              <TabsTrigger value="accounts" className={UNDERLINE_TAB}>
                 {t("tabs.accounts", "Accounts")}
               </TabsTrigger>
-              <TabsTrigger
-                value="preferences"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm"
-              >
+              <TabsTrigger value="preferences" className={UNDERLINE_TAB}>
                 {t("tabs.preferences", "Preferences")}
               </TabsTrigger>
-              <TabsTrigger
-                value="security"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm"
-              >
+              <TabsTrigger value="security" className={UNDERLINE_TAB}>
                 {t("tabs.security", "Security")}
               </TabsTrigger>
             </TabsList>

@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useInvestments } from "@/hooks/useInvestments";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -83,69 +82,35 @@ export default function Investments() {
           <>
             <div className="flex flex-col gap-[16px]">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px]">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {tc('time.thisMonth')}
-                    </CardTitle>
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold tabular-nums text-primary">
-                      {formatCurrency(totalInvestedThisMonth)}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {t('summary.totalInvested')}
-                    </CardTitle>
-                    <PiggyBank className="w-5 h-5 text-primary" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold tabular-nums">
-                      {formatCurrency(netInvestedAllTime)}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {t('summary.totalValue')}
-                    </CardTitle>
-                    <Wallet className="w-5 h-5 text-success" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold tabular-nums text-success">
-                      {formatCurrency(totalCurrentValue)}
-                    </div>
-                    {netInvestedAllTime > 0 && (
-                      <p className={`text-sm tabular-nums ${profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
-                        {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss)} ({profitLossPercent}%)
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {t('byPlatform.title')}
-                    </CardTitle>
-                    <Building2 className="w-5 h-5 text-primary" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold tabular-nums">
-                      {Object.keys(byPlatform).length}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {accounts.length} {t('accounts.title').toLowerCase()}
-                    </p>
-                  </CardContent>
-                </Card>
+                <KpiCard
+                  label={tc('time.thisMonth')}
+                  icon={<TrendingUp className="w-[15px] h-[15px]" />}
+                  iconClass="bg-primary/10 text-primary"
+                  value={formatCurrency(totalInvestedThisMonth)}
+                  valueClass="text-primary"
+                />
+                <KpiCard
+                  label={t('summary.totalInvested')}
+                  icon={<PiggyBank className="w-[15px] h-[15px]" />}
+                  iconClass="bg-primary/10 text-primary"
+                  value={formatCurrency(netInvestedAllTime)}
+                />
+                <KpiCard
+                  label={t('summary.totalValue')}
+                  icon={<Wallet className="w-[15px] h-[15px]" />}
+                  iconClass="bg-success/10 text-success"
+                  value={formatCurrency(totalCurrentValue)}
+                  valueClass="text-success"
+                  subtext={netInvestedAllTime > 0 ? `${profitLoss >= 0 ? '+' : ''}${formatCurrency(profitLoss)} (${profitLossPercent}%)` : undefined}
+                  subtextClass={profitLoss >= 0 ? 'text-success' : 'text-destructive'}
+                />
+                <KpiCard
+                  label={t('byPlatform.title')}
+                  icon={<Building2 className="w-[15px] h-[15px]" />}
+                  iconClass="bg-primary/10 text-primary"
+                  value={String(Object.keys(byPlatform).length)}
+                  subtext={`${accounts.length} ${t('accounts.title').toLowerCase()}`}
+                />
               </div>
 
               <InvestmentAccountsManager accounts={accounts} />
@@ -171,5 +136,47 @@ export default function Investments() {
 
       <DashboardFooter />
     </DashboardLayout>
+  );
+}
+
+function KpiCard({
+  label,
+  icon,
+  iconClass,
+  value,
+  valueClass,
+  subtext,
+  subtextClass,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  iconClass: string;
+  value: string;
+  valueClass?: string;
+  subtext?: string;
+  subtextClass?: string;
+}) {
+  return (
+    <div
+      className="rounded-[18px] p-[18px_18px_16px] bg-card border border-border"
+      style={{ boxShadow: "var(--shadow-bento)" }}
+    >
+      <div className="flex items-center justify-between mb-[14px]">
+        <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
+          {label}
+        </span>
+        <div className={`flex items-center justify-center w-[30px] h-[30px] rounded-[9px] shrink-0 ${iconClass}`}>
+          {icon}
+        </div>
+      </div>
+      <div className={`text-[25px] font-bold tracking-[-0.02em] tabular-nums leading-none ${valueClass ?? "text-foreground"}`}>
+        {value}
+      </div>
+      {subtext && (
+        <p className={`text-[12px] mt-[5px] tabular-nums ${subtextClass ?? "text-muted-foreground"}`}>
+          {subtext}
+        </p>
+      )}
+    </div>
   );
 }

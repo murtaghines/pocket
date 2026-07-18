@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { TotalView } from "@/components/dashboard/TotalView";
@@ -9,6 +10,8 @@ import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 
 export default function History() {
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get("search") ?? "";
   const { t } = useTranslation("dashboard");
   const { transactions, monthlyData, isLoading } = useTransactions();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
@@ -62,7 +65,7 @@ export default function History() {
               className="bg-card rounded-[18px] p-[20px_22px_10px] border border-border shadow-bento"
             >
               <div className="max-h-[500px] overflow-y-auto">
-                <TransactionTable transactions={sortedTransactions} />
+                <TransactionTable transactions={sortedTransactions} initialSearch={initialSearch} />
               </div>
             </div>
           </>

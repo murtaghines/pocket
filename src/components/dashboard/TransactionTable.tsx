@@ -32,6 +32,7 @@ import { TransactionCardList } from "./TransactionCardList";
 
 interface TransactionTableProps {
   transactions: Transaction[];
+  initialSearch?: string;
 }
 
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
@@ -57,10 +58,10 @@ const getMovementType = (transaction: Transaction): MovementType => {
   return 'expense';
 };
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
+export function TransactionTable({ transactions, initialSearch = "" }: TransactionTableProps) {
   const { t } = useTranslation('dashboard');
   const { t: tc } = useTranslation('common');
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMovements, setSelectedMovements] = useState<string[]>([]);
   const { formatCurrency, formatDate } = useLocalization();

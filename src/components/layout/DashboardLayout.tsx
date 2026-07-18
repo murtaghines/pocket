@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   User,
@@ -30,9 +30,12 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation("common");
   const { signOut } = useAuth();
   const { profile } = useProfile();
+  const [searchValue, setSearchValue] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const initials = (() => {
     const f = profile?.first_name?.charAt(0).toUpperCase() ?? "";
@@ -89,12 +92,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Right: search + bell + theme + divider + avatar */}
         <div className="flex items-center gap-[9px] shrink-0">
           {/* Search input */}
-          <div
-            className="flex items-center gap-[9px] bg-card rounded-[11px] px-[13px] py-[9px] w-[210px] text-muted-foreground shadow-sm"
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const q = searchValue.trim();
+              if (q) {
+                navigate(`/history?search=${encodeURIComponent(q)}`);
+                setSearchValue("");
+                searchRef.current?.blur();
+              }
+            }}
+            className="flex items-center gap-[9px] bg-card rounded-[11px] px-[13px] py-[9px] w-[210px] text-muted-foreground shadow-sm focus-within:ring-1 focus-within:ring-primary/40 transition-shadow"
           >
             <Search className="w-[16px] h-[16px] shrink-0" strokeWidth={2} />
-            <span className="text-[13px] whitespace-nowrap">Search transaction…</span>
-          </div>
+            <input
+              ref={searchRef}
+              type="text"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="Search transaction…"
+              className="bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground outline-none w-full"
+            />
+          </form>
 
           {/* Notification bell */}
           <div className="relative">
