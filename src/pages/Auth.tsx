@@ -12,8 +12,7 @@ import { PasswordStrengthIndicator } from "@/components/ui/password-strength-ind
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
 import { LandingHeader } from "@/components/landing/LandingHeader";
-import { Logo } from "@/components/brand";
-import pocketIcon from "@/assets/pocket-icon.png";
+import { LandingFooter } from "@/components/landing/LandingFooter";
 
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
@@ -65,84 +64,9 @@ function detectBrowserLanguage(): SupportedLanguage {
   return (supported?.code || 'en') as SupportedLanguage;
 }
 
-/* ── Pre-footer CTA + Dark Footer shared across all auth modes ── */
+/* ── Footer shared across all auth modes — reuses landing footer ── */
 function AuthBottomSections() {
-  return (
-    <>
-      {/* Divider line */}
-      <div className="w-full h-px bg-primary">
-        <div className="container max-w-7xl mx-auto px-6 md:px-12">
-          <div className="h-px bg-white/20" />
-        </div>
-      </div>
-      {/* Pre-footer CTA — solid blue */}
-      <section className="relative overflow-hidden bg-primary">
-        {/* Decorative cloud */}
-        <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-10 pointer-events-none">
-          <img src={pocketIcon} alt="" className="w-full h-full object-contain" />
-        </div>
-        <div className="container max-w-7xl mx-auto px-6 md:px-12 py-24 lg:py-32 relative z-10">
-          <div className="max-w-2xl">
-            <h2 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-white leading-tight mb-6">
-              Take full control of
-              <br />
-              your finances.
-            </h2>
-            <p className="text-lg md:text-xl text-white/80 mb-10 max-w-xl leading-relaxed">
-              See how pocket helps you organize expenses, investments, and savings. Set up in minutes, not hours.
-            </p>
-            <Link
-              to="/auth"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-primary transition-colors"
-            >
-              <span>Get started free</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Dark footer */}
-      <footer className="py-16 bg-[hsl(0_0%_4%)]">
-        <div className="container max-w-7xl mx-auto px-6 md:px-12">
-          {/* Top row */}
-          <div className="flex flex-col md:flex-row justify-between gap-12 mb-16">
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              <Link to="/" className="inline-flex items-center">
-                <Logo size={28} className="text-white text-lg opacity-90" />
-              </Link>
-            </div>
-
-            {/* Link columns */}
-            <div className="flex gap-16 md:gap-24">
-              <div>
-                <p className="text-sm font-medium text-white mb-4">Product</p>
-                <ul className="space-y-3">
-                  <li><a href="/#features" className="text-sm text-white/50 hover:text-white/80 transition-colors">Features</a></li>
-                  <li><a href="/#how-it-works" className="text-sm text-white/50 hover:text-white/80 transition-colors">How it works</a></li>
-                  <li><Link to="/auth?mode=login" className="text-sm text-white/50 hover:text-white/80 transition-colors">Login</Link></li>
-                </ul>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white mb-4">Company</p>
-                <ul className="space-y-3">
-                  <li><a href="/#contact" className="text-sm text-white/50 hover:text-white/80 transition-colors">Contact</a></li>
-                  <li><a href="#" className="text-sm text-white/50 hover:text-white/80 transition-colors">Privacy</a></li>
-                  <li><a href="#" className="text-sm text-white/50 hover:text-white/80 transition-colors">Terms</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom copyright */}
-          <div className="border-t border-white/10 pt-8">
-            <p className="text-sm text-white/40">© 2026 pocket. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-    </>
-  );
+  return <LandingFooter />;
 }
 
 export default function Auth() {
