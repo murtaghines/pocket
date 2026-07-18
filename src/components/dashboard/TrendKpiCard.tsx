@@ -53,35 +53,35 @@ export function TrendKpiCard({
 
   // Styling per variant
   const cardClasses = filled
-    ? "bg-primary text-white"
-    : "bg-card border border-[rgba(13,30,70,.07)]";
+    ? "bg-primary text-primary-foreground"
+    : "bg-card border border-border";
 
-  const labelClass = filled ? "text-white/78" : "text-[#79839a]";
-  const valueClass = filled ? "text-white" : "text-[#0d1220]";
-  const subtextClass = filled ? "text-white/82" : "text-[#79839a]";
+  const labelClass = filled ? "text-primary-foreground/78" : "text-muted-foreground";
+  const valueClass = filled ? "text-primary-foreground" : "text-foreground";
+  const subtextClass = filled ? "text-primary-foreground/82" : "text-muted-foreground";
 
   const iconBgClass = filled
-    ? "bg-white/[0.18] text-white"
+    ? "bg-white/[0.18] text-primary-foreground"
     : kind === "income"
-    ? "bg-[hsl(152_60%_94%)] text-[hsl(152_64%_36%)]"
+    ? "bg-success/10 text-success"
     : kind === "expense"
-    ? "bg-[hsl(8_80%_95%)] text-[hsl(8_72%_52%)]"
+    ? "bg-destructive/10 text-destructive"
     : kind === "invest"
-    ? "bg-[hsl(216_75%_94%)] text-[hsl(216_75%_42%)]"
-    : "bg-[hsl(216_100%_95%)] text-[hsl(216_100%_50%)]";
+    ? "bg-primary/10 text-primary"
+    : "bg-primary/10 text-primary";
 
   const deltaColor =
     change === undefined
       ? subtextClass
       : isGoodChange
-      ? "text-[hsl(152_64%_36%)]"
+      ? "text-success"
       : filled
-      ? "text-white/82"
-      : "text-[hsl(8_72%_52%)]";
+      ? "text-primary-foreground/82"
+      : "text-destructive";
 
   const cardShadow = filled
-    ? "0 12px 26px -12px rgba(20,80,210,.6)"
-    : "0 1px 3px rgba(13,30,70,.06)";
+    ? "var(--shadow-glow)"
+    : "var(--shadow-bento)";
 
   return (
     <div

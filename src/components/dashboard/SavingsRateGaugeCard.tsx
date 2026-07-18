@@ -21,26 +21,26 @@ export function SavingsRateGaugeCard({
 
   return (
     <div
-      className="rounded-[18px] bg-card border border-[rgba(13,30,70,.07)] p-[18px_18px_16px]"
-      style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)", animationDelay: `${delay}ms` }}
+      className="rounded-[18px] bg-card border border-border p-[18px_18px_16px] shadow-bento"
+      style={{ animationDelay: `${delay}ms` }}
     >
       {/* Header row */}
       <div className="flex items-center justify-between mb-[14px]">
-        <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-[#79839a]">
+        <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
           Savings rate
         </span>
-        <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-[hsl(216_100%_95%)] text-[hsl(216_100%_50%)]">
+        <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-primary/10 text-primary">
           <PiggyBank className="w-[17px] h-[17px]" strokeWidth={2.2} />
         </div>
       </div>
 
       {/* Rate value */}
-      <div className="text-[25px] font-bold tracking-[-0.02em] tabular-nums leading-none text-[#0d1220]">
+      <div className="text-[25px] font-bold tracking-[-0.02em] tabular-nums leading-none text-foreground">
         {rate}%
       </div>
 
       {/* Saved amount subtext */}
-      <div className="text-[12px] mt-[5px] text-[#79839a]">
+      <div className="text-[12px] mt-[5px] text-muted-foreground">
         {formatCurrency(saved)} saved this month
       </div>
     </div>

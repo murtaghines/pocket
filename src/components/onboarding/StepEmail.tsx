@@ -52,7 +52,7 @@ export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityC
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 text-gray-500">
+      <div className="flex items-center gap-3 text-muted-foreground">
         <Mail className="w-5 h-5" />
         <p>We'll use this to keep your account secure.</p>
       </div>
@@ -65,11 +65,11 @@ export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityC
           onValidChange={setFormatValid}
           autoFocus
           required
-          className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+          className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
         />
 
         {formatValid && status === 'checking' && (
-          <p className="flex items-center gap-2 text-sm text-gray-500">
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
             Checking availability...
           </p>

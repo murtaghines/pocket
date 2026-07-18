@@ -56,7 +56,7 @@ const OPTIONAL_STEPS: RegisterStep[] = [4, 5, 6];
 
 const TOTAL_STEPS = 7;
 
-const AUTH_GRADIENT = 'linear-gradient(to right, #1b76ff 0%, #0d5ad6 100%)';
+const AUTH_GRADIENT = 'linear-gradient(to right, hsl(216 100% 55%) 0%, hsl(216 100% 42%) 100%)';
 
 function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language || 'en';
@@ -70,13 +70,13 @@ function AuthBottomSections() {
   return (
     <>
       {/* Divider line */}
-      <div style={{ background: '#1b76ff' }} className="w-full h-px">
+      <div className="w-full h-px bg-primary">
         <div className="container max-w-7xl mx-auto px-6 md:px-12">
           <div className="h-px bg-white/20" />
         </div>
       </div>
       {/* Pre-footer CTA — solid blue */}
-      <section className="relative overflow-hidden" style={{ background: '#1b76ff' }}>
+      <section className="relative overflow-hidden bg-primary">
         {/* Decorative cloud */}
         <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-10 pointer-events-none">
           <img src={pocketIcon} alt="" className="w-full h-full object-contain" />
@@ -93,7 +93,7 @@ function AuthBottomSections() {
             </p>
             <Link
               to="/auth"
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-[#1b76ff] transition-colors"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full border-2 border-white text-white font-medium text-base hover:bg-white hover:text-primary transition-colors"
             >
               <span>Get started free</span>
               <ArrowRight className="w-4 h-4" />
@@ -103,7 +103,7 @@ function AuthBottomSections() {
       </section>
 
       {/* Dark footer */}
-      <footer style={{ background: '#0A0A0A' }} className="py-16">
+      <footer className="py-16 bg-[hsl(0_0%_4%)]">
         <div className="container max-w-7xl mx-auto px-6 md:px-12">
           {/* Top row */}
           <div className="flex flex-col md:flex-row justify-between gap-12 mb-16">
@@ -286,26 +286,26 @@ export default function Auth() {
 
               <form onSubmit={handleUpdatePassword} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                  <label className="block text-sm font-medium text-foreground/70 mb-2">New Password</label>
                   <PasswordInput
                     placeholder="••••••••"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                    className="w-full h-14 px-4 text-base text-foreground bg-white border-2 border-border rounded-xl focus:border-foreground focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
                   />
                   <PasswordStrengthIndicator password={newPassword} />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                  <label className="block text-sm font-medium text-foreground/70 mb-2">Confirm Password</label>
                   <PasswordInput
                     placeholder="••••••••"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full h-14 px-4 text-base text-gray-900 bg-white border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                    className="w-full h-14 px-4 text-base text-foreground bg-white border-2 border-border rounded-xl focus:border-foreground focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
                   />
                 </div>
                 
@@ -584,31 +584,31 @@ export default function Auth() {
                     className={`h-1 flex-1 rounded-full transition-colors ${
                       i < registerStep 
                         ? 'bg-primary' 
-                        : 'bg-gray-200'
+                        : 'bg-border'
                     }`}
                   />
                 ))}
               </div>
 
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-sm text-muted-foreground mb-2">
                 {registerStep} of {TOTAL_STEPS}
               </p>
 
-              <h2 className="text-2xl font-semibold text-gray-900 mb-1 font-display">
+              <h2 className="text-2xl font-semibold text-foreground mb-1">
                 {STEP_QUESTIONS[registerStep]}
               </h2>
-              <p className="text-sm text-gray-400 mb-5">{STEP_WHY[registerStep]}</p>
+              <p className="text-sm text-muted-foreground mb-5">{STEP_WHY[registerStep]}</p>
 
               <div className="flex-1 overflow-y-auto min-h-0">
                 {renderRegisterStep()}
               </div>
 
-              <div className="flex justify-between items-center pt-6 mt-auto border-t border-gray-100">
+              <div className="flex justify-between items-center pt-6 mt-auto border-t border-border">
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+                    className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
                   >
                     ← Back
                   </button>
@@ -616,7 +616,7 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => setRegisterStep((prev) => (prev + 1) as RegisterStep)}
-                      className="text-gray-400 hover:text-gray-600 text-sm transition-colors"
+                      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                     >
                       Skip
                     </button>
@@ -678,25 +678,25 @@ export default function Auth() {
           <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
             <form onSubmit={handleSignIn} className="space-y-6 flex-1 flex flex-col">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-foreground/70 mb-2">Email</label>
                 <EmailInput
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onValidChange={setEmailValid}
                   required
-                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                  className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <label className="block text-sm font-medium text-foreground/70 mb-2">Password</label>
                 <PasswordInput
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 focus:outline-none transition-colors placeholder:text-gray-400"
+                  className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
                 />
               </div>
 
@@ -706,9 +706,9 @@ export default function Auth() {
                     id="remember" 
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    className="border-gray-300 data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
+                    className="border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
                   />
-                  <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
+                  <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
                     Remember me
                   </Label>
                 </div>

@@ -24,7 +24,7 @@ export function StepAccounts({ accountNames, onAccountNamesChange }: StepAccount
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-3 text-gray-500">
+      <div className="flex items-center gap-3 text-muted-foreground">
         <Building2 className="w-5 h-5" />
         <p className="text-sm">Add the bank accounts or cards you'll track. You can always add more later.</p>
       </div>
@@ -37,13 +37,13 @@ export function StepAccounts({ accountNames, onAccountNamesChange }: StepAccount
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addName())}
-            className="flex-1 h-10 text-sm border border-gray-200 rounded-xl"
+            className="flex-1 h-10 text-sm border border-border rounded-xl"
           />
           <button
             type="button"
             onClick={addName}
             disabled={!newName.trim()}
-            className="h-10 w-10 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30"
+            className="h-10 w-10 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-muted disabled:opacity-30"
           >
             <Plus className="w-4 h-4" />
           </button>

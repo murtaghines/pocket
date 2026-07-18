@@ -82,7 +82,7 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
                 </div>
               </div>
               <div
-                className={`text-sm font-semibold whitespace-nowrap ${
+                className={`text-sm font-semibold tabular-nums whitespace-nowrap ${
                   inv.type === "deposit" ? "text-success" : "text-destructive"
                 }`}
               >

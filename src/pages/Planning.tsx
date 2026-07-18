@@ -18,7 +18,7 @@ export default function Planning() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-[16px]">
         <Section
           icon={<CalendarClock className="w-5 h-5" />}
           title="Planned payments"
@@ -45,8 +45,7 @@ function Section({
 }) {
   return (
     <section
-      className="bg-card rounded-lg border border-border p-6"
-      style={{ boxShadow: "var(--shadow-section)" }}
+      className="bg-card rounded-[18px] border border-border p-6 shadow-bento"
     >
       <div className="flex items-start gap-3 mb-4">
         <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">

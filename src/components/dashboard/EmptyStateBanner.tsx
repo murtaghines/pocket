@@ -16,8 +16,8 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
   if (resolvedHasData) return null;
 
   return (
-    <div className="flex items-center gap-3 rounded-full bg-[#FFBB03]/15 border border-[#FFBB03]/40 pl-3 pr-1.5 py-1.5 max-w-full">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFBB03]/30 text-[#080808]">
+    <div className="flex items-center gap-3 rounded-full bg-warning/15 border border-warning/40 pl-3 pr-1.5 py-1.5 max-w-full">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-warning/30 text-foreground">
         <FileText className="h-3.5 w-3.5" strokeWidth={2} />
       </div>
       <p className="hidden lg:block text-xs xl:text-sm text-foreground truncate">
@@ -25,7 +25,7 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
       </p>
       <button
         onClick={() => navigate('/my-data?tab=bank')}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#1b76ff] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-transform hover:scale-[1.02] hover:bg-[#1b76ff]/90 active:scale-[0.98]"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02] hover:bg-primary/90 active:scale-[0.98]"
       >
         <span>{t('welcome.uploadButton', 'Upload file')}</span>
         <ArrowRight className="h-3.5 w-3.5" />

@@ -91,17 +91,17 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
                   className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
                     active
                       ? 'border-primary bg-primary/5'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-border hover:border-foreground/30'
                   }`}
                 >
                   <span
                     className={`shrink-0 flex items-center justify-center rounded-lg w-9 h-9 ${
-                      active ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'
+                      active ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                   </span>
-                  <span className="text-sm font-medium text-gray-800">{label}</span>
+                  <span className="text-sm font-medium text-foreground">{label}</span>
                 </button>
               );
             })}
@@ -116,15 +116,15 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
           We'll show your progress toward it in your planning view. Totally optional.
         </p>
 
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-          <span className="text-sm font-medium text-gray-700">I have a savings goal</span>
+        <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
+          <span className="text-sm font-medium text-foreground/70">I have a savings goal</span>
           <Switch checked={hasSavingsGoal} onCheckedChange={setHasSavingsGoal} />
         </div>
 
         {hasSavingsGoal && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-foreground/70 mb-1.5">
                 How much? ({currency})
               </label>
               <Input
@@ -134,18 +134,18 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
                 placeholder="5000"
                 value={savingsAmount}
                 onChange={(e) => setSavingsAmount(e.target.value)}
-                className="h-11 text-base border border-gray-200 rounded-xl"
+                className="h-11 text-base border border-border rounded-xl"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                By when? <span className="text-gray-400 font-normal">(optional)</span>
+              <label className="block text-sm font-medium text-foreground/70 mb-1.5">
+                By when? <span className="text-muted-foreground font-normal">(optional)</span>
               </label>
               <Input
                 type="date"
                 value={savingsDate}
                 onChange={(e) => setSavingsDate(e.target.value)}
-                className="h-11 text-base border border-gray-200 rounded-xl"
+                className="h-11 text-base border border-border rounded-xl"
               />
             </div>
           </div>
@@ -158,7 +158,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-display">
+          <DialogTitle className="text-2xl font-semibold">
             {step === 1 ? 'What brings you to pocket?' : 'Set a savings goal'}
           </DialogTitle>
         </DialogHeader>
@@ -181,7 +181,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
               type="button"
               onClick={() => finish(true)}
               disabled={saving}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+              className="text-sm text-muted-foreground hover:text-foreground/70 transition-colors disabled:opacity-50"
             >
               Skip for now
             </button>

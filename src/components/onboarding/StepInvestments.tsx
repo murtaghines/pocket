@@ -31,7 +31,7 @@ export function StepInvestments({ country, selectedPlatforms, onPlatformsChange 
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-3 text-gray-500">
+      <div className="flex items-center gap-3 text-muted-foreground">
         <TrendingUp className="w-5 h-5" />
         <p className="text-sm">Select the platforms where you invest. You can skip this step.</p>
       </div>
@@ -45,7 +45,7 @@ export function StepInvestments({ country, selectedPlatforms, onPlatformsChange 
             className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
               selectedPlatforms.includes(platform)
                 ? 'bg-primary text-white border-primary'
-                : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                : 'bg-white text-foreground border-border hover:border-foreground/30'
             }`}
           >
             {platform}
@@ -61,13 +61,13 @@ export function StepInvestments({ country, selectedPlatforms, onPlatformsChange 
           value={customPlatform}
           onChange={(e) => setCustomPlatform(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomPlatform())}
-          className="flex-1 h-10 text-sm border border-gray-200 rounded-xl"
+          className="flex-1 h-10 text-sm border border-border rounded-xl"
         />
         <button
           type="button"
           onClick={addCustomPlatform}
           disabled={!customPlatform.trim()}
-          className="h-10 w-10 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30"
+          className="h-10 w-10 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-muted disabled:opacity-30"
         >
           <Plus className="w-4 h-4" />
         </button>

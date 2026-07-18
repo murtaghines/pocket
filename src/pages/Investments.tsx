@@ -44,8 +44,8 @@ export default function Investments() {
   return (
     <DashboardLayout>
       <main className="w-full">
-        {/* Page header — same pattern as Dashboard / History */}
-        <div className="mb-6">
+        {/* Page header — mobile only; desktop renders in the sticky top bar */}
+        <div className="mb-6 md:hidden">
           <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
             {t('title')}
           </h1>
@@ -61,7 +61,7 @@ export default function Investments() {
         )}
 
         {!isLoading && !hasData && (
-          <div className="bg-card rounded-lg p-8 border border-border text-center mb-4" style={{ boxShadow: 'var(--shadow-section)' }}>
+          <div className="bg-card rounded-[18px] p-8 border border-border text-center mb-4 shadow-bento">
             <PiggyBank className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">{tc('noData')}</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -80,92 +80,90 @@ export default function Investments() {
 
         {!isLoading && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {tc('time.thisMonth')}
-                  </CardTitle>
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-primary">
-                    {formatCurrency(totalInvestedThisMonth)}
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex flex-col gap-[16px]">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px]">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      {tc('time.thisMonth')}
+                    </CardTitle>
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold tabular-nums text-primary">
+                      {formatCurrency(totalInvestedThisMonth)}
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('summary.totalInvested')}
-                  </CardTitle>
-                  <PiggyBank className="w-5 h-5 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(netInvestedAllTime)}
-                  </div>
-                </CardContent>
-              </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      {t('summary.totalInvested')}
+                    </CardTitle>
+                    <PiggyBank className="w-5 h-5 text-primary" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold tabular-nums">
+                      {formatCurrency(netInvestedAllTime)}
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('summary.totalValue')}
-                  </CardTitle>
-                  <Wallet className="w-5 h-5 text-success" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-success">
-                    {formatCurrency(totalCurrentValue)}
-                  </div>
-                  {netInvestedAllTime > 0 && (
-                    <p className={`text-sm ${profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss)} ({profitLossPercent}%)
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      {t('summary.totalValue')}
+                    </CardTitle>
+                    <Wallet className="w-5 h-5 text-success" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold tabular-nums text-success">
+                      {formatCurrency(totalCurrentValue)}
+                    </div>
+                    {netInvestedAllTime > 0 && (
+                      <p className={`text-sm tabular-nums ${profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss)} ({profitLossPercent}%)
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      {t('byPlatform.title')}
+                    </CardTitle>
+                    <Building2 className="w-5 h-5 text-primary" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold tabular-nums">
+                      {Object.keys(byPlatform).length}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {accounts.length} {t('accounts.title').toLowerCase()}
                     </p>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t('byPlatform.title')}
-                  </CardTitle>
-                  <Building2 className="w-5 h-5 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {Object.keys(byPlatform).length}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {accounts.length} {t('accounts.title').toLowerCase()}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="mb-4">
               <InvestmentAccountsManager accounts={accounts} />
-            </div>
 
-            {hasData && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <InvestmentsByPlatform data={byPlatform} />
-                <InvestmentsByAssetType data={byAssetType} />
-              </div>
-            )}
+              {hasData && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+                  <InvestmentsByPlatform data={byPlatform} />
+                  <InvestmentsByAssetType data={byAssetType} />
+                </div>
+              )}
 
-            {hasData && monthlyHistory.length > 0 && (
-              <div className="mb-4">
+              {hasData && monthlyHistory.length > 0 && (
                 <InvestmentsHistory data={monthlyHistory} />
-              </div>
-            )}
+              )}
 
-            {hasData && (
-              <InvestmentsTable investments={investments} />
-            )}
+              {hasData && (
+                <InvestmentsTable investments={investments} />
+              )}
+            </div>
           </>
         )}
       </main>

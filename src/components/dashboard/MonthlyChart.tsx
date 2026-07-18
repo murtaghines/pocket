@@ -46,8 +46,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
 
   return (
     <div
-      className="bg-card rounded-[18px] p-[20px_22px_18px]"
-      style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
+      className="bg-card rounded-[18px] p-[20px_22px_18px] shadow-bento"
     >
       {/* Header row: title + legend */}
       <div className="flex items-start justify-between mb-4">
@@ -59,7 +58,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
             {t('charts.lastMonths', 'Last {{n}} months', { n: data.length })}
           </p>
         </div>
-        <div className="flex items-center gap-[14px] text-[12px] text-[#5a6478] shrink-0">
+        <div className="flex items-center gap-[14px] text-[12px] text-muted-foreground shrink-0">
           <span className="flex items-center gap-[6px]">
             <span className="w-[10px] h-[10px] rounded-[3px] bg-primary" />
             {t('stats.income', 'Income')}

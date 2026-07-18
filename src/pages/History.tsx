@@ -58,8 +58,7 @@ export default function History() {
             </div>
 
             <div
-              className="bg-card rounded-lg p-3 md:p-4 border border-border"
-              style={{ boxShadow: "var(--shadow-section)" }}
+              className="bg-card rounded-[18px] p-[20px_22px_10px] border border-border shadow-bento"
             >
               <div className="max-h-[500px] overflow-y-auto">
                 <TransactionTable transactions={sortedTransactions} />

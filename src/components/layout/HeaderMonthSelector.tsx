@@ -19,10 +19,9 @@ export function HeaderMonthSelector() {
 
   return (
     <span
-      className="flex items-center gap-[6px] text-[13px] font-[500] text-[#3b465c] bg-white rounded-full py-[7px] px-[13px] whitespace-nowrap select-none"
-      style={{ boxShadow: "0 1px 2px rgba(0,0,0,.05)" }}
+      className="flex items-center gap-[6px] text-[13px] font-medium text-foreground bg-card rounded-full py-[7px] px-[13px] whitespace-nowrap select-none shadow-sm"
     >
-      <Calendar className="w-[14px] h-[14px] text-[#9aa3b2] shrink-0" strokeWidth={2} />
+      <Calendar className="w-[14px] h-[14px] text-muted-foreground shrink-0" strokeWidth={2} />
       <button
         type="button"
         onClick={() => hasPrev && setSelectedMonth(availableMonths[currentIdx - 1])}

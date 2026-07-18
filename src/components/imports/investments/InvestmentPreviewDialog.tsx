@@ -55,15 +55,15 @@ export function InvestmentPreviewDialog({
             <div className="px-6 pb-4 space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-blue-50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-600">Total Investments</div>
+                  <div className="text-sm text-muted-foreground">Total Investments</div>
                   <div className="text-2xl font-bold">{investments.length}</div>
                 </div>
                 <div className="bg-green-50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-600">Deposits</div>
+                  <div className="text-sm text-muted-foreground">Deposits</div>
                   <div className="text-2xl font-bold text-green-600">{deposits}</div>
                 </div>
                 <div className="bg-red-50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-600">Withdrawals</div>
+                  <div className="text-sm text-muted-foreground">Withdrawals</div>
                   <div className="text-2xl font-bold text-red-600">{withdrawals}</div>
                 </div>
               </div>
@@ -86,7 +86,7 @@ export function InvestmentPreviewDialog({
                           {format(new Date(inv.date), "MMM dd")}
                         </TableCell>
                         <TableCell className="text-sm">{inv.description}</TableCell>
-                        <TableCell className="text-sm text-gray-600">{inv.platform}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{inv.platform}</TableCell>
                         <TableCell>
                           <span
                             className={`text-xs px-2 py-1 rounded-full font-medium ${
@@ -109,7 +109,7 @@ export function InvestmentPreviewDialog({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <AlertCircle className="w-12 h-12 mb-3 opacity-50" />
             <p>No investments found in this file</p>
           </div>

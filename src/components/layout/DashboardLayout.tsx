@@ -69,17 +69,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Top utility bar (desktop) */}
       <header
-        className="hidden md:flex sticky top-0 z-30 h-[74px] items-center justify-between gap-4 px-[30px]"
-        style={{ background: "hsla(220,24%,96%,.85)", backdropFilter: "blur(10px)" }}
+        className="hidden md:flex sticky top-0 z-30 h-[74px] items-center justify-between gap-4 px-[30px] bg-background/85 backdrop-blur-[10px]"
       >
         {/* Left: page title + month selector pill */}
         <div className="flex items-center gap-[14px] min-w-0">
           {location.pathname === "/dashboard" ? (
-            <span className="text-[23px] font-semibold tracking-[-0.01em] text-[#0d1220] whitespace-nowrap">
+            <span className="text-[23px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
               Dashboard
             </span>
           ) : pageHeader ? (
-            <span className="text-[23px] font-semibold tracking-[-0.01em] text-[#0d1220] whitespace-nowrap">
+            <span className="text-[23px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
               {pageHeader.title}
             </span>
           ) : null}
@@ -91,8 +90,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex items-center gap-[9px] shrink-0">
           {/* Search input */}
           <div
-            className="flex items-center gap-[9px] bg-white rounded-[11px] px-[13px] py-[9px] w-[210px] text-[#9aa3b2]"
-            style={{ boxShadow: "0 1px 2px rgba(0,0,0,.05)" }}
+            className="flex items-center gap-[9px] bg-card rounded-[11px] px-[13px] py-[9px] w-[210px] text-muted-foreground shadow-sm"
           >
             <Search className="w-[16px] h-[16px] shrink-0" strokeWidth={2} />
             <span className="text-[13px] whitespace-nowrap">Search transaction…</span>
@@ -107,7 +105,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <ThemeToggle />
 
           {/* Divider */}
-          <div className="w-px h-[30px] bg-[#dfe3ea] mx-[5px]" />
+          <div className="w-px h-[30px] bg-border mx-[5px]" />
 
           {/* Profile cluster */}
           <DropdownMenu>
@@ -118,12 +116,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 className="flex items-center gap-[10px] cursor-pointer hover:opacity-80 transition-opacity"
               >
                 <div
-                  className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-white text-[13px] font-semibold"
-                  style={{ background: "linear-gradient(135deg,hsl(216 100% 60%),hsl(216 100% 42%))" }}
+                  className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-primary-foreground text-[13px] font-semibold"
+                  style={{ background: "var(--gradient-primary)" }}
                 >
                   {initials}
                 </div>
-                <ChevronDown className="w-[16px] h-[16px] text-[#6b7280]" strokeWidth={2} />
+                <ChevronDown className="w-[16px] h-[16px] text-muted-foreground" strokeWidth={2} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">

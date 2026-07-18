@@ -22,11 +22,11 @@ export function StepCountry({ country, currency, onCountryChange, onCurrencyChan
   return (
     <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="country" className="text-gray-700">Country</Label>
+          <Label htmlFor="country" className="text-foreground/70">Country</Label>
           <Select value={country} onValueChange={handleCountryChange}>
-            <SelectTrigger 
-              id="country" 
-              className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 transition-colors"
+            <SelectTrigger
+              id="country"
+              className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 transition-colors"
             >
               <SelectValue placeholder="Select your country" />
             </SelectTrigger>
@@ -41,11 +41,11 @@ export function StepCountry({ country, currency, onCountryChange, onCurrencyChan
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="currency" className="text-gray-700">Base Currency</Label>
+          <Label htmlFor="currency" className="text-foreground/70">Base Currency</Label>
           <Select value={currency} onValueChange={onCurrencyChange}>
-            <SelectTrigger 
-              id="currency" 
-              className="w-full h-14 px-4 text-base text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-gray-300 focus:ring-0 transition-colors"
+            <SelectTrigger
+              id="currency"
+              className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 transition-colors"
             >
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>
