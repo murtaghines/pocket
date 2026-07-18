@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useInvestments } from "@/hooks/useInvestments";
@@ -168,13 +169,7 @@ export default function Investments() {
         )}
       </main>
 
-      <footer className="mt-12 relative z-10">
-        <div className="container px-4 md:px-6 py-6">
-          <p className="text-sm text-muted-foreground text-center">
-            pocket
-          </p>
-        </div>
-      </footer>
+      <DashboardFooter />
     </DashboardLayout>
   );
 }

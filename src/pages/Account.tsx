@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AccountHeader } from "@/components/account/AccountHeader";
 import { AccountOverviewTab } from "@/components/account/AccountOverviewTab";
@@ -96,6 +97,7 @@ export default function Account() {
           </Tabs>
         </main>
       </div>
+      <DashboardFooter />
     </DashboardLayout>
   );
 }

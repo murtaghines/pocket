@@ -1,4 +1,5 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { Sparkles, CalendarClock, PiggyBank } from "lucide-react";
 
 /**
@@ -30,6 +31,7 @@ export default function Planning() {
           subtitle="Set spending limits per category"
         />
       </div>
+      <DashboardFooter />
     </DashboardLayout>
   );
 }

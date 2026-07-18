@@ -1,4 +1,5 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { TotalView } from "@/components/dashboard/TotalView";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { useTransactions } from "@/hooks/useTransactions";
@@ -68,11 +69,7 @@ export default function History() {
         )}
       </main>
 
-      <footer className="mt-12 relative z-10">
-        <div className="container px-4 md:px-6 py-6">
-          <p className="text-sm text-muted-foreground text-center">pocket</p>
-        </div>
-      </footer>
+      <DashboardFooter />
     </DashboardLayout>
   );
 }

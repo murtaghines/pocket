@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Minus, TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
@@ -325,13 +326,7 @@ export default function Index() {
         )}
       </main>
 
-      <footer className="mt-12 relative z-10">
-        <div className="container px-4 md:px-6 py-6">
-          <p className="text-sm text-muted-foreground text-center">
-            pocket
-          </p>
-        </div>
-      </footer>
+      <DashboardFooter />
     </DashboardLayout>
   );
 }
