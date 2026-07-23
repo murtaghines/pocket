@@ -686,7 +686,9 @@ async function callAIWithRetry(
   const effectivePrompt = isLargeFile ? SIMPLE_EXTRACTION_PROMPT : prompt;
   // Escalate to the stronger model for large files and on retry; Haiku is the fast/cheap
   // default for a first pass on a normal-sized chunk. (Migrated off Lovable's Gemini gateway.)
-  const model = (isLargeFile || retryCount > 0) ? 'claude-sonnet-5' : 'claude-haiku-4-5';
+  // Model ids must be the canonical API ids — a bare `claude-haiku-4-5` alias 400s as
+  // model_not_found, which (before the 4xx fallback below) hard-failed every small upload.
+  const model = (isLargeFile || retryCount > 0) ? 'claude-sonnet-5' : 'claude-haiku-4-5-20251001';
 
   console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, contentLength=${content.length}, isLargeFile=${isLargeFile}`);
 
@@ -712,22 +714,24 @@ async function callAIWithRetry(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`[process-import] AI API error: ${response.status}`, errorText);
+    console.error(`[process-import] AI API error: ${response.status} (model=${model})`, errorText);
+    const detail = errorText.slice(0, 300);
 
-    // 429 (rate limited) and 400/401/403 (bad request / auth / billing) are not worth
-    // retrying blindly — surface them so the UI can show the right message.
-    if (response.status === 429 || (response.status >= 400 && response.status < 500)) {
-      return { transactions: null, error: `API error: ${response.status}` };
+    // Auth / billing (401/402/403) won't be fixed by a retry or a different model — surface now.
+    if (response.status === 401 || response.status === 402 || response.status === 403) {
+      return { transactions: null, error: `API error: ${response.status} ${detail}` };
     }
 
-    // 5xx / 529 (overloaded) — retry with backoff.
+    // 400 (e.g. unknown/removed model id), 429 (rate limit) and 5xx: retry, escalating to the
+    // stronger model on the next attempt (retryCount>0 -> sonnet). A bad first-pass model id
+    // must not hard-fail the whole upload without trying the fallback model.
     if (retryCount < maxRetries) {
-      console.log(`[process-import] Retrying AI call...`);
+      console.log(`[process-import] Retrying AI call after ${response.status} (escalating model)...`);
       await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
       return callAIWithRetry(content, prompt, isLargeFile, retryCount + 1);
     }
 
-    return { transactions: null, error: `AI API error after retries: ${response.status}` };
+    return { transactions: null, error: `AI API error after retries: ${response.status} ${detail}` };
   }
 
   const aiData = await response.json();
@@ -1000,6 +1004,9 @@ serve(async (req) => {
     let allTransactions: any[] = [];
     let aiInputTokens = 0;
     let aiOutputTokens = 0;
+    // Last AI error seen while chunking, so a 0-result import can persist *why* it failed
+    // instead of vanishing silently.
+    let lastAiError: string | null = null;
     
     if (isLargeFile) {
       console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
@@ -1015,6 +1022,7 @@ serve(async (req) => {
 
         if (result.error) {
           console.error(`[process-import] Chunk ${i + 1} failed: ${result.error}`);
+          lastAiError = result.error;
           continue;
         }
 
@@ -1025,11 +1033,18 @@ serve(async (req) => {
       }
       
       if (allTransactions.length === 0) {
-        console.log(`[process-import] No transactions extracted, deleting import ${importId}`);
-        await supabase.from('imports').delete().eq('id', importId);
-        
+        // Persist WHY it failed instead of deleting the row silently. A FAILED import does not
+        // block re-upload (the dedup guard only matches NORMALIZED) but leaves a debuggable trail.
+        console.log(`[process-import] No transactions extracted, marking import ${importId} FAILED`);
+        await supabase.from('imports').update({
+          status: 'FAILED',
+          error_message: lastAiError
+            ? `AI extraction failed: ${lastAiError}`
+            : 'No transactions extracted from the file',
+        }).eq('id', importId);
+
         return new Response(
-          JSON.stringify({ 
+          JSON.stringify({
             error: 'parse_failed',
             message: 'Could not extract transactions. The file may be too complex. Try exporting as CSV from your bank.'
           }),
@@ -1045,13 +1060,18 @@ serve(async (req) => {
 
       if (result.error) {
         console.error(`[process-import] AI processing failed: ${result.error}`);
-        
+
         const is402 = result.error.includes('402');
         const is429 = result.error.includes('429');
-        
-        console.log(`[process-import] AI error, deleting import ${importId}`);
-        await supabase.from('imports').delete().eq('id', importId);
-        
+
+        // Persist the real error (status + Anthropic's message) instead of deleting the row
+        // silently, so failures are visible in the UI and readable via SQL for debugging.
+        console.log(`[process-import] AI error, marking import ${importId} FAILED`);
+        await supabase.from('imports').update({
+          status: 'FAILED',
+          error_message: `AI extraction failed: ${result.error}`,
+        }).eq('id', importId);
+
         if (is402) {
           return new Response(
             JSON.stringify({ 
