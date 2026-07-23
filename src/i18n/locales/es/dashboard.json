@@ -21,7 +21,9 @@
     "vsLastMonth": "vs mes anterior",
     "thisMonth": "este mes",
     "previousBalance": "Saldo del mes anterior",
-    "openingBalance": "Saldo inicial"
+    "openingBalance": "Saldo inicial",
+    "netBalance": "Balance neto",
+    "savedThisMonth": "ahorrado este mes"
   },
   "charts": {
     "monthlyBalance": "Ingresos vs gastos",
@@ -47,7 +49,8 @@
     "create": "Crear",
     "txCount": "mov.",
     "currentBalance": "Balance",
-    "netFlow": "Flujo neto"
+    "netFlow": "Flujo neto",
+    "otherCategories": "Otros"
   },
   "transactions": {
     "title": "Transacciones",
@@ -72,7 +75,8 @@
     "totalValue": "Valor total",
     "investedThisMonth": "invertido este mes",
     "noInvestments": "Sin inversiones registradas",
-    "viewInvestments": "Ver inversiones"
+    "viewInvestments": "Ver inversiones",
+    "return": "Retorno"
   },
   "period": {
     "title": "Períodos Contables",
@@ -142,7 +146,78 @@
     "cumulativeBalance": "Balance Acumulado",
     "accumulated": "Acumulado",
     "incomeVsExpenses": "Tendencia Ingresos vs Gastos",
-    "monthlyNet": "Balance Neto Mensual"
+    "monthlyNet": "Balance Neto Mensual",
+    "savingsRateEvolution": "Evolución de la Tasa de Ahorro"
+  },
+  "insights": {
+    "spendPace": {
+      "title": "Ritmo de gasto",
+      "spentSoFar": "Gastado hasta ahora",
+      "projected": "Proyectado este mes",
+      "dayOf": "Día {{elapsed}} de {{total}}",
+      "over": "{{pct}}% por encima de tu ritmo habitual",
+      "under": "{{pct}}% por debajo de tu ritmo habitual",
+      "onTrack": "En línea con tu promedio",
+      "actualVsAvg": "vs {{avg}} promedio mensual"
+    },
+    "essential": {
+      "title": "Esencial vs discrecional",
+      "subtitle": "Cuánto de tu gasto era evitable",
+      "essential": "Esencial",
+      "discretionary": "Discrecional",
+      "discretionaryShare": "{{pct}}% discrecional"
+    },
+    "weekly": {
+      "title": "Desglose semanal",
+      "subtitle": "Gasto por semana del mes",
+      "week": "S{{n}}",
+      "avgPerWeek": "Prom/semana",
+      "spend": "Gasto"
+    },
+    "txStats": {
+      "title": "Estadísticas de transacciones",
+      "count": "Transacciones",
+      "avgTicket": "Ticket promedio",
+      "largest": "Mayor gasto",
+      "costliestDay": "Día más caro",
+      "day": "Día {{day}}"
+    },
+    "volatility": {
+      "label": "Consistencia del gasto",
+      "steady": "Estable",
+      "moderate": "Moderada",
+      "erratic": "Errática"
+    },
+    "rolling": {
+      "title": "Flujo neto móvil",
+      "subtitle": "Suavizado para quitar el ruido de corto plazo",
+      "net": "Neto mensual",
+      "rolling": "Promedio móvil"
+    },
+    "categoryTrend": {
+      "title": "Tendencias por categoría",
+      "subtitle": "Dónde está creciendo o bajando tu gasto"
+    },
+    "seasonality": {
+      "title": "Estacionalidad",
+      "subtitle": "Gasto promedio por mes del año",
+      "needMoreData": "Agregá al menos 12 meses de datos para ver patrones estacionales"
+    },
+    "weekday": {
+      "title": "Gasto por día de la semana",
+      "subtitle": "Tu ritmo semanal",
+      "avgSpend": "Gasto prom."
+    },
+    "summary": {
+      "bestMonth": "Mejor mes",
+      "worstMonth": "Peor mes",
+      "positiveStreak": "Racha de ahorro",
+      "streakMonths_one": "{{count}} mes",
+      "streakMonths_other": "{{count}} meses",
+      "incomeStability": "Estabilidad de ingresos",
+      "stable": "Estables",
+      "variable": "Variables"
+    }
   },
   "notifications": {
     "title": "Notificaciones",

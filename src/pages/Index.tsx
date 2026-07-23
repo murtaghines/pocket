@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Minus, TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -14,6 +14,10 @@ import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
+import { SpendPaceCard } from "@/components/dashboard/SpendPaceCard";
+import { WeeklyBreakdownCard } from "@/components/dashboard/WeeklyBreakdownCard";
+import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscretionaryCard";
+import { TransactionStatsCard } from "@/components/dashboard/TransactionStatsCard";
 
 
 import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
@@ -24,6 +28,7 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
+import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
 import { Wallet, Loader2 } from "lucide-react";
 import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
 import type { Category } from "@/lib/mockData";
@@ -58,9 +63,10 @@ export default function Index() {
   }, [preferences, prefsLoading]);
 
   const userCurrency = preferences?.base_currency || 'EUR';
-  const convertToUserCurrency = (amount: number) => {
-    return convertAmount(amount, 'EUR', userCurrency);
-  };
+  const convertToUserCurrency = useCallback(
+    (amount: number) => convertAmount(amount, 'EUR', userCurrency),
+    [convertAmount, userCurrency],
+  );
 
   // Available months (only those with data), sorted descending (newest first)
   const availableMonths = [...monthlyData]
@@ -73,6 +79,14 @@ export default function Index() {
     selectedMonth && availableMonths.includes(selectedMonth)
       ? selectedMonth
       : availableMonths[0] ?? null;
+
+  // Month-scoped derived insights (spend pace, weekly breakdown, essential split, tx stats)
+  const monthlyInsights = useMonthlyInsights({
+    transactions,
+    monthlyData,
+    monthKey: latestMonthLabel,
+    convert: convertToUserCurrency,
+  });
 
   // Sync month state into the layout header
   useEffect(() => {
@@ -264,7 +278,7 @@ export default function Index() {
                 />
                 <TrendKpiCard
                   kind="balance"
-                  label="Net balance"
+                  label={t('stats.netBalance')}
                   filled
                   icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
                   bgClass="bg-primary"
@@ -274,6 +288,24 @@ export default function Index() {
                   formatCurrency={formatCurrency}
                   positiveIsGood
                 />
+              </div>
+
+              {/* Insights row A: spend pace + weekly breakdown */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-[16px]">
+                <SpendPaceCard
+                  pace={monthlyInsights.spendPace}
+                  avgMonthlyExpenses={monthlyInsights.avgMonthlyExpenses}
+                />
+                <WeeklyBreakdownCard
+                  weekly={monthlyInsights.weekly}
+                  volatilityLevel={monthlyInsights.volatilityLevel}
+                />
+              </div>
+
+              {/* Insights row B: essential vs discretionary + transaction stats */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-[16px]">
+                <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
+                <TransactionStatsCard stats={monthlyInsights.txStats} />
               </div>
 
               {/* Row 2: Income vs Expenses chart + Daily view heatmap */}

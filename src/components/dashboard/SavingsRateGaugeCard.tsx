@@ -1,4 +1,5 @@
 import { PiggyBank } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLocalization } from "@/hooks/useLocalization";
 
 interface SavingsRateGaugeCardProps {
@@ -14,6 +15,7 @@ export function SavingsRateGaugeCard({
   expenses,
   delay = 0,
 }: SavingsRateGaugeCardProps) {
+  const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
 
   const rate = income > 0 ? Math.round(((income - expenses) / income) * 100) : 0;
@@ -27,7 +29,7 @@ export function SavingsRateGaugeCard({
       {/* Header row */}
       <div className="flex items-center justify-between mb-[14px]">
         <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
-          Savings rate
+          {t("stats.savingsRate")}
         </span>
         <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-primary/10 text-primary">
           <PiggyBank className="w-[17px] h-[17px]" strokeWidth={2.2} />
@@ -41,7 +43,7 @@ export function SavingsRateGaugeCard({
 
       {/* Saved amount subtext */}
       <div className="text-[12px] mt-[5px] text-muted-foreground">
-        {formatCurrency(saved)} saved this month
+        {formatCurrency(saved)} {t("stats.savedThisMonth")}
       </div>
     </div>
   );
