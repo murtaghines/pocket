@@ -6,7 +6,9 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { useHistoricalInsights } from "@/hooks/useHistoricalInsights";
 import { useTranslation } from "react-i18next";
+import { useCallback } from "react";
 import { Loader2 } from "lucide-react";
 
 export default function History() {
@@ -18,8 +20,10 @@ export default function History() {
   const { convertAmount } = useExchangeRates("EUR");
 
   const userCurrency = preferences?.base_currency || "EUR";
-  const convertToUserCurrency = (amount: number) =>
-    convertAmount(amount, "EUR", userCurrency);
+  const convertToUserCurrency = useCallback(
+    (amount: number) => convertAmount(amount, "EUR", userCurrency),
+    [convertAmount, userCurrency],
+  );
 
   const convertedMonthlyData = monthlyData.map((m) => ({
     ...m,
@@ -27,6 +31,13 @@ export default function History() {
     expenses: convertToUserCurrency(m.expenses),
     balance: convertToUserCurrency(m.balance),
   }));
+
+  // Advanced all-time insights (rolling averages, category trends, seasonality, weekday pattern).
+  const insights = useHistoricalInsights({
+    transactions,
+    monthlyData: convertedMonthlyData,
+    convert: convertToUserCurrency,
+  });
 
   // Sort transactions newest first for the historical table
   const sortedTransactions = [...transactions].sort((a, b) =>
@@ -58,7 +69,7 @@ export default function History() {
             </div>
 
             <div className="mb-4">
-              <TotalView monthlyData={convertedMonthlyData} />
+              <TotalView monthlyData={convertedMonthlyData} insights={insights} />
             </div>
 
             <div

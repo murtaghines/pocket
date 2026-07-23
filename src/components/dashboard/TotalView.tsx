@@ -2,13 +2,18 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
-import { TrendingUp, TrendingDown, Wallet, Scale, PiggyBank, Percent } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Scale, PiggyBank, Percent, Award, Flame, LineChart as LineChartIcon } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, CartesianGrid, ReferenceLine, Cell, LineChart, Line,
 } from "recharts";
 import { MonthlyChart } from "./MonthlyChart";
 import { YearlyBalanceChart } from "./YearlyBalanceChart";
+import { RollingCashflowChart } from "./RollingCashflowChart";
+import { CategoryTrendChart } from "./CategoryTrendChart";
+import { SeasonalityCard } from "./SeasonalityCard";
+import { WeekdaySpendingCard } from "./WeekdaySpendingCard";
+import type { HistoricalInsights } from "@/hooks/useHistoricalInsights";
 
 interface MonthlyData {
   month: string;
@@ -19,11 +24,13 @@ interface MonthlyData {
 
 interface TotalViewProps {
   monthlyData: MonthlyData[];
+  /** Optional advanced insights (rolling/seasonality/weekday/category trends + enriched KPIs). */
+  insights?: HistoricalInsights;
 }
 
-export function TotalView({ monthlyData }: TotalViewProps) {
+export function TotalView({ monthlyData, insights }: TotalViewProps) {
   const { t } = useTranslation('dashboard');
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatMonthShort } = useLocalization();
 
   const hasData = monthlyData.length > 0 && monthlyData.some(d => d.income !== 0 || d.expenses !== 0);
 
@@ -176,6 +183,96 @@ export function TotalView({ monthlyData }: TotalViewProps) {
         </Card>
       </div>
 
+      {/* Enriched behaviour KPIs: best/worst month, savings streak, income stability */}
+      {insights && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card variant="bento" className="h-[128px] flex flex-col">
+            <CardContent className="p-4 md:p-5 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-1">
+                <Award className="w-4 h-4 text-success" strokeWidth={2.2} />
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("insights.summary.bestMonth")}
+                </p>
+              </div>
+              {insights.summary.bestMonth ? (
+                <>
+                  <p className="text-lg font-bold tabular-nums text-foreground mt-auto">
+                    {formatCurrency(insights.summary.bestMonth.balance)}
+                  </p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {formatMonthShort(`${insights.summary.bestMonth.month}-01`)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-lg font-bold text-muted-foreground mt-auto">—</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card variant="bento" className="h-[128px] flex flex-col">
+            <CardContent className="p-4 md:p-5 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingDown className="w-4 h-4 text-destructive" strokeWidth={2.2} />
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("insights.summary.worstMonth")}
+                </p>
+              </div>
+              {insights.summary.worstMonth ? (
+                <>
+                  <p className="text-lg font-bold tabular-nums text-foreground mt-auto">
+                    {formatCurrency(insights.summary.worstMonth.balance)}
+                  </p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {formatMonthShort(`${insights.summary.worstMonth.month}-01`)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-lg font-bold text-muted-foreground mt-auto">—</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card variant="bento" className="h-[128px] flex flex-col">
+            <CardContent className="p-4 md:p-5 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="w-4 h-4 text-warning" strokeWidth={2.2} />
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("insights.summary.positiveStreak")}
+                </p>
+              </div>
+              <p className="text-2xl font-bold tabular-nums text-foreground mt-auto">
+                {insights.summary.positiveStreak}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("insights.summary.streakMonths", { count: insights.summary.positiveStreak })}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card variant="bento" className="h-[128px] flex flex-col">
+            <CardContent className="p-4 md:p-5 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-1">
+                <LineChartIcon className="w-4 h-4 text-primary" strokeWidth={2.2} />
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("insights.summary.incomeStability")}
+                </p>
+              </div>
+              <p className="text-lg font-bold text-foreground mt-auto">
+                {insights.summary.incomeVolatility < 0.2
+                  ? t("insights.summary.stable")
+                  : t("insights.summary.variable")}
+              </p>
+              <p className="text-xs text-muted-foreground tabular-nums">
+                CV {Math.round(insights.summary.incomeVolatility * 100)}%
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Rolling net cash flow (smoothed trend) */}
+      {insights && <RollingCashflowChart rolling={insights.rolling} />}
+
       {/* Cumulative Balance Evolution */}
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
@@ -322,6 +419,17 @@ export function TotalView({ monthlyData }: TotalViewProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Category spending trends over time */}
+      {insights && <CategoryTrendChart trend={insights.categoryTrend} />}
+
+      {/* Seasonality + weekday spending pattern */}
+      {insights && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SeasonalityCard seasonal={insights.seasonal} hasData={insights.hasSeasonalData} />
+          <WeekdaySpendingCard weekday={insights.weekday} />
+        </div>
+      )}
     </div>
   );
 }

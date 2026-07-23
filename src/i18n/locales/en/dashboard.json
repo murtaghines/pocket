@@ -21,7 +21,9 @@
     "vsLastMonth": "vs last month",
     "thisMonth": "this month",
     "previousBalance": "Previous month balance",
-    "openingBalance": "Opening balance"
+    "openingBalance": "Opening balance",
+    "netBalance": "Net balance",
+    "savedThisMonth": "saved this month"
   },
   "charts": {
     "monthlyBalance": "Income vs expenses",
@@ -48,7 +50,8 @@
     "create": "Create",
     "txCount": "tx",
     "currentBalance": "Balance",
-    "netFlow": "Net flow"
+    "netFlow": "Net flow",
+    "otherCategories": "Other"
   },
   "transactions": {
     "title": "Transactions",
@@ -73,7 +76,8 @@
     "totalValue": "Total value",
     "investedThisMonth": "invested this month",
     "noInvestments": "No investments recorded",
-    "viewInvestments": "View investments"
+    "viewInvestments": "View investments",
+    "return": "Return"
   },
   "period": {
     "title": "Accounting Periods",
@@ -173,7 +177,78 @@
     "cumulativeBalance": "Cumulative Balance",
     "accumulated": "Accumulated",
     "incomeVsExpenses": "Income vs Expenses Trend",
-    "monthlyNet": "Monthly Net Balance"
+    "monthlyNet": "Monthly Net Balance",
+    "savingsRateEvolution": "Savings Rate Evolution"
+  },
+  "insights": {
+    "spendPace": {
+      "title": "Spend pace",
+      "spentSoFar": "Spent so far",
+      "projected": "Projected this month",
+      "dayOf": "Day {{elapsed}} of {{total}}",
+      "over": "{{pct}}% above your usual pace",
+      "under": "{{pct}}% below your usual pace",
+      "onTrack": "In line with your average",
+      "actualVsAvg": "vs {{avg}} monthly average"
+    },
+    "essential": {
+      "title": "Essential vs discretionary",
+      "subtitle": "How much of your spending was avoidable",
+      "essential": "Essential",
+      "discretionary": "Discretionary",
+      "discretionaryShare": "{{pct}}% discretionary"
+    },
+    "weekly": {
+      "title": "Weekly breakdown",
+      "subtitle": "Spending by week of the month",
+      "week": "W{{n}}",
+      "avgPerWeek": "Avg/week",
+      "spend": "Spend"
+    },
+    "txStats": {
+      "title": "Transaction stats",
+      "count": "Transactions",
+      "avgTicket": "Avg. ticket",
+      "largest": "Largest expense",
+      "costliestDay": "Costliest day",
+      "day": "Day {{day}}"
+    },
+    "volatility": {
+      "label": "Spending consistency",
+      "steady": "Steady",
+      "moderate": "Moderate",
+      "erratic": "Erratic"
+    },
+    "rolling": {
+      "title": "Rolling net cash flow",
+      "subtitle": "Smoothed to remove short-term noise",
+      "net": "Monthly net",
+      "rolling": "Rolling average"
+    },
+    "categoryTrend": {
+      "title": "Category trends",
+      "subtitle": "Where your spending is growing or shrinking"
+    },
+    "seasonality": {
+      "title": "Seasonality",
+      "subtitle": "Average spending by month of the year",
+      "needMoreData": "Add at least 12 months of data to reveal seasonal patterns"
+    },
+    "weekday": {
+      "title": "Spending by day of week",
+      "subtitle": "Your weekly rhythm",
+      "avgSpend": "Avg. spend"
+    },
+    "summary": {
+      "bestMonth": "Best month",
+      "worstMonth": "Worst month",
+      "positiveStreak": "Savings streak",
+      "streakMonths_one": "{{count}} month",
+      "streakMonths_other": "{{count}} months",
+      "incomeStability": "Income stability",
+      "stable": "Stable",
+      "variable": "Variable"
+    }
   },
   "notifications": {
     "title": "Notifications",
