@@ -282,10 +282,12 @@ export default function Index() {
                   icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
                   bgClass="bg-primary"
                   monthKey={latestMonthLabel}
-                  // Available balance = income − expenses − money moved to investment
-                  // (a transfer out of the spending account, so it lowers what's left to spend).
-                  total={convertedCurrentMonth.balance - convertedCurrentMonth.sentToInvest}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.balance - convertedPreviousMonth.sentToInvest : undefined}
+                  // Net balance = income − expenses. Money sent to investment is a transfer
+                  // (not an expense), so it does NOT reduce net balance — it's shown as its own
+                  // KPI. It does lower next month's available cash, but that carries through the
+                  // opening balance, which is derived from the bank's real running_balance.
+                  total={convertedCurrentMonth.balance}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
                   formatCurrency={formatCurrency}
                   positiveIsGood
                 />
