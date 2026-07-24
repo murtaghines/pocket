@@ -37,7 +37,7 @@ export function SavingsRateGaugeCard({
       </div>
 
       {/* Rate value */}
-      <div className="text-[25px] font-bold tracking-[-0.02em] tabular-nums leading-none text-foreground">
+      <div className="text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none text-foreground">
         {rate}%
       </div>
 

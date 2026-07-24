@@ -24,7 +24,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
       return (
         <div className="bg-card border border-border/50 rounded-xl p-3 shadow-lg">
           <p className="text-xs text-muted-foreground mb-1">{(() => { const [,m] = (label || '').split('-'); const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return names[parseInt(m)-1] || label; })()}</p>
-          <p className="text-sm font-bold text-foreground">{formatCurrency(payload[0].value)}</p>
+          <p className="text-sm font-semibold text-foreground">{formatCurrency(payload[0].value)}</p>
         </div>
       );
     }
@@ -60,7 +60,7 @@ export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {
             Yearly Balance
           </CardTitle>
           <div className="text-right">
-            <p className="text-xl font-bold text-success">{formatCurrency(totalBalance)}</p>
+            <p className="text-xl font-semibold text-success">{formatCurrency(totalBalance)}</p>
             <p className="text-xs text-muted-foreground">Total Savings</p>
           </div>
         </div>
