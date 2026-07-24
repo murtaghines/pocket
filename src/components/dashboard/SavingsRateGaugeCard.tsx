@@ -23,7 +23,7 @@ export function SavingsRateGaugeCard({
 
   return (
     <div
-      className="rounded-[18px] bg-card border border-border p-[18px_18px_16px] shadow-bento"
+      className="rounded-2xl bg-card p-[18px_18px_16px] shadow-bento"
       style={{ animationDelay: `${delay}ms` }}
     >
       {/* Header row */}

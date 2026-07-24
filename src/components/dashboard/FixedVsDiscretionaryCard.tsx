@@ -21,7 +21,7 @@ export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProp
   const discretionaryPct = hasData ? 100 - essentialPct : 0;
 
   return (
-    <div className="bg-card rounded-[18px] p-[20px_22px_18px] border border-border shadow-bento">
+    <div className="bg-card rounded-2xl p-[20px_22px_18px] shadow-bento">
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[15px] font-semibold text-foreground flex items-center gap-2">

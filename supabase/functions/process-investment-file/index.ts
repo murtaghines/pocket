@@ -165,7 +165,8 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5',
+          // Canonical API id — the bare `claude-haiku-4-5` alias 400s as model_not_found.
+          model: 'claude-haiku-4-5-20251001',
           max_tokens: 16000,
           thinking: { type: 'disabled' },
           system: INVESTMENT_ANALYSIS_PROMPT,
@@ -190,6 +191,11 @@ serve(async (req) => {
           );
         }
 
+        // Persist the real error so the import doesn't sit at PARSED silently.
+        await supabase
+          .from('imports')
+          .update({ status: 'FAILED', error_message: `AI API error: ${aiResponse.status} ${errorText.slice(0, 300)}` })
+          .eq('id', recordId);
         throw new Error(`AI API error: ${aiResponse.status}`);
       }
 

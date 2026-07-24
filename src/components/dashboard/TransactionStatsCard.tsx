@@ -41,7 +41,7 @@ export function TransactionStatsCard({ stats }: TransactionStatsCardProps) {
   ];
 
   return (
-    <div className="bg-card rounded-[18px] p-[18px_18px_16px] border border-border shadow-bento">
+    <div className="bg-card rounded-2xl p-[18px_18px_16px] shadow-bento">
       <div className="flex items-center justify-between mb-[14px]">
         <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
           {t("insights.txStats.title")}

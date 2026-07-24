@@ -17,7 +17,7 @@ export function InvestmentSummaryCard() {
 
   return (
     <div
-      className="bg-card rounded-[18px] p-[20px_22px_18px] flex flex-col h-full"
+      className="bg-card rounded-2xl p-[20px_22px_18px] flex flex-col h-full"
       style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
     >
       {/* Icon + label */}

@@ -73,7 +73,7 @@ export function DataTable({ className, children, ...props }: DataTableProps) {
   return (
     <div
       className={cn(
-        "w-full overflow-x-auto rounded-xl border border-border bg-card",
+        "w-full overflow-x-auto rounded-2xl bg-card",
         className,
       )}
       {...props}
@@ -113,10 +113,8 @@ export function DataTableHead({
   return (
     <th
       className={cn(
-        "h-9 px-3 text-left align-middle font-medium text-xs text-muted-foreground",
-        "border-b border-border",
-        // hairline column separator on the right (except last)
-        "[&:not(:last-child)]:border-r [&:not(:last-child)]:border-border/60",
+        "h-9 px-3 text-left align-middle font-medium text-[11px] uppercase tracking-[0.06em] text-muted-foreground",
+        "border-b border-border/60",
         numeric && "text-right",
         rowNumber && "w-[44px] text-center text-muted-foreground/60",
         className,
@@ -124,12 +122,10 @@ export function DataTableHead({
       {...props}
     >
       {rowNumber ? (
-        <Hash className="w-3.5 h-3.5 mx-auto opacity-60" />
+        <span className="opacity-60">#</span>
       ) : (
-        <span className={cn("inline-flex items-center gap-1.5", numeric && "justify-end w-full")}>
-          {!numeric && <ColumnTypeIcon type={type} />}
+        <span className={cn("inline-flex items-center", numeric && "justify-end w-full")}>
           <span className="truncate">{children}</span>
-          {numeric && <ColumnTypeIcon type={type ?? "number"} />}
         </span>
       )}
     </th>
@@ -186,8 +182,7 @@ export function DataTableCell({
   return (
     <td
       className={cn(
-        "align-middle border-b border-border/60",
-        "[&:not(:last-child)]:border-r [&:not(:last-child)]:border-border/40",
+        "align-middle border-b border-border/50",
         !noPadding && "h-11 px-3 py-2",
         numeric && "text-right tabular-nums",
         rowNumber !== undefined && "w-[44px] text-center text-xs text-muted-foreground/70 font-normal",

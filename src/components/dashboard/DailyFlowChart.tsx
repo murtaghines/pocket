@@ -66,7 +66,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
 
   return (
     <div
-      className="bg-card rounded-[18px] p-[20px_22px_18px]"
+      className="bg-card rounded-2xl p-[20px_22px_18px]"
       style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
     >
       {/* Header */}
