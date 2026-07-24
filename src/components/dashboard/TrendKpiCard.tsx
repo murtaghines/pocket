@@ -19,6 +19,7 @@ interface TrendKpiCardProps {
   formatCurrency: (n: number) => string;
   positiveIsGood?: boolean;
   delay?: number;
+  className?: string;
 }
 
 export function TrendKpiCard({
@@ -32,6 +33,7 @@ export function TrendKpiCard({
   formatCurrency,
   positiveIsGood = true,
   delay = 0,
+  className,
 }: TrendKpiCardProps) {
   const { i18n } = useTranslation("dashboard");
 
@@ -85,7 +87,7 @@ export function TrendKpiCard({
 
   return (
     <div
-      className={cn("rounded-2xl p-[18px_18px_16px] transition-all", cardClasses)}
+      className={cn("rounded-2xl p-[18px_18px_16px] transition-all", cardClasses, className)}
       style={{ boxShadow: cardShadow, animationDelay: `${delay}ms` }}
     >
       {/* Header row: label + icon badge */}
@@ -106,7 +108,7 @@ export function TrendKpiCard({
       {/* Big value */}
       <div
         className={cn(
-          "text-[25px] font-bold tracking-[-0.02em] tabular-nums leading-none",
+          "text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none",
           valueClass,
         )}
       >

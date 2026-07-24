@@ -33,7 +33,7 @@ export function InvestmentSummaryCard() {
       {hasData ? (
         <>
           {/* Main value */}
-          <p className="text-[28px] font-bold tabular-nums tracking-tight text-foreground leading-tight">
+          <p className="text-[28px] font-semibold tabular-nums tracking-tight text-foreground leading-tight">
             {formatCurrency(totalCurrentValue)}
           </p>
           <p className="text-[12px] text-muted-foreground mt-1">
@@ -61,7 +61,7 @@ export function InvestmentSummaryCard() {
         </>
       ) : (
         <>
-          <p className="text-[28px] font-bold text-foreground/30 leading-tight">—</p>
+          <p className="text-[28px] font-semibold text-foreground/30 leading-tight">—</p>
           <p className="text-[13px] text-muted-foreground mt-1">
             {t('investments.noInvestments', 'No investment data yet')}
           </p>

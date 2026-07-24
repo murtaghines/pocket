@@ -236,7 +236,7 @@ export default function Index() {
 
             <div className="flex flex-col gap-[18px]">
               {/* KPI row: Income · Expenses · Sent to invest · Savings rate · Net balance */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-[16px]">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-[16px]">
                 <TrendKpiCard
                   kind="income"
                   label={t('stats.income')}
@@ -278,11 +278,14 @@ export default function Index() {
                   kind="balance"
                   label={t('stats.netBalance')}
                   filled
+                  className="col-span-2 lg:col-span-1"
                   icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
                   bgClass="bg-primary"
                   monthKey={latestMonthLabel}
-                  total={convertedCurrentMonth.balance}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
+                  // Available balance = income − expenses − money moved to investment
+                  // (a transfer out of the spending account, so it lowers what's left to spend).
+                  total={convertedCurrentMonth.balance - convertedCurrentMonth.sentToInvest}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.balance - convertedPreviousMonth.sentToInvest : undefined}
                   formatCurrency={formatCurrency}
                   positiveIsGood
                 />

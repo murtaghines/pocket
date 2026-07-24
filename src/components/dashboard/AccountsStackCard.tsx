@@ -183,7 +183,7 @@ export function AccountsStackCard({
                       </p>
                     </div>
                     {/* Balance */}
-                    <span className="text-[14px] font-bold tabular-nums text-foreground shrink-0">
+                    <span className="text-[14px] font-semibold tabular-nums text-foreground shrink-0">
                       {formatCurrency(acc.balance)}
                     </span>
                   </button>
@@ -207,15 +207,15 @@ export function AccountsStackCard({
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     {detail.hasRunningBalance ? t('charts.currentBalance', 'Balance') : t('charts.netFlow', 'Net flow')}
                   </p>
-                  <p className="text-lg font-bold tabular-nums">{formatCurrency(detail.balance)}</p>
+                  <p className="text-lg font-semibold tabular-nums">{formatCurrency(detail.balance)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Transactions</p>
-                  <p className="text-lg font-bold tabular-nums">{detail.transactionCount}</p>
+                  <p className="text-lg font-semibold tabular-nums">{detail.transactionCount}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Currency</p>
-                  <p className="text-lg font-bold">{detail.currency}</p>
+                  <p className="text-lg font-semibold">{detail.currency}</p>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto px-6 py-4">

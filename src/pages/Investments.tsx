@@ -169,7 +169,7 @@ function KpiCard({
           {icon}
         </div>
       </div>
-      <div className={`text-[25px] font-bold tracking-[-0.02em] tabular-nums leading-none ${valueClass ?? "text-foreground"}`}>
+      <div className={`text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none ${valueClass ?? "text-foreground"}`}>
         {value}
       </div>
       {subtext && (

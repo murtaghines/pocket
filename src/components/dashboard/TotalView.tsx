@@ -113,7 +113,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums text-success">
+            <p className="text-2xl md:text-3xl font-semibold tracking-tight tabular-nums text-success">
               {formatCurrency(totalIncome)}
             </p>
             <p className="text-xs text-success/60 mt-auto">
@@ -133,7 +133,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 <TrendingDown className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums text-destructive">
+            <p className="text-2xl md:text-3xl font-semibold tracking-tight tabular-nums text-destructive">
               {formatCurrency(totalExpenses)}
             </p>
             <p className="text-xs text-destructive/60 mt-auto">
@@ -153,7 +153,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 <PiggyBank className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums text-primary">
+            <p className="text-2xl md:text-3xl font-semibold tracking-tight tabular-nums text-primary">
               {formatCurrency(totalBalance)}
             </p>
             <p className="text-xs text-primary/60 mt-auto">
@@ -173,7 +173,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 <Percent className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums text-primary">
+            <p className="text-2xl md:text-3xl font-semibold tracking-tight tabular-nums text-primary">
               {savingsRate}%
             </p>
             <p className="text-xs text-primary/60 mt-auto">
@@ -196,7 +196,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               </div>
               {insights.summary.bestMonth ? (
                 <>
-                  <p className="text-lg font-bold tabular-nums text-foreground mt-auto">
+                  <p className="text-lg font-semibold tabular-nums text-foreground mt-auto">
                     {formatCurrency(insights.summary.bestMonth.balance)}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
@@ -204,7 +204,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                   </p>
                 </>
               ) : (
-                <p className="text-lg font-bold text-muted-foreground mt-auto">—</p>
+                <p className="text-lg font-semibold text-muted-foreground mt-auto">—</p>
               )}
             </CardContent>
           </Card>
@@ -219,7 +219,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               </div>
               {insights.summary.worstMonth ? (
                 <>
-                  <p className="text-lg font-bold tabular-nums text-foreground mt-auto">
+                  <p className="text-lg font-semibold tabular-nums text-foreground mt-auto">
                     {formatCurrency(insights.summary.worstMonth.balance)}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
@@ -227,7 +227,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                   </p>
                 </>
               ) : (
-                <p className="text-lg font-bold text-muted-foreground mt-auto">—</p>
+                <p className="text-lg font-semibold text-muted-foreground mt-auto">—</p>
               )}
             </CardContent>
           </Card>
@@ -240,7 +240,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                   {t("insights.summary.positiveStreak")}
                 </p>
               </div>
-              <p className="text-2xl font-bold tabular-nums text-foreground mt-auto">
+              <p className="text-2xl font-semibold tabular-nums text-foreground mt-auto">
                 {insights.summary.positiveStreak}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -257,7 +257,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                   {t("insights.summary.incomeStability")}
                 </p>
               </div>
-              <p className="text-lg font-bold text-foreground mt-auto">
+              <p className="text-lg font-semibold text-foreground mt-auto">
                 {insights.summary.incomeVolatility < 0.2
                   ? t("insights.summary.stable")
                   : t("insights.summary.variable")}
@@ -283,7 +283,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               </div>
               {t('views.cumulativeBalance', 'Cumulative Balance')}
             </CardTitle>
-            <p className="text-xl font-bold text-success">{formatCurrency(cumulative)}</p>
+            <p className="text-xl font-semibold text-success">{formatCurrency(cumulative)}</p>
           </div>
         </CardHeader>
         <CardContent>
