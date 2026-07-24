@@ -235,7 +235,7 @@ export default function Index() {
             </div>
 
             <div className="flex flex-col gap-[18px]">
-              {/* KPI row: Income · Expenses · Sent to invest · Savings rate · Net balance */}
+              {/* KPI row: Income · Expenses · Net balance · Sent to invest · Savings rate */}
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-[16px]">
                 <TrendKpiCard
                   kind="income"
@@ -260,21 +260,6 @@ export default function Index() {
                   positiveIsGood={false}
                 />
                 <TrendKpiCard
-                  kind="invest"
-                  label={t('stats.sentToInvest')}
-                  icon={<TrendingUp className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-primary"
-                  monthKey={latestMonthLabel}
-                  total={convertedCurrentMonth.sentToInvest}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.sentToInvest : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood
-                />
-                <SavingsRateGaugeCard
-                  income={convertedCurrentMonth.income}
-                  expenses={convertedCurrentMonth.expenses}
-                />
-                <TrendKpiCard
                   kind="balance"
                   label={t('stats.netBalance')}
                   filled
@@ -290,6 +275,21 @@ export default function Index() {
                   previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
                   formatCurrency={formatCurrency}
                   positiveIsGood
+                />
+                <TrendKpiCard
+                  kind="invest"
+                  label={t('stats.sentToInvest')}
+                  icon={<TrendingUp className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-primary"
+                  monthKey={latestMonthLabel}
+                  total={convertedCurrentMonth.sentToInvest}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.sentToInvest : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood
+                />
+                <SavingsRateGaugeCard
+                  income={convertedCurrentMonth.income}
+                  expenses={convertedCurrentMonth.expenses}
                 />
               </div>
 
