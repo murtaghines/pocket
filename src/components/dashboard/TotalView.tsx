@@ -109,7 +109,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               <p className="text-xs font-medium uppercase tracking-wide text-success/80">
                 {t('views.totalIncome', 'Total Income')}
               </p>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-success/10 text-success">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-success/10 text-success">
                 <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
@@ -129,7 +129,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               <p className="text-xs font-medium uppercase tracking-wide text-destructive/80">
                 {t('views.totalExpenses', 'Total Expenses')}
               </p>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-destructive/10 text-destructive">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-destructive/10 text-destructive">
                 <TrendingDown className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
@@ -149,7 +149,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               <p className="text-xs font-medium uppercase tracking-wide text-primary/70">
                 {t('views.totalSaved', 'Total Saved')}
               </p>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-primary/10 text-primary">
                 <PiggyBank className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
@@ -169,7 +169,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               <p className="text-xs font-medium uppercase tracking-wide text-primary/70">
                 {t('views.savingsRate', 'Savings Rate')}
               </p>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-primary/10 text-primary">
                 <Percent className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
