@@ -103,7 +103,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
       {/* Aggregate KPIs — same inverted look as the Dashboard TrendKpiCards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Income */}
-        <Card variant="bento" className="bg-success/5 border border-success/20 h-[160px] flex flex-col">
+        <Card variant="bento" className="bg-success/5 h-[160px] flex flex-col">
           <CardContent className="p-4 md:p-5 flex flex-col h-full">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs font-medium uppercase tracking-wide text-success/80">
@@ -113,7 +113,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-success to-success/60 bg-clip-text text-transparent">
+            <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums text-success">
               {formatCurrency(totalIncome)}
             </p>
             <p className="text-xs text-success/60 mt-auto">
@@ -123,7 +123,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
         </Card>
 
         {/* Expenses */}
-        <Card variant="bento" className="bg-destructive/5 border border-destructive/20 h-[160px] flex flex-col">
+        <Card variant="bento" className="bg-destructive/5 h-[160px] flex flex-col">
           <CardContent className="p-4 md:p-5 flex flex-col h-full">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs font-medium uppercase tracking-wide text-destructive/80">
@@ -133,7 +133,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 <TrendingDown className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-destructive to-destructive/60 bg-clip-text text-transparent">
+            <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums text-destructive">
               {formatCurrency(totalExpenses)}
             </p>
             <p className="text-xs text-destructive/60 mt-auto">
@@ -143,7 +143,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
         </Card>
 
         {/* Total saved */}
-        <Card variant="bento" className="bg-card border border-primary/20 h-[160px] flex flex-col">
+        <Card variant="bento" className="bg-card h-[160px] flex flex-col">
           <CardContent className="p-4 md:p-5 flex flex-col h-full">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs font-medium uppercase tracking-wide text-primary/70">
@@ -153,7 +153,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 <PiggyBank className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums text-primary">
               {formatCurrency(totalBalance)}
             </p>
             <p className="text-xs text-primary/60 mt-auto">
@@ -163,7 +163,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
         </Card>
 
         {/* Savings rate */}
-        <Card variant="bento" className="bg-card border border-primary/20 h-[160px] flex flex-col">
+        <Card variant="bento" className="bg-card h-[160px] flex flex-col">
           <CardContent className="p-4 md:p-5 flex flex-col h-full">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs font-medium uppercase tracking-wide text-primary/70">
@@ -173,7 +173,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 <Percent className="w-4 h-4" strokeWidth={2.5} />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums text-primary">
               {savingsRate}%
             </p>
             <p className="text-xs text-primary/60 mt-auto">

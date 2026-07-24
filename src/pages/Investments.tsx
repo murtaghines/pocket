@@ -61,7 +61,7 @@ export default function Investments() {
         )}
 
         {!isLoading && !hasData && (
-          <div className="bg-card rounded-[18px] p-8 border border-border text-center mb-4 shadow-bento">
+          <div className="bg-card rounded-2xl p-8 text-center mb-4 shadow-bento">
             <PiggyBank className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">{tc('noData')}</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -158,7 +158,7 @@ function KpiCard({
 }) {
   return (
     <div
-      className="rounded-[18px] p-[18px_18px_16px] bg-card border border-border"
+      className="rounded-2xl p-[18px_18px_16px] bg-card shadow-bento"
       style={{ boxShadow: "var(--shadow-bento)" }}
     >
       <div className="flex items-center justify-between mb-[14px]">

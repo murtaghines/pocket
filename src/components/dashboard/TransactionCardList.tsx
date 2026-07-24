@@ -44,7 +44,7 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
   }
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="divide-y divide-border/60">
       {transactions.map((tx) => {
         const movementType = getMovementType(tx);
         const Icon =
@@ -68,7 +68,7 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
         return (
           <li
             key={tx.id}
-            className="bg-background border border-border rounded-xl p-3 flex items-center gap-3"
+            className="flex items-center gap-3 py-3 px-1 -mx-1 rounded-lg transition-colors hover:bg-muted/40"
           >
             {/* Movement icon */}
             <div

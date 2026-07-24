@@ -51,10 +51,10 @@ export function TrendKpiCard({
     return new Intl.DateTimeFormat(i18n.language || "en", { month: "short" }).format(prevDate);
   }, [monthKey, i18n.language]);
 
-  // Styling per variant
+  // Styling per variant. Borderless — elevation is the shadow token, not a gray outline.
   const cardClasses = filled
     ? "bg-primary text-primary-foreground"
-    : "bg-card border border-border";
+    : "bg-card";
 
   const labelClass = filled ? "text-primary-foreground/78" : "text-muted-foreground";
   const valueClass = filled ? "text-primary-foreground" : "text-foreground";
@@ -85,7 +85,7 @@ export function TrendKpiCard({
 
   return (
     <div
-      className={cn("rounded-[18px] p-[18px_18px_16px] transition-all", cardClasses)}
+      className={cn("rounded-2xl p-[18px_18px_16px] transition-all", cardClasses)}
       style={{ boxShadow: cardShadow, animationDelay: `${delay}ms` }}
     >
       {/* Header row: label + icon badge */}

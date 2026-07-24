@@ -73,7 +73,7 @@ export default function History() {
             </div>
 
             <div
-              className="bg-card rounded-[18px] p-[20px_22px_10px] border border-border shadow-bento"
+              className="bg-card rounded-2xl p-[20px_22px_10px] shadow-bento"
             >
               <div className="max-h-[500px] overflow-y-auto">
                 <TransactionTable transactions={sortedTransactions} initialSearch={initialSearch} />
