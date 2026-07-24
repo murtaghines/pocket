@@ -14,7 +14,6 @@ import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
-import { SpendPaceCard } from "@/components/dashboard/SpendPaceCard";
 import { WeeklyBreakdownCard } from "@/components/dashboard/WeeklyBreakdownCard";
 import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscretionaryCard";
 import { TransactionStatsCard } from "@/components/dashboard/TransactionStatsCard";
@@ -80,10 +79,9 @@ export default function Index() {
       ? selectedMonth
       : availableMonths[0] ?? null;
 
-  // Month-scoped derived insights (spend pace, weekly breakdown, essential split, tx stats)
+  // Month-scoped derived insights (weekly breakdown, essential split, tx stats)
   const monthlyInsights = useMonthlyInsights({
     transactions,
-    monthlyData,
     monthKey: latestMonthLabel,
     convert: convertToUserCurrency,
   });
@@ -290,12 +288,8 @@ export default function Index() {
                 />
               </div>
 
-              {/* Insights row A: spend pace + weekly breakdown */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-[16px]">
-                <SpendPaceCard
-                  pace={monthlyInsights.spendPace}
-                  avgMonthlyExpenses={monthlyInsights.avgMonthlyExpenses}
-                />
+              {/* Insights row A: weekly breakdown */}
+              <div className="grid grid-cols-1 gap-[16px]">
                 <WeeklyBreakdownCard
                   weekly={monthlyInsights.weekly}
                   volatilityLevel={monthlyInsights.volatilityLevel}

@@ -10,7 +10,6 @@ import {
   classifyExpense,
   essentialSplitForMonth,
   weeklyBreakdownForMonth,
-  spendPaceForMonth,
   transactionStatsForMonth,
   monthOverMonth,
   seasonalIndexByCalendarMonth,
@@ -113,25 +112,6 @@ describe("monthly aggregations", () => {
     expect(weekly[1].spend).toBe(70); // week 2
     expect(weekly[2].spend).toBe(50); // week 3
     expect(weekly[2].income).toBe(2000);
-  });
-
-  it("spendPaceForMonth returns the actual total for a fully-past month", () => {
-    const pace = spendPaceForMonth(txs, "2024-03", (n) => n, new Date(2024, 5, 1));
-    expect(pace.spentSoFar).toBe(150);
-    expect(pace.projected).toBe(150);
-    expect(pace.inProgress).toBe(false);
-  });
-
-  it("spendPaceForMonth projects a partial current month", () => {
-    // As of day 10 of a 31-day month with 100 spent -> projects ~310.
-    const partial = [
-      tx({ date: "2024-03-02", amount: -50, movement: "EXPENSE" }),
-      tx({ date: "2024-03-09", amount: -50, movement: "EXPENSE" }),
-    ];
-    const pace = spendPaceForMonth(partial, "2024-03", (n) => n, new Date(2024, 2, 10));
-    expect(pace.spentSoFar).toBe(100);
-    expect(pace.inProgress).toBe(true);
-    expect(pace.projected).toBe(310);
   });
 
   it("transactionStatsForMonth surfaces count, avg ticket and largest", () => {
