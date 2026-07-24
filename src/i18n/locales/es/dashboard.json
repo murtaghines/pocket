@@ -150,16 +150,6 @@
     "savingsRateEvolution": "Evolución de la Tasa de Ahorro"
   },
   "insights": {
-    "spendPace": {
-      "title": "Ritmo de gasto",
-      "spentSoFar": "Gastado hasta ahora",
-      "projected": "Proyectado este mes",
-      "dayOf": "Día {{elapsed}} de {{total}}",
-      "over": "{{pct}}% por encima de tu ritmo habitual",
-      "under": "{{pct}}% por debajo de tu ritmo habitual",
-      "onTrack": "En línea con tu promedio",
-      "actualVsAvg": "vs {{avg}} promedio mensual"
-    },
     "essential": {
       "title": "Esencial vs discrecional",
       "subtitle": "Cuánto de tu gasto era evitable",

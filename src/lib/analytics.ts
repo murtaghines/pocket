@@ -272,51 +272,6 @@ export function transactionStatsForMonth(
   };
 }
 
-export interface SpendPace {
-  spentSoFar: number;
-  projected: number;
-  elapsedDays: number;
-  totalDays: number;
-  /** true when this month is still in progress (so the projection is meaningful). */
-  inProgress: boolean;
-}
-
-/**
- * Spend pace for a month. `asOf` is the reference "today" (defaults to the real today); when the
- * month is fully in the past the projection equals the actual total. Projection linearly
- * extrapolates spend-so-far across the whole month.
- */
-export function spendPaceForMonth(
-  transactions: Transaction[],
-  monthKey: string | null,
-  convert: (n: number) => number = (n) => n,
-  asOf: Date = new Date(),
-): SpendPace {
-  const totalDays = monthKey ? daysInMonthOf(monthKey) : 30;
-  if (!monthKey) {
-    return { spentSoFar: 0, projected: 0, elapsedDays: 0, totalDays, inProgress: false };
-  }
-  const asOfKey = `${asOf.getFullYear()}-${String(asOf.getMonth() + 1).padStart(2, "0")}`;
-  const isCurrentMonth = asOfKey === monthKey;
-  const isFutureMonth = monthKey > asOfKey;
-  const elapsedDays = isCurrentMonth ? asOf.getDate() : isFutureMonth ? 0 : totalDays;
-
-  const spentSoFar = transactions
-    .filter((t) => t.date.startsWith(monthKey) && isExpense(t))
-    .reduce((s, t) => s + Math.abs(convert(t.amount)), 0);
-
-  const projected =
-    isCurrentMonth && elapsedDays > 0 ? (spentSoFar / elapsedDays) * totalDays : spentSoFar;
-
-  return {
-    spentSoFar: round2(spentSoFar),
-    projected: round2(projected),
-    elapsedDays,
-    totalDays,
-    inProgress: isCurrentMonth,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // All-time / historical aggregations (over MonthlyData)
 // ---------------------------------------------------------------------------

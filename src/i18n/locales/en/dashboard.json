@@ -181,16 +181,6 @@
     "savingsRateEvolution": "Savings Rate Evolution"
   },
   "insights": {
-    "spendPace": {
-      "title": "Spend pace",
-      "spentSoFar": "Spent so far",
-      "projected": "Projected this month",
-      "dayOf": "Day {{elapsed}} of {{total}}",
-      "over": "{{pct}}% above your usual pace",
-      "under": "{{pct}}% below your usual pace",
-      "onTrack": "In line with your average",
-      "actualVsAvg": "vs {{avg}} monthly average"
-    },
     "essential": {
       "title": "Essential vs discretionary",
       "subtitle": "How much of your spending was avoidable",
