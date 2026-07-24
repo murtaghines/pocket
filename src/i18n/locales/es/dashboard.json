@@ -42,6 +42,7 @@
     "total": "Total",
     "totalSavings": "Ahorro Total",
     "accounts": "Cuentas",
+    "accountsSubtitle": "Saldo actual por cuenta",
     "addAccount": "Agregar cuenta",
     "addAccountDescription": "Creá una cuenta bancaria nueva. Vas a poder subirle extractos.",
     "accountNamePlaceholder": "Ej: Santander, BBVA, Revolut...",

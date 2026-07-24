@@ -136,9 +136,14 @@ export function AccountsStackCard({
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-[15px] font-semibold text-foreground">
-            {t('charts.accounts', 'Accounts')}
-          </p>
+          <div>
+            <p className="text-[15px] font-semibold text-foreground">
+              {t('charts.accounts', 'Accounts')}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {t('charts.accountsSubtitle', 'Current balance per account')}
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => setAddOpen(true)}
