@@ -274,6 +274,15 @@
     "more": "Más",
     "transaction": "transacción",
     "transactions": "transacciones",
+    "stats": {
+      "highestDay": "Día más alto",
+      "lowestDay": "Día más bajo",
+      "dailyAvg": "Prom. / día activo",
+      "busiestDay": "Día más activo",
+      "quietestDay": "Día más tranquilo",
+      "avgPerDay": "Prom. / día activo",
+      "day": "Día {{day}}"
+    },
     "weekdays": {
       "mon": "Lun",
       "tue": "Mar",

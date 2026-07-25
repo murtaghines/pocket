@@ -305,6 +305,15 @@
     "more": "More",
     "transaction": "transaction",
     "transactions": "transactions",
+    "stats": {
+      "highestDay": "Highest day",
+      "lowestDay": "Lowest day",
+      "dailyAvg": "Avg / active day",
+      "busiestDay": "Busiest day",
+      "quietestDay": "Quietest day",
+      "avgPerDay": "Avg / active day",
+      "day": "Day {{day}}"
+    },
     "weekdays": {
       "mon": "Mon",
       "tue": "Tue",
