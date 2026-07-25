@@ -256,7 +256,7 @@ export default function Index() {
                     positiveIsGood={false}
                   />
                 </div>
-                <div className="grid grid-cols-[1.7fr_0.82fr] gap-3 md:gap-4 lg:flex-[2.4] lg:grid-cols-[1.9fr_0.72fr]">
+                <div className="grid grid-cols-[1.7fr_0.82fr] gap-3 md:gap-4 lg:flex-[2.5] lg:grid-cols-[1.8fr_0.85fr]">
                   <NetBalanceCard
                     balance={convertedCurrentMonth.balance}
                     previousBalance={hasPreviousData ? convertedPreviousMonth.balance : undefined}
@@ -271,28 +271,28 @@ export default function Index() {
                 </div>
               </div>
 
-              {/* Row 2: weekly income vs expenses (this month) + Daily view heatmap (with stats) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
+              {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
                 <WeeklyIncomeExpensesChart weekly={monthlyInsights.weekly} />
-                <DailyHeatmapCard
+                <AccountsStackCard
                   transactions={transactions}
                   monthKey={latestMonthLabel}
                   convert={convertToUserCurrency}
+                  formatCurrency={formatCurrency}
                 />
               </div>
 
-              {/* Row 3: Daily balance chart + Accounts list */}
+              {/* Row 3: Daily balance chart (wide) + Daily view heatmap (with stats, in its square) */}
               <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
                 <DailyFlowChart
                   transactions={transactions}
                   monthKey={latestMonthLabel}
                   convert={convertToUserCurrency}
                 />
-                <AccountsStackCard
+                <DailyHeatmapCard
                   transactions={transactions}
                   monthKey={latestMonthLabel}
                   convert={convertToUserCurrency}
-                  formatCurrency={formatCurrency}
                 />
               </div>
 

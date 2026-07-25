@@ -20,7 +20,8 @@ interface DailyHeatmapCardProps {
 }
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-const CELL_SIZE = 30; // fixed px — height must not scale with column width
+const CELL_SIZE = 22; // fixed px — compact so the calendar + side stats fit the square card
+const CELL_GAP = 4;
 
 export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatmapCardProps) {
   const { t } = useTranslation("dashboard");
@@ -147,20 +148,20 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
       {!monthKey || daysInMonth === 0 ? (
         <EmptyState height="h-[200px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <div className="flex items-center justify-between gap-x-3 gap-y-3">
           {/* Calendar */}
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2">
             {/* Weekday header */}
-            <div className="grid grid-cols-7 gap-[5px]" style={{ width: gridSize > 0 ? `${(CELL_SIZE + 5) * 7 - 5}px` : undefined }}>
+            <div className="grid grid-cols-7" style={{ columnGap: CELL_GAP, width: gridSize > 0 ? `${(CELL_SIZE + CELL_GAP) * 7 - CELL_GAP}px` : undefined }}>
               {WEEKDAY_KEYS.map((k) => (
-                <div key={k} className="text-center text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground" style={{ width: CELL_SIZE }}>
+                <div key={k} className="text-center text-[8.5px] font-semibold uppercase tracking-wide text-muted-foreground" style={{ width: CELL_SIZE }}>
                   {t(`heatmap.weekdays.${k}`, k.charAt(0).toUpperCase() + k.slice(1, 3))}
                 </div>
               ))}
             </div>
 
             {/* Grid — fixed cell size so height never scales with column width */}
-            <div className="grid grid-cols-7 gap-[5px]">
+            <div className="grid grid-cols-7" style={{ gap: CELL_GAP }}>
               {Array.from({ length: gridSize }).map((_, i) => {
                 const dayIndex = i - leadingBlanks;
                 if (dayIndex < 0 || dayIndex >= daysInMonth) {
@@ -174,7 +175,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
                     key={i}
                     title={hasValue ? `${cell.day}: ${formatValue(cell.value)}` : `${cell.day}`}
                     className={cn(
-                      "rounded-[7px] flex items-center justify-center text-[10.5px] font-medium transition-transform hover:scale-110 cursor-default",
+                      "rounded-[6px] flex items-center justify-center text-[9.5px] font-medium transition-transform hover:scale-110 cursor-default",
                       hasValue ? "text-white" : "text-muted-foreground/50 bg-muted/30",
                     )}
                     style={{
@@ -190,26 +191,26 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-1.5 text-[10.5px] text-muted-foreground mt-0.5 self-end">
+            <div className="flex items-center gap-1 text-[9px] text-muted-foreground mt-0.5 self-end">
               <span className="tabular-nums">{minNonZero > 0 ? formatLegendValue(minNonZero) : "—"}</span>
               {[0.12, 0.3, 0.55, 0.8, 1].map((a) => (
-                <div key={a} className="w-[10px] h-[10px] rounded-[3px]" style={{ backgroundColor: `hsl(var(--primary) / ${a})` }} />
+                <div key={a} className="w-[9px] h-[9px] rounded-[2px]" style={{ backgroundColor: `hsl(var(--primary) / ${a})` }} />
               ))}
               <span className="tabular-nums">{maxValue > 0 ? formatLegendValue(maxValue) : "—"}</span>
             </div>
           </div>
 
           {/* Contextual stats — adapt to the selected metric so they explain the heatmap */}
-          <div className="flex min-w-[120px] flex-1 flex-col justify-center gap-4 border-border/60 sm:border-l sm:pl-6">
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 border-l border-border/60 pl-3">
             {stats.map((s, i) => (
-              <div key={i}>
-                <div className="text-[11px] font-medium uppercase tracking-[.03em] text-muted-foreground">
+              <div key={i} className="min-w-0">
+                <div className="truncate text-[9.5px] font-medium uppercase tracking-[.02em] text-muted-foreground">
                   {s.label}
                 </div>
-                <div className="mt-0.5 text-[17px] font-semibold tabular-nums leading-none text-foreground">
+                <div className="mt-0.5 truncate text-[14px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
-                {s.hint && <div className="mt-0.5 text-[11px] text-muted-foreground/80">{s.hint}</div>}
+                {s.hint && <div className="mt-0.5 text-[9.5px] text-muted-foreground/80">{s.hint}</div>}
               </div>
             ))}
           </div>
