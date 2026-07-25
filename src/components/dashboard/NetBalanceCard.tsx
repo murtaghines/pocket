@@ -44,7 +44,7 @@ export function NetBalanceCard({
 
   return (
     <div
-      className="flex items-stretch gap-3 rounded-2xl bg-primary p-[18px] text-primary-foreground"
+      className="flex h-full items-stretch gap-3 rounded-2xl bg-primary p-[18px] text-primary-foreground"
       style={{ boxShadow: "var(--shadow-glow)" }}
     >
       {/* Balance */}
@@ -57,20 +57,22 @@ export function NetBalanceCard({
             <Wallet className="h-[17px] w-[17px]" strokeWidth={2.2} />
           </div>
         </div>
-        <div className="text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em]">
-          {formatCurrency(balance)}
-        </div>
-        <div className="mt-[5px] text-[12px] text-primary-foreground/82">
-          {change !== undefined ? (
-            <>
-              <span className={cn("font-semibold", deltaColor)}>
-                {isUp ? "▲" : isDown ? "▼" : "–"} {Math.abs(change)}%
-              </span>{" "}
-              vs {prevMonthLabel}
-            </>
-          ) : (
-            <span className="opacity-70">–</span>
-          )}
+        <div className="mt-auto">
+          <div className="text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em]">
+            {formatCurrency(balance)}
+          </div>
+          <div className="mt-[5px] text-[12px] text-primary-foreground/82">
+            {change !== undefined ? (
+              <>
+                <span className={cn("font-semibold", deltaColor)}>
+                  {isUp ? "▲" : isDown ? "▼" : "–"} {Math.abs(change)}%
+                </span>{" "}
+                vs {prevMonthLabel}
+              </>
+            ) : (
+              <span className="opacity-70">–</span>
+            )}
+          </div>
         </div>
       </div>
 

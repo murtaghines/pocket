@@ -87,7 +87,7 @@ export function TrendKpiCard({
 
   return (
     <div
-      className={cn("rounded-2xl p-[18px_18px_16px] transition-all", cardClasses, className)}
+      className={cn("flex h-full flex-col rounded-2xl p-[18px_18px_16px] transition-all", cardClasses, className)}
       style={{ boxShadow: cardShadow, animationDelay: `${delay}ms` }}
     >
       {/* Header row: label + icon badge */}
@@ -105,29 +105,29 @@ export function TrendKpiCard({
         </div>
       </div>
 
-      {/* Big value */}
-      <div
-        className={cn(
-          "text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none",
-          valueClass,
-        )}
-      >
-        {formatCurrency(total)}
-      </div>
-
-      {/* Delta line */}
-      <div className={cn("text-[12px] mt-[5px]", subtextClass)}>
-        {change !== undefined ? (
-          <>
-            <span className={cn("font-semibold", deltaColor)}>
-              {isUp ? "▲" : isDown ? "▼" : "–"}{" "}
-              {Math.abs(change)}%
-            </span>{" "}
-            vs {prevMonthLabel}
-          </>
-        ) : (
-          <span className="opacity-70">–</span>
-        )}
+      {/* Value + delta, anchored to the bottom so cards line up across the row */}
+      <div className="mt-auto">
+        <div
+          className={cn(
+            "text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none",
+            valueClass,
+          )}
+        >
+          {formatCurrency(total)}
+        </div>
+        <div className={cn("text-[12px] mt-[5px]", subtextClass)}>
+          {change !== undefined ? (
+            <>
+              <span className={cn("font-semibold", deltaColor)}>
+                {isUp ? "▲" : isDown ? "▼" : "–"}{" "}
+                {Math.abs(change)}%
+              </span>{" "}
+              vs {prevMonthLabel}
+            </>
+          ) : (
+            <span className="opacity-70">–</span>
+          )}
+        </div>
       </div>
     </div>
   );

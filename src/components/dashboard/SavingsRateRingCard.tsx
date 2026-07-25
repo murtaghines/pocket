@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { PiggyBank } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 interface SavingsRateRingCardProps {
@@ -19,15 +18,10 @@ export function SavingsRateRingCard({ income, expenses }: SavingsRateRingCardPro
   const data = [{ value: filled }, { value: 100 - filled }];
 
   return (
-    <div className="flex flex-col rounded-2xl bg-card p-[18px] shadow-bento">
-      <div className="mb-1 flex items-center justify-between">
-        <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
-          {t("stats.savingsRate")}
-        </span>
-        <div className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-primary/10 text-primary">
-          <PiggyBank className="h-[17px] w-[17px]" strokeWidth={2.2} />
-        </div>
-      </div>
+    <div className="flex h-full flex-col rounded-2xl bg-card p-[18px] shadow-bento">
+      <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
+        {t("stats.savingsRate")}
+      </span>
       <div className="relative flex min-h-[104px] flex-1 items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
