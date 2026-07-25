@@ -184,9 +184,10 @@ export function coefficientOfVariation(nums: number[]): number {
 // ---------------------------------------------------------------------------
 
 // Canonical expense slugs (from categoryTranslations) split into "essential" (hard to avoid:
-// housing/utilities, groceries, transport, health, core subscriptions, education) and
-// "discretionary" (lifestyle choices: eating out, leisure, shopping, travel, sports, pets).
-// The split answers "how much of what I spent was avoidable?". Legacy slugs are normalized first.
+// housing/utilities, groceries, transport, health, core subscriptions, education, plus sports and
+// pets — treated as non-negotiable wellbeing/dependents) and "discretionary" (lifestyle choices:
+// eating out, leisure, shopping, travel). The split answers "how much of what I spent was
+// avoidable?". Legacy slugs are normalized first.
 export const ESSENTIAL_EXPENSE_SLUGS = new Set([
   "housing",
   "groceries",
@@ -194,6 +195,8 @@ export const ESSENTIAL_EXPENSE_SLUGS = new Set([
   "health",
   "subscriptions",
   "education",
+  "sports",
+  "pets",
 ]);
 
 export const DISCRETIONARY_EXPENSE_SLUGS = new Set([
@@ -201,8 +204,6 @@ export const DISCRETIONARY_EXPENSE_SLUGS = new Set([
   "entertainment",
   "shopping",
   "travel",
-  "sports",
-  "pets",
   "other_expense",
 ]);
 

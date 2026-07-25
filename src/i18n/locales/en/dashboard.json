@@ -222,7 +222,7 @@
       "discretionary": "Discretionary",
       "discretionaryShare": "{{pct}}% discretionary",
       "explainer": "By category: essentials are hard to avoid, discretionary is lifestyle",
-      "essentialHint": "Housing, groceries, transport, health…",
+      "essentialHint": "Housing, groceries, health, sports, pets…",
       "discretionaryHint": "Eating out, leisure, shopping, travel…",
       "moreCategories_one": "{{count}} more category",
       "moreCategories_other": "{{count}} more categories"

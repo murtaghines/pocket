@@ -164,6 +164,9 @@ describe("fixed vs discretionary", () => {
   it("classifies essential and discretionary slugs", () => {
     expect(classifyExpense("housing")).toBe("essential");
     expect(classifyExpense("groceries")).toBe("essential");
+    // Sports and pets are treated as essential wellbeing/dependents.
+    expect(classifyExpense("sports")).toBe("essential");
+    expect(classifyExpense("pets")).toBe("essential");
     expect(classifyExpense("restaurants")).toBe("discretionary");
     expect(classifyExpense("travel")).toBe("discretionary");
   });
