@@ -117,8 +117,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
       style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
     >
       <div className="flex items-center justify-between gap-3 mb-3">
-        <p className="flex items-center gap-[7px] text-[15px] font-semibold text-foreground">
-          <CalendarDays className="w-[15px] h-[15px] text-muted-foreground" />
+        <p className="text-[15px] font-semibold text-foreground">
           {t("heatmap.title", "Daily view")}
         </p>
         <DropdownMenu>

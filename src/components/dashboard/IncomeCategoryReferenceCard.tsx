@@ -87,7 +87,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
       >
         <CardHeader className="p-4 pb-1">
-          <CardTitle className="text-base font-semibold">
+          <CardTitle className="text-[15px] font-semibold text-foreground">
             {t("charts.incomeByCategory", "Income by Category")}
           </CardTitle>
         </CardHeader>
@@ -135,7 +135,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
     >
       <CardHeader className="absolute left-0 top-0 z-10 p-5 pb-0">
-        <CardTitle className="text-[15px] font-semibold text-primary-foreground md:text-base">
+        <CardTitle className="text-[15px] font-semibold text-primary-foreground">
           {t("charts.incomeByCategory", "Income by Category")}
         </CardTitle>
       </CardHeader>

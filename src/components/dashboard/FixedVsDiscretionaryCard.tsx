@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Scale } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getCategoryLabel, categoryColors } from "@/lib/categoryTranslations";
@@ -35,8 +34,7 @@ export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProp
     <div className="bg-card rounded-2xl p-[20px_22px_18px] shadow-bento">
       <div className="flex items-start justify-between mb-4">
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold text-foreground flex items-center gap-2">
-            <Scale className="w-4 h-4 text-primary" strokeWidth={2} />
+          <p className="text-[15px] font-semibold text-foreground">
             {t("insights.essential.title")}
           </p>
           <p className="text-[12px] text-muted-foreground mt-0.5">
