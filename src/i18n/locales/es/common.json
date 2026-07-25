@@ -41,6 +41,15 @@
     "logout": "Cerrar sesión",
     "logoutSuccess": "Sesión cerrada correctamente"
   },
+  "addData": {
+    "title": "Agregar datos",
+    "bankStatement": "Extracto bancario",
+    "bankStatementDesc": "Subí un export del banco para agregar transacciones",
+    "investments": "Inversiones",
+    "investmentsDesc": "Subí movimientos de inversión",
+    "categories": "Categorías y reglas",
+    "categoriesDesc": "Editá categorías y cómo se clasifican las transacciones"
+  },
   "status": {
     "active": "Activo",
     "inactive": "Inactivo",

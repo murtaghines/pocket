@@ -171,7 +171,7 @@ export function BankStatementsTabsView() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* ============= Header: title (left) + actions (right) ============= */}
-      <div className="flex items-center justify-between gap-3 px-6 md:px-10 py-5 md:py-6 border-b border-border bg-card">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 md:px-10 py-5 md:py-6 border-b border-border bg-card">
         <div className="min-w-0">
           <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
             Bank statements
