@@ -786,9 +786,8 @@ export function InlineTransactionsEditor({
 
       {/* The spreadsheet — flush, no padding, no inner card */}
       <div className="bg-card flex-1 flex flex-col">
-        <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]">
-          {/* min-width keeps the fixed columns from collapsing/overlapping on
-              narrow screens — the container scrolls horizontally instead. */}
+        {/* Desktop / tablet: full spreadsheet. Phones get the stacked card list below. */}
+        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]">
           <Table className="w-full min-w-[860px] table-fixed [&_th]:border-r [&_th]:border-border/60 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/40 [&_td:last-child]:border-r-0">
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow className="hover:bg-transparent border-b border-border [&>th]:h-10">
@@ -1158,6 +1157,246 @@ export function InlineTransactionsEditor({
               })}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Phones: stacked, editable cards (the table is unusable at this width) */}
+        <div className="md:hidden divide-y divide-border/60">
+          {rowsToRender.map((tx, idx) => {
+            const isMismatch = mismatchedIds.has(tx.id);
+            const isSaving = savingIds.has(tx.id);
+            const isSaved = savedIds.has(tx.id);
+            const isHidden = tx.is_hidden;
+            const txHistory = auditByTx[tx.id] || [];
+            const editEntries = txHistory.filter((h) => h.action !== "revert");
+            const hasEditHistory = editEntries.length > 0;
+            const snapshot = hasEditHistory ? buildOriginalSnapshot(txHistory) : null;
+            const isEdited =
+              hasEditHistory &&
+              !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
+            const originalSnapshot = isEdited ? snapshot : null;
+            const cleanDescription = (tx.description_norm || tx.description)
+              .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+              .trim();
+            const pending = pendingByTx[tx.id];
+            const isPending = !!pending;
+            const movement = (pending?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
+            const category = normalizeCategory(pending?.category ?? tx.category ?? "other_expense");
+            const displayAmount = pending?.amount ?? tx.amount;
+            const availableCategories = getCategoriesForMovement(movement);
+            const amountColor =
+              displayAmount === 0
+                ? "text-muted-foreground"
+                : movement === "INCOME"
+                  ? "text-success"
+                  : movement === "TRANSFER"
+                    ? "text-muted-foreground"
+                    : "text-destructive";
+            const ruleWorthy =
+              (!!pending?.category && pending.category !== tx.category) ||
+              (!!pending?.movement &&
+                pending.movement !== tx.movement &&
+                (tx.movement === "TRANSFER" || pending.movement === "TRANSFER"));
+
+            return (
+              <div
+                key={tx.id}
+                className={cn(
+                  "flex flex-col gap-2.5 px-4 py-3.5 transition-colors",
+                  isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                  isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                  isPending && "bg-warning/10 border-l-2 border-l-warning",
+                  isHidden && "opacity-50 bg-muted/20",
+                  isSaved && !isMismatch && "bg-success/5",
+                )}
+              >
+                {/* Description + amount */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-2">
+                    <span className="shrink-0 pt-0.5 text-[11px] tabular-nums text-muted-foreground/60">{idx + 1}</span>
+                    <div className="min-w-0">
+                      <p className={cn("break-words text-sm font-medium text-foreground", isHidden && "line-through")}>
+                        {cleanDescription}
+                      </p>
+                      <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
+                        {formatDate(new Date(tx.date))} · {accountName(tx.account_id) || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {isSaving ? (
+                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                    ) : isSaved ? (
+                      <Check className="h-3 w-3 text-success" />
+                    ) : null}
+                    <span className={cn("text-sm font-semibold tabular-nums", amountColor)}>
+                      {displayAmount < 0 ? "-" : ""}
+                      {formatCurrency(Math.abs(displayAmount))}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Movement + category */}
+                <div className="flex items-center gap-2">
+                  {isLocked ? (
+                    <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                      {getMovementLabel(movement)}
+                    </PillBadge>
+                  ) : (
+                    <Select value={movement} onValueChange={(v) => handleMovementChange(tx, v as MovementType)} disabled={isHidden}>
+                      <SelectTrigger className="h-9 flex-1 border border-border bg-card px-2 text-sm [&>svg]:opacity-50">
+                        <SelectValue>
+                          <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                            {getMovementLabel(movement)}
+                          </PillBadge>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="INCOME">
+                          <PillBadge variant="solid" tone="green" icon={<Plus className="h-3 w-3" />}>
+                            {getMovementLabel("INCOME")}
+                          </PillBadge>
+                        </SelectItem>
+                        <SelectItem value="EXPENSE">
+                          <PillBadge variant="solid" tone="red" icon={<Minus className="h-3 w-3" />}>
+                            {getMovementLabel("EXPENSE")}
+                          </PillBadge>
+                        </SelectItem>
+                        <SelectItem value="TRANSFER">
+                          <PillBadge variant="solid" tone="amber" icon={<ArrowRightLeft className="h-3 w-3" />}>
+                            {getMovementLabel("TRANSFER")}
+                          </PillBadge>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {isLocked ? (
+                    <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
+                      <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                      <span className="truncate max-w-[120px]">{getCategoryLabel(category)}</span>
+                    </PillBadge>
+                  ) : (
+                    <Select value={category} onValueChange={(v) => handleCategoryChange(tx, v)} disabled={isHidden}>
+                      <SelectTrigger className="h-9 flex-1 border border-border bg-card px-2 text-sm [&>svg]:opacity-50">
+                        <SelectValue>
+                          <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
+                            <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                            <span className="truncate max-w-[120px]">{getCategoryLabel(category)}</span>
+                          </PillBadge>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCategories.map((slug) => (
+                          <SelectItem key={slug} value={slug}>
+                            <div className="flex items-center gap-2">
+                              <CategoryIcon iconName={getCategoryIcon(slug)} colorVar={getCategoryColor(slug)} size="sm" showBackground />
+                              {getCategoryLabel(slug)}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                {/* Actions */}
+                {!isLocked && (
+                  <div className="flex items-center justify-end gap-1">
+                    {isPending ? (
+                      <>
+                        {ruleWorthy && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 gap-1.5 rounded-full bg-primary/15 px-3 text-primary hover:bg-primary/25"
+                            onClick={() => commitRow(tx, true)}
+                            disabled={isSaving}
+                          >
+                            <Sparkles className="h-4 w-4" /> Save + rule
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 gap-1.5 rounded-full bg-success/15 px-3 text-success hover:bg-success/25"
+                          onClick={() => commitRow(tx, false)}
+                          disabled={isSaving}
+                        >
+                          <Check className="h-4 w-4" /> Save
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => clearPendingFor(tx.id)}
+                          aria-label="Discard pending changes"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <AmountEditButton
+                          originalAmount={displayAmount}
+                          formatCurrency={formatCurrency}
+                          onChangeAmount={(v) => handleAmountChange(tx, v)}
+                          onApplySplit={(n) => handleSplit(tx, n)}
+                          disabled={isHidden}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleToggleHidden(tx)}
+                          aria-label={isHidden ? "Include in totals" : "Hide from totals"}
+                        >
+                          {isHidden ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                        </Button>
+                        {isEdited && originalSnapshot && (
+                          <RevertToOriginalButton
+                            original={originalSnapshot.values}
+                            fields={originalSnapshot.fields}
+                            current={{
+                              movement: tx.movement,
+                              category: tx.category,
+                              category_id: tx.category_id,
+                              amount: tx.amount,
+                              is_hidden: tx.is_hidden,
+                            }}
+                            formatCurrency={formatCurrency}
+                            getCategoryLabel={getCategoryLabel}
+                            onConfirm={() => {
+                              const payload: Record<string, unknown> = {
+                                ...originalSnapshot.values,
+                                __action: "revert",
+                              };
+                              if ("category" in originalSnapshot.values) {
+                                payload.category_source = "DEFAULT";
+                                payload.user_corrected = false;
+                              }
+                              saveMutation.mutate({
+                                id: tx.id,
+                                payload,
+                                before: {
+                                  movement: tx.movement,
+                                  category: tx.category,
+                                  category_id: tx.category_id,
+                                  amount: tx.amount,
+                                  is_hidden: tx.is_hidden,
+                                },
+                              });
+                            }}
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Collapsed-rows hint */}
