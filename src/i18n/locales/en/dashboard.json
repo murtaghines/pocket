@@ -220,7 +220,12 @@
       "subtitle": "How much of your spending was avoidable",
       "essential": "Essential",
       "discretionary": "Discretionary",
-      "discretionaryShare": "{{pct}}% discretionary"
+      "discretionaryShare": "{{pct}}% discretionary",
+      "explainer": "By category: essentials are hard to avoid, discretionary is lifestyle",
+      "essentialHint": "Housing, groceries, transport, health…",
+      "discretionaryHint": "Eating out, leisure, shopping, travel…",
+      "moreCategories_one": "{{count}} more category",
+      "moreCategories_other": "{{count}} more categories"
     },
     "weekly": {
       "title": "Weekly breakdown",
