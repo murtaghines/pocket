@@ -7,6 +7,7 @@ import {
   weekdaySpending,
   categoryTrends,
   rollingNetByMonths,
+  type Granularity,
   type HistorySummary,
   type MonthComparison,
   type SeasonalMonth,
@@ -17,10 +18,15 @@ import {
 
 interface UseHistoricalInsightsArgs {
   transactions: Transaction[];
-  /** Already converted to the user's base currency (as History builds it). Ascending by month. */
+  /**
+   * Period-bucketed series at the selected granularity (already converted to the user's base
+   * currency, ascending by period key — the `month` field holds the period key).
+   */
   monthlyData: MonthlyData[];
   /** Convert an EUR-stored transaction amount into the user's base currency. */
   convert: (n: number) => number;
+  /** Bucketing level the History view is currently showing. */
+  granularity: Granularity;
 }
 
 /** Rolling windows offered by the UI, in months (~30/90/180 days). */
@@ -47,6 +53,7 @@ export function useHistoricalInsights({
   transactions,
   monthlyData,
   convert,
+  granularity,
 }: UseHistoricalInsightsArgs): HistoricalInsights {
   return useMemo(() => {
     const rolling = ROLLING_WINDOWS.reduce(
@@ -60,11 +67,12 @@ export function useHistoricalInsights({
     return {
       summary: historySummary(monthlyData),
       monthComparisons: monthOverMonth(monthlyData),
+      // Seasonality is calendar-month by nature; only surfaced at month granularity by TotalView.
       seasonal: seasonalIndexByCalendarMonth(monthlyData),
-      hasSeasonalData: monthlyData.length >= 12,
+      hasSeasonalData: granularity === "month" && monthlyData.length >= 12,
       weekday: weekdaySpending(transactions, convert),
-      categoryTrend: categoryTrends(transactions, 6, convert),
+      categoryTrend: categoryTrends(transactions, 6, convert, granularity),
       rolling,
     };
-  }, [transactions, monthlyData, convert]);
+  }, [transactions, monthlyData, convert, granularity]);
 }

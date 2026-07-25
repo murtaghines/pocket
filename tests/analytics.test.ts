@@ -17,6 +17,11 @@ import {
   rollingNetByMonths,
   categoryTrends,
   historySummary,
+  yearKeyOf,
+  weekStartKeyOf,
+  periodKeyOf,
+  bucketByGranularity,
+  formatPeriodLabel,
 } from "../src/lib/analytics";
 import type { MonthlyData, Transaction } from "../src/lib/mockData";
 
@@ -57,6 +62,86 @@ describe("date helpers", () => {
     expect(daysInMonthOf("2024-02")).toBe(29);
     expect(daysInMonthOf("2023-02")).toBe(28);
     expect(daysInMonthOf("2024-04")).toBe(30);
+  });
+});
+
+describe("granularity period keys", () => {
+  it("yearKeyOf slices the year", () => {
+    expect(yearKeyOf("2024-03-05")).toBe("2024");
+    expect(yearKeyOf("2023-12-31")).toBe("2023");
+  });
+
+  it("weekStartKeyOf returns the Monday of the week (tz-safe)", () => {
+    // 2024-03-06 is a Wednesday -> Monday is 2024-03-04.
+    expect(weekStartKeyOf("2024-03-06")).toBe("2024-03-04");
+    // A Monday maps to itself.
+    expect(weekStartKeyOf("2024-03-04")).toBe("2024-03-04");
+    // A Sunday belongs to the week that started the previous Monday.
+    expect(weekStartKeyOf("2024-03-10")).toBe("2024-03-04");
+    // Crossing a month boundary: 2024-03-01 is a Friday -> Monday 2024-02-26.
+    expect(weekStartKeyOf("2024-03-01")).toBe("2024-02-26");
+  });
+
+  it("periodKeyOf dispatches per granularity", () => {
+    expect(periodKeyOf("2024-03-06", "year")).toBe("2024");
+    expect(periodKeyOf("2024-03-06", "month")).toBe("2024-03");
+    expect(periodKeyOf("2024-03-06", "week")).toBe("2024-03-04");
+  });
+});
+
+describe("bucketByGranularity", () => {
+  const txns: Transaction[] = [
+    tx({ date: "2024-01-10", amount: 1000, movement: "INCOME", categorySlug: "salary" }),
+    tx({ date: "2024-01-15", amount: -200, movement: "EXPENSE", categorySlug: "groceries" }),
+    tx({ date: "2024-01-20", amount: -300, movement: "TRANSFER", categorySlug: "to_investment" }),
+    tx({ date: "2024-01-25", amount: -50, movement: "TRANSFER", categorySlug: "own_transfer" }),
+    tx({ date: "2024-02-10", amount: 1200, movement: "INCOME", categorySlug: "salary" }),
+    tx({ date: "2024-02-12", amount: -400, movement: "EXPENSE", categorySlug: "restaurants" }),
+  ];
+
+  it("buckets by month with income/expenses/balance/sentToInvest", () => {
+    const rows = bucketByGranularity(txns, "month");
+    expect(rows.map((r) => r.month)).toEqual(["2024-01", "2024-02"]);
+    expect(rows[0]).toMatchObject({ income: 1000, expenses: 200, balance: 800, sentToInvest: 300 });
+    // The plain own_transfer is excluded from income and expenses.
+    expect(rows[0].expenses).toBe(200);
+    expect(rows[1]).toMatchObject({ income: 1200, expenses: 400, balance: 800 });
+  });
+
+  it("buckets by year, collapsing all months of the year", () => {
+    const rows = bucketByGranularity(txns, "year");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ month: "2024", income: 2200, expenses: 600, balance: 1600, sentToInvest: 300 });
+  });
+
+  it("buckets by week keyed on the Monday of each week, sorted ascending", () => {
+    const rows = bucketByGranularity(txns, "week");
+    // Each transaction date maps to its own week Monday.
+    expect(rows.map((r) => r.month)).toEqual([...rows.map((r) => r.month)].sort());
+    const total = rows.reduce((s, r) => s + r.income - r.expenses, 0);
+    expect(total).toBe(1600);
+  });
+
+  it("applies the convert function to every amount", () => {
+    const rows = bucketByGranularity(txns, "year", (n) => n * 2);
+    expect(rows[0]).toMatchObject({ income: 4400, expenses: 1200, sentToInvest: 600 });
+  });
+});
+
+describe("formatPeriodLabel", () => {
+  it("returns the year unchanged at year granularity", () => {
+    expect(formatPeriodLabel("2024", "year")).toBe("2024");
+  });
+
+  it("formats a month key as a short month name", () => {
+    expect(formatPeriodLabel("2024-03", "month", "en")).toBe("Mar");
+  });
+
+  it("formats a week key as a short day + month", () => {
+    // Locale-dependent exact string; assert it contains the day and month token.
+    const label = formatPeriodLabel("2024-03-04", "week", "en");
+    expect(label).toMatch(/Mar/);
+    expect(label).toMatch(/4/);
   });
 });
 

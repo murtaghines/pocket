@@ -64,6 +64,94 @@ export function round2(n: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// Granularity — bucket a series by week / month / year (History view selector)
+// ---------------------------------------------------------------------------
+
+export type Granularity = "week" | "month" | "year";
+
+/** "2024-03-05" -> "2024". */
+export function yearKeyOf(dateStr: string): string {
+  return dateStr.slice(0, 4);
+}
+
+/**
+ * The Monday (ISO week start) of the week containing `dateStr`, as "YYYY-MM-DD". Continuous and
+ * string-sortable, so it works as a period key across month/year boundaries. tz-safe (date parts).
+ */
+export function weekStartKeyOf(dateStr: string): string {
+  const [y, m, d] = dateStr.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return dateStr.slice(0, 10);
+  const dt = new Date(y, m - 1, d);
+  const dow = (dt.getDay() + 6) % 7; // 0=Mon .. 6=Sun
+  dt.setDate(dt.getDate() - dow);
+  const yy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+/** Period key for a date at the given granularity (week -> Monday date, month -> YYYY-MM, year -> YYYY). */
+export function periodKeyOf(dateStr: string, g: Granularity): string {
+  if (g === "week") return weekStartKeyOf(dateStr);
+  if (g === "year") return yearKeyOf(dateStr);
+  return monthKeyOf(dateStr);
+}
+
+/**
+ * Bucket transactions into a `MonthlyData[]`-shaped series at the given granularity — mirrors the
+ * monthly builder in `useTransactions`: income for INCOME, expenses for other non-transfer
+ * movements, `sentToInvest` for the `to_investment` transfers, `balance = income - expenses`. The
+ * `month` field holds the period key (Monday date / YYYY-MM / YYYY) so existing MonthlyData
+ * consumers work unchanged. Ascending by key.
+ */
+export function bucketByGranularity(
+  transactions: Transaction[],
+  g: Granularity,
+  convert: (n: number) => number = (n) => n,
+): MonthlyData[] {
+  const totals: Record<string, { income: number; expenses: number; sentToInvest: number }> = {};
+  const ensure = (k: string) => (totals[k] ||= { income: 0, expenses: 0, sentToInvest: 0 });
+
+  for (const t of transactions) {
+    const key = periodKeyOf(t.date, g);
+    const amt = Math.abs(convert(t.amount));
+    if (t.categorySlug === "to_investment") {
+      ensure(key).sentToInvest += amt;
+      continue; // a TRANSFER — never income or expense
+    }
+    if (t.movement === "TRANSFER") continue; // other transfers excluded from income/expense
+    if (isIncome(t)) ensure(key).income += amt;
+    else ensure(key).expenses += amt;
+  }
+
+  return Object.entries(totals)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, d]) => ({
+      month,
+      income: round2(d.income),
+      expenses: round2(d.expenses),
+      balance: round2(d.income - d.expenses),
+      sentToInvest: round2(d.sentToInvest),
+    }));
+}
+
+/**
+ * Human label for a period key at a given granularity. Month -> short month name, year -> the year,
+ * week -> the week-start short date. `locale` controls month/day names.
+ */
+export function formatPeriodLabel(key: string, g: Granularity, locale = "en"): string {
+  if (g === "year") return key;
+  if (g === "week") {
+    const [y, m, d] = key.slice(0, 10).split("-").map(Number);
+    if (!y || !m || !d) return key;
+    return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(new Date(y, m - 1, d));
+  }
+  const [y, m] = key.split("-").map(Number);
+  if (!y || !m) return key;
+  return new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(y, m - 1, 1));
+}
+
+// ---------------------------------------------------------------------------
 // Basic statistics (defensive: empty input -> 0, never NaN)
 // ---------------------------------------------------------------------------
 
@@ -424,15 +512,16 @@ export function categoryTrends(
   transactions: Transaction[],
   topN = 6,
   convert: (n: number) => number = (n) => n,
+  g: Granularity = "month",
 ): CategoryTrend {
   const monthsSet = new Set<string>();
-  // slug -> month -> total
+  // slug -> periodKey -> total
   const bySlug: Record<string, Record<string, number>> = {};
   const slugTotals: Record<string, number> = {};
 
   for (const t of transactions) {
     if (!isExpense(t)) continue;
-    const mk = monthKeyOf(t.date);
+    const mk = periodKeyOf(t.date, g);
     monthsSet.add(mk);
     const slug = normalizeCategory(t.categorySlug || String(t.category));
     const amt = Math.abs(convert(t.amount));
