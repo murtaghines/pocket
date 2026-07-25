@@ -40,7 +40,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
     return (
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className="text-[15px] font-semibold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </CardTitle>
         </CardHeader>
@@ -52,16 +52,16 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
   }
 
   return (
-    <Card variant="bento" className="">
+    <Card variant="bento" className="flex h-full flex-col">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-[15px] font-semibold text-foreground">
           {t("charts.spendingByCategory", "Spending by category")}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
+      <CardContent className="flex-1">
+        <div className="flex h-full flex-col items-center justify-center gap-5 sm:flex-row sm:items-center sm:gap-8">
           {/* Donut gauge with the month total in the centre */}
-          <div className="relative shrink-0" style={{ width: 168, height: 150 }}>
+          <div className="relative shrink-0" style={{ width: 224, height: 204 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -85,8 +85,8 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center pb-2.5">
-              <span className="text-[17px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center pb-3">
+              <span className="text-[19px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
                 {formatCurrency(total)}
               </span>
             </div>
@@ -112,13 +112,12 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
                   <span
                     className={cn(
                       "flex w-[52px] shrink-0 items-center justify-end gap-0.5 text-[12px] font-medium tabular-nums",
-                      up && "text-destructive",
-                      down && "text-success",
+                      up ? "text-destructive" : down ? "text-success" : "text-muted-foreground/50",
                     )}
                   >
                     {up && <ArrowUp className="h-3 w-3" strokeWidth={2.6} />}
                     {down && <ArrowDown className="h-3 w-3" strokeWidth={2.6} />}
-                    {pct !== undefined && pct !== 0 && `${Math.abs(pct)}%`}
+                    {up || down ? `${Math.abs(pct as number)}%` : "0%"}
                   </span>
                 </li>
               );

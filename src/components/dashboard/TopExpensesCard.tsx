@@ -26,7 +26,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
     return (
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className="text-[15px] font-semibold text-foreground">
             {t('topExpenses.title')}
           </CardTitle>
         </CardHeader>
@@ -40,7 +40,7 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
   return (
     <Card variant="bento" className="">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-[15px] font-semibold text-foreground">
           {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
