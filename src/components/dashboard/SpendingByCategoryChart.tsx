@@ -53,15 +53,15 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
 
   return (
     <Card variant="bento" className="flex h-full flex-col">
-      <CardHeader className="pb-2">
+      <CardHeader className="px-5 pt-[18px] pb-2">
         <CardTitle className="text-[15px] font-semibold text-foreground">
           {t("charts.spendingByCategory", "Spending by category")}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1">
-        <div className="flex h-full flex-col items-center justify-center gap-5 sm:flex-row sm:items-center sm:gap-8">
+      <CardContent className="flex flex-1 items-center px-5 pb-[18px] pt-0">
+        <div className="flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:items-center sm:gap-7">
           {/* Donut gauge with the month total in the centre */}
-          <div className="relative shrink-0" style={{ width: 224, height: 204 }}>
+          <div className="relative shrink-0" style={{ width: 186, height: 170 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -86,7 +86,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center pb-3">
-              <span className="text-[19px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
+              <span className="text-[18px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
                 {formatCurrency(total)}
               </span>
             </div>
