@@ -230,8 +230,10 @@ export default function Index() {
             <div className="flex flex-col gap-[18px]">
               {/* KPI area: income + expenses, then the net-balance hero (with sent-to-invest
                   tucked in) next to the savings-rate ring */}
-              <div className="flex flex-col gap-3 md:gap-4">
-                <div className="grid grid-cols-2 gap-3 md:gap-4">
+              {/* All four KPIs on a single row on desktop; on mobile the two pairs stack
+                  (income+expenses, then the net-balance hero + savings ring) unchanged. */}
+              <div className="flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-stretch">
+                <div className="grid grid-cols-2 gap-3 md:gap-4 lg:flex-[2]">
                   <TrendKpiCard
                     kind="income"
                     label={t('stats.income')}
@@ -255,7 +257,7 @@ export default function Index() {
                     positiveIsGood={false}
                   />
                 </div>
-                <div className="grid grid-cols-[1.55fr_1fr] gap-3 md:gap-4">
+                <div className="grid grid-cols-[1.55fr_1fr] gap-3 md:gap-4 lg:flex-[2.6]">
                   <NetBalanceCard
                     balance={convertedCurrentMonth.balance}
                     previousBalance={hasPreviousData ? convertedPreviousMonth.balance : undefined}
