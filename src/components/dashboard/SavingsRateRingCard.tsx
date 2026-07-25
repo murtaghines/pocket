@@ -18,11 +18,11 @@ export function SavingsRateRingCard({ income, expenses }: SavingsRateRingCardPro
   const data = [{ value: filled }, { value: 100 - filled }];
 
   return (
-    <div className="flex h-full flex-col rounded-2xl bg-card p-[18px] shadow-bento">
-      <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
+    <div className="flex h-full flex-col rounded-2xl bg-card p-[16px] shadow-bento">
+      <span className="text-[12px] font-semibold uppercase leading-tight tracking-[.04em] text-muted-foreground">
         {t("stats.savingsRate")}
       </span>
-      <div className="relative flex min-h-[104px] flex-1 items-center justify-center">
+      <div className="relative flex min-h-[44px] flex-1 items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

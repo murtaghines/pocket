@@ -44,12 +44,12 @@ export function NetBalanceCard({
 
   return (
     <div
-      className="flex h-full items-stretch gap-3 rounded-2xl bg-primary p-[18px] text-primary-foreground"
+      className="flex h-full items-stretch gap-3 rounded-2xl bg-primary p-[16px] text-primary-foreground"
       style={{ boxShadow: "var(--shadow-glow)" }}
     >
       {/* Balance */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="mb-[14px] flex items-center justify-between">
+        <div className="mb-[10px] flex items-center justify-between">
           <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-primary-foreground/78">
             {t("stats.netBalance")}
           </span>

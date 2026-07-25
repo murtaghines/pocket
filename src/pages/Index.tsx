@@ -257,7 +257,7 @@ export default function Index() {
                     positiveIsGood={false}
                   />
                 </div>
-                <div className="grid grid-cols-[1.55fr_1fr] gap-3 md:gap-4 lg:flex-[2.6]">
+                <div className="grid grid-cols-[1.7fr_0.82fr] gap-3 md:gap-4 lg:flex-[2.4] lg:grid-cols-[1.9fr_0.72fr]">
                   <NetBalanceCard
                     balance={convertedCurrentMonth.balance}
                     previousBalance={hasPreviousData ? convertedPreviousMonth.balance : undefined}
@@ -270,12 +270,6 @@ export default function Index() {
                     expenses={convertedCurrentMonth.expenses}
                   />
                 </div>
-              </div>
-
-              {/* Insights row B: essential vs discretionary + transaction stats */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-[16px]">
-                <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
-                <TransactionStatsCard stats={monthlyInsights.txStats} />
               </div>
 
               {/* Row 2: weekly income vs expenses (this month) + Daily view heatmap */}
@@ -301,6 +295,12 @@ export default function Index() {
                   convert={convertToUserCurrency}
                   formatCurrency={formatCurrency}
                 />
+              </div>
+
+              {/* Insights: essential vs discretionary + transaction stats */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-[16px]">
+                <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
+                <TransactionStatsCard stats={monthlyInsights.txStats} />
               </div>
 
               {/* Row 4: Spending by category + Top expenses */}
