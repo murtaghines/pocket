@@ -39,18 +39,18 @@ export function TopExpensesCard({ transactions }: TopExpensesCardProps) {
 
   return (
     <Card variant="bento" className="">
-      <CardHeader className="pb-2">
+      <CardHeader className="px-5 pt-[18px] pb-2">
         <CardTitle className="text-[15px] font-semibold text-foreground">
           {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-1.5 px-5 pb-[18px] pt-0">
         {topExpenses.map((expense, index) => {
           const categorySlug = expense.categorySlug || expense.category;
           return (
             <div
               key={expense.id}
-              className="flex items-center gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors"
+              className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/80 text-sm font-medium text-muted-foreground shrink-0">
                 {index + 1}

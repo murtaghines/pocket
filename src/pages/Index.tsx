@@ -310,7 +310,7 @@ export default function Index() {
               </div>
 
               {/* Row 4: Spending by category (donut + month-over-month list) + Top expenses */}
-              <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-[16px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
                 <SpendingByCategoryChart data={convertedCategoryData} />
                 <TopExpensesCard transactions={monthTransactions} />
               </div>
