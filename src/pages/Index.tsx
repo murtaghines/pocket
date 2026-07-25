@@ -179,9 +179,23 @@ export default function Index() {
     }));
   };
 
+  // Previous-month expense totals per category slug (for the month-over-month arrows).
+  const prevExpenseByCategory: Record<string, number> = {};
+  if (previousMonth.month) {
+    transactions
+      .filter((t) => t.date.startsWith(previousMonth.month) && (t.movement === "EXPENSE" || t.type === "expense"))
+      .forEach((t) => {
+        const key = t.categorySlug || t.category;
+        prevExpenseByCategory[key] = (prevExpenseByCategory[key] || 0) + Math.abs(t.amount);
+      });
+  }
+
   const convertedCategoryData = buildCategoryData(
     (t) => t.movement === "EXPENSE" || t.type === "expense"
-  );
+  ).map((d) => ({
+    ...d,
+    previousValue: Math.round(convertToUserCurrency(prevExpenseByCategory[d.category] || 0) * 100) / 100,
+  }));
   const convertedIncomeCategoryData = buildCategoryData(
     (t) => t.movement === "INCOME" || t.type === "income"
   );
@@ -299,13 +313,13 @@ export default function Index() {
               {/* Insights: essential vs discretionary (transaction stats now live inside the heatmap) */}
               <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
 
-              {/* Row 4: Spending by category + Top expenses */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-                <SpendingByCategoryChart data={convertedCategoryData} />
-                <TopExpensesCard transactions={monthTransactions} />
-              </div>
+              {/* Row 4: Spending by category — donut + month-over-month category list */}
+              <SpendingByCategoryChart data={convertedCategoryData} monthKey={latestMonthLabel} />
 
-              {/* Row 5: Income analysis */}
+              {/* Row 5: Top expenses */}
+              <TopExpensesCard transactions={monthTransactions} />
+
+              {/* Row 6: Income analysis */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
                 <InvestmentSummaryCard />
                 <CategoryChart data={convertedIncomeCategoryData} />
