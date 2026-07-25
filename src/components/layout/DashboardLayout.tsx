@@ -77,11 +77,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Left: page title + month selector pill */}
         <div className="flex items-center gap-[14px] min-w-0">
           {location.pathname === "/dashboard" ? (
-            <span className="text-[23px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
+            <span className="text-[20px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
               Dashboard
             </span>
           ) : pageHeader ? (
-            <span className="text-[23px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
+            <span className="text-[20px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
               {pageHeader.title}
             </span>
           ) : null}
