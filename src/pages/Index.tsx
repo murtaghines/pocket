@@ -12,7 +12,6 @@ import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
 import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
-import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { WeeklyIncomeExpensesChart } from "@/components/dashboard/WeeklyIncomeExpensesChart";
 import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscretionaryCard";
@@ -310,18 +309,15 @@ export default function Index() {
                 />
               </div>
 
-              {/* Insights: essential vs discretionary (transaction stats now live inside the heatmap) */}
-              <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
+              {/* Row 4: Spending by category (donut + month-over-month list) + Top expenses */}
+              <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-[16px]">
+                <SpendingByCategoryChart data={convertedCategoryData} />
+                <TopExpensesCard transactions={monthTransactions} />
+              </div>
 
-              {/* Row 4: Spending by category — donut + month-over-month category list */}
-              <SpendingByCategoryChart data={convertedCategoryData} monthKey={latestMonthLabel} />
-
-              {/* Row 5: Top expenses */}
-              <TopExpensesCard transactions={monthTransactions} />
-
-              {/* Row 6: Income analysis */}
+              {/* Row 5: essential vs discretionary + income by category */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
-                <InvestmentSummaryCard />
+                <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
                 <CategoryChart data={convertedIncomeCategoryData} />
               </div>
 

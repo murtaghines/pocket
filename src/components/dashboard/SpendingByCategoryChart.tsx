@@ -5,35 +5,28 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
+import { cn } from "@/lib/utils";
 
 interface CategoryData {
   name: string;
   value: number;
   color: string;
   category?: string;
-  /** Same category's spend in the previous month, for the trend arrow. */
+  /** Same category's spend in the previous month, for the trend arrow + % change. */
   previousValue?: number;
 }
 
 interface SpendingByCategoryChartProps {
   data: CategoryData[];
-  monthKey?: string | null;
 }
 
-export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryChartProps) {
-  const { t, i18n } = useTranslation("dashboard");
+export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) {
+  const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const hasData = data.length > 0 && total > 0;
   const sorted = useMemo(() => [...data].sort((a, b) => b.value - a.value), [data]);
-
-  const monthLabel = useMemo(() => {
-    if (!monthKey) return "";
-    const [y, m] = monthKey.split("-").map(Number);
-    if (!y || !m) return "";
-    return new Intl.DateTimeFormat(i18n.language || "en", { month: "long", year: "numeric" }).format(new Date(y, m - 1, 1));
-  }, [monthKey, i18n.language]);
 
   // One-decimal percentage with a comma separator, integers when whole (e.g. "40%", "1,5%").
   const pctLabel = (value: number) => {
@@ -52,7 +45,7 @@ export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryCh
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <EmptyState height="h-[280px]" />
+          <EmptyState height="h-[240px]" />
         </CardContent>
       </Card>
     );
@@ -66,9 +59,9 @@ export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryCh
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:gap-10">
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
           {/* Donut gauge with the month total in the centre */}
-          <div className="relative shrink-0" style={{ width: 214, height: 196 }}>
+          <div className="relative shrink-0" style={{ width: 168, height: 150 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -92,35 +85,40 @@ export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryCh
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-3">
-              <span className="text-[26px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center pb-2.5">
+              <span className="text-[17px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
                 {formatCurrency(total)}
               </span>
-              {monthLabel && (
-                <span className="mt-1.5 text-[13px] capitalize text-muted-foreground">{monthLabel}</span>
-              )}
             </div>
           </div>
 
-          {/* Category list with month-over-month trend */}
-          <ul className="w-full flex-1 space-y-1">
+          {/* Category list with month-over-month trend + % change */}
+          <ul className="w-full flex-1 space-y-0.5">
             {sorted.map((entry, i) => {
               const prev = entry.previousValue;
-              const up = prev !== undefined && prev > 0 && entry.value > prev;
-              const down = prev !== undefined && prev > 0 && entry.value < prev;
+              const pct = prev !== undefined && prev > 0 ? Math.round(((entry.value - prev) / prev) * 100) : undefined;
+              const up = pct !== undefined && pct > 0;
+              const down = pct !== undefined && pct < 0;
               return (
-                <li key={i} className="flex items-center gap-3 py-1">
+                <li key={i} className="flex items-center gap-2.5 py-1">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: entry.color }} />
                   <span className="min-w-0 flex-1 truncate text-[14px] text-foreground">{entry.name}</span>
-                  <span className="w-[46px] shrink-0 text-right text-[13px] font-medium tabular-nums text-foreground">
+                  <span className="w-[44px] shrink-0 text-right text-[13px] font-medium tabular-nums text-foreground">
                     {pctLabel(entry.value)}
                   </span>
-                  <span className="w-[96px] shrink-0 text-right text-[13px] tabular-nums text-muted-foreground">
+                  <span className="w-[88px] shrink-0 text-right text-[13px] tabular-nums text-muted-foreground">
                     {formatCurrency(entry.value)}
                   </span>
-                  <span className="flex w-4 shrink-0 justify-center">
-                    {up && <ArrowUp className="h-3.5 w-3.5 text-destructive" strokeWidth={2.4} />}
-                    {down && <ArrowDown className="h-3.5 w-3.5 text-success" strokeWidth={2.4} />}
+                  <span
+                    className={cn(
+                      "flex w-[52px] shrink-0 items-center justify-end gap-0.5 text-[12px] font-medium tabular-nums",
+                      up && "text-destructive",
+                      down && "text-success",
+                    )}
+                  >
+                    {up && <ArrowUp className="h-3 w-3" strokeWidth={2.6} />}
+                    {down && <ArrowDown className="h-3 w-3" strokeWidth={2.6} />}
+                    {pct !== undefined && pct !== 0 && `${Math.abs(pct)}%`}
                   </span>
                 </li>
               );
