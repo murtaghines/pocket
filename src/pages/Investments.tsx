@@ -81,7 +81,7 @@ export default function Investments() {
         {!isLoading && (
           <>
             <div className="flex flex-col gap-[16px]">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px]">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-[16px]">
                 <KpiCard
                   label={tc('time.thisMonth')}
                   icon={<TrendingUp className="w-[15px] h-[15px]" />}
