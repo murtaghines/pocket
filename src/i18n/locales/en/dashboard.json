@@ -43,7 +43,7 @@
     "totalSavings": "Total Savings",
     "average": "Avg",
     "accounts": "Accounts",
-    "accountsSubtitle": "Current balance per account",
+    "accountsSubtitle": "Month-end balance",
     "addAccount": "Add account",
     "addAccountDescription": "Create a new bank account. You'll be able to upload statements to it.",
     "accountNamePlaceholder": "e.g. Santander, BBVA, Revolut...",

@@ -141,7 +141,7 @@ export function AccountsStackCard({
               {t('charts.accounts', 'Accounts')}
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              {t('charts.accountsSubtitle', 'Current balance per account')}
+              {t('charts.accountsSubtitle', 'Month-end balance')}
             </p>
           </div>
           <button

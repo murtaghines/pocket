@@ -41,6 +41,15 @@
     "logout": "Log out",
     "logoutSuccess": "Logged out successfully"
   },
+  "addData": {
+    "title": "Add data",
+    "bankStatement": "Bank statement",
+    "bankStatementDesc": "Upload a bank export to add transactions",
+    "investments": "Investments",
+    "investmentsDesc": "Upload investment movements",
+    "categories": "Categories & rules",
+    "categoriesDesc": "Edit categories and how transactions get sorted"
+  },
   "status": {
     "active": "Active",
     "inactive": "Inactive",
