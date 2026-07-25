@@ -13,10 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
 import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import { formatPeriodLabel, type Granularity } from "@/lib/analytics";
 import type { CategoryTrend } from "@/lib/analytics";
 
 interface CategoryTrendChartProps {
   trend: CategoryTrend;
+  /** Bucketing level driving the axis/tooltip labels (defaults to month). */
+  granularity?: Granularity;
 }
 
 // Resolve a category slug to an `hsl(...)` string from its CSS variable (falls back to grey).
@@ -34,9 +37,10 @@ function categoryHsl(slug: string): string {
  * see where spending is growing or shrinking. Tail categories are already collapsed into
  * "other_expense" by `categoryTrends`.
  */
-export function CategoryTrendChart({ trend }: CategoryTrendChartProps) {
-  const { t } = useTranslation("dashboard");
-  const { formatCurrency, formatMonthShort } = useLocalization();
+export function CategoryTrendChart({ trend, granularity = "month" }: CategoryTrendChartProps) {
+  const { t, i18n } = useTranslation("dashboard");
+  const { formatCurrency } = useLocalization();
+  const periodLabel = (key: string) => formatPeriodLabel(key, granularity, i18n.language);
 
   const hasData = trend.months.length > 0 && trend.series.length > 0;
 
@@ -53,7 +57,7 @@ export function CategoryTrendChart({ trend }: CategoryTrendChartProps) {
     return (
       <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 max-w-[220px]">
         <p className="text-xs font-semibold text-foreground mb-1">
-          {label ? formatMonthShort(`${label}-01`) : ""}
+          {label ? periodLabel(label) : ""}
         </p>
         {visible.map((item, i) => (
           <div key={i} className="flex items-center gap-2 text-xs">
@@ -90,7 +94,7 @@ export function CategoryTrendChart({ trend }: CategoryTrendChartProps) {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                  tickFormatter={(v) => formatMonthShort(`${v}-01`)}
+                  tickFormatter={(v) => periodLabel(v)}
                 />
                 <YAxis
                   axisLine={false}

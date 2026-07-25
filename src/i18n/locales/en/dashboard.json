@@ -25,6 +25,21 @@
     "netBalance": "Net balance",
     "savedThisMonth": "saved this month"
   },
+  "granularity": {
+    "week": "Week",
+    "month": "Month",
+    "year": "Year",
+    "unit": {
+      "week": "wk",
+      "month": "mo",
+      "year": "yr"
+    },
+    "noun": {
+      "week": "week",
+      "month": "month",
+      "year": "year"
+    }
+  },
   "charts": {
     "monthlyBalance": "Income vs expenses",
     "categoryBreakdown": "Category Breakdown",
@@ -33,6 +48,11 @@
     "dailyBalance": "Daily balance",
     "dailyBalanceSubtitle": "How your balance moved through {{month}}",
     "lastMonths": "Last {{n}} months",
+    "lastPeriods": {
+      "week": "Last {{n}} weeks",
+      "month": "Last {{n}} months",
+      "year": "Last {{n}} years"
+    },
     "other": "Other",
     "expensesByBank": "Expenses by Bank",
     "weeklyComparison": "This Week",
@@ -171,6 +191,17 @@
     "historySubtitle": "All your data, every month combined",
     "historicalOverview": "Historical Overview",
     "monthsTracked": "{{count}} months tracked",
+    "periodsTracked": {
+      "week_one": "{{count}} week tracked",
+      "week_other": "{{count}} weeks tracked",
+      "month_one": "{{count}} month tracked",
+      "month_other": "{{count}} months tracked",
+      "year_one": "{{count}} year tracked",
+      "year_other": "{{count}} years tracked"
+    },
+    "bestPeriod": "Best {{period}}",
+    "worstPeriod": "Worst {{period}}",
+    "netBalance": "Net Balance",
     "totalIncome": "Total Income",
     "totalExpenses": "Total Expenses",
     "totalSaved": "Total Saved",
@@ -238,6 +269,14 @@
       "positiveStreak": "Savings streak",
       "streakMonths_one": "{{count}} month",
       "streakMonths_other": "{{count}} months",
+      "streakPeriods": {
+        "week_one": "positive week",
+        "week_other": "positive weeks",
+        "month_one": "positive month",
+        "month_other": "positive months",
+        "year_one": "positive year",
+        "year_other": "positive years"
+      },
       "incomeStability": "Income stability",
       "stable": "Stable",
       "variable": "Variable"

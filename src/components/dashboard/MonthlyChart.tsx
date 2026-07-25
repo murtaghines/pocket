@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useLocalization } from "@/hooks/useLocalization";
 import { EmptyState } from "@/components/ui/empty-state";
+import { formatPeriodLabel, type Granularity } from "@/lib/analytics";
 
 interface MonthlyData {
   month: string;
@@ -12,17 +13,14 @@ interface MonthlyData {
 
 interface MonthlyChartProps {
   data: MonthlyData[];
+  /** Bucketing level driving the axis/tooltip labels (defaults to month). */
+  granularity?: Granularity;
 }
 
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const monthLabel = (val: string) => {
-  const [, m] = val.split('-');
-  return MONTH_NAMES[parseInt(m) - 1] || val;
-};
-
-export function MonthlyChart({ data }: MonthlyChartProps) {
-  const { t } = useTranslation('dashboard');
+export function MonthlyChart({ data, granularity = "month" }: MonthlyChartProps) {
+  const { t, i18n } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
+  const monthLabel = (val: string) => formatPeriodLabel(val, granularity, i18n.language);
 
   const hasData = data.length > 0 && data.some(d => d.income !== 0 || d.expenses !== 0);
 
@@ -55,7 +53,10 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
             {t('charts.monthlyBalance', 'Income vs expenses')}
           </p>
           <p className="text-[12px] text-muted-foreground mt-[3px]">
-            {t('charts.lastMonths', 'Last {{n}} months', { n: data.length })}
+            {t(`charts.lastPeriods.${granularity}`, {
+              n: data.length,
+              defaultValue: { week: 'Last {{n}} weeks', month: 'Last {{n}} months', year: 'Last {{n}} years' }[granularity],
+            })}
           </p>
         </div>
         <div className="flex items-center gap-[14px] text-[12px] text-muted-foreground shrink-0">

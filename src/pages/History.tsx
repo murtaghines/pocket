@@ -3,21 +3,33 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { TotalView } from "@/components/dashboard/TotalView";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
+import { GranularityToggle } from "@/components/dashboard/GranularityToggle";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useHistoricalInsights } from "@/hooks/useHistoricalInsights";
+import { bucketByGranularity, type Granularity } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 
 export default function History() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
   const { t } = useTranslation("dashboard");
-  const { transactions, monthlyData, isLoading } = useTransactions();
+  const { transactions, isLoading } = useTransactions();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
+
+  // Granularity of the whole History analysis, persisted to ?g= so it survives a refresh.
+  const gParam = searchParams.get("g");
+  const granularity: Granularity = gParam === "week" || gParam === "year" ? gParam : "month";
+  const setGranularity = (g: Granularity) => {
+    const next = new URLSearchParams(searchParams);
+    if (g === "month") next.delete("g");
+    else next.set("g", g);
+    setSearchParams(next, { replace: true });
+  };
 
   const userCurrency = preferences?.base_currency || "EUR";
   const convertToUserCurrency = useCallback(
@@ -25,18 +37,19 @@ export default function History() {
     [convertAmount, userCurrency],
   );
 
-  const convertedMonthlyData = monthlyData.map((m) => ({
-    ...m,
-    income: convertToUserCurrency(m.income),
-    expenses: convertToUserCurrency(m.expenses),
-    balance: convertToUserCurrency(m.balance),
-  }));
+  // Re-bucket every transaction at the selected granularity (week / month / year), converted to
+  // the user's base currency. This drives every chart/KPI in TotalView.
+  const periodData = useMemo(
+    () => bucketByGranularity(transactions, granularity, convertToUserCurrency),
+    [transactions, granularity, convertToUserCurrency],
+  );
 
   // Advanced all-time insights (rolling averages, category trends, seasonality, weekday pattern).
   const insights = useHistoricalInsights({
     transactions,
-    monthlyData: convertedMonthlyData,
+    monthlyData: periodData,
     convert: convertToUserCurrency,
+    granularity,
   });
 
   // Sort transactions newest first for the historical table
@@ -61,15 +74,17 @@ export default function History() {
                 {t("views.history", "History")}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                {t(
-                  "views.historySubtitle",
-                  "All your data, every month combined",
-                )}
+                {t("views.historySubtitle", "All your data, every period combined")}
               </p>
             </div>
 
+            {/* Granularity selector — re-buckets the whole analysis below */}
+            <div className="mb-4 flex justify-center md:justify-start">
+              <GranularityToggle value={granularity} onChange={setGranularity} />
+            </div>
+
             <div className="mb-4">
-              <TotalView monthlyData={convertedMonthlyData} insights={insights} />
+              <TotalView monthlyData={periodData} insights={insights} granularity={granularity} />
             </div>
 
             <div

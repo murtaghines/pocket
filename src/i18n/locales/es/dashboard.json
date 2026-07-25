@@ -25,6 +25,21 @@
     "netBalance": "Balance neto",
     "savedThisMonth": "ahorrado este mes"
   },
+  "granularity": {
+    "week": "Semana",
+    "month": "Mes",
+    "year": "Año",
+    "unit": {
+      "week": "sem",
+      "month": "mes",
+      "year": "año"
+    },
+    "noun": {
+      "week": "semana",
+      "month": "mes",
+      "year": "año"
+    }
+  },
   "charts": {
     "monthlyBalance": "Ingresos vs gastos",
     "categoryBreakdown": "Desglose por Categoría",
@@ -33,6 +48,11 @@
     "dailyBalance": "Balance diario",
     "dailyBalanceSubtitle": "Cómo evolucionó tu saldo durante {{month}}",
     "lastMonths": "Últimos {{n}} meses",
+    "lastPeriods": {
+      "week": "Últimas {{n}} semanas",
+      "month": "Últimos {{n}} meses",
+      "year": "Últimos {{n}} años"
+    },
     "other": "Otros",
     "expensesByBank": "Gastos por Banco",
     "weeklyComparison": "Esta Semana",
@@ -140,6 +160,17 @@
     "historySubtitle": "Todos tus datos, todos los meses combinados",
     "historicalOverview": "Vista Histórica",
     "monthsTracked": "{{count}} meses registrados",
+    "periodsTracked": {
+      "week_one": "{{count}} semana registrada",
+      "week_other": "{{count}} semanas registradas",
+      "month_one": "{{count}} mes registrado",
+      "month_other": "{{count}} meses registrados",
+      "year_one": "{{count}} año registrado",
+      "year_other": "{{count}} años registrados"
+    },
+    "bestPeriod": "Mejor {{period}}",
+    "worstPeriod": "Peor {{period}}",
+    "netBalance": "Balance Neto",
     "totalIncome": "Ingresos Totales",
     "totalExpenses": "Gastos Totales",
     "totalSaved": "Total Ahorrado",
@@ -207,6 +238,14 @@
       "positiveStreak": "Racha de ahorro",
       "streakMonths_one": "{{count}} mes",
       "streakMonths_other": "{{count}} meses",
+      "streakPeriods": {
+        "week_one": "semana positiva",
+        "week_other": "semanas positivas",
+        "month_one": "mes positivo",
+        "month_other": "meses positivos",
+        "year_one": "año positivo",
+        "year_other": "años positivos"
+      },
       "incomeStability": "Estabilidad de ingresos",
       "stable": "Estables",
       "variable": "Variables"

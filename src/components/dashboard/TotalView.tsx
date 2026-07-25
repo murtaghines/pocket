@@ -13,6 +13,7 @@ import { RollingCashflowChart } from "./RollingCashflowChart";
 import { CategoryTrendChart } from "./CategoryTrendChart";
 import { SeasonalityCard } from "./SeasonalityCard";
 import { WeekdaySpendingCard } from "./WeekdaySpendingCard";
+import { formatPeriodLabel, type Granularity } from "@/lib/analytics";
 import type { HistoricalInsights } from "@/hooks/useHistoricalInsights";
 
 interface MonthlyData {
@@ -26,11 +27,25 @@ interface TotalViewProps {
   monthlyData: MonthlyData[];
   /** Optional advanced insights (rolling/seasonality/weekday/category trends + enriched KPIs). */
   insights?: HistoricalInsights;
+  /** Bucketing level the whole view is showing (drives labels + which cards appear). */
+  granularity: Granularity;
 }
 
-export function TotalView({ monthlyData, insights }: TotalViewProps) {
-  const { t } = useTranslation('dashboard');
-  const { formatCurrency, formatMonthShort } = useLocalization();
+export function TotalView({ monthlyData, insights, granularity }: TotalViewProps) {
+  const { t, i18n } = useTranslation('dashboard');
+  const { formatCurrency } = useLocalization();
+
+  // Short per-period unit ("wk" / "mo" / "yr") for average suffixes.
+  const unit = t(`granularity.unit.${granularity}`, { defaultValue: { week: 'wk', month: 'mo', year: 'yr' }[granularity] });
+  // "N weeks/months/years tracked".
+  const trackedLabel = t(`views.periodsTracked.${granularity}`, {
+    count: monthlyData.length,
+    defaultValue: { week: '{{count}} weeks tracked', month: '{{count}} months tracked', year: '{{count}} years tracked' }[granularity],
+  });
+  // Singular period noun ("week" / "month" / "year") for best/worst titles.
+  const periodNoun = t(`granularity.noun.${granularity}`, { defaultValue: { week: 'week', month: 'month', year: 'year' }[granularity] });
+  const bestPeriodLabel = t('views.bestPeriod', { period: periodNoun, defaultValue: 'Best {{period}}' });
+  const worstPeriodLabel = t('views.worstPeriod', { period: periodNoun, defaultValue: 'Worst {{period}}' });
 
   const hasData = monthlyData.length > 0 && monthlyData.some(d => d.income !== 0 || d.expenses !== 0);
 
@@ -55,11 +70,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
     rate: d.income > 0 ? Math.round(((d.income - d.expenses) / d.income) * 100) : 0,
   }));
 
-  const formatMonthLabel = (val: string) => {
-    const [, m] = val.split('-');
-    const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return names[parseInt(m) - 1] || val;
-  };
+  const formatMonthLabel = (val: string) => formatPeriodLabel(val, granularity, i18n.language);
 
   const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -97,7 +108,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
     <div className="space-y-6">
       {/* Period summary line */}
       <p className="text-sm text-muted-foreground -mt-2">
-        {t('views.monthsTracked', { count: monthlyData.length, defaultValue: '{{count}} months tracked' })}
+        {trackedLabel}
       </p>
 
       {/* Aggregate KPIs — same inverted look as the Dashboard TrendKpiCards */}
@@ -117,7 +128,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               {formatCurrency(totalIncome)}
             </p>
             <p className="text-xs text-success/60 mt-auto">
-              ø {formatCurrency(avgIncome)}/{t('views.month', 'mo')}
+              ø {formatCurrency(avgIncome)}/{unit}
             </p>
           </CardContent>
         </Card>
@@ -137,7 +148,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               {formatCurrency(totalExpenses)}
             </p>
             <p className="text-xs text-destructive/60 mt-auto">
-              ø {formatCurrency(avgExpenses)}/{t('views.month', 'mo')}
+              ø {formatCurrency(avgExpenses)}/{unit}
             </p>
           </CardContent>
         </Card>
@@ -157,7 +168,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               {formatCurrency(totalBalance)}
             </p>
             <p className="text-xs text-primary/60 mt-auto">
-              ø {formatCurrency(avgBalance)}/{t('views.month', 'mo')}
+              ø {formatCurrency(avgBalance)}/{unit}
             </p>
           </CardContent>
         </Card>
@@ -191,7 +202,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               <div className="flex items-center gap-2 mb-1">
                 <Award className="w-4 h-4 text-success" strokeWidth={2.2} />
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("insights.summary.bestMonth")}
+                  {bestPeriodLabel}
                 </p>
               </div>
               {insights.summary.bestMonth ? (
@@ -200,7 +211,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                     {formatCurrency(insights.summary.bestMonth.balance)}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {formatMonthShort(`${insights.summary.bestMonth.month}-01`)}
+                    {formatPeriodLabel(insights.summary.bestMonth.month, granularity, i18n.language)}
                   </p>
                 </>
               ) : (
@@ -214,7 +225,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               <div className="flex items-center gap-2 mb-1">
                 <TrendingDown className="w-4 h-4 text-destructive" strokeWidth={2.2} />
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("insights.summary.worstMonth")}
+                  {worstPeriodLabel}
                 </p>
               </div>
               {insights.summary.worstMonth ? (
@@ -223,7 +234,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                     {formatCurrency(insights.summary.worstMonth.balance)}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {formatMonthShort(`${insights.summary.worstMonth.month}-01`)}
+                    {formatPeriodLabel(insights.summary.worstMonth.month, granularity, i18n.language)}
                   </p>
                 </>
               ) : (
@@ -244,7 +255,10 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
                 {insights.summary.positiveStreak}
               </p>
               <p className="text-xs text-muted-foreground">
-                {t("insights.summary.streakMonths", { count: insights.summary.positiveStreak })}
+                {t(`insights.summary.streakPeriods.${granularity}`, {
+                  count: insights.summary.positiveStreak,
+                  defaultValue: { week: 'positive weeks', month: 'positive months', year: 'positive years' }[granularity],
+                })}
               </p>
             </CardContent>
           </Card>
@@ -270,8 +284,9 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
         </div>
       )}
 
-      {/* Rolling net cash flow (smoothed trend) */}
-      {insights && <RollingCashflowChart rolling={insights.rolling} />}
+      {/* Rolling net cash flow (smoothed trend) — its 30d/90d/180d windows and month axis are
+          calendar-month bound, so it only makes sense at month granularity. */}
+      {insights && granularity === "month" && <RollingCashflowChart rolling={insights.rolling} />}
 
       {/* Cumulative Balance Evolution */}
       <Card variant="bento" className="">
@@ -307,8 +322,8 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
         </CardContent>
       </Card>
 
-      {/* Monthly Balance (moved from monthly view) */}
-      <MonthlyChart data={monthlyData} />
+      {/* Income vs expenses per period (moved from monthly view) */}
+      <MonthlyChart data={monthlyData} granularity={granularity} />
 
       {/* Income vs Expenses Trend */}
       <Card variant="bento" className="">
@@ -346,8 +361,9 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
         </CardContent>
       </Card>
 
-      {/* Yearly Balance (moved from monthly view) */}
-      <YearlyBalanceChart data={monthlyData} />
+      {/* Yearly Balance — its axis labels + title are calendar-month bound, so it's only shown at
+          month granularity (redundant at year, mislabeled at week). */}
+      {granularity === "month" && <YearlyBalanceChart data={monthlyData} />}
 
       {/* Monthly Net Balance */}
       <Card variant="bento" className="">
@@ -357,7 +373,7 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Scale className="w-4 h-4 text-primary" />
               </div>
-              {t('views.monthlyNet', 'Monthly Net Balance')}
+              {t('views.netBalance', 'Net Balance')}
             </CardTitle>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">{t('charts.average', 'Avg')}: {formatCurrency(avgBalance)}</p>
@@ -421,12 +437,14 @@ export function TotalView({ monthlyData, insights }: TotalViewProps) {
       </Card>
 
       {/* Category spending trends over time */}
-      {insights && <CategoryTrendChart trend={insights.categoryTrend} />}
+      {insights && <CategoryTrendChart trend={insights.categoryTrend} granularity={granularity} />}
 
-      {/* Seasonality + weekday spending pattern */}
-      {insights && (
+      {/* Seasonality (calendar-month only) + weekday spending pattern (day-of-week; hidden at year). */}
+      {insights && granularity !== "year" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SeasonalityCard seasonal={insights.seasonal} hasData={insights.hasSeasonalData} />
+          {granularity === "month" && (
+            <SeasonalityCard seasonal={insights.seasonal} hasData={insights.hasSeasonalData} />
+          )}
           <WeekdaySpendingCard weekday={insights.weekday} />
         </div>
       )}
