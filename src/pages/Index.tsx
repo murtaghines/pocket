@@ -11,10 +11,9 @@ import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
 import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
-import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryCard";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
-import { WeeklyBreakdownCard } from "@/components/dashboard/WeeklyBreakdownCard";
+import { WeeklyIncomeExpensesChart } from "@/components/dashboard/WeeklyIncomeExpensesChart";
 import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscretionaryCard";
 import { TransactionStatsCard } from "@/components/dashboard/TransactionStatsCard";
 
@@ -146,13 +145,6 @@ export default function Index() {
     : undefined;
 
   
-
-  const convertedMonthlyData = monthlyData.map(m => ({
-    ...m,
-    income: convertToUserCurrency(m.income),
-    expenses: convertToUserCurrency(m.expenses),
-    balance: convertToUserCurrency(m.balance),
-  }));
 
   // Recompute category breakdowns for the SELECTED month so charts react
   // to the month dropdown AND to live edits (categories, movement) made in
@@ -293,23 +285,15 @@ export default function Index() {
                 />
               </div>
 
-              {/* Insights row A: weekly breakdown */}
-              <div className="grid grid-cols-1 gap-[16px]">
-                <WeeklyBreakdownCard
-                  weekly={monthlyInsights.weekly}
-                  volatilityLevel={monthlyInsights.volatilityLevel}
-                />
-              </div>
-
               {/* Insights row B: essential vs discretionary + transaction stats */}
               <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-[16px]">
                 <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
                 <TransactionStatsCard stats={monthlyInsights.txStats} />
               </div>
 
-              {/* Row 2: Income vs Expenses chart + Daily view heatmap */}
+              {/* Row 2: weekly income vs expenses (this month) + Daily view heatmap */}
               <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
-                <MonthlyChart data={convertedMonthlyData} />
+                <WeeklyIncomeExpensesChart weekly={monthlyInsights.weekly} />
                 <DailyHeatmapCard
                   transactions={transactions}
                   monthKey={latestMonthLabel}

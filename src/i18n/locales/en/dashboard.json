@@ -44,6 +44,8 @@
     "average": "Avg",
     "accounts": "Accounts",
     "accountsSubtitle": "Month-end balance",
+    "weekShort": "W{{n}}",
+    "byWeekThisMonth": "By week · this month",
     "addAccount": "Add account",
     "addAccountDescription": "Create a new bank account. You'll be able to upload statements to it.",
     "accountNamePlaceholder": "e.g. Santander, BBVA, Revolut...",

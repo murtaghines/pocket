@@ -43,6 +43,8 @@
     "totalSavings": "Ahorro Total",
     "accounts": "Cuentas",
     "accountsSubtitle": "Saldo a fin de mes",
+    "weekShort": "S{{n}}",
+    "byWeekThisMonth": "Por semana · este mes",
     "addAccount": "Agregar cuenta",
     "addAccountDescription": "Creá una cuenta bancaria nueva. Vas a poder subirle extractos.",
     "accountNamePlaceholder": "Ej: Santander, BBVA, Revolut...",
