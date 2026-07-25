@@ -8,28 +8,23 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useHistoricalInsights } from "@/hooks/useHistoricalInsights";
-import { bucketByGranularity, type Granularity } from "@/lib/analytics";
+import { useGranularity } from "@/hooks/useGranularity";
+import { bucketByGranularity } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
 import { useCallback, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 
 export default function History() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
   const { t } = useTranslation("dashboard");
   const { transactions, isLoading } = useTransactions();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
 
-  // Granularity of the whole History analysis, persisted to ?g= so it survives a refresh.
-  const gParam = searchParams.get("g");
-  const granularity: Granularity = gParam === "week" || gParam === "year" ? gParam : "month";
-  const setGranularity = (g: Granularity) => {
-    const next = new URLSearchParams(searchParams);
-    if (g === "month") next.delete("g");
-    else next.set("g", g);
-    setSearchParams(next, { replace: true });
-  };
+  // Granularity of the whole History analysis (persisted to ?g=). Driven from the sticky top bar
+  // on desktop and from the in-body toggle on mobile — both read/write the same param.
+  const [granularity, setGranularity] = useGranularity();
 
   const userCurrency = preferences?.base_currency || "EUR";
   const convertToUserCurrency = useCallback(
@@ -78,8 +73,8 @@ export default function History() {
               </p>
             </div>
 
-            {/* Granularity selector — re-buckets the whole analysis below */}
-            <div className="mb-4 flex justify-center md:justify-start">
+            {/* Granularity selector — mobile only; desktop shows it pinned in the top bar */}
+            <div className="mb-4 flex justify-center md:hidden">
               <GranularityToggle value={granularity} onChange={setGranularity} />
             </div>
 

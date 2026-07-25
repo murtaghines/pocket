@@ -16,6 +16,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTransactions } from "@/hooks/useTransactions";
 import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
 import { HeaderMonthSelector } from "./HeaderMonthSelector";
+import { HeaderGranularitySelector } from "./HeaderGranularitySelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,6 +87,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </span>
           ) : null}
           <HeaderMonthSelector />
+          <HeaderGranularitySelector />
           <EmptyStateBanner />
         </div>
 

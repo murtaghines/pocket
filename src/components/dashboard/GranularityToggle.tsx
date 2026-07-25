@@ -17,7 +17,7 @@ interface GranularityToggleProps {
 export function GranularityToggle({ value, onChange }: GranularityToggleProps) {
   const { t } = useTranslation("dashboard");
   return (
-    <div className="inline-flex items-center gap-0.5 rounded-full bg-muted/60 p-0.5">
+    <div className="inline-flex items-center gap-0.5 rounded-full border border-primary/45 bg-muted/60 p-0.5">
       {OPTIONS.map((opt) => (
         <button
           key={opt.value}
