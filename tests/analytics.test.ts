@@ -181,6 +181,27 @@ describe("fixed vs discretionary", () => {
     expect(split.total).toBe(200);
     expect(split.discretionaryPct).toBe(50);
   });
+
+  it("breaks each bucket down by category, largest first", () => {
+    const txs = [
+      tx({ date: "2024-03-02", amount: -100, movement: "EXPENSE", categorySlug: "housing" }),
+      tx({ date: "2024-03-03", amount: -50, movement: "EXPENSE", categorySlug: "groceries" }),
+      tx({ date: "2024-03-04", amount: -20, movement: "EXPENSE", categorySlug: "groceries" }),
+      tx({ date: "2024-03-05", amount: -80, movement: "EXPENSE", categorySlug: "restaurants" }),
+      tx({ date: "2024-03-06", amount: -40, movement: "EXPENSE", categorySlug: "shopping" }),
+    ];
+    const split = essentialSplitForMonth(txs, "2024-03");
+    // Essential: housing 100, groceries 70 (50+20) -> housing first.
+    expect(split.essentialCategories).toEqual([
+      { slug: "housing", amount: 100 },
+      { slug: "groceries", amount: 70 },
+    ]);
+    // Discretionary: restaurants 80, shopping 40.
+    expect(split.discretionaryCategories).toEqual([
+      { slug: "restaurants", amount: 80 },
+      { slug: "shopping", amount: 40 },
+    ]);
+  });
 });
 
 describe("monthly aggregations", () => {

@@ -289,14 +289,32 @@ export function weeklyBreakdownForMonth(
   }));
 }
 
+/** A category slug with its accumulated amount, used to break a bucket down by category. */
+export interface CategoryAmount {
+  slug: string;
+  amount: number;
+}
+
 export interface EssentialSplit {
   essential: number;
   discretionary: number;
   total: number;
   discretionaryPct: number;
+  /** Categories composing the essential bucket, largest first — answers "which transactions?". */
+  essentialCategories: CategoryAmount[];
+  /** Categories composing the discretionary bucket, largest first. */
+  discretionaryCategories: CategoryAmount[];
 }
 
-/** Split one month's expenses into essential vs discretionary buckets. */
+/** Collapse a slug->amount map into a descending, rounded CategoryAmount[]. */
+function toSortedCategories(map: Record<string, number>): CategoryAmount[] {
+  return Object.entries(map)
+    .map(([slug, amount]) => ({ slug, amount: round2(amount) }))
+    .filter((c) => c.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
+}
+
+/** Split one month's expenses into essential vs discretionary buckets, with a per-category breakdown. */
 export function essentialSplitForMonth(
   transactions: Transaction[],
   monthKey: string | null,
@@ -304,12 +322,20 @@ export function essentialSplitForMonth(
 ): EssentialSplit {
   let essential = 0;
   let discretionary = 0;
+  const essentialByCat: Record<string, number> = {};
+  const discretionaryByCat: Record<string, number> = {};
   if (monthKey) {
     for (const t of transactions) {
       if (!t.date.startsWith(monthKey) || !isExpense(t)) continue;
       const amt = Math.abs(convert(t.amount));
-      if (classifyExpense(t.categorySlug || String(t.category)) === "essential") essential += amt;
-      else discretionary += amt;
+      const slug = normalizeCategory(t.categorySlug || String(t.category));
+      if (classifyExpense(slug) === "essential") {
+        essential += amt;
+        essentialByCat[slug] = (essentialByCat[slug] ?? 0) + amt;
+      } else {
+        discretionary += amt;
+        discretionaryByCat[slug] = (discretionaryByCat[slug] ?? 0) + amt;
+      }
     }
   }
   const total = essential + discretionary;
@@ -318,6 +344,8 @@ export function essentialSplitForMonth(
     discretionary: round2(discretionary),
     total: round2(total),
     discretionaryPct: total > 0 ? Math.round((discretionary / total) * 100) : 0,
+    essentialCategories: toSortedCategories(essentialByCat),
+    discretionaryCategories: toSortedCategories(discretionaryByCat),
   };
 }
 

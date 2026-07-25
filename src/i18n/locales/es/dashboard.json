@@ -189,7 +189,12 @@
       "subtitle": "Cuánto de tu gasto era evitable",
       "essential": "Esencial",
       "discretionary": "Discrecional",
-      "discretionaryShare": "{{pct}}% discrecional"
+      "discretionaryShare": "{{pct}}% discrecional",
+      "explainer": "Por categoría: lo esencial es difícil de evitar, lo discrecional es estilo de vida",
+      "essentialHint": "Vivienda, súper, transporte, salud…",
+      "discretionaryHint": "Salir a comer, ocio, compras, viajes…",
+      "moreCategories_one": "{{count}} categoría más",
+      "moreCategories_other": "{{count}} categorías más"
     },
     "weekly": {
       "title": "Desglose semanal",
