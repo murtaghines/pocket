@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, TrendingUp } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { SavingsRateGaugeCard } from "@/components/dashboard/SavingsRateGaugeCard";
+import { NetBalanceCard } from "@/components/dashboard/NetBalanceCard";
+import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
@@ -27,7 +28,7 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
-import { Wallet, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
 import type { Category } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
@@ -227,62 +228,46 @@ export default function Index() {
             </div>
 
             <div className="flex flex-col gap-[18px]">
-              {/* KPI row: Income · Expenses · Net balance · Sent to invest · Savings rate */}
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-[16px]">
-                <TrendKpiCard
-                  kind="income"
-                  label={t('stats.income')}
-                  icon={<Plus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-success"
-                  monthKey={latestMonthLabel}
-                  total={convertedCurrentMonth.income}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood
-                />
-                <TrendKpiCard
-                  kind="expense"
-                  label={t('stats.expenses')}
-                  icon={<Minus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-destructive"
-                  monthKey={latestMonthLabel}
-                  total={convertedCurrentMonth.expenses}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood={false}
-                />
-                <TrendKpiCard
-                  kind="balance"
-                  label={t('stats.netBalance')}
-                  filled
-                  className="col-span-2 lg:col-span-1"
-                  icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-primary"
-                  monthKey={latestMonthLabel}
-                  // Net balance = income − expenses. Money sent to investment is a transfer
-                  // (not an expense), so it does NOT reduce net balance — it's shown as its own
-                  // KPI. It does lower next month's available cash, but that carries through the
-                  // opening balance, which is derived from the bank's real running_balance.
-                  total={convertedCurrentMonth.balance}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood
-                />
-                <TrendKpiCard
-                  kind="invest"
-                  label={t('stats.sentToInvest')}
-                  icon={<TrendingUp className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-primary"
-                  monthKey={latestMonthLabel}
-                  total={convertedCurrentMonth.sentToInvest}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.sentToInvest : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood
-                />
-                <SavingsRateGaugeCard
-                  income={convertedCurrentMonth.income}
-                  expenses={convertedCurrentMonth.expenses}
-                />
+              {/* KPI area: income + expenses, then the net-balance hero (with sent-to-invest
+                  tucked in) next to the savings-rate ring */}
+              <div className="flex flex-col gap-3 md:gap-4">
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                  <TrendKpiCard
+                    kind="income"
+                    label={t('stats.income')}
+                    icon={<Plus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                    bgClass="bg-success"
+                    monthKey={latestMonthLabel}
+                    total={convertedCurrentMonth.income}
+                    previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                    formatCurrency={formatCurrency}
+                    positiveIsGood
+                  />
+                  <TrendKpiCard
+                    kind="expense"
+                    label={t('stats.expenses')}
+                    icon={<Minus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                    bgClass="bg-destructive"
+                    monthKey={latestMonthLabel}
+                    total={convertedCurrentMonth.expenses}
+                    previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                    formatCurrency={formatCurrency}
+                    positiveIsGood={false}
+                  />
+                </div>
+                <div className="grid grid-cols-[1.55fr_1fr] gap-3 md:gap-4">
+                  <NetBalanceCard
+                    balance={convertedCurrentMonth.balance}
+                    previousBalance={hasPreviousData ? convertedPreviousMonth.balance : undefined}
+                    sentToInvest={convertedCurrentMonth.sentToInvest}
+                    monthKey={latestMonthLabel}
+                    formatCurrency={formatCurrency}
+                  />
+                  <SavingsRateRingCard
+                    income={convertedCurrentMonth.income}
+                    expenses={convertedCurrentMonth.expenses}
+                  />
+                </div>
               </div>
 
               {/* Insights row B: essential vs discretionary + transaction stats */}
