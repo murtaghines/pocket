@@ -21,7 +21,6 @@ export function HeaderMonthSelector() {
     <span
       className="flex items-center gap-[6px] text-[13px] font-medium text-foreground bg-card rounded-full py-[7px] px-[13px] whitespace-nowrap select-none shadow-sm"
     >
-      <Calendar className="w-[14px] h-[14px] text-muted-foreground shrink-0" strokeWidth={2} />
       <button
         type="button"
         onClick={() => hasPrev && setSelectedMonth(availableMonths[currentIdx - 1])}
@@ -31,6 +30,7 @@ export function HeaderMonthSelector() {
       >
         <ChevronLeft className="w-[15px] h-[15px]" strokeWidth={2} />
       </button>
+      <Calendar className="w-[14px] h-[14px] text-muted-foreground shrink-0" strokeWidth={2} />
       <span className="capitalize min-w-[90px] text-center">{label}</span>
       <button
         type="button"
