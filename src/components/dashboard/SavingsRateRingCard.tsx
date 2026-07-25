@@ -18,11 +18,12 @@ export function SavingsRateRingCard({ income, expenses }: SavingsRateRingCardPro
   const data = [{ value: filled }, { value: 100 - filled }];
 
   return (
-    <div className="flex h-full flex-col rounded-2xl bg-card p-[16px] shadow-bento">
-      <span className="text-[12px] font-semibold uppercase leading-tight tracking-[.04em] text-muted-foreground">
+    <div className="flex h-full items-center gap-2.5 rounded-2xl bg-card p-[14px_16px] shadow-bento">
+      {/* Label stacked in two lines so the ring gets the rest of the width */}
+      <span className="max-w-[60px] shrink-0 text-[12px] font-semibold uppercase leading-[1.18] tracking-[.04em] text-muted-foreground">
         {t("stats.savingsRate")}
       </span>
-      <div className="relative flex min-h-[44px] flex-1 items-center justify-center">
+      <div className="relative ml-auto flex h-full min-h-[78px] flex-1 items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -30,7 +31,7 @@ export function SavingsRateRingCard({ income, expenses }: SavingsRateRingCardPro
               dataKey="value"
               cx="50%"
               cy="50%"
-              innerRadius="72%"
+              innerRadius="70%"
               outerRadius="100%"
               startAngle={90}
               endAngle={-270}
@@ -43,7 +44,7 @@ export function SavingsRateRingCard({ income, expenses }: SavingsRateRingCardPro
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="text-[22px] font-semibold tabular-nums leading-none text-foreground">{rate}%</span>
+          <span className="text-[21px] font-semibold tabular-nums leading-none text-foreground">{rate}%</span>
         </div>
       </div>
     </div>
