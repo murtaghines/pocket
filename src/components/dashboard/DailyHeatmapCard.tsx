@@ -20,7 +20,7 @@ interface DailyHeatmapCardProps {
 }
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-const CELL_SIZE = 22; // fixed px — compact so the calendar + side stats fit the square card
+const CELL_SIZE = 30; // fixed px — height must not scale with column width
 const CELL_GAP = 4;
 
 export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatmapCardProps) {
@@ -87,19 +87,21 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
   const activeMetricLabel = metricOptions.find((o) => o.key === metric)?.label ?? "";
 
   // Contextual stats beside the calendar, worded per selected metric.
+  const highestFallback = isCount ? "Highest activity" : metric === "income" ? "Highest income" : "Highest expense";
+  const lowestFallback = isCount ? "Lowest activity" : metric === "income" ? "Lowest income" : "Lowest expense";
   const stats = [
     {
-      label: isCount ? t("heatmap.stats.busiestDay", "Busiest day") : t("heatmap.stats.highestDay", "Highest day"),
+      label: t(`heatmap.stats.highest.${metric}`, highestFallback),
       value: maxValue > 0 ? formatStat(maxValue) : "—",
       hint: maxDay > 0 ? t("heatmap.stats.day", { day: maxDay, defaultValue: "Day {{day}}" }) : undefined,
     },
     {
-      label: isCount ? t("heatmap.stats.quietestDay", "Quietest day") : t("heatmap.stats.lowestDay", "Lowest day"),
+      label: t(`heatmap.stats.lowest.${metric}`, lowestFallback),
       value: minNonZero > 0 ? formatStat(minNonZero) : "—",
       hint: minDay > 0 ? t("heatmap.stats.day", { day: minDay, defaultValue: "Day {{day}}" }) : undefined,
     },
     {
-      label: isCount ? t("heatmap.stats.avgPerDay", "Avg / active day") : t("heatmap.stats.dailyAvg", "Avg / active day"),
+      label: t("heatmap.stats.avg", "Avg / active day"),
       value: avgActive > 0 ? formatStat(avgActive, true) : "—",
       hint: undefined,
     },
@@ -148,13 +150,13 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
       {!monthKey || daysInMonth === 0 ? (
         <EmptyState height="h-[200px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
-        <div className="flex items-center justify-between gap-x-3 gap-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
           {/* Calendar */}
           <div className="flex flex-col gap-2">
             {/* Weekday header */}
             <div className="grid grid-cols-7" style={{ columnGap: CELL_GAP, width: gridSize > 0 ? `${(CELL_SIZE + CELL_GAP) * 7 - CELL_GAP}px` : undefined }}>
               {WEEKDAY_KEYS.map((k) => (
-                <div key={k} className="text-center text-[8.5px] font-semibold uppercase tracking-wide text-muted-foreground" style={{ width: CELL_SIZE }}>
+                <div key={k} className="text-center text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground" style={{ width: CELL_SIZE }}>
                   {t(`heatmap.weekdays.${k}`, k.charAt(0).toUpperCase() + k.slice(1, 3))}
                 </div>
               ))}
@@ -175,7 +177,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
                     key={i}
                     title={hasValue ? `${cell.day}: ${formatValue(cell.value)}` : `${cell.day}`}
                     className={cn(
-                      "rounded-[6px] flex items-center justify-center text-[9.5px] font-medium transition-transform hover:scale-110 cursor-default",
+                      "rounded-[7px] flex items-center justify-center text-[10.5px] font-medium transition-transform hover:scale-110 cursor-default",
                       hasValue ? "text-white" : "text-muted-foreground/50 bg-muted/30",
                     )}
                     style={{
@@ -191,26 +193,26 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-1 text-[9px] text-muted-foreground mt-0.5 self-end">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5 self-end">
               <span className="tabular-nums">{minNonZero > 0 ? formatLegendValue(minNonZero) : "—"}</span>
               {[0.12, 0.3, 0.55, 0.8, 1].map((a) => (
-                <div key={a} className="w-[9px] h-[9px] rounded-[2px]" style={{ backgroundColor: `hsl(var(--primary) / ${a})` }} />
+                <div key={a} className="w-[10px] h-[10px] rounded-[3px]" style={{ backgroundColor: `hsl(var(--primary) / ${a})` }} />
               ))}
               <span className="tabular-nums">{maxValue > 0 ? formatLegendValue(maxValue) : "—"}</span>
             </div>
           </div>
 
-          {/* Contextual stats — adapt to the selected metric so they explain the heatmap */}
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 border-l border-border/60 pl-3">
+          {/* Contextual stats — pinned to the right, worded per selected metric */}
+          <div className="ml-auto flex flex-col items-end gap-3.5 text-right">
             {stats.map((s, i) => (
-              <div key={i} className="min-w-0">
-                <div className="truncate text-[9.5px] font-medium uppercase tracking-[.02em] text-muted-foreground">
+              <div key={i}>
+                <div className="text-[10.5px] font-medium uppercase tracking-[.03em] text-muted-foreground whitespace-nowrap">
                   {s.label}
                 </div>
-                <div className="mt-0.5 truncate text-[14px] font-semibold tabular-nums leading-none text-foreground">
+                <div className="mt-0.5 text-[18px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
-                {s.hint && <div className="mt-0.5 text-[9.5px] text-muted-foreground/80">{s.hint}</div>}
+                {s.hint && <div className="mt-0.5 text-[10.5px] text-muted-foreground/80">{s.hint}</div>}
               </div>
             ))}
           </div>
