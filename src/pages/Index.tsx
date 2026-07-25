@@ -16,7 +16,6 @@ import { InvestmentSummaryCard } from "@/components/dashboard/InvestmentSummaryC
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { WeeklyIncomeExpensesChart } from "@/components/dashboard/WeeklyIncomeExpensesChart";
 import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscretionaryCard";
-import { TransactionStatsCard } from "@/components/dashboard/TransactionStatsCard";
 
 
 import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
@@ -272,8 +271,8 @@ export default function Index() {
                 </div>
               </div>
 
-              {/* Row 2: weekly income vs expenses (this month) + Daily view heatmap */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+              {/* Row 2: weekly income vs expenses (this month) + Daily view heatmap (with stats) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
                 <WeeklyIncomeExpensesChart weekly={monthlyInsights.weekly} />
                 <DailyHeatmapCard
                   transactions={transactions}
@@ -297,11 +296,8 @@ export default function Index() {
                 />
               </div>
 
-              {/* Insights: essential vs discretionary + transaction stats */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-[16px]">
-                <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
-                <TransactionStatsCard stats={monthlyInsights.txStats} />
-              </div>
+              {/* Insights: essential vs discretionary (transaction stats now live inside the heatmap) */}
+              <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
 
               {/* Row 4: Spending by category + Top expenses */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">

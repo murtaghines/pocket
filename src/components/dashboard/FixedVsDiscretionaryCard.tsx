@@ -68,7 +68,7 @@ export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProp
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-1">
+          <div className="mt-4 grid max-w-[760px] grid-cols-2 gap-x-8 gap-y-1">
             <BucketColumn
               label={t("insights.essential.essential")}
               caption={t("insights.essential.essentialHint")}
