@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Plus, Minus } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
+import { HeaderMonthSelector } from "@/components/layout/HeaderMonthSelector";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
@@ -42,7 +43,7 @@ export default function Index() {
     isLoading 
   } = useTransactions();
   
-  const { formatCurrency, formatMonth } = useLocalization();
+  const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates('EUR');
   const { profile } = useProfile();
@@ -227,13 +228,12 @@ export default function Index() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* Section header (mobile only — desktop shows it in the sticky top bar) */}
+            {/* Section header (mobile only — desktop shows it in the sticky top bar).
+                The month navigator pill lets you move between months on mobile too. */}
             <div className="mb-6 md:hidden">
-              <h1 className="text-xl md:text-2xl font-semibold tracking-tight capitalize text-foreground leading-tight">
-                {latestMonthLabel ? formatMonth(latestMonthLabel + '-01') : t('period.noPeriods', 'No data yet')}
-              </h1>
+              <HeaderMonthSelector />
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
-                <p className="text-sm tabular-nums text-muted-foreground mt-1">
+                <p className="text-sm tabular-nums text-muted-foreground mt-2">
                   {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
                 </p>
               )}
