@@ -11,7 +11,6 @@ import {
   ChevronRight,
   ChevronLeft,
   User,
-  Upload,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -292,26 +291,18 @@ export function DataRail() {
 
         <div className="flex-1 min-h-4" />
 
-        {/* ── DATA · uploads panel ── */}
+        {/* ── DATA panel ── */}
         <div
           className={cn(
             "rounded-[18px] flex flex-col bg-white/10 border border-white/[0.13]",
             expanded ? "p-3 gap-1" : "p-[10px_6px] gap-1.5",
           )}
         >
-          <div
-            className={cn(
-              "flex items-center gap-1.5 px-1.5 mb-0.5",
-              expanded ? "justify-start" : "justify-center",
-            )}
-          >
-            <Upload className="w-3.5 h-3.5 text-white/[0.62] shrink-0" strokeWidth={2} />
-            {expanded && (
-              <span className="text-[10px] font-bold tracking-[0.1em] text-white/[0.62] uppercase whitespace-nowrap">
-                Data · uploads
-              </span>
-            )}
-          </div>
+          {expanded && (
+            <div className="text-[10px] font-bold tracking-[0.12em] text-white/50 uppercase px-1.5 mb-0.5">
+              DATA
+            </div>
+          )}
           {DATA_NAV.map((item) => (
             <NavRow
               key={item.key}
