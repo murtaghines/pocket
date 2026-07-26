@@ -21,8 +21,9 @@ export type Database = {
           created_at: string | null
           currency_base: string
           domain_default: Database["public"]["Enums"]["app_domain"] | null
+          hidden_from_dashboard: boolean
           id: string
-          institution: string | null
+          institution: string
           is_primary: boolean
           name: string
           user_id: string
@@ -33,8 +34,9 @@ export type Database = {
           created_at?: string | null
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
+          hidden_from_dashboard?: boolean
           id?: string
-          institution?: string | null
+          institution: string
           is_primary?: boolean
           name: string
           user_id: string
@@ -45,8 +47,9 @@ export type Database = {
           created_at?: string | null
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
+          hidden_from_dashboard?: boolean
           id?: string
-          institution?: string | null
+          institution?: string
           is_primary?: boolean
           name?: string
           user_id?: string
@@ -121,50 +124,6 @@ export type Database = {
           {
             foreignKeyName: "categories_parent_id_fkey"
             columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      categorization_rules: {
-        Row: {
-          category_id: string | null
-          created_at: string | null
-          domain: Database["public"]["Enums"]["app_domain"]
-          id: string
-          match_field: string
-          match_type: string
-          pattern: string
-          priority: number
-          user_id: string
-        }
-        Insert: {
-          category_id?: string | null
-          created_at?: string | null
-          domain: Database["public"]["Enums"]["app_domain"]
-          id?: string
-          match_field: string
-          match_type: string
-          pattern: string
-          priority?: number
-          user_id: string
-        }
-        Update: {
-          category_id?: string | null
-          created_at?: string | null
-          domain?: Database["public"]["Enums"]["app_domain"]
-          id?: string
-          match_field?: string
-          match_type?: string
-          pattern?: string
-          priority?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "categorization_rules_category_id_fkey"
-            columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
@@ -385,9 +344,10 @@ export type Database = {
           date: string
           description: string
           id: string
+          is_hidden: boolean
           original_text: string | null
           platform: string
-          transaction_hash: string | null
+          transaction_hash: string
           type: string
           upload_id: string | null
           user_id: string
@@ -399,9 +359,10 @@ export type Database = {
           date: string
           description: string
           id?: string
+          is_hidden?: boolean
           original_text?: string | null
           platform: string
-          transaction_hash?: string | null
+          transaction_hash: string
           type: string
           upload_id?: string | null
           user_id: string
@@ -413,9 +374,10 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          is_hidden?: boolean
           original_text?: string | null
           platform?: string
-          transaction_hash?: string | null
+          transaction_hash?: string
           type?: string
           upload_id?: string | null
           user_id?: string
@@ -425,7 +387,7 @@ export type Database = {
             foreignKeyName: "investments_upload_id_fkey"
             columns: ["upload_id"]
             isOneToOne: false
-            referencedRelation: "uploads"
+            referencedRelation: "imports"
             referencedColumns: ["id"]
           },
         ]
@@ -464,33 +426,39 @@ export type Database = {
         Row: {
           created_at: string
           custom_category_rules: Json | null
+          deleted_at: string | null
+          email: string | null
           first_name: string | null
           id: string
-          investment_platforms: string[] | null
-          joint_account_names: string[] | null
           last_name: string | null
+          last_seen_at: string | null
+          onboarding_answers: Json
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           custom_category_rules?: Json | null
+          deleted_at?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
-          investment_platforms?: string[] | null
-          joint_account_names?: string[] | null
           last_name?: string | null
+          last_seen_at?: string | null
+          onboarding_answers?: Json
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           custom_category_rules?: Json | null
+          deleted_at?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
-          investment_platforms?: string[] | null
-          joint_account_names?: string[] | null
           last_name?: string | null
+          last_seen_at?: string | null
+          onboarding_answers?: Json
           updated_at?: string
           user_id?: string
         }
@@ -500,15 +468,12 @@ export type Database = {
         Row: {
           account_id: string | null
           amount: number
-          amount_base: number | null
-          auth_date: string | null
-          auto_recategorized: boolean | null
-          bank: string | null
           categorization_rule_id: string | null
           categorized_by: string | null
           category: string
           category_id: string | null
           category_source: string | null
+          confidence: number | null
           counterparty_raw: string | null
           created_at: string
           currency: string | null
@@ -516,45 +481,30 @@ export type Database = {
           description: string
           description_clean: string | null
           description_norm: string | null
-          description_raw: string | null
           domain: Database["public"]["Enums"]["app_domain"] | null
-          fingerprint: string | null
-          fx_rate: number | null
+          fingerprint: string
           id: string
           import_id: string | null
           is_hidden: boolean
-          linked_transaction_id: string | null
-          merchant_norm: string | null
-          movement: Database["public"]["Enums"]["movement_type"] | null
+          movement: Database["public"]["Enums"]["movement_type"]
           original_text: string | null
-          payment_channel: string | null
           period_id: string | null
-          posted_date: string | null
-          rule_id_applied: string | null
           running_balance: number | null
           source_row_hash: string | null
           source_transaction_id: string | null
-          subcategory_id: string | null
-          transaction_hash: string | null
-          tx_type: string | null
-          type: string
-          upload_id: string | null
+          transfer_pair_id: string | null
           user_corrected: boolean | null
           user_id: string
-          value_date: string | null
         }
         Insert: {
           account_id?: string | null
           amount: number
-          amount_base?: number | null
-          auth_date?: string | null
-          auto_recategorized?: boolean | null
-          bank?: string | null
           categorization_rule_id?: string | null
           categorized_by?: string | null
           category: string
           category_id?: string | null
           category_source?: string | null
+          confidence?: number | null
           counterparty_raw?: string | null
           created_at?: string
           currency?: string | null
@@ -562,45 +512,30 @@ export type Database = {
           description: string
           description_clean?: string | null
           description_norm?: string | null
-          description_raw?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
-          fingerprint?: string | null
-          fx_rate?: number | null
+          fingerprint: string
           id?: string
           import_id?: string | null
           is_hidden?: boolean
-          linked_transaction_id?: string | null
-          merchant_norm?: string | null
-          movement?: Database["public"]["Enums"]["movement_type"] | null
+          movement: Database["public"]["Enums"]["movement_type"]
           original_text?: string | null
-          payment_channel?: string | null
           period_id?: string | null
-          posted_date?: string | null
-          rule_id_applied?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
           source_transaction_id?: string | null
-          subcategory_id?: string | null
-          transaction_hash?: string | null
-          tx_type?: string | null
-          type: string
-          upload_id?: string | null
+          transfer_pair_id?: string | null
           user_corrected?: boolean | null
           user_id: string
-          value_date?: string | null
         }
         Update: {
           account_id?: string | null
           amount?: number
-          amount_base?: number | null
-          auth_date?: string | null
-          auto_recategorized?: boolean | null
-          bank?: string | null
           categorization_rule_id?: string | null
           categorized_by?: string | null
           category?: string
           category_id?: string | null
           category_source?: string | null
+          confidence?: number | null
           counterparty_raw?: string | null
           created_at?: string
           currency?: string | null
@@ -608,32 +543,20 @@ export type Database = {
           description?: string
           description_clean?: string | null
           description_norm?: string | null
-          description_raw?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
-          fingerprint?: string | null
-          fx_rate?: number | null
+          fingerprint?: string
           id?: string
           import_id?: string | null
           is_hidden?: boolean
-          linked_transaction_id?: string | null
-          merchant_norm?: string | null
-          movement?: Database["public"]["Enums"]["movement_type"] | null
+          movement?: Database["public"]["Enums"]["movement_type"]
           original_text?: string | null
-          payment_channel?: string | null
           period_id?: string | null
-          posted_date?: string | null
-          rule_id_applied?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
           source_transaction_id?: string | null
-          subcategory_id?: string | null
-          transaction_hash?: string | null
-          tx_type?: string | null
-          type?: string
-          upload_id?: string | null
+          transfer_pair_id?: string | null
           user_corrected?: boolean | null
           user_id?: string
-          value_date?: string | null
         }
         Relationships: [
           {
@@ -641,13 +564,6 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_categorization_rule_id_fkey"
-            columns: ["categorization_rule_id"]
-            isOneToOne: false
-            referencedRelation: "categorization_rules"
             referencedColumns: ["id"]
           },
           {
@@ -665,31 +581,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "transactions_linked_transaction_id_fkey"
-            columns: ["linked_transaction_id"]
-            isOneToOne: false
-            referencedRelation: "transactions"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "transactions_period_id_fkey"
             columns: ["period_id"]
             isOneToOne: false
             referencedRelation: "periods"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_subcategory_id_fkey"
-            columns: ["subcategory_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_upload_id_fkey"
-            columns: ["upload_id"]
-            isOneToOne: false
-            referencedRelation: "uploads"
             referencedColumns: ["id"]
           },
         ]
@@ -756,6 +651,7 @@ export type Database = {
           locale: string
           onboarding_completed: boolean | null
           selected_categories: string[] | null
+          theme: string
           updated_at: string | null
           user_id: string
         }
@@ -772,6 +668,7 @@ export type Database = {
           locale?: string
           onboarding_completed?: boolean | null
           selected_categories?: string[] | null
+          theme?: string
           updated_at?: string | null
           user_id: string
         }
@@ -788,6 +685,7 @@ export type Database = {
           locale?: string
           onboarding_completed?: boolean | null
           selected_categories?: string[] | null
+          theme?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -852,6 +750,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_rule_stats: {
+        Args: { _hit_count: number; _rule_id: string }
+        Returns: undefined
+      }
       log_audit_event: {
         Args: {
           _action: string
@@ -865,7 +767,7 @@ export type Database = {
     Enums: {
       account_role: "CASH" | "INVESTMENT"
       app_domain: "CASHFLOW" | "INVESTING"
-      import_status: "UPLOADED" | "PARSED" | "NORMALIZED" | "FAILED"
+      import_status: "UPLOADED" | "PARSED" | "NORMALIZED" | "FAILED" | "PARTIAL"
       movement_type: "INCOME" | "EXPENSE" | "TRANSFER"
       period_status: "OPEN" | "READY_TO_CLOSE" | "CLOSED"
       source_type: "BANK" | "BROKER" | "SAVINGS" | "CARD" | "OTHER"
@@ -998,7 +900,7 @@ export const Constants = {
     Enums: {
       account_role: ["CASH", "INVESTMENT"],
       app_domain: ["CASHFLOW", "INVESTING"],
-      import_status: ["UPLOADED", "PARSED", "NORMALIZED", "FAILED"],
+      import_status: ["UPLOADED", "PARSED", "NORMALIZED", "FAILED", "PARTIAL"],
       movement_type: ["INCOME", "EXPENSE", "TRANSFER"],
       period_status: ["OPEN", "READY_TO_CLOSE", "CLOSED"],
       source_type: ["BANK", "BROKER", "SAVINGS", "CARD", "OTHER"],
