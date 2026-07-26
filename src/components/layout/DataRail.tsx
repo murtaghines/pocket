@@ -11,7 +11,6 @@ import {
   ChevronRight,
   ChevronLeft,
   User,
-  Upload,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
