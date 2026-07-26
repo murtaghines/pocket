@@ -231,7 +231,10 @@ export default function Index() {
             {/* Section header (mobile only — desktop shows it in the sticky top bar).
                 The month navigator pill lets you move between months on mobile too. */}
             <div className="mb-6 md:hidden">
-              <HeaderMonthSelector />
+              <div className="flex items-center justify-between gap-3">
+                <h1 className="text-2xl font-semibold">{t('title')}</h1>
+                <HeaderMonthSelector />
+              </div>
               {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
                 <p className="text-sm tabular-nums text-muted-foreground mt-2">
                   {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
