@@ -229,18 +229,20 @@ export default function Index() {
         {!isLoading && !prefsLoading && (
           <>
             {/* Section header (mobile only — desktop shows it in the sticky top bar).
-                The month navigator pill lets you move between months on mobile too. */}
-            <div className="mb-6 md:hidden">
+                Pinned to the top so the title + month navigator stay reachable while scrolling,
+                mirroring the desktop sticky top bar. The -mx-4/-mt-4 bleed cancels the main
+                padding so the blurred backdrop spans full width and sits flush at the top. */}
+            <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-4 bg-background/90 px-4 pt-4 pb-3 backdrop-blur-[10px] md:hidden">
               <div className="flex items-center justify-between gap-3">
                 <h1 className="text-2xl font-semibold">{t('title')}</h1>
                 <HeaderMonthSelector />
               </div>
-              {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
-                <p className="text-sm tabular-nums text-muted-foreground mt-2">
-                  {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
-                </p>
-              )}
             </div>
+            {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
+              <p className="mb-5 text-sm tabular-nums text-muted-foreground md:hidden">
+                {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+              </p>
+            )}
 
             <div className="flex flex-col gap-[18px]">
               {/* KPI area: income + expenses, then the net-balance hero (with sent-to-invest
