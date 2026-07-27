@@ -45,7 +45,7 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
   };
 
   return (
-    <div className="bg-card rounded-2xl p-[20px_22px_18px] shadow-bento">
+    <div className="flex h-full flex-col bg-card rounded-2xl p-[20px_22px_18px] shadow-bento">
       {/* Header row: title + legend */}
       <div className="flex items-start justify-between mb-4">
         <div>
@@ -71,7 +71,7 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
       {!hasData ? (
         <EmptyState height="h-[180px]" />
       ) : (
-        <div className="h-[180px]">
+        <div className="min-h-[180px] flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 4, right: 4, left: -14, bottom: 0 }} barGap={3} barCategoryGap="28%">
               <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.35} vertical={false} />
