@@ -69,9 +69,9 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 items-center px-5 pb-[18px] pt-0">
-        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row sm:items-center sm:gap-7">
+        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row sm:items-center sm:gap-9">
           {/* Donut gauge — centre shows the month total, or the selected category's amount */}
-          <div className="relative shrink-0" style={{ width: 186, height: 170 }}>
+          <div className="relative shrink-0" style={{ width: 216, height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -104,16 +104,16 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 pb-3 text-center">
               {activeEntry ? (
                 <>
-                  <span className="max-w-full truncate text-[11px] font-medium text-muted-foreground">
+                  <span className="max-w-full truncate text-[12px] font-medium text-muted-foreground">
                     {activeEntry.name}
                   </span>
-                  <span className="text-[17px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-foreground">
+                  <span className="text-[19px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-foreground">
                     {formatCurrency(activeEntry.value)}
                   </span>
-                  <span className="text-[11px] tabular-nums text-muted-foreground">{pctLabel(activeEntry.value)}</span>
+                  <span className="text-[12px] tabular-nums text-muted-foreground">{pctLabel(activeEntry.value)}</span>
                 </>
               ) : (
-                <span className="text-[18px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
+                <span className="text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
                   {formatCurrency(total)}
                 </span>
               )}

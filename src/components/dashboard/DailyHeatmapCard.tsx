@@ -20,13 +20,13 @@ interface DailyHeatmapCardProps {
 }
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-const CELL_SIZE = 30; // fixed px — height must not scale with column width
-const CELL_GAP = 4;
 
 export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatmapCardProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const [metric, setMetric] = useState<Metric>("expense");
+  // Day the user is hovering (desktop) or tapped (mobile) — surfaces that date's exact value.
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
 
   const { cells, maxValue, minNonZero, maxDay, minDay, avgActive, daysInMonth, leadingBlanks } = useMemo(() => {
     if (!monthKey) {
@@ -73,7 +73,6 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
     return formatCurrency(value);
   };
 
-  const formatLegendValue = (value: number) => (metric === "count" ? `${value}` : formatCurrency(value));
   // Stat values: whole counts (avg to 1 decimal) for Activity, currency otherwise.
   const isCount = metric === "count";
   const formatStat = (value: number, isAvg = false) =>
@@ -149,70 +148,79 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
       {!monthKey || daysInMonth === 0 ? (
         <EmptyState height="h-[200px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
-        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 sm:gap-x-6">
-          {/* Calendar */}
-          <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 sm:gap-x-6">
+          {/* Calendar — cells flex to fill the column (capped) so it uses the available width */}
+          <div className="flex w-full max-w-[400px] flex-col gap-2">
             {/* Weekday header */}
-            <div className="grid grid-cols-7" style={{ columnGap: CELL_GAP, width: gridSize > 0 ? `${(CELL_SIZE + CELL_GAP) * 7 - CELL_GAP}px` : undefined }}>
+            <div className="grid grid-cols-7 gap-1">
               {WEEKDAY_KEYS.map((k) => (
-                <div key={k} className="text-center text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground" style={{ width: CELL_SIZE }}>
+                <div key={k} className="text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   {t(`heatmap.weekdays.${k}`, k.charAt(0).toUpperCase() + k.slice(1, 3))}
                 </div>
               ))}
             </div>
 
-            {/* Grid — fixed cell size so height never scales with column width */}
-            <div className="grid grid-cols-7" style={{ gap: CELL_GAP }}>
+            {/* Grid — square cells sized from the column width */}
+            <div className="grid grid-cols-7 gap-1">
               {Array.from({ length: gridSize }).map((_, i) => {
                 const dayIndex = i - leadingBlanks;
                 if (dayIndex < 0 || dayIndex >= daysInMonth) {
-                  return <div key={i} style={{ width: CELL_SIZE, height: CELL_SIZE }} />;
+                  return <div key={i} className="aspect-square" />;
                 }
                 const cell = cells[dayIndex];
                 const intensity = getIntensity(cell.value);
                 const hasValue = cell.value > 0;
                 return (
-                  <div
+                  <button
                     key={i}
-                    title={hasValue ? `${cell.day}: ${formatValue(cell.value)}` : `${cell.day}`}
+                    type="button"
+                    onMouseEnter={() => setHoveredDay(cell.day)}
+                    onMouseLeave={() => setHoveredDay((d) => (d === cell.day ? null : d))}
+                    onClick={() => setHoveredDay((d) => (d === cell.day ? null : cell.day))}
                     className={cn(
-                      "rounded-[7px] flex items-center justify-center text-[10.5px] font-medium transition-transform hover:scale-110 cursor-default",
+                      "flex aspect-square items-center justify-center rounded-[7px] text-[11px] font-medium transition-transform hover:scale-105",
                       hasValue ? "text-white" : "text-muted-foreground/50 bg-muted/30",
+                      hoveredDay === cell.day && "ring-2 ring-primary/60 ring-offset-1 ring-offset-card",
                     )}
-                    style={{
-                      width: CELL_SIZE,
-                      height: CELL_SIZE,
-                      backgroundColor: hasValue ? `hsl(var(--primary) / ${intensity})` : undefined,
-                    }}
+                    style={{ backgroundColor: hasValue ? `hsl(var(--primary) / ${intensity})` : undefined }}
                   >
                     {cell.day}
-                  </div>
+                  </button>
                 );
               })}
             </div>
 
-            {/* Legend */}
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5 self-end">
-              <span className="tabular-nums">{minNonZero > 0 ? formatLegendValue(minNonZero) : "—"}</span>
-              {[0.12, 0.3, 0.55, 0.8, 1].map((a) => (
-                <div key={a} className="w-[10px] h-[10px] rounded-[3px]" style={{ backgroundColor: `hsl(var(--primary) / ${a})` }} />
-              ))}
-              <span className="tabular-nums">{maxValue > 0 ? formatLegendValue(maxValue) : "—"}</span>
+            {/* Legend (Min → Max) + the hovered day's exact value on the right */}
+            <div className="mt-0.5 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <span>{t("heatmap.min", "Min")}</span>
+                {[0.12, 0.3, 0.55, 0.8, 1].map((a) => (
+                  <div key={a} className="w-[10px] h-[10px] rounded-[3px]" style={{ backgroundColor: `hsl(var(--primary) / ${a})` }} />
+                ))}
+                <span>{t("heatmap.max", "Max")}</span>
+              </div>
+              <span className="min-h-[14px] truncate tabular-nums text-foreground/80">
+                {hoveredDay !== null
+                  ? `${t("heatmap.stats.day", { day: hoveredDay, defaultValue: "Day {{day}}" })} · ${
+                      cells[hoveredDay - 1]?.value > 0 ? formatValue(cells[hoveredDay - 1].value) : "—"
+                    }`
+                  : ""}
+              </span>
             </div>
           </div>
 
-          {/* Contextual stats — compact, pinned to the right, worded per selected metric.
-              Sizes shrink on mobile so they sit beside the calendar instead of wrapping below. */}
-          <div className="flex flex-col items-end gap-2.5 text-right justify-self-end min-w-0 sm:gap-3.5">
+          {/* Contextual stats — pinned to the right, worded per selected metric.
+              Labels are constrained so two-word titles stack (e.g. "HIGHEST" / "EXPENSE"). */}
+          <div className="flex flex-col items-end gap-3.5 text-right justify-self-end">
             {stats.map((s, i) => (
-              <div key={i} className="min-w-0">
-                <div className="text-[9.5px] font-medium uppercase leading-tight tracking-[.03em] text-muted-foreground sm:text-[10.5px]">
+              <div key={i}>
+                <div className="ml-auto max-w-[76px] text-[10px] font-semibold uppercase leading-[1.15] tracking-[.04em] text-muted-foreground">
                   {s.label}
                 </div>
-                <div className="mt-0.5 text-[15px] font-semibold tabular-nums leading-none text-foreground sm:text-[18px]">
+                <div className="mt-1 text-[18px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
-                {s.hint && <div className="mt-0.5 text-[9.5px] text-muted-foreground/80 sm:text-[10.5px]">{s.hint}</div>}
+                {s.hint && <div className="mt-0.5 text-[10px] text-muted-foreground/80">{s.hint}</div>}
               </div>
             ))}
           </div>

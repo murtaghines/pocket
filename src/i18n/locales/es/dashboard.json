@@ -275,6 +275,8 @@
     "more": "Más",
     "transaction": "transacción",
     "transactions": "transacciones",
+    "min": "Mín",
+    "max": "Máx",
     "stats": {
       "highest": {
         "expense": "Gasto más alto",
@@ -286,7 +288,7 @@
         "income": "Ingreso más bajo",
         "count": "Menor actividad"
       },
-      "avg": "Prom. / día activo",
+      "avg": "Promedio diario",
       "day": "Día {{day}}"
     },
     "weekdays": {
