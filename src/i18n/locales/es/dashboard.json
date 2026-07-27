@@ -63,6 +63,7 @@
     "totalSavings": "Ahorro Total",
     "accounts": "Cuentas",
     "accountsSubtitle": "Saldo a fin de mes",
+    "manageAccounts": "Gestionar cuentas",
     "weekShort": "S{{n}}",
     "byWeekThisMonth": "Por semana · este mes",
     "addAccount": "Agregar cuenta",
