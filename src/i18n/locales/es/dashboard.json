@@ -185,12 +185,13 @@
   },
   "insights": {
     "essential": {
-      "title": "Esencial vs discrecional",
+      "title": "Esencial vs opcional",
       "subtitle": "Cuánto de tu gasto era evitable",
       "essential": "Esencial",
-      "discretionary": "Discrecional",
-      "discretionaryShare": "{{pct}}% discrecional",
-      "explainer": "Por categoría: lo esencial es difícil de evitar, lo discrecional es estilo de vida",
+      "discretionary": "Opcional",
+      "discretionaryShare": "{{pct}}% opcional",
+      "tapHint": "Tocá un lado para ver qué incluye",
+      "explainer": "Por categoría: lo esencial es difícil de evitar, lo opcional es estilo de vida",
       "essentialHint": "Vivienda, súper, salud, deportes, mascotas…",
       "discretionaryHint": "Salir a comer, ocio, compras, viajes…",
       "moreCategories_one": "{{count}} categoría más",
