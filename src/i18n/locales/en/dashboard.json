@@ -64,6 +64,7 @@
     "average": "Avg",
     "accounts": "Accounts",
     "accountsSubtitle": "Month-end balance",
+    "manageAccounts": "Manage accounts",
     "weekShort": "W{{n}}",
     "byWeekThisMonth": "By week · this month",
     "addAccount": "Add account",

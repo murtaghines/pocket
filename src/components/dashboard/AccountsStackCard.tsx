@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAccounts } from "@/hooks/useAccounts";
 import type { Transaction } from "@/lib/mockData";
-import { Plus, Landmark, PiggyBank, Users, CreditCard } from "lucide-react";
+import { Settings2, Landmark, PiggyBank, Users, CreditCard } from "lucide-react";
 import { getAccountColorStyle, getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
-import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 
 interface AccountsStackCardProps {
   transactions: Transaction[];
@@ -57,9 +57,9 @@ export function AccountsStackCard({
   formatCurrency,
 }: AccountsStackCardProps) {
   const { t } = useTranslation("dashboard");
-  const { accounts, getCashAccounts, createAccount, isCreating } = useAccounts();
+  const navigate = useNavigate();
+  const { accounts, getCashAccounts } = useAccounts();
   const [detail, setDetail] = useState<AccountDisplay | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
 
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
 
@@ -117,17 +117,6 @@ export function AccountsStackCard({
     return primary ? [primary, ...rest] : rest;
   }, [accountsData]);
 
-  const handleAdd = (values: AccountFormValues) => {
-    createAccount({
-      institution: values.institution,
-      name: values.name,
-      color: values.color,
-      account_role: "CASH",
-      domain_default: "CASHFLOW",
-    });
-    setAddOpen(false);
-  };
-
   return (
     <>
       <div
@@ -146,11 +135,12 @@ export function AccountsStackCard({
           </div>
           <button
             type="button"
-            onClick={() => setAddOpen(true)}
-            aria-label="Add account"
+            onClick={() => navigate("/account?tab=accounts")}
+            aria-label={t("charts.manageAccounts", "Manage accounts")}
+            title={t("charts.manageAccounts", "Manage accounts")}
             className="w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors"
           >
-            <Plus className="w-[16px] h-[16px]" strokeWidth={2} />
+            <Settings2 className="w-[16px] h-[16px]" strokeWidth={2} />
           </button>
         </div>
 
@@ -249,14 +239,6 @@ export function AccountsStackCard({
           )}
         </SheetContent>
       </Sheet>
-
-      <AccountFormDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        mode="create"
-        isSubmitting={isCreating}
-        onSubmit={handleAdd}
-      />
     </>
   );
 }
