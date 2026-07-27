@@ -149,7 +149,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
       {!monthKey || daysInMonth === 0 ? (
         <EmptyState height="h-[200px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 sm:gap-x-6">
           {/* Calendar */}
           <div className="flex flex-col gap-2">
             {/* Weekday header */}
@@ -201,17 +201,18 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
             </div>
           </div>
 
-          {/* Contextual stats — pinned to the right, worded per selected metric */}
-          <div className="ml-auto flex flex-col items-end gap-3.5 text-right">
+          {/* Contextual stats — compact, pinned to the right, worded per selected metric.
+              Sizes shrink on mobile so they sit beside the calendar instead of wrapping below. */}
+          <div className="flex flex-col items-end gap-2.5 text-right justify-self-end min-w-0 sm:gap-3.5">
             {stats.map((s, i) => (
-              <div key={i}>
-                <div className="text-[10.5px] font-medium uppercase tracking-[.03em] text-muted-foreground whitespace-nowrap">
+              <div key={i} className="min-w-0">
+                <div className="text-[9.5px] font-medium uppercase leading-tight tracking-[.03em] text-muted-foreground sm:text-[10.5px]">
                   {s.label}
                 </div>
-                <div className="mt-0.5 text-[18px] font-semibold tabular-nums leading-none text-foreground">
+                <div className="mt-0.5 text-[15px] font-semibold tabular-nums leading-none text-foreground sm:text-[18px]">
                   {s.value}
                 </div>
-                {s.hint && <div className="mt-0.5 text-[10.5px] text-muted-foreground/80">{s.hint}</div>}
+                {s.hint && <div className="mt-0.5 text-[9.5px] text-muted-foreground/80 sm:text-[10.5px]">{s.hint}</div>}
               </div>
             ))}
           </div>
