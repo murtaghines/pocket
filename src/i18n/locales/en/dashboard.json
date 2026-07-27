@@ -310,16 +310,8 @@
     "min": "Min",
     "max": "Max",
     "stats": {
-      "highest": {
-        "expense": "Highest expense",
-        "income": "Highest income",
-        "count": "Highest activity"
-      },
-      "lowest": {
-        "expense": "Lowest expense",
-        "income": "Lowest income",
-        "count": "Lowest activity"
-      },
+      "highest": "Highest",
+      "lowest": "Lowest",
       "avg": "Daily average",
       "day": "Day {{day}}"
     },

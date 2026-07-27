@@ -85,22 +85,21 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
   ];
   const activeMetricLabel = metricOptions.find((o) => o.key === metric)?.label ?? "";
 
-  // Contextual stats beside the calendar, worded per selected metric.
-  const highestFallback = isCount ? "Highest activity" : metric === "income" ? "Highest income" : "Highest expense";
-  const lowestFallback = isCount ? "Lowest activity" : metric === "income" ? "Lowest income" : "Lowest expense";
+  // Contextual stats beside the calendar. The selected metric is already shown by the dropdown
+  // above, so the titles stay single-word ("Highest" / "Lowest") rather than "Highest expense".
   const stats = [
     {
-      label: t(`heatmap.stats.highest.${metric}`, highestFallback),
+      label: t("heatmap.stats.highest", "Highest"),
       value: maxValue > 0 ? formatStat(maxValue) : "—",
       hint: maxDay > 0 ? t("heatmap.stats.day", { day: maxDay, defaultValue: "Day {{day}}" }) : undefined,
     },
     {
-      label: t(`heatmap.stats.lowest.${metric}`, lowestFallback),
+      label: t("heatmap.stats.lowest", "Lowest"),
       value: minNonZero > 0 ? formatStat(minNonZero) : "—",
       hint: minDay > 0 ? t("heatmap.stats.day", { day: minDay, defaultValue: "Day {{day}}" }) : undefined,
     },
     {
-      label: t("heatmap.stats.avg", "Avg / active day"),
+      label: t("heatmap.stats.avg", "Daily average"),
       value: avgActive > 0 ? formatStat(avgActive, true) : "—",
       hint: undefined,
     },
@@ -152,7 +151,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
           {/* Calendar — cells flex to fill the column (capped) so it uses the available width */}
           <div className="flex w-full max-w-[400px] flex-col gap-2">
             {/* Weekday header */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1.5">
               {WEEKDAY_KEYS.map((k) => (
                 <div key={k} className="text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   {t(`heatmap.weekdays.${k}`, k.charAt(0).toUpperCase() + k.slice(1, 3))}
@@ -161,7 +160,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
             </div>
 
             {/* Grid — square cells sized from the column width */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1.5">
               {Array.from({ length: gridSize }).map((_, i) => {
                 const dayIndex = i - leadingBlanks;
                 if (dayIndex < 0 || dayIndex >= daysInMonth) {
