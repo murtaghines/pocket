@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocalization } from "@/hooks/useLocalization";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -14,37 +16,33 @@ function categoryDotColor(slug: string): string {
   return varName ? `hsl(var(--${varName}))` : "hsl(var(--muted-foreground))";
 }
 
-/** How many categories to list per bucket before collapsing the rest into "+N more". */
-const MAX_ROWS = 4;
+type Bucket = "essential" | "discretionary";
 
 /**
- * Splits the month's expenses into essential vs discretionary spending. Beyond the headline share,
- * it lists the actual categories composing each bucket (with their brand colors) so the user can see
- * exactly which spending is counted where. Essential = muted, discretionary = warning (yellow).
+ * Splits the month's expenses into essential vs optional spending. The headline is a single
+ * capsule bar showing the proportion; the per-category breakdown stays hidden until the user taps
+ * one side, so the card reads clean at a glance. Essential = muted, optional = warning (yellow).
  */
 export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
+  const [open, setOpen] = useState<Bucket | null>(null);
 
   const hasData = split.total > 0;
   const essentialPct = hasData ? Math.round((split.essential / split.total) * 100) : 0;
   const discretionaryPct = hasData ? 100 - essentialPct : 0;
 
+  const toggle = (b: Bucket) => setOpen((cur) => (cur === b ? null : b));
+
+  const openCategories =
+    open === "essential" ? split.essentialCategories : open === "discretionary" ? split.discretionaryCategories : [];
+
   return (
     <div className="bg-card rounded-2xl p-[20px_22px_18px] shadow-bento">
-      <div className="flex items-start justify-between mb-4">
-        <div className="min-w-0">
-          <p className="text-[15px] font-semibold text-foreground">
-            {t("insights.essential.title")}
-          </p>
-          <p className="text-[12px] text-muted-foreground mt-0.5">
-            {t("insights.essential.explainer")}
-          </p>
-        </div>
+      <div className="mb-4 min-w-0">
+        <p className="text-[15px] font-semibold text-foreground">{t("insights.essential.title")}</p>
         {hasData && (
-          <span className="text-[13px] font-semibold text-warning-foreground bg-warning/90 rounded-full px-2.5 py-1 whitespace-nowrap shrink-0">
-            {t("insights.essential.discretionaryShare", { pct: split.discretionaryPct })}
-          </span>
+          <p className="text-[12px] text-muted-foreground mt-0.5">{t("insights.essential.tapHint")}</p>
         )}
       </div>
 
@@ -52,109 +50,138 @@ export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProp
         <EmptyState height="h-[140px]" />
       ) : (
         <>
-          {/* Stacked proportion bar with the two percentages inline */}
-          <div className="flex w-full h-2.5 rounded-full overflow-hidden bg-muted/40">
-            <div
-              className="h-full bg-muted-foreground/45"
-              style={{ width: `${essentialPct}%` }}
-              aria-label={t("insights.essential.essential")}
-            />
-            <div
-              className="h-full bg-warning"
-              style={{ width: `${discretionaryPct}%` }}
-              aria-label={t("insights.essential.discretionary")}
-            />
+          {/* Capsule proportion bar — two tappable segments inside an outlined pill */}
+          <div className="p-[3px] rounded-full bg-muted/40 ring-1 ring-border/70">
+            <div className="flex h-8 rounded-full overflow-hidden">
+              <BarSegment
+                pct={essentialPct}
+                onClick={() => toggle("essential")}
+                active={open === "essential"}
+                className="bg-muted-foreground/40 text-foreground"
+                label={t("insights.essential.essential")}
+              />
+              <BarSegment
+                pct={discretionaryPct}
+                onClick={() => toggle("discretionary")}
+                active={open === "discretionary"}
+                className="bg-warning text-warning-foreground"
+                label={t("insights.essential.discretionary")}
+              />
+            </div>
           </div>
 
-          <div className="mt-4 grid max-w-[760px] grid-cols-2 gap-x-8 gap-y-1">
-            <BucketColumn
+          {/* Two summary toggles — dot + label + amount, tap to reveal that bucket's categories */}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <BucketToggle
               label={t("insights.essential.essential")}
-              caption={t("insights.essential.essentialHint")}
               amount={split.essential}
               pct={essentialPct}
-              dotClass="bg-muted-foreground/45"
-              categories={split.essentialCategories}
+              dotClass="bg-muted-foreground/40"
+              open={open === "essential"}
+              onClick={() => toggle("essential")}
               formatCurrency={formatCurrency}
-              moreLabel={t}
             />
-            <BucketColumn
+            <BucketToggle
               label={t("insights.essential.discretionary")}
-              caption={t("insights.essential.discretionaryHint")}
               amount={split.discretionary}
               pct={discretionaryPct}
               dotClass="bg-warning"
-              categories={split.discretionaryCategories}
+              open={open === "discretionary"}
+              onClick={() => toggle("discretionary")}
               formatCurrency={formatCurrency}
-              moreLabel={t}
             />
           </div>
+
+          {open && (
+            <ul className="mt-3 space-y-1.5 border-t border-border/60 pt-3">
+              {openCategories.map((c) => (
+                <CategoryRow key={c.slug} category={c} formatCurrency={formatCurrency} />
+              ))}
+            </ul>
+          )}
         </>
       )}
     </div>
   );
 }
 
-interface BucketColumnProps {
+interface BarSegmentProps {
+  pct: number;
+  onClick: () => void;
+  active: boolean;
+  className: string;
   label: string;
-  caption: string;
+}
+
+/** One coloured slice of the capsule bar; shows its % inline when wide enough to fit. */
+function BarSegment({ pct, onClick, active, className, label }: BarSegmentProps) {
+  if (pct <= 0) return null;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={`${label} ${pct}%`}
+      style={{ width: `${pct}%` }}
+      className={`h-full flex items-center justify-center text-[11px] font-semibold tabular-nums transition-opacity hover:opacity-90 ${
+        active ? "" : "opacity-95"
+      } ${className}`}
+    >
+      {pct >= 12 && `${pct}%`}
+    </button>
+  );
+}
+
+interface BucketToggleProps {
+  label: string;
   amount: number;
   pct: number;
   dotClass: string;
-  categories: CategoryAmount[];
+  open: boolean;
+  onClick: () => void;
   formatCurrency: (n: number) => string;
-  moreLabel: ReturnType<typeof useTranslation>["t"];
 }
 
-/** One side of the split: header amount + the categories that compose it, largest first. */
-function BucketColumn({
-  label,
-  caption,
-  amount,
-  pct,
-  dotClass,
-  categories,
-  formatCurrency,
-  moreLabel: t,
-}: BucketColumnProps) {
-  const shown = categories.slice(0, MAX_ROWS);
-  const rest = categories.slice(MAX_ROWS);
-  const restAmount = rest.reduce((s, c) => s + c.amount, 0);
-
+/** Summary row for one bucket: a button that expands the category list below. */
+function BucketToggle({ label, amount, pct, dotClass, open, onClick, formatCurrency }: BucketToggleProps) {
   return (
-    <div>
-      <div className="flex items-center gap-1.5">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left transition-colors ${
+        open ? "border-border bg-muted/40" : "border-transparent bg-muted/20 hover:bg-muted/40"
+      }`}
+    >
+      <div className="flex w-full items-center gap-1.5">
         <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
         <span className="text-[12px] font-medium text-foreground">{label}</span>
         <span className="text-[11px] text-muted-foreground tabular-nums">· {pct}%</span>
+        <ChevronDown
+          className={`ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </div>
-      <div className="text-[17px] font-semibold tabular-nums text-foreground mt-0.5">
-        {formatCurrency(amount)}
-      </div>
-      <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">{caption}</p>
+      <div className="text-[17px] font-semibold tabular-nums text-foreground mt-1">{formatCurrency(amount)}</div>
+    </button>
+  );
+}
 
-      <ul className="space-y-1">
-        {shown.map((c) => (
-          <li key={c.slug} className="flex items-center gap-1.5 text-[12px]">
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ backgroundColor: categoryDotColor(c.slug) }}
-            />
-            <span className="text-muted-foreground truncate">{getCategoryLabel(c.slug)}</span>
-            <span className="ml-auto text-foreground tabular-nums">{formatCurrency(c.amount)}</span>
-          </li>
-        ))}
-        {rest.length > 0 && (
-          <li className="flex items-center gap-1.5 text-[12px]">
-            <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-muted-foreground/30" />
-            <span className="text-muted-foreground truncate">
-              {t("insights.essential.moreCategories", { count: rest.length })}
-            </span>
-            <span className="ml-auto text-muted-foreground tabular-nums">
-              {formatCurrency(restAmount)}
-            </span>
-          </li>
-        )}
-      </ul>
-    </div>
+/** One category line inside an expanded bucket: colour dot + label + amount. */
+function CategoryRow({
+  category,
+  formatCurrency,
+}: {
+  category: CategoryAmount;
+  formatCurrency: (n: number) => string;
+}) {
+  return (
+    <li className="flex items-center gap-2 text-[13px]">
+      <span
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ backgroundColor: categoryDotColor(category.slug) }}
+      />
+      <span className="text-muted-foreground truncate">{getCategoryLabel(category.slug)}</span>
+      <span className="ml-auto text-foreground tabular-nums">{formatCurrency(category.amount)}</span>
+    </li>
   );
 }

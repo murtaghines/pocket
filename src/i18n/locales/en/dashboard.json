@@ -216,12 +216,13 @@
   },
   "insights": {
     "essential": {
-      "title": "Essential vs discretionary",
+      "title": "Essential vs optional",
       "subtitle": "How much of your spending was avoidable",
       "essential": "Essential",
-      "discretionary": "Discretionary",
-      "discretionaryShare": "{{pct}}% discretionary",
-      "explainer": "By category: essentials are hard to avoid, discretionary is lifestyle",
+      "discretionary": "Optional",
+      "discretionaryShare": "{{pct}}% optional",
+      "tapHint": "Tap a side to see what's in it",
+      "explainer": "By category: essentials are hard to avoid, optional is lifestyle",
       "essentialHint": "Housing, groceries, health, sports, pets…",
       "discretionaryHint": "Eating out, leisure, shopping, travel…",
       "moreCategories_one": "{{count}} more category",
