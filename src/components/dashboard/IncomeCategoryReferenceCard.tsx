@@ -17,23 +17,11 @@ const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
 const OUTER_RADIUS = 150;
 const INNER_RADIUS = 56;
-const VISUAL_BOX_WIDTH = 460;
-const VISUAL_BOX_HEIGHT = 220;
-const VISUAL_CHART_SIZE = 220;
-const VISUAL_CHART_LEFT = 8;
-const LABEL_COLUMN_LEFT = VISUAL_CHART_LEFT + VISUAL_CHART_SIZE + 24;
-const LABEL_COLUMN_WIDTH = VISUAL_BOX_WIDTH - LABEL_COLUMN_LEFT;
+// Fixed on-screen chart size — never grows with the number of categories.
+const CHART_SIZE = 188;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
-
-const polar = (cx: number, cy: number, radius: number, degrees: number) => {
-  const radians = (degrees * Math.PI) / 180;
-  return {
-    x: cx + radius * Math.cos(radians),
-    y: cy - radius * Math.sin(radians),
-  };
-};
 
 const getRingStroke = (style: RingStyle) => {
   switch (style) {
@@ -48,6 +36,13 @@ const getRingStroke = (style: RingStyle) => {
     case "softer":
       return "hsl(var(--primary-foreground) / 0.22)";
   }
+};
+
+/** Colour for the legend dot, matching each ring's style. */
+const getDotBackground = (style: RingStyle) => {
+  if (style === "white") return "hsl(var(--primary-foreground))";
+  if (style === "black") return "hsl(var(--sidebar-background))";
+  return "transparent";
 };
 
 export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCardProps) {
@@ -81,11 +76,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
   if (!hasData) {
     return (
-      <Card
-        variant="bento"
-        className="h-[300px] w-full"
-
-      >
+      <Card variant="bento" className="h-[300px] w-full">
         <CardHeader className="p-4 pb-1">
           <CardTitle className="text-[15px] font-semibold text-foreground">
             {t("charts.incomeByCategory", "Income by Category")}
@@ -102,158 +93,101 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
   const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
   // Scale stroke width down as we add rings so they never overlap.
   // 1 ring -> 30, 2 -> 28, 3 -> 24, 4 -> 20, 5 -> 17, 6 -> 14
-  const strokeWidth =
-    ringCount === 1
-      ? 30
-      : Math.max(12, Math.min(28, ringSpacing * 0.78));
+  const strokeWidth = ringCount === 1 ? 30 : Math.max(12, Math.min(28, ringSpacing * 0.78));
   const cx = SVG_SIZE * 0.5;
   const cy = SVG_SIZE * 0.5;
   const radiiByIndex = sorted.map((_, index) =>
     ringCount === 1 ? OUTER_RADIUS : OUTER_RADIUS - ringSpacing * index,
   );
-  const chartCenterX = VISUAL_CHART_LEFT + VISUAL_CHART_SIZE / 2;
-  const chartCenterY = VISUAL_BOX_HEIGHT / 2;
-
-  // Two-column legend when there are many categories so labels never collide
-  // and stay legible at any count. <=4 -> single column, >4 -> two columns.
-  const useTwoColumns = ringCount > 4;
-  const columnCount = useTwoColumns ? 2 : 1;
-  const rowsPerColumn = Math.ceil(ringCount / columnCount);
-  const lineHeight = useTwoColumns ? 22 : ringCount >= 4 ? 24 : 26;
-  const columnGap = 12;
-  const columnWidth = useTwoColumns
-    ? (LABEL_COLUMN_WIDTH - columnGap) / 2
-    : LABEL_COLUMN_WIDTH;
-  const labelTextSize = useTwoColumns ? "text-[11px] md:text-xs" : "text-[13px] md:text-sm";
-  const labelValueSize = useTwoColumns ? "text-[11px] md:text-xs" : "text-[13px] md:text-sm";
-  const dotSize = useTwoColumns ? "h-2 w-2" : "h-2.5 w-2.5";
 
   return (
     <Card
       variant="bento"
-      className="relative flex h-[300px] w-full overflow-hidden border-0 bg-primary text-primary-foreground"
-
+      className="relative flex h-[300px] w-full flex-col overflow-hidden border-0 bg-primary text-primary-foreground"
     >
-      <CardHeader className="absolute left-0 top-0 z-10 p-5 pb-0">
+      <CardHeader className="shrink-0 p-5 pb-0">
         <CardTitle className="text-[15px] font-semibold text-primary-foreground">
           {t("charts.incomeByCategory", "Income by Category")}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="relative flex h-full w-full items-center justify-center p-5 pt-14">
-        <div
-          className="relative h-[220px] w-full"
-          style={{ maxWidth: `${VISUAL_BOX_WIDTH}px` }}
-        >
-          <div
-            className="pointer-events-none absolute top-1/2"
-            style={{
-              left: `${VISUAL_CHART_LEFT}px`,
-              width: `${VISUAL_CHART_SIZE}px`,
-              height: `${VISUAL_CHART_SIZE}px`,
-              transform: "translateY(-50%)",
-            }}
+      <CardContent className="flex min-h-0 flex-1 items-center gap-4 p-5 pt-3">
+        {/* Legend — left, single column, scrolls vertically when there are many categories */}
+        <ul className="flex max-h-full min-w-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
+          {sorted.map((category, index) => {
+            const pct = (category.value / total) * 100;
+            const ringStyle = RING_STYLES[index % RING_STYLES.length];
+            return (
+              <li
+                key={`${category.name}-legend-${index}`}
+                className="flex items-center gap-2.5 text-primary-foreground"
+              >
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full border border-primary-foreground/80"
+                  style={{ backgroundColor: getDotBackground(ringStyle) }}
+                />
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{category.name}</span>
+                <span className="shrink-0 text-[13px] font-semibold tabular-nums">{pct.toFixed(0)}%</span>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Chart — right, fixed size so it never grows with the category count */}
+        <div className="shrink-0" style={{ width: CHART_SIZE, height: CHART_SIZE }}>
+          <svg
+            viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
+            preserveAspectRatio="xMidYMid meet"
+            className="h-full w-full"
+            aria-hidden
           >
-            <svg
-              viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
-              preserveAspectRatio="xMidYMid meet"
-              className="h-full w-full"
-              aria-hidden
-            >
-              <defs>
-                <pattern
-                  id="income-category-stripes"
-                  width="12"
-                  height="12"
-                  patternUnits="userSpaceOnUse"
-                  patternTransform="rotate(10)"
-                >
-                  <rect width="12" height="12" fill="transparent" />
-                  <rect width="4" height="12" fill="hsl(var(--primary-foreground))" />
-                </pattern>
-              </defs>
+            <defs>
+              <pattern
+                id="income-category-stripes"
+                width="12"
+                height="12"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(10)"
+              >
+                <rect width="12" height="12" fill="transparent" />
+                <rect width="4" height="12" fill="hsl(var(--primary-foreground))" />
+              </pattern>
+            </defs>
 
-              {sorted.map((category, index) => {
-                const radius = radiiByIndex[index];
-                const pct = category.value / total;
-                const ringStyle = RING_STYLES[index % RING_STYLES.length];
-                const circumference = 2 * Math.PI * radius;
-                const trackLength = (TRACK_SWEEP_DEG / 360) * circumference;
-                const fillLength = Math.max(trackLength * pct, pct > 0 ? strokeWidth * 0.9 : 0);
-
-                return (
-                  <g key={`${category.name}-${index}`} transform={`rotate(${TRACK_START_DEG} ${cx} ${cy})`}>
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={radius}
-                      fill="none"
-                      stroke="hsl(var(--primary-foreground) / 0.15)"
-                      strokeWidth={strokeWidth}
-                      strokeLinecap="round"
-                      strokeDasharray={`${trackLength} ${circumference}`}
-                    />
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={radius}
-                      fill="none"
-                      stroke={getRingStroke(ringStyle)}
-                      strokeWidth={strokeWidth}
-                      strokeLinecap="round"
-                      strokeDasharray={`${fillLength} ${circumference}`}
-                    />
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-
-          <div className="absolute inset-0 z-10">
             {sorted.map((category, index) => {
-              const pct = (category.value / total) * 100;
+              const radius = radiiByIndex[index];
+              const pct = category.value / total;
               const ringStyle = RING_STYLES[index % RING_STYLES.length];
-              const colIndex = Math.floor(index / rowsPerColumn);
-              const rowIndex = index % rowsPerColumn;
-              const itemsInThisColumn =
-                colIndex === columnCount - 1 ? ringCount - colIndex * rowsPerColumn : rowsPerColumn;
-              const totalHeight = (itemsInThisColumn - 1) * lineHeight;
-              const startY = chartCenterY - totalHeight / 2;
-              const topY = startY + rowIndex * lineHeight;
-              const leftX = LABEL_COLUMN_LEFT + colIndex * (columnWidth + columnGap);
+              const circumference = 2 * Math.PI * radius;
+              const trackLength = (TRACK_SWEEP_DEG / 360) * circumference;
+              const fillLength = Math.max(trackLength * pct, pct > 0 ? strokeWidth * 0.9 : 0);
 
               return (
-                <div
-                  key={`${category.name}-legend-${index}`}
-                  className="absolute flex items-center gap-2 text-primary-foreground"
-                  style={{
-                    left: `${leftX}px`,
-                    width: `${columnWidth}px`,
-                    top: `${topY}px`,
-                    transform: "translateY(-50%)",
-                  }}
-                >
-                  <span
-                    className={`${dotSize} shrink-0 rounded-full border border-primary-foreground/80`}
-                    style={{
-                      backgroundColor:
-                        ringStyle === "white"
-                          ? "hsl(var(--primary-foreground))"
-                          : ringStyle === "black"
-                            ? "hsl(var(--sidebar-background))"
-                            : "transparent",
-                    }}
+                <g key={`${category.name}-${index}`} transform={`rotate(${TRACK_START_DEG} ${cx} ${cy})`}>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    fill="none"
+                    stroke="hsl(var(--primary-foreground) / 0.15)"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeDasharray={`${trackLength} ${circumference}`}
                   />
-                  <span className={`${labelTextSize} min-w-0 flex-1 truncate font-medium`}>
-                    {category.name}
-                  </span>
-                  <span className={`${labelValueSize} shrink-0 font-semibold tabular-nums`}>
-                    {pct.toFixed(0)}%
-                  </span>
-                </div>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    fill="none"
+                    stroke={getRingStroke(ringStyle)}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeDasharray={`${fillLength} ${circumference}`}
+                  />
+                </g>
               );
             })}
-          </div>
+          </svg>
         </div>
       </CardContent>
     </Card>
