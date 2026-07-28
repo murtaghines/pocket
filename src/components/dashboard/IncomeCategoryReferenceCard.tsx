@@ -17,8 +17,6 @@ const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
 const OUTER_RADIUS = 150;
 const INNER_RADIUS = 56;
-// Fixed on-screen chart size — never grows with the number of categories.
-const CHART_SIZE = 188;
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
@@ -111,9 +109,10 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="flex min-h-0 flex-1 items-center gap-4 p-5 pt-3">
-        {/* Legend — left, single column, scrolls vertically when there are many categories */}
-        <ul className="flex max-h-full min-w-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
+      <CardContent className="flex min-h-0 flex-1 items-center justify-between gap-2 p-5 pt-3">
+        {/* Legend — left, compact single column (name + %) that stays hugged to the left;
+            scrolls vertically when there are many categories */}
+        <ul className="flex max-h-full shrink-0 flex-col gap-2 overflow-y-auto pr-1">
           {sorted.map((category, index) => {
             const pct = (category.value / total) * 100;
             const ringStyle = RING_STYLES[index % RING_STYLES.length];
@@ -126,15 +125,17 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
                   className="h-2.5 w-2.5 shrink-0 rounded-full border border-primary-foreground/80"
                   style={{ backgroundColor: getDotBackground(ringStyle) }}
                 />
-                <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{category.name}</span>
-                <span className="shrink-0 text-[13px] font-semibold tabular-nums">{pct.toFixed(0)}%</span>
+                <span className="w-[100px] truncate text-[13px] font-medium sm:w-[150px]">{category.name}</span>
+                <span className="w-[40px] shrink-0 text-right text-[13px] font-semibold tabular-nums">
+                  {pct.toFixed(0)}%
+                </span>
               </li>
             );
           })}
         </ul>
 
-        {/* Chart — right, fixed size so it never grows with the category count */}
-        <div className="shrink-0" style={{ width: CHART_SIZE, height: CHART_SIZE }}>
+        {/* Chart — right, fixed size (never grows with the category count) and fully contained */}
+        <div className="h-[130px] w-[130px] shrink-0 sm:h-[200px] sm:w-[200px]">
           <svg
             viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
             preserveAspectRatio="xMidYMid meet"
