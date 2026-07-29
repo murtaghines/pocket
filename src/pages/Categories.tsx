@@ -1,9 +1,12 @@
 import { useEffect } from "react";
-import { TopNav } from "@/components/layout/TopNav";
+import { useTranslation } from "react-i18next";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 
 export default function Categories() {
+  const { t } = useTranslation("common");
+
   useEffect(() => {
     document.body.classList.add("dashboard-theme");
     return () => {
@@ -13,9 +16,7 @@ export default function Categories() {
 
   return (
     <div className="min-h-screen bg-background dashboard-theme">
-      <header className="hidden md:flex sticky top-0 z-30 h-[60px] items-center justify-center px-[30px] bg-card/85 backdrop-blur-[10px]">
-        <TopNav />
-      </header>
+      <AppHeader title={t("navigation.categories", "Categories")} showSelectors={false} />
       <main className="w-full bg-card min-h-screen pb-20 md:pb-0">
         <CategoriesEditor />
       </main>
