@@ -34,6 +34,7 @@
   "navigation": {
     "dashboard": "Dashboard",
     "home": "Home",
+    "overview": "Overview",
     "history": "History",
     "investments": "Investments",
     "planning": "Planning",
