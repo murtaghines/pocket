@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { DataRail } from "@/components/layout/DataRail";
+import { TopNav } from "@/components/layout/TopNav";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { BankStatementsTabsView } from "@/components/imports/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
@@ -8,9 +8,9 @@ import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
 type Tab = "bank" | "investments";
 
 /**
- * MyData — full-screen workspace. The persistent vertical DataRail handles
- * navigation between sub-sections (bank / investments) and back home, so we
- * intentionally skip DashboardLayout's top nav to maximise the spreadsheet area.
+ * MyData — full-screen workspace. Navigation is the shared top pill (TopNav) in a slim bar;
+ * the sub-section switch (bank / investments) lives inside the tabs view, keeping the rest of
+ * the canvas edge-to-edge for the spreadsheet.
  */
 export default function MyData() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -53,12 +53,14 @@ export default function MyData() {
   }, [highlightSection, highlightMonth, setSearchParams]);
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme md:pl-[var(--rail-width,104px)] md:transition-[padding-left] md:duration-[220ms] md:ease-out">
-      <DataRail />
+    <div className="min-h-screen bg-background dashboard-theme">
+      {/* Slim top bar with the centered pill nav (desktop) */}
+      <header className="hidden md:flex sticky top-0 z-30 h-[60px] items-center justify-center px-[30px] bg-card/85 backdrop-blur-[10px]">
+        <TopNav />
+      </header>
 
-      {/* Full-bleed workspace — true edge-to-edge, no padding, white canvas.
-          Header (title + actions) lives inside the tabs view so it can render
-          on the same row as the "Add file" button and source-files dropdown. */}
+      {/* Full-bleed workspace — white canvas. Header (title + actions) lives inside the
+          tabs view so it can render on the same row as the "Add file" button. */}
       <main className="w-full bg-card min-h-screen pb-20 md:pb-0">
         {tab === "bank" ? <BankStatementsTabsView /> : <InvestmentTabsView />}
       </main>

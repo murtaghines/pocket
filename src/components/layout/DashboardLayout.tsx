@@ -7,7 +7,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { DataRail } from "./DataRail";
+import { TopNav } from "./TopNav";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
@@ -67,16 +67,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   })();
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme relative md:pl-[var(--rail-width,104px)] md:transition-[padding-left] md:duration-[220ms] md:ease-out">
-      {/* Persistent vertical rail (desktop) */}
-      <DataRail />
-
-      {/* Top utility bar (desktop) */}
+    <div className="min-h-screen bg-background dashboard-theme relative">
+      {/* Top utility bar (desktop): page title + month selector · centered pill nav · utilities */}
       <header
-        className="hidden md:flex sticky top-0 z-30 h-[74px] items-center justify-between gap-4 px-[30px] bg-background/85 backdrop-blur-[10px]"
+        className="hidden md:flex sticky top-0 z-30 h-[74px] items-center gap-4 px-[30px] bg-background/85 backdrop-blur-[10px]"
       >
         {/* Left: page title + month selector pill */}
-        <div className="flex items-center gap-[14px] min-w-0">
+        <div className="flex items-center gap-[14px] min-w-0 shrink-0">
           {location.pathname === "/dashboard" ? (
             <span className="text-[20px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
               Dashboard
@@ -89,6 +86,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <HeaderMonthSelector />
           <HeaderGranularitySelector />
           <EmptyStateBanner />
+        </div>
+
+        {/* Center: the Pocket pill nav, floating in the space between the two clusters */}
+        <div className="flex min-w-0 flex-1 justify-center">
+          <TopNav />
         </div>
 
         {/* Right: search + bell + theme + divider + avatar */}
@@ -104,7 +106,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 searchRef.current?.blur();
               }
             }}
-            className="flex items-center gap-[9px] bg-card rounded-[11px] px-[13px] py-[9px] w-[210px] text-muted-foreground shadow-sm focus-within:ring-1 focus-within:ring-primary/40 transition-shadow"
+            className="hidden items-center gap-[9px] bg-card rounded-[11px] px-[13px] py-[9px] w-[190px] text-muted-foreground shadow-sm focus-within:ring-1 focus-within:ring-primary/40 transition-shadow xl:flex"
           >
             <Search className="w-[16px] h-[16px] shrink-0" strokeWidth={2} />
             <input
