@@ -33,8 +33,12 @@
   "required": "Requerido",
   "navigation": {
     "dashboard": "Panel",
+    "home": "Inicio",
     "history": "Histórico",
     "investments": "Inversiones",
+    "planning": "Planificación",
+    "data": "Datos",
+    "account": "Cuenta",
     "profile": "Perfil",
     "myData": "Mis Datos",
     "settings": "Configuración",

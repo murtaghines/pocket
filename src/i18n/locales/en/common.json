@@ -33,8 +33,12 @@
   "required": "Required",
   "navigation": {
     "dashboard": "Dashboard",
+    "home": "Home",
     "history": "History",
     "investments": "Investments",
+    "planning": "Planning",
+    "data": "Data",
+    "account": "Account",
     "profile": "Profile",
     "myData": "My Data",
     "settings": "Settings",
