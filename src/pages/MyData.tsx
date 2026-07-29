@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { TopNav } from "@/components/layout/TopNav";
+import { useTranslation } from "react-i18next";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { BankStatementsTabsView } from "@/components/imports/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
@@ -13,6 +14,7 @@ type Tab = "bank" | "investments";
  * the canvas edge-to-edge for the spreadsheet.
  */
 export default function MyData() {
+  const { t } = useTranslation("common");
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabParam = searchParams.get("tab");
@@ -54,10 +56,7 @@ export default function MyData() {
 
   return (
     <div className="min-h-screen bg-background dashboard-theme">
-      {/* Slim top bar with the centered pill nav (desktop) */}
-      <header className="hidden md:flex sticky top-0 z-30 h-[60px] items-center justify-center px-[30px] bg-card/85 backdrop-blur-[10px]">
-        <TopNav />
-      </header>
+      <AppHeader title={t("navigation.data", "Data")} showSelectors={false} />
 
       {/* Full-bleed workspace — white canvas. Header (title + actions) lives inside the
           tabs view so it can render on the same row as the "Add file" button. */}

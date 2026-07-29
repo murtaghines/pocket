@@ -33,7 +33,7 @@ export function TopNav() {
     item.match.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"));
 
   return (
-    <div className="flex items-center gap-2 rounded-full bg-primary p-2 shadow-[0_10px_26px_-10px_rgba(20,80,210,0.6)]">
+    <div className="flex items-center gap-3 rounded-full bg-primary p-2 shadow-[0_10px_26px_-10px_rgba(20,80,210,0.6)]">
       {items.map((item) => {
         const Icon = item.icon;
         const active = isActive(item);
@@ -44,15 +44,17 @@ export function TopNav() {
             aria-label={item.label}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center rounded-full py-2.5 transition-all duration-300 ease-out",
-              active ? "gap-2.5 bg-white/[0.20] px-4 text-white" : "px-3.5 text-white/65 hover:text-white",
+              "flex items-center rounded-full px-4 py-2.5 transition-colors duration-200",
+              active ? "gap-2.5 bg-white/[0.20] text-white" : "text-white/65 hover:text-white",
             )}
           >
             <Icon className="h-5 w-5 shrink-0" strokeWidth={1.5} />
+            {/* Fixed-width label slot: the pill's total width never changes between sections —
+                only the active section's label fades into its reserved space. */}
             <span
               className={cn(
-                "overflow-hidden whitespace-nowrap text-[13.5px] font-medium leading-none transition-all duration-300 ease-out",
-                active ? "max-w-[130px] opacity-100" : "max-w-0 opacity-0",
+                "overflow-hidden whitespace-nowrap text-[13.5px] font-medium leading-none transition-[width,opacity] duration-300 ease-out",
+                active ? "w-[88px] opacity-100" : "w-0 opacity-0",
               )}
             >
               {item.label}
