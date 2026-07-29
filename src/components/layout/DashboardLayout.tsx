@@ -1,9 +1,8 @@
-import { ReactNode, useEffect, useState, useRef } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ReactNode, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   User,
   LogOut,
-  Search,
   ChevronDown,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -31,12 +30,9 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
-  const navigate = useNavigate();
   const { t } = useTranslation("common");
   const { signOut } = useAuth();
   const { profile } = useProfile();
-  const [searchValue, setSearchValue] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
 
   const initials = (() => {
     const f = profile?.first_name?.charAt(0).toUpperCase() ?? "";
@@ -72,8 +68,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <header
         className="hidden md:flex sticky top-0 z-30 h-[74px] items-center gap-4 px-[30px] bg-background/85 backdrop-blur-[10px]"
       >
-        {/* Left: page title + month selector pill */}
-        <div className="flex items-center gap-[14px] min-w-0 shrink-0">
+        {/* Left: page title + month selector pill (flex-1 so the centre pill stays centred) */}
+        <div className="flex flex-1 items-center gap-[14px] min-w-0">
           {location.pathname === "/dashboard" ? (
             <span className="text-[20px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
               Dashboard
@@ -88,37 +84,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <EmptyStateBanner />
         </div>
 
-        {/* Center: the Pocket pill nav, floating in the space between the two clusters */}
-        <div className="flex min-w-0 flex-1 justify-center">
+        {/* Center: the Pocket pill nav, centred in the top bar */}
+        <div className="shrink-0">
           <TopNav />
         </div>
 
-        {/* Right: search + bell + theme + divider + avatar */}
-        <div className="flex items-center gap-[9px] shrink-0">
-          {/* Search input */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const q = searchValue.trim();
-              if (q) {
-                navigate(`/history?search=${encodeURIComponent(q)}`);
-                setSearchValue("");
-                searchRef.current?.blur();
-              }
-            }}
-            className="hidden items-center gap-[9px] bg-card rounded-[11px] px-[13px] py-[9px] w-[190px] text-muted-foreground shadow-sm focus-within:ring-1 focus-within:ring-primary/40 transition-shadow xl:flex"
-          >
-            <Search className="w-[16px] h-[16px] shrink-0" strokeWidth={2} />
-            <input
-              ref={searchRef}
-              type="text"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Search transaction…"
-              className="bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground outline-none w-full"
-            />
-          </form>
-
+        {/* Right: bell + theme + divider + avatar (flex-1 to mirror the left cluster) */}
+        <div className="flex flex-1 items-center justify-end gap-[9px] min-w-0">
           {/* Notification bell */}
           <div className="relative">
             <NotificationBell variant="light" />
