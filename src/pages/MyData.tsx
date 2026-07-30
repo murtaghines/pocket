@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { BankStatementsTabsView } from "@/components/imports/BankStatementsTabsView";
@@ -8,10 +9,37 @@ import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
 
 type Tab = "bank" | "investments";
 
+/** Segmented toggle (styled like the History granularity switch) between the two Data sub-sections. */
+function DataSectionToggle({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
+  const { t } = useTranslation("common");
+  const options: Array<{ key: Tab; label: string }> = [
+    { key: "bank", label: t("navigation.bankStatements", "Bank statements") },
+    { key: "investments", label: t("navigation.investments", "Investments") },
+  ];
+  return (
+    <div className="inline-flex items-center rounded-full bg-muted p-1">
+      {options.map((o) => (
+        <button
+          key={o.key}
+          type="button"
+          onClick={() => onChange(o.key)}
+          aria-pressed={tab === o.key}
+          className={cn(
+            "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
+            tab === o.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /**
- * MyData — full-screen workspace. Navigation is the shared top pill (TopNav) in a slim bar;
- * the sub-section switch (bank / investments) lives inside the tabs view, keeping the rest of
- * the canvas edge-to-edge for the spreadsheet.
+ * MyData — full-screen workspace ("Data uploads"). The shared AppHeader carries the pill nav plus a
+ * Bank statements / Investments toggle in the selector slot; below it each tabs view keeps the
+ * canvas edge-to-edge for the spreadsheet.
  */
 export default function MyData() {
   const { t } = useTranslation("common");
@@ -56,7 +84,11 @@ export default function MyData() {
 
   return (
     <div className="min-h-screen bg-background dashboard-theme">
-      <AppHeader title={t("navigation.data", "Data")} showSelectors={false} />
+      <AppHeader
+        title={t("navigation.dataUploads", "Data uploads")}
+        showSelectors={false}
+        leftExtra={<DataSectionToggle tab={tab} onChange={(next) => setSearchParams({ tab: next })} />}
+      />
 
       {/* Full-bleed workspace — white canvas. Header (title + actions) lives inside the
           tabs view so it can render on the same row as the "Add file" button. */}
