@@ -14,12 +14,18 @@ import { AccountSelectDialog } from "./AccountSelectDialog";
 import { UploadedFilesDropdown } from "./cashflow/UploadedFiles";
 import { MonthTabStrip } from "./cashflow/MonthTabStrip";
 import { MonthWorkspace } from "./cashflow/MonthWorkspace";
+import { DataSectionToggle, type DataTab } from "./DataSectionToggle";
 import { DEFAULT_MONTHS, MIN_MONTHS, MONTHS_INCREMENT } from "./cashflow/helpers";
 import type { MovementType } from "./cashflow/types";
 
 /* ─────────────────────────  Main component  ───────────────────────── */
 
-export function BankStatementsTabsView() {
+interface BankStatementsTabsViewProps {
+  tab: DataTab;
+  onTabChange: (t: DataTab) => void;
+}
+
+export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsViewProps) {
   const { user } = useAuth();
   const { formatMonth, formatDate, formatCurrency } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting, toggleLockImport } = useImports("CASHFLOW");
@@ -170,16 +176,9 @@ export function BankStatementsTabsView() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* ============= Header: title (left) + actions (right) ============= */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 md:px-10 py-5 md:py-6 border-b border-border bg-card">
-        <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
-            Bank statements
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1 truncate">
-            Pick a month and edit transactions inline
-          </p>
-        </div>
+      {/* ============= Toolbar: section toggle (left) + actions (right) ============= */}
+      <div className="flex items-center justify-between gap-3 px-6 md:px-10 py-4 border-b border-border bg-card">
+        <DataSectionToggle tab={tab} onChange={onTabChange} />
 
         <div className="flex items-center gap-2 shrink-0">
           <input
