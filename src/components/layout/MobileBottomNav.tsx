@@ -13,12 +13,14 @@ interface NavItem {
 }
 
 /**
- * Mobile bottom navigation — a single floating brand-blue pill spanning the full viewport width,
- * matching the reference "pill nav" pattern exactly: inactive destinations are plain icons with no
- * background, evenly spaced (`justify-evenly`, so the two at the ends get the same breathing room
- * as the middle ones); the active destination becomes a white capsule that nests a small
- * rounded-square icon badge (still in brand blue, icon inverted to white) next to its label in
- * blue text — "an icon inside a badge inside a pill inside the bar".
+ * Mobile bottom navigation — a single floating brand-blue pill spanning the full viewport width.
+ * Five equal grid columns (not flex) hold the destinations, so the item centers itself within its
+ * own column — this guarantees the left edge and right edge inset are always pixel-identical no
+ * matter which item is active, instead of depending on flex space-distribution math that shifts
+ * with each item's (very different) content width.
+ * Active state matches the reference exactly: a translucent white pill (no separate coloured
+ * badge) with the icon filled solid white and the label in white, medium weight. Inactive items
+ * are plain outline icons with no background.
  */
 export function MobileBottomNav() {
   const location = useLocation();
@@ -37,7 +39,7 @@ export function MobileBottomNav() {
 
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
-      <div className="pointer-events-auto flex w-full items-center justify-evenly rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
+      <div className="pointer-events-auto grid w-full grid-cols-5 items-center justify-items-center rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.match);
@@ -48,21 +50,19 @@ export function MobileBottomNav() {
               aria-label={item.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center rounded-full transition-all duration-300 ease-out",
-                active ? "gap-2 bg-white py-1 pl-1 pr-3.5" : "p-2.5",
+                "flex items-center rounded-full py-2 transition-all duration-300 ease-out",
+                active ? "gap-1.5 bg-white/[0.18] px-3.5" : "px-2.5",
               )}
             >
-              {active ? (
-                <>
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                    <Icon className="h-[16px] w-[16px]" strokeWidth={2} />
-                  </span>
-                  <span className="whitespace-nowrap text-[13px] font-medium leading-none text-primary">
-                    {item.label}
-                  </span>
-                </>
-              ) : (
-                <Icon className="h-5 w-5 text-white/70" strokeWidth={1.75} />
+              <Icon
+                className={cn("h-5 w-5 shrink-0", active ? "text-white" : "text-white/65")}
+                strokeWidth={1.5}
+                fill={active ? "currentColor" : "none"}
+              />
+              {active && (
+                <span className="whitespace-nowrap text-[13px] font-medium leading-none text-white">
+                  {item.label}
+                </span>
               )}
             </Link>
           );
