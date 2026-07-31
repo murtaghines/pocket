@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, PiggyBank, Target, Database, type LucideIcon } from "lucide-react";
+import { Home, PiggyBank, Target, Database, Settings, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/hooks/useProfile";
@@ -16,10 +16,13 @@ interface NavItem {
 const ACCOUNT_MATCH = ["/account", "/profile"];
 
 /**
- * Mobile bottom navigation — two floating blue pills, mirroring the desktop top bar where the
- * account avatar sits apart from the section pill nav. The active destination in the main pill
- * expands to reveal its label (Home / Investments / Planning / Data); the account pill is a single
- * avatar button (initials, like HeaderUserMenu) linking to /account.
+ * Mobile bottom navigation — two floating blue pills that together span the full viewport width
+ * (a fixed 7:3 column ratio via grid, so it fills edge-to-edge on any phone size):
+ * - Section pill (wider): Home / Investments / Planning / Data, icons spread across the pill via
+ *   justify-between so the wider pill never looks sparse. The active item expands its label.
+ * - Account pill (narrower): a loose settings (gear) icon on the left — /account?tab=preferences —
+ *   and the profile avatar (initials) on the right — /account — mirroring the desktop top bar
+ *   where account/settings sit apart from the section nav.
  */
 export function MobileBottomNav() {
   const location = useLocation();
@@ -36,7 +39,10 @@ export function MobileBottomNav() {
   const isActive = (match: string[]) =>
     match.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"));
 
-  const accountActive = isActive(ACCOUNT_MATCH);
+  const onAccount = isActive(ACCOUNT_MATCH);
+  const activeAccountTab = new URLSearchParams(location.search).get("tab");
+  const settingsActive = onAccount && activeAccountTab === "preferences";
+  const avatarActive = onAccount && !settingsActive;
 
   const initials = (() => {
     const f = profile?.first_name?.charAt(0).toUpperCase() ?? "";
@@ -45,9 +51,9 @@ export function MobileBottomNav() {
   })();
 
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center gap-2 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
-      {/* Section nav pill — ~3/4 of the row */}
-      <div className="pointer-events-auto flex items-center gap-1 rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 grid grid-cols-[7fr_3fr] gap-2 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
+      {/* Section nav pill */}
+      <div className="pointer-events-auto flex items-center justify-between rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.match);
@@ -76,25 +82,36 @@ export function MobileBottomNav() {
         })}
       </div>
 
-      {/* Account pill — separate, ~1/4 of the row, avatar like the desktop profile cluster */}
-      <Link
-        to="/account"
-        aria-label={t("navigation.account", "Account")}
-        aria-current={accountActive ? "page" : undefined}
-        className={cn(
-          "pointer-events-auto flex items-center justify-center rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)] transition-opacity active:opacity-80",
-        )}
-      >
-        <span
+      {/* Account pill: settings gear (loose) + avatar */}
+      <div className="pointer-events-auto flex items-center justify-between rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
+        <Link
+          to="/account?tab=preferences"
+          aria-label={t("navigation.settings", "Settings")}
+          aria-current={settingsActive ? "page" : undefined}
           className={cn(
-            "flex h-[38px] w-[38px] items-center justify-center rounded-full text-[13px] font-semibold text-primary-foreground transition-shadow",
-            accountActive ? "ring-2 ring-white/70" : "ring-0",
+            "flex h-[38px] w-[38px] items-center justify-center rounded-full transition-colors",
+            settingsActive ? "bg-white/[0.22] text-white" : "text-white/55 active:text-white/80",
           )}
-          style={{ background: "var(--gradient-primary)" }}
         >
-          {initials}
-        </span>
-      </Link>
+          <Settings className="h-[19px] w-[19px]" strokeWidth={settingsActive ? 2.4 : 2} />
+        </Link>
+        <Link
+          to="/account"
+          aria-label={t("navigation.account", "Account")}
+          aria-current={avatarActive ? "page" : undefined}
+          className="flex items-center justify-center transition-opacity active:opacity-80"
+        >
+          <span
+            className={cn(
+              "flex h-[38px] w-[38px] items-center justify-center rounded-full text-[13px] font-semibold text-primary-foreground transition-shadow",
+              avatarActive ? "ring-2 ring-white/70" : "ring-0",
+            )}
+            style={{ background: "var(--gradient-primary)" }}
+          >
+            {initials}
+          </span>
+        </Link>
+      </div>
     </nav>
   );
 }
