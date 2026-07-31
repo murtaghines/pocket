@@ -21,11 +21,14 @@ const ACCOUNT_MATCH = ["/account", "/profile"];
  * - Section pill (wider, brand blue): Home / Investments / Planning / Data. `justify-evenly` gives
  *   every icon — including the two at the ends — the exact same spacing, so nothing looks hugged to
  *   an edge. The active item expands its label.
- * - Account pill (narrower, dark/ink): a loose settings (gear) icon on the left —
- *   /account?tab=preferences — and the profile avatar (initials) on the right — /account. The dark
- *   background keeps it visually distinct from the blue section pill instead of blending in.
+ * - Account pill (narrower, dark blue): a loose settings (gear) icon on the left —
+ *   /account?tab=preferences — and the profile avatar (initials) on the right — /account. It uses
+ *   a deeper shade of the same brand-blue gradient as the avatar (not black/grey), so the avatar
+ *   reads as blending into its background rather than clashing with it.
  * Icons are a uniform, thin stroke and labels are medium weight (never bold) for a clean,
- * minimal look — active state is carried by the background/opacity, not by weight.
+ * minimal look — active state is carried by the background/opacity, not by weight. Both pills use
+ * a softer corner radius (not a full capsule) so the perfectly round avatar sits inside a shape
+ * that contrasts with it instead of competing with it.
  */
 export function MobileBottomNav() {
   const location = useLocation();
@@ -56,7 +59,7 @@ export function MobileBottomNav() {
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 grid grid-cols-[7fr_3fr] gap-2 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
       {/* Section nav pill */}
-      <div className="pointer-events-auto flex items-center justify-evenly rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.5)]">
+      <div className="pointer-events-auto flex items-center justify-evenly rounded-2xl bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.5)]">
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.match);
@@ -67,7 +70,7 @@ export function MobileBottomNav() {
               aria-label={item.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center rounded-full py-2.5 transition-all duration-300 ease-out",
+                "flex items-center rounded-xl py-2.5 transition-all duration-300 ease-out",
                 active ? "gap-2 bg-white/[0.18] px-3 text-white" : "px-2 text-white/55 active:text-white/80",
               )}
             >
@@ -85,14 +88,18 @@ export function MobileBottomNav() {
         })}
       </div>
 
-      {/* Account pill: settings gear (loose) + avatar — dark so it reads as a distinct group */}
-      <div className="pointer-events-auto flex items-center justify-evenly rounded-full bg-sidebar p-1.5 shadow-[0_12px_30px_-8px_rgba(0,0,0,0.5)]">
+      {/* Account pill: settings gear (loose) + avatar — deep blue so it reads as a distinct group
+          while staying in the brand-blue family (same hue as --gradient-primary, darker stop) */}
+      <div
+        className="pointer-events-auto flex items-center justify-evenly rounded-2xl p-1.5 shadow-[0_12px_30px_-8px_rgba(10,45,100,0.55)]"
+        style={{ background: "linear-gradient(135deg, hsl(216 100% 38%) 0%, hsl(216 100% 21%) 100%)" }}
+      >
         <Link
           to="/account?tab=preferences"
           aria-label={t("navigation.settings", "Settings")}
           aria-current={settingsActive ? "page" : undefined}
           className={cn(
-            "flex h-[38px] w-[38px] items-center justify-center rounded-full transition-colors",
+            "flex h-[38px] w-[38px] items-center justify-center rounded-xl transition-colors",
             settingsActive ? "bg-white/[0.18] text-white" : "text-white/55 active:text-white/80",
           )}
         >
