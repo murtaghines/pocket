@@ -16,13 +16,16 @@ interface NavItem {
 const ACCOUNT_MATCH = ["/account", "/profile"];
 
 /**
- * Mobile bottom navigation — two floating blue pills that together span the full viewport width
+ * Mobile bottom navigation — two floating pills that together span the full viewport width
  * (a fixed 7:3 column ratio via grid, so it fills edge-to-edge on any phone size):
- * - Section pill (wider): Home / Investments / Planning / Data, icons spread across the pill via
- *   justify-between so the wider pill never looks sparse. The active item expands its label.
- * - Account pill (narrower): a loose settings (gear) icon on the left — /account?tab=preferences —
- *   and the profile avatar (initials) on the right — /account — mirroring the desktop top bar
- *   where account/settings sit apart from the section nav.
+ * - Section pill (wider, brand blue): Home / Investments / Planning / Data. `justify-evenly` gives
+ *   every icon — including the two at the ends — the exact same spacing, so nothing looks hugged to
+ *   an edge. The active item expands its label.
+ * - Account pill (narrower, dark/ink): a loose settings (gear) icon on the left —
+ *   /account?tab=preferences — and the profile avatar (initials) on the right — /account. The dark
+ *   background keeps it visually distinct from the blue section pill instead of blending in.
+ * Icons are a uniform, thin stroke and labels are medium weight (never bold) for a clean,
+ * minimal look — active state is carried by the background/opacity, not by weight.
  */
 export function MobileBottomNav() {
   const location = useLocation();
@@ -53,7 +56,7 @@ export function MobileBottomNav() {
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 grid grid-cols-[7fr_3fr] gap-2 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
       {/* Section nav pill */}
-      <div className="pointer-events-auto flex items-center justify-between rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
+      <div className="pointer-events-auto flex items-center justify-evenly rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.5)]">
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.match);
@@ -65,13 +68,13 @@ export function MobileBottomNav() {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center rounded-full py-2.5 transition-all duration-300 ease-out",
-                active ? "gap-2 bg-white/[0.22] px-3 text-white" : "px-2 text-white/55 active:text-white/80",
+                active ? "gap-2 bg-white/[0.18] px-3 text-white" : "px-2 text-white/55 active:text-white/80",
               )}
             >
-              <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={active ? 2.4 : 2} />
+              <Icon className="h-[20px] w-[20px] shrink-0" strokeWidth={1.5} />
               <span
                 className={cn(
-                  "overflow-hidden whitespace-nowrap text-[13px] font-semibold leading-none transition-all duration-300 ease-out",
+                  "overflow-hidden whitespace-nowrap text-[13px] font-medium leading-none transition-all duration-300 ease-out",
                   active ? "max-w-[110px] opacity-100" : "max-w-0 opacity-0",
                 )}
               >
@@ -82,18 +85,18 @@ export function MobileBottomNav() {
         })}
       </div>
 
-      {/* Account pill: settings gear (loose) + avatar */}
-      <div className="pointer-events-auto flex items-center justify-between rounded-full bg-primary p-1.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
+      {/* Account pill: settings gear (loose) + avatar — dark so it reads as a distinct group */}
+      <div className="pointer-events-auto flex items-center justify-evenly rounded-full bg-sidebar p-1.5 shadow-[0_12px_30px_-8px_rgba(0,0,0,0.5)]">
         <Link
           to="/account?tab=preferences"
           aria-label={t("navigation.settings", "Settings")}
           aria-current={settingsActive ? "page" : undefined}
           className={cn(
             "flex h-[38px] w-[38px] items-center justify-center rounded-full transition-colors",
-            settingsActive ? "bg-white/[0.22] text-white" : "text-white/55 active:text-white/80",
+            settingsActive ? "bg-white/[0.18] text-white" : "text-white/55 active:text-white/80",
           )}
         >
-          <Settings className="h-[19px] w-[19px]" strokeWidth={settingsActive ? 2.4 : 2} />
+          <Settings className="h-[18px] w-[18px]" strokeWidth={1.5} />
         </Link>
         <Link
           to="/account"
@@ -103,7 +106,7 @@ export function MobileBottomNav() {
         >
           <span
             className={cn(
-              "flex h-[38px] w-[38px] items-center justify-center rounded-full text-[13px] font-semibold text-primary-foreground transition-shadow",
+              "flex h-[36px] w-[36px] items-center justify-center rounded-full text-[12.5px] font-medium text-primary-foreground transition-shadow",
               avatarActive ? "ring-2 ring-white/70" : "ring-0",
             )}
             style={{ background: "var(--gradient-primary)" }}
