@@ -15,6 +15,7 @@ import { UploadedFilesDropdown } from "./investments/UploadedFiles";
 import { MonthTabStrip } from "./investments/MonthTabStrip";
 import { MonthWorkspace } from "./investments/MonthWorkspace";
 import { InvestmentPreviewDialog } from "./investments/InvestmentPreviewDialog";
+import { DataSectionToggle, type DataTab } from "./DataSectionToggle";
 import type { PendingInvEdit } from "./investments/types";
 
 const DEFAULT_MONTHS = 6;
@@ -23,7 +24,12 @@ const MONTHS_INCREMENT = 1;
 
 /* ─────────────────────────  Main component  ───────────────────────── */
 
-export function InvestmentTabsView() {
+interface InvestmentTabsViewProps {
+  tab: DataTab;
+  onTabChange: (t: DataTab) => void;
+}
+
+export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps) {
   const { user } = useAuth();
   const { formatMonth } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting } = useImports("INVESTING");
@@ -159,16 +165,9 @@ export function InvestmentTabsView() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* ============= Header ============= */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 md:px-10 py-5 md:py-6 border-b border-border bg-card">
-        <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
-            Investment statements
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1 truncate">
-            Pick a month and edit movements inline
-          </p>
-        </div>
+      {/* ============= Toolbar: section toggle (left) + actions (right) ============= */}
+      <div className="flex items-center justify-between gap-3 px-6 md:px-10 py-4 border-b border-border bg-card">
+        <DataSectionToggle tab={tab} onChange={onTabChange} />
 
         <div className="flex items-center gap-2 shrink-0">
           <input
