@@ -54,23 +54,26 @@ export default function Account() {
         }`}
       >
         <main className="max-w-[1400px] mx-auto space-y-6">
-          <AccountHeader />
-
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto">
-              <TabsTrigger value="overview" className={UNDERLINE_TAB}>
-                {t("tabs.overview", "Overview")}
-              </TabsTrigger>
-              <TabsTrigger value="accounts" className={UNDERLINE_TAB}>
-                {t("tabs.accounts", "Accounts")}
-              </TabsTrigger>
-              <TabsTrigger value="preferences" className={UNDERLINE_TAB}>
-                {t("tabs.preferences", "Preferences")}
-              </TabsTrigger>
-              <TabsTrigger value="security" className={UNDERLINE_TAB}>
-                {t("tabs.security", "Security")}
-              </TabsTrigger>
-            </TabsList>
+            {/* Sticky on scroll: the person's name/avatar and the tab switcher stay reachable —
+                pinned to the very top on mobile, and just below the sticky AppHeader on desktop. */}
+            <div className="sticky top-0 z-20 -mx-4 -mt-4 bg-background/90 px-4 pt-4 backdrop-blur-[10px] md:top-[84px] md:mx-0 md:mt-0 md:px-0 md:pt-0 md:bg-background/85">
+              <AccountHeader />
+              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto mt-4">
+                <TabsTrigger value="overview" className={UNDERLINE_TAB}>
+                  {t("tabs.overview", "Overview")}
+                </TabsTrigger>
+                <TabsTrigger value="accounts" className={UNDERLINE_TAB}>
+                  {t("tabs.accounts", "Accounts")}
+                </TabsTrigger>
+                <TabsTrigger value="preferences" className={UNDERLINE_TAB}>
+                  {t("tabs.preferences", "Preferences")}
+                </TabsTrigger>
+                <TabsTrigger value="security" className={UNDERLINE_TAB}>
+                  {t("tabs.security", "Security")}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="overview" className="mt-6">
               <AccountOverviewTab onNavigateTab={handleTabChange} />
