@@ -264,7 +264,7 @@ export function AddManualEntryDialog({
           </div>
 
           {/* Movement + Category */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Movement</Label>
               <Select value={movement} onValueChange={(v) => setMovement(v as MovementType)}>
@@ -360,7 +360,7 @@ export function AddManualEntryDialog({
 
           {isShared && (
             <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">
                     Total amount paid

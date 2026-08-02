@@ -95,7 +95,7 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
         </DialogHeader>
         <div className="space-y-5 py-2">
           {/* Name & Type row */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">{t('categories.customCategoryName')}</Label>
               <Input

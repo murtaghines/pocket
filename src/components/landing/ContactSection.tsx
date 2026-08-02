@@ -178,8 +178,7 @@ export function ContactSection() {
   const eased = Math.min(1, progress * 1.45);
   const p     = eased < 0.5 ? 2 * eased * eased : -1 + (4 - 2 * eased) * eased;
 
-  // Card height: explicit equal value for all 4
-  const CARD_H = "clamp(320px, 40vh, 460px)";
+  const CARD_H = isDesktop ? "clamp(320px, 40vh, 460px)" : "auto";
 
   return (
     /*

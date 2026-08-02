@@ -58,7 +58,7 @@ export function NetBalanceCard({
           </div>
         </div>
         <div className="mt-auto">
-          <div className="text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em]">
+          <div className="text-[18px] sm:text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em] truncate">
             {formatCurrency(balance)}
           </div>
           <div className="mt-[5px] text-[12px] text-primary-foreground/82">

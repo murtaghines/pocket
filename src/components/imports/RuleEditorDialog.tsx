@@ -273,7 +273,7 @@ export function RuleEditorDialog({
             <Label className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">
               Match type
             </Label>
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
               {MATCH_OPTIONS.map((opt) => {
                 const active = matchType === opt.value;
                 return (

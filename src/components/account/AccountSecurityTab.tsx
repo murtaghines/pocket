@@ -82,7 +82,7 @@ function PersonalInfoSection({ onLogout }: { onLogout: () => void }) {
 
       {isEditing ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="edit-first-name" className="text-xs">
                 {t("security.firstName", "First name")}
