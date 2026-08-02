@@ -138,7 +138,7 @@ function GroupShell({
                   <Smile className="w-3.5 h-3.5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="end" sideOffset={8} className="w-[440px] p-4">
+              <PopoverContent align="end" sideOffset={8} className="w-[calc(100vw-2rem)] sm:w-[440px] p-4">
 
                 {onEditIcon()}
               </PopoverContent>
@@ -156,7 +156,7 @@ function GroupShell({
                   <Palette className="w-3.5 h-3.5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="end" sideOffset={8} className="w-[440px] p-4">
+              <PopoverContent align="end" sideOffset={8} className="w-[calc(100vw-2rem)] sm:w-[440px] p-4">
                 {onEditCategory()}
               </PopoverContent>
             </Popover>

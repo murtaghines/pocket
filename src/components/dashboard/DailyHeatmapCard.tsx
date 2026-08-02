@@ -147,7 +147,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
       {!monthKey || daysInMonth === 0 ? (
         <EmptyState height="h-[200px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 sm:gap-x-6">
+        <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center gap-4 sm:gap-x-6">
           {/* Calendar — cells flex to fill the column (capped) so it uses the available width */}
           <div className="flex w-full max-w-[400px] flex-col gap-2">
             {/* Weekday header */}
@@ -210,7 +210,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
 
           {/* Contextual stats — pinned to the right, worded per selected metric.
               Labels are constrained so two-word titles stack (e.g. "HIGHEST" / "EXPENSE"). */}
-          <div className="flex flex-col items-end gap-3.5 text-right justify-self-end">
+          <div className="flex flex-row sm:flex-col items-start sm:items-end gap-4 sm:gap-3.5 text-left sm:text-right sm:justify-self-end">
             {stats.map((s, i) => (
               <div key={i}>
                 <div className="ml-auto max-w-[76px] text-[10px] font-semibold uppercase leading-[1.15] tracking-[.04em] text-muted-foreground">

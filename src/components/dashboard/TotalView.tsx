@@ -114,7 +114,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
       {/* Aggregate KPIs — same inverted look as the Dashboard TrendKpiCards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Income */}
-        <Card variant="bento" className="bg-success/5 h-[128px] flex flex-col">
+        <Card variant="bento" className="bg-success/5 sm:h-[128px] flex flex-col">
           <CardContent className="p-4 md:p-5 flex flex-col h-full">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs font-medium uppercase tracking-wide text-success/80">
@@ -134,7 +134,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
         </Card>
 
         {/* Expenses */}
-        <Card variant="bento" className="bg-destructive/5 h-[128px] flex flex-col">
+        <Card variant="bento" className="bg-destructive/5 sm:h-[128px] flex flex-col">
           <CardContent className="p-4 md:p-5 flex flex-col h-full">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs font-medium uppercase tracking-wide text-destructive/80">
@@ -154,7 +154,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
         </Card>
 
         {/* Total saved */}
-        <Card variant="bento" className="bg-card h-[128px] flex flex-col">
+        <Card variant="bento" className="bg-card sm:h-[128px] flex flex-col">
           <CardContent className="p-4 md:p-5 flex flex-col h-full">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs font-medium uppercase tracking-wide text-primary/70">
@@ -174,7 +174,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
         </Card>
 
         {/* Savings rate */}
-        <Card variant="bento" className="bg-card h-[128px] flex flex-col">
+        <Card variant="bento" className="bg-card sm:h-[128px] flex flex-col">
           <CardContent className="p-4 md:p-5 flex flex-col h-full">
             <div className="flex items-start justify-between mb-2">
               <p className="text-xs font-medium uppercase tracking-wide text-primary/70">
@@ -197,7 +197,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
       {/* Enriched behaviour KPIs: best/worst month, savings streak, income stability */}
       {insights && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card variant="bento" className="h-[128px] flex flex-col">
+          <Card variant="bento" className="sm:h-[128px] flex flex-col">
             <CardContent className="p-4 md:p-5 flex flex-col h-full">
               <div className="flex items-center gap-2 mb-1">
                 <Award className="w-4 h-4 text-success" strokeWidth={2.2} />
@@ -220,7 +220,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
             </CardContent>
           </Card>
 
-          <Card variant="bento" className="h-[128px] flex flex-col">
+          <Card variant="bento" className="sm:h-[128px] flex flex-col">
             <CardContent className="p-4 md:p-5 flex flex-col h-full">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingDown className="w-4 h-4 text-destructive" strokeWidth={2.2} />
@@ -243,7 +243,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
             </CardContent>
           </Card>
 
-          <Card variant="bento" className="h-[128px] flex flex-col">
+          <Card variant="bento" className="sm:h-[128px] flex flex-col">
             <CardContent className="p-4 md:p-5 flex flex-col h-full">
               <div className="flex items-center gap-2 mb-1">
                 <Flame className="w-4 h-4 text-warning" strokeWidth={2.2} />
@@ -263,7 +263,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
             </CardContent>
           </Card>
 
-          <Card variant="bento" className="h-[128px] flex flex-col">
+          <Card variant="bento" className="sm:h-[128px] flex flex-col">
             <CardContent className="p-4 md:p-5 flex flex-col h-full">
               <div className="flex items-center gap-2 mb-1">
                 <LineChartIcon className="w-4 h-4 text-primary" strokeWidth={2.2} />

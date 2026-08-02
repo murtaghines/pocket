@@ -25,7 +25,7 @@ function OverviewStatCard({ label, value, sub, icon: Icon, loading }: OverviewSt
       {loading ? (
         <div className="h-8 w-16 rounded bg-muted animate-pulse" />
       ) : (
-        <p className="text-[28px] font-bold tracking-[-0.02em] text-foreground leading-none tabular-nums">{value}</p>
+        <p className="text-[20px] md:text-[28px] font-bold tracking-[-0.02em] text-foreground leading-none tabular-nums truncate">{value}</p>
       )}
       {sub && !loading && (
         <p className="text-xs text-muted-foreground">{sub}</p>

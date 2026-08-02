@@ -10,7 +10,7 @@ export function LandingFooter() {
       {/* Ghost brand mark */}
       <Logo
         variant="full"
-        className="absolute right-[-2rem] bottom-[-2rem] pointer-events-none select-none text-white w-full h-full"
+        className="absolute right-[-1rem] bottom-[-1rem] pointer-events-none select-none text-white"
         style={{ width: "clamp(5rem, 18vw, 15rem)", opacity: 0.06 }}
         aria-hidden="true"
       />

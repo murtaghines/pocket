@@ -70,8 +70,8 @@ export function ReviewQueueSection({ incomeCategories, expenseCategories, transf
         {visible.map((g) => {
           const cats = categoriesForMovement(g.movement);
           return (
-            <div key={g.key} className="flex items-center gap-3 px-4 py-3">
-              <div className="flex-1 min-w-0">
+            <div key={g.key} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <div className="flex-1 min-w-0 basis-full sm:basis-0">
                 <code className="text-sm font-mono text-foreground truncate block">{g.pattern}</code>
                 <span className="text-xs text-muted-foreground">
                   {g.count} transactions · {movementLabel(g.movement)} · {formatCurrency(g.totalAmount)}
@@ -81,7 +81,7 @@ export function ReviewQueueSection({ incomeCategories, expenseCategories, transf
                 value={selectedCategory[g.key] || ""}
                 onValueChange={(v) => setSelectedCategory((prev) => ({ ...prev, [g.key]: v }))}
               >
-                <SelectTrigger className="w-[180px] h-8 text-xs shrink-0">
+                <SelectTrigger className="w-full sm:w-[180px] h-8 text-xs shrink-0">
                   <SelectValue placeholder="Assign category" />
                 </SelectTrigger>
                 <SelectContent>

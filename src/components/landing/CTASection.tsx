@@ -91,10 +91,9 @@ export function CTASection() {
 
         {/* ── Right: action + stats ──────────────────────────────────────── */}
         <div
-          className="flex flex-col justify-center items-start lg:items-center"
+          className="flex flex-col justify-center items-start lg:items-center lg:border-l lg:border-white/[0.12]"
           style={{
             padding: "clamp(3rem, 6vw, 6rem) clamp(1.5rem, 5vw, 4.5rem)",
-            borderLeft: "1px solid rgba(255,255,255,0.12)",
           }}
         >
           {/* App mark */}

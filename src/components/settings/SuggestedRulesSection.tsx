@@ -68,8 +68,8 @@ export function SuggestedRulesSection({ incomeCategories, expenseCategories, tra
         {visible.map((s) => {
           const cats = categoriesForMovement(s.movement);
           return (
-            <div key={s.key} className="flex items-center gap-3 px-4 py-3">
-              <div className="flex-1 min-w-0">
+            <div key={s.key} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <div className="flex-1 min-w-0 basis-full sm:basis-0">
                 <code className="text-sm font-mono text-foreground truncate block">{s.pattern}</code>
                 <span className="text-xs text-muted-foreground">
                   {s.count} transactions · {movementLabel(s.movement)}
@@ -79,7 +79,7 @@ export function SuggestedRulesSection({ incomeCategories, expenseCategories, tra
                 value={selectedCategory[s.key] || ""}
                 onValueChange={(v) => setSelectedCategory((prev) => ({ ...prev, [s.key]: v }))}
               >
-                <SelectTrigger className="w-[180px] h-8 text-xs shrink-0">
+                <SelectTrigger className="w-full sm:w-[180px] h-8 text-xs shrink-0">
                   <SelectValue placeholder="Pick category" />
                 </SelectTrigger>
                 <SelectContent>

@@ -31,16 +31,29 @@ export function AppShowcaseSection() {
   const cooldown = useRef(false);
   const grace    = useRef(false);
 
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   useEffect(() => { stepRef.current = step; }, [step]);
 
   useEffect(() => {
+    if (!isDesktop) return;
+
     const el = sectionRef.current;
     if (!el) return;
 
     let lastScrollY  = window.scrollY;
     let prevTop      = el.getBoundingClientRect().top;
     let graceTimer   = 0;
-    let unlockScrollY: number | null = null; // scroll position when we last unlocked
+    let unlockScrollY: number | null = null;
 
     const startCooldown = () => {
       cooldown.current = true;
@@ -53,7 +66,6 @@ export function AppShowcaseSection() {
       graceTimer = window.setTimeout(() => { grace.current = false; }, GRACE);
     };
 
-    // Snap section to exact viewport top (corrects sub-pixel drift)
     const snapToTop = () => {
       const top = el.getBoundingClientRect().top;
       if (Math.abs(top) > 0.5) {
@@ -67,24 +79,21 @@ export function AppShowcaseSection() {
       stepRef.current = initialStep;
       setStep(initialStep);
       snapToTop();
-      startCooldown(); // absorb arrival momentum
+      startCooldown();
     };
 
     const unlock = () => {
       locked.current = false;
-      unlockScrollY = window.scrollY; // record position for the distance gate
-      startGrace(); // prevent immediate re-lock during exit momentum
+      unlockScrollY = window.scrollY;
+      startGrace();
     };
 
-    // ── Scroll listener: detects section entering the viewport ────────────────
-    // Uses "crossed the threshold" logic so fast swipes can't skip the section.
     const onScroll = () => {
       const currY = window.scrollY;
       const dir   = currY >= lastScrollY ? 1 : -1;
       lastScrollY = currY;
 
       if (locked.current) {
-        // While locked: correct any drift so section stays pinned at top
         const drift = el.getBoundingClientRect().top;
         if (Math.abs(drift) > 0.5) snapToTop();
         return;
@@ -92,34 +101,24 @@ export function AppShowcaseSection() {
 
       if (grace.current) return;
 
-      // Distance gate: after grace expires, also block re-lock until the page
-      // has actually scrolled EXIT_TRAVEL px away from where we unlocked.
-      // Guards against rubber-band / momentum bouncing the section back in range.
       if (unlockScrollY !== null) {
         if (Math.abs(currY - unlockScrollY) < EXIT_TRAVEL) return;
-        unlockScrollY = null; // far enough away — allow re-lock normally
+        unlockScrollY = null;
       }
 
       const top = el.getBoundingClientRect().top;
-
-      // "In zone": section is within ±40px of the viewport top
       const inZone = Math.abs(top) < 40;
-
-      // "Crossed": one event jumped over the zone entirely (very fast scroll)
-      // prevTop and top straddle the ±40 threshold in the scroll direction
       const crossed =
-        (dir > 0 && prevTop > 40  && top <= 40)  || // going down, section passed through
-        (dir < 0 && prevTop < -40 && top >= -40);   // going up, section passed through
+        (dir > 0 && prevTop > 40  && top <= 40)  ||
+        (dir < 0 && prevTop < -40 && top >= -40);
 
       prevTop = top;
 
       if (inZone || crossed) {
-        // Start at step 01 when approaching from below, step 03 from above
         lock(dir < 0 ? N - 1 : 0);
       }
     };
 
-    // ── Wheel listener: advance steps while locked ────────────────────────────
     const onWheel = (e: WheelEvent) => {
       if (!locked.current) return;
 
@@ -127,12 +126,10 @@ export function AppShowcaseSection() {
       const next = stepRef.current + dir;
 
       if (next < 0 || next >= N) {
-        // At boundary: release lock and let the page scroll naturally
         unlock();
-        return; // don't prevent — outer page handles the exit scroll
+        return;
       }
 
-      // Absorb this event so the outer page doesn't also scroll
       e.preventDefault();
 
       if (!cooldown.current) {
@@ -149,8 +146,53 @@ export function AppShowcaseSection() {
       window.removeEventListener("wheel",  onWheel);
       clearTimeout(graceTimer);
     };
-  }, []);
+  }, [isDesktop]);
 
+  /* ── Mobile: stacked flow layout ──────────────────────────────────────── */
+  if (!isDesktop) {
+    return (
+      <section
+        data-nav-theme="light"
+        className="relative bg-white"
+        style={{ borderRadius: "2rem 2rem 0 0", zIndex: 1 }}
+      >
+        {STATEMENTS.map((stmt) => (
+          <div
+            key={stmt.tag}
+            className="flex flex-col justify-center"
+            style={{ padding: "clamp(4rem, 10vw, 6rem) clamp(1.5rem, 6vw, 3rem)" }}
+          >
+            <div
+              className="font-bold tabular-nums mb-6"
+              style={{ fontSize: "1rem", letterSpacing: "0.18em", color: "#1b76ff" }}
+            >
+              {stmt.tag}
+            </div>
+            <h2
+              className="font-heading font-bold text-[#080808] uppercase leading-[0.88] tracking-tight"
+              style={{ fontSize: "clamp(2rem, 8vw, 3.5rem)" }}
+            >
+              {stmt.headline.map((line, li) => (
+                <span key={li} className="block">{line}</span>
+              ))}
+            </h2>
+            <p
+              className="text-[#080808]/45 leading-relaxed"
+              style={{
+                marginTop: "1.5rem",
+                fontSize: "clamp(0.95rem, 3.8vw, 1.1rem)",
+                maxWidth: "36ch",
+              }}
+            >
+              {stmt.body}
+            </p>
+          </div>
+        ))}
+      </section>
+    );
+  }
+
+  /* ── Desktop: scroll-lock step-through ────────────────────────────────── */
   return (
     <section
       ref={sectionRef}
@@ -165,7 +207,6 @@ export function AppShowcaseSection() {
       }}
     >
       {STATEMENTS.map((stmt, i) => {
-        // Steps below current sit at +100vh, current at 0, steps above at -100vh
         const yVh = i < step ? -100 : i === step ? 0 : 100;
         return (
           <div

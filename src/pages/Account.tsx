@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 type TabKey = "overview" | "accounts" | "preferences" | "security";
 
-const UNDERLINE_TAB = "rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm";
+const UNDERLINE_TAB = "rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm whitespace-nowrap shrink-0";
 const TAB_KEYS: TabKey[] = ["overview", "accounts", "preferences", "security"];
 
 export default function Account() {
@@ -59,7 +59,7 @@ export default function Account() {
                 pinned to the very top on mobile, and just below the sticky AppHeader on desktop. */}
             <div className="sticky top-0 z-20 -mx-4 -mt-4 bg-background/90 px-4 pt-4 backdrop-blur-[10px] md:top-[84px] md:mx-0 md:mt-0 md:px-0 md:pt-0 md:bg-background/85">
               <AccountHeader />
-              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto mt-4">
+              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto mt-4 overflow-x-auto scrollbar-none">
                 <TabsTrigger value="overview" className={UNDERLINE_TAB}>
                   {t("tabs.overview", "Overview")}
                 </TabsTrigger>

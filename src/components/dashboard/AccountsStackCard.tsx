@@ -202,7 +202,7 @@ export function AccountsStackCard({
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     {detail.hasRunningBalance ? t('charts.currentBalance', 'Balance') : t('charts.netFlow', 'Net flow')}
                   </p>
-                  <p className="text-lg font-semibold tabular-nums">{formatCurrency(detail.balance)}</p>
+                  <p className="text-base sm:text-lg font-semibold tabular-nums truncate">{formatCurrency(detail.balance)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Transactions</p>
