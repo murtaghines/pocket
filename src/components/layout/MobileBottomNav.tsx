@@ -14,19 +14,10 @@ interface NavItem {
 
 /**
  * Mobile bottom navigation — a single floating brand-blue pill spanning the full viewport width.
- * Plain flexbox with `justify-evenly`, not a grid: grid columns of equal width forced the (much
- * wider) active item to overflow its column, which overlapped the pill's rounded end whenever
- * Home or Account (the first/last items) were active. Flex sizes each item to its own content and
- * only distributes the *leftover* space as gaps — `justify-evenly` guarantees those gaps
- * (edge-to-first, between every pair, last-to-edge) are exactly equal by spec, regardless of how
- * wide the active item's label is. The active chip's own padding is symmetric (no icon hugging one
- * side) so it doesn't introduce its own lopsidedness either.
- * The pill has NO horizontal padding of its own (only vertical, for height) — any container-level
- * horizontal padding would stack on top of justify-evenly's already-equal edge gap, making the
- * edges visibly wider than the gaps between icons (dead space at the ends). Letting justify-evenly
- * be the only source of spacing keeps edges exactly as tight as the interior.
- * Icons stay in their original outline style (no fill) at every state — only color/opacity and the
- * background pill signal the active one.
+ * The pill uses uniform padding (`p-2.5` = 10px) so the gap between the white active-selection
+ * chip and the blue pill edge is equal on all four sides — top, bottom, left tip, right tip.
+ * Items are spaced with `justify-between` which places them at the padded edges; the padding
+ * itself is the only gap between the outermost items and the pill boundary.
  */
 export function MobileBottomNav() {
   const location = useLocation();
@@ -45,7 +36,7 @@ export function MobileBottomNav() {
 
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
-      <div className="pointer-events-auto flex w-full items-center justify-evenly rounded-full bg-primary py-2 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
+      <div className="pointer-events-auto flex w-full items-center justify-between rounded-full bg-primary p-2.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.match);
