@@ -14,10 +14,9 @@ interface NavItem {
 
 /**
  * Mobile bottom navigation — a single floating brand-blue pill spanning the full viewport width.
- * The pill uses uniform padding (`p-2.5` = 10px) so the gap between the white active-selection
- * chip and the blue pill edge is equal on all four sides — top, bottom, left tip, right tip.
- * Items are spaced with `justify-between` which places them at the padded edges; the padding
- * itself is the only gap between the outermost items and the pill boundary.
+ * The pill uses `py-2.5` vertical padding and `justify-evenly` so every gap — edge-to-first,
+ * between each pair, last-to-edge — is exactly equal. Active chips get a minimum width so
+ * short labels like "Data" don't shrink to a sliver next to "Investments".
  */
 export function MobileBottomNav() {
   const location = useLocation();
@@ -36,7 +35,7 @@ export function MobileBottomNav() {
 
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] md:hidden">
-      <div className="pointer-events-auto flex w-full items-center justify-between rounded-full bg-primary p-2.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
+      <div className="pointer-events-auto flex w-full items-center justify-evenly rounded-full bg-primary py-2.5 shadow-[0_12px_30px_-8px_rgba(20,80,210,0.55)]">
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.match);
@@ -48,7 +47,7 @@ export function MobileBottomNav() {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center justify-center rounded-full py-2 transition-all duration-300 ease-out",
-                active ? "gap-1.5 bg-white/[0.18] px-3" : "px-2",
+                active ? "gap-1.5 bg-white/[0.18] px-3 min-w-[5rem]" : "px-2",
               )}
             >
               <Icon

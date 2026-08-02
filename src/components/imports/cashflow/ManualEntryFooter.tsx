@@ -123,7 +123,7 @@ export function ManualEntryFooter({
   };
 
   return (
-    <div className="sticky bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 flex flex-wrap items-center gap-3 text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
+    <div className="sticky bottom-[4.25rem] md:bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-3 md:px-4 py-2.5 md:py-3 flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
         <Button
           size="sm"
           variant="outline"
