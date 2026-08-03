@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, PiggyBank, Target, Database, User, type LucideIcon } from "lucide-react";
+import { Home, TrendingUp, PiggyBank, Target, Database, User, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,8 @@ export function MobileBottomNav() {
   const { t } = useTranslation("common");
 
   const items: NavItem[] = [
-    { label: t("navigation.home", "Home"), path: "/dashboard", icon: Home, match: ["/dashboard", "/history"] },
+    { label: t("navigation.home", "Home"), path: "/dashboard", icon: Home, match: ["/dashboard"] },
+    { label: t("navigation.history", "History"), path: "/history", icon: TrendingUp, match: ["/history"] },
     { label: t("navigation.investments", "Investments"), path: "/investments", icon: PiggyBank, match: ["/investments"] },
     { label: t("navigation.planning", "Planning"), path: "/planning", icon: Target, match: ["/planning"] },
     { label: t("navigation.data", "Data"), path: "/my-data", icon: Database, match: ["/my-data", "/categories"] },
