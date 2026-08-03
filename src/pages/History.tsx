@@ -63,19 +63,15 @@ export default function History() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* Page header — mobile only; desktop renders in the sticky top bar */}
-            <div className="mb-6 md:hidden">
-              <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
-                {t("views.history", "History")}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t("views.historySubtitle", "All your data, every period combined")}
-              </p>
-            </div>
-
-            {/* Granularity selector — mobile only; desktop shows it pinned in the top bar */}
-            <div className="mb-4 flex justify-center md:hidden">
-              <GranularityToggle value={granularity} onChange={setGranularity} />
+            {/* Page header — mobile only; desktop renders in the sticky top bar.
+               Sticky + blurred backdrop mirrors Dashboard's mobile header. */}
+            <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-4 bg-background/90 px-4 pt-4 pb-3 backdrop-blur-[10px] md:hidden">
+              <div className="flex items-center justify-between gap-3">
+                <h1 className="text-2xl font-semibold">
+                  {t("views.history", "History")}
+                </h1>
+                <GranularityToggle value={granularity} onChange={setGranularity} />
+              </div>
             </div>
 
             <div className="mb-4">
