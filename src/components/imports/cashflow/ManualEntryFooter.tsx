@@ -123,7 +123,44 @@ export function ManualEntryFooter({
   };
 
   return (
-    <div className="sticky bottom-[4.25rem] md:bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-3 md:px-4 py-2.5 md:py-3 flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
+    <>
+      {/* Mobile: summary strip + FAB */}
+      <div className="md:hidden">
+        {/* Summary strip */}
+        <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-card/95 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Plus className="w-3 h-3 text-success" />
+              <span className="text-xs font-semibold tabular-nums text-success">
+                {formatCurrency(summary.income)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Minus className="w-3 h-3 text-destructive" />
+              <span className="text-xs font-semibold tabular-nums text-destructive">
+                {formatCurrency(summary.expenses)}
+              </span>
+            </div>
+          </div>
+          <span className="text-[11px] tabular-nums text-muted-foreground">
+            {summary.total} row{summary.total !== 1 ? "s" : ""}
+          </span>
+        </div>
+
+        {/* FAB */}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          disabled={isLocked}
+          className="fixed right-4 bottom-[5.5rem] z-30 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform disabled:opacity-50"
+          aria-label="Add entry"
+        >
+          <PlusCircle className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Desktop: full sticky footer bar */}
+      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex md:flex-wrap md:items-center md:gap-3 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
         <Button
           size="sm"
           variant="outline"
@@ -171,6 +208,8 @@ export function ManualEntryFooter({
             {rightSlot}
           </div>
         )}
+      </div>
+
       <AddManualEntryDialog
         open={open}
         onOpenChange={setOpen}
@@ -178,6 +217,6 @@ export function ManualEntryFooter({
         monthLabel={monthLabel}
         onSubmit={handleSubmit}
       />
-    </div>
+    </>
   );
 }

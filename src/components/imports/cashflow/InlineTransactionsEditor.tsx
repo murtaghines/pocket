@@ -1159,6 +1159,35 @@ export function InlineTransactionsEditor({
           </Table>
         </div>
 
+        {/* Mobile summary strip — at-a-glance totals */}
+        <div className="md:hidden flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Plus className="w-3 h-3 text-success" />
+              <span className="text-xs font-semibold tabular-nums text-success">
+                {formatCurrency(summary.income)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Minus className="w-3 h-3 text-destructive" />
+              <span className="text-xs font-semibold tabular-nums text-destructive">
+                {formatCurrency(summary.expenses)}
+              </span>
+            </div>
+            {summary.transfers > 0 && (
+              <div className="flex items-center gap-1">
+                <ArrowRightLeft className="w-3 h-3 text-warning" />
+                <span className="text-xs font-semibold tabular-nums text-warning">
+                  {summary.transfers}
+                </span>
+              </div>
+            )}
+          </div>
+          <span className="text-[11px] tabular-nums text-muted-foreground">
+            {summary.total} row{summary.total !== 1 ? "s" : ""}
+          </span>
+        </div>
+
         {/* Phones: stacked, editable cards (the table is unusable at this width) */}
         <div className="md:hidden divide-y divide-border/60">
           {rowsToRender.map((tx, idx) => {
