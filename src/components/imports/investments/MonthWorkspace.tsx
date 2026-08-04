@@ -80,24 +80,23 @@ export function MonthWorkspace({
   // Empty state
   if (imports.length === 0) {
     return (
-      <div className="bg-card py-20 px-6 text-center flex-1 flex flex-col items-center justify-center">
+      <div className="bg-card py-12 md:py-20 px-6 text-center flex-1 flex flex-col items-center justify-center">
         {activePending.length > 0 ? (
           <div className="w-full max-w-xl">
             <ProcessingPanel files={activePending} />
           </div>
         ) : (
           <>
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-3">
               <Upload className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-semibold text-foreground">
+            <h3 className="text-sm md:text-base font-semibold text-foreground">
               {monthLabel} is empty
             </h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-              Add a broker statement to start editing this month's investment
-              movements directly.
+            <p className="text-xs md:text-sm text-muted-foreground mt-1 max-w-xs md:max-w-md mx-auto">
+              Add a broker statement to start tracking this month.
             </p>
-            <div className="mt-5">
+            <div className="mt-4">
               <input
                 ref={fileInputRef}
                 type="file"

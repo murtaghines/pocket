@@ -166,10 +166,10 @@ export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps
   return (
     <div className="flex flex-col min-h-screen">
       {/* ============= Toolbar: section toggle (left) + actions (right) ============= */}
-      <div className="flex items-center justify-between gap-3 px-6 md:px-10 py-4 border-b border-border bg-card">
+      <div className="flex items-center justify-between gap-2 px-4 md:px-10 py-3 md:py-4 border-b border-border bg-card">
         <DataSectionToggle tab={tab} onChange={onTabChange} />
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
           <input
             ref={globalFileInputRef}
             type="file"
@@ -183,11 +183,26 @@ export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps
               e.target.value = "";
             }}
           />
+          {/* Mobile: icon-only upload button */}
+          <Button
+            size="icon"
+            onClick={() => globalFileInputRef.current?.click()}
+            disabled={isProcessingAny}
+            className="h-8 w-8 md:hidden"
+            title="Upload file"
+          >
+            {isProcessingAny ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+          </Button>
+          {/* Desktop: full upload button */}
           <Button
             size="sm"
             onClick={() => globalFileInputRef.current?.click()}
             disabled={isProcessingAny}
-            className="gap-2 h-9 px-5 font-medium"
+            className="hidden md:flex gap-2 h-9 px-5 font-medium"
             title="Upload a broker statement for the active month"
           >
             {isProcessingAny ? (

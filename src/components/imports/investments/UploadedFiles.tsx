@@ -57,14 +57,14 @@ export function UploadedFilesDropdown({
           title="View or delete uploaded files"
           aria-label="Manage uploaded files"
           className={cn(
-            "group h-9 gap-2 pl-3 pr-2 font-medium border-2 shadow-sm",
+            "group h-8 md:h-9 gap-2 px-2 md:pl-3 md:pr-2 font-medium border-2 shadow-sm",
             pendingCount > 0
               ? "border-warning/40 bg-warning/10 text-foreground hover:bg-warning/20 hover:border-warning/60"
               : "border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/50",
           )}
         >
           <FileSpreadsheet className={cn("w-4 h-4", pendingCount > 0 ? "text-warning" : "text-primary")} />
-          <span className="tabular-nums">Manage files</span>
+          <span className="hidden md:inline tabular-nums">Manage files</span>
           <span
             className={cn(
               "inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums",
