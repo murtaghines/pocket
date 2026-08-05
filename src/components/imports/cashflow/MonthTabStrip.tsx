@@ -30,16 +30,62 @@ export function MonthTabStrip({
     scrollRef.current.scrollBy({ left: dir * 240, behavior: "smooth" });
   };
 
+  const activeIdx = slots.findIndex((s) => s.key === activeKey);
+  const activeSlot = slots[activeIdx];
+  const activeImports = importsByMonth[activeKey] || [];
+  const activeTxCount = activeImports.reduce((s, i) => s + (i.transactions_count || 0), 0);
+
+  const goPrev = () => {
+    if (activeIdx < slots.length - 1) onActivate(slots[activeIdx + 1].key);
+    else onLoadMore();
+  };
+  const goNext = () => {
+    if (activeIdx > 0) onActivate(slots[activeIdx - 1].key);
+  };
+
   return (
     <div className="relative">
-      {/* Airtable-style tab strip: full-bleed, pastel band, active tab is white and seamless */}
-      <div className="flex items-stretch border-b border-border bg-primary/5">
+      {/* Mobile: simple month navigator */}
+      <div className="flex md:hidden items-center justify-between px-4 py-2.5 border-b border-border bg-card">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground"
+          onClick={goPrev}
+          aria-label="Previous month"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-[15px] font-semibold text-foreground capitalize">
+            {activeSlot?.label}
+          </span>
+          {activeTxCount > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[10px] font-semibold tabular-nums bg-primary/15 text-primary">
+              {activeTxCount}
+            </span>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground"
+          onClick={goNext}
+          disabled={activeIdx <= 0}
+          aria-label="Next month"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* Desktop: full Airtable-style tab strip */}
+      <div className="hidden md:flex items-stretch border-b border-border bg-primary/5">
         <div
           ref={scrollRef}
           className="flex-1 flex items-stretch overflow-x-auto scrollbar-none"
           style={{ scrollbarWidth: "none" }}
         >
-          {slots.map((slot, idx) => {
+          {slots.map((slot) => {
             const active = slot.key === activeKey;
             const imports = importsByMonth[slot.key] || [];
             const hasData = imports.length > 0;

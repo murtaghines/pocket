@@ -1159,6 +1159,35 @@ export function InlineTransactionsEditor({
           </Table>
         </div>
 
+        {/* Mobile summary strip — at-a-glance totals */}
+        <div className="md:hidden flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Plus className="w-3 h-3 text-success" />
+              <span className="text-xs font-semibold tabular-nums text-success">
+                {formatCurrency(summary.income)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Minus className="w-3 h-3 text-destructive" />
+              <span className="text-xs font-semibold tabular-nums text-destructive">
+                {formatCurrency(summary.expenses)}
+              </span>
+            </div>
+            {summary.transfers > 0 && (
+              <div className="flex items-center gap-1">
+                <ArrowRightLeft className="w-3 h-3 text-warning" />
+                <span className="text-xs font-semibold tabular-nums text-warning">
+                  {summary.transfers}
+                </span>
+              </div>
+            )}
+          </div>
+          <span className="text-[11px] tabular-nums text-muted-foreground">
+            {summary.total} row{summary.total !== 1 ? "s" : ""}
+          </span>
+        </div>
+
         {/* Phones: stacked, editable cards (the table is unusable at this width) */}
         <div className="md:hidden divide-y divide-border/60">
           {rowsToRender.map((tx, idx) => {
@@ -1201,7 +1230,7 @@ export function InlineTransactionsEditor({
               <div
                 key={tx.id}
                 className={cn(
-                  "flex flex-col gap-2.5 px-4 py-3.5 transition-colors",
+                  "flex flex-col gap-1.5 px-3 py-2.5 transition-colors",
                   isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                   isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
                   isPending && "bg-warning/10 border-l-2 border-l-warning",
@@ -1214,7 +1243,7 @@ export function InlineTransactionsEditor({
                   <div className="flex min-w-0 items-start gap-2">
                     <span className="shrink-0 pt-0.5 text-[11px] tabular-nums text-muted-foreground/60">{idx + 1}</span>
                     <div className="min-w-0">
-                      <p className={cn("break-words text-sm font-medium text-foreground", isHidden && "line-through")}>
+                      <p className={cn("break-words text-[13px] font-medium text-foreground", isHidden && "line-through")}>
                         {cleanDescription}
                       </p>
                       <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
@@ -1228,7 +1257,7 @@ export function InlineTransactionsEditor({
                     ) : isSaved ? (
                       <Check className="h-3 w-3 text-success" />
                     ) : null}
-                    <span className={cn("text-sm font-semibold tabular-nums", amountColor)}>
+                    <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
                       {displayAmount < 0 ? "-" : ""}
                       {formatCurrency(Math.abs(displayAmount))}
                     </span>
@@ -1243,7 +1272,7 @@ export function InlineTransactionsEditor({
                     </PillBadge>
                   ) : (
                     <Select value={movement} onValueChange={(v) => handleMovementChange(tx, v as MovementType)} disabled={isHidden}>
-                      <SelectTrigger className="h-9 flex-1 border border-border bg-card px-2 text-sm [&>svg]:opacity-50">
+                      <SelectTrigger className="h-[30px] flex-1 border border-border bg-card px-2 text-xs [&>svg]:opacity-50">
                         <SelectValue>
                           <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
                             {getMovementLabel(movement)}
@@ -1276,7 +1305,7 @@ export function InlineTransactionsEditor({
                     </PillBadge>
                   ) : (
                     <Select value={category} onValueChange={(v) => handleCategoryChange(tx, v)} disabled={isHidden}>
-                      <SelectTrigger className="h-9 flex-1 border border-border bg-card px-2 text-sm [&>svg]:opacity-50">
+                      <SelectTrigger className="h-[30px] flex-1 border border-border bg-card px-2 text-xs [&>svg]:opacity-50">
                         <SelectValue>
                           <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
                             <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
@@ -1308,7 +1337,7 @@ export function InlineTransactionsEditor({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-8 gap-1.5 rounded-full bg-primary/15 px-3 text-primary hover:bg-primary/25"
+                            className="h-7 gap-1 rounded-full bg-primary/15 px-2.5 text-xs text-primary hover:bg-primary/25"
                             onClick={() => commitRow(tx, true)}
                             disabled={isSaving}
                           >
@@ -1319,17 +1348,17 @@ export function InlineTransactionsEditor({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-8 gap-1.5 rounded-full bg-success/15 px-3 text-success hover:bg-success/25"
+                          className="h-7 gap-1 rounded-full bg-success/15 px-2.5 text-xs text-success hover:bg-success/25"
                           onClick={() => commitRow(tx, false)}
                           disabled={isSaving}
                         >
-                          <Check className="h-4 w-4" /> Save
+                          <Check className="h-3.5 w-3.5" /> Save
                         </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          className="h-7 w-7 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => clearPendingFor(tx.id)}
                           aria-label="Discard pending changes"
                         >
@@ -1348,11 +1377,11 @@ export function InlineTransactionsEditor({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
                           onClick={() => handleToggleHidden(tx)}
                           aria-label={isHidden ? "Include in totals" : "Hide from totals"}
                         >
-                          {isHidden ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                          {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                         {isEdited && originalSnapshot && (
                           <RevertToOriginalButton
