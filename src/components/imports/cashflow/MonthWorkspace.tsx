@@ -26,6 +26,8 @@ export interface MonthWorkspaceProps {
   pendingByTx: Record<string, PendingEditShape>;
   setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
   pendingTxIds: Set<string>;
+  manualEntryOpen?: boolean;
+  onManualEntryOpenChange?: (open: boolean) => void;
 }
 
 export function MonthWorkspace({
@@ -43,6 +45,8 @@ export function MonthWorkspace({
   pendingByTx,
   setPendingByTx,
   pendingTxIds,
+  manualEntryOpen: externalManualEntryOpen,
+  onManualEntryOpenChange,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,9 +105,12 @@ export function MonthWorkspace({
     (f) => f.status === "processing" || f.status === "pending",
   );
 
-  // Controlled open state for ManualEntryFooter dialog — lets mobile action
-  // bars and empty-state buttons trigger it without a FAB.
-  const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [internalManualOpen, setInternalManualOpen] = useState(false);
+  const manualEntryOpen = externalManualEntryOpen ?? internalManualOpen;
+  const setManualEntryOpen = (v: boolean) => {
+    setInternalManualOpen(v);
+    onManualEntryOpenChange?.(v);
+  };
 
   // Empty state
   if (imports.length === 0) {
