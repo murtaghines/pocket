@@ -1,6 +1,6 @@
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Loader2, Plus, Upload } from "lucide-react";
+import { Loader2, PlusCircle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Import } from "@/hooks/useImports";
@@ -101,6 +101,10 @@ export function MonthWorkspace({
     (f) => f.status === "processing" || f.status === "pending",
   );
 
+  // Controlled open state for ManualEntryFooter dialog — lets mobile action
+  // bars and empty-state buttons trigger it without a FAB.
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
+
   // Empty state
   if (imports.length === 0) {
     return (
@@ -121,7 +125,7 @@ export function MonthWorkspace({
               <p className="text-xs md:text-sm text-muted-foreground mt-1 max-w-xs md:max-w-md mx-auto">
                 Upload a bank statement or add entries manually to start tracking this month.
               </p>
-              <div className="mt-4">
+              <div className="mt-4 flex items-center gap-2">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -143,6 +147,15 @@ export function MonthWorkspace({
                   )}
                   Upload file
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setManualEntryOpen(true)}
+                  className="gap-2"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  Add entry
+                </Button>
               </div>
             </>
           )}
@@ -153,6 +166,8 @@ export function MonthWorkspace({
           importId={null}
           isLocked={false}
           summary={{ total: 0, income: 0, expenses: 0, transfers: 0 }}
+          externalOpen={manualEntryOpen}
+          onExternalOpenChange={setManualEntryOpen}
         />
       </div>
     );
