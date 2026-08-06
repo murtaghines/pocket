@@ -18,6 +18,8 @@ import {
   Split as SplitIcon,
   RotateCcw,
   FileSpreadsheet,
+  Upload,
+  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -135,6 +137,7 @@ export function InlineTransactionsEditor({
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
   const [expanded, setExpanded] = useState(false);
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
   // Per-row "saving"/"saved" indicators
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
@@ -1159,33 +1162,62 @@ export function InlineTransactionsEditor({
           </Table>
         </div>
 
-        {/* Mobile summary strip — at-a-glance totals */}
-        <div className="md:hidden flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Plus className="w-3 h-3 text-success" />
-              <span className="text-xs font-semibold tabular-nums text-success">
-                {formatCurrency(summary.income)}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Minus className="w-3 h-3 text-destructive" />
-              <span className="text-xs font-semibold tabular-nums text-destructive">
-                {formatCurrency(summary.expenses)}
-              </span>
-            </div>
-            {summary.transfers > 0 && (
+        {/* Mobile: summary strip + action buttons */}
+        <div className="md:hidden border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between px-3 py-2">
+            <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
-                <ArrowRightLeft className="w-3 h-3 text-warning" />
-                <span className="text-xs font-semibold tabular-nums text-warning">
-                  {summary.transfers}
+                <Plus className="w-3 h-3 text-success" />
+                <span className="text-xs font-semibold tabular-nums text-success">
+                  {formatCurrency(summary.income)}
                 </span>
               </div>
-            )}
+              <div className="flex items-center gap-1">
+                <Minus className="w-3 h-3 text-destructive" />
+                <span className="text-xs font-semibold tabular-nums text-destructive">
+                  {formatCurrency(summary.expenses)}
+                </span>
+              </div>
+              {summary.transfers > 0 && (
+                <div className="flex items-center gap-1">
+                  <ArrowRightLeft className="w-3 h-3 text-warning" />
+                  <span className="text-xs font-semibold tabular-nums text-warning">
+                    {summary.transfers}
+                  </span>
+                </div>
+              )}
+            </div>
+            <span className="text-[11px] tabular-nums text-muted-foreground">
+              {summary.total} row{summary.total !== 1 ? "s" : ""}
+            </span>
           </div>
-          <span className="text-[11px] tabular-nums text-muted-foreground">
-            {summary.total} row{summary.total !== 1 ? "s" : ""}
-          </span>
+          {!isLocked && (
+            <div className="flex items-center gap-2 px-3 pb-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1.5 text-xs"
+                onClick={onAddMore}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5" />
+                )}
+                Upload file
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1.5 text-xs"
+                onClick={() => setManualEntryOpen(true)}
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                Add entry
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Phones: stacked, editable cards (the table is unusable at this width) */}
@@ -1466,6 +1498,8 @@ export function InlineTransactionsEditor({
           importId={imports[0]?.id ?? null}
           isLocked={isLocked}
           summary={summary}
+          externalOpen={manualEntryOpen}
+          onExternalOpenChange={setManualEntryOpen}
           rightSlot={
             <button
               type="button"

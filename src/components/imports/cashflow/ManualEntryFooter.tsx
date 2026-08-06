@@ -24,6 +24,8 @@ export interface ManualEntryFooterProps {
     hidden?: number;
   };
   rightSlot?: React.ReactNode;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
 export function ManualEntryFooter({
@@ -33,6 +35,8 @@ export function ManualEntryFooter({
   isLocked,
   summary,
   rightSlot,
+  externalOpen,
+  onExternalOpenChange,
 }: ManualEntryFooterProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -40,7 +44,12 @@ export function ManualEntryFooter({
   const { accounts } = useAccounts();
   const { categories } = useCategories("CASHFLOW");
   const { formatCurrency } = useLocalization();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    onExternalOpenChange?.(v);
+  };
 
   const handleSubmit = async (entry: {
     date: string;
@@ -124,9 +133,8 @@ export function ManualEntryFooter({
 
   return (
     <>
-      {/* Mobile: summary strip + FAB */}
+      {/* Mobile: summary strip only (action buttons live in the month workspace) */}
       <div className="md:hidden">
-        {/* Summary strip */}
         <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-card/95 backdrop-blur">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
@@ -146,17 +154,6 @@ export function ManualEntryFooter({
             {summary.total} row{summary.total !== 1 ? "s" : ""}
           </span>
         </div>
-
-        {/* FAB */}
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          disabled={isLocked}
-          className="fixed right-4 bottom-[5.5rem] z-30 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform disabled:opacity-50"
-          aria-label="Add entry"
-        >
-          <PlusCircle className="w-5 h-5" />
-        </button>
       </div>
 
       {/* Desktop: full sticky footer bar */}
