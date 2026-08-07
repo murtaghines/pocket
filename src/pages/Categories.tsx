@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { MobileNav } from "@/components/layout/MobileNav";
 import { CategoriesEditor } from "@/components/settings/CategoriesEditor";
 
 export default function Categories() {
@@ -16,11 +16,11 @@ export default function Categories() {
 
   return (
     <div className="min-h-screen bg-background dashboard-theme">
+      <MobileNav />
       <AppHeader title={t("navigation.categories", "Categories")} showSelectors={false} />
-      <main className="w-full bg-card min-h-screen pb-20 md:pb-0">
+      <main className="w-full bg-card min-h-screen">
         <CategoriesEditor />
       </main>
-      <MobileBottomNav />
     </div>
   );
 }

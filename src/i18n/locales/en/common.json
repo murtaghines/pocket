@@ -46,6 +46,9 @@
     "profile": "Profile",
     "myData": "My Data",
     "settings": "Settings",
+    "analytics": "Analytics",
+    "investmentFiles": "Investment files",
+    "categoriesRules": "Categories & rules",
     "logout": "Log out",
     "logoutSuccess": "Logged out successfully"
   },
