@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppHeader } from "./AppHeader";
-import { MobileBottomNav } from "./MobileBottomNav";
+import { MobileNav } from "./MobileNav";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -31,13 +31,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background dashboard-theme relative">
+      <MobileNav />
       <AppHeader title={title} />
 
-      {/* Mobile bottom nav */}
-      <MobileBottomNav />
-
       {/* Main content */}
-      <main className="w-full px-4 md:px-[30px] pt-4 md:pt-[8px] pb-20 md:pb-[40px] relative z-10">
+      <main className="w-full px-4 md:px-[30px] pt-4 md:pt-[8px] pb-6 md:pb-[40px] relative z-10">
         {children}
       </main>
     </div>

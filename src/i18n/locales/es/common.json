@@ -46,6 +46,9 @@
     "profile": "Perfil",
     "myData": "Mis Datos",
     "settings": "Configuración",
+    "analytics": "Analytics",
+    "investmentFiles": "Archivos de inversión",
+    "categoriesRules": "Categorías y reglas",
     "logout": "Cerrar sesión",
     "logoutSuccess": "Sesión cerrada correctamente"
   },

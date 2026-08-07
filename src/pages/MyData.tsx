@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { MobileNav } from "@/components/layout/MobileNav";
 import { BankStatementsTabsView } from "@/components/imports/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
 import type { DataTab } from "@/components/imports/DataSectionToggle";
@@ -56,19 +56,16 @@ export default function MyData() {
 
   return (
     <div className="min-h-screen bg-background dashboard-theme">
+      <MobileNav />
       <AppHeader title={t("navigation.dataUploads", "Data uploads")} showSelectors={false} />
 
-      {/* Full-bleed workspace — white canvas. Each view renders its own toolbar (section toggle
-          + upload actions) as the top row, then the month strip and inline table. */}
-      <main className="w-full bg-card min-h-screen pb-20 md:pb-0">
+      <main className="w-full bg-card min-h-screen">
         {tab === "bank" ? (
           <BankStatementsTabsView tab={tab} onTabChange={setTab} />
         ) : (
           <InvestmentTabsView tab={tab} onTabChange={setTab} />
         )}
       </main>
-
-      <MobileBottomNav />
     </div>
   );
 }
