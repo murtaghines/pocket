@@ -1159,8 +1159,8 @@ export function InlineTransactionsEditor({
           </Table>
         </div>
 
-        {/* Mobile: summary strip */}
-        <div className="md:hidden border-b border-border bg-muted/30">
+        {/* Desktop-only: summary strip (mobile uses ManualEntryFooter sticky bar) */}
+        <div className="hidden md:block border-b border-border bg-muted/30">
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">

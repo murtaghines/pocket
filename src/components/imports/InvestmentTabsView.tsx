@@ -250,7 +250,7 @@ export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps
       <MobileUploadFAB
         options={[
           {
-            label: t("addData.investments", "Investments"),
+            label: t("fab.uploadFile", "upload file"),
             icon: <Upload className="w-4 h-4 text-primary" />,
             onClick: () => globalFileInputRef.current?.click(),
           },

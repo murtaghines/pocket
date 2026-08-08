@@ -266,12 +266,12 @@ export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsV
       <MobileUploadFAB
         options={[
           {
-            label: t("addData.bankStatement", "Bank statement"),
+            label: t("fab.uploadFile", "upload file"),
             icon: <Upload className="w-4 h-4 text-primary" />,
             onClick: () => globalFileInputRef.current?.click(),
           },
           {
-            label: t("fab.manualEntry", "Manual entry"),
+            label: t("fab.manualEntry", "manual entry"),
             icon: <PenLine className="w-4 h-4 text-primary" />,
             onClick: () => setManualEntryOpen(true),
           },

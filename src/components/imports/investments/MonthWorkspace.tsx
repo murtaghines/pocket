@@ -92,7 +92,7 @@ export function MonthWorkspace({
             </div>
             {/* Mobile: minimal — FAB handles actions */}
             <div className="md:hidden">
-              <p className="text-[13px] font-medium text-foreground lowercase">
+              <p className="text-[13px] font-semibold text-foreground uppercase">
                 no investments yet
               </p>
               <p className="text-[12px] text-muted-foreground mt-1 lowercase">
