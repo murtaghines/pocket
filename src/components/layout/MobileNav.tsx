@@ -46,6 +46,8 @@ function HamburgerAsterisk({ open }: { open: boolean }) {
   );
 }
 
+const THEME_COLOR_BLUE = "hsl(216, 100%, 55%)";
+
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
@@ -62,6 +64,20 @@ export function MobileNav() {
   useEffect(() => {
     setOpen(false);
   }, [location.pathname, location.search]);
+
+  // Set iOS status bar to match blue header
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    meta.content = THEME_COLOR_BLUE;
+    return () => {
+      if (meta) meta.content = "";
+    };
+  }, []);
 
   const title = (() => {
     if (location.pathname === "/dashboard") return t("navigation.dashboard", "Dashboard");
@@ -95,21 +111,16 @@ export function MobileNav() {
         { label: t("navigation.planning", "Planning"), path: "/planning" },
       ],
     },
-    {
-      label: t("navigation.data", "Data"),
-      items: [
-        { label: t("navigation.bankStatements", "Bank statements"), path: "/my-data" },
-        { label: t("navigation.investmentFiles", "Investment files"), path: "/my-data?tab=investments" },
-        { label: t("navigation.categoriesRules", "Categories & rules"), path: "/categories" },
-      ],
-    },
-    {
-      label: t("navigation.account", "Account"),
-      items: [
-        { label: t("navigation.account", "Account"), path: "/account" },
-      ],
-    },
   ];
+
+  const dataGroup: NavGroup = {
+    label: t("navigation.data", "Data"),
+    items: [
+      { label: t("navigation.bankStatements", "Bank statements"), path: "/my-data" },
+      { label: t("navigation.investmentFiles", "Investment files"), path: "/my-data?tab=investments" },
+      { label: t("navigation.categoriesRules", "Categories & rules"), path: "/categories" },
+    ],
+  };
 
   const isActive = (path: string) => {
     if (path === "/my-data?tab=investments") {
@@ -124,9 +135,26 @@ export function MobileNav() {
   return (
     <>
       <header className="sticky top-0 z-50 flex items-center justify-between h-12 px-4 bg-primary md:hidden">
-        <span className="text-[15px] font-medium tracking-[-0.01em] lowercase text-primary-foreground">
-          {title}
-        </span>
+        <div className="relative h-full flex items-center overflow-hidden">
+          {/* Page title — visible when closed */}
+          <span
+            className={cn(
+              "text-[15px] font-medium tracking-[-0.01em] lowercase text-primary-foreground transition-all duration-300",
+              open ? "opacity-0 -translate-y-3" : "opacity-100 translate-y-0",
+            )}
+          >
+            {title}
+          </span>
+          {/* "pocket" wordmark — visible when open */}
+          <span
+            className={cn(
+              "absolute left-0 text-[15px] font-medium tracking-[-0.01em] lowercase text-primary-foreground transition-all duration-300",
+              open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
+            )}
+          >
+            pocket
+          </span>
+        </div>
 
         <div className="flex items-center gap-1.5">
           <div
@@ -159,6 +187,7 @@ export function MobileNav() {
         style={{ paddingTop: 48 }}
       >
         <nav className="flex-1 overflow-y-auto px-7 pt-8 pb-6">
+          {/* Main nav groups */}
           {groups.map((group, gi) => (
             <div
               key={group.label}
@@ -192,24 +221,73 @@ export function MobileNav() {
               })}
             </div>
           ))}
+
+          {/* DATA group — extra top spacing to visually separate */}
+          <div
+            className="mt-5 mb-7"
+            style={{
+              opacity: open ? 1 : 0,
+              transform: open ? "translateY(0)" : "translateY(10px)",
+              transition: `opacity 0.35s ease ${groups.length * 50 + 100}ms, transform 0.35s ease ${groups.length * 50 + 100}ms`,
+            }}
+          >
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-primary-foreground/30 mb-2.5">
+              {dataGroup.label}
+            </span>
+            {dataGroup.items.map((item) => {
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "block py-[7px] text-[20px] font-light lowercase tracking-[-0.01em] transition-colors duration-200",
+                    active
+                      ? "text-primary-foreground"
+                      : "text-primary-foreground/45 hover:text-primary-foreground/70",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
+        {/* Bottom bar — account · settings · log out */}
         <div
-          className="px-7 pb-10"
+          className="px-7 pb-10 flex items-center gap-2 text-[13px] lowercase"
           style={{
             opacity: open ? 1 : 0,
             transition: "opacity 0.3s ease 350ms",
           }}
         >
+          <Link
+            to="/account"
+            onClick={() => setOpen(false)}
+            className="text-primary-foreground/35 hover:text-primary-foreground/60 transition-colors"
+          >
+            {t("navigation.account", "account")}
+          </Link>
+          <span className="text-primary-foreground/20">·</span>
+          <Link
+            to="/account?tab=preferences"
+            onClick={() => setOpen(false)}
+            className="text-primary-foreground/35 hover:text-primary-foreground/60 transition-colors"
+          >
+            {t("navigation.settings", "settings")}
+          </Link>
+          <span className="text-primary-foreground/20">·</span>
           <button
             type="button"
             onClick={() => {
               setOpen(false);
               signOut();
             }}
-            className="text-[13px] lowercase text-primary-foreground/25 hover:text-primary-foreground/50 transition-colors"
+            className="text-primary-foreground/25 hover:text-primary-foreground/50 transition-colors"
           >
-            {t("navigation.logout", "Log out")}
+            {t("navigation.logout", "log out")}
           </button>
         </div>
       </div>
