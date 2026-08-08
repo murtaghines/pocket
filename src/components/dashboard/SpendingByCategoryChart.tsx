@@ -50,7 +50,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
     return (
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
-          <CardTitle className="text-[15px] font-semibold text-foreground">
+          <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </CardTitle>
         </CardHeader>
@@ -64,7 +64,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
   return (
     <Card variant="bento" className="flex h-full flex-col">
       <CardHeader className="px-5 pt-[18px] pb-2">
-        <CardTitle className="text-[15px] font-semibold text-foreground">
+        <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
           {t("charts.spendingByCategory", "Spending by category")}
         </CardTitle>
       </CardHeader>

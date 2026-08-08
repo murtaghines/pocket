@@ -76,7 +76,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     return (
       <Card variant="bento" className="h-[300px] w-full">
         <CardHeader className="p-4 pb-1">
-          <CardTitle className="text-[14px] md:text-[15px] font-semibold text-foreground">
+          <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
             {t("charts.incomeByCategory", "Income by Category")}
           </CardTitle>
         </CardHeader>
@@ -104,7 +104,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
       className="relative flex h-[300px] w-full flex-col overflow-hidden border-0 bg-primary text-primary-foreground"
     >
       <CardHeader className="shrink-0 p-5 pb-0">
-        <CardTitle className="text-[15px] font-semibold text-primary-foreground">
+        <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-primary-foreground">
           {t("charts.incomeByCategory", "Income by Category")}
         </CardTitle>
       </CardHeader>

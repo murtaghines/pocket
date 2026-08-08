@@ -195,7 +195,7 @@ export function TransactionTable({ transactions, initialSearch = "" }: Transacti
   return (
     <Card variant="bento" className="border-0 shadow-none bg-transparent">
       <CardHeader className="pb-2 pt-0 px-0">
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle>
           {t('transactions.title')}
         </CardTitle>
         {/* Airtable-style toolbar */}
