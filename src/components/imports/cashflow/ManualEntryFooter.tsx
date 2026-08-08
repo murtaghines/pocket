@@ -133,8 +133,8 @@ export function ManualEntryFooter({
 
   return (
     <>
-      {/* Mobile: summary strip only (action buttons live in the month workspace) */}
-      <div className="md:hidden">
+      {/* Mobile: summary strip — sticky at bottom */}
+      <div className="md:hidden sticky bottom-0 z-20">
         <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-card/95 backdrop-blur">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">

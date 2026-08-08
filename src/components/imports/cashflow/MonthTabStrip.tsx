@@ -45,8 +45,8 @@ export function MonthTabStrip({
 
   return (
     <div className="relative">
-      {/* Mobile: simple month navigator */}
-      <div className="flex md:hidden items-center justify-between px-4 py-2.5 border-b border-border bg-card">
+      {/* Mobile: simple month navigator — sticky below the header */}
+      <div className="flex md:hidden items-center justify-between px-4 py-2.5 border-b border-border bg-card sticky top-12 z-20">
         <Button
           variant="ghost"
           size="icon"

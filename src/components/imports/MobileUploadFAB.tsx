@@ -25,7 +25,7 @@ export function MobileUploadFAB({ options }: MobileUploadFABProps) {
   if (options.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-5 z-40 flex flex-col items-end gap-3 md:hidden safe-area-bottom">
+    <div className="fixed bottom-6 right-5 z-30 flex flex-col items-end gap-3 md:hidden safe-area-bottom">
       {/* Option pills */}
       {options.map((opt, i) => (
         <button
