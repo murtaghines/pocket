@@ -123,20 +123,8 @@ export function MobileNav() {
 
   return (
     <>
-      <header
-        className={cn(
-          "sticky top-0 z-50 flex items-center justify-between h-12 px-4 border-b md:hidden transition-colors duration-300",
-          open
-            ? "bg-foreground border-transparent"
-            : "bg-background/95 backdrop-blur-md border-border/40",
-        )}
-      >
-        <span
-          className={cn(
-            "text-[15px] font-medium tracking-[-0.01em] lowercase transition-colors duration-300",
-            open ? "text-background" : "text-foreground",
-          )}
-        >
+      <header className="sticky top-0 z-50 flex items-center justify-between h-12 px-4 bg-primary md:hidden">
+        <span className="text-[15px] font-medium tracking-[-0.01em] lowercase text-primary-foreground">
           {title}
         </span>
 
@@ -147,17 +135,14 @@ export function MobileNav() {
               open && "opacity-0 pointer-events-none",
             )}
           >
-            <HeaderMonthSelector />
-            <HeaderGranularitySelector />
+            <HeaderMonthSelector variant="onPrimary" />
+            <HeaderGranularitySelector variant="onPrimary" />
           </div>
 
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className={cn(
-              "flex items-center justify-center w-10 h-10 -mr-2 transition-colors duration-300",
-              open ? "text-background" : "text-foreground",
-            )}
+            className="flex items-center justify-center w-10 h-10 -mr-2 text-primary-foreground"
             aria-label={open ? t("close") : "Menu"}
           >
             <HamburgerAsterisk open={open} />
@@ -167,7 +152,7 @@ export function MobileNav() {
 
       <div
         className={cn(
-          "fixed inset-0 z-40 flex flex-col bg-foreground md:hidden",
+          "fixed inset-0 z-40 flex flex-col bg-primary md:hidden",
           "transition-all duration-300 ease-out",
           open ? "opacity-100 visible" : "opacity-0 invisible",
         )}
@@ -184,7 +169,7 @@ export function MobileNav() {
                 transition: `opacity 0.35s ease ${gi * 50 + 100}ms, transform 0.35s ease ${gi * 50 + 100}ms`,
               }}
             >
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-background/30 mb-2.5">
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-primary-foreground/30 mb-2.5">
                 {group.label}
               </span>
               {group.items.map((item) => {
@@ -197,8 +182,8 @@ export function MobileNav() {
                     className={cn(
                       "block py-[7px] text-[20px] font-light lowercase tracking-[-0.01em] transition-colors duration-200",
                       active
-                        ? "text-background"
-                        : "text-background/45 hover:text-background/70",
+                        ? "text-primary-foreground"
+                        : "text-primary-foreground/45 hover:text-primary-foreground/70",
                     )}
                   >
                     {item.label}
@@ -222,7 +207,7 @@ export function MobileNav() {
               setOpen(false);
               signOut();
             }}
-            className="text-[13px] lowercase text-background/25 hover:text-background/50 transition-colors"
+            className="text-[13px] lowercase text-primary-foreground/25 hover:text-primary-foreground/50 transition-colors"
           >
             {t("navigation.logout", "Log out")}
           </button>

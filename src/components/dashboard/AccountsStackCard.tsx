@@ -126,7 +126,7 @@ export function AccountsStackCard({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[15px] font-semibold text-foreground">
+            <p className="text-[14px] md:text-[15px] font-semibold text-foreground">
               {t('charts.accounts', 'Accounts')}
             </p>
             <p className="text-[12px] text-muted-foreground mt-0.5">
@@ -202,7 +202,7 @@ export function AccountsStackCard({
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                     {detail.hasRunningBalance ? t('charts.currentBalance', 'Balance') : t('charts.netFlow', 'Net flow')}
                   </p>
-                  <p className="text-base sm:text-lg font-semibold tabular-nums truncate">{formatCurrency(detail.balance)}</p>
+                  <p className="text-sm md:text-lg font-semibold tabular-nums truncate">{formatCurrency(detail.balance)}</p>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Transactions</p>

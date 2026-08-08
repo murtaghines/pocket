@@ -48,7 +48,7 @@ export function SavingsRateRingCard({ income, expenses }: SavingsRateRingCardPro
             strokeDasharray={`${dash} ${circumference}`}
           />
         </svg>
-        <span className="absolute text-[20px] font-semibold tabular-nums leading-none text-foreground">
+        <span className="absolute text-[17px] md:text-[20px] font-semibold tabular-nums leading-none text-foreground">
           {rate}%
         </span>
       </div>

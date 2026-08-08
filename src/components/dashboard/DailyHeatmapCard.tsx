@@ -115,7 +115,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
       style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
     >
       <div className="flex items-center justify-between gap-3 mb-3">
-        <p className="text-[15px] font-semibold text-foreground">
+        <p className="text-[14px] md:text-[15px] font-semibold text-foreground">
           {t("heatmap.title", "Daily view")}
         </p>
         <DropdownMenu>
@@ -216,7 +216,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
                 <div className="ml-auto max-w-[76px] text-[10px] font-semibold uppercase leading-[1.15] tracking-[.04em] text-muted-foreground">
                   {s.label}
                 </div>
-                <div className="mt-1 text-[18px] font-semibold tabular-nums leading-none text-foreground">
+                <div className="mt-1 text-[15px] md:text-[18px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
                 {s.hint && <div className="mt-0.5 text-[10px] text-muted-foreground/80">{s.hint}</div>}
