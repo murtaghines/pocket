@@ -33,7 +33,7 @@ export function GranularityToggle({ value, onChange, variant = "default" }: Gran
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
+            "rounded-full px-3 py-[4px] text-[12px] font-medium lowercase transition-colors",
             value === opt.value
               ? onBlue
                 ? "bg-white/25 text-white shadow-sm"

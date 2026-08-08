@@ -49,7 +49,7 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
       {/* Header row: title + legend */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-[14px] md:text-[15px] font-semibold text-foreground leading-tight">
+          <p className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground leading-tight">
             {t("charts.monthlyBalance", "Income vs expenses")}
           </p>
           <p className="text-[12px] text-muted-foreground mt-[3px]">

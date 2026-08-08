@@ -292,7 +292,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Wallet className="w-4 h-4 text-primary" />
               </div>
@@ -328,7 +328,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
       {/* Income vs Expenses Trend */}
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <TrendingUp className="w-4 h-4 text-primary" />
             </div>
@@ -369,7 +369,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Scale className="w-4 h-4 text-primary" />
               </div>
@@ -411,7 +411,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Percent className="w-4 h-4 text-primary" />
               </div>

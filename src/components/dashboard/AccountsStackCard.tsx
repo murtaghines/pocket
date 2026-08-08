@@ -126,7 +126,7 @@ export function AccountsStackCard({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[14px] md:text-[15px] font-semibold text-foreground">
+            <p className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
               {t('charts.accounts', 'Accounts')}
             </p>
             <p className="text-[12px] text-muted-foreground mt-0.5">

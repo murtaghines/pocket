@@ -73,7 +73,7 @@ export function CategoryTrendChart({ trend, granularity = "month" }: CategoryTre
   return (
     <Card variant="bento">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
             <Layers className="w-4 h-4 text-primary" />
           </div>
