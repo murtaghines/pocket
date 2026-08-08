@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { TotalView } from "@/components/dashboard/TotalView";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { GranularityToggle } from "@/components/dashboard/GranularityToggle";
+
 import { useTransactions } from "@/hooks/useTransactions";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -63,17 +63,6 @@ export default function History() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* Page header — mobile only; desktop renders in the sticky top bar.
-               Sticky + blurred backdrop mirrors Dashboard's mobile header. */}
-            <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-4 bg-background/90 px-4 pt-4 pb-3 backdrop-blur-[10px] md:hidden">
-              <div className="flex items-center justify-between gap-3">
-                <h1 className="text-2xl font-semibold">
-                  {t("views.history", "History")}
-                </h1>
-                <GranularityToggle value={granularity} onChange={setGranularity} />
-              </div>
-            </div>
-
             <div className="mb-4">
               <TotalView monthlyData={periodData} insights={insights} granularity={granularity} />
             </div>

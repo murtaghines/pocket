@@ -1,34 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  Menu,
-  Home,
-  TrendingUp,
-  PiggyBank,
-  Target,
-  Database,
-  BarChart3,
-  User,
-  LogOut,
-  Tags,
-  type LucideIcon,
-} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { AsteriskMark } from "@/components/brand/AsteriskMark";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { HeaderMonthSelector } from "./HeaderMonthSelector";
+import { HeaderGranularitySelector } from "./HeaderGranularitySelector";
 
-interface NavLink {
+interface NavItem {
   label: string;
   path: string;
-  icon: LucideIcon;
-  match: string[];
 }
 
 interface NavGroup {
   label: string;
-  items: NavLink[];
+  items: NavItem[];
+}
+
+function HamburgerAsterisk({ open }: { open: boolean }) {
+  const bars = [
+    { closed: "translateY(-6px) rotate(90deg)", open: "rotate(0deg)" },
+    { closed: "rotate(90deg)", open: "rotate(45deg)" },
+    { closed: "rotate(90deg)", open: "rotate(90deg)" },
+    { closed: "translateY(6px) rotate(90deg)", open: "rotate(135deg)" },
+  ];
+
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
+      {bars.map((bar, i) => (
+        <rect
+          key={i}
+          x="10.7"
+          y="3"
+          width="2.6"
+          height="18"
+          rx="1.3"
+          fill="currentColor"
+          style={{
+            transformOrigin: "12px 12px",
+            transform: open ? bar.open : bar.closed,
+            transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        />
+      ))}
+    </svg>
+  );
 }
 
 export function MobileNav() {
@@ -37,119 +52,182 @@ export function MobileNav() {
   const { t } = useTranslation("common");
   const { signOut } = useAuth();
 
-  const isActive = (match: string[]) =>
-    match.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"));
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname, location.search]);
+
+  const title = (() => {
+    if (location.pathname === "/dashboard") return t("navigation.dashboard", "Dashboard");
+    if (location.pathname.startsWith("/history")) return t("navigation.history", "History");
+    if (location.pathname.startsWith("/investments")) return t("navigation.investments", "Investments");
+    if (location.pathname.startsWith("/planning")) return t("navigation.planning", "Planning");
+    if (location.pathname.startsWith("/my-data")) return t("navigation.dataUploads", "Data uploads");
+    if (location.pathname.startsWith("/categories")) return t("navigation.categories", "Categories");
+    if (location.pathname.startsWith("/account") || location.pathname.startsWith("/profile"))
+      return t("navigation.account", "Account");
+    return "";
+  })();
 
   const groups: NavGroup[] = [
     {
       label: t("navigation.analytics", "Analytics"),
       items: [
-        { label: t("navigation.dashboard", "Dashboard"), path: "/dashboard", icon: Home, match: ["/dashboard"] },
-        { label: t("navigation.history", "History"), path: "/history", icon: TrendingUp, match: ["/history"] },
+        { label: t("navigation.dashboard", "Dashboard"), path: "/dashboard" },
+        { label: t("navigation.history", "History"), path: "/history" },
       ],
     },
     {
       label: t("navigation.investments", "Investments"),
       items: [
-        { label: t("navigation.investments", "Investments"), path: "/investments", icon: PiggyBank, match: ["/investments"] },
+        { label: t("navigation.investments", "Investments"), path: "/investments" },
       ],
     },
     {
       label: t("navigation.planning", "Planning"),
       items: [
-        { label: t("navigation.planning", "Planning"), path: "/planning", icon: Target, match: ["/planning"] },
+        { label: t("navigation.planning", "Planning"), path: "/planning" },
       ],
     },
     {
       label: t("navigation.data", "Data"),
       items: [
-        { label: t("navigation.bankStatements", "Bank statements"), path: "/my-data", icon: Database, match: ["/my-data"] },
-        { label: t("navigation.investmentFiles", "Investment files"), path: "/my-data?tab=investments", icon: BarChart3, match: [] },
-        { label: t("navigation.categoriesRules", "Categories & rules"), path: "/categories", icon: Tags, match: ["/categories"] },
+        { label: t("navigation.bankStatements", "Bank statements"), path: "/my-data" },
+        { label: t("navigation.investmentFiles", "Investment files"), path: "/my-data?tab=investments" },
+        { label: t("navigation.categoriesRules", "Categories & rules"), path: "/categories" },
       ],
     },
     {
       label: t("navigation.account", "Account"),
       items: [
-        { label: t("navigation.account", "Account"), path: "/account", icon: User, match: ["/account", "/profile"] },
+        { label: t("navigation.account", "Account"), path: "/account" },
       ],
     },
   ];
 
-  const isInvestmentFilesActive = location.pathname === "/my-data" && location.search.includes("tab=investments");
+  const isActive = (path: string) => {
+    if (path === "/my-data?tab=investments") {
+      return location.pathname === "/my-data" && location.search.includes("tab=investments");
+    }
+    if (path === "/my-data") {
+      return location.pathname === "/my-data" && !location.search.includes("tab=investments");
+    }
+    return location.pathname === path || location.pathname.startsWith(path + "/");
+  };
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex items-center justify-between h-14 px-4 bg-background/90 backdrop-blur-md border-b border-border md:hidden">
-        <Link to="/dashboard" className="text-primary" aria-label="Home">
-          <AsteriskMark size={26} />
-        </Link>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="flex items-center justify-center w-10 h-10 -mr-1.5 rounded-lg text-foreground hover:bg-muted transition-colors"
-          aria-label="Open menu"
+      <header
+        className={cn(
+          "sticky top-0 z-50 flex items-center justify-between h-12 px-4 border-b md:hidden transition-colors duration-300",
+          open
+            ? "bg-foreground border-transparent"
+            : "bg-background/95 backdrop-blur-md border-border/40",
+        )}
+      >
+        <span
+          className={cn(
+            "text-[15px] font-medium tracking-[-0.01em] lowercase transition-colors duration-300",
+            open ? "text-background" : "text-foreground",
+          )}
         >
-          <Menu className="w-5 h-5" strokeWidth={2} />
-        </button>
+          {title}
+        </span>
+
+        <div className="flex items-center gap-1.5">
+          <div
+            className={cn(
+              "transition-opacity duration-200",
+              open && "opacity-0 pointer-events-none",
+            )}
+          >
+            <HeaderMonthSelector />
+            <HeaderGranularitySelector />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "flex items-center justify-center w-10 h-10 -mr-2 transition-colors duration-300",
+              open ? "text-background" : "text-foreground",
+            )}
+            aria-label={open ? t("close") : "Menu"}
+          >
+            <HamburgerAsterisk open={open} />
+          </button>
+        </div>
       </header>
 
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-[280px] px-0 py-0 flex flex-col">
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
-
-          <nav className="flex-1 overflow-y-auto pt-14 pb-6 px-3">
-            {groups.map((group) => (
-              <div key={group.label} className="mb-5">
-                <span className="block px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-muted-foreground/70">
-                  {group.label}
-                </span>
-                <div className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    const active =
-                      item.path === "/my-data?tab=investments"
-                        ? isInvestmentFilesActive
-                        : item.path === "/my-data"
-                          ? location.pathname === "/my-data" && !location.search.includes("tab=investments")
-                          : isActive(item.match);
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                          active
-                            ? "bg-primary/10 text-primary"
-                            : "text-foreground/80 hover:bg-muted hover:text-foreground",
-                        )}
-                      >
-                        <Icon className={cn("w-[18px] h-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground")} strokeWidth={active ? 2 : 1.5} />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
-
-          <div className="border-t border-border px-3 py-3">
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                signOut();
+      <div
+        className={cn(
+          "fixed inset-0 z-40 flex flex-col bg-foreground md:hidden",
+          "transition-all duration-300 ease-out",
+          open ? "opacity-100 visible" : "opacity-0 invisible",
+        )}
+        style={{ paddingTop: 48 }}
+      >
+        <nav className="flex-1 overflow-y-auto px-7 pt-8 pb-6">
+          {groups.map((group, gi) => (
+            <div
+              key={group.label}
+              className="mb-7"
+              style={{
+                opacity: open ? 1 : 0,
+                transform: open ? "translateY(0)" : "translateY(10px)",
+                transition: `opacity 0.35s ease ${gi * 50 + 100}ms, transform 0.35s ease ${gi * 50 + 100}ms`,
               }}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
             >
-              <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.5} />
-              {t("navigation.logout", "Log out")}
-            </button>
-          </div>
-        </SheetContent>
-      </Sheet>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-background/30 mb-2.5">
+                {group.label}
+              </span>
+              {group.items.map((item) => {
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "block py-[7px] text-[20px] font-light lowercase tracking-[-0.01em] transition-colors duration-200",
+                      active
+                        ? "text-background"
+                        : "text-background/45 hover:text-background/70",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        <div
+          className="px-7 pb-10"
+          style={{
+            opacity: open ? 1 : 0,
+            transition: "opacity 0.3s ease 350ms",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              signOut();
+            }}
+            className="text-[13px] lowercase text-background/25 hover:text-background/50 transition-colors"
+          >
+            {t("navigation.logout", "Log out")}
+          </button>
+        </div>
+      </div>
     </>
   );
 }

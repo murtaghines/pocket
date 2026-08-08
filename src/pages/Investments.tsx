@@ -44,16 +44,6 @@ export default function Investments() {
   return (
     <DashboardLayout>
       <main className="w-full">
-        {/* Page header — mobile only; desktop renders in the sticky top bar */}
-        <div className="mb-6 md:hidden">
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
-            {t('title')}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1 capitalize">
-            {currentMonthName}
-          </p>
-        </div>
-
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
