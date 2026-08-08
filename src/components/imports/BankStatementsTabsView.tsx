@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Upload, PlusCircle } from "lucide-react";
+import { Loader2, Upload, PenLine } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { uploadFileRejection } from "@/lib/fileExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { AccountSelectDialog } from "./AccountSelectDialog";
 import { UploadedFilesDropdown } from "./cashflow/UploadedFiles";
 import { MonthTabStrip } from "./cashflow/MonthTabStrip";
 import { MonthWorkspace } from "./cashflow/MonthWorkspace";
+import { MobileUploadFAB } from "./MobileUploadFAB";
 import { DataSectionToggle, type DataTab } from "./DataSectionToggle";
 import { DEFAULT_MONTHS, MIN_MONTHS, MONTHS_INCREMENT } from "./cashflow/helpers";
 import type { MovementType } from "./cashflow/types";
@@ -27,6 +29,7 @@ interface BankStatementsTabsViewProps {
 
 export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsViewProps) {
   const { user } = useAuth();
+  const { t } = useTranslation("common");
   const { formatMonth, formatDate, formatCurrency } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting, toggleLockImport } = useImports("CASHFLOW");
   const { accounts } = useAccounts();
@@ -177,53 +180,29 @@ export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsV
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* ============= Toolbar: section toggle (left) + actions (right) ============= */}
-      <div className="flex items-center justify-between gap-2 px-4 md:px-10 py-3 md:py-4 border-b border-border bg-card">
+      {/* Shared hidden file input */}
+      <input
+        ref={globalFileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        accept=".xlsx,.xls,.csv,.pdf"
+        onChange={(e) => {
+          handleGlobalFilesPicked(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      {/* ============= Toolbar (desktop only): section toggle + actions ============= */}
+      <div className="hidden md:flex items-center justify-between gap-2 px-10 py-4 border-b border-border bg-card">
         <DataSectionToggle tab={tab} onChange={onTabChange} />
 
-        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-          <input
-            ref={globalFileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            accept=".xlsx,.xls,.csv,.pdf"
-            onChange={(e) => {
-              handleGlobalFilesPicked(e.target.files);
-              e.target.value = "";
-            }}
-          />
-          {/* Mobile: icon-only upload button */}
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => globalFileInputRef.current?.click()}
-            disabled={isProcessingAny()}
-            className="h-8 w-8 md:hidden"
-            title="Upload file"
-          >
-            {isProcessingAny() ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-          </Button>
-          {/* Mobile: icon-only add entry button */}
-          <Button
-            size="icon"
-            onClick={() => setManualEntryOpen(true)}
-            className="h-8 w-8 md:hidden"
-            title="Add manual entry"
-          >
-            <PlusCircle className="w-4 h-4" />
-          </Button>
-          {/* Desktop: full upload button */}
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             onClick={() => globalFileInputRef.current?.click()}
             disabled={isProcessingAny()}
-            className="hidden md:flex gap-2 h-9 px-5 font-medium"
-            title="Upload one or more files. Transactions are auto-sorted into the right months."
+            className="flex gap-2 h-9 px-5 font-medium"
           >
             {isProcessingAny() ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -232,19 +211,16 @@ export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsV
             )}
             Add file
           </Button>
-          {/* Desktop: manage files dropdown */}
-          <div className="hidden md:block">
-            <UploadedFilesDropdown
-              imports={imports}
-              cashAccounts={cashAccounts}
-              deleteImport={deleteImport}
-              isDeleting={isDeleting}
-              toggleLockImport={toggleLockImport}
-              pendingImportIds={pendingImportIds}
-              retryImport={retryImport}
-              retryingImportIds={retryingImportIds}
-            />
-          </div>
+          <UploadedFilesDropdown
+            imports={imports}
+            cashAccounts={cashAccounts}
+            deleteImport={deleteImport}
+            isDeleting={isDeleting}
+            toggleLockImport={toggleLockImport}
+            pendingImportIds={pendingImportIds}
+            retryImport={retryImport}
+            retryingImportIds={retryingImportIds}
+          />
         </div>
       </div>
 
@@ -285,6 +261,22 @@ export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsV
           onManualEntryOpenChange={setManualEntryOpen}
         />
       )}
+
+      {/* Mobile FAB */}
+      <MobileUploadFAB
+        options={[
+          {
+            label: t("addData.bankStatement", "Bank statement"),
+            icon: <Upload className="w-4 h-4 text-primary" />,
+            onClick: () => globalFileInputRef.current?.click(),
+          },
+          {
+            label: t("fab.manualEntry", "Manual entry"),
+            icon: <PenLine className="w-4 h-4 text-primary" />,
+            onClick: () => setManualEntryOpen(true),
+          },
+        ]}
+      />
 
       <AccountSelectDialog
         open={accountDialogOpen}

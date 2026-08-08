@@ -61,6 +61,10 @@
     "categories": "Categories & rules",
     "categoriesDesc": "Edit categories and how transactions get sorted"
   },
+  "fab": {
+    "manualEntry": "Manual entry",
+    "uploadFile": "Upload file"
+  },
   "status": {
     "active": "Active",
     "inactive": "Inactive",
