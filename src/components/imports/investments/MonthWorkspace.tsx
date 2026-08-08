@@ -1,5 +1,5 @@
 import { useRef, useState, useMemo } from "react";
-import { Loader2, Plus, Upload } from "lucide-react";
+import { Loader2, Plus, Upload, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Import } from "@/hooks/useImports";
@@ -87,36 +87,48 @@ export function MonthWorkspace({
           </div>
         ) : (
           <>
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-3">
-              <Upload className="w-6 h-6" />
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted mb-3">
+              <Inbox className="w-5 h-5 text-muted-foreground" />
             </div>
-            <h3 className="text-sm md:text-base font-semibold text-foreground">
-              {monthLabel} is empty
-            </h3>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1 max-w-xs md:max-w-md mx-auto">
-              Add a broker statement to start tracking this month.
-            </p>
-            <div className="mt-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                accept=".xlsx,.xls,.csv,.pdf"
-                onChange={(e) => onPickFiles(e.target.files, monthDate)}
-              />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isProcessing}
-                className="gap-2"
-              >
-                {isProcessing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Plus className="w-4 h-4" />
-                )}
-                Add file
-              </Button>
+            {/* Mobile: minimal — FAB handles actions */}
+            <div className="md:hidden">
+              <p className="text-[13px] font-medium text-foreground lowercase">
+                no investments yet
+              </p>
+              <p className="text-[12px] text-muted-foreground mt-1 lowercase">
+                press + to upload a statement
+              </p>
+            </div>
+            {/* Desktop: full message with action button */}
+            <div className="hidden md:block">
+              <h3 className="text-base font-semibold text-foreground">
+                {monthLabel} is empty
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                Add a broker statement to start tracking this month.
+              </p>
+              <div className="mt-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  accept=".xlsx,.xls,.csv,.pdf"
+                  onChange={(e) => onPickFiles(e.target.files, monthDate)}
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isProcessing}
+                  className="gap-2"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  Add file
+                </Button>
+              </div>
             </div>
           </>
         )}
