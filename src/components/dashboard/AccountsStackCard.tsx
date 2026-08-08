@@ -120,7 +120,7 @@ export function AccountsStackCard({
   return (
     <>
       <div
-        className="bg-card rounded-2xl p-[20px_22px_18px] h-full"
+        className="bg-card rounded-xl p-[20px_22px_18px] h-full"
         style={{ boxShadow: "var(--shadow-card)" }}
       >
         {/* Header */}

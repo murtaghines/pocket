@@ -18,10 +18,10 @@ interface NavGroup {
 
 function HamburgerAsterisk({ open }: { open: boolean }) {
   const bars = [
-    { closed: "translateY(-6px) rotate(90deg)", open: "rotate(0deg)" },
-    { closed: "rotate(90deg)", open: "rotate(45deg)" },
-    { closed: "rotate(90deg)", open: "rotate(90deg)" },
-    { closed: "translateY(6px) rotate(90deg)", open: "rotate(135deg)" },
+    { closed: "translateY(-7px) rotate(90deg)", open: "rotate(0deg)" },
+    { closed: "translateY(-2.3px) rotate(90deg)", open: "rotate(45deg)" },
+    { closed: "translateY(2.3px) rotate(90deg)", open: "rotate(90deg)" },
+    { closed: "translateY(7px) rotate(90deg)", open: "rotate(135deg)" },
   ];
 
   return (
@@ -46,7 +46,7 @@ function HamburgerAsterisk({ open }: { open: boolean }) {
   );
 }
 
-const THEME_COLOR_BLUE = "hsl(216, 100%, 55%)";
+const THEME_COLOR_BLUE = "#1B76FF";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);

@@ -45,7 +45,7 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
   };
 
   return (
-    <div className="flex h-full flex-col bg-card rounded-2xl p-[20px_22px_18px] shadow-bento">
+    <div className="flex h-full flex-col bg-card rounded-xl p-[20px_22px_18px] shadow-bento">
       {/* Header row: title + legend */}
       <div className="flex items-start justify-between mb-4">
         <div>
