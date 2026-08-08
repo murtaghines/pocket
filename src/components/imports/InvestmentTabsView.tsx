@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Upload } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { uploadFileRejection } from "@/lib/fileExtract";
 import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ import { UploadedFilesDropdown } from "./investments/UploadedFiles";
 import { MonthTabStrip } from "./investments/MonthTabStrip";
 import { MonthWorkspace } from "./investments/MonthWorkspace";
 import { InvestmentPreviewDialog } from "./investments/InvestmentPreviewDialog";
+import { MobileUploadFAB } from "./MobileUploadFAB";
 import { DataSectionToggle, type DataTab } from "./DataSectionToggle";
 import type { PendingInvEdit } from "./investments/types";
 
@@ -31,6 +33,7 @@ interface InvestmentTabsViewProps {
 
 export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps) {
   const { user } = useAuth();
+  const { t } = useTranslation("common");
   const { formatMonth } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting } = useImports("INVESTING");
   const { getInvestmentAccounts } = useAccounts();
@@ -165,46 +168,31 @@ export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* ============= Toolbar: section toggle (left) + actions (right) ============= */}
-      <div className="flex items-center justify-between gap-2 px-4 md:px-10 py-3 md:py-4 border-b border-border bg-card">
+      {/* Shared hidden file input */}
+      <input
+        ref={globalFileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        accept=".xlsx,.xls,.csv,.pdf"
+        onChange={(e) => {
+          if (e.target.files && activeSlot) {
+            handleFilesPicked(e.target.files, activeSlot.date);
+          }
+          e.target.value = "";
+        }}
+      />
+
+      {/* ============= Toolbar (desktop only): section toggle + actions ============= */}
+      <div className="hidden md:flex items-center justify-between gap-2 px-10 py-4 border-b border-border bg-card">
         <DataSectionToggle tab={tab} onChange={onTabChange} />
 
-        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-          <input
-            ref={globalFileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            accept=".xlsx,.xls,.csv,.pdf"
-            onChange={(e) => {
-              if (e.target.files && activeSlot) {
-                handleFilesPicked(e.target.files, activeSlot.date);
-              }
-              e.target.value = "";
-            }}
-          />
-          {/* Mobile: icon-only upload button */}
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => globalFileInputRef.current?.click()}
-            disabled={isProcessingAny}
-            className="h-8 w-8 md:hidden"
-            title="Upload file"
-          >
-            {isProcessingAny ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-          </Button>
-          {/* Desktop: full upload button */}
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             onClick={() => globalFileInputRef.current?.click()}
             disabled={isProcessingAny}
-            className="hidden md:flex gap-2 h-9 px-5 font-medium"
-            title="Upload a broker statement for the active month"
+            className="flex gap-2 h-9 px-5 font-medium"
           >
             {isProcessingAny ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -213,15 +201,12 @@ export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps
             )}
             Add file
           </Button>
-          {/* Desktop: manage files dropdown */}
-          <div className="hidden md:block">
-            <UploadedFilesDropdown
-              imports={imports}
-              deleteImport={deleteImport}
-              isDeleting={isDeleting}
-              pendingImportIds={pendingImportIds}
-            />
-          </div>
+          <UploadedFilesDropdown
+            imports={imports}
+            deleteImport={deleteImport}
+            isDeleting={isDeleting}
+            pendingImportIds={pendingImportIds}
+          />
         </div>
       </div>
 
@@ -260,6 +245,17 @@ export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps
           setPendingByInv={setPendingByInv}
         />
       )}
+
+      {/* Mobile FAB */}
+      <MobileUploadFAB
+        options={[
+          {
+            label: t("addData.investments", "Investments"),
+            icon: <Upload className="w-4 h-4 text-primary" />,
+            onClick: () => globalFileInputRef.current?.click(),
+          },
+        ]}
+      />
 
       <AccountSelectDialog
         open={accountDialogOpen}
