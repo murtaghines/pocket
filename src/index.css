@@ -142,11 +142,10 @@
     --shadow-section: 0 1px 3px rgba(13,30,70,.06);
   }
 
-  /* Override card border-radius to 18px per design spec */
-  .dashboard-theme .rounded-lg,
+  /* Card border-radius — tighter than the original 18px */
   .dashboard-theme .rounded-xl,
   .dashboard-theme .rounded-2xl {
-    border-radius: 18px;
+    border-radius: 14px;
   }
 
   /* Dashboard DARK theme — applied when .dark is on body alongside dashboard-theme */

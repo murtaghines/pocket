@@ -111,7 +111,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
 
   return (
     <div
-      className="bg-card rounded-2xl p-[18px_20px_16px] h-full"
+      className="bg-card rounded-xl p-[18px_20px_16px] h-full"
       style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
     >
       <div className="flex items-center justify-between gap-3 mb-3">

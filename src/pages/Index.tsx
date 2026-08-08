@@ -318,7 +318,7 @@ export default function Index() {
 
               {/* Row 6: Transactions table */}
               <div
-                className="bg-card rounded-2xl p-[20px_22px_10px] shadow-bento"
+                className="bg-card rounded-xl p-[20px_22px_10px] shadow-bento"
               >
                 <div className="max-h-[500px] overflow-y-auto">
                   <TransactionTable transactions={monthTransactions} />

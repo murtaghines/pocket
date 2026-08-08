@@ -26,7 +26,7 @@ export function SavingsRateRingCard({ income, expenses }: SavingsRateRingCardPro
   const dash = (filled / 100) * circumference;
 
   return (
-    <div className="flex h-full items-center gap-2.5 rounded-2xl bg-card p-[14px_16px] shadow-bento">
+    <div className="flex h-full items-center gap-2.5 rounded-xl bg-card p-[14px_16px] shadow-bento">
       {/* Label stacked in two lines so the ring gets the rest of the width */}
       <span className="max-w-[60px] shrink-0 text-[12px] font-semibold uppercase leading-[1.18] tracking-[.04em] text-muted-foreground">
         {t("stats.savingsRate")}

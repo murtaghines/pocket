@@ -12,7 +12,7 @@ export const PROCESSING_STAGES: { threshold: number; label: string }[] = [
 
 export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-card shadow-[0_2px_18px_-8px_rgb(8_8_8_/_0.08)] overflow-hidden">
+    <div className="rounded-xl border border-border/70 bg-card shadow-[0_2px_18px_-8px_rgb(8_8_8_/_0.08)] overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 border-b border-border/60 bg-muted/30 flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">

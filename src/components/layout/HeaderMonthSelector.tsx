@@ -26,7 +26,7 @@ export function HeaderMonthSelector({ variant = "default" }: HeaderMonthSelector
   return (
     <span
       className={cn(
-        "flex items-center gap-[6px] text-[13px] font-medium rounded-full py-[7px] px-[13px] whitespace-nowrap select-none",
+        "flex items-center gap-[5px] text-[12px] font-medium rounded-full py-[4px] px-[10px] whitespace-nowrap select-none",
         onBlue
           ? "text-white bg-white/15"
           : "text-foreground bg-card shadow-sm",
@@ -39,10 +39,10 @@ export function HeaderMonthSelector({ variant = "default" }: HeaderMonthSelector
         aria-label="Previous month"
         className="disabled:opacity-30 hover:opacity-60 transition-opacity"
       >
-        <ChevronLeft className="w-[15px] h-[15px]" strokeWidth={2} />
+        <ChevronLeft className="w-[14px] h-[14px]" strokeWidth={2} />
       </button>
-      <Calendar className={cn("w-[14px] h-[14px] shrink-0", onBlue ? "text-white/60" : "text-muted-foreground")} strokeWidth={2} />
-      <span className="capitalize min-w-[90px] text-center">{label}</span>
+      <Calendar className={cn("w-[13px] h-[13px] shrink-0", onBlue ? "text-white/60" : "text-muted-foreground")} strokeWidth={2} />
+      <span className="capitalize min-w-[80px] text-center">{label}</span>
       <button
         type="button"
         onClick={() => hasNewer && setSelectedMonth(availableMonths[currentIdx - 1])}
@@ -50,7 +50,7 @@ export function HeaderMonthSelector({ variant = "default" }: HeaderMonthSelector
         aria-label="Next month"
         className="disabled:opacity-30 hover:opacity-60 transition-opacity"
       >
-        <ChevronRight className="w-[15px] h-[15px]" strokeWidth={2} />
+        <ChevronRight className="w-[14px] h-[14px]" strokeWidth={2} />
       </button>
     </span>
   );

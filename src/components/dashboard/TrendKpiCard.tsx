@@ -87,7 +87,7 @@ export function TrendKpiCard({
 
   return (
     <div
-      className={cn("flex h-full flex-col rounded-2xl p-[16px] transition-all", cardClasses, className)}
+      className={cn("flex h-full flex-col rounded-xl p-[16px] transition-all", cardClasses, className)}
       style={{ boxShadow: cardShadow, animationDelay: `${delay}ms` }}
     >
       {/* Header row: label + icon badge */}
