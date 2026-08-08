@@ -5,15 +5,6 @@ import { CalendarClock, PiggyBank, Bell } from "lucide-react";
 export default function Planning() {
   return (
     <DashboardLayout>
-      <div className="mb-6 md:hidden">
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
-          Planning
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Plan upcoming payments and set budgets per category
-        </p>
-      </div>
-
       <div className="flex flex-col gap-[16px]">
         <Section
           icon={<CalendarClock className="w-5 h-5" />}

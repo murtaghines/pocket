@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Plus, Minus } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
-import { HeaderMonthSelector } from "@/components/layout/HeaderMonthSelector";
+
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
@@ -228,16 +228,6 @@ export default function Index() {
 
         {!isLoading && !prefsLoading && (
           <>
-            {/* Section header (mobile only — desktop shows it in the sticky top bar).
-                Pinned to the top so the title + month navigator stay reachable while scrolling,
-                mirroring the desktop sticky top bar. The -mx-4/-mt-4 bleed cancels the main
-                padding so the blurred backdrop spans full width and sits flush at the top. */}
-            <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-4 bg-background/90 px-4 pt-4 pb-3 backdrop-blur-[10px] md:hidden">
-              <div className="flex items-center justify-between gap-3">
-                <h1 className="text-2xl font-semibold">{t('title')}</h1>
-                <HeaderMonthSelector />
-              </div>
-            </div>
             {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
               <p className="mb-5 text-sm tabular-nums text-muted-foreground md:hidden">
                 {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
