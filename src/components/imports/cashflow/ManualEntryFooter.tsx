@@ -135,24 +135,27 @@ export function ManualEntryFooter({
     <>
       {/* Mobile: summary strip — sticky at bottom */}
       <div className="md:hidden sticky bottom-0 z-20">
-        <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-card/95 backdrop-blur">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Plus className="w-3 h-3 text-success" />
-              <span className="text-xs font-semibold tabular-nums text-success">
-                {formatCurrency(summary.income)}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Minus className="w-3 h-3 text-destructive" />
-              <span className="text-xs font-semibold tabular-nums text-destructive">
-                {formatCurrency(summary.expenses)}
-              </span>
-            </div>
+        <div className="flex items-center px-4 py-2 gap-3 border-t border-border bg-card/95 backdrop-blur">
+          <div className="flex items-center gap-1">
+            <Plus className="w-3 h-3 text-success" />
+            <span className="text-xs font-semibold tabular-nums text-success">
+              {formatCurrency(summary.income)}
+            </span>
           </div>
-          <span className="text-[11px] tabular-nums text-muted-foreground">
-            {summary.total} row{summary.total !== 1 ? "s" : ""}
-          </span>
+          <div className="flex items-center gap-1">
+            <Minus className="w-3 h-3 text-destructive" />
+            <span className="text-xs font-semibold tabular-nums text-destructive">
+              {formatCurrency(summary.expenses)}
+            </span>
+          </div>
+          {summary.transfers !== undefined && summary.transfers > 0 && (
+            <div className="flex items-center gap-1">
+              <ArrowRightLeft className="w-3 h-3 text-warning" />
+              <span className="text-xs font-semibold tabular-nums text-warning">
+                {summary.transfers}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -56,7 +56,7 @@ export function MonthTabStrip({
           <ChevronLeft className="w-5 h-5" />
         </Button>
         <div className="flex items-center gap-2">
-          <span className="text-[15px] font-semibold text-foreground capitalize">
+          <span className="text-[15px] font-semibold text-foreground uppercase">
             {activeSlot?.label}
           </span>
           {activeTxCount > 0 && (
