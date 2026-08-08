@@ -12,8 +12,8 @@ export function HeaderMonthSelector() {
   if (availableMonths.length === 0) return null;
 
   const currentIdx = selectedMonth ? availableMonths.indexOf(selectedMonth) : -1;
-  const hasPrev = currentIdx > 0;
-  const hasNext = currentIdx < availableMonths.length - 1;
+  const hasOlder = currentIdx < availableMonths.length - 1;
+  const hasNewer = currentIdx > 0;
 
   const label = selectedMonth ? formatMonth(selectedMonth + "-01") : "–";
 
@@ -23,8 +23,8 @@ export function HeaderMonthSelector() {
     >
       <button
         type="button"
-        onClick={() => hasPrev && setSelectedMonth(availableMonths[currentIdx - 1])}
-        disabled={!hasPrev}
+        onClick={() => hasOlder && setSelectedMonth(availableMonths[currentIdx + 1])}
+        disabled={!hasOlder}
         aria-label="Previous month"
         className="disabled:opacity-30 hover:opacity-60 transition-opacity"
       >
@@ -34,8 +34,8 @@ export function HeaderMonthSelector() {
       <span className="capitalize min-w-[90px] text-center">{label}</span>
       <button
         type="button"
-        onClick={() => hasNext && setSelectedMonth(availableMonths[currentIdx + 1])}
-        disabled={!hasNext}
+        onClick={() => hasNewer && setSelectedMonth(availableMonths[currentIdx - 1])}
+        disabled={!hasNewer}
         aria-label="Next month"
         className="disabled:opacity-30 hover:opacity-60 transition-opacity"
       >
