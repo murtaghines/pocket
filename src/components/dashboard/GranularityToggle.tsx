@@ -11,13 +11,22 @@ const OPTIONS: { value: Granularity; fallback: string }[] = [
 interface GranularityToggleProps {
   value: Granularity;
   onChange: (g: Granularity) => void;
+  variant?: "default" | "onPrimary";
 }
 
-/** Segmented Week / Month / Year control that drives the granularity of the whole History view. */
-export function GranularityToggle({ value, onChange }: GranularityToggleProps) {
+export function GranularityToggle({ value, onChange, variant = "default" }: GranularityToggleProps) {
   const { t } = useTranslation("dashboard");
+  const onBlue = variant === "onPrimary";
+
   return (
-    <div className="inline-flex items-center gap-0.5 rounded-full border border-primary/45 bg-muted/60 p-0.5">
+    <div
+      className={cn(
+        "inline-flex items-center gap-0.5 rounded-full p-0.5",
+        onBlue
+          ? "border border-white/20 bg-white/10"
+          : "border border-primary/45 bg-muted/60",
+      )}
+    >
       {OPTIONS.map((opt) => (
         <button
           key={opt.value}
@@ -26,8 +35,12 @@ export function GranularityToggle({ value, onChange }: GranularityToggleProps) {
           className={cn(
             "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
             value === opt.value
-              ? "bg-card text-primary shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
+              ? onBlue
+                ? "bg-white/25 text-white shadow-sm"
+                : "bg-card text-primary shadow-sm"
+              : onBlue
+                ? "text-white/60 hover:text-white"
+                : "text-muted-foreground hover:text-foreground",
           )}
         >
           {t(`granularity.${opt.value}`, opt.fallback)}

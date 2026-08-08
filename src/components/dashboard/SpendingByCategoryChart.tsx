@@ -107,13 +107,13 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
                   <span className="max-w-full truncate text-[12px] font-medium text-muted-foreground">
                     {activeEntry.name}
                   </span>
-                  <span className="text-[19px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-foreground">
+                  <span className="text-[16px] md:text-[19px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-foreground">
                     {formatCurrency(activeEntry.value)}
                   </span>
                   <span className="text-[12px] tabular-nums text-muted-foreground">{pctLabel(activeEntry.value)}</span>
                 </>
               ) : (
-                <span className="text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
+                <span className="text-[17px] md:text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
                   {formatCurrency(total)}
                 </span>
               )}

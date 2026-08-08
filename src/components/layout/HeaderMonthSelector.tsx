@@ -1,9 +1,14 @@
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { useLocalization } from "@/hooks/useLocalization";
 
-export function HeaderMonthSelector() {
+interface HeaderMonthSelectorProps {
+  variant?: "default" | "onPrimary";
+}
+
+export function HeaderMonthSelector({ variant = "default" }: HeaderMonthSelectorProps) {
   const location = useLocation();
   const { formatMonth } = useLocalization();
   const { selectedMonth, setSelectedMonth, availableMonths } = useMonthSelection();
@@ -16,10 +21,16 @@ export function HeaderMonthSelector() {
   const hasNewer = currentIdx > 0;
 
   const label = selectedMonth ? formatMonth(selectedMonth + "-01") : "–";
+  const onBlue = variant === "onPrimary";
 
   return (
     <span
-      className="flex items-center gap-[6px] text-[13px] font-medium text-foreground bg-card rounded-full py-[7px] px-[13px] whitespace-nowrap select-none shadow-sm"
+      className={cn(
+        "flex items-center gap-[6px] text-[13px] font-medium rounded-full py-[7px] px-[13px] whitespace-nowrap select-none",
+        onBlue
+          ? "text-white bg-white/15"
+          : "text-foreground bg-card shadow-sm",
+      )}
     >
       <button
         type="button"
@@ -30,7 +41,7 @@ export function HeaderMonthSelector() {
       >
         <ChevronLeft className="w-[15px] h-[15px]" strokeWidth={2} />
       </button>
-      <Calendar className="w-[14px] h-[14px] text-muted-foreground shrink-0" strokeWidth={2} />
+      <Calendar className={cn("w-[14px] h-[14px] shrink-0", onBlue ? "text-white/60" : "text-muted-foreground")} strokeWidth={2} />
       <span className="capitalize min-w-[90px] text-center">{label}</span>
       <button
         type="button"

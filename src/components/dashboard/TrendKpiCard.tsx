@@ -109,7 +109,7 @@ export function TrendKpiCard({
       <div className="mt-auto">
         <div
           className={cn(
-            "text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none",
+            "text-[17px] md:text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none",
             valueClass,
           )}
         >

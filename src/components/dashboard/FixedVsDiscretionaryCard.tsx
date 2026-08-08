@@ -40,7 +40,7 @@ export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProp
   return (
     <div className="bg-card rounded-2xl p-[20px_22px_18px] shadow-bento">
       <div className="mb-4 min-w-0">
-        <p className="text-[15px] font-semibold text-foreground">{t("insights.essential.title")}</p>
+        <p className="text-[14px] md:text-[15px] font-semibold text-foreground">{t("insights.essential.title")}</p>
         {hasData && (
           <p className="text-[12px] text-muted-foreground mt-0.5">{t("insights.essential.tapHint")}</p>
         )}
@@ -161,7 +161,7 @@ function BucketToggle({ label, amount, pct, dotClass, open, onClick, formatCurre
           className={`ml-auto h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
         />
       </div>
-      <div className="text-[17px] font-semibold tabular-nums text-foreground mt-1">{formatCurrency(amount)}</div>
+      <div className="text-[14px] md:text-[17px] font-semibold tabular-nums text-foreground mt-1">{formatCurrency(amount)}</div>
     </button>
   );
 }

@@ -72,7 +72,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-[15px] font-semibold text-foreground">
+          <p className="text-[14px] md:text-[15px] font-semibold text-foreground">
             {t('charts.dailyBalance', 'Daily balance')}
           </p>
           <p className="text-[12px] text-muted-foreground mt-0.5">

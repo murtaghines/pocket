@@ -76,7 +76,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     return (
       <Card variant="bento" className="h-[300px] w-full">
         <CardHeader className="p-4 pb-1">
-          <CardTitle className="text-[15px] font-semibold text-foreground">
+          <CardTitle className="text-[14px] md:text-[15px] font-semibold text-foreground">
             {t("charts.incomeByCategory", "Income by Category")}
           </CardTitle>
         </CardHeader>
