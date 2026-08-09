@@ -20,6 +20,7 @@ export const USER_TRACKED_FIELDS = new Set<string>([
   "category_id",
   "amount",
   "is_hidden",
+  "description_norm",
 ]);
 
 export const FIELD_LABELS: Record<string, string> = {
@@ -28,6 +29,7 @@ export const FIELD_LABELS: Record<string, string> = {
   category_id: "Category",
   amount: "Amount",
   is_hidden: "Visibility",
+  description_norm: "Description",
 };
 
 /**
