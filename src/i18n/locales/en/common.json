@@ -74,6 +74,7 @@
     "amount": "Amount",
     "type": "Type",
     "platform": "Platform",
+    "account": "Account",
     "asset": "Asset",
     "description": "Description",
     "date": "Date",

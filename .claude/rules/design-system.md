@@ -75,9 +75,9 @@ Always reference tokens. Never hardcode hex values in components.
 --ring:               hsl(216 100% 55%);
 
 /* Semantic — financial */
---success:            hsl(150 100% 37%);     /* Income, positive */
+--success:            hsl(150 70% 32%);      /* Income, positive */
 --success-foreground: hsl(0 0% 100%);
---destructive:        hsl(12 99% 56%);       /* Expenses, errors */
+--destructive:        hsl(12 80% 46%);       /* Expenses, errors */
 --destructive-foreground: hsl(0 0% 100%);
 --warning:            hsl(45 100% 58%);      /* Transfers */
 --warning-foreground: hsl(0 0% 3%);

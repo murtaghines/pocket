@@ -5,17 +5,12 @@ import {
   Minus,
   ArrowRightLeft,
   Sparkles,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
   DrawerFooter,
   DrawerClose,
 } from "@/components/ui/drawer";
@@ -50,7 +45,6 @@ interface TransactionEditDrawerProps {
   categories: { id: string; slug: string }[];
   accountName: string | null;
   onSave: (tx: MonthTransaction, edits: PendingEditShape, withRule: boolean) => void;
-  onToggleHidden: (tx: MonthTransaction) => void;
 }
 
 export function TransactionEditDrawer({
@@ -63,7 +57,6 @@ export function TransactionEditDrawer({
   categories,
   accountName,
   onSave,
-  onToggleHidden,
 }: TransactionEditDrawerProps) {
   const { t } = useTranslation("common");
 
@@ -166,119 +159,94 @@ export function TransactionEditDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <DrawerHeader className="text-left">
-          <DrawerTitle>{t("imports.editTransaction", "Edit transaction")}</DrawerTitle>
-          <DrawerDescription className="truncate">{cleanDescription}</DrawerDescription>
-        </DrawerHeader>
-
-        <div className="px-4 space-y-5 pb-2">
-          <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
-            <span className="text-sm text-muted-foreground truncate">{accountName || "—"}</span>
-            <span className={cn("text-sm font-semibold tabular-nums", amountColor)}>
-              {amount < 0 ? "−" : ""}
-              {formatCurrency(Math.abs(amount))}
-            </span>
+        <div className="px-4 pt-2 pb-1">
+          {/* Movement toggle */}
+          <div className="flex gap-2 mb-4">
+            {movementOptions.map((opt) => {
+              const Icon = opt.icon;
+              const tone = getMovementTone(opt.value);
+              const active = movement === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleMovementChange(opt.value)}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
+                    active
+                      ? toneClass[tone] || "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-muted/50",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("imports.movement", "Movement")}
-            </label>
-            <div className="flex gap-2">
-              {movementOptions.map((opt) => {
-                const Icon = opt.icon;
-                const tone = getMovementTone(opt.value);
-                const active = movement === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    disabled={tx.is_hidden}
-                    onClick={() => handleMovementChange(opt.value)}
-                    className={cn(
-                      "flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
-                      active
-                        ? toneClass[tone] || "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-muted-foreground hover:bg-muted/50",
-                      tx.is_hidden && "opacity-50 cursor-not-allowed",
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {opt.label}
-                  </button>
-                );
-              })}
+          {/* Form rows */}
+          <div className="divide-y divide-border/60">
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.description", "Description")}</span>
+              <span className="text-sm font-medium text-foreground truncate max-w-[60%] text-right">{cleanDescription}</span>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("imports.category", "Category")}
-            </label>
-            <Select value={category} onValueChange={handleCategoryChange} disabled={tx.is_hidden}>
-              <SelectTrigger className="h-11">
-                <SelectValue>
-                  <div className="flex items-center gap-2">
-                    <CategoryIcon
-                      iconName={getIcon(category)}
-                      colorVar={getColor(category)}
-                      size="sm"
-                      showBackground
-                    />
-                    {getCategoryLabel(category)}
-                  </div>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {availableCategories.map((slug) => (
-                  <SelectItem key={slug} value={slug}>
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.amount", "Amount")}</span>
+              <div className="flex items-center gap-2">
+                <span className={cn("text-sm font-semibold tabular-nums", amountColor)}>
+                  {amount < 0 ? "−" : ""}
+                  {formatCurrency(Math.abs(amount))}
+                </span>
+                <AmountEditButton
+                  originalAmount={amount}
+                  formatCurrency={formatCurrency}
+                  onChangeAmount={handleAmountChange}
+                  onApplySplit={handleSplit}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.category", "Category")}</span>
+              <Select value={category} onValueChange={handleCategoryChange}>
+                <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 gap-1.5 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40">
+                  <SelectValue>
                     <div className="flex items-center gap-2">
                       <CategoryIcon
-                        iconName={getIcon(slug)}
-                        colorVar={getColor(slug)}
+                        iconName={getIcon(category)}
+                        colorVar={getColor(category)}
                         size="sm"
                         showBackground
                       />
-                      {getCategoryLabel(slug)}
+                      <span className="text-sm font-medium">{getCategoryLabel(category)}</span>
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCategories.map((slug) => (
+                    <SelectItem key={slug} value={slug}>
+                      <div className="flex items-center gap-2">
+                        <CategoryIcon
+                          iconName={getIcon(slug)}
+                          colorVar={getColor(slug)}
+                          size="sm"
+                          showBackground
+                        />
+                        {getCategoryLabel(slug)}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("imports.amount", "Amount")}
-            </label>
-            <div className="flex items-center gap-3">
-              <span className={cn("text-lg font-semibold tabular-nums flex-1", amountColor)}>
-                {amount < 0 ? "−" : ""}
-                {formatCurrency(Math.abs(amount))}
-              </span>
-              <AmountEditButton
-                originalAmount={amount}
-                formatCurrency={formatCurrency}
-                onChangeAmount={handleAmountChange}
-                onApplySplit={handleSplit}
-                disabled={tx.is_hidden}
-              />
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.account", "Account")}</span>
+              <span className="text-sm text-foreground">{accountName || "—"}</span>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              onToggleHidden(tx);
-              onOpenChange(false);
-            }}
-            className="flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50"
-          >
-            {tx.is_hidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-            {tx.is_hidden
-              ? t("imports.includeInTotals", "Include in totals")
-              : t("imports.hideFromTotals", "Hide from totals")}
-          </button>
         </div>
 
         <DrawerFooter>
@@ -298,7 +266,7 @@ export function TransactionEditDrawer({
             )}
             <Button
               className="flex-1"
-              disabled={!hasChanges || tx.is_hidden}
+              disabled={!hasChanges}
               onClick={() => {
                 onSave(tx, buildEdits(), false);
                 onOpenChange(false);
