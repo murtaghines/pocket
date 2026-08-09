@@ -43,9 +43,9 @@ export function MonthTabStrip({
   };
 
   return (
-    <div className="relative">
+    <>
       {/* Mobile: simple month navigator — sticky below the header */}
-      <div className="flex md:hidden items-center justify-between px-4 py-2.5 border-b border-border bg-card sticky top-12 z-20">
+      <div className="md:hidden sticky top-12 z-20 flex items-center justify-between px-4 py-2.5 border-b border-border bg-card">
         <Button
           variant="ghost"
           size="icon"
@@ -78,7 +78,7 @@ export function MonthTabStrip({
       </div>
 
       {/* Desktop: full Airtable-style tab strip */}
-      <div className="hidden md:flex items-stretch border-b border-border bg-primary/5">
+      <div className="hidden md:flex items-stretch border-b border-border bg-primary/5 relative">
         <div
           ref={scrollRef}
           className="flex-1 flex items-stretch overflow-x-auto scrollbar-none"
@@ -162,6 +162,6 @@ export function MonthTabStrip({
           </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1242,16 +1242,13 @@ export function InlineTransactionsEditor({
               >
                 {/* Description + amount */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-2">
-                    <span className="shrink-0 pt-0.5 text-[11px] tabular-nums text-muted-foreground/60">{idx + 1}</span>
-                    <div className="min-w-0">
-                      <p className={cn("break-words text-[13px] font-medium text-foreground", isHidden && "line-through")}>
-                        {cleanDescription}
-                      </p>
-                      <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                        {formatDate(new Date(tx.date))} · {accountName(tx.account_id) || "—"}
-                      </p>
-                    </div>
+                  <div className="min-w-0">
+                    <p className={cn("break-words text-[13px] font-medium text-foreground", isHidden && "line-through")}>
+                      {cleanDescription}
+                    </p>
+                    <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
+                      {formatDate(new Date(tx.date))} · {accountName(tx.account_id) || "—"}
+                    </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     {isSaving ? (
@@ -1274,7 +1271,7 @@ export function InlineTransactionsEditor({
                     </PillBadge>
                   ) : (
                     <Select value={movement} onValueChange={(v) => handleMovementChange(tx, v as MovementType)} disabled={isHidden}>
-                      <SelectTrigger className="h-[30px] flex-1 border border-border bg-card px-2 text-xs [&>svg]:opacity-50">
+                      <SelectTrigger className="h-[30px] w-auto shrink-0 border border-border bg-card px-2 text-xs [&>svg]:opacity-50">
                         <SelectValue>
                           <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
                             {getMovementLabel(movement)}
@@ -1307,7 +1304,7 @@ export function InlineTransactionsEditor({
                     </PillBadge>
                   ) : (
                     <Select value={category} onValueChange={(v) => handleCategoryChange(tx, v)} disabled={isHidden}>
-                      <SelectTrigger className="h-[30px] flex-1 border border-border bg-card px-2 text-xs [&>svg]:opacity-50">
+                      <SelectTrigger className="h-[30px] min-w-0 flex-1 border border-border bg-card px-2 text-xs [&>svg]:opacity-50">
                         <SelectValue>
                           <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
                             <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />

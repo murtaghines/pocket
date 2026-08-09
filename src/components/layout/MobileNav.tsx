@@ -84,7 +84,11 @@ export function MobileNav() {
     if (location.pathname.startsWith("/history")) return t("navigation.history", "History");
     if (location.pathname.startsWith("/investments")) return t("navigation.investments", "Investments");
     if (location.pathname.startsWith("/planning")) return t("navigation.planning", "Planning");
-    if (location.pathname.startsWith("/my-data")) return t("navigation.dataUploads", "Data uploads");
+    if (location.pathname.startsWith("/my-data")) {
+      if (location.search.includes("tab=investments"))
+        return t("navigation.investmentFiles", "Investment files");
+      return t("navigation.bankStatements", "Bank statements");
+    }
     if (location.pathname.startsWith("/categories")) return t("navigation.categories", "Categories");
     if (location.pathname.startsWith("/account") || location.pathname.startsWith("/profile"))
       return t("navigation.account", "Account");
