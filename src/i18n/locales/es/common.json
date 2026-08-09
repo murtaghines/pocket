@@ -65,6 +65,9 @@
     "manualEntry": "entrada manual",
     "uploadFile": "subir archivo"
   },
+  "imports": {
+    "excluded": "Excluida"
+  },
   "status": {
     "active": "Activo",
     "inactive": "Inactivo",

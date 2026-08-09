@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
@@ -131,8 +132,9 @@ export function InlineTransactionsEditor({
   const queryClient = useQueryClient();
   const { categories } = useCategories("CASHFLOW");
   const { accounts } = useAccounts();
-  const { formatCurrency, formatDate } = useLocalization();
+  const { formatCurrency, formatDate, formatWeekdayShort } = useLocalization();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+  const { t } = useTranslation("common");
 
   const [expanded, setExpanded] = useState(false);
   // Per-row "saving"/"saved" indicators
@@ -770,6 +772,17 @@ export function InlineTransactionsEditor({
   const showCollapsedHint = !expanded && visibleAll.length > ROW_THRESHOLD;
   const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
+  // Consecutive rows sharing a date, for the mobile day-grouped card list.
+  // Rows already come sorted date-desc from the query, so a single pass suffices.
+  // (Not memoized: this component already returns early above for loading/empty
+  // states, so a useMemo here would be a conditional hook call.)
+  const dayGroups: { dateKey: string; rows: MonthTransaction[] }[] = [];
+  for (const tx of rowsToRender) {
+    const last = dayGroups[dayGroups.length - 1];
+    if (last && last.dateKey === tx.date) last.rows.push(tx);
+    else dayGroups.push({ dateKey: tx.date, rows: [tx] });
+  }
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Mismatch warning */}
@@ -1191,237 +1204,303 @@ export function InlineTransactionsEditor({
         </div>
 
         {/* Phones: stacked, editable cards (the table is unusable at this width) */}
-        <div className="md:hidden divide-y divide-border/60">
-          {rowsToRender.map((tx, idx) => {
-            const isMismatch = mismatchedIds.has(tx.id);
-            const isSaving = savingIds.has(tx.id);
-            const isSaved = savedIds.has(tx.id);
-            const isHidden = tx.is_hidden;
-            const txHistory = auditByTx[tx.id] || [];
-            const editEntries = txHistory.filter((h) => h.action !== "revert");
-            const hasEditHistory = editEntries.length > 0;
-            const snapshot = hasEditHistory ? buildOriginalSnapshot(txHistory) : null;
-            const isEdited =
-              hasEditHistory &&
-              !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
-            const originalSnapshot = isEdited ? snapshot : null;
-            const cleanDescription = (tx.description_norm || tx.description)
-              .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-              .trim();
-            const pending = pendingByTx[tx.id];
-            const isPending = !!pending;
-            const movement = (pending?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
-            const category = normalizeCategory(pending?.category ?? tx.category ?? "other_expense");
-            const displayAmount = pending?.amount ?? tx.amount;
-            const availableCategories = getCategoriesForMovement(movement);
-            const amountColor =
-              displayAmount === 0
-                ? "text-muted-foreground"
-                : movement === "INCOME"
-                  ? "text-success"
-                  : movement === "TRANSFER"
-                    ? "text-muted-foreground"
-                    : "text-destructive";
-            const ruleWorthy =
-              (!!pending?.category && pending.category !== tx.category) ||
-              (!!pending?.movement &&
-                pending.movement !== tx.movement &&
-                (tx.movement === "TRANSFER" || pending.movement === "TRANSFER"));
+        <div className="md:hidden">
+          {dayGroups.map((group) => {
+            let dayIncome = 0;
+            let dayExpense = 0;
+            group.rows.forEach((tx) => {
+              if (tx.is_hidden) return;
+              const p = pendingByTx[tx.id];
+              const mv = (p?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
+              const amt = p?.amount ?? tx.amount;
+              if (mv === "INCOME") dayIncome += amt;
+              else if (mv === "EXPENSE") dayExpense += Math.abs(amt);
+            });
 
             return (
-              <div
-                key={tx.id}
-                className={cn(
-                  "flex flex-col gap-1.5 px-3 py-2.5 transition-colors",
-                  isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                  isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
-                  isPending && "bg-warning/10 border-l-2 border-l-warning",
-                  isHidden && "opacity-50 bg-muted/20",
-                  isSaved && !isMismatch && "bg-success/5",
-                )}
-              >
-                {/* Description + amount */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className={cn("break-words text-[13px] font-medium text-foreground", isHidden && "line-through")}>
-                      {cleanDescription}
-                    </p>
-                    <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                      {formatDate(new Date(tx.date))} · {accountName(tx.account_id) || "—"}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {isSaving ? (
-                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                    ) : isSaved ? (
-                      <Check className="h-3 w-3 text-success" />
-                    ) : null}
-                    <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
-                      {displayAmount < 0 ? "-" : ""}
-                      {formatCurrency(Math.abs(displayAmount))}
+              <div key={group.dateKey}>
+                {/* Day header — date, weekday, day subtotals */}
+                <div className="flex items-center justify-between gap-2 border-y border-border/60 bg-muted/40 px-3 py-1.5">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[13px] font-semibold tabular-nums text-foreground">
+                      {group.dateKey.slice(8, 10)}
+                    </span>
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {formatWeekdayShort(group.dateKey)}
                     </span>
                   </div>
+                  {(dayIncome > 0 || dayExpense > 0) && (
+                    <div className="flex items-center gap-2 text-[11px] tabular-nums">
+                      {dayIncome > 0 && (
+                        <span className="font-medium text-success">+{formatCurrency(dayIncome)}</span>
+                      )}
+                      {dayExpense > 0 && (
+                        <span className="font-medium text-destructive">-{formatCurrency(dayExpense)}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Movement + category */}
-                <div className="flex items-center gap-2">
-                  {isLocked ? (
-                    <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
-                      {getMovementLabel(movement)}
-                    </PillBadge>
-                  ) : (
-                    <Select value={movement} onValueChange={(v) => handleMovementChange(tx, v as MovementType)} disabled={isHidden}>
-                      <SelectTrigger className="h-[30px] w-auto shrink-0 border border-border bg-card px-2 text-xs [&>svg]:opacity-50">
-                        <SelectValue>
-                          <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
-                            {getMovementLabel(movement)}
-                          </PillBadge>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="INCOME">
-                          <PillBadge variant="solid" tone="green" icon={<Plus className="h-3 w-3" />}>
-                            {getMovementLabel("INCOME")}
-                          </PillBadge>
-                        </SelectItem>
-                        <SelectItem value="EXPENSE">
-                          <PillBadge variant="solid" tone="red" icon={<Minus className="h-3 w-3" />}>
-                            {getMovementLabel("EXPENSE")}
-                          </PillBadge>
-                        </SelectItem>
-                        <SelectItem value="TRANSFER">
-                          <PillBadge variant="solid" tone="amber" icon={<ArrowRightLeft className="h-3 w-3" />}>
-                            {getMovementLabel("TRANSFER")}
-                          </PillBadge>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {isLocked ? (
-                    <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
-                      <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
-                      <span className="truncate max-w-[120px]">{getCategoryLabel(category)}</span>
-                    </PillBadge>
-                  ) : (
-                    <Select value={category} onValueChange={(v) => handleCategoryChange(tx, v)} disabled={isHidden}>
-                      <SelectTrigger className="h-[30px] min-w-0 flex-1 border border-border bg-card px-2 text-xs [&>svg]:opacity-50">
-                        <SelectValue>
-                          <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
-                            <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
-                            <span className="truncate max-w-[120px]">{getCategoryLabel(category)}</span>
-                          </PillBadge>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableCategories.map((slug) => (
-                          <SelectItem key={slug} value={slug}>
-                            <div className="flex items-center gap-2">
-                              <CategoryIcon iconName={getCategoryIcon(slug)} colorVar={getCategoryColor(slug)} size="sm" showBackground />
-                              {getCategoryLabel(slug)}
+                <div className="divide-y divide-border/60">
+                  {group.rows.map((tx) => {
+                    const isMismatch = mismatchedIds.has(tx.id);
+                    const isSaving = savingIds.has(tx.id);
+                    const isSaved = savedIds.has(tx.id);
+                    const isHidden = tx.is_hidden;
+                    const txHistory = auditByTx[tx.id] || [];
+                    const editEntries = txHistory.filter((h) => h.action !== "revert");
+                    const hasEditHistory = editEntries.length > 0;
+                    const snapshot = hasEditHistory ? buildOriginalSnapshot(txHistory) : null;
+                    const isEdited =
+                      hasEditHistory &&
+                      !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
+                    const originalSnapshot = isEdited ? snapshot : null;
+                    const cleanDescription = (tx.description_norm || tx.description)
+                      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+                      .trim();
+                    const pending = pendingByTx[tx.id];
+                    const isPending = !!pending;
+                    const movement = (pending?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
+                    const category = normalizeCategory(pending?.category ?? tx.category ?? "other_expense");
+                    const displayAmount = pending?.amount ?? tx.amount;
+                    const availableCategories = getCategoriesForMovement(movement);
+                    const amountColor =
+                      displayAmount === 0
+                        ? "text-muted-foreground"
+                        : movement === "INCOME"
+                          ? "text-success"
+                          : movement === "TRANSFER"
+                            ? "text-muted-foreground"
+                            : "text-destructive";
+                    const ruleWorthy =
+                      (!!pending?.category && pending.category !== tx.category) ||
+                      (!!pending?.movement &&
+                        pending.movement !== tx.movement &&
+                        (tx.movement === "TRANSFER" || pending.movement === "TRANSFER"));
+
+                    return (
+                      <div
+                        key={tx.id}
+                        className={cn(
+                          "flex items-start gap-2.5 px-3 py-2.5 transition-colors",
+                          isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                          isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                          isPending && "bg-warning/10 border-l-2 border-l-warning",
+                          isHidden && "opacity-60 bg-muted/20",
+                          isSaved && !isMismatch && "bg-success/5",
+                        )}
+                      >
+                        {/* Movement icon — same convention as the read-only dashboard/history cards */}
+                        <div
+                          className={cn(
+                            "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                            movement === "INCOME" && "bg-success/15 text-success",
+                            movement === "EXPENSE" && "bg-destructive/15 text-destructive",
+                            movement === "TRANSFER" && "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {movement === "INCOME" ? (
+                            <Plus className="h-4 w-4" />
+                          ) : movement === "TRANSFER" ? (
+                            <ArrowRightLeft className="h-4 w-4" />
+                          ) : (
+                            <Minus className="h-4 w-4" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          {/* Description + account */}
+                          <p className={cn("truncate text-[13px] font-medium text-foreground", isHidden && "line-through")}>
+                            {cleanDescription}
+                          </p>
+                          <div className="mt-0.5 flex items-center gap-1.5">
+                            <span className="truncate text-[11px] text-muted-foreground">
+                              {accountName(tx.account_id) || "—"}
+                            </span>
+                            {isHidden && (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                <EyeOff className="h-2.5 w-2.5" />
+                                {t("imports.excluded", "Excluded")}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Movement + category */}
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            {isLocked ? (
+                              <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                                {getMovementLabel(movement)}
+                              </PillBadge>
+                            ) : (
+                              <Select value={movement} onValueChange={(v) => handleMovementChange(tx, v as MovementType)} disabled={isHidden}>
+                                <SelectTrigger className="h-auto w-auto shrink-0 gap-1 border-0 bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-50">
+                                  <SelectValue>
+                                    <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                                      {getMovementLabel(movement)}
+                                    </PillBadge>
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="INCOME">
+                                    <PillBadge variant="solid" tone="green" icon={<Plus className="h-3 w-3" />}>
+                                      {getMovementLabel("INCOME")}
+                                    </PillBadge>
+                                  </SelectItem>
+                                  <SelectItem value="EXPENSE">
+                                    <PillBadge variant="solid" tone="red" icon={<Minus className="h-3 w-3" />}>
+                                      {getMovementLabel("EXPENSE")}
+                                    </PillBadge>
+                                  </SelectItem>
+                                  <SelectItem value="TRANSFER">
+                                    <PillBadge variant="solid" tone="amber" icon={<ArrowRightLeft className="h-3 w-3" />}>
+                                      {getMovementLabel("TRANSFER")}
+                                    </PillBadge>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                            {isLocked ? (
+                              <PillBadge colorVar={getCategoryColor(category)} className="min-w-0 text-[13px]">
+                                <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                                <span className="truncate">{getCategoryLabel(category)}</span>
+                              </PillBadge>
+                            ) : (
+                              <Select value={category} onValueChange={(v) => handleCategoryChange(tx, v)} disabled={isHidden}>
+                                <SelectTrigger className="h-auto min-w-0 flex-1 gap-1 border-0 bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0 [&>svg]:opacity-40">
+                                  <SelectValue>
+                                    <PillBadge colorVar={getCategoryColor(category)} className="min-w-0 text-[13px]">
+                                      <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                                      <span className="truncate">{getCategoryLabel(category)}</span>
+                                    </PillBadge>
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableCategories.map((slug) => (
+                                    <SelectItem key={slug} value={slug}>
+                                      <div className="flex items-center gap-2">
+                                        <CategoryIcon iconName={getCategoryIcon(slug)} colorVar={getCategoryColor(slug)} size="sm" showBackground />
+                                        {getCategoryLabel(slug)}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+
+                          {/* Pending edit actions */}
+                          {isPending && (
+                            <div className="mt-1.5 flex items-center justify-end gap-1">
+                              {ruleWorthy && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1 rounded-full bg-primary/15 px-2.5 text-xs text-primary hover:bg-primary/25"
+                                  onClick={() => commitRow(tx, true)}
+                                  disabled={isSaving}
+                                >
+                                  <Sparkles className="h-4 w-4" /> Save + rule
+                                </Button>
+                              )}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 rounded-full bg-success/15 px-2.5 text-xs text-success hover:bg-success/25"
+                                onClick={() => commitRow(tx, false)}
+                                disabled={isSaving}
+                              >
+                                <Check className="h-3.5 w-3.5" /> Save
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                onClick={() => clearPendingFor(tx.id)}
+                                aria-label="Discard pending changes"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
+                          )}
+                        </div>
 
-                {/* Actions */}
-                {!isLocked && (
-                  <div className="flex items-center justify-end gap-1">
-                    {isPending ? (
-                      <>
-                        {ruleWorthy && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 gap-1 rounded-full bg-primary/15 px-2.5 text-xs text-primary hover:bg-primary/25"
-                            onClick={() => commitRow(tx, true)}
-                            disabled={isSaving}
-                          >
-                            <Sparkles className="h-4 w-4" /> Save + rule
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 gap-1 rounded-full bg-success/15 px-2.5 text-xs text-success hover:bg-success/25"
-                          onClick={() => commitRow(tx, false)}
-                          disabled={isSaving}
-                        >
-                          <Check className="h-3.5 w-3.5" /> Save
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => clearPendingFor(tx.id)}
-                          aria-label="Discard pending changes"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <AmountEditButton
-                          originalAmount={displayAmount}
-                          formatCurrency={formatCurrency}
-                          onChangeAmount={(v) => handleAmountChange(tx, v)}
-                          onApplySplit={(n) => handleSplit(tx, n)}
-                          disabled={isHidden}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          onClick={() => handleToggleHidden(tx)}
-                          aria-label={isHidden ? "Include in totals" : "Hide from totals"}
-                        >
-                          {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        {isEdited && originalSnapshot && (
-                          <RevertToOriginalButton
-                            original={originalSnapshot.values}
-                            fields={originalSnapshot.fields}
-                            current={{
-                              movement: tx.movement,
-                              category: tx.category,
-                              category_id: tx.category_id,
-                              amount: tx.amount,
-                              is_hidden: tx.is_hidden,
-                            }}
-                            formatCurrency={formatCurrency}
-                            getCategoryLabel={getCategoryLabel}
-                            onConfirm={() => {
-                              const payload: Record<string, unknown> = {
-                                ...originalSnapshot.values,
-                                __action: "revert",
-                              };
-                              if ("category" in originalSnapshot.values) {
-                                payload.category_source = "DEFAULT";
-                                payload.user_corrected = false;
-                              }
-                              saveMutation.mutate({
-                                id: tx.id,
-                                payload,
-                                before: {
-                                  movement: tx.movement,
-                                  category: tx.category,
-                                  category_id: tx.category_id,
-                                  amount: tx.amount,
-                                  is_hidden: tx.is_hidden,
-                                },
-                              });
-                            }}
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+                        {/* Amount + row actions */}
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          <div className="flex items-center gap-1">
+                            {isSaving ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                            ) : isSaved ? (
+                              <Check className="h-3 w-3 text-success" />
+                            ) : null}
+                            <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
+                              {displayAmount < 0 ? "-" : ""}
+                              {formatCurrency(Math.abs(displayAmount))}
+                            </span>
+                          </div>
+                          {!isLocked && !isPending && (
+                            <div className="flex items-center gap-0.5">
+                              <AmountEditButton
+                                originalAmount={displayAmount}
+                                formatCurrency={formatCurrency}
+                                onChangeAmount={(v) => handleAmountChange(tx, v)}
+                                onApplySplit={(n) => handleSplit(tx, n)}
+                                disabled={isHidden}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleToggleHidden(tx)}
+                                aria-label={isHidden ? "Include in totals" : "Hide from totals"}
+                              >
+                                {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </Button>
+                              {isEdited && originalSnapshot && (
+                                <RevertToOriginalButton
+                                  original={originalSnapshot.values}
+                                  fields={originalSnapshot.fields}
+                                  current={{
+                                    movement: tx.movement,
+                                    category: tx.category,
+                                    category_id: tx.category_id,
+                                    amount: tx.amount,
+                                    is_hidden: tx.is_hidden,
+                                  }}
+                                  formatCurrency={formatCurrency}
+                                  getCategoryLabel={getCategoryLabel}
+                                  onConfirm={() => {
+                                    const payload: Record<string, unknown> = {
+                                      ...originalSnapshot.values,
+                                      __action: "revert",
+                                    };
+                                    if ("category" in originalSnapshot.values) {
+                                      payload.category_source = "DEFAULT";
+                                      payload.user_corrected = false;
+                                    }
+                                    saveMutation.mutate({
+                                      id: tx.id,
+                                      payload,
+                                      before: {
+                                        movement: tx.movement,
+                                        category: tx.category,
+                                        category_id: tx.category_id,
+                                        amount: tx.amount,
+                                        is_hidden: tx.is_hidden,
+                                      },
+                                    });
+                                  }}
+                                />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}

@@ -139,6 +139,16 @@ export function useLocalization() {
     }
   }, [dateFnsLocale, shortDateFormat]);
 
+  // Format short weekday name (e.g. "Mon", "lun.") — used by day-grouped lists
+  const formatWeekdayShort = useCallback((date: string | Date) => {
+    try {
+      const dateObj = typeof date === 'string' ? parseISO(date) : date;
+      return format(dateObj, 'EEE', { locale: dateFnsLocale });
+    } catch {
+      return String(date);
+    }
+  }, [dateFnsLocale]);
+
   // Format day + short month name in user's order (e.g. "28 Feb" or "Feb 28")
   const formatDayMonth = useCallback((date: string | Date) => {
     try {
@@ -223,6 +233,7 @@ export function useLocalization() {
     formatDate,
     formatDateShort,
     formatDayMonth,
+    formatWeekdayShort,
     formatDateTime,
     formatRelativeDate,
     formatMonth,
@@ -230,7 +241,7 @@ export function useLocalization() {
   }), [
     locale, baseCurrency, effectivePattern, isLoading, isUpdating, updatePreferences,
     formatCurrency, formatCurrencyCompact, formatNumber, formatPercent,
-    formatDate, formatDateShort, formatDayMonth, formatDateTime,
+    formatDate, formatDateShort, formatDayMonth, formatWeekdayShort, formatDateTime,
     formatRelativeDate, formatMonth, formatMonthShort
   ]);
 }
