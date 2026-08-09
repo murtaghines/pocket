@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Plus,
@@ -15,6 +15,7 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -64,13 +65,23 @@ export function TransactionEditDrawer({
   const [category, setCategory] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [amount, setAmount] = useState(0);
+  const [description, setDescription] = useState("");
+
+  const savedCategoriesRef = useRef<Record<string, { slug: string; id: string | null }>>({});
 
   useEffect(() => {
     if (tx && open) {
-      setMovement((tx.movement || "EXPENSE") as MovementType);
-      setCategory(normalizeCategory(tx.category || "other_expense"));
+      const m = (tx.movement || "EXPENSE") as MovementType;
+      const cat = normalizeCategory(tx.category || "other_expense");
+      setMovement(m);
+      setCategory(cat);
       setCategoryId(tx.category_id);
       setAmount(tx.amount);
+      const cleaned = (tx.description_norm || tx.description)
+        .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+        .trim();
+      setDescription(cleaned);
+      savedCategoriesRef.current = { [m]: { slug: cat, id: tx.category_id } };
     }
   }, [tx?.id, open]);
 
@@ -83,13 +94,22 @@ export function TransactionEditDrawer({
   const availableCategories = getCategoriesForMovement(movement);
 
   const handleMovementChange = (newMovement: MovementType) => {
+    savedCategoriesRef.current[movement] = { slug: category, id: categoryId };
+
     setMovement(newMovement);
     const sign = newMovement === "EXPENSE" ? -1 : 1;
     setAmount(sign * Math.abs(amount));
-    const defaultCat = getCategoriesForMovement(newMovement)[0];
-    setCategory(defaultCat);
-    const cat = categories.find((c) => c.slug === defaultCat);
-    setCategoryId(cat?.id || null);
+
+    const saved = savedCategoriesRef.current[newMovement];
+    if (saved) {
+      setCategory(saved.slug);
+      setCategoryId(saved.id);
+    } else {
+      const defaultCat = getCategoriesForMovement(newMovement)[0];
+      setCategory(defaultCat);
+      const cat = categories.find((c) => c.slug === defaultCat);
+      setCategoryId(cat?.id || null);
+    }
   };
 
   const handleCategoryChange = (newSlug: string) => {
@@ -117,7 +137,8 @@ export function TransactionEditDrawer({
   const hasChanges =
     movement !== origMovement ||
     category !== origCategory ||
-    amount !== tx.amount;
+    amount !== tx.amount ||
+    description !== cleanDescription;
 
   const ruleWorthy =
     category !== origCategory ||
@@ -132,6 +153,7 @@ export function TransactionEditDrawer({
       edits.category_id = categoryId;
     }
     if (amount !== tx.amount) edits.amount = amount;
+    if (description !== cleanDescription) edits.description = description;
     return edits;
   };
 
@@ -201,7 +223,16 @@ export function TransactionEditDrawer({
           <div className="divide-y divide-border/60">
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-muted-foreground">{t("imports.description", "Description")}</span>
-              <span className="text-sm font-medium text-foreground truncate max-w-[60%] text-right">{cleanDescription}</span>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="h-auto w-[60%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0"
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.account", "Account")}</span>
+              <span className="text-sm text-foreground">{accountName || "—"}</span>
             </div>
 
             <div className="flex items-center justify-between py-3">
@@ -223,7 +254,7 @@ export function TransactionEditDrawer({
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-muted-foreground">{t("imports.category", "Category")}</span>
               <Select value={category} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 gap-1.5 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40">
+                <SelectTrigger className="h-auto w-auto max-w-[65%] border-0 bg-transparent p-0 gap-1 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40 [&>svg]:shrink-0">
                   <SelectValue>
                     <PillBadge colorVar={getColor(category)} className="text-[11px] py-0.5">
                       <CategoryIcon
@@ -239,24 +270,19 @@ export function TransactionEditDrawer({
                 <SelectContent>
                   {availableCategories.map((slug) => (
                     <SelectItem key={slug} value={slug}>
-                      <PillBadge colorVar={getColor(slug)} className="text-[11px] py-0.5">
+                      <div className="flex items-center gap-2">
                         <CategoryIcon
                           iconName={getIcon(slug)}
                           colorVar={getColor(slug)}
                           size="sm"
-                          showBackground={false}
+                          showBackground
                         />
-                        <span className="truncate">{getCategoryLabel(slug)}</span>
-                      </PillBadge>
+                        {getCategoryLabel(slug)}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.account", "Account")}</span>
-              <span className="text-sm text-foreground">{accountName || "—"}</span>
             </div>
           </div>
         </div>

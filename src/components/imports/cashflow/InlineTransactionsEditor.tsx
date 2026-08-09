@@ -111,6 +111,8 @@ export interface InlineTransactionsEditorProps {
   pendingByTx: Record<string, PendingEditShape>;
   setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
   pendingTxIds: Set<string>;
+  manualEntryOpen?: boolean;
+  onManualEntryOpenChange?: (open: boolean) => void;
 }
 
 export function InlineTransactionsEditor({
@@ -128,6 +130,8 @@ export function InlineTransactionsEditor({
   pendingByTx,
   setPendingByTx,
   pendingTxIds: _pendingTxIds,
+  manualEntryOpen: externalManualEntryOpen,
+  onManualEntryOpenChange,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -492,6 +496,10 @@ export function InlineTransactionsEditor({
     if (pending.amount !== undefined && pending.amount !== tx.amount) {
       payload.amount = pending.amount;
       before.amount = tx.amount;
+    }
+    if (pending.description !== undefined) {
+      payload.description_norm = pending.description;
+      before.description_norm = tx.description_norm;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -1238,6 +1246,7 @@ export function InlineTransactionsEditor({
                   const isEdited =
                     hasEditHistory &&
                     !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
+                  const originalSnapshot = isEdited ? snapshot : null;
                   const cleanDescription = (tx.description_norm || tx.description)
                     .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                     .trim();
@@ -1266,9 +1275,9 @@ export function InlineTransactionsEditor({
                       <div
                         className={cn(
                           "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-                          movement === "INCOME" && "bg-success/15 text-success",
-                          movement === "EXPENSE" && "bg-destructive/15 text-destructive",
-                          movement === "TRANSFER" && "bg-warning/15 text-warning",
+                          movement === "INCOME" && "bg-success text-white",
+                          movement === "EXPENSE" && "bg-destructive text-white",
+                          movement === "TRANSFER" && "bg-warning text-warning-foreground",
                         )}
                       >
                         {movement === "INCOME" ? (
@@ -1337,6 +1346,42 @@ export function InlineTransactionsEditor({
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
+                              {isEdited && originalSnapshot && (
+                                <RevertToOriginalButton
+                                  original={originalSnapshot.values}
+                                  fields={originalSnapshot.fields}
+                                  current={{
+                                    movement: tx.movement,
+                                    category: tx.category,
+                                    category_id: tx.category_id,
+                                    amount: tx.amount,
+                                    is_hidden: tx.is_hidden,
+                                  }}
+                                  formatCurrency={formatCurrency}
+                                  getCategoryLabel={getCategoryLabel}
+                                  onConfirm={() => {
+                                    const payload: Record<string, unknown> = {
+                                      ...originalSnapshot.values,
+                                      __action: "revert",
+                                    };
+                                    if ("category" in originalSnapshot.values) {
+                                      payload.category_source = "DEFAULT";
+                                      payload.user_corrected = false;
+                                    }
+                                    saveMutation.mutate({
+                                      id: tx.id,
+                                      payload,
+                                      before: {
+                                        movement: tx.movement,
+                                        category: tx.category,
+                                        category_id: tx.category_id,
+                                        amount: tx.amount,
+                                        is_hidden: tx.is_hidden,
+                                      },
+                                    });
+                                  }}
+                                />
+                              )}
                             </>
                           )}
                         </div>
@@ -1403,6 +1448,8 @@ export function InlineTransactionsEditor({
           importId={imports[0]?.id ?? null}
           isLocked={isLocked}
           summary={summary}
+          externalOpen={externalManualEntryOpen}
+          onExternalOpenChange={onManualEntryOpenChange}
           rightSlot={
             <button
               type="button"

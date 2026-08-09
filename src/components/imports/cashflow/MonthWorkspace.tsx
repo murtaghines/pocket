@@ -256,6 +256,8 @@ export function MonthWorkspace({
         pendingByTx={pendingByTx}
         setPendingByTx={setPendingByTx}
         pendingTxIds={pendingTxIds}
+        manualEntryOpen={manualEntryOpen}
+        onManualEntryOpenChange={setManualEntryOpen}
       />
     </div>
   );
