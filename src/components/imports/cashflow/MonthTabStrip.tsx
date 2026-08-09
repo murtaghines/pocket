@@ -12,6 +12,8 @@ export interface MonthTabStripProps {
   onLoadMore: () => void;
   onShowLess: () => void;
   canShowLess: boolean;
+  /** Actual transaction count for the active month (from the query, not imports metadata). */
+  activeTxCount?: number;
 }
 
 export function MonthTabStrip({
@@ -22,6 +24,7 @@ export function MonthTabStrip({
   onLoadMore,
   onShowLess,
   canShowLess,
+  activeTxCount: activeTxCountProp,
 }: MonthTabStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +36,8 @@ export function MonthTabStrip({
   const activeIdx = slots.findIndex((s) => s.key === activeKey);
   const activeSlot = slots[activeIdx];
   const activeImports = importsByMonth[activeKey] || [];
-  const activeTxCount = activeImports.reduce((s, i) => s + (i.transactions_count || 0), 0);
+  const importsTxCount = activeImports.reduce((s, i) => s + (i.transactions_count || 0), 0);
+  const activeTxCount = activeTxCountProp ?? importsTxCount;
 
   const goPrev = () => {
     if (activeIdx < slots.length - 1) onActivate(slots[activeIdx + 1].key);
@@ -44,9 +48,9 @@ export function MonthTabStrip({
   };
 
   return (
-    <div className="relative">
+    <>
       {/* Mobile: simple month navigator — sticky below the header */}
-      <div className="flex md:hidden items-center justify-between px-4 py-2.5 border-b border-border bg-card sticky top-12 z-20">
+      <div className="md:hidden sticky top-12 z-20 flex items-center justify-between px-4 py-2.5 border-b border-border bg-card">
         <Button
           variant="ghost"
           size="icon"
@@ -79,7 +83,7 @@ export function MonthTabStrip({
       </div>
 
       {/* Desktop: full Airtable-style tab strip */}
-      <div className="hidden md:flex items-stretch border-b border-border bg-primary/5">
+      <div className="hidden md:flex items-stretch border-b border-border bg-primary/5 relative">
         <div
           ref={scrollRef}
           className="flex-1 flex items-stretch overflow-x-auto scrollbar-none"
@@ -169,6 +173,6 @@ export function MonthTabStrip({
           </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 }

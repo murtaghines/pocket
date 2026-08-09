@@ -119,6 +119,27 @@ export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsV
 
   const activeSlot = monthSlots.find((s) => s.key === activeKey) ?? monthSlots[0];
 
+  const { data: activeTxCount } = useQuery({
+    queryKey: ["tx-count", activeKey, user?.id],
+    queryFn: async () => {
+      if (!user || !activeKey) return 0;
+      const [year, month] = activeKey.split("-").map(Number);
+      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+      const lastDay = new Date(year, month, 0).getDate();
+      const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+      const { count, error } = await supabase
+        .from("transactions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("domain", "CASHFLOW")
+        .gte("date", startDate)
+        .lte("date", endDate);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user && !!activeKey,
+  });
+
   // Account-select dialog state (when uploading from a tab)
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -235,6 +256,7 @@ export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsV
           setMonthsToShow((n) => Math.max(MIN_MONTHS, n - MONTHS_INCREMENT))
         }
         canShowLess={monthsToShow > MIN_MONTHS}
+        activeTxCount={activeTxCount ?? undefined}
       />
 
       {/* ============= Active month workspace ============= */}

@@ -26,10 +26,10 @@ export function MobileUploadFAB({ options }: MobileUploadFABProps) {
 
   return (
     <>
-      {/* Backdrop overlay — dims & blurs everything behind the FAB pills */}
+      {/* Backdrop overlay — frosted white blur behind the FAB pills */}
       <div
         className={cn(
-          "fixed inset-0 z-[29] bg-black/40 backdrop-blur-[2px] transition-opacity duration-200 md:hidden",
+          "fixed inset-0 z-[29] bg-white/70 backdrop-blur-[6px] transition-opacity duration-200 md:hidden",
           open ? "opacity-100" : "opacity-0 pointer-events-none",
         )}
         onPointerDown={() => setOpen(false)}
@@ -47,7 +47,7 @@ export function MobileUploadFAB({ options }: MobileUploadFABProps) {
               opt.onClick();
             }}
             className={cn(
-              "flex items-center gap-2.5 rounded-full bg-primary/10 pl-4 pr-5 py-2.5 shadow-lg text-[13px] font-medium text-foreground transition-all duration-200",
+              "flex items-center gap-2.5 rounded-full bg-white pl-4 pr-5 py-2.5 shadow-lg ring-1 ring-primary/15 text-[13px] font-medium text-foreground transition-all duration-200",
               open
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-3 pointer-events-none",
