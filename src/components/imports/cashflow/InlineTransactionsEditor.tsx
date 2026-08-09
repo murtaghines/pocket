@@ -1291,7 +1291,7 @@ export function InlineTransactionsEditor({
                           )}
                         </p>
                         <div className="mt-1 flex items-center gap-1.5">
-                          <PillBadge colorVar={getCategoryColor(category)} className="min-w-0 text-[13px]">
+                          <PillBadge colorVar={getCategoryColor(category)} className="min-w-0 text-[11px] py-0.5">
                             <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
                             <span className="truncate">{getCategoryLabel(category)}</span>
                           </PillBadge>
