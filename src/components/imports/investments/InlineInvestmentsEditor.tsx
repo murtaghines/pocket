@@ -678,16 +678,11 @@ export function InlineInvestmentsEditor({
                             </span>
                           )}
                         </div>
-                        <div className="mt-1.5 flex items-center gap-1.5">
-                          <PillBadge variant="solid" tone={meta.tone} icon={<TypeIcon className="h-3 w-3" />}>
-                            {meta.label}
-                          </PillBadge>
-                          {inv.asset_type && (
-                            <span className="truncate text-[11px] text-muted-foreground">
-                              {inv.asset_type}
-                            </span>
-                          )}
-                        </div>
+                        {inv.asset_type && (
+                          <span className="mt-1 truncate text-[11px] text-muted-foreground">
+                            {inv.asset_type}
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex shrink-0 flex-col items-end gap-1">
@@ -701,15 +696,26 @@ export function InlineInvestmentsEditor({
                             {formatCurrency(Math.abs(inv.amount))}
                           </span>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          onClick={() => setEditingInv(inv)}
-                          aria-label={t("imports.editInvestment", "Edit movement")}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex items-center gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleToggleHidden(inv)}
+                            aria-label={isHidden ? t("imports.includeInTotals", "Include in totals") : t("imports.hideFromTotals", "Hide from totals")}
+                          >
+                            {isHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => setEditingInv(inv)}
+                            aria-label={t("imports.editInvestment", "Edit movement")}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -727,10 +733,6 @@ export function InlineInvestmentsEditor({
           knownPlatforms={knownPlatforms}
           onSave={(inv, edits) => {
             commitRow(inv, edits);
-            setEditingInv(null);
-          }}
-          onToggleHidden={(inv) => {
-            handleToggleHidden(inv);
             setEditingInv(null);
           }}
         />

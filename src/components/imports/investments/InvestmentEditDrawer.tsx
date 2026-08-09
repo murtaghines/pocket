@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
   DrawerFooter,
   DrawerClose,
 } from "@/components/ui/drawer";
@@ -18,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PillBadge } from "@/components/ui/pill-badge";
 import { INVESTMENT_TYPES, ASSET_TYPES, getTypeMeta } from "./types";
 import type { Investment, PendingInvEdit } from "./types";
 
@@ -29,7 +25,6 @@ interface InvestmentEditDrawerProps {
   formatCurrency: (amount: number) => string;
   knownPlatforms: string[];
   onSave: (inv: Investment, edits: PendingInvEdit) => void;
-  onToggleHidden: (inv: Investment) => void;
 }
 
 export function InvestmentEditDrawer({
@@ -39,7 +34,6 @@ export function InvestmentEditDrawer({
   formatCurrency,
   knownPlatforms,
   onSave,
-  onToggleHidden,
 }: InvestmentEditDrawerProps) {
   const { t } = useTranslation("common");
 
@@ -88,90 +82,78 @@ export function InvestmentEditDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <DrawerHeader className="text-left">
-          <DrawerTitle>{t("imports.editInvestment", "Edit movement")}</DrawerTitle>
-        </DrawerHeader>
-
-        <div className="px-4 space-y-4 pb-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("imports.description", "Description")}
-            </label>
-            <Input
-              value={description}
-              disabled={inv.is_hidden}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+        <div className="px-4 pt-2 pb-1">
+          {/* Type selector as segmented toggle */}
+          <div className="flex gap-2 mb-4">
+            {INVESTMENT_TYPES.map((it) => {
+              const active = type === it.value;
+              const toneClass: Record<string, string> = {
+                green: "border-success bg-success/10 text-success",
+                red: "border-destructive bg-destructive/10 text-destructive",
+                amber: "border-warning bg-warning/10 text-warning",
+                neutral: "border-muted-foreground bg-muted text-muted-foreground",
+              };
+              return (
+                <button
+                  key={it.value}
+                  type="button"
+                  onClick={() => setType(it.value)}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
+                    active
+                      ? toneClass[it.tone] || "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <it.icon className="h-4 w-4" />
+                  {it.label}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="flex gap-3">
-            <div className="flex-1 space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("imports.date", "Date")}
-              </label>
+          {/* Form rows */}
+          <div className="divide-y divide-border/60">
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.description", "Description")}</span>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="h-auto w-[60%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0"
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.date", "Date")}</span>
               <Input
                 type="date"
                 value={date}
-                disabled={inv.is_hidden}
                 onChange={(e) => setDate(e.target.value)}
+                className="h-auto w-auto border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0 tabular-nums"
               />
             </div>
-            <div className="flex-1 space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("imports.amount", "Amount")}
-              </label>
+
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.amount", "Amount")}</span>
               <Input
                 type="number"
                 step="0.01"
                 value={amount}
-                disabled={inv.is_hidden}
                 onChange={(e) => {
                   const v = parseFloat(e.target.value);
                   if (!Number.isNaN(v)) setAmount(v);
                 }}
-                className="tabular-nums"
+                className="h-auto w-32 border-0 bg-transparent p-0 text-right text-sm font-semibold tabular-nums shadow-none focus-visible:ring-0"
               />
             </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("imports.type", "Type")}
-            </label>
-            <Select value={type} disabled={inv.is_hidden} onValueChange={setType}>
-              <SelectTrigger className="h-11">
-                <SelectValue>
-                  <div className="flex items-center gap-2">
-                    <TypeIcon className="h-4 w-4" />
-                    <PillBadge variant="solid" tone={meta.tone}>
-                      {meta.label}
-                    </PillBadge>
-                  </div>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {INVESTMENT_TYPES.map((it) => (
-                  <SelectItem key={it.value} value={it.value}>
-                    <div className="flex items-center gap-2">
-                      <it.icon className="h-4 w-4" />
-                      {it.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="flex-1 space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("imports.platform", "Platform")}
-              </label>
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.platform", "Platform")}</span>
               <Input
                 list="drawer-platforms"
                 value={platform}
-                disabled={inv.is_hidden}
                 onChange={(e) => setPlatform(e.target.value)}
+                placeholder="—"
+                className="h-auto w-[50%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0"
               />
               <datalist id="drawer-platforms">
                 {knownPlatforms.map((p) => (
@@ -179,17 +161,17 @@ export function InvestmentEditDrawer({
                 ))}
               </datalist>
             </div>
-            <div className="flex-1 space-y-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("imports.asset", "Asset")}
-              </label>
+
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.asset", "Asset")}</span>
               <Select
                 value={assetType || "__none__"}
-                disabled={inv.is_hidden}
                 onValueChange={(v) => setAssetType(v === "__none__" ? null : v)}
               >
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="—" />
+                <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 gap-1.5 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40">
+                  <SelectValue placeholder="—">
+                    <span className="text-sm font-medium">{assetType || "—"}</span>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">—</SelectItem>
@@ -202,25 +184,11 @@ export function InvestmentEditDrawer({
               </Select>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              onToggleHidden(inv);
-              onOpenChange(false);
-            }}
-            className="flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50"
-          >
-            {inv.is_hidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-            {inv.is_hidden
-              ? t("imports.includeInTotals", "Include in totals")
-              : t("imports.hideFromTotals", "Hide from totals")}
-          </button>
         </div>
 
         <DrawerFooter>
           <Button
-            disabled={!hasChanges || inv.is_hidden}
+            disabled={!hasChanges}
             onClick={() => {
               onSave(inv, buildEdits());
               onOpenChange(false);

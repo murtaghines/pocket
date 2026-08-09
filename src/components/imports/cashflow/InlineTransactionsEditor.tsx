@@ -1295,10 +1295,7 @@ export function InlineTransactionsEditor({
                             </span>
                           )}
                         </div>
-                        <div className="mt-1.5 flex items-center gap-1.5">
-                          <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
-                            {getMovementLabel(movement)}
-                          </PillBadge>
+                        <div className="mt-1 flex items-center gap-1.5">
                           <PillBadge colorVar={getCategoryColor(category)} className="min-w-0 text-[13px]">
                             <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
                             <span className="truncate">{getCategoryLabel(category)}</span>
@@ -1318,17 +1315,30 @@ export function InlineTransactionsEditor({
                             {formatCurrency(Math.abs(tx.amount))}
                           </span>
                         </div>
-                        {!isLocked && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                            onClick={() => setEditingTx(tx)}
-                            aria-label={t("imports.editTransaction", "Edit transaction")}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-0.5">
+                          {!isLocked && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleToggleHidden(tx)}
+                                aria-label={isHidden ? t("imports.includeInTotals", "Include in totals") : t("imports.hideFromTotals", "Hide from totals")}
+                              >
+                                {isHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                onClick={() => setEditingTx(tx)}
+                                aria-label={t("imports.editTransaction", "Edit transaction")}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -1350,10 +1360,6 @@ export function InlineTransactionsEditor({
           accountName={editingTx ? (accountName(editingTx.account_id) || null) : null}
           onSave={(tx, edits, withRule) => {
             commitRow(tx, withRule, edits);
-            setEditingTx(null);
-          }}
-          onToggleHidden={(tx) => {
-            handleToggleHidden(tx);
             setEditingTx(null);
           }}
         />

@@ -74,6 +74,7 @@
     "amount": "Monto",
     "type": "Tipo",
     "platform": "Plataforma",
+    "account": "Cuenta",
     "asset": "Activo",
     "description": "Descripción",
     "date": "Fecha",
