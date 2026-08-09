@@ -82,7 +82,17 @@
     "saveRule": "Save + rule",
     "cancel": "Cancel",
     "hideFromTotals": "Hide from totals",
-    "includeInTotals": "Include in totals"
+    "includeInTotals": "Include in totals",
+    "addManualEntry": "Add manual entry",
+    "addManualEntryDesc": "Record a transaction that isn't on a statement",
+    "addEntry": "Add entry",
+    "descriptionPlaceholder": "e.g. Cash lunch",
+    "selectAccount": "Select account",
+    "sharedExpense": "Shared expense",
+    "sharedExpenseDesc": "Someone else paid the full amount — only your share counts.",
+    "totalPaid": "Total paid",
+    "yourShare": "Your share (%)",
+    "yourAmount": "Your amount:"
   },
   "status": {
     "active": "Active",

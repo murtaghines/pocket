@@ -279,3 +279,4 @@ Pattern opacity: 10–40% max. Single fill color per tile. Always brand palette.
 7. Never tile the Asterisk mark in patterns
 8. Quicksand 700 → wordmark and hero headlines only
 9. Charts/sparklines → always use `hsl(var(--success))` / `hsl(var(--destructive))` — never raw CSS colors
+10. Popups, dialogs, drawers, and modals → always `bg-card` (white), never `bg-background` (gray)
