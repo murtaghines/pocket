@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -29,9 +29,11 @@ const MONTHS_INCREMENT = 1;
 interface InvestmentTabsViewProps {
   tab: DataTab;
   onTabChange: (t: DataTab) => void;
+  activeMonth: string | null;
+  onMonthChange: (key: string) => void;
 }
 
-export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps) {
+export function InvestmentTabsView({ tab, onTabChange, activeMonth, onMonthChange }: InvestmentTabsViewProps) {
   const { user } = useAuth();
   const { t } = useTranslation("common");
   const { formatMonth } = useLocalization();
@@ -106,10 +108,9 @@ export function InvestmentTabsView({ tab, onTabChange }: InvestmentTabsViewProps
     return g;
   }, [imports]);
 
-  const [activeKey, setActiveKey] = useState<string>(() => monthSlots[0]?.key ?? "");
-  useEffect(() => {
-    if (!activeKey && monthSlots[0]) setActiveKey(monthSlots[0].key);
-  }, [monthSlots, activeKey]);
+  const defaultMonth = monthSlots[0]?.key ?? "";
+  const activeKey = activeMonth && monthSlots.some((s) => s.key === activeMonth) ? activeMonth : defaultMonth;
+  const setActiveKey = onMonthChange;
 
   const activeSlot = monthSlots.find((s) => s.key === activeKey) ?? monthSlots[0];
   const isProcessingAny = useMemo(

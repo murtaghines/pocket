@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Upload, PenLine } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -25,9 +25,11 @@ import type { MovementType } from "./cashflow/types";
 interface BankStatementsTabsViewProps {
   tab: DataTab;
   onTabChange: (t: DataTab) => void;
+  activeMonth: string | null;
+  onMonthChange: (key: string) => void;
 }
 
-export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsViewProps) {
+export function BankStatementsTabsView({ tab, onTabChange, activeMonth, onMonthChange }: BankStatementsTabsViewProps) {
   const { user } = useAuth();
   const { t } = useTranslation("common");
   const { formatMonth, formatDate, formatCurrency } = useLocalization();
@@ -111,11 +113,9 @@ export function BankStatementsTabsView({ tab, onTabChange }: BankStatementsTabsV
     return g;
   }, [imports]);
 
-  // Active tab (default = latest month)
-  const [activeKey, setActiveKey] = useState<string>(() => monthSlots[0]?.key ?? "");
-  useEffect(() => {
-    if (!activeKey && monthSlots[0]) setActiveKey(monthSlots[0].key);
-  }, [monthSlots, activeKey]);
+  const defaultMonth = monthSlots[0]?.key ?? "";
+  const activeKey = activeMonth && monthSlots.some((s) => s.key === activeMonth) ? activeMonth : defaultMonth;
+  const setActiveKey = onMonthChange;
 
   const activeSlot = monthSlots.find((s) => s.key === activeKey) ?? monthSlots[0];
 

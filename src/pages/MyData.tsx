@@ -18,7 +18,18 @@ export default function MyData() {
 
   const tabParam = searchParams.get("tab");
   const tab: DataTab = tabParam === "investments" ? "investments" : "bank";
-  const setTab = (next: DataTab) => setSearchParams({ tab: next });
+
+  const monthParam = searchParams.get("month");
+
+  const setTab = (next: DataTab) => {
+    const params: Record<string, string> = { tab: next };
+    if (monthParam) params.month = monthParam;
+    setSearchParams(params);
+  };
+
+  const setMonth = (key: string) => {
+    setSearchParams({ tab, month: key });
+  };
 
   // Body class so portaled UI inherits the dashboard theme tokens
   useEffect(() => {
@@ -48,7 +59,7 @@ export default function MyData() {
           }, 2000);
         }
         const next = highlightSection === "investment" ? "investments" : "bank";
-        setSearchParams({ tab: next });
+        setSearchParams({ tab: next, month: highlightMonth });
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -61,9 +72,9 @@ export default function MyData() {
 
       <main className="w-full bg-card min-h-screen">
         {tab === "bank" ? (
-          <BankStatementsTabsView tab={tab} onTabChange={setTab} />
+          <BankStatementsTabsView tab={tab} onTabChange={setTab} activeMonth={monthParam} onMonthChange={setMonth} />
         ) : (
-          <InvestmentTabsView tab={tab} onTabChange={setTab} />
+          <InvestmentTabsView tab={tab} onTabChange={setTab} activeMonth={monthParam} onMonthChange={setMonth} />
         )}
       </main>
     </div>
