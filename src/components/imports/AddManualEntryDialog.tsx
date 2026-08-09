@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerFooter,
+  DrawerClose,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -28,12 +29,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
-import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
+import { PillBadge } from "@/components/ui/pill-badge";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useLocalization } from "@/hooks/useLocalization";
+import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 import {
@@ -49,7 +50,7 @@ type MovementType = Database["public"]["Enums"]["movement_type"];
 interface AddManualEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  monthKey: string; // YYYY-MM — date is constrained to this month
+  monthKey: string;
   monthLabel: string;
   onSubmit: (entry: {
     date: string;
@@ -68,6 +69,7 @@ export function AddManualEntryDialog({
   monthLabel,
   onSubmit,
 }: AddManualEntryDialogProps) {
+  const { t } = useTranslation("common");
   const { accounts } = useAccounts();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const { formatCurrency } = useLocalization();
@@ -85,15 +87,10 @@ export function AddManualEntryDialog({
   const [amountStr, setAmountStr] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Shared-expense split: e.g. your partner paid the full rent, but only your
-  // share should count as your expense. Off by default — pure convenience calculator,
-  // no schema change: we just save your share as the amount and note the split in the
-  // description, so it's self-documenting without a new column.
   const [isShared, setIsShared] = useState(false);
   const [totalAmountStr, setTotalAmountStr] = useState<string>("");
   const [sharePercentStr, setSharePercentStr] = useState<string>("50");
 
-  // Reset on open
   useEffect(() => {
     if (open) {
       setDate(firstDay);
@@ -108,7 +105,6 @@ export function AddManualEntryDialog({
     }
   }, [open]);
 
-  // Sync default category when movement changes
   useEffect(() => {
     const list =
       movement === "INCOME" ? INCOME_CATEGORIES :
@@ -131,8 +127,6 @@ export function AddManualEntryDialog({
   const sharePercent = parseNum(sharePercentStr);
   const directAmount = Math.abs(parseNum(amountStr));
 
-  // When splitting a shared expense, the amount actually saved is your share of the
-  // total someone else paid (or you paid but only part is "yours") — never the full total.
   const sharedAmount =
     !isNaN(totalAmount) && !isNaN(sharePercent)
       ? Math.round(Math.abs(totalAmount) * (sharePercent / 100) * 100) / 100
@@ -154,8 +148,6 @@ export function AddManualEntryDialog({
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // Self-documenting: the split shows up in the description itself (no schema change),
-      // so it's still visible later in the transaction list / audit history.
       const finalDescription = isShared
         ? `${description.trim()} (${sharePercent}% of ${formatCurrency(Math.abs(totalAmount))})`
         : description.trim();
@@ -173,142 +165,188 @@ export function AddManualEntryDialog({
     }
   };
 
-  const movementTone = (m: MovementType): PillTone =>
-    m === "INCOME" ? "green" : m === "TRANSFER" ? "amber" : "red";
-  const movementIcon = (m: MovementType) =>
-    m === "INCOME" ? <Plus className="w-3 h-3" /> :
-    m === "TRANSFER" ? <ArrowRightLeft className="w-3 h-3" /> :
-    <Minus className="w-3 h-3" />;
+  const activeClass: Record<string, string> = {
+    green: "border-success bg-success/10 text-success",
+    red: "border-destructive bg-destructive/10 text-destructive",
+    amber: "border-warning bg-warning/10 text-warning",
+  };
+
+  const circleClass: Record<string, string> = {
+    green: "bg-success text-white",
+    red: "bg-destructive text-white",
+    amber: "bg-warning text-warning-foreground",
+  };
+
+  const movementOptions: { value: MovementType; icon: typeof Plus; label: string; tone: string }[] = [
+    { value: "INCOME", icon: Plus, label: getMovementLabel("INCOME"), tone: "green" },
+    { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE"), tone: "red" },
+    { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER"), tone: "amber" },
+  ];
+
+  const amountColor =
+    !parsedAmount || isNaN(parsedAmount)
+      ? "text-muted-foreground"
+      : movement === "INCOME"
+        ? "text-success"
+        : movement === "TRANSFER"
+          ? "text-muted-foreground"
+          : "text-destructive";
+
+  const selectedAccount = accounts.find((a) => a.id === accountId);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="dashboard-theme bg-background text-foreground sm:max-w-[460px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <PlusCircle className="w-5 h-5 text-primary" />
-            Add manual entry · {monthLabel}
-          </DialogTitle>
-          <DialogDescription>
-            Record a transaction that isn't on a statement (e.g. cash).
-          </DialogDescription>
-        </DialogHeader>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
+        <DrawerTitle className="sr-only">
+          {t("imports.addManualEntry", "Add manual entry")} · {monthLabel}
+        </DrawerTitle>
+        <DrawerDescription className="sr-only">
+          {t("imports.addManualEntryDesc", "Record a transaction that isn't on a statement")}
+        </DrawerDescription>
 
-        <div className="space-y-3.5 py-1">
-          {/* Date */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
+        <div className="px-4 pt-2 pb-1">
+          {/* Movement toggle — same as TransactionEditDrawer */}
+          <div className="flex gap-2 mb-4">
+            {movementOptions.map((opt) => {
+              const Icon = opt.icon;
+              const active = movement === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setMovement(opt.value)}
                   className={cn(
-                    "w-full justify-start text-left font-normal h-9",
-                    !date && "text-muted-foreground"
+                    "flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? activeClass[opt.tone] || "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-muted/50",
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(new Date(date + "T00:00:00"), "PPP") : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={new Date(date + "T00:00:00")}
-                  onSelect={(d) => {
-                    if (d) {
-                      const y = d.getFullYear();
-                      const m = String(d.getMonth() + 1).padStart(2, "0");
-                      const dd = String(d.getDate()).padStart(2, "0");
-                      setDate(`${y}-${m}-${dd}`);
-                    }
-                  }}
-                  defaultMonth={new Date(firstDay + "T00:00:00")}
-                  disabled={(d) => {
-                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                    return iso < firstDay || iso > lastDay;
-                  }}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
+                  <span className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full",
+                    active
+                      ? circleClass[opt.tone]
+                      : "bg-muted text-muted-foreground",
+                  )}>
+                    <Icon className="h-3 w-3" />
+                  </span>
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Description */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">Description</Label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Cash lunch"
-              className="h-9"
-              maxLength={200}
-            />
-          </div>
+          {/* Form rows — divider style matching TransactionEditDrawer */}
+          <div className="divide-y divide-border/60">
+            {/* Date */}
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.date", "Date")}</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors"
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    {format(new Date(date + "T00:00:00"), "PPP")}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={new Date(date + "T00:00:00")}
+                    onSelect={(d) => {
+                      if (d) {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, "0");
+                        const dd = String(d.getDate()).padStart(2, "0");
+                        setDate(`${y}-${m}-${dd}`);
+                      }
+                    }}
+                    defaultMonth={new Date(firstDay + "T00:00:00")}
+                    disabled={(d) => {
+                      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                      return iso < firstDay || iso > lastDay;
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-          {/* Account */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">Account</Label>
-            <Select value={accountId} onValueChange={setAccountId}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Select an account" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Description */}
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.description", "Description")}</span>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t("imports.descriptionPlaceholder", "e.g. Cash lunch")}
+                className="h-auto w-[60%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                maxLength={200}
+              />
+            </div>
 
-          {/* Movement + Category */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Movement</Label>
-              <Select value={movement} onValueChange={(v) => setMovement(v as MovementType)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue>
-                    <PillBadge tone={movementTone(movement)} icon={movementIcon(movement)}>
-                      {getMovementLabel(movement)}
-                    </PillBadge>
+            {/* Account */}
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.account", "Account")}</span>
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 gap-1 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40">
+                  <SelectValue placeholder={t("imports.selectAccount", "Select account")}>
+                    <span className="text-sm font-medium">
+                      {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                    </span>
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="INCOME">
-                    <PillBadge tone="green" icon={<Plus className="w-3 h-3" />}>
-                      {getMovementLabel("INCOME")}
-                    </PillBadge>
-                  </SelectItem>
-                  <SelectItem value="EXPENSE">
-                    <PillBadge tone="red" icon={<Minus className="w-3 h-3" />}>
-                      {getMovementLabel("EXPENSE")}
-                    </PillBadge>
-                  </SelectItem>
-                  <SelectItem value="TRANSFER">
-                    <PillBadge tone="amber" icon={<ArrowRightLeft className="w-3 h-3" />}>
-                      {getMovementLabel("TRANSFER")}
-                    </PillBadge>
-                  </SelectItem>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {getAccountDisplayName(a)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Category</Label>
+            {/* Amount */}
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.amount", "Amount")}</span>
+              {isShared ? (
+                <span className={cn("text-sm font-semibold tabular-nums", amountColor)}>
+                  {!isNaN(sharedAmount) && sharedAmount > 0
+                    ? formatCurrency(sharedAmount)
+                    : "—"}
+                </span>
+              ) : (
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={amountStr}
+                  onChange={(e) => setAmountStr(e.target.value)}
+                  placeholder="0,00"
+                  className={cn(
+                    "h-auto w-[40%] border-0 bg-transparent p-0 text-right text-sm font-semibold tabular-nums shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50",
+                    amountColor,
+                  )}
+                />
+              )}
+            </div>
+
+            {/* Category */}
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.category", "Category")}</span>
               <Select value={categorySlug} onValueChange={setCategorySlug}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-auto w-auto max-w-[65%] border-0 bg-transparent p-0 gap-1 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40 [&>svg]:shrink-0">
                   <SelectValue>
-                    <div className="flex items-center gap-1.5">
+                    <PillBadge colorVar={getCategoryColor(categorySlug)} className="text-[11px] py-0.5">
                       <CategoryIcon
                         iconName={getCategoryIcon(categorySlug)}
                         colorVar={getCategoryColor(categorySlug)}
                         size="sm"
-                        showBackground={true}
+                        showBackground={false}
                       />
-                      <span>{getCategoryLabel(categorySlug)}</span>
-                    </div>
+                      <span className="truncate">{getCategoryLabel(categorySlug)}</span>
+                    </PillBadge>
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -319,7 +357,7 @@ export function AddManualEntryDialog({
                           iconName={getCategoryIcon(slug)}
                           colorVar={getCategoryColor(slug)}
                           size="sm"
-                          showBackground={true}
+                          showBackground
                         />
                         {getCategoryLabel(slug)}
                       </div>
@@ -330,87 +368,68 @@ export function AddManualEntryDialog({
             </div>
           </div>
 
-          {/* Amount */}
-          {!isShared && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
-                Amount {movement === "EXPENSE" ? "(will be saved as a negative value)" : ""}
-              </Label>
-              <Input
-                type="text"
-                inputMode="decimal"
-                value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value)}
-                placeholder="0,00"
-                className="h-9 text-right tabular-nums"
-              />
-            </div>
-          )}
-
           {/* Shared expense toggle */}
-          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+          <div className="mt-3 flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5">
             <div className="space-y-0.5 pr-3">
-              <Label className="text-xs font-medium">Shared expense</Label>
-              <p className="text-[11px] text-muted-foreground">
-                Someone else paid the full amount — only your share counts.
+              <span className="text-xs font-medium">{t("imports.sharedExpense", "Shared expense")}</span>
+              <p className="text-[11px] text-muted-foreground leading-tight">
+                {t("imports.sharedExpenseDesc", "Someone else paid the full amount — only your share counts.")}
               </p>
             </div>
             <Switch checked={isShared} onCheckedChange={setIsShared} />
           </div>
 
           {isShared && (
-            <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground">
-                    Total amount paid
-                  </Label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={totalAmountStr}
-                    onChange={(e) => setTotalAmountStr(e.target.value)}
-                    placeholder="0,00"
-                    className="h-9 text-right tabular-nums"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground">
-                    Your share (%)
-                  </Label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={sharePercentStr}
-                    onChange={(e) => setSharePercentStr(e.target.value)}
-                    placeholder="50"
-                    className="h-9 text-right tabular-nums"
-                  />
-                </div>
+            <div className="mt-2 space-y-2.5 rounded-lg border border-border/60 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {t("imports.totalPaid", "Total paid")}
+                </span>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={totalAmountStr}
+                  onChange={(e) => setTotalAmountStr(e.target.value)}
+                  placeholder="0,00"
+                  className="h-auto w-[40%] border-0 bg-transparent p-0 text-right text-sm font-medium tabular-nums shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {!isNaN(sharedAmount) && sharedAmount > 0
-                  ? <>You'll save this as <span className="font-semibold text-foreground">{formatCurrency(sharedAmount)}</span>.</>
-                  : "Enter the total and your share to see the amount."}
-              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {t("imports.yourShare", "Your share (%)")}
+                </span>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={sharePercentStr}
+                  onChange={(e) => setSharePercentStr(e.target.value)}
+                  placeholder="50"
+                  className="h-auto w-[30%] border-0 bg-transparent p-0 text-right text-sm font-medium tabular-nums shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                />
+              </div>
+              {!isNaN(sharedAmount) && sharedAmount > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {t("imports.yourAmount", "Your amount:")} <span className="font-semibold text-foreground tabular-nums">{formatCurrency(sharedAmount)}</span>
+                </p>
+              )}
             </div>
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
+        <DrawerFooter>
+          <Button onClick={handleSubmit} disabled={!canSubmit} className="gap-1.5">
             {submitting ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <PlusCircle className="w-4 h-4 mr-2" />
+              <PlusCircle className="w-4 h-4" />
             )}
-            Add entry
+            {t("imports.addEntry", "Add entry")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DrawerClose asChild>
+            <Button variant="outline">{t("imports.cancel", "Cancel")}</Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

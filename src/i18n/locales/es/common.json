@@ -82,7 +82,17 @@
     "saveRule": "Guardar + regla",
     "cancel": "Cancelar",
     "hideFromTotals": "Ocultar de totales",
-    "includeInTotals": "Incluir en totales"
+    "includeInTotals": "Incluir en totales",
+    "addManualEntry": "Agregar entrada manual",
+    "addManualEntryDesc": "Registrá una transacción que no está en un extracto",
+    "addEntry": "Agregar entrada",
+    "descriptionPlaceholder": "ej. Almuerzo en efectivo",
+    "selectAccount": "Seleccionar cuenta",
+    "sharedExpense": "Gasto compartido",
+    "sharedExpenseDesc": "Otra persona pagó el total — solo cuenta tu parte.",
+    "totalPaid": "Total pagado",
+    "yourShare": "Tu parte (%)",
+    "yourAmount": "Tu monto:"
   },
   "status": {
     "active": "Activo",
