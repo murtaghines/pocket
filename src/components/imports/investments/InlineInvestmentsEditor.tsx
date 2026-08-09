@@ -656,21 +656,29 @@ export function InlineInvestmentsEditor({
                     >
                       <div
                         className={cn(
-                          "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
                           TYPE_ICON_BG[meta.tone] ?? TYPE_ICON_BG.neutral,
                         )}
                       >
-                        <TypeIcon className="h-4 w-4" />
+                        <TypeIcon className="h-3.5 w-3.5" />
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className={cn("truncate text-[13px] font-medium text-foreground", isHidden && "line-through")}>
-                          {inv.description || "—"}
+                        <p className={cn("truncate text-[13px] text-foreground", isHidden && "line-through")}>
+                          <span className="font-medium">{inv.description || "—"}</span>
+                          {inv.platform && (
+                            <>
+                              <span className="text-muted-foreground/50 mx-1">&middot;</span>
+                              <span className="text-[12px] text-muted-foreground">{inv.platform}</span>
+                            </>
+                          )}
                         </p>
-                        <div className="mt-0.5 flex items-center gap-1.5">
-                          <span className="truncate text-[11px] text-muted-foreground">
-                            {inv.platform || "—"}
-                          </span>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          {inv.asset_type && (
+                            <span className="truncate text-[11px] text-muted-foreground">
+                              {inv.asset_type}
+                            </span>
+                          )}
                           {isHidden && (
                             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                               <EyeOff className="h-2.5 w-2.5" />
@@ -678,11 +686,6 @@ export function InlineInvestmentsEditor({
                             </span>
                           )}
                         </div>
-                        {inv.asset_type && (
-                          <span className="mt-1 truncate text-[11px] text-muted-foreground">
-                            {inv.asset_type}
-                          </span>
-                        )}
                       </div>
 
                       <div className="flex shrink-0 flex-col items-end gap-1">
