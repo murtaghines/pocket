@@ -11,6 +11,7 @@ import {
   X,
   Eye,
   EyeOff,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
 import type { Import } from "@/hooks/useImports";
 import { ProcessingPanel } from "./ProcessingPanel";
+import { InvestmentEditDrawer } from "./InvestmentEditDrawer";
 import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
 import { USER_TRACKED_FIELDS, buildOriginalSnapshot, isBackToOriginal } from "./helpers";
@@ -86,11 +88,13 @@ export function InlineInvestmentsEditor({
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { formatCurrency, formatDate, formatWeekdayShort } = useLocalization();
+  const { formatCurrency, formatDate, formatWeekday } = useLocalization();
   const { t } = useTranslation("common");
 
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
+  const [editingInv, setEditingInv] = useState<Investment | null>(null);
 
   const setPendingFor = (id: string, patch: PendingInvEdit) => {
     setPendingByInv((prev) => ({
@@ -220,9 +224,12 @@ export function InlineInvestmentsEditor({
     },
   });
 
-  const commitRow = async (inv: Investment) => {
-    const pending = pendingByInv[inv.id];
+  const commitRow = async (inv: Investment, overrideEdits?: PendingInvEdit) => {
+    const pending = overrideEdits || pendingByInv[inv.id];
     if (!pending) return;
+    if (overrideEdits) {
+      setPendingFor(inv.id, overrideEdits);
+    }
     setSavingIds((s) => new Set(s).add(inv.id));
     try {
       const before: Record<string, unknown> = {};
@@ -231,6 +238,8 @@ export function InlineInvestmentsEditor({
       }
       await saveMutation.mutateAsync({ id: inv.id, payload: pending, before });
       clearPendingFor(inv.id);
+      setSavedIds((s) => new Set(s).add(inv.id));
+      setTimeout(() => setSavedIds((s) => { const n = new Set(s); n.delete(inv.id); return n; }), 1500);
       toast({ title: "Saved", description: "Movement updated." });
     } catch (e: any) {
       toast({
@@ -606,25 +615,23 @@ export function InlineInvestmentsEditor({
           </Table>
         </div>
 
-        {/* Phones: day-grouped, editable cards (the table is unusable at this width) */}
+        {/* Phones: read-only day-grouped cards with pencil → drawer */}
         <div className="md:hidden">
           {dayGroups.map((group) => (
             <div key={group.dateKey}>
-              {/* Day header — date + weekday */}
-              <div className="flex items-baseline gap-1.5 border-y border-border/60 bg-muted/40 px-3 py-1.5">
+              <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">
                 <span className="text-[13px] font-semibold tabular-nums text-foreground">
                   {group.dateKey.slice(8, 10)}
                 </span>
-                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  {formatWeekdayShort(group.dateKey)}
+                <span className="text-[11px] font-medium text-muted-foreground capitalize">
+                  {formatWeekday(group.dateKey)}
                 </span>
               </div>
 
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-border/40">
                 {group.rows.map((inv) => {
-                  const pending = pendingByInv[inv.id];
-                  const isPending = !!pending;
                   const isSaving = savingIds.has(inv.id);
+                  const isSaved = savedIds.has(inv.id);
                   const isHidden = inv.is_hidden;
                   const invHistory = auditByInv[inv.id] || [];
                   const editEntries = invHistory.filter((h) => h.action !== "revert");
@@ -633,39 +640,20 @@ export function InlineInvestmentsEditor({
                   const isEdited =
                     hasEditHistory &&
                     !(snapshot && isBackToOriginal(inv as unknown as Record<string, unknown>, snapshot.values));
-                  const originalSnapshot = isEdited ? snapshot : null;
-                  const type = (pending?.type ?? inv.type) || "deposit";
+                  const type = inv.type || "deposit";
                   const meta = getTypeMeta(type);
                   const TypeIcon = meta.icon;
-                  const platform = pending?.platform ?? inv.platform ?? "";
-                  const asset = (pending?.asset_type ?? inv.asset_type) || "";
-                  const description = pending?.description ?? inv.description ?? "";
-                  const amount = pending?.amount ?? inv.amount;
-                  const date = pending?.date ?? inv.date;
-
-                  // Set a pending field, or clear it when the value is back to the original.
-                  const patch = (field: string, value: unknown, original: unknown) => {
-                    if (value === original) {
-                      const next = { ...(pendingByInv[inv.id] || {}) } as Record<string, unknown>;
-                      delete next[field];
-                      if (Object.keys(next).length === 0) clearPendingFor(inv.id);
-                      else setPendingByInv((p) => ({ ...p, [inv.id]: next }));
-                    } else {
-                      setPendingFor(inv.id, { [field]: value });
-                    }
-                  };
 
                   return (
                     <div
                       key={inv.id}
                       className={cn(
-                        "flex items-start gap-2.5 px-3 py-2.5 transition-colors",
-                        isEdited && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
-                        isPending && "bg-warning/10 border-l-2 border-l-warning",
+                        "flex items-start gap-2.5 px-3 py-2.5",
+                        isEdited && "bg-primary/[0.04] border-l-2 border-l-primary/60",
                         isHidden && "opacity-60 bg-muted/20",
+                        isSaved && "bg-success/5",
                       )}
                     >
-                      {/* Type icon */}
                       <div
                         className={cn(
                           "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
@@ -676,50 +664,13 @@ export function InlineInvestmentsEditor({
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        {/* Description + amount (edit in place) */}
-                        <div className="flex items-start justify-between gap-2">
-                          <Input
-                            value={description}
-                            disabled={isHidden}
-                            placeholder="Description"
-                            onChange={(e) => patch("description", e.target.value, inv.description || "")}
-                            className={cn(
-                              "h-6 min-w-0 flex-1 border-0 border-b border-transparent bg-transparent p-0 text-[13px] font-medium shadow-none focus-visible:border-b-primary focus-visible:ring-0 focus-visible:ring-offset-0",
-                              isHidden && "text-muted-foreground line-through",
-                            )}
-                          />
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={amount}
-                            disabled={isHidden}
-                            onChange={(e) => {
-                              const v = parseFloat(e.target.value);
-                              if (Number.isNaN(v)) return;
-                              patch("amount", v, inv.amount);
-                            }}
-                            className="h-6 w-24 shrink-0 border-0 border-b border-transparent bg-transparent p-0 text-right text-[13px] font-semibold tabular-nums shadow-none focus-visible:border-b-primary focus-visible:ring-0 focus-visible:ring-offset-0"
-                          />
-                        </div>
-
-                        {/* Date + platform + hidden badge */}
+                        <p className={cn("truncate text-[13px] font-medium text-foreground", isHidden && "line-through")}>
+                          {inv.description || "—"}
+                        </p>
                         <div className="mt-0.5 flex items-center gap-1.5">
-                          <Input
-                            type="date"
-                            value={date}
-                            disabled={isHidden}
-                            onChange={(e) => patch("date", e.target.value, inv.date)}
-                            className="h-5 w-auto shrink-0 border-0 border-b border-transparent bg-transparent p-0 text-[11px] text-muted-foreground shadow-none focus-visible:border-b-primary focus-visible:ring-0 focus-visible:ring-offset-0"
-                          />
-                          <span className="text-muted-foreground/40">·</span>
-                          <Input
-                            list={`platforms-mobile-${monthKey}`}
-                            value={platform}
-                            placeholder="Platform"
-                            disabled={isHidden}
-                            onChange={(e) => patch("platform", e.target.value, inv.platform || "")}
-                            className="h-5 min-w-0 flex-1 border-0 border-b border-transparent bg-transparent p-0 text-[11px] text-muted-foreground shadow-none focus-visible:border-b-primary focus-visible:ring-0 focus-visible:ring-offset-0"
-                          />
+                          <span className="truncate text-[11px] text-muted-foreground">
+                            {inv.platform || "—"}
+                          </span>
                           {isHidden && (
                             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                               <EyeOff className="h-2.5 w-2.5" />
@@ -727,107 +678,39 @@ export function InlineInvestmentsEditor({
                             </span>
                           )}
                         </div>
-
-                        {/* Type + asset */}
                         <div className="mt-1.5 flex items-center gap-1.5">
-                          <Select value={type} disabled={isHidden} onValueChange={(v) => patch("type", v, inv.type)}>
-                            <SelectTrigger className="h-auto w-auto shrink-0 gap-1 border-0 bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-50">
-                              <SelectValue>
-                                <PillBadge variant="solid" tone={meta.tone} icon={<TypeIcon className="h-3 w-3" />}>
-                                  {meta.label}
-                                </PillBadge>
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {INVESTMENT_TYPES.map((it) => (
-                                <SelectItem key={it.value} value={it.value}>
-                                  <PillBadge variant="solid" tone={it.tone} icon={<it.icon className="h-3 w-3" />}>
-                                    {it.label}
-                                  </PillBadge>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Select
-                            value={asset || "__none__"}
-                            disabled={isHidden}
-                            onValueChange={(v) => patch("asset_type", v === "__none__" ? null : v, inv.asset_type || null)}
-                          >
-                            <SelectTrigger className="h-auto min-w-0 flex-1 gap-1 border-0 bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0 [&>svg]:opacity-40">
-                              <SelectValue placeholder="—">
-                                <span className="truncate text-muted-foreground">{asset || "—"}</span>
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">—</SelectItem>
-                              {ASSET_TYPES.map((a) => (
-                                <SelectItem key={a} value={a}>
-                                  {a}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Pending edit actions */}
-                        {isPending && (
-                          <div className="mt-1.5 flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 gap-1 rounded-full bg-success/15 px-2.5 text-xs text-success hover:bg-success/25"
-                              onClick={() => commitRow(inv)}
-                              disabled={isSaving}
-                            >
-                              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() => clearPendingFor(inv.id)}
-                              disabled={isSaving}
-                              aria-label="Discard changes"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Row actions */}
-                      {!isPending && (
-                        <div className="flex shrink-0 items-center gap-0.5">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                            onClick={() => handleToggleHidden(inv)}
-                            aria-label={isHidden ? "Include in totals" : "Hide from totals"}
-                          >
-                            {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                          {originalSnapshot && (
-                            <RevertToOriginalButton
-                              original={originalSnapshot.values}
-                              fields={originalSnapshot.fields}
-                              current={inv as unknown as Record<string, unknown>}
-                              formatCurrency={formatCurrency}
-                              onConfirm={() => {
-                                const payload: Record<string, unknown> = {
-                                  ...originalSnapshot.values,
-                                  __action: "revert",
-                                };
-                                const before: Record<string, unknown> = {};
-                                for (const key of originalSnapshot.fields) {
-                                  before[key] = (inv as unknown as Record<string, unknown>)[key];
-                                }
-                                saveMutation.mutate({ id: inv.id, payload, before });
-                              }}
-                            />
+                          <PillBadge variant="solid" tone={meta.tone} icon={<TypeIcon className="h-3 w-3" />}>
+                            {meta.label}
+                          </PillBadge>
+                          {inv.asset_type && (
+                            <span className="truncate text-[11px] text-muted-foreground">
+                              {inv.asset_type}
+                            </span>
                           )}
                         </div>
-                      )}
+                      </div>
+
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <div className="flex items-center gap-1">
+                          {isSaving ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                          ) : isSaved ? (
+                            <Check className="h-3 w-3 text-success" />
+                          ) : null}
+                          <span className="text-[13px] font-semibold tabular-nums text-foreground">
+                            {formatCurrency(Math.abs(inv.amount))}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          onClick={() => setEditingInv(inv)}
+                          aria-label={t("imports.editInvestment", "Edit movement")}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
@@ -835,11 +718,22 @@ export function InlineInvestmentsEditor({
             </div>
           ))}
         </div>
-        <datalist id={`platforms-mobile-${monthKey}`}>
-          {knownPlatforms.map((p) => (
-            <option key={p} value={p} />
-          ))}
-        </datalist>
+
+        <InvestmentEditDrawer
+          inv={editingInv}
+          open={!!editingInv}
+          onOpenChange={(open) => { if (!open) setEditingInv(null); }}
+          formatCurrency={formatCurrency}
+          knownPlatforms={knownPlatforms}
+          onSave={(inv, edits) => {
+            commitRow(inv, edits);
+            setEditingInv(null);
+          }}
+          onToggleHidden={(inv) => {
+            handleToggleHidden(inv);
+            setEditingInv(null);
+          }}
+        />
         </>
       )}
     </div>

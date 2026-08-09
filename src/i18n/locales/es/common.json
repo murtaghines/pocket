@@ -66,7 +66,22 @@
     "uploadFile": "subir archivo"
   },
   "imports": {
-    "excluded": "Excluida"
+    "excluded": "Excluida",
+    "editTransaction": "Editar transacción",
+    "editInvestment": "Editar movimiento",
+    "movement": "Movimiento",
+    "category": "Categoría",
+    "amount": "Monto",
+    "type": "Tipo",
+    "platform": "Plataforma",
+    "asset": "Activo",
+    "description": "Descripción",
+    "date": "Fecha",
+    "save": "Guardar",
+    "saveRule": "Guardar + regla",
+    "cancel": "Cancelar",
+    "hideFromTotals": "Ocultar de totales",
+    "includeInTotals": "Incluir en totales"
   },
   "status": {
     "active": "Activo",
