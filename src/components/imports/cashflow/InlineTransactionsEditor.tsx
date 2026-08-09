@@ -1265,41 +1265,42 @@ export function InlineTransactionsEditor({
                     >
                       <div
                         className={cn(
-                          "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
                           movement === "INCOME" && "bg-success/15 text-success",
                           movement === "EXPENSE" && "bg-destructive/15 text-destructive",
-                          movement === "TRANSFER" && "bg-muted text-muted-foreground",
+                          movement === "TRANSFER" && "bg-warning/15 text-warning",
                         )}
                       >
                         {movement === "INCOME" ? (
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-3.5 w-3.5" />
                         ) : movement === "TRANSFER" ? (
-                          <ArrowRightLeft className="h-4 w-4" />
+                          <ArrowRightLeft className="h-3.5 w-3.5" />
                         ) : (
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-3.5 w-3.5" />
                         )}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className={cn("truncate text-[13px] font-medium text-foreground", isHidden && "line-through")}>
-                          {cleanDescription}
+                        <p className={cn("truncate text-[13px] text-foreground", isHidden && "line-through")}>
+                          <span className="font-medium">{cleanDescription}</span>
+                          {accountName(tx.account_id) && (
+                            <>
+                              <span className="text-muted-foreground/50 mx-1">&middot;</span>
+                              <span className="text-[12px] text-muted-foreground">{accountName(tx.account_id)}</span>
+                            </>
+                          )}
                         </p>
-                        <div className="mt-0.5 flex items-center gap-1.5">
-                          <span className="truncate text-[11px] text-muted-foreground">
-                            {accountName(tx.account_id) || "—"}
-                          </span>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <PillBadge colorVar={getCategoryColor(category)} className="min-w-0 text-[13px]">
+                            <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                            <span className="truncate">{getCategoryLabel(category)}</span>
+                          </PillBadge>
                           {isHidden && (
                             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                               <EyeOff className="h-2.5 w-2.5" />
                               {t("imports.excluded", "Excluded")}
                             </span>
                           )}
-                        </div>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          <PillBadge colorVar={getCategoryColor(category)} className="min-w-0 text-[13px]">
-                            <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
-                            <span className="truncate">{getCategoryLabel(category)}</span>
-                          </PillBadge>
                         </div>
                       </div>
 
