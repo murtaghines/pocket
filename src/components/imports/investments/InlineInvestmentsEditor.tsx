@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
@@ -46,6 +47,15 @@ import {
 } from "./types";
 import type { Investment, PendingInvEdit, PendingFileInfo, AuditEntry } from "./types";
 
+// Solid-fill background for the leading type icon on mobile cards — mirrors
+// the "movement badge = solid fill" convention used for bank statements.
+const TYPE_ICON_BG: Record<string, string> = {
+  green: "bg-success/15 text-success",
+  red: "bg-destructive/15 text-destructive",
+  amber: "bg-warning/15 text-warning",
+  neutral: "bg-muted text-muted-foreground",
+};
+
 export interface InlineInvestmentsEditorProps {
   monthKey: string;
   monthLabel: string;
@@ -76,7 +86,8 @@ export function InlineInvestmentsEditor({
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { formatCurrency, formatDate } = useLocalization();
+  const { formatCurrency, formatDate, formatWeekdayShort } = useLocalization();
+  const { t } = useTranslation("common");
 
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
@@ -121,6 +132,15 @@ export function InlineInvestmentsEditor({
   const displayedInvestments = filterUploadIds
     ? investments.filter((inv) => inv.upload_id != null && filterUploadIds.has(inv.upload_id))
     : investments;
+
+  // Consecutive rows sharing a date, for the mobile day-grouped card list.
+  // Rows already come sorted date-desc from the query, so a single pass suffices.
+  const dayGroups: { dateKey: string; rows: Investment[] }[] = [];
+  for (const inv of displayedInvestments) {
+    const last = dayGroups[dayGroups.length - 1];
+    if (last && last.dateKey === inv.date) last.rows.push(inv);
+    else dayGroups.push({ dateKey: inv.date, rows: [inv] });
+  }
 
   // Edit history for every investment in this month, grouped by row id (newest first).
   // Mirrors InlineTransactionsEditor's tx-audit query.
@@ -586,203 +606,234 @@ export function InlineInvestmentsEditor({
           </Table>
         </div>
 
-        {/* Phones: stacked, editable cards (the table is unusable at this width) */}
-        <div className="md:hidden divide-y divide-border/60">
-          {displayedInvestments.map((inv, idx) => {
-            const pending = pendingByInv[inv.id];
-            const isPending = !!pending;
-            const isSaving = savingIds.has(inv.id);
-            const isHidden = inv.is_hidden;
-            const invHistory = auditByInv[inv.id] || [];
-            const editEntries = invHistory.filter((h) => h.action !== "revert");
-            const hasEditHistory = editEntries.length > 0;
-            const snapshot = hasEditHistory ? buildOriginalSnapshot(invHistory) : null;
-            const isEdited =
-              hasEditHistory &&
-              !(snapshot && isBackToOriginal(inv as unknown as Record<string, unknown>, snapshot.values));
-            const originalSnapshot = isEdited ? snapshot : null;
-            const type = (pending?.type ?? inv.type) || "deposit";
-            const meta = getTypeMeta(type);
-            const TypeIcon = meta.icon;
-            const platform = pending?.platform ?? inv.platform ?? "";
-            const asset = (pending?.asset_type ?? inv.asset_type) || "";
-            const description = pending?.description ?? inv.description ?? "";
-            const amount = pending?.amount ?? inv.amount;
-            const date = pending?.date ?? inv.date;
-
-            // Set a pending field, or clear it when the value is back to the original.
-            const patch = (field: string, value: unknown, original: unknown) => {
-              if (value === original) {
-                const next = { ...(pendingByInv[inv.id] || {}) } as Record<string, unknown>;
-                delete next[field];
-                if (Object.keys(next).length === 0) clearPendingFor(inv.id);
-                else setPendingByInv((p) => ({ ...p, [inv.id]: next }));
-              } else {
-                setPendingFor(inv.id, { [field]: value });
-              }
-            };
-
-            return (
-              <div
-                key={inv.id}
-                className={cn(
-                  "flex flex-col gap-3 px-4 py-3.5 transition-colors",
-                  isEdited && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
-                  isPending && "bg-warning/10 border-l-2 border-l-warning",
-                  isHidden && "opacity-50 bg-muted/20",
-                )}
-              >
-                {/* Description */}
-                <div className="flex items-center gap-2">
-                  <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground/60">{idx + 1}</span>
-                  <Input
-                    value={description}
-                    disabled={isHidden}
-                    placeholder="Description"
-                    onChange={(e) => patch("description", e.target.value, inv.description || "")}
-                    className={cn("h-9 flex-1 text-sm font-medium", isHidden && "line-through")}
-                  />
-                </div>
-
-                {/* Field grid */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Date</span>
-                    <Input
-                      type="date"
-                      value={date}
-                      disabled={isHidden}
-                      onChange={(e) => patch("date", e.target.value, inv.date)}
-                      className="h-9 text-sm tabular-nums"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Amount</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={amount}
-                      disabled={isHidden}
-                      onChange={(e) => {
-                        const v = parseFloat(e.target.value);
-                        if (Number.isNaN(v)) return;
-                        patch("amount", v, inv.amount);
-                      }}
-                      className="h-9 text-sm text-right tabular-nums"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Platform</span>
-                    <Input
-                      list={`platforms-mobile-${monthKey}`}
-                      value={platform}
-                      disabled={isHidden}
-                      onChange={(e) => patch("platform", e.target.value, inv.platform || "")}
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Type</span>
-                    <Select value={type} disabled={isHidden} onValueChange={(v) => patch("type", v, inv.type)}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <span className="inline-flex items-center gap-1.5">
-                          <TypeIcon className="h-3 w-3" />
-                          <PillBadge tone={meta.tone}>{meta.label}</PillBadge>
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {INVESTMENT_TYPES.map((t) => (
-                          <SelectItem key={t.value} value={t.value}>
-                            {t.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-2 flex flex-col gap-1">
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Asset</span>
-                    <Select
-                      value={asset || "__none__"}
-                      disabled={isHidden}
-                      onValueChange={(v) => patch("asset_type", v === "__none__" ? null : v, inv.asset_type || null)}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="—">
-                          {asset || <span className="text-muted-foreground">—</span>}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">—</SelectItem>
-                        {ASSET_TYPES.map((a) => (
-                          <SelectItem key={a} value={a}>
-                            {a}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-1">
-                  {isPending ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-1.5 rounded-full bg-success/15 px-3 text-success hover:bg-success/25"
-                        onClick={() => commitRow(inv)}
-                        disabled={isSaving}
-                      >
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => clearPendingFor(inv.id)}
-                        disabled={isSaving}
-                        aria-label="Discard changes"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleToggleHidden(inv)}
-                        aria-label={isHidden ? "Include in totals" : "Hide from totals"}
-                      >
-                        {isHidden ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
-                      </Button>
-                      {originalSnapshot && (
-                        <RevertToOriginalButton
-                          original={originalSnapshot.values}
-                          fields={originalSnapshot.fields}
-                          current={inv as unknown as Record<string, unknown>}
-                          formatCurrency={formatCurrency}
-                          onConfirm={() => {
-                            const payload: Record<string, unknown> = {
-                              ...originalSnapshot.values,
-                              __action: "revert",
-                            };
-                            const before: Record<string, unknown> = {};
-                            for (const key of originalSnapshot.fields) {
-                              before[key] = (inv as unknown as Record<string, unknown>)[key];
-                            }
-                            saveMutation.mutate({ id: inv.id, payload, before });
-                          }}
-                        />
-                      )}
-                    </>
-                  )}
-                </div>
+        {/* Phones: day-grouped, editable cards (the table is unusable at this width) */}
+        <div className="md:hidden">
+          {dayGroups.map((group) => (
+            <div key={group.dateKey}>
+              {/* Day header — date + weekday */}
+              <div className="flex items-baseline gap-1.5 border-y border-border/60 bg-muted/40 px-3 py-1.5">
+                <span className="text-[13px] font-semibold tabular-nums text-foreground">
+                  {group.dateKey.slice(8, 10)}
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {formatWeekdayShort(group.dateKey)}
+                </span>
               </div>
-            );
-          })}
+
+              <div className="divide-y divide-border/60">
+                {group.rows.map((inv) => {
+                  const pending = pendingByInv[inv.id];
+                  const isPending = !!pending;
+                  const isSaving = savingIds.has(inv.id);
+                  const isHidden = inv.is_hidden;
+                  const invHistory = auditByInv[inv.id] || [];
+                  const editEntries = invHistory.filter((h) => h.action !== "revert");
+                  const hasEditHistory = editEntries.length > 0;
+                  const snapshot = hasEditHistory ? buildOriginalSnapshot(invHistory) : null;
+                  const isEdited =
+                    hasEditHistory &&
+                    !(snapshot && isBackToOriginal(inv as unknown as Record<string, unknown>, snapshot.values));
+                  const originalSnapshot = isEdited ? snapshot : null;
+                  const type = (pending?.type ?? inv.type) || "deposit";
+                  const meta = getTypeMeta(type);
+                  const TypeIcon = meta.icon;
+                  const platform = pending?.platform ?? inv.platform ?? "";
+                  const asset = (pending?.asset_type ?? inv.asset_type) || "";
+                  const description = pending?.description ?? inv.description ?? "";
+                  const amount = pending?.amount ?? inv.amount;
+                  const date = pending?.date ?? inv.date;
+
+                  // Set a pending field, or clear it when the value is back to the original.
+                  const patch = (field: string, value: unknown, original: unknown) => {
+                    if (value === original) {
+                      const next = { ...(pendingByInv[inv.id] || {}) } as Record<string, unknown>;
+                      delete next[field];
+                      if (Object.keys(next).length === 0) clearPendingFor(inv.id);
+                      else setPendingByInv((p) => ({ ...p, [inv.id]: next }));
+                    } else {
+                      setPendingFor(inv.id, { [field]: value });
+                    }
+                  };
+
+                  return (
+                    <div
+                      key={inv.id}
+                      className={cn(
+                        "flex items-start gap-2.5 px-3 py-2.5 transition-colors",
+                        isEdited && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                        isPending && "bg-warning/10 border-l-2 border-l-warning",
+                        isHidden && "opacity-60 bg-muted/20",
+                      )}
+                    >
+                      {/* Type icon */}
+                      <div
+                        className={cn(
+                          "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                          TYPE_ICON_BG[meta.tone] ?? TYPE_ICON_BG.neutral,
+                        )}
+                      >
+                        <TypeIcon className="h-4 w-4" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        {/* Description + amount (edit in place) */}
+                        <div className="flex items-start justify-between gap-2">
+                          <Input
+                            value={description}
+                            disabled={isHidden}
+                            placeholder="Description"
+                            onChange={(e) => patch("description", e.target.value, inv.description || "")}
+                            className={cn(
+                              "h-6 min-w-0 flex-1 border-0 border-b border-transparent bg-transparent p-0 text-[13px] font-medium shadow-none focus-visible:border-b-primary focus-visible:ring-0 focus-visible:ring-offset-0",
+                              isHidden && "text-muted-foreground line-through",
+                            )}
+                          />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={amount}
+                            disabled={isHidden}
+                            onChange={(e) => {
+                              const v = parseFloat(e.target.value);
+                              if (Number.isNaN(v)) return;
+                              patch("amount", v, inv.amount);
+                            }}
+                            className="h-6 w-24 shrink-0 border-0 border-b border-transparent bg-transparent p-0 text-right text-[13px] font-semibold tabular-nums shadow-none focus-visible:border-b-primary focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </div>
+
+                        {/* Date + platform + hidden badge */}
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          <Input
+                            type="date"
+                            value={date}
+                            disabled={isHidden}
+                            onChange={(e) => patch("date", e.target.value, inv.date)}
+                            className="h-5 w-auto shrink-0 border-0 border-b border-transparent bg-transparent p-0 text-[11px] text-muted-foreground shadow-none focus-visible:border-b-primary focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                          <span className="text-muted-foreground/40">·</span>
+                          <Input
+                            list={`platforms-mobile-${monthKey}`}
+                            value={platform}
+                            placeholder="Platform"
+                            disabled={isHidden}
+                            onChange={(e) => patch("platform", e.target.value, inv.platform || "")}
+                            className="h-5 min-w-0 flex-1 border-0 border-b border-transparent bg-transparent p-0 text-[11px] text-muted-foreground shadow-none focus-visible:border-b-primary focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                          {isHidden && (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                              <EyeOff className="h-2.5 w-2.5" />
+                              {t("imports.excluded", "Excluded")}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Type + asset */}
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <Select value={type} disabled={isHidden} onValueChange={(v) => patch("type", v, inv.type)}>
+                            <SelectTrigger className="h-auto w-auto shrink-0 gap-1 border-0 bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-50">
+                              <SelectValue>
+                                <PillBadge variant="solid" tone={meta.tone} icon={<TypeIcon className="h-3 w-3" />}>
+                                  {meta.label}
+                                </PillBadge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {INVESTMENT_TYPES.map((it) => (
+                                <SelectItem key={it.value} value={it.value}>
+                                  <PillBadge variant="solid" tone={it.tone} icon={<it.icon className="h-3 w-3" />}>
+                                    {it.label}
+                                  </PillBadge>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={asset || "__none__"}
+                            disabled={isHidden}
+                            onValueChange={(v) => patch("asset_type", v === "__none__" ? null : v, inv.asset_type || null)}
+                          >
+                            <SelectTrigger className="h-auto min-w-0 flex-1 gap-1 border-0 bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0 [&>svg]:opacity-40">
+                              <SelectValue placeholder="—">
+                                <span className="truncate text-muted-foreground">{asset || "—"}</span>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">—</SelectItem>
+                              {ASSET_TYPES.map((a) => (
+                                <SelectItem key={a} value={a}>
+                                  {a}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Pending edit actions */}
+                        {isPending && (
+                          <div className="mt-1.5 flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1 rounded-full bg-success/15 px-2.5 text-xs text-success hover:bg-success/25"
+                              onClick={() => commitRow(inv)}
+                              disabled={isSaving}
+                            >
+                              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => clearPendingFor(inv.id)}
+                              disabled={isSaving}
+                              aria-label="Discard changes"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Row actions */}
+                      {!isPending && (
+                        <div className="flex shrink-0 items-center gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleToggleHidden(inv)}
+                            aria-label={isHidden ? "Include in totals" : "Hide from totals"}
+                          >
+                            {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                          {originalSnapshot && (
+                            <RevertToOriginalButton
+                              original={originalSnapshot.values}
+                              fields={originalSnapshot.fields}
+                              current={inv as unknown as Record<string, unknown>}
+                              formatCurrency={formatCurrency}
+                              onConfirm={() => {
+                                const payload: Record<string, unknown> = {
+                                  ...originalSnapshot.values,
+                                  __action: "revert",
+                                };
+                                const before: Record<string, unknown> = {};
+                                for (const key of originalSnapshot.fields) {
+                                  before[key] = (inv as unknown as Record<string, unknown>)[key];
+                                }
+                                saveMutation.mutate({ id: inv.id, payload, before });
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
         <datalist id={`platforms-mobile-${monthKey}`}>
           {knownPlatforms.map((p) => (
