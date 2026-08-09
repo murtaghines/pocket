@@ -22,11 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PillBadge } from "@/components/ui/pill-badge";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { AmountEditButton } from "./AmountEditButton";
 import {
   getCategoriesForMovement,
-  getMovementTone,
 } from "./helpers";
 import {
   getCategoryLabel,
@@ -144,16 +144,22 @@ export function TransactionEditDrawer({
           ? "text-muted-foreground"
           : "text-destructive";
 
-  const toneClass: Record<string, string> = {
+  const activeClass: Record<string, string> = {
     green: "border-success bg-success/10 text-success",
     red: "border-destructive bg-destructive/10 text-destructive",
     amber: "border-warning bg-warning/10 text-warning",
   };
 
-  const movementOptions: { value: MovementType; icon: typeof Plus; label: string }[] = [
-    { value: "INCOME", icon: Plus, label: getMovementLabel("INCOME") },
-    { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE") },
-    { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER") },
+  const circleClass: Record<string, string> = {
+    green: "bg-success text-white",
+    red: "bg-destructive text-white",
+    amber: "bg-warning text-warning-foreground",
+  };
+
+  const movementOptions: { value: MovementType; icon: typeof Plus; label: string; tone: string }[] = [
+    { value: "INCOME", icon: Plus, label: getMovementLabel("INCOME"), tone: "green" },
+    { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE"), tone: "red" },
+    { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER"), tone: "amber" },
   ];
 
   return (
@@ -164,7 +170,6 @@ export function TransactionEditDrawer({
           <div className="flex gap-2 mb-4">
             {movementOptions.map((opt) => {
               const Icon = opt.icon;
-              const tone = getMovementTone(opt.value);
               const active = movement === opt.value;
               return (
                 <button
@@ -172,13 +177,20 @@ export function TransactionEditDrawer({
                   type="button"
                   onClick={() => handleMovementChange(opt.value)}
                   className={cn(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                     active
-                      ? toneClass[tone] || "border-primary bg-primary/10 text-primary"
+                      ? activeClass[opt.tone] || "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:bg-muted/50",
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <span className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full",
+                    active
+                      ? circleClass[opt.tone]
+                      : "bg-muted text-muted-foreground",
+                  )}>
+                    <Icon className="h-3 w-3" />
+                  </span>
                   {opt.label}
                 </button>
               );
@@ -213,29 +225,29 @@ export function TransactionEditDrawer({
               <Select value={category} onValueChange={handleCategoryChange}>
                 <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 gap-1.5 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40">
                   <SelectValue>
-                    <div className="flex items-center gap-2">
+                    <PillBadge colorVar={getColor(category)} className="text-[11px] py-0.5">
                       <CategoryIcon
                         iconName={getIcon(category)}
                         colorVar={getColor(category)}
                         size="sm"
-                        showBackground
+                        showBackground={false}
                       />
-                      <span className="text-sm font-medium">{getCategoryLabel(category)}</span>
-                    </div>
+                      <span className="truncate">{getCategoryLabel(category)}</span>
+                    </PillBadge>
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {availableCategories.map((slug) => (
                     <SelectItem key={slug} value={slug}>
-                      <div className="flex items-center gap-2">
+                      <PillBadge colorVar={getColor(slug)} className="text-[11px] py-0.5">
                         <CategoryIcon
                           iconName={getIcon(slug)}
                           colorVar={getColor(slug)}
                           size="sm"
-                          showBackground
+                          showBackground={false}
                         />
-                        {getCategoryLabel(slug)}
-                      </div>
+                        <span className="truncate">{getCategoryLabel(slug)}</span>
+                      </PillBadge>
                     </SelectItem>
                   ))}
                 </SelectContent>

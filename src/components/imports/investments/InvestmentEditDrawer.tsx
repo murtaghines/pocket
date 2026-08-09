@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { INVESTMENT_TYPES, ASSET_TYPES, getTypeMeta } from "./types";
 import type { Investment, PendingInvEdit } from "./types";
 
@@ -87,24 +88,38 @@ export function InvestmentEditDrawer({
           <div className="flex gap-2 mb-4">
             {INVESTMENT_TYPES.map((it) => {
               const active = type === it.value;
-              const toneClass: Record<string, string> = {
+              const activeClass: Record<string, string> = {
                 green: "border-success bg-success/10 text-success",
                 red: "border-destructive bg-destructive/10 text-destructive",
                 amber: "border-warning bg-warning/10 text-warning",
                 neutral: "border-muted-foreground bg-muted text-muted-foreground",
+              };
+              const circleClass: Record<string, string> = {
+                green: "bg-success text-white",
+                red: "bg-destructive text-white",
+                amber: "bg-warning text-warning-foreground",
+                neutral: "bg-muted-foreground text-white",
               };
               return (
                 <button
                   key={it.value}
                   type="button"
                   onClick={() => setType(it.value)}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                     active
-                      ? toneClass[it.tone] || "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:bg-muted/50"
-                  }`}
+                      ? activeClass[it.tone] || "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-muted/50",
+                  )}
                 >
-                  <it.icon className="h-4 w-4" />
+                  <span className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full",
+                    active
+                      ? circleClass[it.tone] || "bg-primary text-white"
+                      : "bg-muted text-muted-foreground",
+                  )}>
+                    <it.icon className="h-3 w-3" />
+                  </span>
                   {it.label}
                 </button>
               );
