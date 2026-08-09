@@ -113,6 +113,7 @@ export interface InlineTransactionsEditorProps {
   pendingTxIds: Set<string>;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
+  defaultMovement?: MovementType;
 }
 
 export function InlineTransactionsEditor({
@@ -132,6 +133,7 @@ export function InlineTransactionsEditor({
   pendingTxIds: _pendingTxIds,
   manualEntryOpen: externalManualEntryOpen,
   onManualEntryOpenChange,
+  defaultMovement,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1450,6 +1452,7 @@ export function InlineTransactionsEditor({
           summary={summary}
           externalOpen={externalManualEntryOpen}
           onExternalOpenChange={onManualEntryOpenChange}
+          defaultMovement={defaultMovement}
           rightSlot={
             <button
               type="button"

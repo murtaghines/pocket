@@ -26,6 +26,7 @@ export interface ManualEntryFooterProps {
   rightSlot?: React.ReactNode;
   externalOpen?: boolean;
   onExternalOpenChange?: (open: boolean) => void;
+  defaultMovement?: MovementType;
 }
 
 export function ManualEntryFooter({
@@ -37,6 +38,7 @@ export function ManualEntryFooter({
   rightSlot,
   externalOpen,
   onExternalOpenChange,
+  defaultMovement,
 }: ManualEntryFooterProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -215,6 +217,7 @@ export function ManualEntryFooter({
         onOpenChange={setOpen}
         monthKey={monthKey}
         monthLabel={monthLabel}
+        defaultMovement={defaultMovement}
         onSubmit={handleSubmit}
       />
     </>

@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Upload, PenLine } from "lucide-react";
+import { Loader2, Upload, Plus, Minus, ArrowRightLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { uploadFileRejection } from "@/lib/fileExtract";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,7 @@ export function BankStatementsTabsView({ tab, onTabChange, activeMonth, onMonthC
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [defaultMovement, setDefaultMovement] = useState<MovementType>("EXPENSE");
 
   // Pending (unsaved) edits live in the parent so they survive when the
   // user switches to another month tab or navigates the rest of the app.
@@ -281,6 +282,7 @@ export function BankStatementsTabsView({ tab, onTabChange, activeMonth, onMonthC
           pendingTxIds={pendingTxIds}
           manualEntryOpen={manualEntryOpen}
           onManualEntryOpenChange={setManualEntryOpen}
+          defaultMovement={defaultMovement}
         />
       )}
 
@@ -293,9 +295,19 @@ export function BankStatementsTabsView({ tab, onTabChange, activeMonth, onMonthC
             onClick: () => globalFileInputRef.current?.click(),
           },
           {
-            label: t("fab.manualEntry", "manual entry"),
-            icon: <PenLine className="w-4 h-4 text-primary" />,
-            onClick: () => setManualEntryOpen(true),
+            label: t("fab.addTransfer", "add transfer"),
+            icon: <ArrowRightLeft className="w-4 h-4 text-warning" />,
+            onClick: () => { setDefaultMovement("TRANSFER"); setManualEntryOpen(true); },
+          },
+          {
+            label: t("fab.addIncome", "add income"),
+            icon: <Plus className="w-4 h-4 text-success" />,
+            onClick: () => { setDefaultMovement("INCOME"); setManualEntryOpen(true); },
+          },
+          {
+            label: t("fab.addExpense", "add expense"),
+            icon: <Minus className="w-4 h-4 text-destructive" />,
+            onClick: () => { setDefaultMovement("EXPENSE"); setManualEntryOpen(true); },
           },
         ]}
       />

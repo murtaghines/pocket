@@ -29,11 +29,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { PillBadge } from "@/components/ui/pill-badge";
 import { useAccounts } from "@/hooks/useAccounts";
-import { useLocalization } from "@/hooks/useLocalization";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
@@ -47,11 +45,23 @@ import {
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
+function getSmartDefaultDate(monthKey: string): string {
+  const [year, monthNum] = monthKey.split("-").map(Number);
+  const now = new Date();
+  const isCurrentMonth = now.getFullYear() === year && now.getMonth() + 1 === monthNum;
+  if (isCurrentMonth) {
+    return `${year}-${String(monthNum).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }
+  const lastDay = new Date(year, monthNum, 0).getDate();
+  return `${year}-${String(monthNum).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+}
+
 interface AddManualEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   monthKey: string;
   monthLabel: string;
+  defaultMovement?: MovementType;
   onSubmit: (entry: {
     date: string;
     description: string;
@@ -67,41 +77,39 @@ export function AddManualEntryDialog({
   onOpenChange,
   monthKey,
   monthLabel,
+  defaultMovement,
   onSubmit,
 }: AddManualEntryDialogProps) {
   const { t } = useTranslation("common");
   const { accounts } = useAccounts();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
-  const { formatCurrency } = useLocalization();
 
   const [year, monthNum] = monthKey.split("-").map(Number);
   const firstDay = `${year}-${String(monthNum).padStart(2, "0")}-01`;
   const lastDayNum = new Date(year, monthNum, 0).getDate();
   const lastDay = `${year}-${String(monthNum).padStart(2, "0")}-${String(lastDayNum).padStart(2, "0")}`;
 
-  const [date, setDate] = useState<string>(firstDay);
+  const [date, setDate] = useState<string>(() => getSmartDefaultDate(monthKey));
   const [description, setDescription] = useState<string>("");
   const [accountId, setAccountId] = useState<string>("");
-  const [movement, setMovement] = useState<MovementType>("EXPENSE");
+  const [movement, setMovement] = useState<MovementType>(defaultMovement || "EXPENSE");
   const [categorySlug, setCategorySlug] = useState<string>(EXPENSE_CATEGORIES[0]);
   const [amountStr, setAmountStr] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
-  const [isShared, setIsShared] = useState(false);
-  const [totalAmountStr, setTotalAmountStr] = useState<string>("");
-  const [sharePercentStr, setSharePercentStr] = useState<string>("50");
-
   useEffect(() => {
     if (open) {
-      setDate(firstDay);
+      setDate(getSmartDefaultDate(monthKey));
       setDescription("");
       setAccountId(accounts[0]?.id || "");
-      setMovement("EXPENSE");
-      setCategorySlug(EXPENSE_CATEGORIES[0]);
+      const m = defaultMovement || "EXPENSE";
+      setMovement(m);
+      const list =
+        m === "INCOME" ? INCOME_CATEGORIES :
+        m === "TRANSFER" ? TRANSFER_CATEGORIES :
+        EXPENSE_CATEGORIES;
+      setCategorySlug(list[0]);
       setAmountStr("");
-      setIsShared(false);
-      setTotalAmountStr("");
-      setSharePercentStr("50");
     }
   }, [open]);
 
@@ -123,16 +131,7 @@ export function AddManualEntryDialog({
     return isNaN(n) ? NaN : n;
   };
 
-  const totalAmount = parseNum(totalAmountStr);
-  const sharePercent = parseNum(sharePercentStr);
-  const directAmount = Math.abs(parseNum(amountStr));
-
-  const sharedAmount =
-    !isNaN(totalAmount) && !isNaN(sharePercent)
-      ? Math.round(Math.abs(totalAmount) * (sharePercent / 100) * 100) / 100
-      : NaN;
-
-  const parsedAmount = isShared ? sharedAmount : directAmount;
+  const parsedAmount = Math.abs(parseNum(amountStr));
 
   const dateValid = date >= firstDay && date <= lastDay;
   const canSubmit =
@@ -140,7 +139,6 @@ export function AddManualEntryDialog({
     description.trim().length > 0 &&
     !isNaN(parsedAmount) &&
     parsedAmount > 0 &&
-    (!isShared || (sharePercent > 0 && sharePercent <= 100)) &&
     dateValid &&
     !submitting;
 
@@ -148,13 +146,9 @@ export function AddManualEntryDialog({
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      const finalDescription = isShared
-        ? `${description.trim()} (${sharePercent}% of ${formatCurrency(Math.abs(totalAmount))})`
-        : description.trim();
-
       await onSubmit({
         date,
-        description: finalDescription,
+        description: description.trim(),
         accountId,
         movement,
         categorySlug,
@@ -205,7 +199,7 @@ export function AddManualEntryDialog({
         </DrawerDescription>
 
         <div className="px-4 pt-2 pb-1">
-          {/* Movement toggle — same as TransactionEditDrawer */}
+          {/* Movement toggle */}
           <div className="flex gap-2 mb-4">
             {movementOptions.map((opt) => {
               const Icon = opt.icon;
@@ -236,7 +230,7 @@ export function AddManualEntryDialog({
             })}
           </div>
 
-          {/* Form rows — divider style matching TransactionEditDrawer */}
+          {/* Form rows */}
           <div className="divide-y divide-border/60">
             {/* Date */}
             <div className="flex items-center justify-between py-3">
@@ -311,13 +305,10 @@ export function AddManualEntryDialog({
             {/* Amount */}
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-muted-foreground">{t("imports.amount", "Amount")}</span>
-              {isShared ? (
-                <span className={cn("text-sm font-semibold tabular-nums", amountColor)}>
-                  {!isNaN(sharedAmount) && sharedAmount > 0
-                    ? formatCurrency(sharedAmount)
-                    : "—"}
-                </span>
-              ) : (
+              <div className="flex items-center gap-0.5">
+                {movement === "EXPENSE" && (
+                  <span className={cn("text-sm font-semibold", amountColor)}>−</span>
+                )}
                 <Input
                   type="text"
                   inputMode="decimal"
@@ -325,20 +316,20 @@ export function AddManualEntryDialog({
                   onChange={(e) => setAmountStr(e.target.value)}
                   placeholder="0,00"
                   className={cn(
-                    "h-auto w-[40%] border-0 bg-transparent p-0 text-right text-sm font-semibold tabular-nums shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50",
+                    "h-auto w-28 border-0 bg-transparent p-0 text-right text-sm font-semibold tabular-nums shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50",
                     amountColor,
                   )}
                 />
-              )}
+              </div>
             </div>
 
             {/* Category */}
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-muted-foreground">{t("imports.category", "Category")}</span>
               <Select value={categorySlug} onValueChange={setCategorySlug}>
-                <SelectTrigger className="h-auto w-auto max-w-[65%] border-0 bg-transparent p-0 gap-1 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40 [&>svg]:shrink-0">
+                <SelectTrigger className="h-auto w-auto max-w-[65%] border-0 bg-transparent p-0 gap-1 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40 [&>svg]:shrink-0 overflow-visible">
                   <SelectValue>
-                    <PillBadge colorVar={getCategoryColor(categorySlug)} className="text-[11px] py-0.5">
+                    <PillBadge colorVar={getCategoryColor(categorySlug)} className="text-[11px] py-0.5 overflow-visible">
                       <CategoryIcon
                         iconName={getCategoryIcon(categorySlug)}
                         colorVar={getCategoryColor(categorySlug)}
@@ -367,53 +358,6 @@ export function AddManualEntryDialog({
               </Select>
             </div>
           </div>
-
-          {/* Shared expense toggle */}
-          <div className="mt-3 flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5">
-            <div className="space-y-0.5 pr-3">
-              <span className="text-xs font-medium">{t("imports.sharedExpense", "Shared expense")}</span>
-              <p className="text-[11px] text-muted-foreground leading-tight">
-                {t("imports.sharedExpenseDesc", "Someone else paid the full amount — only your share counts.")}
-              </p>
-            </div>
-            <Switch checked={isShared} onCheckedChange={setIsShared} />
-          </div>
-
-          {isShared && (
-            <div className="mt-2 space-y-2.5 rounded-lg border border-border/60 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  {t("imports.totalPaid", "Total paid")}
-                </span>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={totalAmountStr}
-                  onChange={(e) => setTotalAmountStr(e.target.value)}
-                  placeholder="0,00"
-                  className="h-auto w-[40%] border-0 bg-transparent p-0 text-right text-sm font-medium tabular-nums shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  {t("imports.yourShare", "Your share (%)")}
-                </span>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={sharePercentStr}
-                  onChange={(e) => setSharePercentStr(e.target.value)}
-                  placeholder="50"
-                  className="h-auto w-[30%] border-0 bg-transparent p-0 text-right text-sm font-medium tabular-nums shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
-                />
-              </div>
-              {!isNaN(sharedAmount) && sharedAmount > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {t("imports.yourAmount", "Your amount:")} <span className="font-semibold text-foreground tabular-nums">{formatCurrency(sharedAmount)}</span>
-                </p>
-              )}
-            </div>
-          )}
         </div>
 
         <DrawerFooter>
