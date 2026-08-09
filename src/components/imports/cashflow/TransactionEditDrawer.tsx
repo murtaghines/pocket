@@ -254,7 +254,7 @@ export function TransactionEditDrawer({
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-muted-foreground">{t("imports.category", "Category")}</span>
               <Select value={category} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="h-auto w-auto max-w-[65%] border-0 bg-transparent p-0 gap-1 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40 [&>svg]:shrink-0">
+                <SelectTrigger className="h-auto w-auto max-w-[65%] border-0 bg-transparent p-0 gap-1 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40 [&>svg]:shrink-0 overflow-visible">
                   <SelectValue>
                     <PillBadge colorVar={getColor(category)} className="text-[11px] py-0.5">
                       <CategoryIcon

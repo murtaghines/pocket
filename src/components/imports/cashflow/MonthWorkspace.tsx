@@ -9,7 +9,7 @@ import { getAccountDisplayName } from "@/lib/accountColors";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { InlineTransactionsEditor } from "./InlineTransactionsEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
-import type { PendingEditShape, PendingFileInfo } from "./types";
+import type { PendingEditShape, PendingFileInfo, MovementType } from "./types";
 
 export interface MonthWorkspaceProps {
   monthKey: string;
@@ -28,6 +28,7 @@ export interface MonthWorkspaceProps {
   pendingTxIds: Set<string>;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
+  defaultMovement?: MovementType;
 }
 
 export function MonthWorkspace({
@@ -47,6 +48,7 @@ export function MonthWorkspace({
   pendingTxIds,
   manualEntryOpen: externalManualEntryOpen,
   onManualEntryOpenChange,
+  defaultMovement,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -187,6 +189,7 @@ export function MonthWorkspace({
           summary={{ total: 0, income: 0, expenses: 0, transfers: 0 }}
           externalOpen={manualEntryOpen}
           onExternalOpenChange={setManualEntryOpen}
+          defaultMovement={defaultMovement}
         />
       </div>
     );
@@ -258,6 +261,7 @@ export function MonthWorkspace({
         pendingTxIds={pendingTxIds}
         manualEntryOpen={manualEntryOpen}
         onManualEntryOpenChange={setManualEntryOpen}
+        defaultMovement={defaultMovement}
       />
     </div>
   );

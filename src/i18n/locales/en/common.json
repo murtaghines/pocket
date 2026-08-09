@@ -63,7 +63,10 @@
   },
   "fab": {
     "manualEntry": "manual entry",
-    "uploadFile": "upload file"
+    "uploadFile": "upload file",
+    "addExpense": "add expense",
+    "addIncome": "add income",
+    "addTransfer": "add transfer"
   },
   "imports": {
     "excluded": "Excluded",
