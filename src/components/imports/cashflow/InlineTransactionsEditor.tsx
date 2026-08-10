@@ -778,8 +778,9 @@ export function InlineTransactionsEditor({
       <div className="bg-card py-12 px-6 text-center">
         <FileSpreadsheet className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
         <p className="text-sm text-muted-foreground">
-          File uploaded but no transactions detected yet. They will appear here
-          once processing finishes.
+          {imports.length > 0
+            ? "File uploaded but no transactions detected yet. They will appear here once processing finishes."
+            : "No transactions yet. Upload a file or add entries manually."}
         </p>
       </div>
     );

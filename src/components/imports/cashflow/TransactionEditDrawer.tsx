@@ -1,19 +1,15 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {
   Plus,
   Minus,
   ArrowRightLeft,
   Sparkles,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerFooter,
-  DrawerClose,
-} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,7 +21,6 @@ import {
 } from "@/components/ui/select";
 import { PillBadge } from "@/components/ui/pill-badge";
 import { CategoryIcon } from "@/components/ui/category-icon";
-import { AmountEditButton } from "./AmountEditButton";
 import {
   getCategoriesForMovement,
 } from "./helpers";
@@ -65,6 +60,7 @@ export function TransactionEditDrawer({
   const [category, setCategory] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [amount, setAmount] = useState(0);
+  const [amountStr, setAmountStr] = useState("");
   const [description, setDescription] = useState("");
 
   const savedCategoriesRef = useRef<Record<string, { slug: string; id: string | null }>>({});
@@ -77,6 +73,7 @@ export function TransactionEditDrawer({
       setCategory(cat);
       setCategoryId(tx.category_id);
       setAmount(tx.amount);
+      setAmountStr(String(Math.abs(tx.amount)).replace(".", ","));
       const cleaned = (tx.description_norm || tx.description)
         .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
         .trim();
@@ -95,7 +92,6 @@ export function TransactionEditDrawer({
 
   const handleMovementChange = (newMovement: MovementType) => {
     savedCategoriesRef.current[movement] = { slug: category, id: categoryId };
-
     setMovement(newMovement);
     const sign = newMovement === "EXPENSE" ? -1 : 1;
     setAmount(sign * Math.abs(amount));
@@ -118,17 +114,20 @@ export function TransactionEditDrawer({
     setCategoryId(cat?.id || null);
   };
 
-  const handleAmountChange = (raw: string) => {
-    const sanitized = raw.replace(/\s/g, "").replace(",", ".");
+  const handleAmountBlur = () => {
+    const sanitized = amountStr.replace(/\s/g, "").replace(",", ".");
     const parsed = evalArithmetic(sanitized);
     if (parsed === null) return;
     const sign = movement === "EXPENSE" ? -1 : 1;
     setAmount(sign * Math.abs(parsed));
   };
 
-  const handleSplit = (n: number) => {
+  const handleDivide = (n: number) => {
     if (n < 1) return;
-    setAmount(Math.sign(amount || 1) * (Math.abs(amount) / n));
+    const newAbs = Math.abs(amount) / n;
+    const sign = movement === "EXPENSE" ? -1 : 1;
+    setAmount(sign * newAbs);
+    setAmountStr(String(parseFloat(newAbs.toFixed(2))).replace(".", ","));
   };
 
   const origMovement = (tx.movement || "EXPENSE") as MovementType;
@@ -166,158 +165,198 @@ export function TransactionEditDrawer({
           ? "text-muted-foreground"
           : "text-destructive";
 
-  const activeClass: Record<string, string> = {
-    green: "border-success bg-success/10 text-success",
-    red: "border-destructive bg-destructive/10 text-destructive",
-    amber: "border-warning bg-warning/10 text-warning",
-  };
-
-  const circleClass: Record<string, string> = {
-    green: "bg-success text-white",
-    red: "bg-destructive text-white",
-    amber: "bg-warning text-warning-foreground",
-  };
-
   const movementOptions: { value: MovementType; icon: typeof Plus; label: string; tone: string }[] = [
-    { value: "INCOME", icon: Plus, label: getMovementLabel("INCOME"), tone: "green" },
     { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE"), tone: "red" },
+    { value: "INCOME", icon: Plus, label: getMovementLabel("INCOME"), tone: "green" },
     { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER"), tone: "amber" },
   ];
 
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <div className="px-4 pt-2 pb-1">
-          {/* Movement toggle */}
-          <div className="flex gap-2 mb-4">
-            {movementOptions.map((opt) => {
-              const Icon = opt.icon;
-              const active = movement === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleMovementChange(opt.value)}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                    active
-                      ? activeClass[opt.tone] || "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:bg-muted/50",
-                  )}
-                >
-                  <span className={cn(
-                    "flex h-6 w-6 items-center justify-center rounded-full",
-                    active
-                      ? circleClass[opt.tone]
-                      : "bg-muted text-muted-foreground",
-                  )}>
-                    <Icon className="h-3 w-3" />
-                  </span>
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+  const panel = (
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        open ? "translate-y-0" : "translate-y-full",
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <span className="text-sm font-semibold text-foreground">
+          {t("imports.editTransaction", "Edit transaction")}
+        </span>
+        <div className="w-9" />
+      </div>
 
-          {/* Form rows */}
-          <div className="divide-y divide-border/60">
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.description", "Description")}</span>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {/* Movement toggle — segmented control */}
+        <div className="flex rounded-xl bg-muted p-1">
+          {movementOptions.map((opt) => {
+            const Icon = opt.icon;
+            const active = movement === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleMovementChange(opt.value)}
+                className={cn(
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-all",
+                  active
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Description */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.description", "Description")}
+          </label>
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="h-11 rounded-xl bg-muted border-0 shadow-none focus-visible:ring-1 focus-visible:ring-primary"
+          />
+        </div>
+
+        {/* Amount */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.amount", "Amount")}
+          </label>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              {movement === "EXPENSE" && (
+                <span className={cn("absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold", amountColor)}>−</span>
+              )}
               <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="h-auto w-[60%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0"
+                type="text"
+                inputMode="decimal"
+                value={amountStr}
+                onChange={(e) => setAmountStr(e.target.value)}
+                onBlur={handleAmountBlur}
+                placeholder="0,00"
+                className={cn(
+                  "h-11 rounded-xl bg-muted border-0 shadow-none tabular-nums font-semibold focus-visible:ring-1 focus-visible:ring-primary",
+                  movement === "EXPENSE" ? "pl-7" : "pl-3",
+                  amountColor,
+                )}
               />
             </div>
-
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.account", "Account")}</span>
-              <span className="text-sm text-foreground">{accountName || "—"}</span>
-            </div>
-
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.amount", "Amount")}</span>
-              <div className="flex items-center gap-2">
-                <span className={cn("text-sm font-semibold tabular-nums", amountColor)}>
-                  {amount < 0 ? "−" : ""}
-                  {formatCurrency(Math.abs(amount))}
-                </span>
-                <AmountEditButton
-                  originalAmount={amount}
-                  formatCurrency={formatCurrency}
-                  onChangeAmount={handleAmountChange}
-                  onApplySplit={handleSplit}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.category", "Category")}</span>
-              <Select value={category} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="h-auto w-auto max-w-[65%] border-0 bg-transparent p-0 gap-1 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40 [&>svg]:shrink-0 overflow-visible">
-                  <SelectValue>
-                    <PillBadge colorVar={getColor(category)} className="text-[11px] py-0.5">
-                      <CategoryIcon
-                        iconName={getIcon(category)}
-                        colorVar={getColor(category)}
-                        size="sm"
-                        showBackground={false}
-                      />
-                      <span className="truncate">{getCategoryLabel(category)}</span>
-                    </PillBadge>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {availableCategories.map((slug) => (
-                    <SelectItem key={slug} value={slug}>
-                      <div className="flex items-center gap-2">
-                        <CategoryIcon
-                          iconName={getIcon(slug)}
-                          colorVar={getColor(slug)}
-                          size="sm"
-                          showBackground
-                        />
-                        {getCategoryLabel(slug)}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          </div>
+          <div className="flex gap-1.5 pt-0.5">
+            {[2, 3, 4].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => handleDivide(n)}
+                className="rounded-lg bg-muted px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
+                &divide; {n}
+              </button>
+            ))}
           </div>
         </div>
 
-        <DrawerFooter>
-          <div className="flex gap-2">
-            {ruleWorthy && hasChanges && (
-              <Button
-                className="flex-1 gap-1.5"
-                variant="outline"
-                onClick={() => {
-                  onSave(tx, buildEdits(), true);
-                  onOpenChange(false);
-                }}
-              >
-                <Sparkles className="h-4 w-4" />
-                {t("imports.saveRule", "Save + rule")}
-              </Button>
-            )}
+        {/* Account */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.account", "Account")}
+          </label>
+          <div className="flex h-11 items-center rounded-xl bg-muted px-3 text-sm text-foreground">
+            {accountName || "—"}
+          </div>
+        </div>
+
+        {/* Category */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.category", "Category")}
+          </label>
+          <Select value={category} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="h-11 rounded-xl bg-muted border-0 shadow-none focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+              <SelectValue>
+                <PillBadge colorVar={getColor(category)} className="text-[11px] py-0.5 overflow-visible">
+                  <CategoryIcon
+                    iconName={getIcon(category)}
+                    colorVar={getColor(category)}
+                    size="sm"
+                    showBackground={false}
+                  />
+                  <span className="truncate">{getCategoryLabel(category)}</span>
+                </PillBadge>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {availableCategories.map((slug) => (
+                <SelectItem key={slug} value={slug}>
+                  <div className="flex items-center gap-2">
+                    <CategoryIcon
+                      iconName={getIcon(slug)}
+                      colorVar={getColor(slug)}
+                      size="sm"
+                      showBackground
+                    />
+                    {getCategoryLabel(slug)}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Footer buttons */}
+      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
+        <div className="flex gap-2">
+          {ruleWorthy && hasChanges && (
             <Button
-              className="flex-1"
-              disabled={!hasChanges}
+              className="flex-1 h-12 rounded-xl gap-1.5"
+              variant="outline"
               onClick={() => {
-                onSave(tx, buildEdits(), false);
+                handleAmountBlur();
+                onSave(tx, buildEdits(), true);
                 onOpenChange(false);
               }}
             >
-              {t("imports.save", "Save")}
+              <Sparkles className="h-4 w-4" />
+              {t("imports.saveRule", "Save + rule")}
             </Button>
-          </div>
-          <DrawerClose asChild>
-            <Button variant="outline">{t("imports.cancel", "Cancel")}</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+          )}
+          <Button
+            className="flex-1 h-12 rounded-xl"
+            disabled={!hasChanges}
+            onClick={() => {
+              handleAmountBlur();
+              onSave(tx, buildEdits(), false);
+              onOpenChange(false);
+            }}
+          >
+            {t("imports.save", "Save")}
+          </Button>
+        </div>
+        <Button
+          variant="ghost"
+          className="w-full h-10 rounded-xl text-muted-foreground"
+          onClick={() => onOpenChange(false)}
+        >
+          {t("imports.cancel", "Cancel")}
+        </Button>
+      </div>
+    </div>
   );
+
+  return createPortal(panel, document.body);
 }
