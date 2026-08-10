@@ -70,7 +70,7 @@
   },
   "imports": {
     "excluded": "Excluida",
-    "editTransaction": "Editar transacción",
+    "editTransaction": "editar transacción",
     "editInvestment": "Editar movimiento",
     "movement": "Movimiento",
     "category": "Categoría",
@@ -87,7 +87,7 @@
     "cancel": "Cancelar",
     "hideFromTotals": "Ocultar de totales",
     "includeInTotals": "Incluir en totales",
-    "addManualEntry": "Agregar entrada manual",
+    "addManualEntry": "agregar transacción",
     "addManualEntryDesc": "Registrá una transacción que no está en un extracto",
     "addEntry": "Agregar entrada",
     "descriptionPlaceholder": "ej. Almuerzo en efectivo",
@@ -102,7 +102,10 @@
     "deleteEntry": "Eliminar entrada",
     "deleteEntryTitle": "¿Eliminar entrada?",
     "deleteEntryDesc": "Esta entrada manual se eliminará permanentemente. No se puede deshacer.",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "lockedDescription": "esta descripción viene del extracto bancario subido y no se puede editar",
+    "lockedDate": "la fecha viene del extracto bancario, así que no se puede cambiar en una transacción importada",
+    "lockedAccount": "la cuenta pertenece a todo el archivo de extracto subido — se puede cambiar en configuración"
   },
   "status": {
     "active": "Activo",

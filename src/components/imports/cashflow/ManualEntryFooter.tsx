@@ -9,6 +9,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
 import { buildRuleFromCorrection } from "@/lib/userRules";
+import { buildManualFingerprint } from "@/lib/transactionSource";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { AddManualEntryDialog } from "../AddManualEntryDialog";
 import type { MovementType } from "./types";
@@ -16,7 +17,6 @@ import type { MovementType } from "./types";
 export interface ManualEntryFooterProps {
   monthKey: string;
   monthLabel: string;
-  importId?: string | null;
   isLocked: boolean;
   summary: {
     total: number;
@@ -34,7 +34,6 @@ export interface ManualEntryFooterProps {
 export function ManualEntryFooter({
   monthKey,
   monthLabel,
-  importId,
   isLocked,
   summary,
   rightSlot,
@@ -93,8 +92,10 @@ export function ManualEntryFooter({
       const cleanDesc = entry.description.trim();
       const descNorm = cleanDesc.toLowerCase();
       // Manual entries have no source file, so we mint a unique fingerprint/row-hash to
-      // satisfy the NOT NULL dedup key without colliding with imported rows.
-      const uniqHash = `manual-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      // satisfy the NOT NULL dedup key without colliding with imported rows. The
+      // `manual-` prefix is also what marks the row as user-created for the rest of
+      // the app (see lib/transactionSource.ts).
+      const uniqHash = buildManualFingerprint(user.id);
 
       const { error: insertError } = await supabase.from("transactions").insert({
         user_id: user.id,
@@ -110,7 +111,11 @@ export function ManualEntryFooter({
         category_id: category?.id || null,
         account_id: entry.accountId,
         period_id: periodId,
-        import_id: importId || null,
+        // Deliberately NOT linked to the month's statement, even when one exists:
+        // a manual entry isn't part of that file, and deleteImport() deletes every
+        // transaction carrying the import_id — which used to take the user's own
+        // entries down with the file.
+        import_id: null,
         category_source: "MANUAL",
         categorized_by: "user",
         user_corrected: true,

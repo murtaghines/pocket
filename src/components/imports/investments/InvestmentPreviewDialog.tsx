@@ -1,8 +1,8 @@
-import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, X } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { SheetPanel, SHEET_BUTTON } from "../SheetPanel";
 
 interface PreviewInvestment {
   date: string;
@@ -39,33 +39,41 @@ export function InvestmentPreviewDialog({
     }
   };
 
-  if (!isOpen) return null;
+  const footer = (
+    <>
+      <Button
+        className={cn(SHEET_BUTTON, "w-full")}
+        onClick={handleConfirm}
+        disabled={isConfirming || investments.length === 0}
+      >
+        {isConfirming ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Confirming...
+          </>
+        ) : (
+          "Confirm & Save"
+        )}
+      </Button>
+      <Button
+        variant="ghost"
+        className="w-full h-10 rounded-full text-sm text-muted-foreground"
+        onClick={onCancel}
+        disabled={isConfirming}
+      >
+        Cancel
+      </Button>
+    </>
+  );
 
-  const panel = (
-    <div
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
-        "top-[100px] md:top-0",
-        isOpen ? "translate-y-0" : "translate-y-full",
-      )}
+  return (
+    <SheetPanel
+      open={isOpen}
+      onOpenChange={(next) => { if (!next) onCancel(); }}
+      title="investment preview"
+      footer={footer}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <span className="text-sm font-semibold text-foreground">
-          Investment Preview
-        </span>
-        <div className="w-9" />
-      </div>
-
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <>
         {investments.length > 0 ? (
           <>
             {/* Summary cards */}
@@ -136,35 +144,7 @@ export function InvestmentPreviewDialog({
             <p className="text-sm">No investments found in this file</p>
           </div>
         )}
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
-        <Button
-          className="w-full h-12 rounded-xl"
-          onClick={handleConfirm}
-          disabled={isConfirming || investments.length === 0}
-        >
-          {isConfirming ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Confirming...
-            </>
-          ) : (
-            "Confirm & Save"
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full h-10 rounded-xl text-muted-foreground"
-          onClick={onCancel}
-          disabled={isConfirming}
-        >
-          Cancel
-        </Button>
-      </div>
-    </div>
+      </>
+    </SheetPanel>
   );
-
-  return createPortal(panel, document.body);
 }

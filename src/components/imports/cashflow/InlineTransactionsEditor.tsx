@@ -85,6 +85,7 @@ import {
 import { AmountEditButton } from "./AmountEditButton";
 import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
+import { isManualTransaction } from "@/lib/transactionSource";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { ProcessingPanel } from "./ProcessingPanel";
 import { TransactionEditDrawer } from "./TransactionEditDrawer";
@@ -220,7 +221,7 @@ export function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, transfer_pair_id",
+          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -897,6 +898,7 @@ export function InlineTransactionsEditor({
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
                 const isHidden = tx.is_hidden;
+                const isManual = isManualTransaction(tx);
                 const txHistory = auditByTx[tx.id] || [];
                 const editEntries = txHistory.filter((h) => h.action !== "revert");
                 const hasEditHistory = editEntries.length > 0;
@@ -1142,7 +1144,7 @@ export function InlineTransactionsEditor({
                         >
                           <Check className="w-[16px] h-[16px]" />
                         </Button>
-                      ) : !isLocked && tx.import_id ? (
+                      ) : !isLocked && !isManual ? (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1186,7 +1188,7 @@ export function InlineTransactionsEditor({
                         >
                           <X className="w-[16px] h-[16px]" />
                         </Button>
-                      ) : !isLocked && isEdited && originalSnapshot && tx.import_id ? (
+                      ) : !isLocked && isEdited && originalSnapshot && !isManual ? (
                         <RevertToOriginalButton
                           original={originalSnapshot.values}
                           fields={originalSnapshot.fields}
@@ -1289,6 +1291,7 @@ export function InlineTransactionsEditor({
                   const isSaving = savingIds.has(tx.id);
                   const isSaved = savedIds.has(tx.id);
                   const isHidden = tx.is_hidden;
+                  const isManual = isManualTransaction(tx);
                   const txHistory = auditByTx[tx.id] || [];
                   const editEntries = txHistory.filter((h) => h.action !== "revert");
                   const hasEditHistory = editEntries.length > 0;
@@ -1378,7 +1381,7 @@ export function InlineTransactionsEditor({
                         <div className="flex items-center gap-0.5">
                           {!isLocked && (
                             <>
-                              {tx.import_id ? (
+                              {!isManual ? (
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -1408,7 +1411,7 @@ export function InlineTransactionsEditor({
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
-                              {isEdited && originalSnapshot && tx.import_id && (
+                              {isEdited && originalSnapshot && !isManual && (
                                 <RevertToOriginalButton
                                   original={originalSnapshot.values}
                                   fields={originalSnapshot.fields}
@@ -1493,7 +1496,7 @@ export function InlineTransactionsEditor({
                 onClick={() => {
                   // Defensive: the trigger points only ever set this for manual
                   // entries, but never hard-delete an imported row regardless.
-                  if (deleteConfirmTx && !deleteConfirmTx.import_id) {
+                  if (deleteConfirmTx && isManualTransaction(deleteConfirmTx)) {
                     deleteMutation.mutate(deleteConfirmTx.id);
                   }
                   setDeleteConfirmTx(null);
@@ -1541,7 +1544,6 @@ export function InlineTransactionsEditor({
         <ManualEntryFooter
           monthKey={monthKey}
           monthLabel={monthLabel}
-          importId={imports[0]?.id ?? null}
           isLocked={isLocked}
           summary={summary}
           externalOpen={externalManualEntryOpen}

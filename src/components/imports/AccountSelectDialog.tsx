@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import {
   Select,
   SelectContent,
@@ -8,8 +7,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Plus, Building2, Upload, X } from "lucide-react";
+import { Plus, Building2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SheetPanel, SHEET_BUTTON } from "./SheetPanel";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useTranslation } from "react-i18next";
 import { getAccountDisplayName } from "@/lib/accountColors";
@@ -60,37 +60,29 @@ export function AccountSelectDialog({
 
   const hasAccounts = filteredAccounts.length > 0;
 
-  if (!open) return null;
+  const footer = (
+    <Button
+      className={cn(SHEET_BUTTON, "w-full gap-1.5")}
+      onClick={handleConfirm}
+      disabled={!selectedAccountId}
+    >
+      <Upload className="w-4 h-4" />
+      {t('accounts.upload', 'Upload')}
+    </Button>
+  );
 
   const panel = (
-    <div
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
-        "top-[100px] md:top-0",
-        open ? "translate-y-0" : "translate-y-full",
-      )}
+    <SheetPanel
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t('accounts.selectAccount', 'select account')}
+      footer={footer}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <span className="text-base font-semibold text-foreground">
-          {t('accounts.selectAccount', 'Select account')}
-        </span>
-        <div className="w-9" />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
+      <>
         {/* File info */}
         {fileName && (
           <div className="rounded-2xl bg-muted px-5 py-3">
-            <span className="text-sm font-semibold text-foreground">
+            <span className="text-[13px] font-semibold text-foreground">
               File
             </span>
             <p className="text-sm text-muted-foreground mt-1 truncate">
@@ -101,12 +93,12 @@ export function AccountSelectDialog({
 
         {/* Account selector */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+          <label className="text-[13px] font-semibold text-foreground">
             {t('accounts.selectAccount', 'Account')}
           </label>
           {hasAccounts ? (
             <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+              <SelectTrigger className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
                 <SelectValue placeholder={t('accounts.selectPlaceholder', 'Select an account...')} />
               </SelectTrigger>
               <SelectContent>
@@ -135,31 +127,19 @@ export function AccountSelectDialog({
         {/* Add new account */}
         <Button
           variant="outline"
-          className="w-full h-12 rounded-full gap-2 font-semibold"
+          className="w-full h-11 rounded-full gap-2 font-semibold"
           onClick={() => setShowNewForm(true)}
         >
           <Plus className="w-4 h-4" />
           {t('accounts.addNewAccount', 'Add new account')}
         </Button>
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 pb-6 pt-3 bg-background">
-        <Button
-          className="w-full h-12 rounded-full font-semibold text-base gap-1.5"
-          onClick={handleConfirm}
-          disabled={!selectedAccountId}
-        >
-          <Upload className="w-4 h-4" />
-          {t('accounts.upload', 'Upload')}
-        </Button>
-      </div>
-    </div>
+      </>
+    </SheetPanel>
   );
 
   return (
     <>
-      {createPortal(panel, document.body)}
+      {panel}
       <AccountFormDialog
         open={showNewForm}
         onOpenChange={setShowNewForm}
