@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PillBadge } from "@/components/ui/pill-badge";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
@@ -154,14 +153,9 @@ export function TransactionEditDrawer({
     return edits;
   };
 
-  const amountColor =
-    amount === 0
-      ? "text-muted-foreground"
-      : movement === "INCOME"
-        ? "text-success"
-        : movement === "TRANSFER"
-          ? "text-muted-foreground"
-          : "text-destructive";
+  // Sign is implied by the movement toggle — the user only ever types the
+  // plain magnitude. Transfers show no sign (matches the table's badge rule).
+  const amountSign = movement === "EXPENSE" ? "−" : movement === "INCOME" ? "+" : null;
 
   const movementOptions: { value: MovementType; icon: typeof Plus; label: string }[] = [
     { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE") },
@@ -229,8 +223,10 @@ export function TransactionEditDrawer({
             {t("imports.amount", "Amount")}
           </label>
           <div className="relative">
-            {movement === "EXPENSE" && (
-              <span className={cn("absolute left-5 top-1/2 -translate-y-1/2 text-base font-semibold pointer-events-none", amountColor)}>−</span>
+            {amountSign && (
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-base text-muted-foreground pointer-events-none">
+                {amountSign}
+              </span>
             )}
             <Input
               type="text"
@@ -240,9 +236,8 @@ export function TransactionEditDrawer({
               onBlur={handleAmountBlur}
               placeholder="0,00"
               className={cn(
-                "h-12 rounded-full bg-muted border-0 shadow-none tabular-nums font-semibold text-base focus-visible:ring-1 focus-visible:ring-primary",
-                movement === "EXPENSE" ? "pl-10 pr-5" : "px-5",
-                amountColor,
+                "h-12 rounded-full bg-muted border-0 shadow-none tabular-nums text-base focus-visible:ring-1 focus-visible:ring-primary",
+                amountSign ? "pl-10 pr-5" : "px-5",
               )}
             />
           </div>
@@ -263,9 +258,15 @@ export function TransactionEditDrawer({
               {t("imports.category", "Category")}
             </label>
             <Select value={category} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-40 overflow-visible">
+              <SelectTrigger
+                className="h-12 rounded-full border-0 shadow-none px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-60"
+                style={{
+                  backgroundColor: `hsl(var(--${getColor(category)}) / 0.15)`,
+                  color: `hsl(var(--${getColor(category)}))`,
+                }}
+              >
                 <SelectValue>
-                  <PillBadge colorVar={getColor(category)} className="text-[11px] py-0.5 overflow-visible">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold">
                     <CategoryIcon
                       iconName={getIcon(category)}
                       colorVar={getColor(category)}
@@ -273,7 +274,7 @@ export function TransactionEditDrawer({
                       showBackground={false}
                     />
                     <span className="truncate">{getCategoryLabel(category)}</span>
-                  </PillBadge>
+                  </span>
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
