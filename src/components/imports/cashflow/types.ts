@@ -11,6 +11,9 @@ export type PendingEditShape = {
   category_id?: string | null;
   amount?: number;
   description?: string;
+  date?: string;
+  account_id?: string;
+  currency?: string;
 };
 
 export interface MonthTransaction {
@@ -25,6 +28,9 @@ export interface MonthTransaction {
   account_id: string | null;
   is_hidden: boolean;
   import_id: string | null;
+  /** `manual-…` on user-created entries, a content sha256 on imported rows.
+   *  Read it via isManualTransaction() — never compare it by hand. */
+  fingerprint: string | null;
   transfer_pair_id: string | null;
 }
 

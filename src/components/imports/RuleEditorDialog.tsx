@@ -178,7 +178,7 @@ export function RuleEditorDialog({
         {/* Original description + category tag */}
         <div className="rounded-2xl bg-muted p-4 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-foreground">
+            <span className="text-[13px] font-semibold text-foreground">
               Description
             </span>
             <div className="inline-flex items-center gap-1.5">
@@ -212,7 +212,7 @@ export function RuleEditorDialog({
 
         {/* Pattern */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+          <label className="text-[13px] font-semibold text-foreground">
             Pattern
           </label>
           <Input
@@ -230,7 +230,7 @@ export function RuleEditorDialog({
                 ? "Exact text to match"
                 : "Text the description must include"
             }
-            className="h-12 rounded-full bg-muted border-0 shadow-none font-mono text-sm px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-11 rounded-full bg-muted border-0 shadow-none font-mono text-sm px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
             maxLength={200}
           />
         </div>
@@ -261,7 +261,7 @@ export function RuleEditorDialog({
 
         {/* Match type — pill segmented control */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+          <label className="text-[13px] font-semibold text-foreground">
             Match type
           </label>
           <div className="flex rounded-full bg-muted p-1">
@@ -301,7 +301,7 @@ export function RuleEditorDialog({
               )}
             />
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-foreground">
+              <div className="text-[13px] font-semibold text-foreground">
                 Live preview
               </div>
               <div className="text-xs text-muted-foreground truncate">
@@ -328,7 +328,7 @@ export function RuleEditorDialog({
       {/* Footer */}
       <div className="px-4 pb-6 pt-3 bg-background space-y-2">
         <Button
-          className="w-full h-12 rounded-full font-semibold gap-1.5"
+          className="w-full h-11 rounded-full font-semibold gap-1.5"
           disabled={!canSave}
           onClick={handleSave}
         >
@@ -338,7 +338,7 @@ export function RuleEditorDialog({
         {onSkip && (
           <Button
             variant="outline"
-            className="w-full h-12 rounded-full font-semibold"
+            className="w-full h-11 rounded-full font-semibold"
             onClick={() => {
               onSkip();
               onOpenChange(false);

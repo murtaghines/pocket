@@ -21,6 +21,8 @@ export const USER_TRACKED_FIELDS = new Set<string>([
   "amount",
   "is_hidden",
   "description_norm",
+  "date",
+  "account_id",
 ]);
 
 export const FIELD_LABELS: Record<string, string> = {
@@ -30,6 +32,8 @@ export const FIELD_LABELS: Record<string, string> = {
   amount: "Amount",
   is_hidden: "Visibility",
   description_norm: "Description",
+  date: "Date",
+  account_id: "Account",
 };
 
 /**

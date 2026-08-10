@@ -20,6 +20,7 @@ import {
   RotateCcw,
   FileSpreadsheet,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -84,6 +85,7 @@ import {
 import { AmountEditButton } from "./AmountEditButton";
 import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
+import { isManualTransaction } from "@/lib/transactionSource";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { ProcessingPanel } from "./ProcessingPanel";
 import { TransactionEditDrawer } from "./TransactionEditDrawer";
@@ -219,7 +221,7 @@ export function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, transfer_pair_id",
+          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -345,6 +347,33 @@ export function InlineTransactionsEditor({
       });
     },
   });
+
+  // Hard-delete — only ever offered for manual entries (no import_id). Imported
+  // rows stay soft-hide-only: see the NOTE in useTransactions.tsx (a deleted
+  // imported row has no fingerprint to dedup against, so it would silently
+  // reappear on the next re-upload). Manual entries have no source file, so
+  // that risk doesn't apply.
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("transactions").delete().eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast({ title: "Entry deleted" });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Couldn't delete entry",
+        description: err?.message ?? "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const [deleteConfirmTx, setDeleteConfirmTx] = useState<MonthTransaction | null>(null);
 
   // ─── Buffered edit handlers ──────────────────────────────────────────
   // Movement / category / amount edits do NOT save automatically.
@@ -502,6 +531,15 @@ export function InlineTransactionsEditor({
     if (pending.description !== undefined) {
       payload.description_norm = pending.description;
       before.description_norm = tx.description_norm;
+    }
+    if (pending.date !== undefined && pending.date !== tx.date) {
+      payload.date = pending.date;
+      before.date = tx.date;
+    }
+    if (pending.account_id !== undefined && pending.account_id !== tx.account_id) {
+      payload.account_id = pending.account_id;
+      before.account_id = tx.account_id;
+      if (pending.currency) payload.currency = pending.currency;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -860,6 +898,7 @@ export function InlineTransactionsEditor({
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
                 const isHidden = tx.is_hidden;
+                const isManual = isManualTransaction(tx);
                 const txHistory = auditByTx[tx.id] || [];
                 const editEntries = txHistory.filter((h) => h.action !== "revert");
                 const hasEditHistory = editEntries.length > 0;
@@ -1105,7 +1144,7 @@ export function InlineTransactionsEditor({
                         >
                           <Check className="w-[16px] h-[16px]" />
                         </Button>
-                      ) : !isLocked ? (
+                      ) : !isLocked && !isManual ? (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1114,6 +1153,16 @@ export function InlineTransactionsEditor({
                           title={isHidden ? "Include in totals" : "Hide from totals"}
                         >
                           {isHidden ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+                        </Button>
+                      ) : !isLocked ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 mx-auto text-muted-foreground hover:text-destructive"
+                          onClick={() => setDeleteConfirmTx(tx)}
+                          title={t("imports.deleteEntry", "Delete entry")}
+                        >
+                          <Trash2 className="w-[16px] h-[16px]" />
                         </Button>
                       ) : (
                         <div
@@ -1139,7 +1188,7 @@ export function InlineTransactionsEditor({
                         >
                           <X className="w-[16px] h-[16px]" />
                         </Button>
-                      ) : !isLocked && isEdited && originalSnapshot ? (
+                      ) : !isLocked && isEdited && originalSnapshot && !isManual ? (
                         <RevertToOriginalButton
                           original={originalSnapshot.values}
                           fields={originalSnapshot.fields}
@@ -1242,6 +1291,7 @@ export function InlineTransactionsEditor({
                   const isSaving = savingIds.has(tx.id);
                   const isSaved = savedIds.has(tx.id);
                   const isHidden = tx.is_hidden;
+                  const isManual = isManualTransaction(tx);
                   const txHistory = auditByTx[tx.id] || [];
                   const editEntries = txHistory.filter((h) => h.action !== "revert");
                   const hasEditHistory = editEntries.length > 0;
@@ -1331,15 +1381,27 @@ export function InlineTransactionsEditor({
                         <div className="flex items-center gap-0.5">
                           {!isLocked && (
                             <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                onClick={() => handleToggleHidden(tx)}
-                                aria-label={isHidden ? t("imports.includeInTotals", "Include in totals") : t("imports.hideFromTotals", "Hide from totals")}
-                              >
-                                {isHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                              </Button>
+                              {!isManual ? (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() => handleToggleHidden(tx)}
+                                  aria-label={isHidden ? t("imports.includeInTotals", "Include in totals") : t("imports.hideFromTotals", "Hide from totals")}
+                                >
+                                  {isHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                  onClick={() => setDeleteConfirmTx(tx)}
+                                  aria-label={t("imports.deleteEntry", "Delete entry")}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1349,7 +1411,7 @@ export function InlineTransactionsEditor({
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
-                              {isEdited && originalSnapshot && (
+                              {isEdited && originalSnapshot && !isManual && (
                                 <RevertToOriginalButton
                                   original={originalSnapshot.values}
                                   fields={originalSnapshot.fields}
@@ -1402,16 +1464,50 @@ export function InlineTransactionsEditor({
           tx={editingTx}
           open={!!editingTx}
           onOpenChange={(open) => { if (!open) setEditingTx(null); }}
+          monthKey={monthKey}
           categories={categories}
+          accounts={accounts}
           getCategoryIcon={getCategoryIcon}
           getCategoryColor={getCategoryColor}
           formatCurrency={formatCurrency}
-          accountName={editingTx ? (accountName(editingTx.account_id) || null) : null}
           onSave={(tx, edits, withRule) => {
             commitRow(tx, withRule, edits);
             setEditingTx(null);
           }}
+          onDelete={(tx) => setDeleteConfirmTx(tx)}
         />
+
+        {/* Delete-entry confirmation — only ever triggered for manual entries */}
+        <AlertDialog
+          open={!!deleteConfirmTx}
+          onOpenChange={(open) => { if (!open) setDeleteConfirmTx(null); }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("imports.deleteEntryTitle", "Delete entry?")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("imports.deleteEntryDesc", "This manual entry will be permanently deleted. This can't be undone.")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("imports.cancel", "Cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  // Defensive: the trigger points only ever set this for manual
+                  // entries, but never hard-delete an imported row regardless.
+                  if (deleteConfirmTx && isManualTransaction(deleteConfirmTx)) {
+                    deleteMutation.mutate(deleteConfirmTx.id);
+                  }
+                  setDeleteConfirmTx(null);
+                  setEditingTx(null);
+                }}
+              >
+                {t("imports.delete", "Delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Collapsed-rows hint */}
         {showCollapsedHint && (
@@ -1448,7 +1544,6 @@ export function InlineTransactionsEditor({
         <ManualEntryFooter
           monthKey={monthKey}
           monthLabel={monthLabel}
-          importId={imports[0]?.id ?? null}
           isLocked={isLocked}
           summary={summary}
           externalOpen={externalManualEntryOpen}

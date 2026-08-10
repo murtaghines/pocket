@@ -70,7 +70,7 @@
   },
   "imports": {
     "excluded": "Excluded",
-    "editTransaction": "Edit transaction",
+    "editTransaction": "edit transaction",
     "editInvestment": "Edit movement",
     "movement": "Movement",
     "category": "Category",
@@ -87,7 +87,7 @@
     "cancel": "Cancel",
     "hideFromTotals": "Hide from totals",
     "includeInTotals": "Include in totals",
-    "addManualEntry": "Add manual entry",
+    "addManualEntry": "add transaction",
     "addManualEntryDesc": "Record a transaction that isn't on a statement",
     "addEntry": "Add entry",
     "descriptionPlaceholder": "e.g. Cash lunch",
@@ -96,7 +96,16 @@
     "sharedExpenseDesc": "Someone else paid the full amount — only your share counts.",
     "totalPaid": "Total paid",
     "yourShare": "Your share (%)",
-    "yourAmount": "Your amount:"
+    "yourAmount": "Your amount:",
+    "setByImport": "Set by the imported file",
+    "accountSetByImport": "The account belongs to the whole statement",
+    "deleteEntry": "Delete entry",
+    "deleteEntryTitle": "Delete entry?",
+    "deleteEntryDesc": "This manual entry will be permanently deleted. This can't be undone.",
+    "delete": "Delete",
+    "lockedDescription": "this description comes from the uploaded bank statement and can't be edited",
+    "lockedDate": "the date comes from the bank statement, so it can't be changed on an imported transaction",
+    "lockedAccount": "the account belongs to the entire uploaded file statement — it can be changed in configuration"
   },
   "status": {
     "active": "Active",

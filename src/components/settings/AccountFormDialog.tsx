@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Landmark, X } from "lucide-react";
+import { Loader2, Landmark } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SheetPanel, SHEET_BUTTON } from "@/components/imports/SheetPanel";
 import { ACCOUNT_COLOR_PALETTE, getDefaultAccountColor } from "@/lib/accountColors";
 
 export interface AccountFormValues {
@@ -51,39 +51,35 @@ export function AccountFormDialog({
     onSubmit({ institution: institution.trim(), name: name.trim(), color });
   };
 
-  if (!open) return null;
-
-  const panel = (
-    <div
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
-        "top-[100px] md:top-0",
-        open ? "translate-y-0" : "translate-y-full",
-      )}
+  const footer = (
+    <Button
+      className={cn(SHEET_BUTTON, "w-full")}
+      onClick={handleSubmit}
+      disabled={!canSubmit}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <span className="text-base font-semibold text-foreground flex items-center gap-2">
+      {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+      {mode === "create" ? t("accounts.create", "Create") : t("accounts.save", "Save")}
+    </Button>
+  );
+
+  return (
+    <SheetPanel
+      open={open}
+      onOpenChange={onOpenChange}
+      title={
+        <span className="inline-flex items-center gap-2">
           <Landmark className="w-4 h-4 text-primary" />
           {mode === "create"
-            ? t("accounts.addAccount", "Add account")
-            : t("accounts.editAccount", "Edit account")}
+            ? t("accounts.addAccount", "add account")
+            : t("accounts.editAccount", "edit account")}
         </span>
-        <div className="w-9" />
-      </div>
-
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
+      }
+      footer={footer}
+    >
+      <>
         {/* Bank / Institution */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+          <label className="text-[13px] font-semibold text-foreground">
             {t("accounts.institution", "Bank")}
           </label>
           <Input
@@ -92,13 +88,13 @@ export function AccountFormDialog({
             onChange={(e) => setInstitution(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             autoFocus
-            className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
           />
         </div>
 
         {/* Nickname */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+          <label className="text-[13px] font-semibold text-foreground">
             {t("accounts.nickname", "Nickname")}{" "}
             <span className="font-normal text-muted-foreground">
               ({t("accounts.optional", "optional")})
@@ -109,7 +105,7 @@ export function AccountFormDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
           />
           <p className="text-xs text-muted-foreground px-1">
             {institution.trim()
@@ -125,7 +121,7 @@ export function AccountFormDialog({
 
         {/* Color */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+          <label className="text-[13px] font-semibold text-foreground">
             {t("accounts.color", "Color")}
           </label>
           <div className="rounded-2xl bg-muted p-4 space-y-2.5">
@@ -165,21 +161,7 @@ export function AccountFormDialog({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 pb-6 pt-3 bg-background">
-        <Button
-          className="w-full h-12 rounded-full font-semibold text-base"
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-        >
-          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {mode === "create" ? t("accounts.create", "Create") : t("accounts.save", "Save")}
-        </Button>
-      </div>
-    </div>
+      </>
+    </SheetPanel>
   );
-
-  return createPortal(panel, document.body);
 }

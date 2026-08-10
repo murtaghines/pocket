@@ -188,7 +188,6 @@ export function MonthWorkspace({
         <ManualEntryFooter
           monthKey={monthKey}
           monthLabel={monthLabel}
-          importId={null}
           isLocked={false}
           summary={{ total: 0, income: 0, expenses: 0, transfers: 0 }}
           externalOpen={manualEntryOpen}
