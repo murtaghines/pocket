@@ -46,7 +46,13 @@ export function BankStatementsTabsView({ tab, onTabChange, activeMonth, onMonthC
   } = useMonthlyFileUpload();
 
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
-  const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
+  const [monthsToShow, setMonthsToShow] = useState(() => {
+    if (!activeMonth) return DEFAULT_MONTHS;
+    const now = new Date();
+    const [y, m] = activeMonth.split("-").map(Number);
+    const diff = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m) + 1;
+    return Math.max(DEFAULT_MONTHS, diff);
+  });
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [defaultMovement, setDefaultMovement] = useState<MovementType>("EXPENSE");
 
