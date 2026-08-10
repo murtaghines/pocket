@@ -6,7 +6,6 @@ import {
   Minus,
   ArrowRightLeft,
   Sparkles,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { PillBadge } from "@/components/ui/pill-badge";
 import { CategoryIcon } from "@/components/ui/category-icon";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
   getCategoriesForMovement,
 } from "./helpers";
@@ -30,6 +30,9 @@ import {
   normalizeCategory,
 } from "@/lib/categoryTranslations";
 import type { MonthTransaction, PendingEditShape, MovementType } from "./types";
+
+// Field label — 12px/500 uppercase per design system (Label/overline token).
+const FIELD_LABEL = "text-xs font-medium uppercase tracking-[0.07em] text-muted-foreground";
 
 interface TransactionEditDrawerProps {
   tx: MonthTransaction | null;
@@ -55,6 +58,8 @@ export function TransactionEditDrawer({
   onSave,
 }: TransactionEditDrawerProps) {
   const { t } = useTranslation("common");
+
+  useBodyScrollLock(open);
 
   const [movement, setMovement] = useState<MovementType>("EXPENSE");
   const [category, setCategory] = useState("");
@@ -167,29 +172,21 @@ export function TransactionEditDrawer({
   const panel = (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-card transition-transform duration-300 ease-out",
         // Leave mobile nav (h-12 = 48px) + month tab strip (~52px) visible on top
         "top-[100px] md:top-0",
         open ? "translate-y-0" : "translate-y-full",
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
-        >
-          <X className="h-4 w-4" />
-        </button>
+      <div className="px-4 py-3 bg-card border-b border-border text-center">
         <span className="text-base font-semibold text-foreground">
           {t("imports.editTransaction", "Edit transaction")}
         </span>
-        <div className="w-9" />
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 space-y-5">
         {/* Movement toggle — pill segmented control */}
         <div className="flex rounded-full bg-muted p-1">
           {movementOptions.map((opt) => {
@@ -201,9 +198,9 @@ export function TransactionEditDrawer({
                 type="button"
                 onClick={() => handleMovementChange(opt.value)}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-sm font-semibold transition-all",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-sm font-medium transition-all",
                   active
-                    ? "bg-card text-foreground shadow-sm"
+                    ? "bg-card text-foreground shadow-sm font-semibold"
                     : "text-muted-foreground",
                 )}
               >
@@ -215,8 +212,8 @@ export function TransactionEditDrawer({
         </div>
 
         {/* Description */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+        <div className="space-y-1.5">
+          <label className={FIELD_LABEL}>
             {t("imports.description", "Description")}
           </label>
           <Input
@@ -227,8 +224,8 @@ export function TransactionEditDrawer({
         </div>
 
         {/* Amount */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+        <div className="space-y-1.5">
+          <label className={FIELD_LABEL}>
             {t("imports.amount", "Amount")}
           </label>
           <div className="relative">
@@ -253,16 +250,16 @@ export function TransactionEditDrawer({
 
         {/* Account + Category row */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-2 min-w-0">
-            <label className="text-sm font-semibold text-foreground">
+          <div className="space-y-1.5 min-w-0">
+            <label className={FIELD_LABEL}>
               {t("imports.account", "Account")}
             </label>
             <div className="flex h-12 items-center rounded-full bg-muted px-5 text-sm font-medium text-foreground truncate">
               {accountName || "—"}
             </div>
           </div>
-          <div className="space-y-2 min-w-0">
-            <label className="text-sm font-semibold text-foreground">
+          <div className="space-y-1.5 min-w-0">
+            <label className={FIELD_LABEL}>
               {t("imports.category", "Category")}
             </label>
             <Select value={category} onValueChange={handleCategoryChange}>
@@ -300,10 +297,30 @@ export function TransactionEditDrawer({
       </div>
 
       {/* Footer buttons */}
-      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
+      <div className="px-4 pb-6 pt-3 bg-card border-t border-border space-y-2">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 h-12 rounded-full font-semibold text-base"
+            onClick={() => onOpenChange(false)}
+          >
+            {t("imports.cancel", "Cancel")}
+          </Button>
+          <Button
+            className="flex-1 h-12 rounded-full font-semibold text-base"
+            disabled={!hasChanges}
+            onClick={() => {
+              handleAmountBlur();
+              onSave(tx, buildEdits(), false);
+              onOpenChange(false);
+            }}
+          >
+            {t("imports.save", "Save")}
+          </Button>
+        </div>
         {ruleWorthy && hasChanges && (
           <Button
-            className="w-full h-12 rounded-full font-semibold gap-1.5"
+            className="w-full h-12 rounded-full font-semibold text-base gap-1.5"
             variant="outline"
             onClick={() => {
               handleAmountBlur();
@@ -315,17 +332,6 @@ export function TransactionEditDrawer({
             {t("imports.saveRule", "Save + rule")}
           </Button>
         )}
-        <Button
-          className="w-full h-12 rounded-full font-semibold text-base"
-          disabled={!hasChanges}
-          onClick={() => {
-            handleAmountBlur();
-            onSave(tx, buildEdits(), false);
-            onOpenChange(false);
-          }}
-        >
-          {t("imports.save", "Save")}
-        </Button>
       </div>
     </div>
   );

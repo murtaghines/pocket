@@ -17,7 +17,7 @@ import {
   Minus,
   Loader2,
   CalendarIcon,
-  X,
+  Sparkles,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -28,6 +28,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import type { Database } from "@/integrations/supabase/types";
 import {
   INCOME_CATEGORIES,
@@ -38,6 +39,9 @@ import {
 } from "@/lib/categoryTranslations";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
+
+// Field label — 12px/500 uppercase per design system (Label/overline token).
+const FIELD_LABEL = "text-xs font-medium uppercase tracking-[0.07em] text-muted-foreground";
 
 function getSmartDefaultDate(monthKey: string): string {
   const [year, monthNum] = monthKey.split("-").map(Number);
@@ -63,6 +67,7 @@ interface AddManualEntryDialogProps {
     movement: MovementType;
     categorySlug: string;
     amount: number;
+    createRule: boolean;
   }) => Promise<void> | void;
 }
 
@@ -78,6 +83,8 @@ export function AddManualEntryDialog({
   const { accounts } = useAccounts();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
+  useBodyScrollLock(open);
+
   const [year, monthNum] = monthKey.split("-").map(Number);
   const firstDay = `${year}-${String(monthNum).padStart(2, "0")}-01`;
   const lastDayNum = new Date(year, monthNum, 0).getDate();
@@ -89,7 +96,7 @@ export function AddManualEntryDialog({
   const [movement, setMovement] = useState<MovementType>(defaultMovement || "EXPENSE");
   const [categorySlug, setCategorySlug] = useState<string>(EXPENSE_CATEGORIES[0]);
   const [amountStr, setAmountStr] = useState<string>("");
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState<"save" | "rule" | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -139,9 +146,9 @@ export function AddManualEntryDialog({
     dateValid &&
     !submitting;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (createRule: boolean) => {
     if (!canSubmit) return;
-    setSubmitting(true);
+    setSubmitting(createRule ? "rule" : "save");
     try {
       await onSubmit({
         date,
@@ -150,9 +157,10 @@ export function AddManualEntryDialog({
         movement,
         categorySlug,
         amount: parsedAmount,
+        createRule,
       });
     } finally {
-      setSubmitting(false);
+      setSubmitting(null);
     }
   };
 
@@ -178,29 +186,21 @@ export function AddManualEntryDialog({
   const panel = (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-card transition-transform duration-300 ease-out",
         // Leave mobile nav (h-12 = 48px) + month tab strip (~52px) visible on top
         "top-[100px] md:top-0",
         open ? "translate-y-0" : "translate-y-full",
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
-        >
-          <X className="h-4 w-4" />
-        </button>
+      <div className="px-4 py-3 bg-card border-b border-border text-center">
         <span className="text-base font-semibold text-foreground">
-          {t("imports.addManualEntry", "Add entry")}
+          {t("imports.addManualEntry", "Add manual entry")}
         </span>
-        <div className="w-9" />
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 space-y-5">
         {/* Movement toggle — pill segmented control */}
         <div className="flex rounded-full bg-muted p-1">
           {movementOptions.map((opt) => {
@@ -212,9 +212,9 @@ export function AddManualEntryDialog({
                 type="button"
                 onClick={() => setMovement(opt.value)}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-sm font-semibold transition-all",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-sm font-medium transition-all",
                   active
-                    ? "bg-card text-foreground shadow-sm"
+                    ? "bg-card text-foreground shadow-sm font-semibold"
                     : "text-muted-foreground",
                 )}
               >
@@ -226,8 +226,8 @@ export function AddManualEntryDialog({
         </div>
 
         {/* Description */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+        <div className="space-y-1.5">
+          <label className={FIELD_LABEL}>
             {t("imports.description", "Description")}
           </label>
           <Input
@@ -239,55 +239,32 @@ export function AddManualEntryDialog({
           />
         </div>
 
-        {/* Amount */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
-            {t("imports.amount", "Amount")}
-          </label>
-          <div className="relative">
-            {movement === "EXPENSE" && (
-              <span className={cn("absolute left-5 top-1/2 -translate-y-1/2 text-base font-semibold pointer-events-none", amountColor)}>−</span>
-            )}
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
-              placeholder="0,00"
-              className={cn(
-                "h-12 rounded-full bg-muted border-0 shadow-none tabular-nums font-semibold text-base focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50",
-                movement === "EXPENSE" ? "pl-10 pr-5" : "px-5",
-                amountColor,
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Account + Date row (two columns) */}
+        {/* Amount + Date row */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-2 min-w-0">
-            <label className="text-sm font-semibold text-foreground">
-              {t("imports.account", "Account")}
+          <div className="space-y-1.5 min-w-0">
+            <label className={FIELD_LABEL}>
+              {t("imports.amount", "Amount")}
             </label>
-            <Select value={accountId} onValueChange={setAccountId}>
-              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
-                <SelectValue placeholder={t("imports.selectAccount", "Select")}>
-                  <span className="text-sm font-medium truncate">
-                    {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {getAccountDisplayName(a)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              {movement === "EXPENSE" && (
+                <span className={cn("absolute left-5 top-1/2 -translate-y-1/2 text-base font-semibold pointer-events-none", amountColor)}>−</span>
+              )}
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={amountStr}
+                onChange={(e) => setAmountStr(e.target.value)}
+                placeholder="0,00"
+                className={cn(
+                  "h-12 rounded-full bg-muted border-0 shadow-none tabular-nums font-semibold text-base focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50",
+                  movement === "EXPENSE" ? "pl-10 pr-5" : "px-5",
+                  amountColor,
+                )}
+              />
+            </div>
           </div>
-          <div className="space-y-2 min-w-0">
-            <label className="text-sm font-semibold text-foreground">
+          <div className="space-y-1.5 min-w-0">
+            <label className={FIELD_LABEL}>
               {t("imports.date", "Date")}
             </label>
             <Popover>
@@ -327,53 +304,99 @@ export function AddManualEntryDialog({
           </div>
         </div>
 
-        {/* Category */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">
-            {t("imports.category", "Category")}
-          </label>
-          <Select value={categorySlug} onValueChange={setCategorySlug}>
-            <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-40 overflow-visible">
-              <SelectValue>
-                <PillBadge colorVar={getCategoryColor(categorySlug)} className="text-[11px] py-0.5 overflow-visible">
-                  <CategoryIcon
-                    iconName={getCategoryIcon(categorySlug)}
-                    colorVar={getCategoryColor(categorySlug)}
-                    size="sm"
-                    showBackground={false}
-                  />
-                  <span className="truncate">{getCategoryLabel(categorySlug)}</span>
-                </PillBadge>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {availableCategories.map((slug) => (
-                <SelectItem key={slug} value={slug}>
-                  <div className="flex items-center gap-2">
+        {/* Account + Category row */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1.5 min-w-0">
+            <label className={FIELD_LABEL}>
+              {t("imports.account", "Account")}
+            </label>
+            <Select value={accountId} onValueChange={setAccountId}>
+              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+                <SelectValue placeholder={t("imports.selectAccount", "Select")}>
+                  <span className="text-sm font-medium truncate">
+                    {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {getAccountDisplayName(a)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5 min-w-0">
+            <label className={FIELD_LABEL}>
+              {t("imports.category", "Category")}
+            </label>
+            <Select value={categorySlug} onValueChange={setCategorySlug}>
+              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-40 overflow-visible">
+                <SelectValue>
+                  <PillBadge colorVar={getCategoryColor(categorySlug)} className="text-[11px] py-0.5 overflow-visible">
                     <CategoryIcon
-                      iconName={getCategoryIcon(slug)}
-                      colorVar={getCategoryColor(slug)}
+                      iconName={getCategoryIcon(categorySlug)}
+                      colorVar={getCategoryColor(categorySlug)}
                       size="sm"
-                      showBackground
+                      showBackground={false}
                     />
-                    {getCategoryLabel(slug)}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                    <span className="truncate">{getCategoryLabel(categorySlug)}</span>
+                  </PillBadge>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {availableCategories.map((slug) => (
+                  <SelectItem key={slug} value={slug}>
+                    <div className="flex items-center gap-2">
+                      <CategoryIcon
+                        iconName={getCategoryIcon(slug)}
+                        colorVar={getCategoryColor(slug)}
+                        size="sm"
+                        showBackground
+                      />
+                      {getCategoryLabel(slug)}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="px-4 pb-6 pt-3 bg-background">
+      <div className="px-4 pb-6 pt-3 bg-card border-t border-border space-y-2">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 h-12 rounded-full font-semibold text-base"
+            onClick={() => onOpenChange(false)}
+            disabled={!!submitting}
+          >
+            {t("imports.cancel", "Cancel")}
+          </Button>
+          <Button
+            className="flex-1 h-12 rounded-full font-semibold text-base"
+            onClick={() => handleSubmit(false)}
+            disabled={!canSubmit}
+          >
+            {submitting === "save" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {t("imports.addEntry", "Add entry")}
+          </Button>
+        </div>
         <Button
-          className="w-full h-12 rounded-full font-semibold text-base"
-          onClick={handleSubmit}
+          variant="outline"
+          className="w-full h-12 rounded-full font-semibold text-base gap-1.5"
+          onClick={() => handleSubmit(true)}
           disabled={!canSubmit}
         >
-          {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {t("imports.addEntry", "Add entry")}
+          {submitting === "rule" ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
+          {t("imports.addEntryRule", "Add + create rule")}
         </Button>
       </div>
     </div>

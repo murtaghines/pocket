@@ -8,6 +8,8 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
+import { buildRuleFromCorrection } from "@/lib/userRules";
+import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { AddManualEntryDialog } from "../AddManualEntryDialog";
 import type { MovementType } from "./types";
 
@@ -60,6 +62,7 @@ export function ManualEntryFooter({
     movement: MovementType;
     categorySlug: string;
     amount: number;
+    createRule: boolean;
   }) => {
     if (!user) return;
     try {
@@ -121,7 +124,46 @@ export function ManualEntryFooter({
       await queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user.id] });
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
-      toast({ title: "Entry added", duration: 2500 });
+      if (entry.createRule && cleanDesc) {
+        const built = buildRuleFromCorrection(cleanDesc, entry.movement, entry.categorySlug);
+        const { data: existing } = await supabase
+          .from("user_rules")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("pattern", built.pattern)
+          .eq("category", entry.categorySlug)
+          .eq("is_active", true)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          toast({ title: "Entry added", description: "Rule already exists for this pattern", duration: 3000 });
+        } else {
+          const { error: ruleError } = await supabase.from("user_rules").insert({
+            user_id: user.id,
+            source: "manual",
+            match_type: built.match_type,
+            pattern: built.pattern,
+            tokens: built.tokens,
+            movement: entry.movement,
+            category: entry.categorySlug,
+            confidence: 0.99,
+            original_description: cleanDesc,
+            is_active: true,
+          });
+          if (ruleError) {
+            toast({ title: "Entry added", description: "Couldn't save rule: " + ruleError.message, variant: "destructive" });
+          } else {
+            await queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+            toast({
+              title: "Entry added",
+              description: `Rule saved: future "${cleanDesc}" transactions will be categorized as ${getCategoryLabel(entry.categorySlug)}.`,
+              duration: 3500,
+            });
+          }
+        }
+      } else {
+        toast({ title: "Entry added", duration: 2500 });
+      }
       setOpen(false);
     } catch (err) {
       console.error("[ManualEntryFooter] insert error", err);

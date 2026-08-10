@@ -83,6 +83,7 @@
     "date": "Date",
     "save": "Save",
     "saveRule": "Save + rule",
+    "addEntryRule": "Add + create rule",
     "cancel": "Cancel",
     "hideFromTotals": "Hide from totals",
     "includeInTotals": "Include in totals",
