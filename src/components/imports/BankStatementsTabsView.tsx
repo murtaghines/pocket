@@ -289,6 +289,7 @@ export function BankStatementsTabsView({ tab, onTabChange, activeMonth, onMonthC
           manualEntryOpen={manualEntryOpen}
           onManualEntryOpenChange={setManualEntryOpen}
           defaultMovement={defaultMovement}
+          txCount={activeTxCount ?? 0}
         />
       )}
 

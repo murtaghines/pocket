@@ -29,6 +29,7 @@ export interface MonthWorkspaceProps {
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
+  txCount?: number;
 }
 
 export function MonthWorkspace({
@@ -49,6 +50,7 @@ export function MonthWorkspace({
   manualEntryOpen: externalManualEntryOpen,
   onManualEntryOpenChange,
   defaultMovement,
+  txCount,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -114,8 +116,10 @@ export function MonthWorkspace({
     onManualEntryOpenChange?.(v);
   };
 
-  // Empty state
-  if (imports.length === 0) {
+  const hasTransactions = (txCount ?? 0) > 0;
+
+  // Empty state — only show when no imports AND no standalone transactions
+  if (imports.length === 0 && !hasTransactions) {
     return (
       <div className="bg-card flex-1 flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 md:py-20">
