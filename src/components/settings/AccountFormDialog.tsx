@@ -56,7 +56,8 @@ export function AccountFormDialog({
   const panel = (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "top-[100px] md:top-0",
         open ? "translate-y-0" : "translate-y-full",
       )}
     >
@@ -69,7 +70,7 @@ export function AccountFormDialog({
         >
           <X className="h-4 w-4" />
         </button>
-        <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+        <span className="text-base font-semibold text-foreground flex items-center gap-2">
           <Landmark className="w-4 h-4 text-primary" />
           {mode === "create"
             ? t("accounts.addAccount", "Add account")
@@ -79,10 +80,10 @@ export function AccountFormDialog({
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
         {/* Bank / Institution */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             {t("accounts.institution", "Bank")}
           </label>
           <Input
@@ -91,15 +92,15 @@ export function AccountFormDialog({
             onChange={(e) => setInstitution(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             autoFocus
-            className="h-11 rounded-xl bg-muted border-0 shadow-none focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
           />
         </div>
 
         {/* Nickname */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             {t("accounts.nickname", "Nickname")}{" "}
-            <span className="normal-case font-normal">
+            <span className="font-normal text-muted-foreground">
               ({t("accounts.optional", "optional")})
             </span>
           </label>
@@ -108,9 +109,9 @@ export function AccountFormDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            className="h-11 rounded-xl bg-muted border-0 shadow-none focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
           />
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground px-1">
             {institution.trim()
               ? t("accounts.previewLabel", {
                   preview: name.trim()
@@ -124,18 +125,18 @@ export function AccountFormDialog({
 
         {/* Color */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <label className="text-sm font-semibold text-foreground">
             {t("accounts.color", "Color")}
           </label>
-          <div className="rounded-xl bg-muted p-3 space-y-2">
-            <div className="flex flex-wrap gap-1.5">
+          <div className="rounded-2xl bg-muted p-4 space-y-2.5">
+            <div className="flex flex-wrap gap-2">
               {ACCOUNT_COLOR_PALETTE.blues.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
                   className={cn(
-                    "w-7 h-7 rounded-full transition-transform hover:scale-110",
+                    "w-8 h-8 rounded-full transition-transform hover:scale-110",
                     color.toLowerCase() === c.toLowerCase()
                       ? "ring-2 ring-offset-2 ring-primary"
                       : "",
@@ -145,14 +146,14 @@ export function AccountFormDialog({
                 />
               ))}
             </div>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {ACCOUNT_COLOR_PALETTE.yellows.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
                   className={cn(
-                    "w-7 h-7 rounded-full transition-transform hover:scale-110",
+                    "w-8 h-8 rounded-full transition-transform hover:scale-110",
                     color.toLowerCase() === c.toLowerCase()
                       ? "ring-2 ring-offset-2 ring-primary"
                       : "",
@@ -167,21 +168,14 @@ export function AccountFormDialog({
       </div>
 
       {/* Footer */}
-      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
+      <div className="px-4 pb-6 pt-3 bg-background">
         <Button
-          className="w-full h-12 rounded-xl"
+          className="w-full h-12 rounded-full font-semibold text-base"
           onClick={handleSubmit}
           disabled={!canSubmit}
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {mode === "create" ? t("accounts.create", "Create") : t("accounts.save", "Save")}
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full h-10 rounded-xl text-muted-foreground"
-          onClick={() => onOpenChange(false)}
-        >
-          {t("accounts.cancel", "Cancel")}
         </Button>
       </div>
     </div>

@@ -65,7 +65,8 @@ export function AccountSelectDialog({
   const panel = (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "top-[100px] md:top-0",
         open ? "translate-y-0" : "translate-y-full",
       )}
     >
@@ -78,34 +79,34 @@ export function AccountSelectDialog({
         >
           <X className="h-4 w-4" />
         </button>
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-base font-semibold text-foreground">
           {t('accounts.selectAccount', 'Select account')}
         </span>
         <div className="w-9" />
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
         {/* File info */}
         {fileName && (
-          <div className="rounded-xl bg-muted p-3">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="rounded-2xl bg-muted px-5 py-3">
+            <span className="text-sm font-semibold text-foreground">
               File
             </span>
-            <p className="text-sm font-medium text-foreground mt-1 truncate">
+            <p className="text-sm text-muted-foreground mt-1 truncate">
               {fileName}
             </p>
           </div>
         )}
 
         {/* Account selector */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             {t('accounts.selectAccount', 'Account')}
           </label>
           {hasAccounts ? (
             <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-              <SelectTrigger className="h-11 rounded-xl bg-muted border-0 shadow-none focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
                 <SelectValue placeholder={t('accounts.selectPlaceholder', 'Select an account...')} />
               </SelectTrigger>
               <SelectContent>
@@ -120,7 +121,7 @@ export function AccountSelectDialog({
               </SelectContent>
             </Select>
           ) : (
-            <div className="rounded-xl bg-muted p-4 text-center">
+            <div className="rounded-2xl bg-muted px-5 py-4 text-center">
               <p className="text-sm text-muted-foreground">
                 {t('accounts.noAccountsYet1', 'No accounts yet.')}
               </p>
@@ -134,7 +135,7 @@ export function AccountSelectDialog({
         {/* Add new account */}
         <Button
           variant="outline"
-          className="w-full h-11 rounded-xl gap-2"
+          className="w-full h-12 rounded-full gap-2 font-semibold"
           onClick={() => setShowNewForm(true)}
         >
           <Plus className="w-4 h-4" />
@@ -143,21 +144,14 @@ export function AccountSelectDialog({
       </div>
 
       {/* Footer */}
-      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
+      <div className="px-4 pb-6 pt-3 bg-background">
         <Button
-          className="w-full h-12 rounded-xl gap-1.5"
+          className="w-full h-12 rounded-full font-semibold text-base gap-1.5"
           onClick={handleConfirm}
           disabled={!selectedAccountId}
         >
           <Upload className="w-4 h-4" />
           {t('accounts.upload', 'Upload')}
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full h-10 rounded-xl text-muted-foreground"
-          onClick={() => onOpenChange(false)}
-        >
-          {t('accounts.cancel', 'Cancel')}
         </Button>
       </div>
     </div>

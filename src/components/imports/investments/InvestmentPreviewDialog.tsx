@@ -44,7 +44,8 @@ export function InvestmentPreviewDialog({
   const panel = (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "top-[100px] md:top-0",
         isOpen ? "translate-y-0" : "translate-y-full",
       )}
     >
