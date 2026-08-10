@@ -177,16 +177,26 @@ export function AddManualEntryDialog({
   if (!open) return null;
 
   const panel = (
-    <div
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-card transition-transform duration-300 ease-out",
-        // Leave mobile nav (h-12 = 48px) + month tab strip (~52px) visible on top
-        "top-[100px] md:top-0",
-        open ? "translate-y-0" : "translate-y-full",
-      )}
-    >
+    <>
+      {/* Backdrop — lets the current month peek through above the sheet */}
+      <div
+        className={cn(
+          "fixed inset-0 z-30 bg-black/40 transition-opacity duration-300 md:hidden",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+        onClick={() => onOpenChange(false)}
+      />
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-card transition-transform duration-300 ease-out",
+          "rounded-t-3xl md:rounded-none shadow-lg",
+          // Leave mobile nav (h-12 = 48px) + month tab strip (~52px) visible on top
+          "top-[100px] md:top-0",
+          open ? "translate-y-0" : "translate-y-full",
+        )}
+      >
       {/* Header */}
-      <div className="px-4 py-3 bg-card border-b border-border text-center">
+      <div className="px-4 py-3 bg-card border-b border-border text-center rounded-t-3xl md:rounded-none">
         <span className="text-base font-semibold text-foreground">
           {t("imports.addManualEntry", "Add manual entry")}
         </span>
@@ -397,7 +407,8 @@ export function AddManualEntryDialog({
           {t("imports.addEntryRule", "Add + create rule")}
         </Button>
       </div>
-    </div>
+      </div>
+    </>
   );
 
   return createPortal(panel, document.body);

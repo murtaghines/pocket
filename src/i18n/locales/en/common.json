@@ -96,7 +96,13 @@
     "sharedExpenseDesc": "Someone else paid the full amount — only your share counts.",
     "totalPaid": "Total paid",
     "yourShare": "Your share (%)",
-    "yourAmount": "Your amount:"
+    "yourAmount": "Your amount:",
+    "setByImport": "Set by the imported file",
+    "accountSetByImport": "The account belongs to the whole statement",
+    "deleteEntry": "Delete entry",
+    "deleteEntryTitle": "Delete entry?",
+    "deleteEntryDesc": "This manual entry will be permanently deleted. This can't be undone.",
+    "delete": "Delete"
   },
   "status": {
     "active": "Active",

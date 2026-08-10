@@ -11,6 +11,9 @@ export type PendingEditShape = {
   category_id?: string | null;
   amount?: number;
   description?: string;
+  date?: string;
+  account_id?: string;
+  currency?: string;
 };
 
 export interface MonthTransaction {
