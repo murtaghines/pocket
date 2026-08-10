@@ -1,13 +1,5 @@
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { createPortal } from "react-dom";
 import {
   Select,
   SelectContent,
@@ -15,7 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Building2, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Plus, Building2, Upload, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useTranslation } from "react-i18next";
 import { getAccountDisplayName } from "@/lib/accountColors";
@@ -66,77 +60,112 @@ export function AccountSelectDialog({
 
   const hasAccounts = filteredAccounts.length > 0;
 
+  if (!open) return null;
+
+  const panel = (
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        open ? "translate-y-0" : "translate-y-full",
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <span className="text-sm font-semibold text-foreground">
+          {t('accounts.selectAccount', 'Select account')}
+        </span>
+        <div className="w-9" />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {/* File info */}
+        {fileName && (
+          <div className="rounded-xl bg-muted p-3">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              File
+            </span>
+            <p className="text-sm font-medium text-foreground mt-1 truncate">
+              {fileName}
+            </p>
+          </div>
+        )}
+
+        {/* Account selector */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t('accounts.selectAccount', 'Account')}
+          </label>
+          {hasAccounts ? (
+            <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+              <SelectTrigger className="h-11 rounded-xl bg-muted border-0 shadow-none focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+                <SelectValue placeholder={t('accounts.selectPlaceholder', 'Select an account...')} />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredAccounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>{getAccountDisplayName(account)}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="rounded-xl bg-muted p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t('accounts.noAccountsYet1', 'No accounts yet.')}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t('accounts.noAccountsYet2', 'Create one to get started.')}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Add new account */}
+        <Button
+          variant="outline"
+          className="w-full h-11 rounded-xl gap-2"
+          onClick={() => setShowNewForm(true)}
+        >
+          <Plus className="w-4 h-4" />
+          {t('accounts.addNewAccount', 'Add new account')}
+        </Button>
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
+        <Button
+          className="w-full h-12 rounded-xl gap-1.5"
+          onClick={handleConfirm}
+          disabled={!selectedAccountId}
+        >
+          <Upload className="w-4 h-4" />
+          {t('accounts.upload', 'Upload')}
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full h-10 rounded-xl text-muted-foreground"
+          onClick={() => onOpenChange(false)}
+        >
+          {t('accounts.cancel', 'Cancel')}
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md dashboard-theme bg-background text-foreground">
-          <DialogHeader>
-            <DialogTitle>
-              {t('accounts.selectAccount', 'Select account')}
-            </DialogTitle>
-            <DialogDescription>
-              {fileName
-                ? t('accounts.whichAccountFile', { fileName, defaultValue: `Which account does "${fileName}" belong to?` })
-                : t('accounts.whichAccount', 'Which account are these files from?')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            {hasAccounts ? (
-              <div className="space-y-2">
-                <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('accounts.selectPlaceholder', 'Select an account...')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredAccounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span>{getAccountDisplayName(account)}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-1 py-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  {t('accounts.noAccountsYet1', 'No accounts yet.')}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {t('accounts.noAccountsYet2', 'Create one to get started.')}
-                </p>
-              </div>
-            )}
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => setShowNewForm(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {t('accounts.addNewAccount', 'Add new account')}
-            </Button>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              {t('accounts.cancel', 'Cancel')}
-            </Button>
-            <Button
-              onClick={handleConfirm}
-              disabled={!selectedAccountId}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {t('accounts.upload', 'Upload')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      {createPortal(panel, document.body)}
       <AccountFormDialog
         open={showNewForm}
         onOpenChange={setShowNewForm}

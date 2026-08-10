@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerFooter,
-  DrawerClose,
-} from "@/components/ui/drawer";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { INVESTMENT_TYPES, ASSET_TYPES, getTypeMeta } from "./types";
+import { INVESTMENT_TYPES, ASSET_TYPES } from "./types";
 import type { Investment, PendingInvEdit } from "./types";
 
 interface InvestmentEditDrawerProps {
@@ -42,7 +38,7 @@ export function InvestmentEditDrawer({
   const [platform, setPlatform] = useState("");
   const [assetType, setAssetType] = useState<string | null>(null);
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState(0);
+  const [amountStr, setAmountStr] = useState("");
   const [date, setDate] = useState("");
 
   useEffect(() => {
@@ -51,12 +47,20 @@ export function InvestmentEditDrawer({
       setPlatform(inv.platform || "");
       setAssetType(inv.asset_type || null);
       setDescription(inv.description || "");
-      setAmount(inv.amount);
+      setAmountStr(String(Math.abs(inv.amount)).replace(".", ","));
       setDate(inv.date);
     }
   }, [inv?.id, open]);
 
-  if (!inv) return null;
+  if (!inv || !open) return null;
+
+  const parseNum = (s: string) => {
+    const n = parseFloat(s.replace(",", ".").trim());
+    return isNaN(n) ? NaN : n;
+  };
+
+  const parsedAmount = parseNum(amountStr);
+  const amount = isNaN(parsedAmount) ? inv.amount : parsedAmount;
 
   const hasChanges =
     type !== (inv.type || "deposit") ||
@@ -77,145 +81,161 @@ export function InvestmentEditDrawer({
     return edits;
   };
 
-  const meta = getTypeMeta(type);
-  const TypeIcon = meta.icon;
+  const panel = (
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        open ? "translate-y-0" : "translate-y-full",
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <span className="text-sm font-semibold text-foreground">
+          {t("imports.editTransaction", "Edit transaction")}
+        </span>
+        <div className="w-9" />
+      </div>
 
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <div className="px-4 pt-2 pb-1">
-          {/* Type selector as segmented toggle */}
-          <div className="flex gap-2 mb-4">
-            {INVESTMENT_TYPES.map((it) => {
-              const active = type === it.value;
-              const activeClass: Record<string, string> = {
-                green: "border-success bg-success/10 text-success",
-                red: "border-destructive bg-destructive/10 text-destructive",
-                amber: "border-warning bg-warning/10 text-warning",
-                neutral: "border-muted-foreground bg-muted text-muted-foreground",
-              };
-              const circleClass: Record<string, string> = {
-                green: "bg-success text-white",
-                red: "bg-destructive text-white",
-                amber: "bg-warning text-warning-foreground",
-                neutral: "bg-muted-foreground text-white",
-              };
-              return (
-                <button
-                  key={it.value}
-                  type="button"
-                  onClick={() => setType(it.value)}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                    active
-                      ? activeClass[it.tone] || "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:bg-muted/50",
-                  )}
-                >
-                  <span className={cn(
-                    "flex h-6 w-6 items-center justify-center rounded-full",
-                    active
-                      ? circleClass[it.tone] || "bg-primary text-white"
-                      : "bg-muted text-muted-foreground",
-                  )}>
-                    <it.icon className="h-3 w-3" />
-                  </span>
-                  {it.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Form rows */}
-          <div className="divide-y divide-border/60">
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.description", "Description")}</span>
-              <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="h-auto w-[60%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0"
-              />
-            </div>
-
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.date", "Date")}</span>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="h-auto w-auto border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0 tabular-nums"
-              />
-            </div>
-
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.amount", "Amount")}</span>
-              <Input
-                type="number"
-                step="0.01"
-                value={amount}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value);
-                  if (!Number.isNaN(v)) setAmount(v);
-                }}
-                className="h-auto w-32 border-0 bg-transparent p-0 text-right text-sm font-semibold tabular-nums shadow-none focus-visible:ring-0"
-              />
-            </div>
-
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.platform", "Platform")}</span>
-              <Input
-                list="drawer-platforms"
-                value={platform}
-                onChange={(e) => setPlatform(e.target.value)}
-                placeholder="—"
-                className="h-auto w-[50%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0"
-              />
-              <datalist id="drawer-platforms">
-                {knownPlatforms.map((p) => (
-                  <option key={p} value={p} />
-                ))}
-              </datalist>
-            </div>
-
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.asset", "Asset")}</span>
-              <Select
-                value={assetType || "__none__"}
-                onValueChange={(v) => setAssetType(v === "__none__" ? null : v)}
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {/* Type toggle — segmented control */}
+        <div className="flex rounded-xl bg-muted p-1">
+          {INVESTMENT_TYPES.map((it) => {
+            const Icon = it.icon;
+            const active = type === it.value;
+            return (
+              <button
+                key={it.value}
+                type="button"
+                onClick={() => setType(it.value)}
+                className={cn(
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all",
+                  active
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground",
+                )}
               >
-                <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 gap-1.5 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:opacity-40">
-                  <SelectValue placeholder="—">
-                    <span className="text-sm font-medium">{assetType || "—"}</span>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">—</SelectItem>
-                  {ASSET_TYPES.map((a) => (
-                    <SelectItem key={a} value={a}>
-                      {a}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                <Icon className="h-3.5 w-3.5" />
+                {it.label}
+              </button>
+            );
+          })}
         </div>
 
-        <DrawerFooter>
-          <Button
-            disabled={!hasChanges}
-            onClick={() => {
-              onSave(inv, buildEdits());
-              onOpenChange(false);
-            }}
+        {/* Description */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.description", "Description")}
+          </label>
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="h-11 rounded-xl bg-muted border-0 shadow-none focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+          />
+        </div>
+
+        {/* Date */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.date", "Date")}
+          </label>
+          <Input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="h-11 rounded-xl bg-muted border-0 shadow-none tabular-nums focus-visible:ring-1 focus-visible:ring-primary"
+          />
+        </div>
+
+        {/* Amount */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.amount", "Amount")}
+          </label>
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={amountStr}
+            onChange={(e) => setAmountStr(e.target.value)}
+            placeholder="0,00"
+            className="h-11 rounded-xl bg-muted border-0 shadow-none tabular-nums font-semibold focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+          />
+        </div>
+
+        {/* Platform */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.platform", "Platform")}
+          </label>
+          <Input
+            list="drawer-platforms"
+            value={platform}
+            onChange={(e) => setPlatform(e.target.value)}
+            placeholder="—"
+            className="h-11 rounded-xl bg-muted border-0 shadow-none focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+          />
+          <datalist id="drawer-platforms">
+            {knownPlatforms.map((p) => (
+              <option key={p} value={p} />
+            ))}
+          </datalist>
+        </div>
+
+        {/* Asset type */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("imports.asset", "Asset")}
+          </label>
+          <Select
+            value={assetType || "__none__"}
+            onValueChange={(v) => setAssetType(v === "__none__" ? null : v)}
           >
-            {t("imports.save", "Save")}
-          </Button>
-          <DrawerClose asChild>
-            <Button variant="outline">{t("imports.cancel", "Cancel")}</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+            <SelectTrigger className="h-11 rounded-xl bg-muted border-0 shadow-none focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+              <SelectValue placeholder="—">
+                <span className="text-sm font-medium">{assetType || "—"}</span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">—</SelectItem>
+              {ASSET_TYPES.map((a) => (
+                <SelectItem key={a} value={a}>
+                  {a}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
+        <Button
+          className="w-full h-12 rounded-xl"
+          disabled={!hasChanges}
+          onClick={() => {
+            onSave(inv, buildEdits());
+            onOpenChange(false);
+          }}
+        >
+          {t("imports.save", "Save")}
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full h-10 rounded-xl text-muted-foreground"
+          onClick={() => onOpenChange(false)}
+        >
+          {t("imports.cancel", "Cancel")}
+        </Button>
+      </div>
+    </div>
   );
+
+  return createPortal(panel, document.body);
 }
