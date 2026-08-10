@@ -13,13 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { MinimalSelectContent, MinimalSelectItem } from "../MinimalSelect";
 import {
   getCategoriesForMovement,
 } from "./helpers";
@@ -277,21 +276,19 @@ export function TransactionEditDrawer({
                   </span>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <MinimalSelectContent>
                 {availableCategories.map((slug) => (
-                  <SelectItem key={slug} value={slug}>
-                    <div className="flex items-center gap-2">
-                      <CategoryIcon
-                        iconName={getIcon(slug)}
-                        colorVar={getColor(slug)}
-                        size="sm"
-                        showBackground
-                      />
-                      {getCategoryLabel(slug)}
-                    </div>
-                  </SelectItem>
+                  <MinimalSelectItem key={slug} value={slug}>
+                    <CategoryIcon
+                      iconName={getIcon(slug)}
+                      colorVar={getColor(slug)}
+                      size="sm"
+                      showBackground
+                    />
+                    <span className="truncate">{getCategoryLabel(slug)}</span>
+                  </MinimalSelectItem>
                 ))}
-              </SelectContent>
+              </MinimalSelectContent>
             </Select>
           </div>
         </div>

@@ -6,11 +6,10 @@ import { CategoryIcon } from "@/components/ui/category-icon";
 import { Button } from "@/components/ui/button";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MinimalSelectContent, MinimalSelectItem } from "./MinimalSelect";
 import {
   ArrowRightLeft,
   Plus,
@@ -313,13 +312,13 @@ export function AddManualEntryDialog({
                   </span>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <MinimalSelectContent>
                 {accounts.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {getAccountDisplayName(a)}
-                  </SelectItem>
+                  <MinimalSelectItem key={a.id} value={a.id}>
+                    <span className="truncate">{getAccountDisplayName(a)}</span>
+                  </MinimalSelectItem>
                 ))}
-              </SelectContent>
+              </MinimalSelectContent>
             </Select>
           </div>
           <div className="space-y-1.5 min-w-0">
@@ -346,21 +345,19 @@ export function AddManualEntryDialog({
                   </span>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <MinimalSelectContent>
                 {availableCategories.map((slug) => (
-                  <SelectItem key={slug} value={slug}>
-                    <div className="flex items-center gap-2">
-                      <CategoryIcon
-                        iconName={getCategoryIcon(slug)}
-                        colorVar={getCategoryColor(slug)}
-                        size="sm"
-                        showBackground
-                      />
-                      {getCategoryLabel(slug)}
-                    </div>
-                  </SelectItem>
+                  <MinimalSelectItem key={slug} value={slug}>
+                    <CategoryIcon
+                      iconName={getCategoryIcon(slug)}
+                      colorVar={getCategoryColor(slug)}
+                      size="sm"
+                      showBackground
+                    />
+                    <span className="truncate">{getCategoryLabel(slug)}</span>
+                  </MinimalSelectItem>
                 ))}
-              </SelectContent>
+              </MinimalSelectContent>
             </Select>
           </div>
         </div>
