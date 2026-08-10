@@ -153,7 +153,8 @@ export function RuleEditorDialog({
   const panel = (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "top-[100px] md:top-0",
         open ? "translate-y-0" : "translate-y-full",
       )}
     >
@@ -166,24 +167,23 @@ export function RuleEditorDialog({
         >
           <X className="h-4 w-4" />
         </button>
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-base font-semibold text-foreground">
           Create rule
         </span>
         <div className="w-9" />
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
         {/* Original description + category tag */}
-        <div className="rounded-xl bg-muted p-3 space-y-2">
+        <div className="rounded-2xl bg-muted p-4 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span className="text-sm font-semibold text-foreground">
               Description
             </span>
-            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              <span>Tag as</span>
+            <div className="inline-flex items-center gap-1.5">
               <span
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold normal-case tracking-normal"
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
                 style={
                   categoryColorVar
                     ? {
@@ -211,8 +211,8 @@ export function RuleEditorDialog({
         </div>
 
         {/* Pattern */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             Pattern
           </label>
           <Input
@@ -230,7 +230,7 @@ export function RuleEditorDialog({
                 ? "Exact text to match"
                 : "Text the description must include"
             }
-            className="h-11 rounded-xl bg-muted border-0 shadow-none font-mono text-sm focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-12 rounded-full bg-muted border-0 shadow-none font-mono text-sm px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
             maxLength={200}
           />
         </div>
@@ -246,7 +246,7 @@ export function RuleEditorDialog({
                   type="button"
                   onClick={() => toggleToken(tok)}
                   className={cn(
-                    "rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+                    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                     active
                       ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground",
@@ -259,12 +259,12 @@ export function RuleEditorDialog({
           </div>
         )}
 
-        {/* Match type — segmented control */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        {/* Match type — pill segmented control */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             Match type
           </label>
-          <div className="flex rounded-xl bg-muted p-1">
+          <div className="flex rounded-full bg-muted p-1">
             {MATCH_OPTIONS.map((opt) => {
               const active = matchType === opt.value;
               return (
@@ -273,7 +273,7 @@ export function RuleEditorDialog({
                   type="button"
                   onClick={() => setMatchType(opt.value)}
                   className={cn(
-                    "flex flex-1 items-center justify-center rounded-lg py-2 text-[11px] font-medium transition-all",
+                    "flex flex-1 items-center justify-center rounded-full py-2 text-[11px] font-semibold transition-all",
                     active
                       ? "bg-card text-foreground shadow-sm"
                       : "text-muted-foreground",
@@ -285,14 +285,14 @@ export function RuleEditorDialog({
             })}
           </div>
           {currentMeta && (
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed px-1">
               {currentMeta.hint}
             </p>
           )}
         </div>
 
         {/* Live preview */}
-        <div className="rounded-xl bg-muted p-3.5 flex items-center justify-between gap-3">
+        <div className="rounded-2xl bg-muted px-5 py-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <Sparkles
               className={cn(
@@ -301,10 +301,10 @@ export function RuleEditorDialog({
               )}
             />
             <div className="min-w-0">
-              <div className="text-xs font-medium text-foreground">
+              <div className="text-sm font-semibold text-foreground">
                 Live preview
               </div>
-              <div className="text-[11px] text-muted-foreground truncate">
+              <div className="text-xs text-muted-foreground truncate">
                 Will retroactively match transactions in your history.
               </div>
             </div>
@@ -312,7 +312,7 @@ export function RuleEditorDialog({
           <div className="text-right shrink-0">
             <div
               className={cn(
-                "text-lg font-semibold tabular-nums leading-none",
+                "text-lg font-bold tabular-nums leading-none",
                 canSave ? "text-primary" : "text-muted-foreground",
               )}
             >
@@ -328,23 +328,25 @@ export function RuleEditorDialog({
       {/* Footer */}
       <div className="px-4 pb-6 pt-3 bg-background space-y-2">
         <Button
-          className="w-full h-12 rounded-xl gap-1.5"
+          className="w-full h-12 rounded-full font-semibold gap-1.5"
           disabled={!canSave}
           onClick={handleSave}
         >
           <Wand2 className="w-4 h-4" />
           Save rule
         </Button>
-        <Button
-          variant="ghost"
-          className="w-full h-10 rounded-xl text-muted-foreground"
-          onClick={() => {
-            onSkip?.();
-            onOpenChange(false);
-          }}
-        >
-          {onSkip ? skipLabel : "Cancel"}
-        </Button>
+        {onSkip && (
+          <Button
+            variant="outline"
+            className="w-full h-12 rounded-full font-semibold"
+            onClick={() => {
+              onSkip();
+              onOpenChange(false);
+            }}
+          >
+            {skipLabel}
+          </Button>
+        )}
       </div>
     </div>
   );

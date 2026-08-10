@@ -120,14 +120,7 @@ export function TransactionEditDrawer({
     if (parsed === null) return;
     const sign = movement === "EXPENSE" ? -1 : 1;
     setAmount(sign * Math.abs(parsed));
-  };
-
-  const handleDivide = (n: number) => {
-    if (n < 1) return;
-    const newAbs = Math.abs(amount) / n;
-    const sign = movement === "EXPENSE" ? -1 : 1;
-    setAmount(sign * newAbs);
-    setAmountStr(String(parseFloat(newAbs.toFixed(2))).replace(".", ","));
+    setAmountStr(String(parseFloat(Math.abs(parsed).toFixed(2))).replace(".", ","));
   };
 
   const origMovement = (tx.movement || "EXPENSE") as MovementType;
@@ -165,16 +158,18 @@ export function TransactionEditDrawer({
           ? "text-muted-foreground"
           : "text-destructive";
 
-  const movementOptions: { value: MovementType; icon: typeof Plus; label: string; tone: string }[] = [
-    { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE"), tone: "red" },
-    { value: "INCOME", icon: Plus, label: getMovementLabel("INCOME"), tone: "green" },
-    { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER"), tone: "amber" },
+  const movementOptions: { value: MovementType; icon: typeof Plus; label: string }[] = [
+    { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE") },
+    { value: "INCOME", icon: Plus, label: getMovementLabel("INCOME") },
+    { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER") },
   ];
 
   const panel = (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
+        // Leave mobile nav (h-12 = 48px) + month tab strip (~52px) visible on top
+        "top-[100px] md:top-0",
         open ? "translate-y-0" : "translate-y-full",
       )}
     >
@@ -187,16 +182,16 @@ export function TransactionEditDrawer({
         >
           <X className="h-4 w-4" />
         </button>
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-base font-semibold text-foreground">
           {t("imports.editTransaction", "Edit transaction")}
         </span>
         <div className="w-9" />
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {/* Movement toggle — segmented control */}
-        <div className="flex rounded-xl bg-muted p-1">
+      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
+        {/* Movement toggle — pill segmented control */}
+        <div className="flex rounded-full bg-muted p-1">
           {movementOptions.map((opt) => {
             const Icon = opt.icon;
             const active = movement === opt.value;
@@ -206,7 +201,7 @@ export function TransactionEditDrawer({
                 type="button"
                 onClick={() => handleMovementChange(opt.value)}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-all",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-sm font-semibold transition-all",
                   active
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground",
@@ -220,139 +215,116 @@ export function TransactionEditDrawer({
         </div>
 
         {/* Description */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             {t("imports.description", "Description")}
           </label>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="h-11 rounded-xl bg-muted border-0 shadow-none focus-visible:ring-1 focus-visible:ring-primary"
+            className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary"
           />
         </div>
 
         {/* Amount */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             {t("imports.amount", "Amount")}
           </label>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              {movement === "EXPENSE" && (
-                <span className={cn("absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold", amountColor)}>−</span>
+          <div className="relative">
+            {movement === "EXPENSE" && (
+              <span className={cn("absolute left-5 top-1/2 -translate-y-1/2 text-base font-semibold pointer-events-none", amountColor)}>−</span>
+            )}
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
+              onBlur={handleAmountBlur}
+              placeholder="0,00"
+              className={cn(
+                "h-12 rounded-full bg-muted border-0 shadow-none tabular-nums font-semibold text-base focus-visible:ring-1 focus-visible:ring-primary",
+                movement === "EXPENSE" ? "pl-10 pr-5" : "px-5",
+                amountColor,
               )}
-              <Input
-                type="text"
-                inputMode="decimal"
-                value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value)}
-                onBlur={handleAmountBlur}
-                placeholder="0,00"
-                className={cn(
-                  "h-11 rounded-xl bg-muted border-0 shadow-none tabular-nums font-semibold focus-visible:ring-1 focus-visible:ring-primary",
-                  movement === "EXPENSE" ? "pl-7" : "pl-3",
-                  amountColor,
-                )}
-              />
+            />
+          </div>
+        </div>
+
+        {/* Account + Category row */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2 min-w-0">
+            <label className="text-sm font-semibold text-foreground">
+              {t("imports.account", "Account")}
+            </label>
+            <div className="flex h-12 items-center rounded-full bg-muted px-5 text-sm font-medium text-foreground truncate">
+              {accountName || "—"}
             </div>
           </div>
-          <div className="flex gap-1.5 pt-0.5">
-            {[2, 3, 4].map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => handleDivide(n)}
-                className="rounded-lg bg-muted px-3 py-1 text-xs font-medium tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                &divide; {n}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Account */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {t("imports.account", "Account")}
-          </label>
-          <div className="flex h-11 items-center rounded-xl bg-muted px-3 text-sm text-foreground">
-            {accountName || "—"}
-          </div>
-        </div>
-
-        {/* Category */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {t("imports.category", "Category")}
-          </label>
-          <Select value={category} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="h-11 rounded-xl bg-muted border-0 shadow-none focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
-              <SelectValue>
-                <PillBadge colorVar={getColor(category)} className="text-[11px] py-0.5 overflow-visible">
-                  <CategoryIcon
-                    iconName={getIcon(category)}
-                    colorVar={getColor(category)}
-                    size="sm"
-                    showBackground={false}
-                  />
-                  <span className="truncate">{getCategoryLabel(category)}</span>
-                </PillBadge>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {availableCategories.map((slug) => (
-                <SelectItem key={slug} value={slug}>
-                  <div className="flex items-center gap-2">
+          <div className="space-y-2 min-w-0">
+            <label className="text-sm font-semibold text-foreground">
+              {t("imports.category", "Category")}
+            </label>
+            <Select value={category} onValueChange={handleCategoryChange}>
+              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-40 overflow-visible">
+                <SelectValue>
+                  <PillBadge colorVar={getColor(category)} className="text-[11px] py-0.5 overflow-visible">
                     <CategoryIcon
-                      iconName={getIcon(slug)}
-                      colorVar={getColor(slug)}
+                      iconName={getIcon(category)}
+                      colorVar={getColor(category)}
                       size="sm"
-                      showBackground
+                      showBackground={false}
                     />
-                    {getCategoryLabel(slug)}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                    <span className="truncate">{getCategoryLabel(category)}</span>
+                  </PillBadge>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {availableCategories.map((slug) => (
+                  <SelectItem key={slug} value={slug}>
+                    <div className="flex items-center gap-2">
+                      <CategoryIcon
+                        iconName={getIcon(slug)}
+                        colorVar={getColor(slug)}
+                        size="sm"
+                        showBackground
+                      />
+                      {getCategoryLabel(slug)}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {/* Footer buttons */}
       <div className="px-4 pb-6 pt-3 bg-background space-y-2">
-        <div className="flex gap-2">
-          {ruleWorthy && hasChanges && (
-            <Button
-              className="flex-1 h-12 rounded-xl gap-1.5"
-              variant="outline"
-              onClick={() => {
-                handleAmountBlur();
-                onSave(tx, buildEdits(), true);
-                onOpenChange(false);
-              }}
-            >
-              <Sparkles className="h-4 w-4" />
-              {t("imports.saveRule", "Save + rule")}
-            </Button>
-          )}
+        {ruleWorthy && hasChanges && (
           <Button
-            className="flex-1 h-12 rounded-xl"
-            disabled={!hasChanges}
+            className="w-full h-12 rounded-full font-semibold gap-1.5"
+            variant="outline"
             onClick={() => {
               handleAmountBlur();
-              onSave(tx, buildEdits(), false);
+              onSave(tx, buildEdits(), true);
               onOpenChange(false);
             }}
           >
-            {t("imports.save", "Save")}
+            <Sparkles className="h-4 w-4" />
+            {t("imports.saveRule", "Save + rule")}
           </Button>
-        </div>
+        )}
         <Button
-          variant="ghost"
-          className="w-full h-10 rounded-xl text-muted-foreground"
-          onClick={() => onOpenChange(false)}
+          className="w-full h-12 rounded-full font-semibold text-base"
+          disabled={!hasChanges}
+          onClick={() => {
+            handleAmountBlur();
+            onSave(tx, buildEdits(), false);
+            onOpenChange(false);
+          }}
         >
-          {t("imports.cancel", "Cancel")}
+          {t("imports.save", "Save")}
         </Button>
       </div>
     </div>

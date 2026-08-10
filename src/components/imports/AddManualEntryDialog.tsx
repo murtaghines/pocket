@@ -16,7 +16,6 @@ import {
   Plus,
   Minus,
   Loader2,
-  PlusCircle,
   CalendarIcon,
   X,
 } from "lucide-react";
@@ -28,6 +27,7 @@ import { PillBadge } from "@/components/ui/pill-badge";
 import { useAccounts } from "@/hooks/useAccounts";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
+import { evalArithmetic } from "@/lib/safeMath";
 import type { Database } from "@/integrations/supabase/types";
 import {
   INCOME_CATEGORIES,
@@ -121,7 +121,10 @@ export function AddManualEntryDialog({
     EXPENSE_CATEGORIES;
 
   const parseNum = (s: string) => {
-    const n = parseFloat(s.replace(",", ".").trim());
+    const sanitized = s.replace(/\s/g, "").replace(",", ".");
+    const arith = evalArithmetic(sanitized);
+    if (arith !== null) return arith;
+    const n = parseFloat(sanitized);
     return isNaN(n) ? NaN : n;
   };
 
@@ -175,7 +178,9 @@ export function AddManualEntryDialog({
   const panel = (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex flex-col bg-background transition-transform duration-300 ease-out",
+        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
+        // Leave mobile nav (h-12 = 48px) + month tab strip (~52px) visible on top
+        "top-[100px] md:top-0",
         open ? "translate-y-0" : "translate-y-full",
       )}
     >
@@ -188,16 +193,16 @@ export function AddManualEntryDialog({
         >
           <X className="h-4 w-4" />
         </button>
-        <span className="text-sm font-semibold text-foreground">
-          {t("imports.addManualEntry", "Add entry")} &middot; {monthLabel}
+        <span className="text-base font-semibold text-foreground">
+          {t("imports.addManualEntry", "Add entry")}
         </span>
         <div className="w-9" />
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {/* Movement toggle — segmented control */}
-        <div className="flex rounded-xl bg-muted p-1">
+      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
+        {/* Movement toggle — pill segmented control */}
+        <div className="flex rounded-full bg-muted p-1">
           {movementOptions.map((opt) => {
             const Icon = opt.icon;
             const active = movement === opt.value;
@@ -207,7 +212,7 @@ export function AddManualEntryDialog({
                 type="button"
                 onClick={() => setMovement(opt.value)}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-all",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-sm font-semibold transition-all",
                   active
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground",
@@ -220,67 +225,28 @@ export function AddManualEntryDialog({
           })}
         </div>
 
-        {/* Date */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {t("imports.date", "Date")}
-          </label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="flex w-full h-11 items-center gap-2 rounded-xl bg-muted px-3 text-sm font-medium text-foreground hover:bg-accent transition-colors"
-              >
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                {format(new Date(date + "T00:00:00"), "PPP")}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={new Date(date + "T00:00:00")}
-                onSelect={(d) => {
-                  if (d) {
-                    const y = d.getFullYear();
-                    const m = String(d.getMonth() + 1).padStart(2, "0");
-                    const dd = String(d.getDate()).padStart(2, "0");
-                    setDate(`${y}-${m}-${dd}`);
-                  }
-                }}
-                defaultMonth={new Date(firstDay + "T00:00:00")}
-                disabled={(d) => {
-                  const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                  return iso < firstDay || iso > lastDay;
-                }}
-                initialFocus
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
         {/* Description */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             {t("imports.description", "Description")}
           </label>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t("imports.descriptionPlaceholder", "e.g. Cash lunch")}
-            className="h-11 rounded-xl bg-muted border-0 shadow-none focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
             maxLength={200}
           />
         </div>
 
         {/* Amount */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             {t("imports.amount", "Amount")}
           </label>
           <div className="relative">
             {movement === "EXPENSE" && (
-              <span className={cn("absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold", amountColor)}>−</span>
+              <span className={cn("absolute left-5 top-1/2 -translate-y-1/2 text-base font-semibold pointer-events-none", amountColor)}>−</span>
             )}
             <Input
               type="text"
@@ -289,44 +255,85 @@ export function AddManualEntryDialog({
               onChange={(e) => setAmountStr(e.target.value)}
               placeholder="0,00"
               className={cn(
-                "h-11 rounded-xl bg-muted border-0 shadow-none tabular-nums font-semibold focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50",
-                movement === "EXPENSE" ? "pl-7" : "pl-3",
+                "h-12 rounded-full bg-muted border-0 shadow-none tabular-nums font-semibold text-base focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50",
+                movement === "EXPENSE" ? "pl-10 pr-5" : "px-5",
                 amountColor,
               )}
             />
           </div>
         </div>
 
-        {/* Account */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {t("imports.account", "Account")}
-          </label>
-          <Select value={accountId} onValueChange={setAccountId}>
-            <SelectTrigger className="h-11 rounded-xl bg-muted border-0 shadow-none focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
-              <SelectValue placeholder={t("imports.selectAccount", "Select account")}>
-                <span className="text-sm font-medium">
-                  {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
-                </span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {accounts.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {getAccountDisplayName(a)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Account + Date row (two columns) */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2 min-w-0">
+            <label className="text-sm font-semibold text-foreground">
+              {t("imports.account", "Account")}
+            </label>
+            <Select value={accountId} onValueChange={setAccountId}>
+              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-5 focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+                <SelectValue placeholder={t("imports.selectAccount", "Select")}>
+                  <span className="text-sm font-medium truncate">
+                    {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {getAccountDisplayName(a)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2 min-w-0">
+            <label className="text-sm font-semibold text-foreground">
+              {t("imports.date", "Date")}
+            </label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex w-full h-12 items-center gap-2 rounded-full bg-muted px-5 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                >
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate">
+                    {format(new Date(date + "T00:00:00"), "d MMM yyyy")}
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={new Date(date + "T00:00:00")}
+                  onSelect={(d) => {
+                    if (d) {
+                      const y = d.getFullYear();
+                      const m = String(d.getMonth() + 1).padStart(2, "0");
+                      const dd = String(d.getDate()).padStart(2, "0");
+                      setDate(`${y}-${m}-${dd}`);
+                    }
+                  }}
+                  defaultMonth={new Date(firstDay + "T00:00:00")}
+                  disabled={(d) => {
+                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                    return iso < firstDay || iso > lastDay;
+                  }}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* Category */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">
             {t("imports.category", "Category")}
           </label>
           <Select value={categorySlug} onValueChange={setCategorySlug}>
-            <SelectTrigger className="h-11 rounded-xl bg-muted border-0 shadow-none focus:ring-1 focus:ring-primary [&>svg]:opacity-40 overflow-visible">
+            <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-40 overflow-visible">
               <SelectValue>
                 <PillBadge colorVar={getCategoryColor(categorySlug)} className="text-[11px] py-0.5 overflow-visible">
                   <CategoryIcon
@@ -359,25 +366,14 @@ export function AddManualEntryDialog({
       </div>
 
       {/* Footer */}
-      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
+      <div className="px-4 pb-6 pt-3 bg-background">
         <Button
-          className="w-full h-12 rounded-xl gap-1.5"
+          className="w-full h-12 rounded-full font-semibold text-base"
           onClick={handleSubmit}
           disabled={!canSubmit}
         >
-          {submitting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <PlusCircle className="w-4 h-4" />
-          )}
+          {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {t("imports.addEntry", "Add entry")}
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full h-10 rounded-xl text-muted-foreground"
-          onClick={() => onOpenChange(false)}
-        >
-          {t("imports.cancel", "Cancel")}
         </Button>
       </div>
     </div>
