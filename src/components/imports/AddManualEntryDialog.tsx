@@ -269,18 +269,6 @@ export function AddManualEntryDialog({
               </Popover>
             </div>
 
-            {/* Description */}
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-muted-foreground">{t("imports.description", "Description")}</span>
-              <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={t("imports.descriptionPlaceholder", "e.g. Cash lunch")}
-                className="h-auto w-[60%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
-                maxLength={200}
-              />
-            </div>
-
             {/* Account */}
             <div className="flex items-center justify-between py-3">
               <span className="text-sm text-muted-foreground">{t("imports.account", "Account")}</span>
@@ -300,6 +288,18 @@ export function AddManualEntryDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Description */}
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-muted-foreground">{t("imports.description", "Description")}</span>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t("imports.descriptionPlaceholder", "e.g. Cash lunch")}
+                className="h-auto w-[60%] border-0 bg-transparent p-0 text-right text-sm font-medium shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                maxLength={200}
+              />
             </div>
 
             {/* Amount */}

@@ -280,3 +280,5 @@ Pattern opacity: 10–40% max. Single fill color per tile. Always brand palette.
 8. Quicksand 700 → wordmark and hero headlines only
 9. Charts/sparklines → always use `hsl(var(--success))` / `hsl(var(--destructive))` — never raw CSS colors
 10. Popups, dialogs, drawers, and modals → always `bg-card` (white), never `bg-background` (gray)
+11. Floating panels (Select dropdowns, Popovers, DropdownMenus) → `shadow-lg`, no `border` — shadow alone defines the edge
+12. Number inputs (amounts, splits, quantities) → always `inputMode="decimal"` so mobile shows a numeric keypad
