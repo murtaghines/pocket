@@ -6,11 +6,10 @@ import { CategoryIcon } from "@/components/ui/category-icon";
 import { Button } from "@/components/ui/button";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MinimalSelectContent, MinimalSelectItem } from "./MinimalSelect";
 import {
   ArrowRightLeft,
   Plus,
@@ -23,7 +22,6 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { PillBadge } from "@/components/ui/pill-badge";
 import { useAccounts } from "@/hooks/useAccounts";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
@@ -170,14 +168,9 @@ export function AddManualEntryDialog({
     { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER") },
   ];
 
-  const amountColor =
-    !parsedAmount || isNaN(parsedAmount)
-      ? "text-muted-foreground"
-      : movement === "INCOME"
-        ? "text-success"
-        : movement === "TRANSFER"
-          ? "text-muted-foreground"
-          : "text-destructive";
+  // Sign is implied by the movement toggle — the user only ever types the
+  // plain magnitude. Transfers show no sign (matches the table's badge rule).
+  const amountSign = movement === "EXPENSE" ? "−" : movement === "INCOME" ? "+" : null;
 
   const selectedAccount = accounts.find((a) => a.id === accountId);
 
@@ -246,8 +239,10 @@ export function AddManualEntryDialog({
               {t("imports.amount", "Amount")}
             </label>
             <div className="relative">
-              {movement === "EXPENSE" && (
-                <span className={cn("absolute left-5 top-1/2 -translate-y-1/2 text-base font-semibold pointer-events-none", amountColor)}>−</span>
+              {amountSign && (
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-base text-muted-foreground pointer-events-none">
+                  {amountSign}
+                </span>
               )}
               <Input
                 type="text"
@@ -256,9 +251,8 @@ export function AddManualEntryDialog({
                 onChange={(e) => setAmountStr(e.target.value)}
                 placeholder="0,00"
                 className={cn(
-                  "h-12 rounded-full bg-muted border-0 shadow-none tabular-nums font-semibold text-base focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50",
-                  movement === "EXPENSE" ? "pl-10 pr-5" : "px-5",
-                  amountColor,
+                  "h-12 rounded-full bg-muted border-0 shadow-none tabular-nums text-base focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50",
+                  amountSign ? "pl-10 pr-5" : "px-5",
                 )}
               />
             </div>
@@ -318,13 +312,13 @@ export function AddManualEntryDialog({
                   </span>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <MinimalSelectContent>
                 {accounts.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {getAccountDisplayName(a)}
-                  </SelectItem>
+                  <MinimalSelectItem key={a.id} value={a.id}>
+                    <span className="truncate">{getAccountDisplayName(a)}</span>
+                  </MinimalSelectItem>
                 ))}
-              </SelectContent>
+              </MinimalSelectContent>
             </Select>
           </div>
           <div className="space-y-1.5 min-w-0">
@@ -332,9 +326,15 @@ export function AddManualEntryDialog({
               {t("imports.category", "Category")}
             </label>
             <Select value={categorySlug} onValueChange={setCategorySlug}>
-              <SelectTrigger className="h-12 rounded-full bg-muted border-0 shadow-none px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-40 overflow-visible">
+              <SelectTrigger
+                className="h-12 rounded-full border-0 shadow-none px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-60"
+                style={{
+                  backgroundColor: `hsl(var(--${getCategoryColor(categorySlug)}) / 0.15)`,
+                  color: `hsl(var(--${getCategoryColor(categorySlug)}))`,
+                }}
+              >
                 <SelectValue>
-                  <PillBadge colorVar={getCategoryColor(categorySlug)} className="text-[11px] py-0.5 overflow-visible">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold">
                     <CategoryIcon
                       iconName={getCategoryIcon(categorySlug)}
                       colorVar={getCategoryColor(categorySlug)}
@@ -342,24 +342,22 @@ export function AddManualEntryDialog({
                       showBackground={false}
                     />
                     <span className="truncate">{getCategoryLabel(categorySlug)}</span>
-                  </PillBadge>
+                  </span>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <MinimalSelectContent>
                 {availableCategories.map((slug) => (
-                  <SelectItem key={slug} value={slug}>
-                    <div className="flex items-center gap-2">
-                      <CategoryIcon
-                        iconName={getCategoryIcon(slug)}
-                        colorVar={getCategoryColor(slug)}
-                        size="sm"
-                        showBackground
-                      />
-                      {getCategoryLabel(slug)}
-                    </div>
-                  </SelectItem>
+                  <MinimalSelectItem key={slug} value={slug}>
+                    <CategoryIcon
+                      iconName={getCategoryIcon(slug)}
+                      colorVar={getCategoryColor(slug)}
+                      size="sm"
+                      showBackground
+                    />
+                    <span className="truncate">{getCategoryLabel(slug)}</span>
+                  </MinimalSelectItem>
                 ))}
-              </SelectContent>
+              </MinimalSelectContent>
             </Select>
           </div>
         </div>
