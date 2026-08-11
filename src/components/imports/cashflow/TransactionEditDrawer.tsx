@@ -7,7 +7,6 @@ import {
   ArrowRightLeft,
   Sparkles,
   CalendarIcon,
-  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -63,6 +62,7 @@ interface TransactionEditDrawerProps {
   accounts: Account[];
   onSave: (tx: MonthTransaction, edits: PendingEditShape, withRule: boolean) => void;
   onDelete?: (tx: MonthTransaction) => void;
+  onHide?: (tx: MonthTransaction) => void;
 }
 
 export function TransactionEditDrawer({
@@ -77,6 +77,7 @@ export function TransactionEditDrawer({
   accounts,
   onSave,
   onDelete,
+  onHide,
 }: TransactionEditDrawerProps) {
   const { t } = useTranslation("common");
 
@@ -88,6 +89,7 @@ export function TransactionEditDrawer({
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [accountId, setAccountId] = useState("");
+  const [userNotes, setUserNotes] = useState("");
 
   const savedCategoriesRef = useRef<Record<string, { slug: string; id: string | null }>>({});
 
@@ -106,15 +108,13 @@ export function TransactionEditDrawer({
       setDescription(cleaned);
       setDate(tx.date);
       setAccountId(tx.account_id || "");
+      setUserNotes(tx.user_notes ?? "");
       savedCategoriesRef.current = { [m]: { slug: cat, id: tx.category_id } };
     }
   }, [tx?.id, open]);
 
   if (!tx) return null;
 
-  // What the user may change depends on where the row came from: a statement
-  // row's description/date/account are properties of the file, a manual entry's
-  // are its own. See lib/transactionSource.ts.
   const isManual = isManualTransaction(tx);
 
   const cleanDescription = (tx.description_norm || tx.description)
@@ -128,8 +128,6 @@ export function TransactionEditDrawer({
 
   const availableCategories = getCategoriesForMovement(movement);
   const selectedAccount = accounts.find((a) => a.id === accountId);
-  // `date` syncs from `tx` in an effect, so it's briefly "" on the first render
-  // after `tx` changes — fall back so the date formatting never sees "".
   const displayDate = date || tx.date;
 
   const handleMovementChange = (newMovement: MovementType) => {
@@ -175,7 +173,8 @@ export function TransactionEditDrawer({
     amount !== tx.amount ||
     description !== cleanDescription ||
     date !== tx.date ||
-    accountId !== origAccountId;
+    accountId !== origAccountId ||
+    userNotes !== (tx.user_notes ?? "");
 
   const invalid = isManual && (description.trim().length === 0 || !accountId);
 
@@ -198,10 +197,10 @@ export function TransactionEditDrawer({
       edits.account_id = accountId;
       if (selectedAccount) edits.currency = selectedAccount.currency_base;
     }
+    if (userNotes !== (tx.user_notes ?? "")) edits.user_notes = userNotes;
     return edits;
   };
 
-  // Sign is implied by the movement toggle — the user only types the magnitude.
   const amountSign = movement === "EXPENSE" ? "−" : movement === "INCOME" ? "+" : null;
 
   const movementOptions: { value: MovementType; icon: typeof Plus; label: string }[] = [
@@ -299,26 +298,55 @@ export function TransactionEditDrawer({
         )}
       </div>
 
-      {/* Amount + Date row */}
+      {/* Notes — imported transactions only: the bank description is often
+          cryptic, so this field lets the user add their own recognizable text. */}
+      {!isManual && (
+        <div className="space-y-1.5">
+          <label className={SHEET_LABEL}>
+            {t("imports.userNotes", "My notes")}
+          </label>
+          <Input
+            value={userNotes}
+            onChange={(e) => setUserNotes(e.target.value)}
+            placeholder={t("imports.userNotesPlaceholder", "add your own description...")}
+            className={SHEET_INPUT}
+          />
+        </div>
+      )}
+
+      {/* Account + Date row */}
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5 min-w-0">
-          <label className={SHEET_LABEL}>{t("imports.amount", "Amount")}</label>
-          <div className="relative">
-            {amountSign && (
-              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                {amountSign}
-              </span>
+          <LockedFieldLabel
+            label={t("imports.account", "Account")}
+            locked={!isManual}
+            reason={t(
+              "imports.lockedAccount",
+              "the account belongs to the entire uploaded file statement — it can be changed in configuration",
             )}
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
-              onBlur={handleAmountBlur}
-              placeholder="0,00"
-              className={cn(SHEET_INPUT, "tabular-nums", amountSign && "pl-10 pr-5")}
-            />
-          </div>
+          />
+          {isManual ? (
+            <Select value={accountId} onValueChange={setAccountId}>
+              <SelectTrigger
+                className={cn(SHEET_PILL, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
+              >
+                <SelectValue placeholder={t("imports.selectAccount", "Select")}>
+                  <span className="truncate font-medium">
+                    {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <MinimalSelectContent>
+                {accounts.map((a) => (
+                  <MinimalSelectItem key={a.id} value={a.id}>
+                    <span className="truncate">{getAccountDisplayName(a)}</span>
+                  </MinimalSelectItem>
+                ))}
+              </MinimalSelectContent>
+            </Select>
+          ) : (
+            <LockedValue value={selectedAccount ? getAccountDisplayName(selectedAccount) : "—"} />
+          )}
         </div>
         <div className="space-y-1.5 min-w-0">
           <LockedFieldLabel
@@ -373,39 +401,26 @@ export function TransactionEditDrawer({
         </div>
       </div>
 
-      {/* Account + Category row */}
+      {/* Amount + Category row */}
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5 min-w-0">
-          <LockedFieldLabel
-            label={t("imports.account", "Account")}
-            locked={!isManual}
-            reason={t(
-              "imports.lockedAccount",
-              "the account belongs to the entire uploaded file statement — it can be changed in configuration",
+          <label className={SHEET_LABEL}>{t("imports.amount", "Amount")}</label>
+          <div className="relative">
+            {amountSign && (
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                {amountSign}
+              </span>
             )}
-          />
-          {isManual ? (
-            <Select value={accountId} onValueChange={setAccountId}>
-              <SelectTrigger
-                className={cn(SHEET_PILL, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
-              >
-                <SelectValue placeholder={t("imports.selectAccount", "Select")}>
-                  <span className="truncate font-medium">
-                    {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <MinimalSelectContent>
-                {accounts.map((a) => (
-                  <MinimalSelectItem key={a.id} value={a.id}>
-                    <span className="truncate">{getAccountDisplayName(a)}</span>
-                  </MinimalSelectItem>
-                ))}
-              </MinimalSelectContent>
-            </Select>
-          ) : (
-            <LockedValue value={selectedAccount ? getAccountDisplayName(selectedAccount) : "—"} />
-          )}
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
+              onBlur={handleAmountBlur}
+              placeholder="0,00"
+              className={cn(SHEET_INPUT, "tabular-nums", amountSign && "pl-10 pr-5")}
+            />
+          </div>
         </div>
         <div className="space-y-1.5 min-w-0">
           <label className={SHEET_LABEL}>{t("imports.category", "Category")}</label>
@@ -449,16 +464,30 @@ export function TransactionEditDrawer({
         </div>
       </div>
 
+      {/* Delete / Hide — text only, at the bottom */}
       {isManual && onDelete && (
-        <Button
-          type="button"
-          variant="ghost"
-          className="w-full h-10 rounded-full text-[13px] font-medium text-destructive hover:bg-destructive/10 hover:text-destructive gap-1.5"
-          onClick={() => onDelete(tx)}
-        >
-          <Trash2 className="h-4 w-4" />
-          {t("imports.deleteEntry", "Delete entry")}
-        </Button>
+        <div className="pt-4">
+          <button
+            type="button"
+            className="w-full text-center text-[13px] font-medium text-destructive py-2"
+            onClick={() => onDelete(tx)}
+          >
+            {t("imports.deleteEntry", "delete")}
+          </button>
+        </div>
+      )}
+      {!isManual && onHide && (
+        <div className="pt-4">
+          <button
+            type="button"
+            className="w-full text-center text-[13px] font-medium text-muted-foreground py-2"
+            onClick={() => onHide(tx)}
+          >
+            {tx.is_hidden
+              ? t("imports.showEntry", "show")
+              : t("imports.hideEntry", "hide")}
+          </button>
+        </div>
       )}
     </SheetPanel>
   );

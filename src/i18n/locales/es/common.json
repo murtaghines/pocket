@@ -105,7 +105,11 @@
     "delete": "Eliminar",
     "lockedDescription": "esta descripción viene del extracto bancario subido y no se puede editar",
     "lockedDate": "la fecha viene del extracto bancario, así que no se puede cambiar en una transacción importada",
-    "lockedAccount": "la cuenta pertenece a todo el archivo de extracto subido — se puede cambiar en configuración"
+    "lockedAccount": "la cuenta pertenece a todo el archivo de extracto subido — se puede cambiar en configuración",
+    "userNotes": "Mis notas",
+    "userNotesPlaceholder": "agregar tu propia descripción...",
+    "hideEntry": "ocultar",
+    "showEntry": "mostrar"
   },
   "status": {
     "active": "Activo",

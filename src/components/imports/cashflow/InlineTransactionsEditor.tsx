@@ -229,7 +229,7 @@ export function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id",
+          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id, user_notes",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -560,6 +560,10 @@ export function InlineTransactionsEditor({
       payload.account_id = pending.account_id;
       before.account_id = tx.account_id;
       if (pending.currency) payload.currency = pending.currency;
+    }
+    if (pending.user_notes !== undefined && pending.user_notes !== (tx.user_notes ?? "")) {
+      payload.user_notes = pending.user_notes || null;
+      before.user_notes = tx.user_notes;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -1344,18 +1348,18 @@ export function InlineTransactionsEditor({
                         ? "+"
                         : "−";
 
-                  const swipeLeftAction = !isLocked
-                    ? isManual
-                      ? () => deleteWithUndo(tx)
-                      : () => handleToggleHidden(tx)
-                    : undefined;
-
                   return (
                     <SwipeableRow
                       key={tx.id}
-                      onSwipeLeft={swipeLeftAction}
-                      onSwipeRight={!isLocked ? () => setEditingTx(tx) : undefined}
+                      onSwipeLeft={
+                        !isLocked
+                          ? isManual
+                            ? () => deleteWithUndo(tx)
+                            : () => handleToggleHidden(tx)
+                          : undefined
+                      }
                       leftAction={isManual ? "delete" : "hide"}
+                      onSwipeRight={!isLocked ? () => setEditingTx(tx) : undefined}
                       disabled={isLocked}
                     >
                       <div
@@ -1383,7 +1387,9 @@ export function InlineTransactionsEditor({
 
                         <div className="min-w-0 flex-1">
                           <p className={cn("truncate text-[13px] text-foreground", isHidden && "line-through")}>
-                            <span className="font-medium">{cleanDescription}</span>
+                            <span className="font-medium">
+                              {tx.user_notes || cleanDescription}
+                            </span>
                           </p>
                           <div className="mt-0.5 flex items-center gap-1.5">
                             <span className="truncate text-[11px] text-muted-foreground">
@@ -1398,7 +1404,7 @@ export function InlineTransactionsEditor({
                           </div>
                         </div>
 
-                        <div className="flex shrink-0 flex-col items-end">
+                        <div className="flex shrink-0 flex-col items-end gap-0.5">
                           <div className="flex items-center gap-1">
                             {isSaving ? (
                               <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
@@ -1411,7 +1417,7 @@ export function InlineTransactionsEditor({
                             </span>
                           </div>
                           {accountLabel(tx.account_id) && (
-                            <span className="text-[11px] text-muted-foreground mt-0.5">
+                            <span className="text-[11px] text-muted-foreground">
                               {accountLabel(tx.account_id)}
                             </span>
                           )}
@@ -1441,6 +1447,10 @@ export function InlineTransactionsEditor({
             setEditingTx(null);
           }}
           onDelete={(tx) => deleteWithUndo(tx)}
+          onHide={(tx) => {
+            handleToggleHidden(tx);
+            setEditingTx(null);
+          }}
         />
 
 

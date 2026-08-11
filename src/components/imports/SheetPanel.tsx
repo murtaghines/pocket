@@ -74,22 +74,49 @@ export function SheetPanel({
 
   useBodyScrollLock(mounted);
 
-  // ─── Drag-to-dismiss ───────────────────────────────────────────────
+  // ─── Drag-to-dismiss (works from header AND body) ─────────────────
   const dragStartY = useRef(0);
   const [dragY, setDragY] = useState(0);
   const dragging = useRef(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const DISMISS_THRESHOLD = 120;
 
-  const handleDragStart = (e: TouchEvent) => {
+  const handleHeaderDragStart = (e: TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
     dragging.current = true;
   };
-  const handleDragMove = (e: TouchEvent) => {
+  const handleHeaderDragMove = (e: TouchEvent) => {
     if (!dragging.current) return;
     const dy = e.touches[0].clientY - dragStartY.current;
     if (dy > 0) setDragY(dy);
   };
-  const handleDragEnd = () => {
+  const handleHeaderDragEnd = () => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    if (dragY > DISMISS_THRESHOLD) {
+      onOpenChange(false);
+    }
+    setDragY(0);
+  };
+
+  const handleBodyTouchStart = (e: TouchEvent) => {
+    const el = bodyRef.current;
+    if (!el || el.scrollTop > 0) return;
+    dragStartY.current = e.touches[0].clientY;
+    dragging.current = true;
+  };
+  const handleBodyTouchMove = (e: TouchEvent) => {
+    if (!dragging.current) return;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy > 0) {
+      e.preventDefault();
+      setDragY(dy);
+    } else {
+      dragging.current = false;
+      setDragY(0);
+    }
+  };
+  const handleBodyTouchEnd = () => {
     if (!dragging.current) return;
     dragging.current = false;
     if (dragY > DISMISS_THRESHOLD) {
@@ -122,27 +149,32 @@ export function SheetPanel({
         role="dialog"
         aria-modal="true"
       >
-        {/* Drag handle */}
+        {/* Drag handle + title — entire header is draggable */}
         <div
-          className="flex flex-col items-center pt-2 pb-1 cursor-grab active:cursor-grabbing touch-none"
-          onTouchStart={handleDragStart}
-          onTouchMove={handleDragMove}
-          onTouchEnd={handleDragEnd}
+          className="cursor-grab active:cursor-grabbing touch-none select-none"
+          onTouchStart={handleHeaderDragStart}
+          onTouchMove={handleHeaderDragMove}
+          onTouchEnd={handleHeaderDragEnd}
         >
-          <div className="w-9 h-1 rounded-full bg-muted-foreground/30" />
-        </div>
-
-        <div className="px-4 pb-3 text-center">
-          <span className="text-[15px] font-semibold lowercase text-foreground">
-            {title}
-          </span>
+          <div className="flex flex-col items-center pt-2 pb-1">
+            <div className="w-9 h-1 rounded-full bg-muted-foreground/30" />
+          </div>
+          <div className="px-4 pt-3 pb-5 text-center">
+            <span className="text-[15px] font-title font-normal lowercase tracking-[0.04em] text-foreground">
+              {title}
+            </span>
+          </div>
         </div>
 
         <div
+          ref={bodyRef}
           className={cn(
-            "flex-1 overflow-y-auto overscroll-contain px-4 pb-5 space-y-4",
+            "flex-1 overflow-y-auto overscroll-contain px-4 pb-5 space-y-5",
             bodyClassName,
           )}
+          onTouchStart={handleBodyTouchStart}
+          onTouchMove={handleBodyTouchMove}
+          onTouchEnd={handleBodyTouchEnd}
         >
           {children}
         </div>
