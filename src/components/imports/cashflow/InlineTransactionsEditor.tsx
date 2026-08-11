@@ -229,7 +229,7 @@ export function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id",
+          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id, user_notes",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -558,6 +558,10 @@ export function InlineTransactionsEditor({
       payload.account_id = pending.account_id;
       before.account_id = tx.account_id;
       if (pending.currency) payload.currency = pending.currency;
+    }
+    if (pending.user_notes !== undefined && pending.user_notes !== (tx.user_notes ?? "")) {
+      payload.user_notes = pending.user_notes || null;
+      before.user_notes = tx.user_notes;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -1345,7 +1349,14 @@ export function InlineTransactionsEditor({
                   return (
                     <SwipeableRow
                       key={tx.id}
-                      onSwipeLeft={!isLocked && isManual ? () => deleteWithUndo(tx) : undefined}
+                      onSwipeLeft={
+                        !isLocked
+                          ? isManual
+                            ? () => deleteWithUndo(tx)
+                            : () => handleToggleHidden(tx)
+                          : undefined
+                      }
+                      leftAction={isManual ? "delete" : "hide"}
                       onSwipeRight={!isLocked ? () => setEditingTx(tx) : undefined}
                       disabled={isLocked}
                     >
@@ -1357,6 +1368,7 @@ export function InlineTransactionsEditor({
                           isHidden && "opacity-60 bg-muted/20",
                           isSaved && !isMismatch && "bg-success/5",
                         )}
+                        onClick={() => !isLocked && setEditingTx(tx)}
                       >
                         <div
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -1373,14 +1385,14 @@ export function InlineTransactionsEditor({
 
                         <div className="min-w-0 flex-1">
                           <p className={cn("truncate text-[13px] text-foreground", isHidden && "line-through")}>
-                            <span className="font-medium">{cleanDescription}</span>
+                            <span className="font-medium">
+                              {tx.user_notes || cleanDescription}
+                            </span>
                           </p>
                           <div className="mt-0.5 flex items-center gap-1.5">
-                            {accountLabel(tx.account_id) && (
-                              <span className="truncate text-[11px] text-muted-foreground">
-                                {accountLabel(tx.account_id)}
-                              </span>
-                            )}
+                            <span className="truncate text-[11px] text-muted-foreground">
+                              {getCategoryLabel(category)}
+                            </span>
                             {isHidden && (
                               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                                 <EyeOff className="h-2.5 w-2.5" />
@@ -1390,16 +1402,23 @@ export function InlineTransactionsEditor({
                           </div>
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-1">
-                          {isSaving ? (
-                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                          ) : isSaved ? (
-                            <Check className="h-3 w-3 text-success" />
-                          ) : null}
-                          <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
-                            {amountSign}
-                            {formatCurrency(Math.abs(tx.amount))}
-                          </span>
+                        <div className="flex shrink-0 flex-col items-end gap-0.5">
+                          <div className="flex items-center gap-1">
+                            {isSaving ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                            ) : isSaved ? (
+                              <Check className="h-3 w-3 text-success" />
+                            ) : null}
+                            <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
+                              {amountSign}
+                              {formatCurrency(Math.abs(tx.amount))}
+                            </span>
+                          </div>
+                          {accountLabel(tx.account_id) && (
+                            <span className="text-[11px] text-muted-foreground">
+                              {accountLabel(tx.account_id)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </SwipeableRow>
@@ -1426,6 +1445,10 @@ export function InlineTransactionsEditor({
             setEditingTx(null);
           }}
           onDelete={(tx) => deleteWithUndo(tx)}
+          onHide={(tx) => {
+            handleToggleHidden(tx);
+            setEditingTx(null);
+          }}
         />
 
 

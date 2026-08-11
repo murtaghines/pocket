@@ -14,6 +14,7 @@ export type PendingEditShape = {
   date?: string;
   account_id?: string;
   currency?: string;
+  user_notes?: string;
 };
 
 export interface MonthTransaction {
@@ -32,6 +33,7 @@ export interface MonthTransaction {
    *  Read it via isManualTransaction() — never compare it by hand. */
   fingerprint: string | null;
   transfer_pair_id: string | null;
+  user_notes: string | null;
 }
 
 export interface AuditEntry {

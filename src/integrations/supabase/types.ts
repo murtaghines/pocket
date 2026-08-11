@@ -495,6 +495,7 @@ export type Database = {
           transfer_pair_id: string | null
           user_corrected: boolean | null
           user_id: string
+          user_notes: string | null
         }
         Insert: {
           account_id?: string | null
@@ -526,6 +527,7 @@ export type Database = {
           transfer_pair_id?: string | null
           user_corrected?: boolean | null
           user_id: string
+          user_notes?: string | null
         }
         Update: {
           account_id?: string | null
@@ -557,6 +559,7 @@ export type Database = {
           transfer_pair_id?: string | null
           user_corrected?: boolean | null
           user_id?: string
+          user_notes?: string | null
         }
         Relationships: [
           {
