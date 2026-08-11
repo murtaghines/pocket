@@ -29,7 +29,8 @@ Follow these rules in every component, page and PR — no exceptions.
 
 | Family | Role | Weight |
 |---|---|---|
-| Inter | All UI — titles, body, nav, tables, numbers | 400 / 500 / 600 / 700 |
+| Inter | All UI — body, nav, tables, numbers | 400 / 500 / 600 / 700 |
+| Poppins | Page titles in the top bar only (`font-title`), always lowercase | 700 |
 | Quicksand | Logo wordmark + hero/landing headlines only | 700 |
 
 **Type scale:**
@@ -277,7 +278,7 @@ Pattern opacity: 10–40% max. Single fill color per tile. Always brand palette.
 5. `font-variant-numeric: tabular-nums` in every table cell with numbers
 6. Lucide icons only — no emoji, no other icon libraries
 7. Never tile the Asterisk mark in patterns
-8. Quicksand 700 → wordmark and hero headlines only
+8. Quicksand 700 → wordmark and hero headlines only; Poppins 700 → page titles only
 9. Charts/sparklines → always use `hsl(var(--success))` / `hsl(var(--destructive))` — never raw CSS colors
 10. Popups, dialogs, drawers, and modals → always `bg-card` (white), never `bg-background` (gray)
 11. Floating panels (Select dropdowns, Popovers, DropdownMenus) → `shadow-lg`, no `border` — shadow alone defines the edge

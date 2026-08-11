@@ -25,7 +25,7 @@ export function AppHeader({ title, showSelectors = true, leftExtra }: AppHeaderP
       {/* Left cluster: title + selector/filter (flex-1 so the centre pill stays centred) */}
       <div className="flex flex-1 items-center gap-[14px] min-w-0">
         {title && (
-          <span className="text-[20px] font-semibold tracking-[-0.01em] text-foreground whitespace-nowrap">
+          <span className="font-title text-[20px] font-bold lowercase tracking-[-0.01em] text-foreground whitespace-nowrap">
             {title}
           </span>
         )}

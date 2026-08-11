@@ -1,6 +1,5 @@
-import { Plus, Minus, ArrowRightLeft, TrendingUp } from "lucide-react";
 import { Transaction } from "@/lib/mockData";
-import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
+import { type PillTone } from "@/components/ui/pill-badge";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
@@ -47,15 +46,14 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
     <ul className="divide-y divide-border/60">
       {transactions.map((tx) => {
         const movementType = getMovementType(tx);
-        const Icon =
-          movementType === "income"
-            ? Plus
-            : movementType === "transfer"
-              ? ArrowRightLeft
-              : movementType === "investment"
-                ? TrendingUp
-                : Minus;
-        const sign = tx.amount > 0 ? "+" : "";
+        // Sign follows the movement, not the stored number: transfers move money
+        // between your own accounts, so they carry none.
+        const sign =
+          tx.amount === 0 || movementType === "transfer"
+            ? ""
+            : movementType === "income"
+              ? "+"
+              : "−";
         const amountClass =
           tx.amount === 0
             ? "text-muted-foreground"
@@ -63,24 +61,26 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
               ? "text-success"
               : movementType === "expense"
                 ? "text-destructive"
-                : "text-foreground";
+                : "text-muted-foreground";
 
         return (
           <li
             key={tx.id}
             className="flex items-center gap-3 py-3 px-1 -mx-1 rounded-lg transition-colors hover:bg-muted/40"
           >
-            {/* Movement icon */}
+            {/* Category icon — the movement is already legible from the sign
+                and colour of the amount, so the circle carries the category. */}
             <div
-              className={cn(
-                "shrink-0 w-9 h-9 rounded-full flex items-center justify-center",
-                movementType === "income" && "bg-success/15 text-success",
-                movementType === "expense" && "bg-destructive/15 text-destructive",
-                movementType === "transfer" && "bg-muted text-muted-foreground",
-                movementType === "investment" && "bg-primary/15 text-primary",
-              )}
+              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: `hsl(var(--${getCategoryColor(tx.category)}) / 0.15)` }}
+              title={getCategoryLabel(tx.category)}
             >
-              <Icon className="w-4 h-4" />
+              <CategoryIcon
+                iconName={getCategoryIcon(tx.category)}
+                colorVar={getCategoryColor(tx.category)}
+                size="sm"
+                showBackground={false}
+              />
             </div>
 
             {/* Body */}
@@ -90,33 +90,17 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim()}
               </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <PillBadge colorVar={getCategoryColor(tx.category)}>
-                  <CategoryIcon
-                    iconName={getCategoryIcon(tx.category)}
-                    colorVar={getCategoryColor(tx.category)}
-                    size="sm"
-                    showBackground={false}
-                  />
-                  <span className="truncate max-w-[110px]">
-                    {getCategoryLabel(tx.category)}
-                  </span>
-                </PillBadge>
-                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                  {formatDate(tx.date)}
-                </span>
+              <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
+                {tx.account && <span className="truncate">{tx.account}</span>}
+                {tx.account && <span className="text-muted-foreground/50">&middot;</span>}
+                <span className="whitespace-nowrap">{formatDate(tx.date)}</span>
               </div>
-              {tx.account && (
-                <div className="text-[11px] text-muted-foreground/80 truncate mt-0.5">
-                  {tx.account}
-                </div>
-              )}
             </div>
 
             {/* Amount */}
             <div className={cn("text-sm font-semibold whitespace-nowrap", amountClass)}>
               {sign}
-              {formatCurrency(tx.amount)}
+              {formatCurrency(Math.abs(tx.amount))}
             </div>
           </li>
         );

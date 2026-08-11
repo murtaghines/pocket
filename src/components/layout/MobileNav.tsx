@@ -143,7 +143,7 @@ export function MobileNav() {
           {/* Page title — visible when closed */}
           <span
             className={cn(
-              "text-[15px] font-medium tracking-[-0.01em] lowercase text-primary-foreground transition-all duration-300",
+              "font-title text-[15px] font-bold tracking-[-0.01em] lowercase text-primary-foreground transition-all duration-300",
               open ? "opacity-0 -translate-y-3" : "opacity-100 translate-y-0",
             )}
           >

@@ -19,6 +19,8 @@ export default {
         display: ['Inter', 'sans-serif'],
         nav: ['Inter', 'sans-serif'],
         heading: ['Quicksand', 'sans-serif'],
+        // Page titles (top bar) only — see .claude/rules/design-system.md
+        title: ['Poppins', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

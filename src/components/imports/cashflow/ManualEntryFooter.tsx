@@ -183,7 +183,7 @@ export function ManualEntryFooter({
   return (
     <>
       {/* Mobile: summary strip — sticky at bottom */}
-      <div className="md:hidden sticky bottom-0 z-20">
+      <div className="md:hidden sticky bottom-0 z-20 mt-auto">
         <div className="flex items-center px-4 py-2 gap-3 border-t border-border bg-card/95 backdrop-blur">
           <div className="flex items-center gap-1">
             <Plus className="w-3 h-3 text-success" />
