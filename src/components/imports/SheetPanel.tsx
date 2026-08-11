@@ -159,8 +159,8 @@ export function SheetPanel({
           <div className="flex flex-col items-center pt-2 pb-1">
             <div className="w-9 h-1 rounded-full bg-muted-foreground/30" />
           </div>
-          <div className="px-4 pt-3 pb-5 text-center">
-            <span className="text-[15px] font-title font-normal lowercase tracking-[0.04em] text-foreground">
+          <div className="px-4 pt-2 pb-4 text-center">
+            <span className="text-[15px] font-semibold lowercase text-foreground">
               {title}
             </span>
           </div>
