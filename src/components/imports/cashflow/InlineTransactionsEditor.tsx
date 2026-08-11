@@ -379,15 +379,17 @@ export function InlineTransactionsEditor({
 
     const { id: _id, created_at: _c, updated_at: _u, ...insertPayload } = fullRow;
 
-    sonnerToast("Entry deleted", {
+    const undoId = sonnerToast("Entry deleted", {
       duration: 5000,
       action: {
-        label: "Undo",
+        label: "undo",
         onClick: async () => {
           await supabase.from("transactions").insert(insertPayload);
           queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
+          sonnerToast.dismiss(undoId);
+          sonnerToast("Entry restored");
         },
       },
     });
@@ -1342,11 +1344,18 @@ export function InlineTransactionsEditor({
                         ? "+"
                         : "−";
 
+                  const swipeLeftAction = !isLocked
+                    ? isManual
+                      ? () => deleteWithUndo(tx)
+                      : () => handleToggleHidden(tx)
+                    : undefined;
+
                   return (
                     <SwipeableRow
                       key={tx.id}
-                      onSwipeLeft={!isLocked && isManual ? () => deleteWithUndo(tx) : undefined}
+                      onSwipeLeft={swipeLeftAction}
                       onSwipeRight={!isLocked ? () => setEditingTx(tx) : undefined}
+                      leftAction={isManual ? "delete" : "hide"}
                       disabled={isLocked}
                     >
                       <div
@@ -1357,6 +1366,7 @@ export function InlineTransactionsEditor({
                           isHidden && "opacity-60 bg-muted/20",
                           isSaved && !isMismatch && "bg-success/5",
                         )}
+                        onClick={() => !isLocked && setEditingTx(tx)}
                       >
                         <div
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -1376,11 +1386,9 @@ export function InlineTransactionsEditor({
                             <span className="font-medium">{cleanDescription}</span>
                           </p>
                           <div className="mt-0.5 flex items-center gap-1.5">
-                            {accountLabel(tx.account_id) && (
-                              <span className="truncate text-[11px] text-muted-foreground">
-                                {accountLabel(tx.account_id)}
-                              </span>
-                            )}
+                            <span className="truncate text-[11px] text-muted-foreground">
+                              {getCategoryLabel(category)}
+                            </span>
                             {isHidden && (
                               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                                 <EyeOff className="h-2.5 w-2.5" />
@@ -1390,16 +1398,23 @@ export function InlineTransactionsEditor({
                           </div>
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-1">
-                          {isSaving ? (
-                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                          ) : isSaved ? (
-                            <Check className="h-3 w-3 text-success" />
-                          ) : null}
-                          <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
-                            {amountSign}
-                            {formatCurrency(Math.abs(tx.amount))}
-                          </span>
+                        <div className="flex shrink-0 flex-col items-end">
+                          <div className="flex items-center gap-1">
+                            {isSaving ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                            ) : isSaved ? (
+                              <Check className="h-3 w-3 text-success" />
+                            ) : null}
+                            <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
+                              {amountSign}
+                              {formatCurrency(Math.abs(tx.amount))}
+                            </span>
+                          </div>
+                          {accountLabel(tx.account_id) && (
+                            <span className="text-[11px] text-muted-foreground mt-0.5">
+                              {accountLabel(tx.account_id)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </SwipeableRow>

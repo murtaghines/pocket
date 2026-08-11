@@ -1,131 +1,148 @@
-import { useRef, useState, type ReactNode, type TouchEvent } from "react";
+import { useRef, useState, useCallback, type ReactNode, type TouchEvent, type MouseEvent } from "react";
 import { cn } from "@/lib/utils";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, EyeOff } from "lucide-react";
 
 interface SwipeableRowProps {
   children: ReactNode;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
-  leftLabel?: string;
-  rightLabel?: string;
+  /** "delete" (red, trash) | "hide" (grey, eye-off) */
+  leftAction?: "delete" | "hide";
   disabled?: boolean;
 }
 
-const THRESHOLD = 70;
-const MAX_DRAG = 100;
+const REVEAL_W = 72;
+const AUTO_TRIGGER_W = 140;
 
 export function SwipeableRow({
   children,
   onSwipeLeft,
   onSwipeRight,
-  leftLabel = "Delete",
-  rightLabel = "Edit",
+  leftAction = "delete",
   disabled,
 }: SwipeableRowProps) {
   const startX = useRef(0);
   const startY = useRef(0);
   const [offset, setOffset] = useState(0);
-  const [swiping, setSwiping] = useState(false);
-  const locked = useRef(false);
+  const tracking = useRef(false);
+  const dirLocked = useRef<"x" | "y" | null>(null);
+  const didSwipe = useRef(false);
+
+  const reset = useCallback(() => {
+    setOffset(0);
+    tracking.current = false;
+    dirLocked.current = null;
+  }, []);
 
   const handleTouchStart = (e: TouchEvent) => {
     if (disabled) return;
-    const touch = e.touches[0];
-    startX.current = touch.clientX;
-    startY.current = touch.clientY;
-    locked.current = false;
-    setSwiping(false);
+    const t = e.touches[0];
+    startX.current = t.clientX;
+    startY.current = t.clientY;
+    dirLocked.current = null;
+    tracking.current = true;
+    didSwipe.current = false;
   };
 
   const handleTouchMove = (e: TouchEvent) => {
-    if (disabled) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - startX.current;
-    const dy = touch.clientY - startY.current;
+    if (disabled || !tracking.current) return;
+    const t = e.touches[0];
+    const dx = t.clientX - startX.current;
+    const dy = t.clientY - startY.current;
 
-    if (!locked.current) {
-      if (Math.abs(dy) > Math.abs(dx)) {
-        locked.current = true;
+    if (!dirLocked.current) {
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 6) {
+        dirLocked.current = "y";
         return;
       }
       if (Math.abs(dx) > 8) {
-        setSwiping(true);
-        locked.current = true;
-      }
+        dirLocked.current = "x";
+        didSwipe.current = true;
+      } else return;
     }
+    if (dirLocked.current !== "x") return;
 
-    if (!swiping && !locked.current) return;
-    if (locked.current && !swiping) return;
-
-    // Only allow swipe left if onSwipeLeft is provided, same for right
     if (dx < 0 && !onSwipeLeft) return;
     if (dx > 0 && !onSwipeRight) return;
 
-    const clamped = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, dx));
+    const max = AUTO_TRIGGER_W + 20;
+    const clamped = Math.max(-max, Math.min(max, dx));
     setOffset(clamped);
   };
 
   const handleTouchEnd = () => {
-    if (!swiping) return;
-    if (offset < -THRESHOLD && onSwipeLeft) {
-      onSwipeLeft();
-    } else if (offset > THRESHOLD && onSwipeRight) {
-      onSwipeRight();
+    if (!tracking.current) return;
+    if (Math.abs(offset) >= AUTO_TRIGGER_W) {
+      if (offset < 0 && onSwipeLeft) onSwipeLeft();
+      else if (offset > 0 && onSwipeRight) onSwipeRight();
+      reset();
+      return;
     }
-    setOffset(0);
-    setSwiping(false);
+    if (offset < -REVEAL_W / 2 && onSwipeLeft) {
+      setOffset(-REVEAL_W);
+      tracking.current = false;
+      dirLocked.current = null;
+    } else if (offset > REVEAL_W / 2 && onSwipeRight) {
+      setOffset(REVEAL_W);
+      tracking.current = false;
+      dirLocked.current = null;
+    } else {
+      reset();
+    }
   };
 
-  const progress = Math.abs(offset) / THRESHOLD;
-  const committed = Math.abs(offset) >= THRESHOLD;
+  const handleContentClick = (e: MouseEvent) => {
+    if (didSwipe.current) {
+      e.stopPropagation();
+      didSwipe.current = false;
+      return;
+    }
+    if (Math.abs(offset) > 0) {
+      e.stopPropagation();
+      reset();
+    }
+  };
+
+  const leftBg = leftAction === "hide" ? "bg-muted-foreground" : "bg-destructive";
+  const LeftIcon = leftAction === "hide" ? EyeOff : Trash2;
 
   return (
     <div className="relative overflow-hidden">
-      {/* Left action background (swipe right → edit) */}
       {offset > 0 && onSwipeRight && (
-        <div
-          className={cn(
-            "absolute inset-y-0 left-0 flex items-center pl-4 transition-colors",
-            committed ? "bg-primary" : "bg-primary/80",
-          )}
-          style={{ width: Math.abs(offset) }}
-        >
-          <div
-            className="flex items-center gap-1.5 text-primary-foreground"
-            style={{ opacity: Math.min(1, progress) }}
+        <div className="absolute inset-y-0 left-0 flex items-center justify-center bg-primary" style={{ width: Math.abs(offset) }}>
+          <button
+            type="button"
+            className="flex h-full w-full items-center justify-center"
+            onClick={() => { onSwipeRight(); reset(); }}
+            aria-label="Edit"
           >
-            <Pencil className="w-4 h-4" />
-            <span className="text-xs font-medium">{rightLabel}</span>
-          </div>
+            <Pencil className="w-5 h-5 text-primary-foreground" />
+          </button>
         </div>
       )}
 
-      {/* Right action background (swipe left → delete) */}
       {offset < 0 && onSwipeLeft && (
-        <div
-          className={cn(
-            "absolute inset-y-0 right-0 flex items-center justify-end pr-4 transition-colors",
-            committed ? "bg-destructive" : "bg-destructive/80",
-          )}
-          style={{ width: Math.abs(offset) }}
-        >
-          <div
-            className="flex items-center gap-1.5 text-destructive-foreground"
-            style={{ opacity: Math.min(1, progress) }}
+        <div className={cn("absolute inset-y-0 right-0 flex items-center justify-center", leftBg)} style={{ width: Math.abs(offset) }}>
+          <button
+            type="button"
+            className="flex h-full w-full items-center justify-center"
+            onClick={() => { onSwipeLeft(); reset(); }}
+            aria-label={leftAction === "hide" ? "Hide" : "Delete"}
           >
-            <span className="text-xs font-medium">{leftLabel}</span>
-            <Trash2 className="w-4 h-4" />
-          </div>
+            <LeftIcon className="w-5 h-5 text-white" />
+          </button>
         </div>
       )}
 
-      {/* Sliding content */}
       <div
-        className={cn(!swiping && "transition-transform duration-200 ease-out")}
+        className={cn(
+          !tracking.current && dirLocked.current !== "x" && "transition-transform duration-200 ease-out",
+        )}
         style={{ transform: `translateX(${offset}px)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClick={handleContentClick}
       >
         {children}
       </div>

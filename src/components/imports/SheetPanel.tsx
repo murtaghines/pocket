@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
@@ -74,12 +74,34 @@ export function SheetPanel({
 
   useBodyScrollLock(mounted);
 
+  // ─── Drag-to-dismiss ───────────────────────────────────────────────
+  const dragStartY = useRef(0);
+  const [dragY, setDragY] = useState(0);
+  const dragging = useRef(false);
+  const DISMISS_THRESHOLD = 120;
+
+  const handleDragStart = (e: TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+    dragging.current = true;
+  };
+  const handleDragMove = (e: TouchEvent) => {
+    if (!dragging.current) return;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy > 0) setDragY(dy);
+  };
+  const handleDragEnd = () => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    if (dragY > DISMISS_THRESHOLD) {
+      onOpenChange(false);
+    }
+    setDragY(0);
+  };
+
   if (!mounted) return null;
 
   const panel = (
     <>
-      {/* Scrim — the month behind stays visible so the sheet reads as
-          sitting on top of the page rather than replacing it. */}
       <div
         className={cn(
           "fixed inset-0 z-30 bg-black/40 transition-opacity duration-300 ease-out",
@@ -91,17 +113,26 @@ export function SheetPanel({
         className={cn(
           "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-card shadow-lg",
           "rounded-t-3xl md:rounded-none",
-          // Leave the mobile nav (48px) + month tab strip (~52px) uncovered
           "top-[100px] md:top-0",
-          // iOS sheet easing: quick to leave the bottom, settles gently.
-          "transition-transform duration-[320ms] ease-[cubic-bezier(0.32,0.72,0,1)]",
+          !dragging.current && "transition-transform duration-[320ms] ease-[cubic-bezier(0.32,0.72,0,1)]",
           "motion-reduce:transition-none",
           shown ? "translate-y-0" : "translate-y-full",
         )}
+        style={dragY > 0 ? { transform: `translateY(${dragY}px)` } : undefined}
         role="dialog"
         aria-modal="true"
       >
-        <div className="px-4 py-3.5 text-center">
+        {/* Drag handle */}
+        <div
+          className="flex flex-col items-center pt-2 pb-1 cursor-grab active:cursor-grabbing touch-none"
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+        >
+          <div className="w-9 h-1 rounded-full bg-muted-foreground/30" />
+        </div>
+
+        <div className="px-4 pb-3 text-center">
           <span className="text-[15px] font-semibold lowercase text-foreground">
             {title}
           </span>
