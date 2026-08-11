@@ -19,7 +19,6 @@ import {
   Split as SplitIcon,
   RotateCcw,
   FileSpreadsheet,
-  Pencil,
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -86,9 +85,11 @@ import {
 import { AmountEditButton } from "./AmountEditButton";
 import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
+import { toast as sonnerToast } from "sonner";
 import { isManualTransaction } from "@/lib/transactionSource";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { ProcessingPanel } from "./ProcessingPanel";
+import { SwipeableRow } from "./SwipeableRow";
 import { TransactionEditDrawer } from "./TransactionEditDrawer";
 import type {
   MonthTransaction,
@@ -355,32 +356,42 @@ export function InlineTransactionsEditor({
     },
   });
 
-  // Hard-delete — only ever offered for manual entries (no import_id). Imported
-  // rows stay soft-hide-only: see the NOTE in useTransactions.tsx (a deleted
-  // imported row has no fingerprint to dedup against, so it would silently
-  // reappear on the next re-upload). Manual entries have no source file, so
-  // that risk doesn't apply.
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("transactions").delete().eq("id", id);
-      if (error) throw error;
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      toast({ title: "Entry deleted" });
-    },
-    onError: (err: any) => {
-      toast({
-        title: "Couldn't delete entry",
-        description: err?.message ?? "Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  // Hard-delete with undo — only ever offered for manual entries (no import_id).
+  const deleteWithUndo = async (tx: MonthTransaction) => {
+    if (!user || !isManualTransaction(tx)) return;
+    // Fetch the full row before deleting so we can re-insert on undo.
+    const { data: fullRow } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("id", tx.id)
+      .single();
+    if (!fullRow) return;
 
-  const [deleteConfirmTx, setDeleteConfirmTx] = useState<MonthTransaction | null>(null);
+    const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
+    if (error) {
+      toast({ title: "Couldn't delete entry", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
+
+    const { id: _id, created_at: _c, updated_at: _u, ...insertPayload } = fullRow;
+
+    sonnerToast("Entry deleted", {
+      duration: 5000,
+      action: {
+        label: "Undo",
+        onClick: async () => {
+          await supabase.from("transactions").insert(insertPayload);
+          queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
+        },
+      },
+    });
+  };
 
   // ─── Buffered edit handlers ──────────────────────────────────────────
   // Movement / category / amount edits do NOT save automatically.
@@ -914,6 +925,7 @@ export function InlineTransactionsEditor({
                 // values, treat it as "not edited" — drop the blue highlight,
                 // history dot, and revert button.
                 const isEdited =
+                  !isManual &&
                   hasEditHistory &&
                   !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
                 const originalSnapshot = isEdited ? snapshot : null;
@@ -1166,7 +1178,7 @@ export function InlineTransactionsEditor({
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 mx-auto text-muted-foreground hover:text-destructive"
-                          onClick={() => setDeleteConfirmTx(tx)}
+                          onClick={() => deleteWithUndo(tx)}
                           title={t("imports.deleteEntry", "Delete entry")}
                         >
                           <Trash2 className="w-[16px] h-[16px]" />
@@ -1304,6 +1316,7 @@ export function InlineTransactionsEditor({
                   const hasEditHistory = editEntries.length > 0;
                   const snapshot = hasEditHistory ? buildOriginalSnapshot(txHistory) : null;
                   const isEdited =
+                    !isManual &&
                     hasEditHistory &&
                     !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
                   const originalSnapshot = isEdited ? snapshot : null;
@@ -1330,52 +1343,54 @@ export function InlineTransactionsEditor({
                         : "−";
 
                   return (
-                    <div
+                    <SwipeableRow
                       key={tx.id}
-                      className={cn(
-                        "flex items-start gap-2.5 px-3 py-2.5",
-                        isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                        isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
-                        isHidden && "opacity-60 bg-muted/20",
-                        isSaved && !isMismatch && "bg-success/5",
-                      )}
+                      onSwipeLeft={!isLocked && isManual ? () => deleteWithUndo(tx) : undefined}
+                      onSwipeRight={!isLocked ? () => setEditingTx(tx) : undefined}
+                      disabled={isLocked}
                     >
-                      {/* Category icon carries the row's identity — the movement is
-                          already legible from the sign and colour of the amount. */}
                       <div
-                        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-                        style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}) / 0.15)` }}
-                        title={getCategoryLabel(category)}
+                        className={cn(
+                          "flex items-center gap-2.5 px-3 py-2.5 bg-card",
+                          isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                          isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                          isHidden && "opacity-60 bg-muted/20",
+                          isSaved && !isMismatch && "bg-success/5",
+                        )}
                       >
-                        <CategoryIcon
-                          iconName={getCategoryIcon(category)}
-                          colorVar={getCategoryColor(category)}
-                          size="sm"
-                          showBackground={false}
-                        />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className={cn("truncate text-[13px] text-foreground", isHidden && "line-through")}>
-                          <span className="font-medium">{cleanDescription}</span>
-                        </p>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          {accountLabel(tx.account_id) && (
-                            <span className="truncate text-[11px] text-muted-foreground">
-                              {accountLabel(tx.account_id)}
-                            </span>
-                          )}
-                          {isHidden && (
-                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                              <EyeOff className="h-2.5 w-2.5" />
-                              {t("imports.excluded", "Excluded")}
-                            </span>
-                          )}
+                        <div
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                          style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}) / 0.15)` }}
+                          title={getCategoryLabel(category)}
+                        >
+                          <CategoryIcon
+                            iconName={getCategoryIcon(category)}
+                            colorVar={getCategoryColor(category)}
+                            size="sm"
+                            showBackground={false}
+                          />
                         </div>
-                      </div>
 
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <div className="flex items-center gap-1">
+                        <div className="min-w-0 flex-1">
+                          <p className={cn("truncate text-[13px] text-foreground", isHidden && "line-through")}>
+                            <span className="font-medium">{cleanDescription}</span>
+                          </p>
+                          <div className="mt-0.5 flex items-center gap-1.5">
+                            {accountLabel(tx.account_id) && (
+                              <span className="truncate text-[11px] text-muted-foreground">
+                                {accountLabel(tx.account_id)}
+                              </span>
+                            )}
+                            {isHidden && (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                <EyeOff className="h-2.5 w-2.5" />
+                                {t("imports.excluded", "Excluded")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-1">
                           {isSaving ? (
                             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                           ) : isSaved ? (
@@ -1386,80 +1401,8 @@ export function InlineTransactionsEditor({
                             {formatCurrency(Math.abs(tx.amount))}
                           </span>
                         </div>
-                        <div className="flex items-center gap-0.5">
-                          {!isLocked && (
-                            <>
-                              {!isManual ? (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                  onClick={() => handleToggleHidden(tx)}
-                                  aria-label={isHidden ? t("imports.includeInTotals", "Include in totals") : t("imports.hideFromTotals", "Hide from totals")}
-                                >
-                                  {isHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                  onClick={() => setDeleteConfirmTx(tx)}
-                                  aria-label={t("imports.deleteEntry", "Delete entry")}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                onClick={() => setEditingTx(tx)}
-                                aria-label={t("imports.editTransaction", "Edit transaction")}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              {isEdited && originalSnapshot && !isManual && (
-                                <RevertToOriginalButton
-                                  original={originalSnapshot.values}
-                                  fields={originalSnapshot.fields}
-                                  current={{
-                                    movement: tx.movement,
-                                    category: tx.category,
-                                    category_id: tx.category_id,
-                                    amount: tx.amount,
-                                    is_hidden: tx.is_hidden,
-                                  }}
-                                  formatCurrency={formatCurrency}
-                                  getCategoryLabel={getCategoryLabel}
-                                  onConfirm={() => {
-                                    const payload: Record<string, unknown> = {
-                                      ...originalSnapshot.values,
-                                      __action: "revert",
-                                    };
-                                    if ("category" in originalSnapshot.values) {
-                                      payload.category_source = "DEFAULT";
-                                      payload.user_corrected = false;
-                                    }
-                                    saveMutation.mutate({
-                                      id: tx.id,
-                                      payload,
-                                      before: {
-                                        movement: tx.movement,
-                                        category: tx.category,
-                                        category_id: tx.category_id,
-                                        amount: tx.amount,
-                                        is_hidden: tx.is_hidden,
-                                      },
-                                    });
-                                  }}
-                                />
-                              )}
-                            </>
-                          )}
-                        </div>
                       </div>
-                    </div>
+                    </SwipeableRow>
                   );
                 })}
               </div>
@@ -1482,40 +1425,9 @@ export function InlineTransactionsEditor({
             commitRow(tx, withRule, edits);
             setEditingTx(null);
           }}
-          onDelete={(tx) => setDeleteConfirmTx(tx)}
+          onDelete={(tx) => deleteWithUndo(tx)}
         />
 
-        {/* Delete-entry confirmation — only ever triggered for manual entries */}
-        <AlertDialog
-          open={!!deleteConfirmTx}
-          onOpenChange={(open) => { if (!open) setDeleteConfirmTx(null); }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("imports.deleteEntryTitle", "Delete entry?")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("imports.deleteEntryDesc", "This manual entry will be permanently deleted. This can't be undone.")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("imports.cancel", "Cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => {
-                  // Defensive: the trigger points only ever set this for manual
-                  // entries, but never hard-delete an imported row regardless.
-                  if (deleteConfirmTx && isManualTransaction(deleteConfirmTx)) {
-                    deleteMutation.mutate(deleteConfirmTx.id);
-                  }
-                  setDeleteConfirmTx(null);
-                  setEditingTx(null);
-                }}
-              >
-                {t("imports.delete", "Delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
 
         {/* Collapsed-rows hint */}
         {showCollapsedHint && (

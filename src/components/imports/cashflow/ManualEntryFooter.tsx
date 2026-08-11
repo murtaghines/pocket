@@ -128,6 +128,7 @@ export function ManualEntryFooter({
 
       await queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user.id] });
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user.id] });
 
       if (entry.createRule && cleanDesc) {
         const built = buildRuleFromCorrection(cleanDesc, entry.movement, entry.categorySlug);

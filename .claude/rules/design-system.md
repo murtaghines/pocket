@@ -30,8 +30,7 @@ Follow these rules in every component, page and PR — no exceptions.
 | Family | Role | Weight |
 |---|---|---|
 | Inter | All UI — body, nav, tables, numbers | 400 / 500 / 600 / 700 |
-| Poppins | Page titles in the top bar only (`font-title`), always lowercase | 700 |
-| Quicksand | Logo wordmark + hero/landing headlines only | 700 |
+| Quicksand | Logo wordmark + hero/landing headlines + page titles (`font-title`) | 700 |
 
 **Type scale:**
 
