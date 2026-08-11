@@ -25,7 +25,7 @@ const TRANSITION_MS = 320;
 export const SHEET_LABEL =
   "text-[11px] font-medium uppercase tracking-[0.07em] text-muted-foreground";
 export const SHEET_PILL =
-  "h-11 rounded-full bg-muted border-0 shadow-none px-5 text-[13px]";
+  "h-11 rounded-full bg-muted border-0 shadow-none px-5 text-base md:text-[13px]";
 export const SHEET_BUTTON = "h-11 rounded-full font-semibold text-sm";
 /** Free-text inputs keep 16px on mobile: anything smaller makes iOS Safari
  *  zoom the page on focus, which would fight the static-keyboard behaviour. */
