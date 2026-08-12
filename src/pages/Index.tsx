@@ -247,6 +247,7 @@ export default function Index() {
                     icon={<Plus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
                     bgClass="bg-success"
                     monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
                     total={convertedCurrentMonth.income}
                     previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
                     formatCurrency={formatCurrency}
@@ -258,6 +259,7 @@ export default function Index() {
                     icon={<Minus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
                     bgClass="bg-destructive"
                     monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
                     total={convertedCurrentMonth.expenses}
                     previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
                     formatCurrency={formatCurrency}
@@ -270,6 +272,7 @@ export default function Index() {
                     previousBalance={hasPreviousData ? convertedPreviousMonth.balance : undefined}
                     sentToInvest={convertedCurrentMonth.sentToInvest}
                     monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
                     formatCurrency={formatCurrency}
                   />
                   <SavingsRateRingCard

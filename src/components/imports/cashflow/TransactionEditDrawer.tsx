@@ -552,17 +552,14 @@ export function TransactionEditDrawer({
 
       {/* iOS-minimal delete confirmation */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent className="max-w-[280px] rounded-2xl p-6">
-          <AlertDialogHeader className="space-y-1">
-            <AlertDialogTitle className="text-center text-base">
+        <AlertDialogContent className="max-w-[240px] rounded-2xl p-5">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-[15px]">
               {t("imports.deleteEntryTitle", "Delete entry?")}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-[13px]">
-              {t("imports.deleteEntryDesc", "This manual entry will be permanently deleted. This can't be undone.")}
-            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row gap-2 sm:justify-center">
-            <AlertDialogCancel className="mt-0 flex-1 rounded-full">
+            <AlertDialogCancel className="mt-0 flex-1 rounded-full border-0 bg-muted shadow-none">
               {t("imports.no", "no")}
             </AlertDialogCancel>
             <AlertDialogAction
