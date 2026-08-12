@@ -15,6 +15,7 @@ export type PendingEditShape = {
   account_id?: string;
   currency?: string;
   user_notes?: string;
+  is_hidden?: boolean;
 };
 
 export interface MonthTransaction {

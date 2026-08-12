@@ -24,6 +24,7 @@ export function SwipeableRow({
   const startX = useRef(0);
   const startY = useRef(0);
   const [offset, setOffset] = useState(0);
+  const startOffset = useRef(0);
   const tracking = useRef(false);
   const dirLocked = useRef<"x" | "y" | null>(null);
   const didSwipe = useRef(false);
@@ -39,6 +40,7 @@ export function SwipeableRow({
     const t = e.touches[0];
     startX.current = t.clientX;
     startY.current = t.clientY;
+    startOffset.current = offset;
     dirLocked.current = null;
     tracking.current = true;
     didSwipe.current = false;
@@ -62,11 +64,16 @@ export function SwipeableRow({
     }
     if (dirLocked.current !== "x") return;
 
-    if (dx < 0 && !onSwipeLeft) return;
-    if (dx > 0 && !onSwipeRight) return;
+    const rawOffset = startOffset.current + dx;
+
+    if (startOffset.current > 0 && rawOffset < 0) { setOffset(0); return; }
+    if (startOffset.current < 0 && rawOffset > 0) { setOffset(0); return; }
+
+    if (rawOffset < 0 && !onSwipeLeft) return;
+    if (rawOffset > 0 && !onSwipeRight) return;
 
     const max = AUTO_TRIGGER_W + 20;
-    const clamped = Math.max(-max, Math.min(max, dx));
+    const clamped = Math.max(-max, Math.min(max, rawOffset));
     setOffset(clamped);
   };
 

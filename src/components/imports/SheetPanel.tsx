@@ -103,6 +103,7 @@ export function SheetPanel({
     if (!dragging.current) return;
     dragging.current = false;
     if (dragYRef.current > DISMISS_THRESHOLD) {
+      setShown(false);
       onOpenChangeRef.current(false);
     }
     updateDragY(0);
@@ -137,6 +138,7 @@ export function SheetPanel({
       if (!dragging.current) return;
       dragging.current = false;
       if (dragYRef.current > DISMISS_THRESHOLD) {
+        setShown(false);
         onOpenChangeRef.current(false);
       }
       dragYRef.current = 0;
