@@ -508,7 +508,7 @@ export function InlineTransactionsEditor({
   // When `withRule` is true and the category changed, open RuleEditorDialog so the
   // user can fine-tune the pattern and confirm — that's what the second "Sparkles
   // tick" does.
-  const commitRow = (tx: MonthTransaction, withRule = false, overrideEdits?: PendingEditShape) => {
+  const commitRow = (tx: MonthTransaction, withRule = false, overrideEdits?: PendingEditShape, isRevert = false) => {
     const pending = overrideEdits || pendingByTx[tx.id];
     if (!pending) return;
 
@@ -564,6 +564,17 @@ export function InlineTransactionsEditor({
     if (pending.user_notes !== undefined && pending.user_notes !== (tx.user_notes ?? "")) {
       payload.user_notes = pending.user_notes || null;
       before.user_notes = tx.user_notes;
+    }
+    if (pending.is_hidden !== undefined && pending.is_hidden !== tx.is_hidden) {
+      payload.is_hidden = pending.is_hidden;
+      before.is_hidden = tx.is_hidden;
+    }
+    if (isRevert) {
+      payload.__action = "revert";
+      if ("category" in payload) {
+        payload.category_source = "DEFAULT";
+        payload.user_corrected = false;
+      }
     }
 
     if (Object.keys(payload).length === 0) {
@@ -953,7 +964,7 @@ export function InlineTransactionsEditor({
                     className={cn(
                       "transition-colors [&>td]:py-3",
                       isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                      isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                      isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-r border-r-primary/60",
                       isPending && "bg-warning/10 border-l-2 border-l-warning",
                       isHidden && "opacity-50 bg-muted/20",
                       isSaved && !isMismatch && "bg-success/5",
@@ -1366,7 +1377,7 @@ export function InlineTransactionsEditor({
                         className={cn(
                           "flex items-center gap-2.5 px-3 py-2.5 bg-card",
                           isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                          isEdited && !isMismatch && "bg-primary/[0.04] border-l-2 border-l-primary/60",
+                          isEdited && !isMismatch && "bg-primary/[0.04] border-r border-r-primary/60",
                           isHidden && "opacity-60 bg-muted/20",
                           isSaved && !isMismatch && "bg-success/5",
                         )}
@@ -1458,38 +1469,13 @@ export function InlineTransactionsEditor({
               getCategoryIcon={getCategoryIcon}
               getCategoryColor={getCategoryColor}
               formatCurrency={formatCurrency}
-              onSave={(tx, edits, withRule) => {
-                commitRow(tx, withRule, edits);
+              onSave={(tx, edits, withRule, isRevert) => {
+                commitRow(tx, withRule, edits, isRevert);
                 setEditingTx(null);
               }}
               onDelete={(tx) => deleteWithUndo(tx)}
-              onHide={(tx) => {
-                handleToggleHidden(tx);
-                setEditingTx(null);
-              }}
               isEdited={drawerIsEdited}
-              onRevert={drawerIsEdited && drawerOriginalSnapshot ? (tx) => {
-                const payload: Record<string, unknown> = {
-                  ...drawerOriginalSnapshot!.values,
-                  __action: "revert",
-                };
-                if ("category" in drawerOriginalSnapshot!.values) {
-                  payload.category_source = "DEFAULT";
-                  payload.user_corrected = false;
-                }
-                saveMutation.mutate({
-                  id: tx.id,
-                  payload,
-                  before: {
-                    movement: tx.movement,
-                    category: tx.category,
-                    category_id: tx.category_id,
-                    amount: tx.amount,
-                    is_hidden: tx.is_hidden,
-                  },
-                });
-                setEditingTx(null);
-              } : undefined}
+              originalSnapshot={drawerOriginalSnapshot}
             />
           );
         })()}

@@ -29,6 +29,16 @@ import {
   SHEET_INPUT,
 } from "../SheetPanel";
 import { LockedFieldLabel } from "../LockedFieldLabel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { isManualTransaction } from "@/lib/transactionSource";
 import type { Account } from "@/hooks/useAccounts";
@@ -64,13 +74,12 @@ interface TransactionEditDrawerProps {
   formatCurrency: (amount: number) => string;
   categories: { id: string; slug: string }[];
   accounts: Account[];
-  onSave: (tx: MonthTransaction, edits: PendingEditShape, withRule: boolean) => void;
+  onSave: (tx: MonthTransaction, edits: PendingEditShape, withRule: boolean, isRevert?: boolean) => void;
   onDelete?: (tx: MonthTransaction) => void;
-  onHide?: (tx: MonthTransaction) => void;
   /** Whether this imported transaction has been edited (blue highlight). */
   isEdited?: boolean;
-  /** Revert all edits back to original imported values. */
-  onRevert?: (tx: MonthTransaction) => void;
+  /** Original values before any user edits — used for the undo flow. */
+  originalSnapshot?: { values: Record<string, unknown>; fields: string[] } | null;
 }
 
 export function TransactionEditDrawer({
@@ -85,9 +94,8 @@ export function TransactionEditDrawer({
   accounts,
   onSave,
   onDelete,
-  onHide,
   isEdited,
-  onRevert,
+  originalSnapshot,
 }: TransactionEditDrawerProps) {
   const { t } = useTranslation("common");
 
@@ -100,6 +108,9 @@ export function TransactionEditDrawer({
   const [date, setDate] = useState("");
   const [accountId, setAccountId] = useState("");
   const [userNotes, setUserNotes] = useState("");
+  const [pendingHidden, setPendingHidden] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const savedCategoriesRef = useRef<Record<string, { slug: string; id: string | null }>>({});
 
@@ -119,6 +130,9 @@ export function TransactionEditDrawer({
       setDate(tx.date);
       setAccountId(tx.account_id || "");
       setUserNotes(tx.user_notes ?? "");
+      setPendingHidden(tx.is_hidden);
+      setIsReverting(false);
+      setDeleteConfirmOpen(false);
       savedCategoriesRef.current = { [m]: { slug: cat, id: tx.category_id } };
     }
   }, [tx?.id, open]);
@@ -173,6 +187,22 @@ export function TransactionEditDrawer({
     setAmountStr(String(parseFloat(Math.abs(parsed).toFixed(2))).replace(".", ","));
   };
 
+  const handleUndoChanges = () => {
+    if (!originalSnapshot) return;
+    const v = originalSnapshot.values;
+    if (v.movement !== undefined) setMovement(v.movement as MovementType);
+    if (v.category !== undefined) {
+      setCategory(normalizeCategory(v.category as string));
+      setCategoryId((v.category_id as string | null) ?? null);
+    }
+    if (v.amount !== undefined) {
+      setAmount(v.amount as number);
+      setAmountStr(String(Math.abs(v.amount as number)).replace(".", ","));
+    }
+    if (v.is_hidden !== undefined) setPendingHidden(v.is_hidden as boolean);
+    setIsReverting(true);
+  };
+
   const origMovement = (tx.movement || "EXPENSE") as MovementType;
   const origCategory = normalizeCategory(tx.category || "other_expense");
   const origAccountId = tx.account_id || "";
@@ -184,7 +214,8 @@ export function TransactionEditDrawer({
     description !== cleanDescription ||
     date !== tx.date ||
     accountId !== origAccountId ||
-    userNotes !== (tx.user_notes ?? "");
+    userNotes !== (tx.user_notes ?? "") ||
+    pendingHidden !== tx.is_hidden;
 
   const invalid = isManual && (description.trim().length === 0 || !accountId);
 
@@ -208,6 +239,7 @@ export function TransactionEditDrawer({
       if (selectedAccount) edits.currency = selectedAccount.currency_base;
     }
     if (userNotes !== (tx.user_notes ?? "")) edits.user_notes = userNotes;
+    if (pendingHidden !== tx.is_hidden) edits.is_hidden = pendingHidden;
     return edits;
   };
 
@@ -234,7 +266,7 @@ export function TransactionEditDrawer({
           disabled={!hasChanges || invalid}
           onClick={() => {
             handleAmountBlur();
-            onSave(tx, buildEdits(), false);
+            onSave(tx, buildEdits(), false, isReverting);
             onOpenChange(false);
           }}
         >
@@ -247,7 +279,7 @@ export function TransactionEditDrawer({
           className={cn(SHEET_BUTTON, "w-full gap-1.5")}
           onClick={() => {
             handleAmountBlur();
-            onSave(tx, buildEdits(), true);
+            onSave(tx, buildEdits(), true, isReverting);
             onOpenChange(false);
           }}
         >
@@ -264,34 +296,31 @@ export function TransactionEditDrawer({
         <button
           type="button"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium text-destructive py-2"
-          onClick={() => onDelete(tx)}
+          onClick={() => setDeleteConfirmOpen(true)}
         >
           <Trash2 className="h-3.5 w-3.5" />
           {t("imports.delete", "delete")}
         </button>
       )}
-      {!isManual && onHide && (
+      {!isManual && (
         <button
           type="button"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground py-2"
-          onClick={() => onHide(tx)}
+          onClick={() => setPendingHidden(!pendingHidden)}
         >
-          {tx.is_hidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-          {tx.is_hidden
+          {pendingHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+          {pendingHidden
             ? t("imports.showEntry", "show")
             : t("imports.hideEntry", "hide")}
         </button>
       )}
-      {!isManual && isEdited && onRevert && (
+      {!isManual && isEdited && originalSnapshot && (
         <>
           <span className="text-muted-foreground/30">·</span>
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground py-2"
-            onClick={() => {
-              onRevert(tx);
-              onOpenChange(false);
-            }}
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary py-2"
+            onClick={handleUndoChanges}
           >
             <RotateCcw className="h-3.5 w-3.5" />
             {t("imports.revertChanges", "undo changes")}
@@ -302,222 +331,252 @@ export function TransactionEditDrawer({
   );
 
   return (
-    <SheetPanel
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("imports.editTransaction", "edit transaction")}
-      footer={footer}
-      belowFooter={belowFooter}
-    >
-      {/* Movement toggle — pill segmented control */}
-      <div className="flex rounded-full bg-muted p-1">
-        {movementOptions.map((opt) => {
-          const Icon = opt.icon;
-          const active = movement === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => handleMovementChange(opt.value)}
-              className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[13px] font-medium transition-all",
-                active ? "bg-card text-foreground shadow-sm font-semibold" : "text-muted-foreground",
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Description */}
-      <div className="space-y-1.5">
-        <LockedFieldLabel
-          label={t("imports.description", "Description")}
-          locked={!isManual}
-          reason={t(
-            "imports.lockedDescription",
-            "this description comes from the uploaded bank statement and can't be edited",
-          )}
-        />
-        {isManual ? (
-          <Input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className={SHEET_INPUT}
-          />
-        ) : (
-          <LockedValue value={description} />
-        )}
-      </div>
-
-      {/* Notes — imported transactions only: the bank description is often
-          cryptic, so this field lets the user add their own recognizable text. */}
-      {!isManual && (
-        <div className="space-y-1.5">
-          <label className={SHEET_LABEL}>
-            {t("imports.userNotes", "My notes")}
-          </label>
-          <Input
-            value={userNotes}
-            onChange={(e) => setUserNotes(e.target.value)}
-            placeholder={t("imports.userNotesPlaceholder", "add your own description...")}
-            className={SHEET_INPUT}
-          />
+    <>
+      <SheetPanel
+        open={open}
+        onOpenChange={onOpenChange}
+        title={t("imports.editTransaction", "edit transaction")}
+        footer={footer}
+        belowFooter={belowFooter}
+      >
+        {/* Movement toggle — pill segmented control */}
+        <div className="flex rounded-full bg-muted p-1">
+          {movementOptions.map((opt) => {
+            const Icon = opt.icon;
+            const active = movement === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleMovementChange(opt.value)}
+                className={cn(
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[13px] font-medium transition-all",
+                  active ? "bg-card text-foreground shadow-sm font-semibold" : "text-muted-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
-      )}
 
-      {/* Account + Date row */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-1.5 min-w-0">
+        {/* Description */}
+        <div className="space-y-1.5">
           <LockedFieldLabel
-            label={t("imports.account", "Account")}
+            label={t("imports.description", "Description")}
             locked={!isManual}
             reason={t(
-              "imports.lockedAccount",
-              "the account belongs to the entire uploaded file statement — it can be changed in configuration",
+              "imports.lockedDescription",
+              "this description comes from the uploaded bank statement and can't be edited",
             )}
           />
           {isManual ? (
-            <Select value={accountId} onValueChange={setAccountId}>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={SHEET_INPUT}
+            />
+          ) : (
+            <LockedValue value={description} />
+          )}
+        </div>
+
+        {/* Notes — imported transactions only: the bank description is often
+            cryptic, so this field lets the user add their own recognizable text. */}
+        {!isManual && (
+          <div className="space-y-1.5">
+            <label className={SHEET_LABEL}>
+              {t("imports.userNotes", "My notes")}
+            </label>
+            <Input
+              value={userNotes}
+              onChange={(e) => setUserNotes(e.target.value)}
+              placeholder={t("imports.userNotesPlaceholder", "add your own description...")}
+              className={SHEET_INPUT}
+            />
+          </div>
+        )}
+
+        {/* Account + Date row */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1.5 min-w-0">
+            <LockedFieldLabel
+              label={t("imports.account", "Account")}
+              locked={!isManual}
+              reason={t(
+                "imports.lockedAccount",
+                "the account belongs to the entire uploaded file statement — it can be changed in configuration",
+              )}
+            />
+            {isManual ? (
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger
+                  className={cn(SHEET_PILL, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
+                >
+                  <SelectValue placeholder={t("imports.selectAccount", "Select")}>
+                    <span className="truncate font-medium">
+                      {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                    </span>
+                  </SelectValue>
+                </SelectTrigger>
+                <MinimalSelectContent>
+                  {accounts.map((a) => (
+                    <MinimalSelectItem key={a.id} value={a.id}>
+                      <span className="truncate">{getAccountDisplayName(a)}</span>
+                    </MinimalSelectItem>
+                  ))}
+                </MinimalSelectContent>
+              </Select>
+            ) : (
+              <LockedValue value={selectedAccount ? getAccountDisplayName(selectedAccount) : "—"} />
+            )}
+          </div>
+          <div className="space-y-1.5 min-w-0">
+            <LockedFieldLabel
+              label={t("imports.date", "Date")}
+              locked={!isManual}
+              reason={t(
+                "imports.lockedDate",
+                "the date comes from the bank statement, so it can't be changed on an imported transaction",
+              )}
+            />
+            {isManual ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      SHEET_PILL,
+                      "flex w-full items-center gap-2 text-foreground hover:bg-accent transition-colors",
+                    )}
+                  >
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">
+                      {format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={new Date(displayDate + "T00:00:00")}
+                    onSelect={(d) => {
+                      if (d) {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, "0");
+                        const dd = String(d.getDate()).padStart(2, "0");
+                        setDate(`${y}-${m}-${dd}`);
+                      }
+                    }}
+                    defaultMonth={new Date(firstDay + "T00:00:00")}
+                    disabled={(d) => {
+                      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                      return iso < firstDay || iso > lastDay;
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <LockedValue value={format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")} />
+            )}
+          </div>
+        </div>
+
+        {/* Amount + Category row */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1.5 min-w-0">
+            <label className={SHEET_LABEL}>{t("imports.amount", "Amount")}</label>
+            <div className="relative">
+              {amountSign && (
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                  {amountSign}
+                </span>
+              )}
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={amountStr}
+                onChange={(e) => setAmountStr(e.target.value)}
+                onBlur={handleAmountBlur}
+                placeholder="0,00"
+                className={cn(SHEET_INPUT, "tabular-nums", amountSign && "pl-10 pr-5")}
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5 min-w-0">
+            <label className={SHEET_LABEL}>{t("imports.category", "Category")}</label>
+            <Select value={category} onValueChange={handleCategoryChange}>
               <SelectTrigger
-                className={cn(SHEET_PILL, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
+                className={cn(
+                  SHEET_PILL,
+                  "px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-60",
+                )}
+                style={{
+                  backgroundColor: `hsl(var(--${getColor(category)}) / 0.15)`,
+                  color: `hsl(var(--${getColor(category)}))`,
+                }}
               >
-                <SelectValue placeholder={t("imports.selectAccount", "Select")}>
-                  <span className="truncate font-medium">
-                    {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                <SelectValue>
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <CategoryIcon
+                      iconName={getIcon(category)}
+                      colorVar={getColor(category)}
+                      size="sm"
+                      showBackground={false}
+                    />
+                    <span className="truncate">{getCategoryLabel(category)}</span>
                   </span>
                 </SelectValue>
               </SelectTrigger>
               <MinimalSelectContent>
-                {accounts.map((a) => (
-                  <MinimalSelectItem key={a.id} value={a.id}>
-                    <span className="truncate">{getAccountDisplayName(a)}</span>
+                {availableCategories.map((slug) => (
+                  <MinimalSelectItem key={slug} value={slug}>
+                    <CategoryIcon
+                      iconName={getIcon(slug)}
+                      colorVar={getColor(slug)}
+                      size="sm"
+                      showBackground
+                    />
+                    <span className="truncate">{getCategoryLabel(slug)}</span>
                   </MinimalSelectItem>
                 ))}
               </MinimalSelectContent>
             </Select>
-          ) : (
-            <LockedValue value={selectedAccount ? getAccountDisplayName(selectedAccount) : "—"} />
-          )}
-        </div>
-        <div className="space-y-1.5 min-w-0">
-          <LockedFieldLabel
-            label={t("imports.date", "Date")}
-            locked={!isManual}
-            reason={t(
-              "imports.lockedDate",
-              "the date comes from the bank statement, so it can't be changed on an imported transaction",
-            )}
-          />
-          {isManual ? (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    SHEET_PILL,
-                    "flex w-full items-center gap-2 text-foreground hover:bg-accent transition-colors",
-                  )}
-                >
-                  <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="truncate">
-                    {format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")}
-                  </span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={new Date(displayDate + "T00:00:00")}
-                  onSelect={(d) => {
-                    if (d) {
-                      const y = d.getFullYear();
-                      const m = String(d.getMonth() + 1).padStart(2, "0");
-                      const dd = String(d.getDate()).padStart(2, "0");
-                      setDate(`${y}-${m}-${dd}`);
-                    }
-                  }}
-                  defaultMonth={new Date(firstDay + "T00:00:00")}
-                  disabled={(d) => {
-                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                    return iso < firstDay || iso > lastDay;
-                  }}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          ) : (
-            <LockedValue value={format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")} />
-          )}
-        </div>
-      </div>
-
-      {/* Amount + Category row */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-1.5 min-w-0">
-          <label className={SHEET_LABEL}>{t("imports.amount", "Amount")}</label>
-          <div className="relative">
-            {amountSign && (
-              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                {amountSign}
-              </span>
-            )}
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
-              onBlur={handleAmountBlur}
-              placeholder="0,00"
-              className={cn(SHEET_INPUT, "tabular-nums", amountSign && "pl-10 pr-5")}
-            />
           </div>
         </div>
-        <div className="space-y-1.5 min-w-0">
-          <label className={SHEET_LABEL}>{t("imports.category", "Category")}</label>
-          <Select value={category} onValueChange={handleCategoryChange}>
-            <SelectTrigger
-              className={cn(
-                SHEET_PILL,
-                "px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-60",
-              )}
-              style={{
-                backgroundColor: `hsl(var(--${getColor(category)}) / 0.15)`,
-                color: `hsl(var(--${getColor(category)}))`,
+
+      </SheetPanel>
+
+      {/* iOS-minimal delete confirmation */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent className="max-w-[280px] rounded-2xl p-6">
+          <AlertDialogHeader className="space-y-1">
+            <AlertDialogTitle className="text-center text-base">
+              {t("imports.deleteEntryTitle", "Delete entry?")}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[13px]">
+              {t("imports.deleteEntryDesc", "This manual entry will be permanently deleted. This can't be undone.")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row gap-2 sm:justify-center">
+            <AlertDialogCancel className="mt-0 flex-1 rounded-full">
+              {t("imports.no", "no")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="flex-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (tx && onDelete) onDelete(tx);
+                onOpenChange(false);
               }}
             >
-              <SelectValue>
-                <span className="flex items-center gap-1.5 font-semibold">
-                  <CategoryIcon
-                    iconName={getIcon(category)}
-                    colorVar={getColor(category)}
-                    size="sm"
-                    showBackground={false}
-                  />
-                  <span className="truncate">{getCategoryLabel(category)}</span>
-                </span>
-              </SelectValue>
-            </SelectTrigger>
-            <MinimalSelectContent>
-              {availableCategories.map((slug) => (
-                <MinimalSelectItem key={slug} value={slug}>
-                  <CategoryIcon
-                    iconName={getIcon(slug)}
-                    colorVar={getColor(slug)}
-                    size="sm"
-                    showBackground
-                  />
-                  <span className="truncate">{getCategoryLabel(slug)}</span>
-                </MinimalSelectItem>
-              ))}
-            </MinimalSelectContent>
-          </Select>
-        </div>
-      </div>
-
-    </SheetPanel>
+              {t("imports.yes", "yes")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
