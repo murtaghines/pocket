@@ -1432,26 +1432,67 @@ export function InlineTransactionsEditor({
         </div>
 
         {/* Mobile transaction edit drawer */}
-        <TransactionEditDrawer
-          tx={editingTx}
-          open={!!editingTx}
-          onOpenChange={(open) => { if (!open) setEditingTx(null); }}
-          monthKey={monthKey}
-          categories={categories}
-          accounts={accounts}
-          getCategoryIcon={getCategoryIcon}
-          getCategoryColor={getCategoryColor}
-          formatCurrency={formatCurrency}
-          onSave={(tx, edits, withRule) => {
-            commitRow(tx, withRule, edits);
-            setEditingTx(null);
-          }}
-          onDelete={(tx) => deleteWithUndo(tx)}
-          onHide={(tx) => {
-            handleToggleHidden(tx);
-            setEditingTx(null);
-          }}
-        />
+        {(() => {
+          const etx = editingTx;
+          let drawerIsEdited = false;
+          let drawerOriginalSnapshot: { values: Record<string, unknown>; fields: string[] } | null = null;
+          if (etx && !isManualTransaction(etx)) {
+            const hist = auditByTx[etx.id] || [];
+            const edits = hist.filter((h) => h.action !== "revert");
+            if (edits.length > 0) {
+              const snap = buildOriginalSnapshot(hist);
+              if (!isBackToOriginal(etx as unknown as Record<string, unknown>, snap.values)) {
+                drawerIsEdited = true;
+                drawerOriginalSnapshot = snap;
+              }
+            }
+          }
+          return (
+            <TransactionEditDrawer
+              tx={etx}
+              open={!!etx}
+              onOpenChange={(open) => { if (!open) setEditingTx(null); }}
+              monthKey={monthKey}
+              categories={categories}
+              accounts={accounts}
+              getCategoryIcon={getCategoryIcon}
+              getCategoryColor={getCategoryColor}
+              formatCurrency={formatCurrency}
+              onSave={(tx, edits, withRule) => {
+                commitRow(tx, withRule, edits);
+                setEditingTx(null);
+              }}
+              onDelete={(tx) => deleteWithUndo(tx)}
+              onHide={(tx) => {
+                handleToggleHidden(tx);
+                setEditingTx(null);
+              }}
+              isEdited={drawerIsEdited}
+              onRevert={drawerIsEdited && drawerOriginalSnapshot ? (tx) => {
+                const payload: Record<string, unknown> = {
+                  ...drawerOriginalSnapshot!.values,
+                  __action: "revert",
+                };
+                if ("category" in drawerOriginalSnapshot!.values) {
+                  payload.category_source = "DEFAULT";
+                  payload.user_corrected = false;
+                }
+                saveMutation.mutate({
+                  id: tx.id,
+                  payload,
+                  before: {
+                    movement: tx.movement,
+                    category: tx.category,
+                    category_id: tx.category_id,
+                    amount: tx.amount,
+                    is_hidden: tx.is_hidden,
+                  },
+                });
+                setEditingTx(null);
+              } : undefined}
+            />
+          );
+        })()}
 
 
         {/* Collapsed-rows hint */}

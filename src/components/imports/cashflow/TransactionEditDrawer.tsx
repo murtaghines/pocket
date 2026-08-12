@@ -7,6 +7,10 @@ import {
   ArrowRightLeft,
   Sparkles,
   CalendarIcon,
+  Trash2,
+  EyeOff,
+  Eye,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -63,6 +67,10 @@ interface TransactionEditDrawerProps {
   onSave: (tx: MonthTransaction, edits: PendingEditShape, withRule: boolean) => void;
   onDelete?: (tx: MonthTransaction) => void;
   onHide?: (tx: MonthTransaction) => void;
+  /** Whether this imported transaction has been edited (blue highlight). */
+  isEdited?: boolean;
+  /** Revert all edits back to original imported values. */
+  onRevert?: (tx: MonthTransaction) => void;
 }
 
 export function TransactionEditDrawer({
@@ -78,6 +86,8 @@ export function TransactionEditDrawer({
   onSave,
   onDelete,
   onHide,
+  isEdited,
+  onRevert,
 }: TransactionEditDrawerProps) {
   const { t } = useTranslation("common");
 
@@ -248,12 +258,56 @@ export function TransactionEditDrawer({
     </>
   );
 
+  const belowFooter = (
+    <div className="flex items-center justify-center gap-4">
+      {isManual && onDelete && (
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-destructive py-2"
+          onClick={() => onDelete(tx)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {t("imports.delete", "delete")}
+        </button>
+      )}
+      {!isManual && onHide && (
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground py-2"
+          onClick={() => onHide(tx)}
+        >
+          {tx.is_hidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+          {tx.is_hidden
+            ? t("imports.showEntry", "show")
+            : t("imports.hideEntry", "hide")}
+        </button>
+      )}
+      {!isManual && isEdited && onRevert && (
+        <>
+          <span className="text-muted-foreground/30">·</span>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground py-2"
+            onClick={() => {
+              onRevert(tx);
+              onOpenChange(false);
+            }}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            {t("imports.revertChanges", "undo changes")}
+          </button>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <SheetPanel
       open={open}
       onOpenChange={onOpenChange}
       title={t("imports.editTransaction", "edit transaction")}
       footer={footer}
+      belowFooter={belowFooter}
     >
       {/* Movement toggle — pill segmented control */}
       <div className="flex rounded-full bg-muted p-1">
@@ -464,31 +518,6 @@ export function TransactionEditDrawer({
         </div>
       </div>
 
-      {/* Delete / Hide — text only, at the bottom */}
-      {isManual && onDelete && (
-        <div className="pt-4">
-          <button
-            type="button"
-            className="w-full text-center text-[13px] font-medium text-destructive py-2"
-            onClick={() => onDelete(tx)}
-          >
-            {t("imports.deleteEntry", "delete")}
-          </button>
-        </div>
-      )}
-      {!isManual && onHide && (
-        <div className="pt-4">
-          <button
-            type="button"
-            className="w-full text-center text-[13px] font-medium text-muted-foreground py-2"
-            onClick={() => onHide(tx)}
-          >
-            {tx.is_hidden
-              ? t("imports.showEntry", "show")
-              : t("imports.hideEntry", "hide")}
-          </button>
-        </div>
-      )}
     </SheetPanel>
   );
 }

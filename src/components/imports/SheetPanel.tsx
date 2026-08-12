@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from "react";
+import { useEffect, useRef, useState, useCallback, type ReactNode, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
@@ -38,6 +38,8 @@ export interface SheetPanelProps {
   title: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  /** Rendered below the footer — for secondary actions like delete/hide. */
+  belowFooter?: ReactNode;
   /** Extra classes for the scrollable body. */
   bodyClassName?: string;
 }
@@ -48,6 +50,7 @@ export function SheetPanel({
   title,
   children,
   footer,
+  belowFooter,
   bodyClassName,
 }: SheetPanelProps) {
   const [mounted, setMounted] = useState(open);
@@ -74,10 +77,18 @@ export function SheetPanel({
 
   // ─── Drag-to-dismiss (works from header AND body) ─────────────────
   const dragStartY = useRef(0);
+  const dragYRef = useRef(0);
   const [dragY, setDragY] = useState(0);
   const dragging = useRef(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const DISMISS_THRESHOLD = 120;
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+
+  const updateDragY = useCallback((v: number) => {
+    dragYRef.current = v;
+    setDragY(v);
+  }, []);
 
   const handleHeaderDragStart = (e: TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
@@ -86,42 +97,61 @@ export function SheetPanel({
   const handleHeaderDragMove = (e: TouchEvent) => {
     if (!dragging.current) return;
     const dy = e.touches[0].clientY - dragStartY.current;
-    if (dy > 0) setDragY(dy);
+    if (dy > 0) updateDragY(dy);
   };
   const handleHeaderDragEnd = () => {
     if (!dragging.current) return;
     dragging.current = false;
-    if (dragY > DISMISS_THRESHOLD) {
-      onOpenChange(false);
+    if (dragYRef.current > DISMISS_THRESHOLD) {
+      onOpenChangeRef.current(false);
     }
-    setDragY(0);
+    updateDragY(0);
   };
 
-  const handleBodyTouchStart = (e: TouchEvent) => {
+  // Body drag: attached via useEffect with { passive: false } so
+  // preventDefault() actually stops scroll/pull-to-refresh. React's
+  // synthetic touch handlers are passive and can't preventDefault.
+  useEffect(() => {
     const el = bodyRef.current;
-    if (!el || el.scrollTop > 0) return;
-    dragStartY.current = e.touches[0].clientY;
-    dragging.current = true;
-  };
-  const handleBodyTouchMove = (e: TouchEvent) => {
-    if (!dragging.current) return;
-    const dy = e.touches[0].clientY - dragStartY.current;
-    if (dy > 0) {
-      e.preventDefault();
-      setDragY(dy);
-    } else {
+    if (!el || !mounted) return;
+
+    const onStart = (e: globalThis.TouchEvent) => {
+      if (el.scrollTop > 0) return;
+      dragStartY.current = e.touches[0].clientY;
+      dragging.current = true;
+    };
+    const onMove = (e: globalThis.TouchEvent) => {
+      if (!dragging.current) return;
+      const dy = e.touches[0].clientY - dragStartY.current;
+      if (dy > 0) {
+        e.preventDefault();
+        dragYRef.current = dy;
+        setDragY(dy);
+      } else {
+        dragging.current = false;
+        dragYRef.current = 0;
+        setDragY(0);
+      }
+    };
+    const onEnd = () => {
+      if (!dragging.current) return;
       dragging.current = false;
+      if (dragYRef.current > DISMISS_THRESHOLD) {
+        onOpenChangeRef.current(false);
+      }
+      dragYRef.current = 0;
       setDragY(0);
-    }
-  };
-  const handleBodyTouchEnd = () => {
-    if (!dragging.current) return;
-    dragging.current = false;
-    if (dragY > DISMISS_THRESHOLD) {
-      onOpenChange(false);
-    }
-    setDragY(0);
-  };
+    };
+
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd);
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+    };
+  }, [mounted]);
 
   if (!mounted) return null;
 
@@ -170,14 +200,12 @@ export function SheetPanel({
             "flex-1 overflow-y-auto overscroll-contain px-4 pb-5 space-y-5",
             bodyClassName,
           )}
-          onTouchStart={handleBodyTouchStart}
-          onTouchMove={handleBodyTouchMove}
-          onTouchEnd={handleBodyTouchEnd}
         >
           {children}
         </div>
 
-        {footer && <div className="px-4 pb-6 pt-3 space-y-2">{footer}</div>}
+        {footer && <div className="px-4 pb-3 pt-3 space-y-2">{footer}</div>}
+        {belowFooter && <div className="px-4 pb-6 pt-1">{belowFooter}</div>}
       </div>
     </>
   );

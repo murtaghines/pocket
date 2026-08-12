@@ -109,7 +109,8 @@
     "userNotes": "Additional description",
     "userNotesPlaceholder": "(optional) add more context",
     "hideEntry": "hide",
-    "showEntry": "show"
+    "showEntry": "show",
+    "revertChanges": "undo changes"
   },
   "status": {
     "active": "Active",
