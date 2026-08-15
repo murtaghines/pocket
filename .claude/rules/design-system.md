@@ -231,21 +231,33 @@ Two full-width horizontal bars, stacked, sticky at the top of every authenticate
 Mobile uses `MobileNav`'s hamburger drawer instead, grouped the same way. All three read from the
 single `src/config/navigation.ts` `NAV_SECTIONS` config — never hand-roll a nav item list.
 
-**Primary bar (`bg-primary`, solid) — the 4 top-level sections:**
-- Icon size: 20px Lucide (brand mark on the far left, via `<Logo variant="mark">`, never hand-assembled)
-- Active: white 100% + rounded bg `rgba(255,255,255,0.22)` · label Inter 600
-- Inactive: white 65% opacity · no bg · label Inter 500
-- Active = icon AND label both at full white. Never one without the other.
-- Right cluster: notifications bell, theme toggle, user avatar dropdown (`HeaderUserMenu onPrimary`)
+**Primary bar (`bg-primary/[0.11]`, light tint) — the 4 top-level sections:**
+- Light blue tinted background with `border-b border-border`, height `h-16` (64px)
+- Brand mark on the far left (`<Logo variant="mark">`, blue fill, never hand-assembled), then
+  the section links left-aligned (never centered), then a `ml-auto` right cluster
+- Quicksand font (`font-heading`), lowercase — active = `text-primary font-bold` +
+  `border-b-[2.5px] border-primary` underline
+- Inactive: `text-primary/60 font-semibold`, no underline (`border-b-[2.5px] border-transparent`),
+  hover `text-primary/80`
+- Right cluster: notifications bell (blue icon), theme toggle, user name + avatar dropdown
+  (`HeaderUserMenu`) — avatar uses gradient fill, name in `text-foreground`
 
-**Secondary bar (`bg-primary-tint`, lighter blue) — sub-tabs of the active section:**
+**Secondary bar (`bg-primary`, solid blue) — sub-tabs of the active section:**
 - Renders only when the active section has more than one sub-tab (e.g. hidden on Investments)
-- Flat pill row, no active background — active = `font-semibold` + full `primary-tint-foreground`,
-  inactive = `font-medium` + `primary-tint-foreground/60`
+- Quicksand font (`font-heading`), height `h-[42px]`
+- Active = `text-white font-extrabold` (800 weight), inactive = `text-white/65 font-medium`,
+  hover `bg-white/[0.08]`
 - Reads/writes `?tab=`, default tab omits the param from the URL (same convention as `Account.tsx`)
 
+**Greeting section (`DashboardGreeting`) — replaces the old title/selector row:**
+- Rendered inside `Dashboard.tsx` above the tab content, not in `AppHeader`
+- "Hi, [firstName]" 22px bold + subtitle varying by active tab
+- Right side: Filter pill + period selector pill (prev/next arrows + label), bordered pills
+  (`border border-border rounded-full`)
+- Includes `EmptyStateBanner` and `GranularityToggle` (history tab) inline
+
 **Mobile drawer groups (`bg-primary`):**
-- Group labels: 9px · Inter 700 · white 45% · uppercase · tracking-wide
+- Group labels: 10px · Inter 600 · white 30% · uppercase · tracking-wide
 - Items follow the same active/inactive white-opacity rule as the primary bar
 
 **Lowercase, everywhere:** every nav label — primary bar, secondary bar, and the mobile

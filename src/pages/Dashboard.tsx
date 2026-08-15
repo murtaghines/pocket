@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
+import { DashboardGreeting } from "@/components/dashboard/DashboardGreeting";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { MonthTab } from "@/components/dashboard/MonthTab";
 import { WeekTab } from "@/components/dashboard/WeekTab";
@@ -10,11 +11,6 @@ import { HistoryTab } from "@/components/dashboard/HistoryTab";
 const TAB_KEYS = ["month", "week", "year", "history"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
-/**
- * The dashboard's 4 tabs (month / week / year / history), switched via `?tab=` — the tab
- * switcher itself lives in the header's SecondaryNavBar, not here; this `<Tabs>` only owns
- * URL-synced content switching, following the same `?tab=` convention as `Account.tsx`.
- */
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab") ?? "month";
@@ -29,6 +25,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
+      <DashboardGreeting />
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsContent value="month" className="mt-0">
           <MonthTab />

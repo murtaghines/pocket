@@ -267,6 +267,16 @@
     "new": "Nuevo",
     "empty": "Sin notificaciones"
   },
+  "greeting": {
+    "hi": "Hola, {{name}}",
+    "subtitle": {
+      "month": "Aquí está tu resumen financiero de este mes.",
+      "week": "Aquí está tu resumen financiero de esta semana.",
+      "year": "Aquí está tu resumen financiero de este año.",
+      "history": "Tu historial financiero completo de un vistazo."
+    },
+    "filter": "Filtro"
+  },
   "heatmap": {
     "title": "Vista diaria",
     "view": "Vista",

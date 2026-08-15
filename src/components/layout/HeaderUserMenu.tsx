@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { User, LogOut, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { ThemeToggle } from "./ThemeToggle";
@@ -14,16 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface HeaderUserMenuProps {
-  /** Render for placement directly on a solid --primary background (e.g. PrimaryNavBar). */
-  onPrimary?: boolean;
-}
-
-/**
- * The top bar's right cluster — notification bell, theme toggle and the profile dropdown.
- * Extracted so every page's header (dashboard, workspace pages…) renders the exact same utilities.
- */
-export function HeaderUserMenu({ onPrimary = false }: HeaderUserMenuProps) {
+export function HeaderUserMenu() {
   const { t } = useTranslation("common");
   const { signOut } = useAuth();
   const { profile } = useProfile();
@@ -34,15 +24,20 @@ export function HeaderUserMenu({ onPrimary = false }: HeaderUserMenuProps) {
     return f + l || "U";
   })();
 
+  const displayName = (() => {
+    const first = profile?.first_name?.trim();
+    if (!first) return "";
+    const lastInitial = profile?.last_name?.trim()?.charAt(0).toUpperCase();
+    return lastInitial ? `${first} ${lastInitial}.` : first;
+  })();
+
   return (
-    <div className="flex items-center gap-[9px]">
+    <div className="flex items-center gap-4">
       <div className="relative">
-        <NotificationBell variant={onPrimary ? "dark" : "light"} />
+        <NotificationBell />
       </div>
 
       <ThemeToggle />
-
-      <div className={cn("w-px h-[30px] mx-[5px]", onPrimary ? "bg-white/20" : "bg-border")} />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -52,15 +47,15 @@ export function HeaderUserMenu({ onPrimary = false }: HeaderUserMenuProps) {
             className="flex items-center gap-[10px] cursor-pointer hover:opacity-80 transition-opacity"
           >
             <div
-              className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-primary-foreground text-[13px] font-semibold"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground text-[13px] font-bold tracking-[0.02em] shrink-0"
               style={{ background: "var(--gradient-primary)" }}
             >
               {initials}
             </div>
-            <ChevronDown
-              className={cn("w-[16px] h-[16px]", onPrimary ? "text-white/70" : "text-muted-foreground")}
-              strokeWidth={2}
-            />
+            {displayName && (
+              <span className="text-[13.5px] font-semibold text-foreground whitespace-nowrap">{displayName}</span>
+            )}
+            <ChevronDown className="w-[13px] h-[13px] text-muted-foreground" strokeWidth={2.5} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">

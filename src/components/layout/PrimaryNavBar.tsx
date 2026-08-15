@@ -5,24 +5,18 @@ import { NAV_SECTIONS, getActiveSection } from "@/config/navigation";
 import { Logo } from "@/components/brand/Logo";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 
-/**
- * Desktop primary navigation — a full-width solid-blue bar with the 4 top-level sections
- * (dashboard / investments / planning / data), the brand mark on the left, and the
- * notifications/theme/user cluster on the right. Sits above SecondaryNavBar, which renders the
- * active section's sub-tabs.
- */
 export function PrimaryNavBar() {
   const location = useLocation();
   const { t } = useTranslation("common");
   const activeSection = getActiveSection(location.pathname);
 
   return (
-    <div className="hidden md:flex items-center justify-between h-14 px-[30px] bg-primary">
-      <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-primary-foreground shrink-0">
+    <div className="hidden md:flex items-center h-16 px-[28px] bg-primary/[0.11] border-b border-border">
+      <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-primary shrink-0 mr-8">
         <Logo variant="mark" size={22} />
       </Link>
 
-      <nav className="flex items-center gap-1">
+      <nav className="flex items-center gap-1 h-full font-heading">
         {NAV_SECTIONS.map((section) => {
           const active = activeSection?.key === section.key;
           return (
@@ -31,10 +25,10 @@ export function PrimaryNavBar() {
               to={section.path}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "rounded-full px-4 py-2 text-[13.5px] font-medium lowercase transition-colors duration-200",
+                "flex items-center h-full px-[18px] border-b-[2.5px] text-[14px] lowercase transition-colors duration-200",
                 active
-                  ? "bg-white/[0.20] text-white"
-                  : "text-white/65 hover:text-white",
+                  ? "border-primary text-primary font-bold"
+                  : "border-transparent text-primary/60 font-semibold hover:text-primary/80",
               )}
             >
               {t(section.i18nKey)}
@@ -43,8 +37,8 @@ export function PrimaryNavBar() {
         })}
       </nav>
 
-      <div className="shrink-0">
-        <HeaderUserMenu onPrimary />
+      <div className="ml-auto shrink-0">
+        <HeaderUserMenu />
       </div>
     </div>
   );
