@@ -11,13 +11,10 @@ import { useImports, Import } from "@/hooks/useImports";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
+
 const BANNER_SHOW_UNTIL_DAY = 10;
 
-interface NotificationBellProps {
-  variant?: 'light' | 'dark';
-}
-
-export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
+export function NotificationBell() {
   const { t, i18n } = useTranslation('dashboard');
   const navigate = useNavigate();
   const { imports: cashflowImports } = useImports("CASHFLOW");
@@ -109,18 +106,13 @@ export function NotificationBell({ variant = 'light' }: NotificationBellProps) {
   const showInvestmentNotification = !dismissedInvestment && currentDay <= BANNER_SHOW_UNTIL_DAY && investmentUploads === 0;
   const hasNotification = showBankNotification || showInvestmentNotification;
 
-  const isDark = variant === 'dark';
-
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="icon"
-          className={cn(
-            "relative rounded-full w-11 h-11",
-            isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-muted text-foreground hover:bg-muted/70"
-          )}
+          className="relative rounded-lg w-[34px] h-[34px] text-primary hover:bg-muted/60"
         >
           <Bell className="w-5 h-5" />
           {hasNotification && (
