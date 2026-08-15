@@ -99,7 +99,7 @@ export function DashboardGreeting() {
 
   const tab = searchParams.get("tab") ?? "month";
   const firstName = profile?.first_name?.trim() || "";
-  const subtitleKey = (["month", "week", "year", "history"] as const).includes(tab as never)
+  const viewKey = (["month", "week", "year", "history"] as const).includes(tab as never)
     ? `greeting.subtitle.${tab}`
     : "greeting.subtitle.month";
 
@@ -110,11 +110,10 @@ export function DashboardGreeting() {
           {firstName && (
             <h1 className="text-[22px] font-bold tracking-[-0.02em] text-foreground">
               {t("greeting.hi", { name: firstName })}
+              {" "}
+              <span className="text-muted-foreground font-medium">· {t(viewKey)}</span>
             </h1>
           )}
-          <p className="text-[13.5px] text-muted-foreground mt-[3px]">
-            {t(subtitleKey)}
-          </p>
         </div>
         <div className="flex items-center gap-2 mt-[2px]">
           <EmptyStateBanner />

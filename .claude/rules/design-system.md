@@ -232,26 +232,28 @@ Mobile uses `MobileNav`'s hamburger drawer instead, grouped the same way. All th
 single `src/config/navigation.ts` `NAV_SECTIONS` config — never hand-roll a nav item list.
 
 **Primary bar (`bg-primary/[0.11]`, light tint) — the 4 top-level sections:**
-- Light blue tinted background with `border-b border-border`, height `h-16` (64px)
+- Light blue tinted background (no bottom border — underline touches the blue bar below),
+  height `h-16` (64px)
 - Brand mark on the far left (`<Logo variant="mark">`, blue fill, never hand-assembled), then
   the section links left-aligned (never centered), then a `ml-auto` right cluster
-- Quicksand font (`font-heading`), lowercase — active = `text-primary font-bold` +
-  `border-b-[2.5px] border-primary` underline
-- Inactive: `text-primary/60 font-semibold`, no underline (`border-b-[2.5px] border-transparent`),
-  hover `text-primary/80`
-- Right cluster: notifications bell (blue icon), theme toggle, user name + avatar dropdown
-  (`HeaderUserMenu`) — avatar uses gradient fill, name in `text-foreground`
+- Quicksand font (`font-heading`), lowercase — ALL items `text-primary`
+- Active = `font-bold` + `border-b-[2.5px] border-primary` underline
+- Inactive = `font-medium`, no underline (`border-b-[2.5px] border-transparent`),
+  hover `opacity-80`
+- Right cluster: notifications bell (blue icon), user icon (blue `User` Lucide icon) +
+  full name + chevron dropdown (`HeaderUserMenu`) — no avatar circle, no theme toggle
 
 **Secondary bar (`bg-primary`, solid blue) — sub-tabs of the active section:**
 - Renders only when the active section has more than one sub-tab (e.g. hidden on Investments)
 - Quicksand font (`font-heading`), height `h-[42px]`
+- Left padding `pl-[82px]` to align first sub-tab with the primary bar's first section label
 - Active = `text-white font-extrabold` (800 weight), inactive = `text-white/65 font-medium`,
   hover `bg-white/[0.08]`
 - Reads/writes `?tab=`, default tab omits the param from the URL (same convention as `Account.tsx`)
 
 **Greeting section (`DashboardGreeting`) — replaces the old title/selector row:**
 - Rendered inside `Dashboard.tsx` above the tab content, not in `AppHeader`
-- "Hi, [firstName]" 22px bold + subtitle varying by active tab
+- "Hi, [firstName] · [View Name]" — 22px bold greeting + muted view label inline (no subtitle)
 - Right side: Filter pill + period selector pill (prev/next arrows + label), bordered pills
   (`border border-border rounded-full`)
 - Includes `EmptyStateBanner` and `GranularityToggle` (history tab) inline

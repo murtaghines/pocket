@@ -62,8 +62,8 @@ export function TrendKpiCard({
 
   // Styling per variant. Borderless — elevation is the shadow token, not a gray outline.
   const cardClasses = filled
-    ? "bg-primary text-primary-foreground"
-    : "bg-card";
+    ? "bg-primary text-primary-foreground border border-primary"
+    : "bg-card border border-border";
 
   const labelClass = filled ? "text-primary-foreground/78" : "text-muted-foreground";
   const valueClass = filled ? "text-primary-foreground" : "text-foreground";

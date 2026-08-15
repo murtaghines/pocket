@@ -22,7 +22,7 @@ export function SecondaryNavBar() {
   };
 
   return (
-    <div className="hidden md:flex items-center h-[42px] px-[28px] bg-primary font-heading">
+    <div className="hidden md:flex items-center h-[42px] pl-[82px] pr-[28px] bg-primary font-heading">
       {section.subTabs.map((sub) => {
         const active = activeTab === sub.key;
         return (
@@ -31,7 +31,7 @@ export function SecondaryNavBar() {
             to={linkFor(sub.key)}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center h-full px-4 text-[13px] lowercase transition-colors duration-200",
+              "flex items-center h-full px-5 text-[13px] lowercase transition-colors duration-200",
               active
                 ? "text-white font-extrabold"
                 : "text-white/65 font-medium hover:bg-white/[0.08]",

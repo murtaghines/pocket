@@ -11,12 +11,12 @@ export function PrimaryNavBar() {
   const activeSection = getActiveSection(location.pathname);
 
   return (
-    <div className="hidden md:flex items-center h-16 px-[28px] bg-primary/[0.11] border-b border-border">
+    <div className="hidden md:flex items-center h-16 px-[28px] bg-primary/[0.11]">
       <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-primary shrink-0 mr-8">
         <Logo variant="mark" size={22} />
       </Link>
 
-      <nav className="flex items-center gap-1 h-full font-heading">
+      <nav className="flex items-center gap-2 h-full font-heading">
         {NAV_SECTIONS.map((section) => {
           const active = activeSection?.key === section.key;
           return (
@@ -28,7 +28,7 @@ export function PrimaryNavBar() {
                 "flex items-center h-full px-[18px] border-b-[2.5px] text-[14px] lowercase transition-colors duration-200",
                 active
                   ? "border-primary text-primary font-bold"
-                  : "border-transparent text-primary/60 font-semibold hover:text-primary/80",
+                  : "border-transparent text-primary font-medium hover:opacity-80",
               )}
             >
               {t(section.i18nKey)}

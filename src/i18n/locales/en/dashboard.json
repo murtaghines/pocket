@@ -301,10 +301,10 @@
   "greeting": {
     "hi": "Hi, {{name}}",
     "subtitle": {
-      "month": "Here's your financial overview for this month.",
-      "week": "Here's your financial overview for this week.",
-      "year": "Here's your financial overview for this year.",
-      "history": "Your complete financial history at a glance."
+      "month": "Monthly View",
+      "week": "Weekly View",
+      "year": "Yearly View",
+      "history": "History"
     },
     "filter": "Filter"
   },
