@@ -28,7 +28,7 @@ export function SecondaryNavBar() {
   };
 
   return (
-    <div className="hidden md:flex items-center gap-1 h-10 px-[30px] bg-primary-tint">
+    <div className="hidden md:flex items-center gap-6 h-9 px-[30px] bg-primary-tint">
       {section.subTabs.map((sub) => {
         const active = activeTab === sub.key;
         return (
@@ -37,10 +37,10 @@ export function SecondaryNavBar() {
             to={linkFor(sub.key)}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-[12.5px] lowercase transition-colors duration-200",
+              "pb-[3px] border-b-2 text-[12.5px] lowercase transition-colors duration-200",
               active
-                ? "font-semibold text-primary-tint-foreground"
-                : "font-medium text-primary-tint-foreground/60 hover:text-primary-tint-foreground/85",
+                ? "border-primary-tint-foreground font-semibold text-primary-tint-foreground"
+                : "border-transparent font-medium text-primary-tint-foreground/60 hover:text-primary-tint-foreground/85",
             )}
           >
             {t(sub.i18nKey, { ns: sub.ns ?? "common" })}

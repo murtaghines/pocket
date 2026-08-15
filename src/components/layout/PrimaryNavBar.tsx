@@ -17,12 +17,12 @@ export function PrimaryNavBar() {
   const activeSection = getActiveSection(location.pathname);
 
   return (
-    <div className="hidden md:flex items-center justify-between h-14 px-[30px] bg-primary">
-      <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-primary-foreground shrink-0">
-        <Logo variant="mark" size={22} />
+    <div className="hidden md:flex items-center h-14 px-[30px] bg-primary">
+      <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-primary-foreground shrink-0 mr-9">
+        <Logo variant="mark" size={20} />
       </Link>
 
-      <nav className="flex items-center gap-1">
+      <nav className="flex items-center gap-7">
         {NAV_SECTIONS.map((section) => {
           const active = activeSection?.key === section.key;
           return (
@@ -31,10 +31,10 @@ export function PrimaryNavBar() {
               to={section.path}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "rounded-full px-4 py-2 text-[13.5px] font-medium lowercase transition-colors duration-200",
+                "pb-[3px] border-b-2 text-[14px] font-medium lowercase transition-colors duration-200",
                 active
-                  ? "bg-white/[0.20] text-white"
-                  : "text-white/65 hover:text-white",
+                  ? "border-white text-white"
+                  : "border-transparent text-white/65 hover:text-white/90",
               )}
             >
               {t(section.i18nKey)}
@@ -43,7 +43,7 @@ export function PrimaryNavBar() {
         })}
       </nav>
 
-      <div className="shrink-0">
+      <div className="ml-auto shrink-0">
         <HeaderUserMenu onPrimary />
       </div>
     </div>

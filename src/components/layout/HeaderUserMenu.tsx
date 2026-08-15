@@ -34,6 +34,13 @@ export function HeaderUserMenu({ onPrimary = false }: HeaderUserMenuProps) {
     return f + l || "U";
   })();
 
+  const displayName = (() => {
+    const first = profile?.first_name?.trim();
+    if (!first) return "";
+    const lastInitial = profile?.last_name?.trim()?.charAt(0).toUpperCase();
+    return lastInitial ? `${first} ${lastInitial}.` : first;
+  })();
+
   return (
     <div className="flex items-center gap-[9px]">
       <div className="relative">
@@ -52,11 +59,14 @@ export function HeaderUserMenu({ onPrimary = false }: HeaderUserMenuProps) {
             className="flex items-center gap-[10px] cursor-pointer hover:opacity-80 transition-opacity"
           >
             <div
-              className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-primary-foreground text-[13px] font-semibold"
-              style={{ background: "var(--gradient-primary)" }}
+              className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-primary-foreground text-[12px] font-semibold shrink-0"
+              style={{ background: onPrimary ? "rgba(255,255,255,0.22)" : "var(--gradient-primary)" }}
             >
               {initials}
             </div>
+            {onPrimary && displayName && (
+              <span className="text-[13px] font-medium text-white whitespace-nowrap">{displayName}</span>
+            )}
             <ChevronDown
               className={cn("w-[16px] h-[16px]", onPrimary ? "text-white/70" : "text-muted-foreground")}
               strokeWidth={2}

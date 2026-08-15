@@ -232,16 +232,21 @@ Mobile uses `MobileNav`'s hamburger drawer instead, grouped the same way. All th
 single `src/config/navigation.ts` `NAV_SECTIONS` config — never hand-roll a nav item list.
 
 **Primary bar (`bg-primary`, solid) — the 4 top-level sections:**
-- Icon size: 20px Lucide (brand mark on the far left, via `<Logo variant="mark">`, never hand-assembled)
-- Active: white 100% + rounded bg `rgba(255,255,255,0.22)` · label Inter 600
-- Inactive: white 65% opacity · no bg · label Inter 500
-- Active = icon AND label both at full white. Never one without the other.
-- Right cluster: notifications bell, theme toggle, user avatar dropdown (`HeaderUserMenu onPrimary`)
+- Brand mark on the far left (`<Logo variant="mark">`, never hand-assembled), then the section
+  links left-aligned (never centered), then a `ml-auto` right cluster
+- Flat text, no pill/chip background — active = white 100% + `border-b-2 border-white` underline,
+  label Inter 500 medium weight
+- Inactive: white 65% opacity, no underline (`border-b-2 border-transparent` to keep baseline
+  alignment), hover white 90%
+- Right cluster: notifications bell, theme toggle, user name + avatar dropdown
+  (`HeaderUserMenu onPrimary`) — avatar circle is a translucent white fill on this background,
+  never the blue gradient used elsewhere (blue-on-blue has no contrast)
 
 **Secondary bar (`bg-primary-tint`, lighter blue) — sub-tabs of the active section:**
 - Renders only when the active section has more than one sub-tab (e.g. hidden on Investments)
-- Flat pill row, no active background — active = `font-semibold` + full `primary-tint-foreground`,
-  inactive = `font-medium` + `primary-tint-foreground/60`
+- Same flat/underline treatment as the primary bar, one size down — active = `font-semibold` +
+  full `primary-tint-foreground` + `border-b-2` underline, inactive = `font-medium` +
+  `primary-tint-foreground/60` + transparent border
 - Reads/writes `?tab=`, default tab omits the param from the URL (same convention as `Account.tsx`)
 
 **Mobile drawer groups (`bg-primary`):**
