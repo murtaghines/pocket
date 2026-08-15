@@ -3,7 +3,6 @@ import { User, LogOut, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
 import {
   DropdownMenu,
@@ -18,17 +17,10 @@ export function HeaderUserMenu() {
   const { signOut } = useAuth();
   const { profile } = useProfile();
 
-  const initials = (() => {
-    const f = profile?.first_name?.charAt(0).toUpperCase() ?? "";
-    const l = profile?.last_name?.charAt(0).toUpperCase() ?? "";
-    return f + l || "U";
-  })();
-
   const displayName = (() => {
-    const first = profile?.first_name?.trim();
-    if (!first) return "";
-    const lastInitial = profile?.last_name?.trim()?.charAt(0).toUpperCase();
-    return lastInitial ? `${first} ${lastInitial}.` : first;
+    const first = profile?.first_name?.trim() ?? "";
+    const last = profile?.last_name?.trim() ?? "";
+    return [first, last].filter(Boolean).join(" ");
   })();
 
   return (
@@ -37,8 +29,6 @@ export function HeaderUserMenu() {
         <NotificationBell />
       </div>
 
-      <ThemeToggle />
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -46,12 +36,7 @@ export function HeaderUserMenu() {
             aria-label="Profile menu"
             className="flex items-center gap-[10px] cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground text-[13px] font-bold tracking-[0.02em] shrink-0"
-              style={{ background: "var(--gradient-primary)" }}
-            >
-              {initials}
-            </div>
+            <User className="w-5 h-5 text-primary" strokeWidth={2} />
             {displayName && (
               <span className="text-[13.5px] font-semibold text-foreground whitespace-nowrap">{displayName}</span>
             )}

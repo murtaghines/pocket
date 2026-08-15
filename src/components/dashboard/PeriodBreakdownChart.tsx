@@ -46,7 +46,7 @@ export function PeriodBreakdownChart({ points, subtitle }: PeriodBreakdownChartP
   };
 
   return (
-    <div className="flex h-full flex-col bg-card rounded-xl p-[20px_22px_18px] shadow-bento">
+    <div className="flex h-full flex-col bg-card rounded-xl p-[20px_22px_18px] shadow-bento border border-border">
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground leading-tight">

@@ -170,7 +170,7 @@ export function WeekTab() {
             <CategoryChart data={incomeCategoryData} />
           </div>
 
-          <div className="bg-card rounded-xl p-[20px_22px_10px] shadow-bento">
+          <div className="bg-card rounded-xl p-[20px_22px_10px] shadow-bento border border-border">
             <div className="max-h-[500px] overflow-y-auto">
               <TransactionTable transactions={periodTransactions} />
             </div>

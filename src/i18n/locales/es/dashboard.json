@@ -270,10 +270,10 @@
   "greeting": {
     "hi": "Hola, {{name}}",
     "subtitle": {
-      "month": "Aquí está tu resumen financiero de este mes.",
-      "week": "Aquí está tu resumen financiero de esta semana.",
-      "year": "Aquí está tu resumen financiero de este año.",
-      "history": "Tu historial financiero completo de un vistazo."
+      "month": "Vista Mensual",
+      "week": "Vista Semanal",
+      "year": "Vista Anual",
+      "history": "Historial"
     },
     "filter": "Filtro"
   },
