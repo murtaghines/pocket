@@ -33,24 +33,27 @@
   "required": "Requerido",
   "navigation": {
     "dashboard": "Panel",
-    "home": "Inicio",
-    "overview": "Resumen",
-    "history": "Histórico",
     "investments": "Inversiones",
     "planning": "Planificación",
     "data": "Datos",
-    "dataUploads": "Carga de datos",
-    "bankStatements": "Extractos",
-    "categories": "Categorías",
     "account": "Cuenta",
-    "profile": "Perfil",
-    "myData": "Mis Datos",
     "settings": "Configuración",
-    "analytics": "Analytics",
-    "investmentFiles": "Archivos de inversión",
-    "categoriesRules": "Categorías y reglas",
     "logout": "Cerrar sesión",
-    "logoutSuccess": "Sesión cerrada correctamente"
+    "logoutSuccess": "Sesión cerrada correctamente",
+    "tabs": {
+      "dashboard": {
+        "history": "Histórico"
+      },
+      "planning": {
+        "planned": "Pagos planificados",
+        "budgets": "Presupuestos"
+      },
+      "data": {
+        "bank": "Extractos",
+        "investments": "Archivos de inversión",
+        "categories": "Categorías"
+      }
+    }
   },
   "addData": {
     "title": "Agregar datos",

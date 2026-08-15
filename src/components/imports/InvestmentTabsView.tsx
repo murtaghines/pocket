@@ -17,7 +17,6 @@ import { MonthTabStrip } from "./investments/MonthTabStrip";
 import { MonthWorkspace } from "./investments/MonthWorkspace";
 import { InvestmentPreviewDialog } from "./investments/InvestmentPreviewDialog";
 import { MobileUploadFAB } from "./MobileUploadFAB";
-import { DataSectionToggle, type DataTab } from "./DataSectionToggle";
 import type { PendingInvEdit } from "./investments/types";
 
 const DEFAULT_MONTHS = 6;
@@ -27,13 +26,11 @@ const MONTHS_INCREMENT = 1;
 /* ─────────────────────────  Main component  ───────────────────────── */
 
 interface InvestmentTabsViewProps {
-  tab: DataTab;
-  onTabChange: (t: DataTab) => void;
   activeMonth: string | null;
   onMonthChange: (key: string) => void;
 }
 
-export function InvestmentTabsView({ tab, onTabChange, activeMonth, onMonthChange }: InvestmentTabsViewProps) {
+export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTabsViewProps) {
   const { user } = useAuth();
   const { t } = useTranslation("common");
   const { formatMonth } = useLocalization();
@@ -184,10 +181,8 @@ export function InvestmentTabsView({ tab, onTabChange, activeMonth, onMonthChang
         }}
       />
 
-      {/* ============= Toolbar (desktop only): section toggle + actions ============= */}
-      <div className="hidden md:flex items-center justify-between gap-2 px-10 py-4 border-b border-border bg-card">
-        <DataSectionToggle tab={tab} onChange={onTabChange} />
-
+      {/* ============= Toolbar (desktop only): actions ============= */}
+      <div className="hidden md:flex items-center justify-end gap-2 px-10 py-4 border-b border-border bg-card">
         <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"

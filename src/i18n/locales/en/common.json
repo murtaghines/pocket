@@ -33,24 +33,27 @@
   "required": "Required",
   "navigation": {
     "dashboard": "Dashboard",
-    "home": "Home",
-    "overview": "Overview",
-    "history": "History",
     "investments": "Investments",
     "planning": "Planning",
     "data": "Data",
-    "dataUploads": "Data uploads",
-    "bankStatements": "Bank statements",
-    "categories": "Categories",
     "account": "Account",
-    "profile": "Profile",
-    "myData": "My Data",
     "settings": "Settings",
-    "analytics": "Analytics",
-    "investmentFiles": "Investment files",
-    "categoriesRules": "Categories & rules",
     "logout": "Log out",
-    "logoutSuccess": "Logged out successfully"
+    "logoutSuccess": "Logged out successfully",
+    "tabs": {
+      "dashboard": {
+        "history": "History"
+      },
+      "planning": {
+        "planned": "Planned payments",
+        "budgets": "Budgets"
+      },
+      "data": {
+        "bank": "Bank statements",
+        "investments": "Investment files",
+        "categories": "Categories"
+      }
+    }
   },
   "addData": {
     "title": "Add data",

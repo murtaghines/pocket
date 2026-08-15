@@ -1,96 +1,36 @@
+import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
-import { CalendarClock, PiggyBank, Bell } from "lucide-react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { PlannedTab } from "@/components/planning/PlannedTab";
+import { BudgetsTab } from "@/components/planning/BudgetsTab";
+
+const TAB_KEYS = ["planned", "budgets"] as const;
+type TabKey = (typeof TAB_KEYS)[number];
 
 export default function Planning() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get("tab") ?? "planned";
+  const activeTab: TabKey = (TAB_KEYS as readonly string[]).includes(rawTab) ? (rawTab as TabKey) : "planned";
+
+  const handleTabChange = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === "planned") next.delete("tab");
+    else next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-[16px]">
-        <Section
-          icon={<CalendarClock className="w-5 h-5" />}
-          title="Planned payments"
-          subtitle="Schedule and track upcoming expenses"
-          previewItems={[
-            { label: "Rent", amount: "€850", date: "1st of each month" },
-            { label: "Netflix", amount: "€17.99", date: "15th of each month" },
-            { label: "Insurance", amount: "€124", date: "Quarterly" },
-          ]}
-          comingSoonNote="Set recurring expenses, get reminders before they hit, and see what's coming next month."
-        />
-        <Section
-          icon={<PiggyBank className="w-5 h-5" />}
-          title="Budgets"
-          subtitle="Set spending limits per category"
-          previewItems={[
-            { label: "Groceries", amount: "€400/mo", date: "68% used" },
-            { label: "Dining out", amount: "€150/mo", date: "42% used" },
-            { label: "Transport", amount: "€100/mo", date: "91% used" },
-          ]}
-          comingSoonNote="Assign monthly limits per category, track progress in real time, and spot overspending early."
-        />
-      </div>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsContent value="planned" className="mt-0">
+          <PlannedTab />
+        </TabsContent>
+        <TabsContent value="budgets" className="mt-0">
+          <BudgetsTab />
+        </TabsContent>
+      </Tabs>
       <DashboardFooter />
     </DashboardLayout>
-  );
-}
-
-function Section({
-  icon,
-  title,
-  subtitle,
-  previewItems,
-  comingSoonNote,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  previewItems: { label: string; amount: string; date: string }[];
-  comingSoonNote: string;
-}) {
-  return (
-    <section className="bg-card rounded-xl p-6 shadow-bento">
-      <div className="flex items-start gap-3 mb-5">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <h2 className="text-base md:text-lg font-semibold text-foreground leading-tight">
-            {title}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
-        </div>
-      </div>
-
-      <div className="border border-dashed border-border rounded-xl overflow-hidden">
-        {/* Preview rows — blurred to hint at the future UI */}
-        <div className="relative">
-          <div className="divide-y divide-border/50 opacity-40 blur-[1px] select-none pointer-events-none">
-            {previewItems.map((item) => (
-              <div key={item.label} className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-muted" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{item.label}</p>
-                    <p className="text-xs text-muted-foreground">{item.date}</p>
-                  </div>
-                </div>
-                <span className="text-sm font-semibold tabular-nums text-foreground">{item.amount}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Overlay */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-[2px]">
-            <div className="flex items-center gap-2 text-primary mb-2">
-              <Bell className="w-4 h-4" />
-              <span className="text-sm font-semibold">Coming soon</span>
-            </div>
-            <p className="text-xs text-muted-foreground text-center max-w-xs leading-relaxed px-4">
-              {comingSoonNote}
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }

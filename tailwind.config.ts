@@ -31,6 +31,10 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
+        "primary-tint": {
+          DEFAULT: "hsl(var(--primary-tint))",
+          foreground: "hsl(var(--primary-tint-foreground))",
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

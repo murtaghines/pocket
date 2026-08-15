@@ -1,15 +1,6 @@
-import { useMemo } from "react";
 import type { Transaction } from "@/lib/mockData";
-import {
-  weeklyBreakdownForMonth,
-  essentialSplitForMonth,
-  transactionStatsForMonth,
-  dailySpendForMonth,
-  coefficientOfVariation,
-  type WeeklyPoint,
-  type EssentialSplit,
-  type TransactionStats,
-} from "@/lib/analytics";
+import { usePeriodInsights, type VolatilityLevel } from "@/hooks/usePeriodInsights";
+import type { WeeklyPoint, EssentialSplit, TransactionStats } from "@/lib/analytics";
 
 interface UseMonthlyInsightsArgs {
   transactions: Transaction[];
@@ -18,7 +9,7 @@ interface UseMonthlyInsightsArgs {
   convert: (n: number) => number;
 }
 
-export type VolatilityLevel = "steady" | "moderate" | "erratic";
+export type { VolatilityLevel };
 
 export interface MonthlyInsights {
   weekly: WeeklyPoint[];
@@ -30,35 +21,16 @@ export interface MonthlyInsights {
 }
 
 /**
- * Derived, month-scoped insight metrics for the Dashboard (monthly view). Pure memoized wrappers
- * over `@/lib/analytics` — no fetching. Feed it the already-loaded transactions from
- * `useTransactions` and the `convertToUserCurrency` helper the pages already build.
+ * Derived, month-scoped insight metrics for the Dashboard (monthly view). Thin wrapper around the
+ * granularity-generic `usePeriodInsights` — kept so the month tab's contract never changes.
  */
-export function useMonthlyInsights({
-  transactions,
-  monthKey,
-  convert,
-}: UseMonthlyInsightsArgs): MonthlyInsights {
-  return useMemo(() => {
-    const weekly = weeklyBreakdownForMonth(transactions, monthKey, convert);
-    const essentialSplit = essentialSplitForMonth(transactions, monthKey, convert);
-    const txStats = transactionStatsForMonth(transactions, monthKey, convert);
-
-    // Volatility over days that actually had spend, so a month with many zero days doesn't read
-    // as artificially "erratic".
-    const spendDays = dailySpendForMonth(transactions, monthKey, convert)
-      .map((p) => p.spend)
-      .filter((v) => v > 0);
-    const dailyVolatility = coefficientOfVariation(spendDays);
-    const volatilityLevel: VolatilityLevel =
-      dailyVolatility >= 1.2 ? "erratic" : dailyVolatility >= 0.7 ? "moderate" : "steady";
-
-    return {
-      weekly,
-      essentialSplit,
-      txStats,
-      dailyVolatility,
-      volatilityLevel,
-    };
-  }, [transactions, monthKey, convert]);
+export function useMonthlyInsights({ transactions, monthKey, convert }: UseMonthlyInsightsArgs): MonthlyInsights {
+  const period = usePeriodInsights({ transactions, periodKey: monthKey, granularity: "month", convert });
+  return {
+    weekly: period.subBreakdown as WeeklyPoint[],
+    essentialSplit: period.essentialSplit,
+    txStats: period.txStats,
+    dailyVolatility: period.dailyVolatility,
+    volatilityLevel: period.volatilityLevel,
+  };
 }
