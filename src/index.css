@@ -108,6 +108,11 @@
     --primary: 216 100% 55%;
     --primary-foreground: 0 0% 100%;
 
+    /* Secondary nav bar — a lighter blue tint that reads as "under" the solid --primary bar,
+       distinct from --accent (a near-white hover tint meant for white backgrounds). */
+    --primary-tint: 216 100% 68%;
+    --primary-tint-foreground: 0 0% 100%;
+
     --secondary: 45 100% 58%;
     --secondary-foreground: 0 0% 3%;
 
@@ -163,6 +168,9 @@
 
     --primary: 216 100% 62%;
     --primary-foreground: 0 0% 100%;
+
+    --primary-tint: 216 90% 48%;
+    --primary-tint-foreground: 0 0% 100%;
 
     --secondary: 220 13% 18%;
     --secondary-foreground: 0 0% 98%;

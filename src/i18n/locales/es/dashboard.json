@@ -66,6 +66,8 @@
     "manageAccounts": "Gestionar cuentas",
     "weekShort": "S{{n}}",
     "byWeekThisMonth": "Por semana · este mes",
+    "byDayThisWeek": "Por día · esta semana",
+    "byMonthThisYear": "Por mes · este año",
     "addAccount": "Agregar cuenta",
     "addAccountDescription": "Creá una cuenta bancaria nueva. Vas a poder subirle extractos.",
     "accountNamePlaceholder": "Ej: Santander, BBVA, Revolut...",

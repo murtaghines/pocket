@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Minus } from "lucide-react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardFooter } from "@/components/layout/DashboardFooter";
 
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
@@ -17,8 +15,6 @@ import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { WeeklyIncomeExpensesChart } from "@/components/dashboard/WeeklyIncomeExpensesChart";
 import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscretionaryCard";
 
-
-import { EmptyStateBanner } from "@/components/dashboard/EmptyStateBanner";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -30,24 +26,23 @@ import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
 import { Loader2 } from "lucide-react";
 import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
 import type { Category } from "@/lib/mockData";
-import { Button } from "@/components/ui/button";
 
-export default function Index() {
+/** Dashboard's "month" tab — current month vs. previous month. Verbatim body of the former Index.tsx page. */
+export function MonthTab() {
   const { t } = useTranslation('dashboard');
-  const { t: tc } = useTranslation('common');
-  const { 
-    transactions, 
-    monthlyData, 
-    summary, 
+  const {
+    transactions,
+    monthlyData,
+    summary,
     openingBalanceByMonth,
-    isLoading 
+    isLoading
   } = useTransactions();
-  
+
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates('EUR');
   const { profile } = useProfile();
-  
+
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance } = useMonthSelection();
@@ -113,7 +108,7 @@ export default function Index() {
     currentIndex > 0
       ? monthlyData[currentIndex - 1]
       : { month: '', income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
-  
+
   const convertedCurrentMonth = {
     ...currentMonth,
     income: convertToUserCurrency(currentMonth.income),
@@ -131,20 +126,20 @@ export default function Index() {
   };
 
   const hasPreviousData = monthlyData.length >= 2;
-  
-  const incomeChange = hasPreviousData && previousMonth.income > 0 
+
+  const incomeChange = hasPreviousData && previousMonth.income > 0
     ? Math.round(((currentMonth.income - previousMonth.income) / previousMonth.income) * 100)
     : undefined;
-  
+
   const expenseChange = hasPreviousData && previousMonth.expenses > 0
     ? Math.round(((currentMonth.expenses - previousMonth.expenses) / previousMonth.expenses) * 100)
     : undefined;
-  
+
   const balanceChange = hasPreviousData && convertedPreviousMonth.balance !== 0
     ? Math.round(((convertedCurrentMonth.balance - convertedPreviousMonth.balance) / Math.abs(convertedPreviousMonth.balance)) * 100)
     : undefined;
 
-  
+
 
   // Recompute category breakdowns for the SELECTED month so charts react
   // to the month dropdown AND to live edits (categories, movement) made in
@@ -210,14 +205,14 @@ export default function Index() {
 
 
   return (
-    <DashboardLayout>
+    <>
       {onboardingChecked && (
-        <OnboardingModal 
-          open={showOnboarding} 
-          onComplete={() => setShowOnboarding(false)} 
+        <OnboardingModal
+          open={showOnboarding}
+          onComplete={() => setShowOnboarding(false)}
         />
       )}
-      
+
       <main className="w-full">
 
         {(isLoading || prefsLoading) && (
@@ -331,8 +326,6 @@ export default function Index() {
           </>
         )}
       </main>
-
-      <DashboardFooter />
-    </DashboardLayout>
+    </>
   );
 }

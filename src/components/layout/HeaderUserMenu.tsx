@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { User, LogOut, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { ThemeToggle } from "./ThemeToggle";
@@ -13,11 +14,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+interface HeaderUserMenuProps {
+  /** Render for placement directly on a solid --primary background (e.g. PrimaryNavBar). */
+  onPrimary?: boolean;
+}
+
 /**
  * The top bar's right cluster — notification bell, theme toggle and the profile dropdown.
  * Extracted so every page's header (dashboard, workspace pages…) renders the exact same utilities.
  */
-export function HeaderUserMenu() {
+export function HeaderUserMenu({ onPrimary = false }: HeaderUserMenuProps) {
   const { t } = useTranslation("common");
   const { signOut } = useAuth();
   const { profile } = useProfile();
@@ -31,12 +37,12 @@ export function HeaderUserMenu() {
   return (
     <div className="flex items-center gap-[9px]">
       <div className="relative">
-        <NotificationBell variant="light" />
+        <NotificationBell variant={onPrimary ? "dark" : "light"} />
       </div>
 
       <ThemeToggle />
 
-      <div className="w-px h-[30px] bg-border mx-[5px]" />
+      <div className={cn("w-px h-[30px] mx-[5px]", onPrimary ? "bg-white/20" : "bg-border")} />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -51,7 +57,10 @@ export function HeaderUserMenu() {
             >
               {initials}
             </div>
-            <ChevronDown className="w-[16px] h-[16px] text-muted-foreground" strokeWidth={2} />
+            <ChevronDown
+              className={cn("w-[16px] h-[16px]", onPrimary ? "text-white/70" : "text-muted-foreground")}
+              strokeWidth={2}
+            />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">

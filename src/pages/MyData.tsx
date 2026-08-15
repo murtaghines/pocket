@@ -1,43 +1,30 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { AppHeader } from "@/components/layout/AppHeader";
-import { MobileNav } from "@/components/layout/MobileNav";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BankStatementsTabsView } from "@/components/imports/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
-import type { DataTab } from "@/components/imports/DataSectionToggle";
+import { CategoriesTab } from "@/components/imports/CategoriesTab";
+
+export type DataTab = "bank" | "investments" | "categories";
 
 /**
- * MyData — full-screen workspace ("Data uploads"). The shared AppHeader carries the pill nav; each
- * tabs view renders its own toolbar (Bank statements / Investments toggle + upload actions) as the
- * top row, keeping the rest of the canvas edge-to-edge for the spreadsheet.
+ * MyData — full-screen workspace ("Data" section: bank statements / investment files /
+ * categories). The header's SecondaryNavBar drives the tab switch via `?tab=`; each view renders
+ * its own toolbar/canvas edge-to-edge.
  */
 export default function MyData() {
-  const { t } = useTranslation("common");
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabParam = searchParams.get("tab");
-  const tab: DataTab = tabParam === "investments" ? "investments" : "bank";
+  const tab: DataTab = tabParam === "investments" ? "investments" : tabParam === "categories" ? "categories" : "bank";
 
   const monthParam = searchParams.get("month");
 
-  const setTab = (next: DataTab) => {
-    const params: Record<string, string> = { tab: next };
-    if (monthParam) params.month = monthParam;
+  const setMonth = (key: string) => {
+    const params: Record<string, string> = { month: key };
+    if (tab !== "bank") params.tab = tab;
     setSearchParams(params);
   };
-
-  const setMonth = (key: string) => {
-    setSearchParams({ tab, month: key });
-  };
-
-  // Body class so portaled UI inherits the dashboard theme tokens
-  useEffect(() => {
-    document.body.classList.add("dashboard-theme");
-    return () => {
-      document.body.classList.remove("dashboard-theme");
-    };
-  }, []);
 
   // Legacy deep-link support (?section=bank&month=YYYY-MM) — scroll & highlight
   const highlightSection = searchParams.get("section");
@@ -66,17 +53,10 @@ export default function MyData() {
   }, [highlightSection, highlightMonth, setSearchParams]);
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme">
-      <MobileNav />
-      <AppHeader title={t("navigation.dataUploads", "Data uploads")} showSelectors={false} />
-
-      <main className="w-full bg-card min-h-screen">
-        {tab === "bank" ? (
-          <BankStatementsTabsView tab={tab} onTabChange={setTab} activeMonth={monthParam} onMonthChange={setMonth} />
-        ) : (
-          <InvestmentTabsView tab={tab} onTabChange={setTab} activeMonth={monthParam} onMonthChange={setMonth} />
-        )}
-      </main>
-    </div>
+    <DashboardLayout fullBleed>
+      {tab === "bank" && <BankStatementsTabsView activeMonth={monthParam} onMonthChange={setMonth} />}
+      {tab === "investments" && <InvestmentTabsView activeMonth={monthParam} onMonthChange={setMonth} />}
+      {tab === "categories" && <CategoriesTab />}
+    </DashboardLayout>
   );
 }

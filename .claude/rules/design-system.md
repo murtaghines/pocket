@@ -64,6 +64,8 @@ Always reference tokens. Never hardcode hex values in components.
 --card-foreground:    hsl(0 0% 3%);
 --primary:            hsl(216 100% 55%);     /* Blue — buttons, links, focus */
 --primary-foreground: hsl(0 0% 100%);
+--primary-tint:       hsl(216 100% 68%);     /* Secondary nav bar — lighter than --primary, not --accent */
+--primary-tint-foreground: hsl(0 0% 100%);
 --secondary:          hsl(45 100% 58%);      /* Yellow — secondary CTAs */
 --secondary-foreground: hsl(0 0% 3%);
 --accent:             hsl(216 100% 96%);     /* Blue tint — hover/active bg */
@@ -222,16 +224,35 @@ Original orientation: top-left (0,0) · top-right (W,0) · bottom-right (W,H)
 
 ---
 
-## Navigation (Sidebar)
+## Navigation (Header)
 
-**On blue background (`bg-primary`):**
-- Icon size: 20px Lucide
-- Active: white 100% + rounded bg `rgba(255,255,255,0.22)` · radius 9px · label Inter 600
-- Inactive: white 52% opacity · no bg · label Inter 400
-- Group labels: 9px · Inter 700 · white 45% · uppercase · tracking-wide
+Two full-width horizontal bars, stacked, sticky at the top of every authenticated page —
+`PrimaryNavBar` (section-level) directly above `SecondaryNavBar` (the active section's sub-tabs).
+Mobile uses `MobileNav`'s hamburger drawer instead, grouped the same way. All three read from the
+single `src/config/navigation.ts` `NAV_SECTIONS` config — never hand-roll a nav item list.
+
+**Primary bar (`bg-primary`, solid) — the 4 top-level sections:**
+- Icon size: 20px Lucide (brand mark on the far left, via `<Logo variant="mark">`, never hand-assembled)
+- Active: white 100% + rounded bg `rgba(255,255,255,0.22)` · label Inter 600
+- Inactive: white 65% opacity · no bg · label Inter 500
 - Active = icon AND label both at full white. Never one without the other.
+- Right cluster: notifications bell, theme toggle, user avatar dropdown (`HeaderUserMenu onPrimary`)
 
-**On white/light background:**
+**Secondary bar (`bg-primary-tint`, lighter blue) — sub-tabs of the active section:**
+- Renders only when the active section has more than one sub-tab (e.g. hidden on Investments)
+- Flat pill row, no active background — active = `font-semibold` + full `primary-tint-foreground`,
+  inactive = `font-medium` + `primary-tint-foreground/60`
+- Reads/writes `?tab=`, default tab omits the param from the URL (same convention as `Account.tsx`)
+
+**Mobile drawer groups (`bg-primary`):**
+- Group labels: 9px · Inter 700 · white 45% · uppercase · tracking-wide
+- Items follow the same active/inactive white-opacity rule as the primary bar
+
+**Lowercase, everywhere:** every nav label — primary bar, secondary bar, and the mobile
+drawer — renders lowercase via a CSS `lowercase` class on the label span. Never lowercase the
+translation string itself; the i18n value stays Title Case (`"Dashboard"`, not `"dashboard"`).
+
+**On white/light background (e.g. Account page's tab strip):**
 - Active: `bg-accent` tint + `text-primary` (icon + label)
 - Inactive: no bg + `text-muted-foreground`
 

@@ -1,6 +1,4 @@
 import { useSearchParams } from "react-router-dom";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { TotalView } from "@/components/dashboard/TotalView";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
@@ -10,14 +8,13 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useHistoricalInsights } from "@/hooks/useHistoricalInsights";
 import { useGranularity } from "@/hooks/useGranularity";
 import { bucketByGranularity } from "@/lib/analytics";
-import { useTranslation } from "react-i18next";
 import { useCallback, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 
-export default function History() {
+/** Dashboard's "history" tab — all-time trend view. Verbatim body of the former History.tsx page. */
+export function HistoryTab() {
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
-  const { t } = useTranslation("dashboard");
   const { transactions, isLoading } = useTransactions();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
@@ -53,32 +50,28 @@ export default function History() {
   );
 
   return (
-    <DashboardLayout>
-      <main className="w-full">
-        {(isLoading || prefsLoading) && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+    <main className="w-full">
+      {(isLoading || prefsLoading) && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
+      {!isLoading && !prefsLoading && (
+        <>
+          <div className="mb-4">
+            <TotalView monthlyData={periodData} insights={insights} granularity={granularity} />
           </div>
-        )}
 
-        {!isLoading && !prefsLoading && (
-          <>
-            <div className="mb-4">
-              <TotalView monthlyData={periodData} insights={insights} granularity={granularity} />
+          <div
+            className="bg-card rounded-xl p-[20px_22px_10px] shadow-bento"
+          >
+            <div className="max-h-[500px] overflow-y-auto">
+              <TransactionTable transactions={sortedTransactions} initialSearch={initialSearch} />
             </div>
-
-            <div
-              className="bg-card rounded-xl p-[20px_22px_10px] shadow-bento"
-            >
-              <div className="max-h-[500px] overflow-y-auto">
-                <TransactionTable transactions={sortedTransactions} initialSearch={initialSearch} />
-              </div>
-            </div>
-          </>
-        )}
-      </main>
-
-      <DashboardFooter />
-    </DashboardLayout>
+          </div>
+        </>
+      )}
+    </main>
   );
 }

@@ -9,6 +9,8 @@ interface NetBalanceCardProps {
   sentToInvest: number;
   monthKey: string | null;
   previousMonthKey?: string | null;
+  /** Override the "vs X" label — needed when monthKey isn't a YYYY-MM month (e.g. week/year tabs). */
+  previousPeriodLabel?: string;
   formatCurrency: (n: number) => string;
 }
 
@@ -23,6 +25,7 @@ export function NetBalanceCard({
   sentToInvest,
   monthKey,
   previousMonthKey,
+  previousPeriodLabel,
   formatCurrency,
 }: NetBalanceCardProps) {
   const { t, i18n } = useTranslation("dashboard");
@@ -35,12 +38,13 @@ export function NetBalanceCard({
   const isDown = change !== undefined && change < 0;
 
   const prevMonthLabel = useMemo(() => {
+    if (previousPeriodLabel !== undefined) return previousPeriodLabel;
     const key = previousMonthKey || monthKey;
     if (!key) return "last month";
     const [y, m] = key.split("-").map(Number);
     const d = previousMonthKey ? new Date(y, m - 1, 1) : new Date(y, m - 2, 1);
     return new Intl.DateTimeFormat(i18n.language || "en", { month: "short" }).format(d);
-  }, [monthKey, previousMonthKey, i18n.language]);
+  }, [monthKey, previousMonthKey, previousPeriodLabel, i18n.language]);
 
   // On the filled card a good change is green; a bad one just softens (no red on blue).
   const deltaColor = change === undefined || !isUp ? "text-primary-foreground/82" : "text-success";

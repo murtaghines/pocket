@@ -9,16 +9,14 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
 import { LanguagePreferenceSync } from "@/components/layout/LanguagePreferenceSync";
-import { MonthSelectionProvider } from "@/hooks/useMonthSelection";
+import { PeriodSelectionProvider } from "@/hooks/usePeriodSelection";
 import { SUPPORTED_LANGUAGES } from "@/i18n/config";
-import Index from "./pages/Index";
-import History from "./pages/History";
+import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Investments from "./pages/Investments";
 import Account from "./pages/Account";
 import MyData from "./pages/MyData";
-import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 import ComingSoon from "./pages/ComingSoon";
 import Planning from "./pages/Planning";
@@ -93,22 +91,19 @@ const App = () => (
         <LanguagePreferenceSync />
         <Toaster />
         <Sonner />
-        <MonthSelectionProvider>
+        <PeriodSelectionProvider>
           <BrowserRouter>
             <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <Index />
+                <Dashboard />
               </ProtectedRoute>
             } />
-            <Route path="/history" element={
-              <ProtectedRoute>
-                <History />
-              </ProtectedRoute>
-            } />
+            {/* History is now the Dashboard's "history" tab */}
+            <Route path="/history" element={<Navigate to="/dashboard?tab=history" replace />} />
             {/* Backwards-compatible redirect from the previous /total route */}
-            <Route path="/total" element={<Navigate to="/history" replace />} />
+            <Route path="/total" element={<Navigate to="/dashboard?tab=history" replace />} />
             <Route path="/calendar" element={
               <ProtectedRoute>
                 <ComingSoon title="Calendar" subtitle="A monthly view of your activity" />
@@ -119,8 +114,8 @@ const App = () => (
                 <Planning />
               </ProtectedRoute>
             } />
-            <Route path="/planning/planned" element={<Navigate to="/planning" replace />} />
-            <Route path="/planning/budgets" element={<Navigate to="/planning" replace />} />
+            <Route path="/planning/planned" element={<Navigate to="/planning?tab=planned" replace />} />
+            <Route path="/planning/budgets" element={<Navigate to="/planning?tab=budgets" replace />} />
             <Route path="/investments" element={
               <ProtectedRoute>
                 <Investments />
@@ -138,11 +133,8 @@ const App = () => (
                 <MyData />
               </ProtectedRoute>
             } />
-            <Route path="/categories" element={
-              <ProtectedRoute>
-                <Categories />
-              </ProtectedRoute>
-            } />
+            {/* Categories is now the Data section's "categories" tab */}
+            <Route path="/categories" element={<Navigate to="/my-data?tab=categories" replace />} />
             <Route path="/auth" element={
               <PublicRoute>
                 <Auth />
@@ -152,7 +144,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </MonthSelectionProvider>
+        </PeriodSelectionProvider>
       </TooltipProvider>
       </ThemeProvider>
     </AuthProvider>

@@ -14,6 +14,8 @@ interface TrendKpiCardProps {
   transactions?: Array<{ date: string; amount: number; type: string }>;
   monthKey: string | null;
   previousMonthKey?: string | null;
+  /** Override the "vs X" label — needed when monthKey isn't a YYYY-MM month (e.g. week/year tabs). */
+  previousPeriodLabel?: string;
   total: number;
   previousTotal?: number;
   convert?: (amount: number) => number;
@@ -30,6 +32,7 @@ export function TrendKpiCard({
   filled = false,
   monthKey,
   previousMonthKey,
+  previousPeriodLabel,
   total,
   previousTotal,
   formatCurrency,
@@ -49,12 +52,13 @@ export function TrendKpiCard({
   const isGoodChange = positiveIsGood ? isUp : isDown;
 
   const prevMonthLabel = useMemo(() => {
+    if (previousPeriodLabel !== undefined) return previousPeriodLabel;
     const key = previousMonthKey || monthKey;
     if (!key) return "last month";
     const [y, m] = key.split("-").map(Number);
     const d = previousMonthKey ? new Date(y, m - 1, 1) : new Date(y, m - 2, 1);
     return new Intl.DateTimeFormat(i18n.language || "en", { month: "short" }).format(d);
-  }, [monthKey, previousMonthKey, i18n.language]);
+  }, [monthKey, previousMonthKey, previousPeriodLabel, i18n.language]);
 
   // Styling per variant. Borderless — elevation is the shadow token, not a gray outline.
   const cardClasses = filled
