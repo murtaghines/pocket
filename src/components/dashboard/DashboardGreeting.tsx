@@ -101,7 +101,7 @@ export function DashboardGreeting() {
     : "greeting.subtitle.month";
 
   return (
-    <div className="hidden md:block px-[30px] pt-7 pb-5">
+    <div className="hidden md:block pt-3 pb-5 sticky top-0 z-30 bg-background">
       <div className="flex items-start justify-between">
         <h1 className="text-[18px] font-semibold text-foreground">{t(viewKey)}</h1>
         <div className="flex items-center gap-2 mt-[2px]">

@@ -11,7 +11,7 @@ export function PrimaryNavBar() {
   const activeSection = getActiveSection(location.pathname);
 
   return (
-    <div className="hidden md:flex items-center h-16 px-[28px] bg-primary/[0.11]">
+    <div className="hidden md:flex items-center h-16 px-[28px] bg-accent">
       <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-primary shrink-0 mr-8">
         <Logo variant="mark" size={22} />
       </Link>

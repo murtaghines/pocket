@@ -3,7 +3,7 @@ import { SecondaryNavBar } from "./SecondaryNavBar";
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-30">
+    <header>
       <PrimaryNavBar />
       <SecondaryNavBar />
     </header>

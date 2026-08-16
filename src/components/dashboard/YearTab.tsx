@@ -81,6 +81,12 @@ export function YearTab() {
   const prevRange = hasPreviousData ? periodRangeOf(previous.month, "year") : null;
   const periodTransactions = range ? transactions.filter((tx) => tx.date >= range.start && tx.date <= range.end) : [];
 
+  const displayMonthKey = useMemo(() => {
+    if (!periodTransactions.length) return selectedYear ? `${selectedYear}-01` : "2024-01";
+    const latest = periodTransactions.reduce((a, b) => (a.date > b.date ? a : b));
+    return latest.date.slice(0, 7);
+  }, [periodTransactions, selectedYear]);
+
   const expenseCategoryData = categoryBreakdownForRange(transactions, range, isExpense, convertToUserCurrency);
   const prevExpenseByCategory: Record<string, number> = {};
   if (prevRange) {
@@ -174,12 +180,12 @@ export function YearTab() {
           <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
             <DailyFlowChart
               transactions={transactions}
-              monthKey={selectedYear}
+              monthKey={displayMonthKey}
               convert={convertToUserCurrency}
             />
             <DailyHeatmapCard
               transactions={transactions}
-              monthKey={selectedYear}
+              monthKey={displayMonthKey}
               convert={convertToUserCurrency}
             />
           </div>
