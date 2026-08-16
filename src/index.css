@@ -94,9 +94,9 @@
     --sidebar-ring: 216 100% 55%;
   }
 
-  /* Dashboard light theme - New Pocket brand: #1b76ff blue, #ffd027 yellow, white bg */
+  /* Dashboard light theme - New Pocket brand: #1b76ff blue, #ffd027 yellow, light-gray bg */
   .dashboard-theme {
-    --background: 0 0% 100%;
+    --background: 220 14% 96%;
     --foreground: 0 0% 3%;
 
     --card: 0 0% 100%;
@@ -131,20 +131,20 @@
     --warning: 45 100% 58%;
     --warning-foreground: 0 0% 3%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 216 100% 55%;
 
     --radius: 0.25rem;
 
-    /* Card sits on light gray bg: matches design spec */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
-    --shadow-md: 0 2px 6px -1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    /* Flat card style: thin border defines edges, no shadow */
+    --shadow-sm: none;
+    --shadow-md: none;
     --shadow-lg: 0 6px 16px -4px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
     --shadow-glow: 0 0 20px hsl(216 100% 55% / 0.08);
-    --shadow-card: 0 1px 2px 0 rgba(13,30,70,.05), 0 4px 12px -4px rgba(13,30,70,.08);
-    --shadow-bento: 0 1px 2px 0 rgba(13,30,70,.05), 0 6px 16px -6px rgba(13,30,70,.08);
-    --shadow-section: 0 1px 3px rgba(13,30,70,.06);
+    --shadow-card: none;
+    --shadow-bento: none;
+    --shadow-section: none;
   }
 
   /* Card border-radius — tighter than the original 18px */

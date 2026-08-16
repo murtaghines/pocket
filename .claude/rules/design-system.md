@@ -58,7 +58,7 @@ Always reference tokens. Never hardcode hex values in components.
 --brand-ink:    hsl(0 0% 3%);        /* #080808 */
 
 /* Semantic */
---background:         hsl(0 0% 97%);         /* Page canvas */
+--background:         hsl(220 14% 96%);       /* Page canvas — very light gray #f4f5f7 */
 --foreground:         hsl(0 0% 3%);          /* Primary text */
 --card:               hsl(0 0% 100%);        /* Elevated surfaces */
 --card-foreground:    hsl(0 0% 3%);
@@ -72,8 +72,8 @@ Always reference tokens. Never hardcode hex values in components.
 --accent-foreground:  hsl(216 100% 45%);
 --muted:              hsl(0 0% 96%);
 --muted-foreground:   hsl(0 0% 35%);         /* Subtitles, secondary labels */
---border:             hsl(0 0% 88%);
---input:              hsl(0 0% 88%);
+--border:             hsl(220 13% 91%);       /* #E5E7EB */
+--input:              hsl(220 13% 91%);
 --ring:               hsl(216 100% 55%);
 
 /* Semantic — financial */
@@ -184,7 +184,7 @@ dot:         full-strength category color, 6–8px, rounded
 
 ```css
 --shadow-sm:      0 1px 2px 0 rgb(0 0 0 / 0.04);
---shadow-section: 0 1px 3px rgba(13,30,70,.06);          /* Dashboard cards — barely visible */
+--shadow-section: none;                                    /* Dashboard cards — border-only, no shadow */
 --shadow-card:    0 1px 2px 0 rgb(0 0 0 / 0.04), 0 4px 12px -2px rgb(0 0 0 / 0.06);
 --shadow-bento:   0 1px 2px 0 rgba(13,30,70,.05), 0 6px 16px -6px rgba(13,30,70,.08);
 --shadow-lg:      0 6px 16px -4px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
@@ -239,21 +239,20 @@ Two full-width horizontal bars, stacked, sticky at the top of every authenticate
 Mobile uses `MobileNav`'s hamburger drawer instead, grouped the same way. All three read from the
 single `src/config/navigation.ts` `NAV_SECTIONS` config — never hand-roll a nav item list.
 
-**Primary bar (`bg-primary/[0.11]`, light tint) — the 4 top-level sections:**
-- Light blue tinted background (no bottom border — underline touches the blue bar below),
-  height `h-16` (64px)
-- Brand mark on the far left (`<Logo variant="mark">`, blue fill, never hand-assembled), then
+**Primary bar (`bg-primary`, solid blue) — the 4 top-level sections:**
+- Solid brand-blue background, height `h-16` (64px)
+- Brand mark on the far left (`<Logo variant="mark">`, white fill, never hand-assembled), then
   the section links left-aligned (never centered), then a `ml-auto` right cluster
-- Quicksand font (`font-heading`), lowercase — ALL items `text-primary`
-- Active = `font-bold` + `border-b-[2.5px] border-primary` underline
-- Inactive = `font-medium`, no underline (`border-b-[2.5px] border-transparent`),
-  hover `opacity-80`
-- Right cluster: notifications bell (blue icon), user icon (blue `User` Lucide icon) +
-  full name + chevron dropdown (`HeaderUserMenu`) — no avatar circle, no theme toggle
+- Quicksand font (`font-heading`), lowercase — ALL items `text-white`
+- Active = `font-bold` + `border-b-[2.5px] border-white` underline
+- Inactive = `font-semibold text-white/70`, no underline (`border-b-[2.5px] border-transparent`),
+  hover `text-white/90`
+- Right cluster: notifications bell (white icon), user icon (white `User` Lucide icon) +
+  full name (white/90) + chevron dropdown (`HeaderUserMenu`) — no avatar circle, no theme toggle
 
 **Secondary bar (`bg-primary`, solid blue) — sub-tabs of the active section:**
 - Renders only when the active section has more than one sub-tab (e.g. hidden on Investments)
-- Quicksand font (`font-heading`), height `h-[42px]`
+- Quicksand font (`font-heading`), height `h-[34px]` (compact)
 - Left padding `pl-[82px]` to align first sub-tab with the primary bar's first section label
 - Active = `text-white font-extrabold` (800 weight), inactive = `text-white/65 font-medium`,
   hover `bg-white/[0.08]`

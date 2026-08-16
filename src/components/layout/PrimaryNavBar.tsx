@@ -11,8 +11,8 @@ export function PrimaryNavBar() {
   const activeSection = getActiveSection(location.pathname);
 
   return (
-    <div className="hidden md:flex items-center h-16 px-[28px] bg-accent">
-      <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-primary shrink-0 mr-8">
+    <div className="hidden md:flex items-center h-16 px-[28px] bg-primary">
+      <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-white shrink-0 mr-8">
         <Logo variant="mark" size={22} />
       </Link>
 
@@ -27,8 +27,8 @@ export function PrimaryNavBar() {
               className={cn(
                 "flex items-center h-full px-[18px] border-b-[2.5px] text-[14px] lowercase transition-colors duration-200",
                 active
-                  ? "border-primary text-primary font-bold"
-                  : "border-transparent text-primary font-medium hover:opacity-80",
+                  ? "border-white text-white font-bold"
+                  : "border-transparent text-white/70 font-semibold hover:text-white/90",
               )}
             >
               {t(section.i18nKey)}
