@@ -36,11 +36,11 @@ export function HeaderUserMenu() {
             aria-label="Profile menu"
             className="flex items-center gap-[10px] cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <User className="w-5 h-5 text-primary" strokeWidth={2} />
+            <User className="w-5 h-5 text-white" strokeWidth={2} />
             {displayName && (
-              <span className="text-[13.5px] font-semibold text-foreground whitespace-nowrap">{displayName}</span>
+              <span className="text-[13.5px] font-semibold text-white/90 whitespace-nowrap">{displayName}</span>
             )}
-            <ChevronDown className="w-[13px] h-[13px] text-muted-foreground" strokeWidth={2.5} />
+            <ChevronDown className="w-[13px] h-[13px] text-white/55" strokeWidth={2.5} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">

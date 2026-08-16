@@ -22,7 +22,7 @@ export function SecondaryNavBar() {
   };
 
   return (
-    <div className="hidden md:flex items-center h-[42px] pl-[82px] pr-[28px] bg-primary font-heading">
+    <div className="hidden md:flex items-center h-[34px] pl-[82px] pr-[28px] bg-primary font-heading">
       {section.subTabs.map((sub) => {
         const active = activeTab === sub.key;
         return (
