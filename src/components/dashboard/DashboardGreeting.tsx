@@ -1,7 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SlidersHorizontal, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { useProfile } from "@/hooks/useProfile";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { useGranularity } from "@/hooks/useGranularity";
@@ -95,26 +94,16 @@ function HistoryControls() {
 export function DashboardGreeting() {
   const [searchParams] = useSearchParams();
   const { t } = useTranslation("dashboard");
-  const { profile } = useProfile();
 
   const tab = searchParams.get("tab") ?? "month";
-  const firstName = profile?.first_name?.trim() || "";
   const viewKey = (["month", "week", "year", "history"] as const).includes(tab as never)
     ? `greeting.subtitle.${tab}`
     : "greeting.subtitle.month";
 
   return (
-    <div className="hidden md:block px-[30px] pt-7 pb-1">
+    <div className="hidden md:block px-[30px] pt-7 pb-5">
       <div className="flex items-start justify-between">
-        <div>
-          {firstName && (
-            <h1 className="text-[22px] font-bold tracking-[-0.02em] text-foreground">
-              {t("greeting.hi", { name: firstName })}
-              {" "}
-              <span className="text-muted-foreground font-medium">· {t(viewKey)}</span>
-            </h1>
-          )}
-        </div>
+        <h1 className="text-[18px] font-semibold text-foreground">{t(viewKey)}</h1>
         <div className="flex items-center gap-2 mt-[2px]">
           <EmptyStateBanner />
           <span className={PILL}>

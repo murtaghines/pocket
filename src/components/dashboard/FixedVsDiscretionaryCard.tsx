@@ -38,7 +38,7 @@ export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProp
     open === "essential" ? split.essentialCategories : open === "discretionary" ? split.discretionaryCategories : [];
 
   return (
-    <div className="bg-card rounded-xl p-[20px_22px_18px] shadow-bento border border-border">
+    <div className="bg-card rounded-xl p-[20px_22px_18px] shadow-section border border-border">
       <div className="mb-4 min-w-0">
         <p className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">{t("insights.essential.title")}</p>
         {hasData && (

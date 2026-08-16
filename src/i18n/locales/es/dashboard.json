@@ -268,7 +268,6 @@
     "empty": "Sin notificaciones"
   },
   "greeting": {
-    "hi": "Hola, {{name}}",
     "subtitle": {
       "month": "Vista Mensual",
       "week": "Vista Semanal",

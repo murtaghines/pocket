@@ -9,16 +9,16 @@ const cardVariants = cva(
     variants: {
       variant: {
         // Brand cards are borderless — elevation comes from the shadow token, never a gray outline.
-        default: "bg-card rounded-xl shadow-[var(--shadow-card)]",
-        glass: "bg-card/80 backdrop-blur-xl rounded-xl shadow-[var(--shadow-card)]",
-        gradient: "bg-gradient-to-br from-card to-accent/50 rounded-xl shadow-[var(--shadow-card)]",
-        stat: "bg-card rounded-xl shadow-[var(--shadow-card)]",
-        income: "bg-success/5 rounded-xl shadow-[var(--shadow-card)]",
-        expense: "bg-destructive/5 rounded-xl shadow-[var(--shadow-card)]",
-        neutral: "bg-card rounded-xl shadow-[var(--shadow-card)]",
-        settings: "bg-primary/5 rounded-xl shadow-[var(--shadow-card)]",
-        modern: "bg-card rounded-xl shadow-[var(--shadow-bento)]",
-        bento: "bg-card rounded-xl shadow-[var(--shadow-bento)]",
+        default: "bg-card rounded-xl shadow-section",
+        glass: "bg-card/80 backdrop-blur-xl rounded-xl shadow-section",
+        gradient: "bg-gradient-to-br from-card to-accent/50 rounded-xl shadow-section",
+        stat: "bg-card rounded-xl shadow-section",
+        income: "bg-success/5 rounded-xl shadow-section",
+        expense: "bg-destructive/5 rounded-xl shadow-section",
+        neutral: "bg-card rounded-xl shadow-section",
+        settings: "bg-primary/5 rounded-xl shadow-section",
+        modern: "bg-card rounded-xl shadow-section",
+        bento: "bg-card rounded-xl shadow-section",
       },
     },
     defaultVariants: {

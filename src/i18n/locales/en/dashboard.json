@@ -299,7 +299,6 @@
     "empty": "No notifications"
   },
   "greeting": {
-    "hi": "Hi, {{name}}",
     "subtitle": {
       "month": "Monthly View",
       "week": "Weekly View",

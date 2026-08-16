@@ -51,8 +51,7 @@ export function NetBalanceCard({
 
   return (
     <div
-      className="flex h-full items-stretch gap-3 rounded-xl bg-primary p-[16px] text-primary-foreground"
-      style={{ boxShadow: "var(--shadow-glow)" }}
+      className="flex h-full items-stretch gap-3 rounded-xl bg-primary p-[16px] text-primary-foreground shadow-glow"
     >
       {/* Balance */}
       <div className="flex min-w-0 flex-1 flex-col">
