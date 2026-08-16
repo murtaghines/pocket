@@ -26,11 +26,51 @@ interface InvestmentAccount {
   created_at: string;
 }
 
+interface PlatformBreakdown {
+  deposits: number;
+  withdrawals: number;
+  net: number;
+}
+
+interface MonthlyHistoryEntry {
+  month: string;
+  deposits: number;
+  withdrawals: number;
+  net: number;
+}
+
+interface InvestmentSummary {
+  currentMonth: string;
+  totalInvestedThisMonth: number;
+  totalWithdrawnThisMonth: number;
+  netInvestedThisMonth: number;
+  totalInvestedAllTime: number;
+  totalWithdrawnAllTime: number;
+  netInvestedAllTime: number;
+  totalCurrentValue: number;
+  byPlatform: Record<string, PlatformBreakdown>;
+  byAssetType: Record<string, PlatformBreakdown>;
+  monthlyHistory: MonthlyHistoryEntry[];
+}
+
+const EMPTY_SUMMARY: InvestmentSummary = {
+  currentMonth: new Date().toISOString().slice(0, 7),
+  totalInvestedThisMonth: 0,
+  totalWithdrawnThisMonth: 0,
+  netInvestedThisMonth: 0,
+  totalInvestedAllTime: 0,
+  totalWithdrawnAllTime: 0,
+  netInvestedAllTime: 0,
+  totalCurrentValue: 0,
+  byPlatform: {},
+  byAssetType: {},
+  monthlyHistory: [],
+};
+
 export function useInvestments() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch investments
   const { data: investments = [], isLoading: isLoadingInvestments } = useQuery({
     queryKey: ['investments', user?.id],
     queryFn: async () => {
@@ -47,7 +87,6 @@ export function useInvestments() {
     enabled: !!user,
   });
 
-  // Fetch investment accounts
   const { data: accounts = [], isLoading: isLoadingAccounts } = useQuery({
     queryKey: ['investment_accounts', user?.id],
     queryFn: async () => {
@@ -63,12 +102,62 @@ export function useInvestments() {
     enabled: !!user,
   });
 
-  // Upsert investment account
+  const { data: summary = EMPTY_SUMMARY, isLoading: isLoadingSummary } = useQuery({
+    queryKey: ['investment-summary', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_investment_summary", {
+        p_user_id: user!.id,
+      });
+      if (error) throw error;
+      if (!data) return EMPTY_SUMMARY;
+
+      const d = data as Record<string, unknown>;
+      const byPlatform: Record<string, PlatformBreakdown> = {};
+      if (d.byPlatform && typeof d.byPlatform === "object") {
+        for (const [k, v] of Object.entries(d.byPlatform as Record<string, Record<string, number>>)) {
+          byPlatform[k] = { deposits: Number(v.deposits), withdrawals: Number(v.withdrawals), net: Number(v.net) };
+        }
+      }
+
+      const byAssetType: Record<string, PlatformBreakdown> = {};
+      if (d.byAssetType && typeof d.byAssetType === "object") {
+        for (const [k, v] of Object.entries(d.byAssetType as Record<string, Record<string, number>>)) {
+          byAssetType[k] = { deposits: Number(v.deposits), withdrawals: Number(v.withdrawals), net: Number(v.net) };
+        }
+      }
+
+      const monthlyHistory: MonthlyHistoryEntry[] = Array.isArray(d.monthlyHistory)
+        ? (d.monthlyHistory as Array<Record<string, unknown>>).map((e) => ({
+            month: String(e.month),
+            deposits: Number(e.deposits),
+            withdrawals: Number(e.withdrawals),
+            net: Number(e.net),
+          }))
+        : [];
+
+      return {
+        currentMonth: String(d.currentMonth),
+        totalInvestedThisMonth: Number(d.totalInvestedThisMonth),
+        totalWithdrawnThisMonth: Number(d.totalWithdrawnThisMonth),
+        netInvestedThisMonth: Number(d.netInvestedThisMonth),
+        totalInvestedAllTime: Number(d.totalInvestedAllTime),
+        totalWithdrawnAllTime: Number(d.totalWithdrawnAllTime),
+        netInvestedAllTime: Number(d.netInvestedAllTime),
+        totalCurrentValue: Number(d.totalCurrentValue),
+        byPlatform,
+        byAssetType,
+        monthlyHistory,
+      } satisfies InvestmentSummary;
+    },
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+
   const upsertAccount = useMutation({
-    mutationFn: async ({ platform, account_name, current_value }: { 
-      platform: string; 
-      account_name: string; 
-      current_value: number 
+    mutationFn: async ({ platform, account_name, current_value }: {
+      platform: string;
+      account_name: string;
+      current_value: number
     }) => {
       const { error } = await supabase
         .from('investment_accounts')
@@ -86,10 +175,10 @@ export function useInvestments() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['investment_accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['investment-summary'] });
     },
   });
 
-  // Delete investment account
   const deleteAccount = useMutation({
     mutationFn: async (accountId: string) => {
       const { error } = await supabase
@@ -101,120 +190,30 @@ export function useInvestments() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['investment_accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['investment-summary'] });
     },
   });
-
-  // "This month" = the most recent month with actual investment activity, NOT the real
-  // wall-clock date. Historical/demo data lives in the past relative to today, so anchoring
-  // to new Date() silently showed 0 for every "this month" figure regardless of what data
-  // actually existed. Mirrors how useTransactions derives latestMonthKey the same way.
-  const currentMonth = investments.length > 0
-    ? investments.reduce((latest, inv) => {
-        const monthKey = inv.date.slice(0, 7);
-        return monthKey > latest ? monthKey : latest;
-      }, investments[0].date.slice(0, 7))
-    : new Date().toISOString().slice(0, 7); // No data at all — value is moot either way.
-
-  const monthlyInvestments = investments.filter(
-    inv => inv.date.startsWith(currentMonth)
-  );
-
-  const totalInvestedThisMonth = monthlyInvestments
-    .filter(inv => inv.type === 'deposit')
-    .reduce((sum, inv) => sum + Math.abs(inv.amount), 0);
-
-  const totalWithdrawnThisMonth = monthlyInvestments
-    .filter(inv => inv.type === 'withdrawal')
-    .reduce((sum, inv) => sum + Math.abs(inv.amount), 0);
-
-  const netInvestedThisMonth = totalInvestedThisMonth - totalWithdrawnThisMonth;
-
-  // Total current value from accounts
-  const totalCurrentValue = accounts.reduce((sum, acc) => sum + acc.current_value, 0);
-
-  // Total invested all time
-  const totalInvestedAllTime = investments
-    .filter(inv => inv.type === 'deposit')
-    .reduce((sum, inv) => sum + Math.abs(inv.amount), 0);
-
-  const totalWithdrawnAllTime = investments
-    .filter(inv => inv.type === 'withdrawal')
-    .reduce((sum, inv) => sum + Math.abs(inv.amount), 0);
-
-  const netInvestedAllTime = totalInvestedAllTime - totalWithdrawnAllTime;
-
-  // By platform
-  const byPlatform = investments.reduce((acc, inv) => {
-    if (!acc[inv.platform]) {
-      acc[inv.platform] = { deposits: 0, withdrawals: 0, net: 0 };
-    }
-    if (inv.type === 'deposit') {
-      acc[inv.platform].deposits += Math.abs(inv.amount);
-    } else {
-      acc[inv.platform].withdrawals += Math.abs(inv.amount);
-    }
-    acc[inv.platform].net = acc[inv.platform].deposits - acc[inv.platform].withdrawals;
-    return acc;
-  }, {} as Record<string, { deposits: number; withdrawals: number; net: number }>);
-
-  // By asset type
-  const byAssetType = investments.reduce((acc, inv) => {
-    const type = inv.asset_type || 'Sin clasificar';
-    if (!acc[type]) {
-      acc[type] = { deposits: 0, withdrawals: 0, net: 0 };
-    }
-    if (inv.type === 'deposit') {
-      acc[type].deposits += Math.abs(inv.amount);
-    } else {
-      acc[type].withdrawals += Math.abs(inv.amount);
-    }
-    acc[type].net = acc[type].deposits - acc[type].withdrawals;
-    return acc;
-  }, {} as Record<string, { deposits: number; withdrawals: number; net: number }>);
-
-  // Monthly history
-  const monthlyHistory = investments.reduce((acc, inv) => {
-    const month = inv.date.slice(0, 7);
-    if (!acc[month]) {
-      acc[month] = { month, deposits: 0, withdrawals: 0, net: 0 };
-    }
-    if (inv.type === 'deposit') {
-      acc[month].deposits += Math.abs(inv.amount);
-    } else {
-      acc[month].withdrawals += Math.abs(inv.amount);
-    }
-    acc[month].net = acc[month].deposits - acc[month].withdrawals;
-    return acc;
-  }, {} as Record<string, { month: string; deposits: number; withdrawals: number; net: number }>);
-
-  const monthlyHistoryArray = Object.values(monthlyHistory).sort((a, b) => 
-    a.month.localeCompare(b.month)
-  );
 
   return {
     investments,
     accounts,
-    isLoading: isLoadingInvestments || isLoadingAccounts,
+    isLoading: isLoadingInvestments || isLoadingAccounts || isLoadingSummary,
     hasData: investments.length > 0 || accounts.length > 0,
-    
-    // Current month (most recent month with data — see comment above, not wall-clock "today")
-    currentMonth,
-    totalInvestedThisMonth,
-    totalWithdrawnThisMonth,
-    netInvestedThisMonth,
-    
-    // All time
-    totalInvestedAllTime,
-    totalWithdrawnAllTime,
-    netInvestedAllTime,
-    totalCurrentValue,
-    
-    // Breakdowns
-    byPlatform,
-    byAssetType,
-    monthlyHistory: monthlyHistoryArray,
-    
-    // Mutations
+
+    currentMonth: summary.currentMonth,
+    totalInvestedThisMonth: summary.totalInvestedThisMonth,
+    totalWithdrawnThisMonth: summary.totalWithdrawnThisMonth,
+    netInvestedThisMonth: summary.netInvestedThisMonth,
+
+    totalInvestedAllTime: summary.totalInvestedAllTime,
+    totalWithdrawnAllTime: summary.totalWithdrawnAllTime,
+    netInvestedAllTime: summary.netInvestedAllTime,
+    totalCurrentValue: summary.totalCurrentValue,
+
+    byPlatform: summary.byPlatform,
+    byAssetType: summary.byAssetType,
+    monthlyHistory: summary.monthlyHistory,
+
     upsertAccount,
     deleteAccount,
   };

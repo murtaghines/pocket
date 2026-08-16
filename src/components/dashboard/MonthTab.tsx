@@ -17,6 +17,7 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -30,13 +31,8 @@ import type { Category } from "@/lib/mockData";
 /** Dashboard's "month" tab — current month vs. previous month. Verbatim body of the former Index.tsx page. */
 export function MonthTab() {
   const { t } = useTranslation('dashboard');
-  const {
-    transactions,
-    monthlyData,
-    summary,
-    openingBalanceByMonth,
-    isLoading
-  } = useTransactions();
+  const { transactions, isLoading } = useTransactions();
+  const { monthlyData, openingBalanceByMonth, isLoading: isDashLoading } = useDashboardData();
 
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
@@ -195,14 +191,6 @@ export function MonthTab() {
     (t) => t.movement === "INCOME" || t.type === "income"
   );
 
-  const convertedSummary = {
-    income: convertToUserCurrency(summary.income),
-    expenses: convertToUserCurrency(summary.expenses),
-    balance: convertToUserCurrency(summary.balance),
-  };
-
-
-
 
   return (
     <>
@@ -215,13 +203,13 @@ export function MonthTab() {
 
       <main className="w-full">
 
-        {(isLoading || prefsLoading) && (
+        {(isLoading || isDashLoading || prefsLoading) && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         )}
 
-        {!isLoading && !prefsLoading && (
+        {!isLoading && !isDashLoading && !prefsLoading && (
           <>
             {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
               <p className="mb-5 text-sm tabular-nums text-muted-foreground md:hidden">

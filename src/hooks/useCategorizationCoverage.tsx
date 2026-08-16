@@ -9,26 +9,16 @@ export function useCategorizationCoverage() {
     queryKey: ["categorization-coverage", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("confidence")
-        .eq("user_id", user!.id)
-        .eq("is_hidden", false);
+      const { data, error } = await supabase.rpc("get_categorization_coverage", {
+        p_user_id: user!.id,
+      });
       if (error) throw error;
-
-      const total = data?.length ?? 0;
-      if (total === 0) return { total: 0, highConfidence: 0, percent: 100 };
-
-      const highConfidence = data!.filter(
-        (t) => t.confidence !== null && t.confidence >= 0.85,
-      ).length;
-      const nullConfidence = data!.filter((t) => t.confidence === null).length;
-      const effectiveHigh = highConfidence + nullConfidence;
-
+      const row = data?.[0];
+      if (!row) return { total: 0, highConfidence: 0, percent: 100 };
       return {
-        total,
-        highConfidence: effectiveHigh,
-        percent: Math.round((effectiveHigh / total) * 100),
+        total: Number(row.total),
+        highConfidence: Number(row.high_confidence),
+        percent: Number(row.percent),
       };
     },
     staleTime: 60_000,
