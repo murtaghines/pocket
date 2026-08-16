@@ -88,14 +88,12 @@ export function TrendKpiCard({
       ? "text-primary-foreground/82"
       : "text-destructive";
 
-  const cardShadow = filled
-    ? "var(--shadow-glow)"
-    : "var(--shadow-bento)";
+  const shadowClass = filled ? "shadow-glow" : "shadow-section";
 
   return (
     <div
-      className={cn("flex h-full flex-col rounded-xl p-[16px] transition-all", cardClasses, className)}
-      style={{ boxShadow: cardShadow, animationDelay: `${delay}ms` }}
+      className={cn("flex h-full flex-col rounded-xl p-[16px] transition-all", cardClasses, shadowClass, className)}
+      style={{ animationDelay: `${delay}ms` }}
     >
       {/* Header row: label + icon badge */}
       <div className="flex items-center justify-between mb-[10px]">

@@ -6,6 +6,9 @@ import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { NetBalanceCard } from "@/components/dashboard/NetBalanceCard";
 import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
 import { PeriodBreakdownChart } from "@/components/dashboard/PeriodBreakdownChart";
+import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
+import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
+import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
@@ -156,8 +159,32 @@ export function YearTab() {
             </div>
           </div>
 
-          <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byMonthThisYear", "By month · this year")} />
+          {/* Row 2: income vs expenses breakdown + accounts */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+            <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byMonthThisYear", "By month · this year")} />
+            <AccountsStackCard
+              transactions={transactions}
+              monthKey={selectedYear}
+              convert={convertToUserCurrency}
+              formatCurrency={formatCurrency}
+            />
+          </div>
 
+          {/* Row 3: balance line + heatmap */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+            <DailyFlowChart
+              transactions={transactions}
+              monthKey={selectedYear}
+              convert={convertToUserCurrency}
+            />
+            <DailyHeatmapCard
+              transactions={transactions}
+              monthKey={selectedYear}
+              convert={convertToUserCurrency}
+            />
+          </div>
+
+          {/* Row 4: spending by category + top expenses */}
           <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
             <SpendingByCategoryChart data={expenseCategoryDataWithTrend} />
             <TopExpensesCard transactions={periodTransactions} />
@@ -168,7 +195,7 @@ export function YearTab() {
             <CategoryChart data={incomeCategoryData} />
           </div>
 
-          <div className="bg-card rounded-xl p-[20px_22px_10px] shadow-bento border border-border">
+          <div className="bg-card rounded-xl p-[20px_22px_10px] shadow-section border border-border">
             <div className="max-h-[500px] overflow-y-auto">
               <TransactionTable transactions={periodTransactions} />
             </div>

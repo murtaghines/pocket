@@ -183,10 +183,18 @@ dot:         full-strength category color, 6–8px, rounded
 ## Shadows
 
 ```css
---shadow-sm:   0 1px 2px 0 rgb(0 0 0 / 0.04);
---shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 4px 12px -2px rgb(0 0 0 / 0.06);
---shadow-lg:   0 6px 16px -4px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+--shadow-sm:      0 1px 2px 0 rgb(0 0 0 / 0.04);
+--shadow-section: 0 1px 3px rgba(13,30,70,.06);          /* Dashboard cards — barely visible */
+--shadow-card:    0 1px 2px 0 rgb(0 0 0 / 0.04), 0 4px 12px -2px rgb(0 0 0 / 0.06);
+--shadow-bento:   0 1px 2px 0 rgba(13,30,70,.05), 0 6px 16px -6px rgba(13,30,70,.08);
+--shadow-lg:      0 6px 16px -4px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+--shadow-glow:    0 4px 24px -6px rgba(27,118,255,.25);   /* Blue glow on filled KPI cards */
 ```
+
+**Dashboard card containers** always use `shadow-section` (the subtlest shadow) for
+a flat, clean appearance matching the mockup. The `<Card>` component base also defaults
+to `shadow-section`. `shadow-bento` (heavier) is reserved for non-dashboard contexts.
+Never use inline `style={{ boxShadow: "..." }}` — always use the Tailwind class.
 
 ---
 
@@ -251,12 +259,23 @@ single `src/config/navigation.ts` `NAV_SECTIONS` config — never hand-roll a na
   hover `bg-white/[0.08]`
 - Reads/writes `?tab=`, default tab omits the param from the URL (same convention as `Account.tsx`)
 
-**Greeting section (`DashboardGreeting`) — replaces the old title/selector row:**
+**Greeting section (`DashboardGreeting`) — page title + controls row:**
 - Rendered inside `Dashboard.tsx` above the tab content, not in `AppHeader`
-- "Hi, [firstName] · [View Name]" — 22px bold greeting + muted view label inline (no subtitle)
+- Left side: view name only — "Monthly View" / "Weekly View" / "Yearly View" / "History"
+  at 18px/600 `text-foreground`. No personal greeting, no "Hi, [name]".
 - Right side: Filter pill + period selector pill (prev/next arrows + label), bordered pills
   (`border border-border rounded-full`)
 - Includes `EmptyStateBanner` and `GranularityToggle` (history tab) inline
+- Bottom padding `pb-5` for breathing room before KPI cards
+
+**All three dashboard tabs (Month, Week, Year) share the same 6-row layout:**
+- Row 1: KPIs (income, expenses, net balance, savings rate)
+- Row 2: Income vs expenses chart (1.55fr) + AccountsStackCard (1fr)
+- Row 3: DailyFlowChart (1.55fr) + DailyHeatmapCard (1fr)
+- Row 4: SpendingByCategoryChart (1.55fr) + TopExpensesCard (1fr)
+- Row 5: FixedVsDiscretionaryCard + CategoryChart (1:1)
+- Row 6: TransactionTable
+Only the data granularity changes between tabs.
 
 **Mobile drawer groups (`bg-primary`):**
 - Group labels: 10px · Inter 600 · white 30% · uppercase · tracking-wide

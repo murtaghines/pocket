@@ -316,7 +316,7 @@ export function MonthTab() {
 
               {/* Row 6: Transactions table */}
               <div
-                className="bg-card rounded-xl p-[20px_22px_10px] shadow-bento border border-border"
+                className="bg-card rounded-xl p-[20px_22px_10px] shadow-section border border-border"
               >
                 <div className="max-h-[500px] overflow-y-auto">
                   <TransactionTable transactions={monthTransactions} />

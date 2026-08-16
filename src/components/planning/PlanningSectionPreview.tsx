@@ -17,7 +17,7 @@ export function PlanningSectionPreview({
   comingSoonNote,
 }: PlanningSectionPreviewProps) {
   return (
-    <section className="bg-card rounded-xl p-6 shadow-bento">
+    <section className="bg-card rounded-xl p-6 border border-border shadow-section">
       <div className="flex items-start gap-3 mb-5">
         <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
           {icon}

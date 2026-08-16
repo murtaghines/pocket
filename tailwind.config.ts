@@ -117,6 +117,9 @@ export default {
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
         glow: "var(--shadow-glow)",
+        card: "var(--shadow-card)",
+        bento: "var(--shadow-bento)",
+        section: "var(--shadow-section)",
       },
       keyframes: {
         "accordion-down": {

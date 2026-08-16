@@ -111,8 +111,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
 
   return (
     <div
-      className="bg-card rounded-xl p-[18px_20px_16px] h-full"
-      style={{ boxShadow: "0 1px 3px rgba(13,30,70,.06)" }}
+      className="bg-card rounded-xl p-[18px_20px_16px] h-full border border-border shadow-section"
     >
       <div className="flex items-center justify-between gap-3 mb-3">
         <p className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
@@ -123,7 +122,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
             <button
               className={cn(
                 "inline-flex items-center gap-1 h-[26px] px-2 rounded-[7px] text-[11px] font-medium",
-                "border border-[rgba(13,30,70,.08)] bg-card text-foreground hover:bg-muted/40 transition-colors",
+                "border border-border bg-card text-foreground hover:bg-muted/40 transition-colors",
               )}
             >
               <span>{activeMetricLabel}</span>
