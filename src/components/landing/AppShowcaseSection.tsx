@@ -198,7 +198,7 @@ export function AppShowcaseSection() {
       ref={sectionRef}
       data-nav-theme="light"
       style={{
-        background:   "#e5e7eb",
+        background:   "#ffffff",
         borderRadius: "2rem 2rem 0 0",
         position:     "relative",
         zIndex:       1,
