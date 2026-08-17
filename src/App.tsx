@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,15 +11,16 @@ import { NetworkStatusBanner } from "@/components/layout/NetworkStatusBanner";
 import { LanguagePreferenceSync } from "@/components/layout/LanguagePreferenceSync";
 import { PeriodSelectionProvider } from "@/hooks/usePeriodSelection";
 import { SUPPORTED_LANGUAGES } from "@/i18n/config";
-import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import Investments from "./pages/Investments";
-import Account from "./pages/Account";
-import MyData from "./pages/MyData";
-import NotFound from "./pages/NotFound";
-import ComingSoon from "./pages/ComingSoon";
-import Planning from "./pages/Planning";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Investments = lazy(() => import("./pages/Investments"));
+const Account = lazy(() => import("./pages/Account"));
+const MyData = lazy(() => import("./pages/MyData"));
+const Planning = lazy(() => import("./pages/Planning"));
+const ComingSoon = lazy(() => import("./pages/ComingSoon"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const App = () => (
         <Sonner />
         <PeriodSelectionProvider>
           <BrowserRouter>
+            <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
             <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/dashboard" element={
@@ -143,6 +145,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </BrowserRouter>
         </PeriodSelectionProvider>
       </TooltipProvider>

@@ -33,6 +33,7 @@ import { TransactionCardList } from "./TransactionCardList";
 interface TransactionTableProps {
   transactions: Transaction[];
   initialSearch?: string;
+  totalCount?: number;
 }
 
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
@@ -58,7 +59,7 @@ const getMovementType = (transaction: Transaction): MovementType => {
   return 'expense';
 };
 
-export function TransactionTable({ transactions, initialSearch = "" }: TransactionTableProps) {
+export function TransactionTable({ transactions, initialSearch = "", totalCount }: TransactionTableProps) {
   const { t } = useTranslation('dashboard');
   const { t: tc } = useTranslation('common');
   const [search, setSearch] = useState(initialSearch);
@@ -286,7 +287,7 @@ export function TransactionTable({ transactions, initialSearch = "" }: Transacti
             emptyLabel={t('transactions.noTransactions')}
           />
           <p className="text-sm text-muted-foreground mt-3">
-            {filteredTransactions.length} / {transactions.length}
+            {filteredTransactions.length} / {totalCount ?? transactions.length}
           </p>
         </div>
 
@@ -385,7 +386,7 @@ export function TransactionTable({ transactions, initialSearch = "" }: Transacti
           </DataTableBody>
         </DataTable>
         <p className="text-sm text-muted-foreground mt-3">
-          {filteredTransactions.length} / {transactions.length}
+          {filteredTransactions.length} / {totalCount ?? transactions.length}
         </p>
         </div>
       </CardContent>
