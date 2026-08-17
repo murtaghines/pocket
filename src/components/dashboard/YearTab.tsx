@@ -28,7 +28,6 @@ import { categoryBreakdownForRange } from "@/lib/categoryBreakdown";
 /** Dashboard's "year" tab — current calendar year vs. previous year. */
 export function YearTab() {
   const { t, i18n } = useTranslation("dashboard");
-  const { transactions, isLoading } = useTransactions();
   const { monthlyData: yearlyData, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
@@ -48,6 +47,21 @@ export function YearTab() {
       ? selectedPeriod.year
       : availableYears[availableYears.length - 1] ?? null;
 
+  const currentIndex = yearlyData.findIndex((y) => y.month === selectedYear);
+  const current =
+    currentIndex >= 0 ? yearlyData[currentIndex] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
+  const previous =
+    currentIndex > 0 ? yearlyData[currentIndex - 1] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
+  const hasPreviousData = currentIndex > 0;
+
+  const range = selectedYear ? periodRangeOf(selectedYear, "year") : null;
+  const prevRange = hasPreviousData ? periodRangeOf(previous.month, "year") : null;
+
+  const { transactions, isLoading } = useTransactions({
+    startDate: prevRange?.start ?? range?.start,
+    endDate: range?.end,
+  });
+
   useEffect(() => {
     setAvailablePeriods("year", availableYears);
   }, [availableYears.join("|")]);
@@ -65,17 +79,8 @@ export function YearTab() {
     convert: convertToUserCurrency,
   });
 
-  const currentIndex = yearlyData.findIndex((y) => y.month === selectedYear);
-  const current =
-    currentIndex >= 0 ? yearlyData[currentIndex] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
-  const previous =
-    currentIndex > 0 ? yearlyData[currentIndex - 1] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
-  const hasPreviousData = currentIndex > 0;
-
   const previousPeriodLabel = hasPreviousData ? previous.month : undefined;
 
-  const range = selectedYear ? periodRangeOf(selectedYear, "year") : null;
-  const prevRange = hasPreviousData ? periodRangeOf(previous.month, "year") : null;
   const periodTransactions = range ? transactions.filter((tx) => tx.date >= range.start && tx.date <= range.end) : [];
 
   const displayMonthKey = useMemo(() => {

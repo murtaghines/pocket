@@ -28,7 +28,6 @@ import { categoryBreakdownForRange } from "@/lib/categoryBreakdown";
 /** Dashboard's "week" tab — current ISO week vs. previous week. */
 export function WeekTab() {
   const { t, i18n } = useTranslation("dashboard");
-  const { transactions, isLoading } = useTransactions();
   const { monthlyData: weeklyData, isLoading: isDashLoading } = useDashboardData({ granularity: "week" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
@@ -48,6 +47,21 @@ export function WeekTab() {
       ? selectedPeriod.week
       : availableWeeks[availableWeeks.length - 1] ?? null;
 
+  const currentIndex = weeklyData.findIndex((w) => w.month === selectedWeek);
+  const current =
+    currentIndex >= 0 ? weeklyData[currentIndex] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
+  const previous =
+    currentIndex > 0 ? weeklyData[currentIndex - 1] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
+  const hasPreviousData = currentIndex > 0;
+
+  const range = selectedWeek ? periodRangeOf(selectedWeek, "week") : null;
+  const prevRange = hasPreviousData ? periodRangeOf(previous.month, "week") : null;
+
+  const { transactions, isLoading } = useTransactions({
+    startDate: prevRange?.start ?? range?.start,
+    endDate: range?.end,
+  });
+
   useEffect(() => {
     setAvailablePeriods("week", availableWeeks);
   }, [availableWeeks.join("|")]);
@@ -65,19 +79,10 @@ export function WeekTab() {
     convert: convertToUserCurrency,
   });
 
-  const currentIndex = weeklyData.findIndex((w) => w.month === selectedWeek);
-  const current =
-    currentIndex >= 0 ? weeklyData[currentIndex] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
-  const previous =
-    currentIndex > 0 ? weeklyData[currentIndex - 1] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
-  const hasPreviousData = currentIndex > 0;
-
   const previousPeriodLabel = hasPreviousData
     ? formatPeriodLabel(previous.month, "week", i18n.language)
     : undefined;
 
-  const range = selectedWeek ? periodRangeOf(selectedWeek, "week") : null;
-  const prevRange = hasPreviousData ? periodRangeOf(previous.month, "week") : null;
   const periodTransactions = range ? transactions.filter((tx) => tx.date >= range.start && tx.date <= range.end) : [];
 
   const expenseCategoryData = categoryBreakdownForRange(transactions, range, isExpense, convertToUserCurrency);
