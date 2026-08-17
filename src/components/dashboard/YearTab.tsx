@@ -16,18 +16,19 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { usePeriodInsights } from "@/hooks/usePeriodInsights";
-import { bucketByGranularity, periodRangeOf, isExpense, isIncome, type MonthOfYearPoint } from "@/lib/analytics";
+import { periodRangeOf, isExpense, isIncome, type MonthOfYearPoint } from "@/lib/analytics";
 import { categoryBreakdownForRange } from "@/lib/categoryBreakdown";
 
 /** Dashboard's "year" tab — current calendar year vs. previous year. */
 export function YearTab() {
   const { t, i18n } = useTranslation("dashboard");
-  const { transactions, isLoading } = useTransactions();
+  const { monthlyData: yearlyData, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
@@ -39,17 +40,27 @@ export function YearTab() {
     [convertAmount, userCurrency],
   );
 
-  const yearlyData = useMemo(
-    () => bucketByGranularity(transactions, "year", convertToUserCurrency),
-    [transactions, convertToUserCurrency],
-  );
-
   const availableYears = useMemo(() => yearlyData.map((y) => y.month), [yearlyData]);
 
   const selectedYear =
     selectedPeriod.year && availableYears.includes(selectedPeriod.year)
       ? selectedPeriod.year
       : availableYears[availableYears.length - 1] ?? null;
+
+  const currentIndex = yearlyData.findIndex((y) => y.month === selectedYear);
+  const current =
+    currentIndex >= 0 ? yearlyData[currentIndex] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
+  const previous =
+    currentIndex > 0 ? yearlyData[currentIndex - 1] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
+  const hasPreviousData = currentIndex > 0;
+
+  const range = selectedYear ? periodRangeOf(selectedYear, "year") : null;
+  const prevRange = hasPreviousData ? periodRangeOf(previous.month, "year") : null;
+
+  const { transactions, isLoading } = useTransactions({
+    startDate: prevRange?.start ?? range?.start,
+    endDate: range?.end,
+  });
 
   useEffect(() => {
     setAvailablePeriods("year", availableYears);
@@ -68,17 +79,8 @@ export function YearTab() {
     convert: convertToUserCurrency,
   });
 
-  const currentIndex = yearlyData.findIndex((y) => y.month === selectedYear);
-  const current =
-    currentIndex >= 0 ? yearlyData[currentIndex] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
-  const previous =
-    currentIndex > 0 ? yearlyData[currentIndex - 1] : { month: "", income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
-  const hasPreviousData = currentIndex > 0;
-
   const previousPeriodLabel = hasPreviousData ? previous.month : undefined;
 
-  const range = selectedYear ? periodRangeOf(selectedYear, "year") : null;
-  const prevRange = hasPreviousData ? periodRangeOf(previous.month, "year") : null;
   const periodTransactions = range ? transactions.filter((tx) => tx.date >= range.start && tx.date <= range.end) : [];
 
   const displayMonthKey = useMemo(() => {
@@ -114,13 +116,13 @@ export function YearTab() {
 
   return (
     <main className="w-full">
-      {(isLoading || prefsLoading) && (
+      {(isLoading || isDashLoading || prefsLoading) && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {!isLoading && !prefsLoading && (
+      {!isLoading && !isDashLoading && !prefsLoading && (
         <div className="flex flex-col gap-[18px]">
           <div className="flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-stretch">
             <div className="grid grid-cols-2 gap-3 md:gap-4 lg:flex-[2]">

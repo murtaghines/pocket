@@ -3,13 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useLanguage } from '@/hooks/useLanguage';
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies';
 import { toast } from 'sonner';
-import { DollarSign, Languages, Loader2, Users, Calendar } from 'lucide-react';
+import { DollarSign, Languages, Loader2, Calendar } from 'lucide-react';
 
 interface PreferencesFormProps {
   className?: string;
@@ -22,7 +21,6 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
   
   const [currency, setCurrency] = useState(preferences.base_currency);
   const [language, setLanguage] = useState<string>(currentLanguage);
-  const [jointSplit, setJointSplit] = useState<number>(preferences.joint_account_split ?? 50);
   const [dateFormat, setDateFormat] = useState<string>(preferences.date_format ?? 'AUTO');
 
   useEffect(() => {
@@ -34,17 +32,12 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
   }, [currentLanguage]);
 
   useEffect(() => {
-    setJointSplit(preferences.joint_account_split ?? 50);
-  }, [preferences.joint_account_split]);
-
-  useEffect(() => {
     setDateFormat(preferences.date_format ?? 'AUTO');
   }, [preferences.date_format]);
 
   const handleSave = () => {
     const languageChanged = language !== currentLanguage;
     const currencyChanged = currency !== preferences.base_currency;
-    const splitChanged = jointSplit !== (preferences.joint_account_split ?? 50);
     const dateFormatChanged = dateFormat !== (preferences.date_format ?? 'AUTO');
 
     if (languageChanged) {
@@ -54,7 +47,6 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
     const updates: Record<string, string | number> = {};
     if (currencyChanged) updates.base_currency = currency;
     if (languageChanged) updates.language = language;
-    if (splitChanged) updates.joint_account_split = jointSplit;
     if (dateFormatChanged) {
       (updates as any).date_format = dateFormat === 'AUTO' ? null : dateFormat;
     }
@@ -67,7 +59,7 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
       },
       onError: (error: any) => {
         console.error('Failed to save preferences:', error);
-        if (languageChanged && !currencyChanged && !splitChanged) {
+        if (languageChanged && !currencyChanged) {
           toast.success(t('regional.saved'));
         } else {
           toast.error(t('regional.errorSaving', 'Error saving preferences'));
@@ -145,28 +137,6 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
               <SelectItem value="YMD">YYYY-MM-DD · 2026-02-28</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Joint Account Split */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            {t('jointAccount.splitPercentage')}
-          </Label>
-          <div className="flex items-center gap-3">
-            <Input
-              type="number"
-              min={1}
-              max={100}
-              value={jointSplit}
-              onChange={(e) => setJointSplit(Math.min(100, Math.max(1, Number(e.target.value))))}
-              className="w-24"
-            />
-            <span className="text-sm text-muted-foreground">%</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {t('jointAccount.splitHelp')}
-          </p>
         </div>
 
         {/* Preview */}

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FileText, ArrowRight } from "lucide-react";
-import { useTransactions } from "@/hooks/useTransactions";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 interface EmptyStateBannerProps {
   hasData?: boolean;
@@ -10,9 +10,9 @@ interface EmptyStateBannerProps {
 export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
   const navigate = useNavigate();
   const { t } = useTranslation('dashboard');
-  const { transactions } = useTransactions();
+  const { hasData: serverHasData } = useDashboardData();
 
-  const resolvedHasData = hasData ?? transactions.length > 0;
+  const resolvedHasData = hasData ?? serverHasData;
   if (resolvedHasData) return null;
 
   return (

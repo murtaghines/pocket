@@ -342,7 +342,7 @@ export default function Auth() {
       }
 
       try {
-        // investment_platforms / joint_account_names live in user_preferences
+        // joint_account_names lives in user_preferences
         // (single source of truth); profiles only holds identity fields.
         await supabase.from('profiles').upsert({
           user_id: userId,

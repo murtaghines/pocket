@@ -3,27 +3,44 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { MonthlyData } from "@/lib/mockData";
 import type { Database } from "@/integrations/supabase/types";
+import type { Granularity } from "@/lib/analytics";
 
 type AppDomain = Database["public"]["Enums"]["app_domain"];
 
 interface UseDashboardDataOptions {
   domain?: AppDomain;
+  granularity?: Granularity;
 }
 
 export function useDashboardData(options: UseDashboardDataOptions = {}) {
-  const { domain = "CASHFLOW" } = options;
+  const { domain = "CASHFLOW", granularity = "month" } = options;
   const { user } = useAuth();
 
   const { data: monthlyData = [], isLoading: isLoadingSeries } = useQuery({
-    queryKey: ["dashboard-monthly-series", user?.id, domain],
+    queryKey: ["dashboard-period-series", user?.id, domain, granularity],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_monthly_series", {
+      if (granularity === "month") {
+        const { data, error } = await supabase.rpc("get_monthly_series", {
+          p_user_id: user!.id,
+          p_domain: domain,
+        });
+        if (error) throw error;
+        return (data ?? []).map((row: { month: string; income: number; expenses: number; balance: number; sent_to_invest: number }): MonthlyData => ({
+          month: row.month,
+          income: Number(row.income),
+          expenses: Number(row.expenses),
+          balance: Number(row.balance),
+          sentToInvest: Number(row.sent_to_invest),
+        }));
+      }
+      const { data, error } = await supabase.rpc("get_period_series", {
         p_user_id: user!.id,
         p_domain: domain,
+        p_granularity: granularity,
       });
       if (error) throw error;
-      return (data ?? []).map((row: { month: string; income: number; expenses: number; balance: number; sent_to_invest: number }): MonthlyData => ({
-        month: row.month,
+      return (data ?? []).map((row: { period: string; income: number; expenses: number; balance: number; sent_to_invest: number }): MonthlyData => ({
+        month: row.period,
         income: Number(row.income),
         expenses: Number(row.expenses),
         balance: Number(row.balance),

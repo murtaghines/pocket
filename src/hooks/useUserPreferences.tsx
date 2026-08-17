@@ -7,13 +7,10 @@ export interface UserPreferences {
   id: string;
   user_id: string;
   base_currency: string;
-  locale: string;
   language: string;
   country?: string;
   date_format?: string | null;
-  selected_categories?: string[];
   onboarding_completed?: boolean;
-  joint_account_split?: number;
   joint_account_names?: string[];
   theme?: string;
   created_at: string;
@@ -85,7 +82,6 @@ export function useUserPreferences() {
           const newPrefs = {
             user_id: user.id,
             base_currency: browserDefaults.currency,
-            locale: browserDefaults.language === 'es' ? 'es-ES' : 'en-US',
             language: browserDefaults.language,
           };
           
@@ -142,10 +138,8 @@ export function useUserPreferences() {
         const newPrefs = {
           user_id: user.id,
           base_currency: updates.base_currency || browserDefaults.currency,
-          locale: browserDefaults.language === 'es' ? 'es-ES' : 'en-US',
           language: updates.language || browserDefaults.language,
           country: updates.country,
-          selected_categories: updates.selected_categories,
           onboarding_completed: updates.onboarding_completed,
         };
         
@@ -172,7 +166,6 @@ export function useUserPreferences() {
     id: '',
     user_id: user?.id || '',
     base_currency: browserDefaults.currency,
-    locale: browserDefaults.language === 'es' ? 'es-ES' : 'en-US',
     language: browserDefaults.language,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

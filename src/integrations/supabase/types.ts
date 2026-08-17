@@ -647,13 +647,9 @@ export type Database = {
           created_at: string | null
           date_format: string | null
           id: string
-          investment_platforms: string[] | null
           joint_account_names: string[] | null
-          joint_account_split: number
           language: string
-          locale: string
           onboarding_completed: boolean | null
-          selected_categories: string[] | null
           theme: string
           updated_at: string | null
           user_id: string
@@ -664,13 +660,9 @@ export type Database = {
           created_at?: string | null
           date_format?: string | null
           id?: string
-          investment_platforms?: string[] | null
           joint_account_names?: string[] | null
-          joint_account_split?: number
           language?: string
-          locale?: string
           onboarding_completed?: boolean | null
-          selected_categories?: string[] | null
           theme?: string
           updated_at?: string | null
           user_id: string
@@ -681,13 +673,9 @@ export type Database = {
           created_at?: string | null
           date_format?: string | null
           id?: string
-          investment_platforms?: string[] | null
           joint_account_names?: string[] | null
-          joint_account_split?: number
           language?: string
-          locale?: string
           onboarding_completed?: boolean | null
-          selected_categories?: string[] | null
           theme?: string
           updated_at?: string | null
           user_id?: string
@@ -753,6 +741,129 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_account_breakdown: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_month_key: string
+          p_user_id: string
+        }
+        Returns: {
+          account_id: string
+          account_name: string
+          institution: string
+          total: number
+          tx_count: number
+        }[]
+      }
+      get_categorization_coverage: {
+        Args: { p_user_id: string }
+        Returns: {
+          high_confidence: number
+          percent: number
+          total: number
+        }[]
+      }
+      get_category_breakdown: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_month_key: string
+          p_movement: Database["public"]["Enums"]["movement_type"]
+          p_user_id: string
+        }
+        Returns: {
+          category: string
+          total: number
+          tx_count: number
+        }[]
+      }
+      get_category_trends: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_granularity?: string
+          p_top_n?: number
+          p_user_id: string
+        }
+        Returns: {
+          period: string
+          slug: string
+          total: number
+        }[]
+      }
+      get_dashboard_summary: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_month_key: string
+          p_user_id: string
+        }
+        Returns: {
+          balance: number
+          expenses: number
+          income: number
+          sent_to_invest: number
+          tx_count: number
+        }[]
+      }
+      get_investment_summary: { Args: { p_user_id: string }; Returns: Json }
+      get_monthly_series: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_end_month?: string
+          p_start_month?: string
+          p_user_id: string
+        }
+        Returns: {
+          balance: number
+          expenses: number
+          income: number
+          month: string
+          sent_to_invest: number
+        }[]
+      }
+      get_opening_balances: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_user_id: string
+        }
+        Returns: {
+          month: string
+          opening_balance: number
+        }[]
+      }
+      get_period_series: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_granularity?: string
+          p_user_id: string
+        }
+        Returns: {
+          balance: number
+          expenses: number
+          income: number
+          period: string
+          sent_to_invest: number
+        }[]
+      }
+      get_popular_corrections: {
+        Args: { _min_users?: number }
+        Returns: {
+          category: string
+          movement: string
+          pattern: string
+          user_count: number
+        }[]
+      }
+      get_weekday_spending: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_user_id: string
+        }
+        Returns: {
+          avg_spend: number
+          total_spend: number
+          tx_count: number
+          weekday: number
+        }[]
+      }
       increment_rule_stats: {
         Args: { _hit_count: number; _rule_id: string }
         Returns: undefined

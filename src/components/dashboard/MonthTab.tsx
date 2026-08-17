@@ -26,12 +26,12 @@ import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
 import { Loader2 } from "lucide-react";
 import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import { periodRangeOf } from "@/lib/analytics";
 import type { Category } from "@/lib/mockData";
 
 /** Dashboard's "month" tab — current month vs. previous month. Verbatim body of the former Index.tsx page. */
 export function MonthTab() {
   const { t } = useTranslation('dashboard');
-  const { transactions, isLoading } = useTransactions();
   const { monthlyData, openingBalanceByMonth, isLoading: isDashLoading } = useDashboardData();
 
   const { formatCurrency } = useLocalization();
@@ -42,6 +42,37 @@ export function MonthTab() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance } = useMonthSelection();
+
+  const availableMonths = [...monthlyData]
+    .map((m) => m.month)
+    .filter(Boolean)
+    .sort((a, b) => b.localeCompare(a));
+
+  const latestMonthLabel =
+    selectedMonth && availableMonths.includes(selectedMonth)
+      ? selectedMonth
+      : availableMonths[0] ?? null;
+
+  const currentIndex = monthlyData.findIndex((m) => m.month === latestMonthLabel);
+  const currentMonth =
+    currentIndex >= 0
+      ? monthlyData[currentIndex]
+      : { month: '', income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
+  const previousMonth =
+    currentIndex > 0
+      ? monthlyData[currentIndex - 1]
+      : { month: '', income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
+
+  const txStartDate = previousMonth.month
+    ? periodRangeOf(previousMonth.month, "month").start
+    : latestMonthLabel
+      ? periodRangeOf(latestMonthLabel, "month").start
+      : undefined;
+  const txEndDate = latestMonthLabel
+    ? periodRangeOf(latestMonthLabel, "month").end
+    : undefined;
+
+  const { transactions, isLoading } = useTransactions({ startDate: txStartDate, endDate: txEndDate });
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
@@ -56,18 +87,6 @@ export function MonthTab() {
     (amount: number) => convertAmount(amount, 'EUR', userCurrency),
     [convertAmount, userCurrency],
   );
-
-  // Available months (only those with data), sorted descending (newest first)
-  const availableMonths = [...monthlyData]
-    .map((m) => m.month)
-    .filter(Boolean)
-    .sort((a, b) => b.localeCompare(a));
-
-  // Default to latest month with data; allow user to override via selector
-  const latestMonthLabel =
-    selectedMonth && availableMonths.includes(selectedMonth)
-      ? selectedMonth
-      : availableMonths[0] ?? null;
 
   // Month-scoped derived insights (weekly breakdown, essential split, tx stats)
   const monthlyInsights = useMonthlyInsights({
@@ -94,16 +113,6 @@ export function MonthTab() {
       setOpeningBalance(null);
     }
   }, [latestMonthLabel, openingBalanceByMonth, userCurrency]);
-
-  const currentIndex = monthlyData.findIndex((m) => m.month === latestMonthLabel);
-  const currentMonth =
-    currentIndex >= 0
-      ? monthlyData[currentIndex]
-      : { month: '', income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
-  const previousMonth =
-    currentIndex > 0
-      ? monthlyData[currentIndex - 1]
-      : { month: '', income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
 
   const convertedCurrentMonth = {
     ...currentMonth,
