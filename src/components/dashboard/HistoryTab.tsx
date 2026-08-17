@@ -3,61 +3,44 @@ import { TotalView } from "@/components/dashboard/TotalView";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { useHistoricalData } from "@/hooks/useHistoricalData";
 import { useHistoricalInsights } from "@/hooks/useHistoricalInsights";
 import { useGranularity } from "@/hooks/useGranularity";
-import { bucketByGranularity } from "@/lib/analytics";
-import { useCallback, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 
-/** Dashboard's "history" tab — all-time trend view. Verbatim body of the former History.tsx page. */
+/** Dashboard's "history" tab — all-time trend view. */
 export function HistoryTab() {
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
   const { transactions, isLoading } = useTransactions();
-  const { preferences, isLoading: prefsLoading } = useUserPreferences();
-  const { convertAmount } = useExchangeRates("EUR");
+  const [granularity] = useGranularity();
 
-  // Granularity of the whole History analysis (persisted to ?g=). Driven from the sticky top bar
-  // on desktop and from the in-body toggle on mobile — both read/write the same param.
-  const [granularity, setGranularity] = useGranularity();
+  const { monthlyData: periodData, isLoading: isDashLoading } = useDashboardData({ granularity });
+  const { weekday, categoryTrend, isLoading: isHistLoading } = useHistoricalData({ granularity });
 
-  const userCurrency = preferences?.base_currency || "EUR";
-  const convertToUserCurrency = useCallback(
-    (amount: number) => convertAmount(amount, "EUR", userCurrency),
-    [convertAmount, userCurrency],
-  );
-
-  // Re-bucket every transaction at the selected granularity (week / month / year), converted to
-  // the user's base currency. This drives every chart/KPI in TotalView.
-  const periodData = useMemo(
-    () => bucketByGranularity(transactions, granularity, convertToUserCurrency),
-    [transactions, granularity, convertToUserCurrency],
-  );
-
-  // Advanced all-time insights (rolling averages, category trends, seasonality, weekday pattern).
   const insights = useHistoricalInsights({
-    transactions,
     monthlyData: periodData,
-    convert: convertToUserCurrency,
     granularity,
+    serverWeekday: weekday,
+    serverCategoryTrend: categoryTrend,
   });
 
-  // Sort transactions newest first for the historical table
   const sortedTransactions = [...transactions].sort((a, b) =>
     b.date.localeCompare(a.date),
   );
 
+  const anyLoading = isLoading || isDashLoading || isHistLoading;
+
   return (
     <main className="w-full">
-      {(isLoading || prefsLoading) && (
+      {anyLoading && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {!isLoading && !prefsLoading && (
+      {!anyLoading && (
         <>
           <div className="mb-4">
             <TotalView monthlyData={periodData} insights={insights} granularity={granularity} />

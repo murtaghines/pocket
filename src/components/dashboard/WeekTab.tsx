@@ -16,18 +16,20 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { usePeriodInsights } from "@/hooks/usePeriodInsights";
-import { bucketByGranularity, periodRangeOf, formatPeriodLabel, isExpense, isIncome, type DailyOfWeekPoint } from "@/lib/analytics";
+import { periodRangeOf, formatPeriodLabel, isExpense, isIncome, type DailyOfWeekPoint } from "@/lib/analytics";
 import { categoryBreakdownForRange } from "@/lib/categoryBreakdown";
 
 /** Dashboard's "week" tab — current ISO week vs. previous week. */
 export function WeekTab() {
   const { t, i18n } = useTranslation("dashboard");
   const { transactions, isLoading } = useTransactions();
+  const { monthlyData: weeklyData, isLoading: isDashLoading } = useDashboardData({ granularity: "week" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
@@ -37,11 +39,6 @@ export function WeekTab() {
   const convertToUserCurrency = useCallback(
     (amount: number) => convertAmount(amount, "EUR", userCurrency),
     [convertAmount, userCurrency],
-  );
-
-  const weeklyData = useMemo(
-    () => bucketByGranularity(transactions, "week", convertToUserCurrency),
-    [transactions, convertToUserCurrency],
   );
 
   const availableWeeks = useMemo(() => weeklyData.map((w) => w.month), [weeklyData]);
@@ -110,13 +107,13 @@ export function WeekTab() {
 
   return (
     <main className="w-full">
-      {(isLoading || prefsLoading) && (
+      {(isLoading || isDashLoading || prefsLoading) && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {!isLoading && !prefsLoading && (
+      {!isLoading && !isDashLoading && !prefsLoading && (
         <div className="flex flex-col gap-[18px]">
           <div className="flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-stretch">
             <div className="grid grid-cols-2 gap-3 md:gap-4 lg:flex-[2]">

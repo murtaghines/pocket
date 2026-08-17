@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -9,7 +8,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useTheme } from "@/hooks/useTheme";
 import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
 import { toast } from "sonner";
-import { Languages, DollarSign, Users, Calendar, Globe, Sun, Moon, Loader2 } from "lucide-react";
+import { Languages, DollarSign, Calendar, Globe, Sun, Moon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const COUNTRIES = [
@@ -62,13 +61,11 @@ export function AccountPreferencesTab() {
 
   const [currency, setCurrency] = useState(preferences.base_currency);
   const [language, setLanguage] = useState(currentLanguage);
-  const [jointSplit, setJointSplit] = useState(preferences.joint_account_split ?? 50);
   const [dateFormat, setDateFormat] = useState(preferences.date_format ?? "AUTO");
   const [country, setCountry] = useState(preferences.country ?? "");
 
   useEffect(() => { setCurrency(preferences.base_currency); }, [preferences.base_currency]);
   useEffect(() => { setLanguage(currentLanguage); }, [currentLanguage]);
-  useEffect(() => { setJointSplit(preferences.joint_account_split ?? 50); }, [preferences.joint_account_split]);
   useEffect(() => { setDateFormat(preferences.date_format ?? "AUTO"); }, [preferences.date_format]);
   useEffect(() => { setCountry(preferences.country ?? ""); }, [preferences.country]);
 
@@ -79,7 +76,6 @@ export function AccountPreferencesTab() {
     const updates: Record<string, unknown> = {};
     if (currency !== preferences.base_currency) updates.base_currency = currency;
     if (languageChanged) updates.language = language;
-    if (jointSplit !== (preferences.joint_account_split ?? 50)) updates.joint_account_split = jointSplit;
     if (dateFormat !== (preferences.date_format ?? "AUTO")) {
       updates.date_format = dateFormat === "AUTO" ? null : dateFormat;
     }
@@ -183,29 +179,6 @@ export function AccountPreferencesTab() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm">
-              <Users className="h-3.5 w-3.5" />
-              {t("preferences.jointSplit", "Your share (%)")}
-            </Label>
-            <div className="flex items-center gap-3">
-              <Input
-                type="number"
-                min={1}
-                max={100}
-                value={jointSplit}
-                onChange={(e) =>
-                  setJointSplit(Math.min(100, Math.max(1, Number(e.target.value))))
-                }
-                className="w-24"
-              />
-              <span className="text-sm text-muted-foreground">%</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("preferences.jointSplitHelp", "Your percentage of shared expenses. E.g. 50 means you pay half.")}
-            </p>
           </div>
         </div>
       </div>

@@ -10,36 +10,33 @@ type MovementType = Database["public"]["Enums"]["movement_type"];
 
 interface DbTransaction {
   id: string;
-  user_id: string;
-  import_id: string | null;
-  period_id: string | null;
   date: string;
   description: string;
   description_norm: string | null;
   amount: number;
   movement: MovementType | null;
   category: string;
-  category_id: string | null;
   currency: string | null;
-  created_at: string;
-  fingerprint: string | null;
-  domain: AppDomain | null;
   account_id: string | null;
   running_balance: number | null;
   user_corrected: boolean | null;
 }
 
+const TX_COLUMNS = "id, date, description, description_norm, amount, movement, category, currency, account_id, running_balance, user_corrected" as const;
+
 interface UseTransactionsOptions {
   domain?: AppDomain;
   periodId?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export function useTransactions(options: UseTransactionsOptions = {}) {
-  const { domain = "CASHFLOW", periodId } = options;
+  const { domain = "CASHFLOW", periodId, startDate, endDate } = options;
   const { user } = useAuth();
 
   const { data: transactions = [], isLoading, error } = useQuery({
-    queryKey: ["transactions", user?.id, domain, periodId],
+    queryKey: ["transactions", user?.id, domain, periodId, startDate, endDate],
     queryFn: async () => {
       if (!user) return [];
 
@@ -53,15 +50,15 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
       let query = supabase
         .from("transactions")
-        .select("*")
+        .select(TX_COLUMNS)
         .eq("user_id", user.id)
         .eq("domain", domain)
         .eq("is_hidden", false)
         .order("date", { ascending: false });
 
-      if (periodId) {
-        query = query.eq("period_id", periodId);
-      }
+      if (periodId) query = query.eq("period_id", periodId);
+      if (startDate) query = query.gte("date", startDate);
+      if (endDate) query = query.lte("date", endDate);
 
       const { data, error } = await query;
 
