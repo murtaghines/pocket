@@ -29,16 +29,18 @@ interface UseTransactionsOptions {
   periodId?: string;
   startDate?: string;
   endDate?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export function useTransactions(options: UseTransactionsOptions = {}) {
-  const { domain = "CASHFLOW", periodId, startDate, endDate } = options;
+  const { domain = "CASHFLOW", periodId, startDate, endDate, page, pageSize = 100 } = options;
   const { user } = useAuth();
 
-  const { data: transactions = [], isLoading, error } = useQuery({
-    queryKey: ["transactions", user?.id, domain, periodId, startDate, endDate],
+  const { data: result = { rows: [], count: null }, isLoading, error } = useQuery({
+    queryKey: ["transactions", user?.id, domain, periodId, startDate, endDate, page, pageSize],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return { rows: [], count: null };
 
       const { data: accountsData } = await supabase
         .from("accounts")
@@ -48,9 +50,10 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       const accountMap: Record<string, string> = {};
       (accountsData || []).forEach(a => { accountMap[a.id] = getAccountDisplayName(a); });
 
+      const selectOpts = page != null ? { count: 'exact' as const } : {};
       let query = supabase
         .from("transactions")
-        .select(TX_COLUMNS)
+        .select(TX_COLUMNS, selectOpts)
         .eq("user_id", user.id)
         .eq("domain", domain)
         .eq("is_hidden", false)
@@ -60,11 +63,17 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       if (startDate) query = query.gte("date", startDate);
       if (endDate) query = query.lte("date", endDate);
 
-      const { data, error } = await query;
+      if (page != null) {
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+        query = query.range(from, to);
+      }
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
 
-      return (data as DbTransaction[]).map((t): Transaction => {
+      const rows = (data as DbTransaction[]).map((t): Transaction => {
         const rawDesc = t.description_norm || t.description;
         const cleanDesc = rawDesc.replace(
           /^value date:\s*\d{1,2}\s+\w{3}\s+\d{4}\s+/i,
@@ -101,10 +110,13 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           userCorrected: t.user_corrected ?? false,
         };
       });
+
+      return { rows, count: count ?? null };
     },
     enabled: !!user,
   });
 
+  const transactions = result.rows;
   const transfers = transactions.filter((t) => t.movement === "TRANSFER");
   const investmentMovements = transactions.filter(
     (t) => t.categorySlug === "to_investment"
@@ -119,5 +131,6 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     hasData: transactions.length > 0,
     transfersCount: transfers.length,
     investmentMovementsCount: investmentMovements.length,
+    totalCount: result.count,
   };
 }

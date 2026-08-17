@@ -144,6 +144,9 @@
     "minLength": "Must be at least {{count}} characters",
     "maxLength": "Must be at most {{count}} characters"
   },
+  "pagination": {
+    "showing": "{{from}}–{{to}} of {{total}}"
+  },
   "onboarding": {
     "welcome": "Welcome to wallet! 👋",
     "yourCountry": "Your Country",

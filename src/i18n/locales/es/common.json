@@ -144,6 +144,9 @@
     "minLength": "Debe tener al menos {{count}} caracteres",
     "maxLength": "Debe tener como máximo {{count}} caracteres"
   },
+  "pagination": {
+    "showing": "{{from}}–{{to}} de {{total}}"
+  },
   "onboarding": {
     "welcome": "Welcome to wallet! 👋",
     "yourCountry": "Tu País",
