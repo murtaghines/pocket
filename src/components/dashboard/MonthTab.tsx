@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Loader2 } from "lucide-react";
 
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
@@ -23,11 +23,8 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useProfile } from "@/hooks/useProfile";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
-import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
-import { Loader2 } from "lucide-react";
-import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
-import { periodRangeOf } from "@/lib/analytics";
-import type { Category } from "@/lib/mockData";
+import { usePeriodAggregates } from "@/hooks/usePeriodAggregates";
+import { periodRangeOf, type WeeklyPoint } from "@/lib/analytics";
 
 /** Dashboard's "month" tab — current month vs. previous month. Verbatim body of the former Index.tsx page. */
 export function MonthTab() {
@@ -63,16 +60,10 @@ export function MonthTab() {
       ? monthlyData[currentIndex - 1]
       : { month: '', income: 0, expenses: 0, balance: 0, sentToInvest: 0 };
 
-  const txStartDate = previousMonth.month
-    ? periodRangeOf(previousMonth.month, "month").start
-    : latestMonthLabel
-      ? periodRangeOf(latestMonthLabel, "month").start
-      : undefined;
-  const txEndDate = latestMonthLabel
-    ? periodRangeOf(latestMonthLabel, "month").end
-    : undefined;
+  const range = latestMonthLabel ? periodRangeOf(latestMonthLabel, "month") : null;
+  const prevRange = previousMonth.month ? periodRangeOf(previousMonth.month, "month") : null;
 
-  const { transactions, isLoading } = useTransactions({ startDate: txStartDate, endDate: txEndDate });
+  const { transactions, isLoading } = useTransactions({ startDate: range?.start, endDate: range?.end });
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
@@ -88,10 +79,12 @@ export function MonthTab() {
     [convertAmount, userCurrency],
   );
 
-  // Month-scoped derived insights (weekly breakdown, essential split, tx stats)
-  const monthlyInsights = useMonthlyInsights({
-    transactions,
-    monthKey: latestMonthLabel,
+  const agg = usePeriodAggregates({
+    startDate: range?.start,
+    endDate: range?.end,
+    prevStartDate: prevRange?.start,
+    prevEndDate: prevRange?.end,
+    granularity: "month",
     convert: convertToUserCurrency,
   });
 
@@ -146,61 +139,6 @@ export function MonthTab() {
 
 
 
-  // Recompute category breakdowns for the SELECTED month so charts react
-  // to the month dropdown AND to live edits (categories, movement) made in
-  // the transaction tables.
-  const getCategoryHslColor = (slug: string): string => {
-    const varName = categoryColorVars[slug];
-    if (!varName) return "hsl(220, 10%, 55%)";
-    if (typeof window !== "undefined") {
-      const value = getComputedStyle(document.documentElement)
-        .getPropertyValue(`--${varName}`)
-        .trim();
-      if (value) return `hsl(${value})`;
-    }
-    return "hsl(220, 10%, 55%)";
-  };
-
-  const monthTransactions = latestMonthLabel
-    ? transactions.filter((t) => t.date.startsWith(latestMonthLabel))
-    : [];
-
-  const buildCategoryData = (filterFn: (t: typeof transactions[number]) => boolean) => {
-    const totals: Record<string, number> = {};
-    monthTransactions.filter(filterFn).forEach((t) => {
-      const key = t.categorySlug || t.category;
-      totals[key] = (totals[key] || 0) + Math.abs(t.amount);
-    });
-    return Object.entries(totals).map(([slug, value]) => ({
-      name: getCategoryLabel(slug),
-      value: Math.round(convertToUserCurrency(value) * 100) / 100,
-      category: slug as Category,
-      color: getCategoryHslColor(slug),
-    }));
-  };
-
-  // Previous-month expense totals per category slug (for the month-over-month arrows).
-  const prevExpenseByCategory: Record<string, number> = {};
-  if (previousMonth.month) {
-    transactions
-      .filter((t) => t.date.startsWith(previousMonth.month) && (t.movement === "EXPENSE" || t.type === "expense"))
-      .forEach((t) => {
-        const key = t.categorySlug || t.category;
-        prevExpenseByCategory[key] = (prevExpenseByCategory[key] || 0) + Math.abs(t.amount);
-      });
-  }
-
-  const convertedCategoryData = buildCategoryData(
-    (t) => t.movement === "EXPENSE" || t.type === "expense"
-  ).map((d) => ({
-    ...d,
-    previousValue: Math.round(convertToUserCurrency(prevExpenseByCategory[d.category] || 0) * 100) / 100,
-  }));
-  const convertedIncomeCategoryData = buildCategoryData(
-    (t) => t.movement === "INCOME" || t.type === "income"
-  );
-
-
   return (
     <>
       {onboardingChecked && (
@@ -212,13 +150,13 @@ export function MonthTab() {
 
       <main className="w-full">
 
-        {(isLoading || isDashLoading || prefsLoading) && (
+        {(isLoading || isDashLoading || prefsLoading || agg.isLoading) && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         )}
 
-        {!isLoading && !isDashLoading && !prefsLoading && (
+        {!isLoading && !isDashLoading && !prefsLoading && !agg.isLoading && (
           <>
             {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
               <p className="mb-5 text-sm tabular-nums text-muted-foreground md:hidden">
@@ -276,7 +214,7 @@ export function MonthTab() {
 
               {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
               <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
-                <WeeklyIncomeExpensesChart weekly={monthlyInsights.weekly} />
+                <WeeklyIncomeExpensesChart weekly={agg.subBreakdown as WeeklyPoint[]} />
                 <AccountsStackCard
                   transactions={transactions}
                   monthKey={latestMonthLabel}
@@ -288,12 +226,12 @@ export function MonthTab() {
               {/* Row 3: Daily balance chart (wide) + Daily view heatmap (with stats, in its square) */}
               <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
                 <DailyFlowChart
-                  transactions={transactions}
+                  dailyTotals={agg.dailyTotals}
                   monthKey={latestMonthLabel}
                   convert={convertToUserCurrency}
                 />
                 <DailyHeatmapCard
-                  transactions={transactions}
+                  dailyTotals={agg.dailyTotals}
                   monthKey={latestMonthLabel}
                   convert={convertToUserCurrency}
                 />
@@ -301,14 +239,14 @@ export function MonthTab() {
 
               {/* Row 4: Spending by category (donut + month-over-month list) + Top expenses */}
               <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
-                <SpendingByCategoryChart data={convertedCategoryData} />
-                <TopExpensesCard transactions={monthTransactions} />
+                <SpendingByCategoryChart data={agg.expenseCategoryData} />
+                <TopExpensesCard topExpenses={agg.topExpenses} />
               </div>
 
               {/* Row 5: essential vs discretionary + income by category */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
-                <FixedVsDiscretionaryCard split={monthlyInsights.essentialSplit} />
-                <CategoryChart data={convertedIncomeCategoryData} />
+                <FixedVsDiscretionaryCard split={agg.essentialSplit} />
+                <CategoryChart data={agg.incomeCategoryData} />
               </div>
 
               {/* Row 6: Transactions table */}
@@ -316,7 +254,7 @@ export function MonthTab() {
                 className="bg-card rounded-xl p-[20px_22px_10px] shadow-section border border-border"
               >
                 <div className="max-h-[500px] overflow-y-auto">
-                  <TransactionTable transactions={monthTransactions} />
+                  <TransactionTable transactions={transactions} />
                 </div>
               </div>
             </div>

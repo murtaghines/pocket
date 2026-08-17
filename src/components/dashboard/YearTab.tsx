@@ -21,9 +21,8 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
-import { usePeriodInsights } from "@/hooks/usePeriodInsights";
-import { periodRangeOf, isExpense, isIncome, type MonthOfYearPoint } from "@/lib/analytics";
-import { categoryBreakdownForRange } from "@/lib/categoryBreakdown";
+import { usePeriodAggregates } from "@/hooks/usePeriodAggregates";
+import { periodRangeOf, type MonthOfYearPoint } from "@/lib/analytics";
 
 /** Dashboard's "year" tab — current calendar year vs. previous year. */
 export function YearTab() {
@@ -58,8 +57,17 @@ export function YearTab() {
   const prevRange = hasPreviousData ? periodRangeOf(previous.month, "year") : null;
 
   const { transactions, isLoading } = useTransactions({
-    startDate: prevRange?.start ?? range?.start,
+    startDate: range?.start,
     endDate: range?.end,
+  });
+
+  const agg = usePeriodAggregates({
+    startDate: range?.start,
+    endDate: range?.end,
+    prevStartDate: prevRange?.start,
+    prevEndDate: prevRange?.end,
+    granularity: "year",
+    convert: convertToUserCurrency,
   });
 
   useEffect(() => {
@@ -72,57 +80,35 @@ export function YearTab() {
     }
   }, [selectedYear]);
 
-  const insights = usePeriodInsights({
-    transactions,
-    periodKey: selectedYear,
-    granularity: "year",
-    convert: convertToUserCurrency,
-  });
-
   const previousPeriodLabel = hasPreviousData ? previous.month : undefined;
 
-  const periodTransactions = range ? transactions.filter((tx) => tx.date >= range.start && tx.date <= range.end) : [];
-
   const displayMonthKey = useMemo(() => {
-    if (!periodTransactions.length) return selectedYear ? `${selectedYear}-01` : "2024-01";
-    const latest = periodTransactions.reduce((a, b) => (a.date > b.date ? a : b));
+    if (!transactions.length) return selectedYear ? `${selectedYear}-01` : "2024-01";
+    const latest = transactions.reduce((a, b) => (a.date > b.date ? a : b));
     return latest.date.slice(0, 7);
-  }, [periodTransactions, selectedYear]);
-
-  const expenseCategoryData = categoryBreakdownForRange(transactions, range, isExpense, convertToUserCurrency);
-  const prevExpenseByCategory: Record<string, number> = {};
-  if (prevRange) {
-    categoryBreakdownForRange(transactions, prevRange, isExpense, convertToUserCurrency).forEach((c) => {
-      prevExpenseByCategory[c.category] = c.value;
-    });
-  }
-  const expenseCategoryDataWithTrend = expenseCategoryData.map((d) => ({
-    ...d,
-    previousValue: prevExpenseByCategory[d.category] ?? 0,
-  }));
-  const incomeCategoryData = categoryBreakdownForRange(transactions, range, isIncome, convertToUserCurrency);
+  }, [transactions, selectedYear]);
 
   const breakdownPoints = useMemo(
     () =>
-      (insights.subBreakdown as MonthOfYearPoint[]).map((p) => ({
+      (agg.subBreakdown as MonthOfYearPoint[]).map((p) => ({
         label: new Intl.DateTimeFormat(i18n.language || "en", { month: "short" }).format(
           new Date(2024, p.monthIndex - 1, 1),
         ),
         income: p.income,
         expenses: p.spend,
       })),
-    [insights.subBreakdown, i18n.language],
+    [agg.subBreakdown, i18n.language],
   );
 
   return (
     <main className="w-full">
-      {(isLoading || isDashLoading || prefsLoading) && (
+      {(isLoading || isDashLoading || prefsLoading || agg.isLoading) && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {!isLoading && !isDashLoading && !prefsLoading && (
+      {!isLoading && !isDashLoading && !prefsLoading && !agg.isLoading && (
         <div className="flex flex-col gap-[18px]">
           <div className="flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-stretch">
             <div className="grid grid-cols-2 gap-3 md:gap-4 lg:flex-[2]">
@@ -181,12 +167,12 @@ export function YearTab() {
           {/* Row 3: balance line + heatmap */}
           <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
             <DailyFlowChart
-              transactions={transactions}
+              dailyTotals={agg.dailyTotals}
               monthKey={displayMonthKey}
               convert={convertToUserCurrency}
             />
             <DailyHeatmapCard
-              transactions={transactions}
+              dailyTotals={agg.dailyTotals}
               monthKey={displayMonthKey}
               convert={convertToUserCurrency}
             />
@@ -194,18 +180,18 @@ export function YearTab() {
 
           {/* Row 4: spending by category + top expenses */}
           <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
-            <SpendingByCategoryChart data={expenseCategoryDataWithTrend} />
-            <TopExpensesCard transactions={periodTransactions} />
+            <SpendingByCategoryChart data={agg.expenseCategoryData} />
+            <TopExpensesCard topExpenses={agg.topExpenses} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
-            <FixedVsDiscretionaryCard split={insights.essentialSplit} />
-            <CategoryChart data={incomeCategoryData} />
+            <FixedVsDiscretionaryCard split={agg.essentialSplit} />
+            <CategoryChart data={agg.incomeCategoryData} />
           </div>
 
           <div className="bg-card rounded-xl p-[20px_22px_10px] shadow-section border border-border">
             <div className="max-h-[500px] overflow-y-auto">
-              <TransactionTable transactions={periodTransactions} />
+              <TransactionTable transactions={transactions} />
             </div>
           </div>
         </div>

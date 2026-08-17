@@ -10,18 +10,19 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
 import { cn } from "@/lib/utils";
 import { CalendarDays, ChevronDown } from "lucide-react";
+import type { DailyTotal } from "@/hooks/usePeriodAggregates";
 
 type Metric = "expense" | "income" | "count";
 
 interface DailyHeatmapCardProps {
-  transactions: Array<{ date: string; amount: number; type: string }>;
+  dailyTotals: DailyTotal[];
   monthKey: string | null;
   convert: (amount: number) => number;
 }
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
-export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatmapCardProps) {
+export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatmapCardProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const [metric, setMetric] = useState<Metric>("expense");
@@ -41,13 +42,14 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
     const firstWeekday = (new Date(y, m - 1, 1).getDay() + 6) % 7;
 
     const buckets = new Array(days).fill(0);
-    for (const tx of transactions) {
-      const d = new Date(tx.date);
-      if (d.getFullYear() !== y || d.getMonth() + 1 !== m) continue;
-      const idx = d.getDate() - 1;
-      if (metric === "count") buckets[idx] += 1;
-      else if (metric === "expense" && tx.type === "expense") buckets[idx] += convert(Math.abs(tx.amount));
-      else if (metric === "income" && tx.type === "income") buckets[idx] += convert(Math.abs(tx.amount));
+    for (const dt of dailyTotals) {
+      if (!dt.day.startsWith(monthKey!)) continue;
+      const dayNum = parseInt(dt.day.slice(8, 10), 10);
+      if (dayNum < 1 || dayNum > days) continue;
+      const idx = dayNum - 1;
+      if (metric === "count") buckets[idx] += dt.txCount;
+      else if (metric === "expense") buckets[idx] += convert(dt.expenses);
+      else if (metric === "income") buckets[idx] += convert(dt.income);
     }
 
     const cells = buckets.map((value, i) => ({ day: i + 1, value }));
@@ -60,7 +62,7 @@ export function DailyHeatmapCard({ transactions, monthKey, convert }: DailyHeatm
     const minDay = minNonZero > 0 ? buckets.findIndex((v) => v === minNonZero) + 1 : 0;
     const avgActive = nonZero.length > 0 ? nonZero.reduce((s, v) => s + v, 0) / nonZero.length : 0;
     return { cells, maxValue, minNonZero, maxDay, minDay, avgActive, daysInMonth: days, leadingBlanks: firstWeekday };
-  }, [transactions, monthKey, metric, convert]);
+  }, [dailyTotals, monthKey, metric, convert]);
 
   const getIntensity = (value: number) => {
     if (maxValue <= 0 || value <= 0) return 0;

@@ -3,9 +3,10 @@ import { useTranslation } from "react-i18next";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
+import type { DailyTotal } from "@/hooks/usePeriodAggregates";
 
 interface DailyFlowChartProps {
-  transactions: Array<{ date: string; amount: number; type: string; movement?: string }>;
+  dailyTotals: DailyTotal[];
   monthKey: string | null;
   convert: (amount: number) => number;
 }
@@ -13,27 +14,24 @@ interface DailyFlowChartProps {
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowChartProps) {
+export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
 
   const { points, monthName, netChange } = useMemo(() => {
     if (!monthKey) return { points: [], monthName: '', netChange: 0 };
     const [y, m] = monthKey.split("-").map(Number);
+    if (!y || !m) return { points: [], monthName: '', netChange: 0 };
     const daysInMonth = new Date(y, m, 0).getDate();
     const name = MONTH_NAMES[m - 1] || monthKey;
 
     const dailyNet: Record<number, number> = {};
-    transactions.forEach((tx) => {
-      if (!tx.date.startsWith(monthKey)) return;
-      const day = parseInt(tx.date.slice(8, 10), 10);
-      if (!day) return;
-      const isIncome = tx.type === "income" || tx.movement === "INCOME";
-      const isExpense = tx.type === "expense" || tx.movement === "EXPENSE";
-      const raw = Math.abs(convert(tx.amount));
-      if (isIncome) dailyNet[day] = (dailyNet[day] || 0) + raw;
-      else if (isExpense) dailyNet[day] = (dailyNet[day] || 0) - raw;
-    });
+    for (const d of dailyTotals) {
+      if (!d.day.startsWith(monthKey)) continue;
+      const day = parseInt(d.day.slice(8, 10), 10);
+      if (!day) continue;
+      dailyNet[day] = (dailyNet[day] || 0) + convert(d.income) - convert(d.expenses);
+    }
 
     let cumulative = 0;
     const pts = Array.from({ length: daysInMonth }, (_, i) => {
@@ -43,7 +41,7 @@ export function DailyFlowChart({ transactions, monthKey, convert }: DailyFlowCha
     });
 
     return { points: pts, monthName: name, netChange: cumulative };
-  }, [transactions, monthKey, convert]);
+  }, [dailyTotals, monthKey, convert]);
 
   const hasData = points.some(p => p.balance !== 0);
   const isPositive = netChange >= 0;
