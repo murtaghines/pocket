@@ -157,8 +157,8 @@ export function YearTab() {
           <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
             <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byMonthThisYear", "By month · this year")} />
             <AccountsStackCard
-              transactions={transactions}
-              monthKey={selectedYear}
+              startDate={range?.start}
+              endDate={range?.end}
               convert={convertToUserCurrency}
               formatCurrency={formatCurrency}
             />

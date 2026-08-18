@@ -1,15 +1,8 @@
-// Central, pure metrics module for the Dashboard (monthly) and History (all-time) views.
+// Pure metrics & date helpers for the Dashboard and History views.
 //
-// Why this exists: aggregation math used to live inline in `useTransactions.tsx`, `Index.tsx`
-// and each chart component, with 2-3 diverging "month key" conventions and duplicated
-// averages/savings-rate logic. Everything here is a pure, side-effect-free function so it can be
-// unit-tested and reused by the insight hooks (`useMonthlyInsights`, `useHistoricalInsights`)
-// and by `TotalView`. No React, no i18n, no formatting — callers format with `useLocalization`.
-//
-// Money rules mirror the rest of the app: transfers are excluded from income/expense by the
-// caller (movement === "TRANSFER"), amounts are summed as `Math.abs`, and results are rounded to
-// cents via `round2`. All date math is tz-safe: we parse "YYYY-MM-DD" by string, never
+// All date math is tz-safe: we parse "YYYY-MM-DD" by string, never
 // `new Date(isoString)` (which parses as UTC and can shift the day in negative-offset locales).
+// Money amounts are summed as `Math.abs` and rounded to cents via `round2`.
 
 import type { MonthlyData, Transaction } from "@/lib/mockData";
 import { normalizeCategory } from "@/lib/categoryTranslations";
@@ -113,48 +106,7 @@ export function periodRangeOf(key: string, g: Granularity): { start: string; end
   return { start: `${key}-01`, end: `${key}-${String(days).padStart(2, "0")}` };
 }
 
-/** Whether a "YYYY-MM-DD" date string falls within an inclusive range (string comparison, tz-safe). */
-export function dateInRange(dateStr: string, range: { start: string; end: string }): boolean {
-  return dateStr >= range.start && dateStr <= range.end;
-}
 
-/**
- * Bucket transactions into a `MonthlyData[]`-shaped series at the given granularity — mirrors the
- * monthly builder in `useTransactions`: income for INCOME, expenses for other non-transfer
- * movements, `sentToInvest` for the `to_investment` transfers, `balance = income - expenses`. The
- * `month` field holds the period key (Monday date / YYYY-MM / YYYY) so existing MonthlyData
- * consumers work unchanged. Ascending by key.
- */
-export function bucketByGranularity(
-  transactions: Transaction[],
-  g: Granularity,
-  convert: (n: number) => number = (n) => n,
-): MonthlyData[] {
-  const totals: Record<string, { income: number; expenses: number; sentToInvest: number }> = {};
-  const ensure = (k: string) => (totals[k] ||= { income: 0, expenses: 0, sentToInvest: 0 });
-
-  for (const t of transactions) {
-    const key = periodKeyOf(t.date, g);
-    const amt = Math.abs(convert(t.amount));
-    if (t.categorySlug === "to_investment") {
-      ensure(key).sentToInvest += amt;
-      continue; // a TRANSFER — never income or expense
-    }
-    if (t.movement === "TRANSFER") continue; // other transfers excluded from income/expense
-    if (isIncome(t)) ensure(key).income += amt;
-    else ensure(key).expenses += amt;
-  }
-
-  return Object.entries(totals)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, d]) => ({
-      month,
-      income: round2(d.income),
-      expenses: round2(d.expenses),
-      balance: round2(d.income - d.expenses),
-      sentToInvest: round2(d.sentToInvest),
-    }));
-}
 
 /**
  * Human label for a period key at a given granularity. Month -> short month name, year -> the year,
@@ -252,31 +204,6 @@ export function isIncome(t: Pick<Transaction, "movement" | "type">): boolean {
 // Monthly aggregations (single selected month)
 // ---------------------------------------------------------------------------
 
-export interface DailySpendPoint {
-  day: number;
-  spend: number;
-}
-
-/** Total expense per day-of-month for one month's transactions (convert applied). */
-export function dailySpendForMonth(
-  transactions: Transaction[],
-  monthKey: string | null,
-  convert: (n: number) => number = (n) => n,
-): DailySpendPoint[] {
-  if (!monthKey) return [];
-  const days = daysInMonthOf(monthKey);
-  const byDay: Record<number, number> = {};
-  for (const t of transactions) {
-    if (!t.date.startsWith(monthKey) || !isExpense(t)) continue;
-    const day = dayOfMonth(t.date);
-    if (!day) continue;
-    byDay[day] = (byDay[day] || 0) + Math.abs(convert(t.amount));
-  }
-  return Array.from({ length: days }, (_, i) => ({
-    day: i + 1,
-    spend: round2(byDay[i + 1] || 0),
-  }));
-}
 
 export interface WeeklyPoint {
   week: number;
@@ -285,31 +212,6 @@ export interface WeeklyPoint {
   net: number;
 }
 
-/** Expense/income/net grouped into weeks-of-month (1..5) for one month. */
-export function weeklyBreakdownForMonth(
-  transactions: Transaction[],
-  monthKey: string | null,
-  convert: (n: number) => number = (n) => n,
-): WeeklyPoint[] {
-  if (!monthKey) return [];
-  const weeks = Math.ceil(daysInMonthOf(monthKey) / 7);
-  const buckets: Record<number, { spend: number; income: number }> = {};
-  for (let w = 1; w <= weeks; w++) buckets[w] = { spend: 0, income: 0 };
-  for (const t of transactions) {
-    if (!t.date.startsWith(monthKey)) continue;
-    const w = weekOfMonth(t.date);
-    if (!buckets[w]) buckets[w] = { spend: 0, income: 0 };
-    const amt = Math.abs(convert(t.amount));
-    if (isExpense(t)) buckets[w].spend += amt;
-    else if (isIncome(t)) buckets[w].income += amt;
-  }
-  return Object.entries(buckets).map(([w, b]) => ({
-    week: Number(w),
-    spend: round2(b.spend),
-    income: round2(b.income),
-    net: round2(b.income - b.spend),
-  }));
-}
 
 export interface DailyOfWeekPoint {
   /** 0=Mon .. 6=Sun */
@@ -319,30 +221,6 @@ export interface DailyOfWeekPoint {
   net: number;
 }
 
-/** Expense/income/net grouped by weekday (Mon..Sun) for one ISO week (`weekStartKey` = the Monday). */
-export function dailyBreakdownForWeek(
-  transactions: Transaction[],
-  weekStartKey: string | null,
-  convert: (n: number) => number = (n) => n,
-): DailyOfWeekPoint[] {
-  if (!weekStartKey) return [];
-  const range = periodRangeOf(weekStartKey, "week");
-  const buckets: Record<number, { spend: number; income: number }> = {};
-  for (let i = 0; i < 7; i++) buckets[i] = { spend: 0, income: 0 };
-  for (const t of transactions) {
-    if (!dateInRange(t.date, range)) continue;
-    const idx = dayOfWeekMon0(t.date);
-    const amt = Math.abs(convert(t.amount));
-    if (isExpense(t)) buckets[idx].spend += amt;
-    else if (isIncome(t)) buckets[idx].income += amt;
-  }
-  return Array.from({ length: 7 }, (_, i) => ({
-    dayIndex: i,
-    spend: round2(buckets[i].spend),
-    income: round2(buckets[i].income),
-    net: round2(buckets[i].income - buckets[i].spend),
-  }));
-}
 
 export interface MonthOfYearPoint {
   /** 1..12 */
@@ -352,33 +230,6 @@ export interface MonthOfYearPoint {
   net: number;
 }
 
-/** Expense/income/net grouped by calendar month (Jan..Dec) for one year. */
-export function monthlyBreakdownForYear(
-  transactions: Transaction[],
-  yearKey: string | null,
-  convert: (n: number) => number = (n) => n,
-): MonthOfYearPoint[] {
-  if (!yearKey) return [];
-  const buckets: Record<number, { spend: number; income: number }> = {};
-  for (let m = 1; m <= 12; m++) buckets[m] = { spend: 0, income: 0 };
-  for (const t of transactions) {
-    if (yearKeyOf(t.date) !== yearKey) continue;
-    const m = Number(t.date.slice(5, 7));
-    if (m < 1 || m > 12) continue;
-    const amt = Math.abs(convert(t.amount));
-    if (isExpense(t)) buckets[m].spend += amt;
-    else if (isIncome(t)) buckets[m].income += amt;
-  }
-  return Array.from({ length: 12 }, (_, i) => {
-    const m = i + 1;
-    return {
-      monthIndex: m,
-      spend: round2(buckets[m].spend),
-      income: round2(buckets[m].income),
-      net: round2(buckets[m].income - buckets[m].spend),
-    };
-  });
-}
 
 /** A category slug with its accumulated amount, used to break a bucket down by category. */
 export interface CategoryAmount {
@@ -397,104 +248,10 @@ export interface EssentialSplit {
   discretionaryCategories: CategoryAmount[];
 }
 
-/** Collapse a slug->amount map into a descending, rounded CategoryAmount[]. */
-function toSortedCategories(map: Record<string, number>): CategoryAmount[] {
-  return Object.entries(map)
-    .map(([slug, amount]) => ({ slug, amount: round2(amount) }))
-    .filter((c) => c.amount > 0)
-    .sort((a, b) => b.amount - a.amount);
-}
 
-/** Split one period's expenses into essential vs discretionary buckets, with a per-category breakdown. */
-export function essentialSplitForPeriod(
-  transactions: Transaction[],
-  range: { start: string; end: string } | null,
-  convert: (n: number) => number = (n) => n,
-): EssentialSplit {
-  let essential = 0;
-  let discretionary = 0;
-  const essentialByCat: Record<string, number> = {};
-  const discretionaryByCat: Record<string, number> = {};
-  if (range) {
-    for (const t of transactions) {
-      if (!dateInRange(t.date, range) || !isExpense(t)) continue;
-      const amt = Math.abs(convert(t.amount));
-      const slug = normalizeCategory(t.categorySlug || String(t.category));
-      if (classifyExpense(slug) === "essential") {
-        essential += amt;
-        essentialByCat[slug] = (essentialByCat[slug] ?? 0) + amt;
-      } else {
-        discretionary += amt;
-        discretionaryByCat[slug] = (discretionaryByCat[slug] ?? 0) + amt;
-      }
-    }
-  }
-  const total = essential + discretionary;
-  return {
-    essential: round2(essential),
-    discretionary: round2(discretionary),
-    total: round2(total),
-    discretionaryPct: total > 0 ? Math.round((discretionary / total) * 100) : 0,
-    essentialCategories: toSortedCategories(essentialByCat),
-    discretionaryCategories: toSortedCategories(discretionaryByCat),
-  };
-}
 
-/** Split one month's expenses into essential vs discretionary buckets. Thin wrapper over `essentialSplitForPeriod`. */
-export function essentialSplitForMonth(
-  transactions: Transaction[],
-  monthKey: string | null,
-  convert: (n: number) => number = (n) => n,
-): EssentialSplit {
-  return essentialSplitForPeriod(transactions, monthKey ? periodRangeOf(monthKey, "month") : null, convert);
-}
 
-export interface TransactionStats {
-  expenseCount: number;
-  avgTicket: number;
-  largest: { amount: number; description: string; date: string } | null;
-  costliestDay: { day: number; spend: number } | null;
-}
 
-/** Per-period transaction behaviour: count, average ticket, largest single expense, costliest date. */
-export function transactionStatsForPeriod(
-  transactions: Transaction[],
-  range: { start: string; end: string } | null,
-  convert: (n: number) => number = (n) => n,
-): TransactionStats {
-  const expenses = (range ? transactions.filter((t) => dateInRange(t.date, range)) : []).filter(isExpense);
-  const total = expenses.reduce((s, t) => s + Math.abs(convert(t.amount)), 0);
-  let largest: TransactionStats["largest"] = null;
-  const byDate: Record<string, number> = {};
-  for (const t of expenses) {
-    const amt = Math.abs(convert(t.amount));
-    if (!largest || amt > largest.amount) {
-      largest = { amount: round2(amt), description: t.description, date: t.date };
-    }
-    byDate[t.date] = (byDate[t.date] || 0) + amt;
-  }
-  let costliestDay: TransactionStats["costliestDay"] = null;
-  for (const [date, spend] of Object.entries(byDate)) {
-    if (spend > 0 && (!costliestDay || spend > costliestDay.spend)) {
-      costliestDay = { day: dayOfMonth(date), spend: round2(spend) };
-    }
-  }
-  return {
-    expenseCount: expenses.length,
-    avgTicket: expenses.length ? round2(total / expenses.length) : 0,
-    largest,
-    costliestDay,
-  };
-}
-
-/** Per-month transaction behaviour: count, average ticket, largest single expense, costliest day. Thin wrapper over `transactionStatsForPeriod`. */
-export function transactionStatsForMonth(
-  transactions: Transaction[],
-  monthKey: string | null,
-  convert: (n: number) => number = (n) => n,
-): TransactionStats {
-  return transactionStatsForPeriod(transactions, monthKey ? periodRangeOf(monthKey, "month") : null, convert);
-}
 
 // ---------------------------------------------------------------------------
 // All-time / historical aggregations (over MonthlyData)
