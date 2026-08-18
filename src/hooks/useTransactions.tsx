@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { Transaction } from "@/lib/mockData";
@@ -117,10 +118,10 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
   });
 
   const transactions = result.rows;
-  const transfers = transactions.filter((t) => t.movement === "TRANSFER");
-  const investmentMovements = transactions.filter(
+  const transfers = useMemo(() => transactions.filter((t) => t.movement === "TRANSFER"), [transactions]);
+  const investmentMovements = useMemo(() => transactions.filter(
     (t) => t.categorySlug === "to_investment"
-  );
+  ), [transactions]);
 
   return {
     transactions,

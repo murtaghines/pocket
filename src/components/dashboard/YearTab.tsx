@@ -1,6 +1,6 @@
-import { useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, Loader2 } from "lucide-react";
+import { Plus, Minus, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { NetBalanceCard } from "@/components/dashboard/NetBalanceCard";
@@ -25,6 +25,8 @@ import { usePeriodAggregates } from "@/hooks/usePeriodAggregates";
 import { periodRangeOf, type MonthOfYearPoint } from "@/lib/analytics";
 
 /** Dashboard's "year" tab — current calendar year vs. previous year. */
+const PAGE_SIZE = 100;
+
 export function YearTab() {
   const { t, i18n } = useTranslation("dashboard");
   const { monthlyData: yearlyData, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
@@ -32,6 +34,7 @@ export function YearTab() {
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
   const { selectedPeriod, setSelectedPeriod, setAvailablePeriods } = usePeriodSelection();
+  const [txPage, setTxPage] = useState(1);
 
   const userCurrency = preferences?.base_currency || "EUR";
   const convertToUserCurrency = useCallback(
@@ -56,9 +59,11 @@ export function YearTab() {
   const range = selectedYear ? periodRangeOf(selectedYear, "year") : null;
   const prevRange = hasPreviousData ? periodRangeOf(previous.month, "year") : null;
 
-  const { transactions, isLoading } = useTransactions({
+  const { transactions, isLoading, totalCount } = useTransactions({
     startDate: range?.start,
     endDate: range?.end,
+    page: txPage,
+    pageSize: PAGE_SIZE,
   });
 
   const agg = usePeriodAggregates({
@@ -78,6 +83,7 @@ export function YearTab() {
     if (selectedYear && selectedPeriod.year !== selectedYear) {
       setSelectedPeriod("year", selectedYear);
     }
+    setTxPage(1);
   }, [selectedYear]);
 
   const previousPeriodLabel = hasPreviousData ? previous.month : undefined;
@@ -191,8 +197,38 @@ export function YearTab() {
 
           <div className="bg-card rounded-xl p-[20px_22px_10px] shadow-section border border-border">
             <div className="max-h-[500px] overflow-y-auto">
-              <TransactionTable transactions={transactions} />
+              <TransactionTable transactions={transactions} totalCount={totalCount ?? undefined} />
             </div>
+            {totalCount != null && totalCount > PAGE_SIZE && (
+              <div className="flex items-center justify-between px-1 pt-3 pb-2">
+                <p className="text-xs text-muted-foreground tabular-nums">
+                  {t("transactions.showing", {
+                    from: (txPage - 1) * PAGE_SIZE + 1,
+                    to: Math.min(txPage * PAGE_SIZE, totalCount),
+                    total: totalCount,
+                    defaultValue: "{{from}}–{{to}} of {{total}}",
+                  })}
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={txPage <= 1}
+                    onClick={() => setTxPage((p) => p - 1)}
+                    className="p-1 rounded-md hover:bg-muted disabled:opacity-30"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={txPage * PAGE_SIZE >= totalCount}
+                    onClick={() => setTxPage((p) => p + 1)}
+                    className="p-1 rounded-md hover:bg-muted disabled:opacity-30"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

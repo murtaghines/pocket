@@ -1,11 +1,9 @@
 import { useMemo } from "react";
-import type { MonthlyData, Transaction } from "@/lib/mockData";
+import type { MonthlyData } from "@/lib/mockData";
 import {
   historySummary,
   monthOverMonth,
   seasonalIndexByCalendarMonth,
-  weekdaySpending,
-  categoryTrends,
   rollingNetByMonths,
   type Granularity,
   type HistorySummary,
@@ -19,12 +17,8 @@ import {
 interface UseHistoricalInsightsArgs {
   monthlyData: MonthlyData[];
   granularity: Granularity;
-  serverWeekday?: WeekdaySpend[];
-  serverCategoryTrend?: CategoryTrend;
-  /** @deprecated Only needed when server data is not provided. */
-  transactions?: Transaction[];
-  /** @deprecated Only needed when server data is not provided. */
-  convert?: (n: number) => number;
+  serverWeekday: WeekdaySpend[];
+  serverCategoryTrend: CategoryTrend;
 }
 
 /** Rolling windows offered by the UI, in months (~30/90/180 days). */
@@ -46,8 +40,6 @@ export function useHistoricalInsights({
   granularity,
   serverWeekday,
   serverCategoryTrend,
-  transactions,
-  convert,
 }: UseHistoricalInsightsArgs): HistoricalInsights {
   return useMemo(() => {
     const rolling = ROLLING_WINDOWS.reduce(
@@ -58,19 +50,14 @@ export function useHistoricalInsights({
       {} as Record<RollingWindow, RollingPoint[]>,
     );
 
-    const weekday = serverWeekday
-      ?? weekdaySpending(transactions ?? [], convert);
-    const categoryTrend = serverCategoryTrend
-      ?? categoryTrends(transactions ?? [], 6, convert, granularity);
-
     return {
       summary: historySummary(monthlyData),
       monthComparisons: monthOverMonth(monthlyData),
       seasonal: seasonalIndexByCalendarMonth(monthlyData),
       hasSeasonalData: granularity === "month" && monthlyData.length >= 12,
-      weekday,
-      categoryTrend,
+      weekday: serverWeekday,
+      categoryTrend: serverCategoryTrend,
       rolling,
     };
-  }, [monthlyData, granularity, serverWeekday, serverCategoryTrend, transactions, convert]);
+  }, [monthlyData, granularity, serverWeekday, serverCategoryTrend]);
 }

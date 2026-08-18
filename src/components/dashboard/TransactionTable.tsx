@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PillBadge, type PillTone } from "@/components/ui/pill-badge";
@@ -125,9 +125,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount 
     }
   };
 
-  // Compute per-account running balance, then merge into a single map
-  const computedBalanceMap = (() => {
-    // Group transactions by account
+  const computedBalanceMap = useMemo(() => {
     const byAccount = new Map<string, typeof transactions>();
     for (const tx of transactions) {
       const key = tx.account || tx.bank || '__unknown__';
@@ -138,7 +136,6 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount 
     const map = new Map<string, number>();
 
     for (const [, accountTxs] of byAccount) {
-      // Sort chronologically within this account
       const sorted = [...accountTxs].sort((a, b) => {
         const dateCmp = a.date.localeCompare(b.date);
         if (dateCmp !== 0) return dateCmp;
@@ -148,7 +145,6 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount 
         return (order[typeA === 'investment' ? 'expense' : typeA] || 2) - (order[typeB === 'investment' ? 'expense' : typeB] || 2);
       });
 
-      // Derive opening balance from the first tx with a bank-reported runningBalance
       let startingBalance = 0;
       const firstWithBalance = sorted.find(tx => tx.runningBalance != null);
       if (firstWithBalance) {
@@ -166,15 +162,15 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount 
     }
 
     return map;
-  })();
+  }, [transactions]);
 
-  const filteredTransactions = transactions.filter(t => {
+  const filteredTransactions = useMemo(() => transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategories.length === 0 || allCategoriesSelected || selectedCategories.includes(t.category);
     const movementType = getMovementType(t);
     const matchesMovement = selectedMovements.length === 0 || allMovementsSelected || selectedMovements.includes(movementType);
     return matchesSearch && matchesCategory && matchesMovement;
-  });
+  }), [transactions, search, selectedCategories, allCategoriesSelected, selectedMovements, allMovementsSelected]);
 
   const formatTransactionDate = (dateStr: string) => formatDate(dateStr);
 
