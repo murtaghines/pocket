@@ -159,8 +159,8 @@ export function WeekTab() {
           <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
             <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byDayThisWeek", "By day · this week")} />
             <AccountsStackCard
-              transactions={transactions}
-              monthKey={selectedWeek}
+              startDate={range?.start}
+              endDate={range?.end}
               convert={convertToUserCurrency}
               formatCurrency={formatCurrency}
             />

@@ -216,8 +216,8 @@ export function MonthTab() {
               <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
                 <WeeklyIncomeExpensesChart weekly={agg.subBreakdown as WeeklyPoint[]} />
                 <AccountsStackCard
-                  transactions={transactions}
-                  monthKey={latestMonthLabel}
+                  startDate={range?.start}
+                  endDate={range?.end}
                   convert={convertToUserCurrency}
                   formatCurrency={formatCurrency}
                 />
