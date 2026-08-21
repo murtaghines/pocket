@@ -487,7 +487,6 @@ export type Database = {
           import_id: string | null
           is_hidden: boolean
           movement: Database["public"]["Enums"]["movement_type"]
-          original_text: string | null
           period_id: string | null
           running_balance: number | null
           source_row_hash: string | null
@@ -519,7 +518,6 @@ export type Database = {
           import_id?: string | null
           is_hidden?: boolean
           movement: Database["public"]["Enums"]["movement_type"]
-          original_text?: string | null
           period_id?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
@@ -551,7 +549,6 @@ export type Database = {
           import_id?: string | null
           is_hidden?: boolean
           movement?: Database["public"]["Enums"]["movement_type"]
-          original_text?: string | null
           period_id?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
@@ -755,6 +752,15 @@ export type Database = {
           tx_count: number
         }[]
       }
+      get_account_period_summary: {
+        Args: { p_end: string; p_start: string; p_user_id: string }
+        Returns: {
+          account_id: string
+          has_running_balance: boolean
+          latest_balance: number
+          tx_count: number
+        }[]
+      }
       get_categorization_coverage: {
         Args: { p_user_id: string }
         Returns: {
@@ -776,6 +782,20 @@ export type Database = {
           tx_count: number
         }[]
       }
+      get_category_breakdown_range: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_end_date: string
+          p_movement: Database["public"]["Enums"]["movement_type"]
+          p_start_date: string
+          p_user_id: string
+        }
+        Returns: {
+          category: string
+          total: number
+          tx_count: number
+        }[]
+      }
       get_category_trends: {
         Args: {
           p_domain: Database["public"]["Enums"]["app_domain"]
@@ -787,6 +807,20 @@ export type Database = {
           period: string
           slug: string
           total: number
+        }[]
+      }
+      get_daily_totals: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_end_date: string
+          p_start_date: string
+          p_user_id: string
+        }
+        Returns: {
+          day: string
+          expenses: number
+          income: number
+          tx_count: number
         }[]
       }
       get_dashboard_summary: {
@@ -801,6 +835,19 @@ export type Database = {
           income: number
           sent_to_invest: number
           tx_count: number
+        }[]
+      }
+      get_essential_split: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_end_date: string
+          p_start_date: string
+          p_user_id: string
+        }
+        Returns: {
+          category: string
+          kind: string
+          total: number
         }[]
       }
       get_investment_summary: { Args: { p_user_id: string }; Returns: Json }
@@ -850,6 +897,23 @@ export type Database = {
           movement: string
           pattern: string
           user_count: number
+        }[]
+      }
+      get_top_expenses: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_end_date: string
+          p_limit?: number
+          p_start_date: string
+          p_user_id: string
+        }
+        Returns: {
+          amount: number
+          category: string
+          date: string
+          description: string
+          description_norm: string
+          id: string
         }[]
       }
       get_weekday_spending: {
