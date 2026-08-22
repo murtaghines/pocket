@@ -1,15 +1,13 @@
-import { useRef, useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useRef, useState } from "react";
 import { Loader2, PlusCircle, Upload, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { Import } from "@/hooks/useImports";
 import type { useAccounts } from "@/hooks/useAccounts";
-import { getAccountDisplayName } from "@/lib/accountColors";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { InlineTransactionsEditor } from "./InlineTransactionsEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
 import type { PendingEditShape, PendingFileInfo, MovementType } from "./types";
+import type { SortColumn, SortDirection, DataFilters } from "./DataToolbar";
 
 export interface MonthWorkspaceProps {
   monthKey: string;
@@ -30,6 +28,10 @@ export interface MonthWorkspaceProps {
   onManualEntryOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
   txCount?: number;
+  sortColumn?: SortColumn;
+  sortDirection?: SortDirection;
+  filters?: DataFilters;
+  exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export function MonthWorkspace({
@@ -51,59 +53,14 @@ export function MonthWorkspace({
   onManualEntryOpenChange,
   defaultMovement,
   txCount,
+  sortColumn,
+  sortDirection,
+  filters,
+  exportTransactionsRef,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
 
-  const selectedAccountId = searchParams.get("account");
-
-  const setAccountFilter = (id: string | null) => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (id) next.set("account", id);
-        else next.delete("account");
-        return next;
-      },
-      { replace: true }
-    );
-  };
-
-  // Reset account filter when switching months
-  useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.delete("account");
-        return next;
-      },
-      { replace: true }
-    );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monthKey]);
-
-  // Build chips from distinct accounts present in this month's imports
-  const accountChips = useMemo(() => {
-    const countById: Record<string, number> = {};
-    imports.forEach((imp) => {
-      if (imp.account_id) countById[imp.account_id] = (countById[imp.account_id] ?? 0) + 1;
-    });
-    return Object.entries(countById).map(([id, count]) => {
-      const acct = cashAccounts.find((a) => a.id === id);
-      return {
-        id,
-        label: acct ? getAccountDisplayName(acct) : "Unknown",
-        color: acct?.color ?? null,
-        count,
-      };
-    });
-  }, [imports, cashAccounts]);
-
-  const filteredImports = selectedAccountId
-    ? imports.filter((i) => i.account_id === selectedAccountId)
-    : imports;
-
-  const isLocked = filteredImports.some((i) => i.locked);
+  const isLocked = imports.some((i) => i.locked);
 
   const activePending = (pendingFiles || []).filter(
     (f) => f.status === "processing" || f.status === "pending",
@@ -209,49 +166,12 @@ export function MonthWorkspace({
         onChange={(e) => onPickFiles(e.target.files, monthDate)}
       />
 
-      {/* Account filter chips — only when 2+ distinct accounts */}
-      {accountChips.length > 1 && (
-        <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-muted/20 overflow-x-auto scrollbar-none">
-          <button
-            onClick={() => setAccountFilter(null)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors shrink-0",
-              !selectedAccountId
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            )}
-          >
-            All
-            <span className="opacity-60">{imports.length}</span>
-          </button>
-          {accountChips.map((chip) => (
-            <button
-              key={chip.id}
-              onClick={() => setAccountFilter(chip.id)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors shrink-0",
-                selectedAccountId === chip.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              )}
-            >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: chip.color ?? "hsl(var(--muted-foreground))" }}
-              />
-              {chip.label}
-              <span className="opacity-60">{chip.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Inline transactions editor — flush with tabs, true edge-to-edge */}
+      {/* Inline transactions editor — flush with toolbar */}
       <InlineTransactionsEditor
         monthKey={monthKey}
         monthLabel={monthLabel}
         isLocked={isLocked}
-        imports={filteredImports}
+        imports={imports}
         cashAccounts={cashAccounts}
         deleteImport={deleteImport}
         isDeleting={isDeleting}
@@ -265,6 +185,10 @@ export function MonthWorkspace({
         manualEntryOpen={manualEntryOpen}
         onManualEntryOpenChange={setManualEntryOpen}
         defaultMovement={defaultMovement}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        filters={filters}
+        exportTransactionsRef={exportTransactionsRef}
       />
     </div>
   );

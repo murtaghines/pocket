@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, ArrowRightLeft, EyeOff, PlusCircle } from "lucide-react";
+import { Plus, Minus, ArrowRightLeft, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
@@ -211,18 +210,6 @@ export function ManualEntryFooter({
 
       {/* Desktop: full sticky footer bar */}
       <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex md:flex-wrap md:items-center md:gap-3 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-          onClick={() => setOpen(true)}
-          disabled={isLocked}
-          title={isLocked ? "Unlock the month to add entries" : "Add a manual entry (cash, etc.)"}
-        >
-          <PlusCircle className="w-3.5 h-3.5" />
-          Add entry
-        </Button>
-        <span className="text-border">|</span>
         <div className="inline-flex items-center gap-1.5 text-muted-foreground">
           <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
           row{summary.total !== 1 ? "s" : ""}

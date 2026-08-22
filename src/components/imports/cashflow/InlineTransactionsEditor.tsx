@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,11 +20,16 @@ import {
   RotateCcw,
   FileSpreadsheet,
   Trash2,
+  MoreHorizontal,
+  MessageSquarePlus,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -40,6 +45,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PillBadge } from "@/components/ui/pill-badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -82,11 +94,12 @@ import {
   buildOriginalSnapshot,
   isBackToOriginal,
 } from "./helpers";
-import { AmountEditButton } from "./AmountEditButton";
 import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
+import { TransactionContextMenu } from "./TransactionContextMenu";
 import { toast as sonnerToast } from "sonner";
 import { isManualTransaction } from "@/lib/transactionSource";
+import { exportTransactionsCsv } from "@/lib/exportCsv";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { ProcessingPanel } from "./ProcessingPanel";
 import { SwipeableRow } from "./SwipeableRow";
@@ -98,6 +111,7 @@ import type {
   PendingFileInfo,
   MovementType,
 } from "./types";
+import type { SortColumn, SortDirection, DataFilters } from "./DataToolbar";
 
 export interface InlineTransactionsEditorProps {
   monthKey: string;
@@ -111,13 +125,16 @@ export interface InlineTransactionsEditorProps {
   onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
-  /** Pending edits map lifted to the parent so it survives tab switches. */
   pendingByTx: Record<string, PendingEditShape>;
   setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
   pendingTxIds: Set<string>;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
+  sortColumn?: SortColumn;
+  sortDirection?: SortDirection;
+  filters?: DataFilters;
+  exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export function InlineTransactionsEditor({
@@ -138,6 +155,10 @@ export function InlineTransactionsEditor({
   manualEntryOpen: externalManualEntryOpen,
   onManualEntryOpenChange,
   defaultMovement,
+  sortColumn: sortColumnProp = "date",
+  sortDirection: sortDirectionProp = "desc",
+  filters: filtersProp,
+  exportTransactionsRef,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -149,9 +170,35 @@ export function InlineTransactionsEditor({
   const { t } = useTranslation("common");
 
   const [expanded, setExpanded] = useState(false);
-  // Per-row "saving"/"saved" indicators
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+
+  // Checkbox selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Inline editing state
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteValue, setEditingNoteValue] = useState("");
+  const [editingAmountId, setEditingAmountId] = useState<string | null>(null);
+  const [editingAmountValue, setEditingAmountValue] = useState("");
+  const noteInputRef = useRef<HTMLInputElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback((ids: string[]) => {
+    setSelectedIds((prev) => {
+      if (prev.size === ids.length) return new Set();
+      return new Set(ids);
+    });
+  }, []);
 
   // Movement-mismatch confirmation (e.g. positive amount marked as EXPENSE)
   const [movementConfirm, setMovementConfirm] = useState<{
@@ -838,6 +885,56 @@ export function InlineTransactionsEditor({
     return { income, expenses, transfers, hidden, total: transactions.length };
   }, [transactions]);
 
+  const filteredSorted = useMemo(() => {
+    let result = [...transactions];
+    if (filtersProp) {
+      if (filtersProp.accounts.length > 0) {
+        result = result.filter((tx) => tx.account_id && filtersProp.accounts.includes(tx.account_id));
+      }
+      if (filtersProp.movements.length > 0) {
+        result = result.filter((tx) => tx.movement && filtersProp.movements.includes(tx.movement));
+      }
+      if (filtersProp.categories.length > 0) {
+        result = result.filter((tx) => filtersProp.categories.includes(normalizeCategory(tx.category || "other_expense")));
+      }
+    }
+    result.sort((a, b) => {
+      const dir = sortDirectionProp === "asc" ? 1 : -1;
+      switch (sortColumnProp) {
+        case "date": return dir * a.date.localeCompare(b.date);
+        case "description": {
+          const da = (a.description_norm || a.description || "").toLowerCase();
+          const db = (b.description_norm || b.description || "").toLowerCase();
+          return dir * da.localeCompare(db);
+        }
+        case "account": {
+          const na = accountName(a.account_id) || "";
+          const nb = accountName(b.account_id) || "";
+          return dir * na.localeCompare(nb);
+        }
+        case "movement": return dir * (a.movement || "").localeCompare(b.movement || "");
+        case "category": return dir * (a.category || "").localeCompare(b.category || "");
+        case "amount": return dir * (a.amount - b.amount);
+        default: return 0;
+      }
+    });
+    return result;
+  }, [transactions, sortColumnProp, sortDirectionProp, filtersProp]);
+
+  const visibleAll = filteredSorted;
+  const showCollapsedHint = !expanded && visibleAll.length > ROW_THRESHOLD;
+  const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
+  const allVisibleIds = rowsToRender.map((tx) => tx.id);
+
+  useEffect(() => {
+    if (exportTransactionsRef) {
+      exportTransactionsRef.current = () => {
+        exportTransactionsCsv(visibleAll, formatCurrency, cashAccounts, monthLabel);
+      };
+    }
+    return () => { if (exportTransactionsRef) exportTransactionsRef.current = null; };
+  }, [exportTransactionsRef, visibleAll, formatCurrency, cashAccounts, monthLabel]);
+
   if (isLoading) {
     return (
       <div className="bg-card py-12 flex items-center justify-center">
@@ -858,12 +955,6 @@ export function InlineTransactionsEditor({
       </div>
     );
   }
-
-  // All rows always render — hidden ones are visually muted but still listed
-  // so the user can clearly see what was excluded from dashboard calculations.
-  const visibleAll = transactions;
-  const showCollapsedHint = !expanded && visibleAll.length > ROW_THRESHOLD;
-  const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
 
   // Consecutive rows sharing a date, for the mobile day-grouped card list.
   // Rows already come sorted date-desc from the query, so a single pass suffices.
@@ -892,55 +983,51 @@ export function InlineTransactionsEditor({
 
       {/* The spreadsheet — flush, no padding, no inner card */}
       <div className="bg-card flex-1 flex flex-col">
-        {/* Desktop / tablet: full spreadsheet. Phones get the stacked card list below. */}
-        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]">
-          <Table className="w-full min-w-[860px] table-fixed [&_th]:border-r [&_th]:border-border/60 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/40 [&_td:last-child]:border-r-0">
+        {/* Desktop / tablet: compact Excel-like spreadsheet */}
+        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-180px)]">
+          <Table className="w-full min-w-[780px] table-fixed [&_th]:border-r [&_th]:border-border/60 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/40 [&_td:last-child]:border-r-0">
             <TableHeader className="sticky top-0 z-10 bg-card">
-              <TableRow className="hover:bg-transparent border-b border-border [&>th]:h-10">
-                <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  #
+              <TableRow className="hover:bg-transparent border-b border-border [&>th]:h-8">
+                <TableHead className="w-[36px] text-center">
+                  <Checkbox
+                    checked={selectedIds.size > 0 && selectedIds.size === allVisibleIds.length}
+                    onCheckedChange={() => toggleSelectAll(allVisibleIds)}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+                <TableHead className="w-[9%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  {t("imports.date")}
                 </TableHead>
                 <TableHead className="w-[10%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Date
+                  {t("imports.account")}
                 </TableHead>
-                <TableHead className="w-[25%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Description
+                <TableHead className="w-[28%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  {t("imports.description")}
                 </TableHead>
-                <TableHead className="w-[10%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Account
-                </TableHead>
-                <TableHead className="w-[12%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Movement
+                <TableHead className="w-[11%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  {t("imports.movement")}
                 </TableHead>
                 <TableHead className="w-[16%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Category
+                  {t("imports.category")}
                 </TableHead>
-                <TableHead className="w-[14%] text-right text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Amount
+                <TableHead className="w-[13%] text-right text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  {t("imports.amount")}
                 </TableHead>
-                <TableHead className="w-[52px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Split
-                </TableHead>
-                <TableHead className="w-[52px]" />
-                <TableHead className="w-[52px]" />
-
+                <TableHead className="w-[36px]" />
               </TableRow>
-
             </TableHeader>
             <TableBody>
-              {rowsToRender.map((tx, idx) => {
+              {rowsToRender.map((tx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
                 const isHidden = tx.is_hidden;
                 const isManual = isManualTransaction(tx);
+                const isSelected = selectedIds.has(tx.id);
                 const txHistory = auditByTx[tx.id] || [];
                 const editEntries = txHistory.filter((h) => h.action !== "revert");
                 const hasEditHistory = editEntries.length > 0;
                 const snapshot = hasEditHistory ? buildOriginalSnapshot(txHistory) : null;
-                // If the row has been fully reverted to its original imported
-                // values, treat it as "not edited" — drop the blue highlight,
-                // history dot, and revert button.
                 const isEdited =
                   !isManual &&
                   hasEditHistory &&
@@ -957,355 +1044,416 @@ export function InlineTransactionsEditor({
                 );
                 const displayAmount = pending?.amount ?? tx.amount;
                 const availableCategories = getCategoriesForMovement(movement);
+                const hasPendingCategoryChange =
+                  !!pending?.category && pending.category !== tx.category;
+                const hasPendingMovementTransfer =
+                  !!pending?.movement && pending.movement !== tx.movement &&
+                  (tx.movement === "TRANSFER" || pending.movement === "TRANSFER");
+
+                const amountColor =
+                  displayAmount === 0
+                    ? "text-muted-foreground"
+                    : movement === "INCOME"
+                      ? "text-success"
+                      : movement === "TRANSFER"
+                        ? "text-muted-foreground"
+                        : "text-destructive";
+                const amountSign =
+                  displayAmount === 0 || movement === "TRANSFER"
+                    ? ""
+                    : movement === "INCOME"
+                      ? "+"
+                      : "−";
+
+                const rowContextActions = {
+                  onToggleHidden: () => handleToggleHidden(tx),
+                  onDelete: () => deleteWithUndo(tx),
+                  onAddNote: () => {
+                    setEditingNoteId(tx.id);
+                    setEditingNoteValue(tx.user_notes || "");
+                    setTimeout(() => noteInputRef.current?.focus(), 50);
+                  },
+                  onCopyAmount: () => {
+                    navigator.clipboard.writeText(formatCurrency(Math.abs(displayAmount)));
+                    sonnerToast("Amount copied");
+                  },
+                  onCopyDescription: () => {
+                    navigator.clipboard.writeText(cleanDescription);
+                    sonnerToast("Description copied");
+                  },
+                  onSplit: () => handleSplit(tx, 2),
+                  onRevert: () => {
+                    if (originalSnapshot) {
+                      const payload: Record<string, unknown> = {
+                        ...originalSnapshot.values,
+                        __action: "revert",
+                      };
+                      if ("category" in originalSnapshot.values) {
+                        payload.category_source = "DEFAULT";
+                        payload.user_corrected = false;
+                      }
+                      saveMutation.mutate({
+                        id: tx.id,
+                        payload,
+                        before: {
+                          movement: tx.movement,
+                          category: tx.category,
+                          category_id: tx.category_id,
+                          amount: tx.amount,
+                          is_hidden: tx.is_hidden,
+                        },
+                      });
+                    }
+                  },
+                  onSaveWithRule: () => commitRow(tx, true),
+                  onBulkHide: selectedIds.size > 1 ? () => {
+                    selectedIds.forEach((id) => {
+                      const t = transactions.find((x) => x.id === id);
+                      if (t && !t.is_hidden) saveMutation.mutate({ id, payload: { is_hidden: true }, before: { is_hidden: false } });
+                    });
+                    setSelectedIds(new Set());
+                  } : undefined,
+                  onBulkShow: selectedIds.size > 1 ? () => {
+                    selectedIds.forEach((id) => {
+                      const t = transactions.find((x) => x.id === id);
+                      if (t && t.is_hidden) saveMutation.mutate({ id, payload: { is_hidden: false }, before: { is_hidden: true } });
+                    });
+                    setSelectedIds(new Set());
+                  } : undefined,
+                };
 
                 return (
-                  <TableRow
+                  <TransactionContextMenu
                     key={tx.id}
-                    className={cn(
-                      "transition-colors [&>td]:py-3",
-                      isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                      isEdited && !isMismatch && !isPending && "bg-primary/[0.04] border-r border-r-primary/60",
-                      isPending && "bg-warning/10 border-l-2 border-l-warning",
-                      isHidden && "opacity-50 bg-muted/20",
-                      isSaved && !isMismatch && "bg-success/5",
-                    )}
+                    isHidden={isHidden}
+                    isManual={isManual}
+                    isLocked={isLocked}
+                    isEdited={isEdited}
+                    isPending={isPending}
+                    hasCategoryChange={hasPendingCategoryChange || hasPendingMovementTransfer}
+                    selectedCount={selectedIds.size}
+                    {...rowContextActions}
                   >
-                    <TableCell className="w-[44px] px-0 text-center text-xs text-muted-foreground/70 font-normal tabular-nums">
-                      <RowEditIndicator
-                        index={idx + 1}
-                        history={isEdited ? (auditByTx[tx.id] || []) : []}
-                        open={openHistoryFor === tx.id}
-                        onOpenChange={(o) => setOpenHistoryFor(o ? tx.id : null)}
-                        onRevert={(entry) => {
-                          if (!entry.diff_json?.before) return;
-                          const before = entry.diff_json.before as Record<string, unknown>;
-                          const after = (entry.diff_json.after || {}) as Record<string, unknown>;
-                          // Restore the previous values; mark this as a revert action in audit.
-                          saveMutation.mutate({
-                            id: tx.id,
-                            payload: { ...before, __action: "revert" },
-                            before: after,
-                          });
+                    <TableRow
+                      className={cn(
+                        "transition-colors [&>td]:py-1.5 cursor-default",
+                        isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                        isEdited && !isMismatch && !isPending && "bg-primary/[0.04]",
+                        isPending && "bg-warning/10 border-l-2 border-l-warning",
+                        isHidden && "opacity-50 bg-muted/20",
+                        isSaved && !isMismatch && "bg-success/5",
+                        isSelected && "bg-primary/[0.08]",
+                      )}
+                    >
+                      {/* Checkbox */}
+                      <TableCell className="w-[36px] px-0 text-center">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelected(tx.id)}
+                          aria-label="Select row"
+                        />
+                      </TableCell>
+
+                      {/* Date */}
+                      <TableCell className="text-[13px] text-foreground tabular-nums whitespace-nowrap">
+                        {formatDate(new Date(tx.date))}
+                      </TableCell>
+
+                      {/* Account */}
+                      <TableCell className="text-[13px] text-muted-foreground truncate">
+                        {accountName(tx.account_id) || "—"}
+                      </TableCell>
+
+                      {/* Description — double-click to add/edit user_notes */}
+                      <TableCell
+                        className="text-[13px]"
+                        onDoubleClick={() => {
+                          if (isLocked || isHidden) return;
+                          setEditingNoteId(tx.id);
+                          setEditingNoteValue(tx.user_notes || "");
+                          setTimeout(() => noteInputRef.current?.focus(), 50);
                         }}
-                        formatCurrency={formatCurrency}
-                        getCategoryLabel={getCategoryLabel}
-                      />
-                    </TableCell>
-                    <TableCell className="text-xs text-foreground tabular-nums whitespace-nowrap">
-                      {formatDate(new Date(tx.date))}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <div className="flex items-start gap-2 min-w-0">
-                        <span
-                          className={cn(
-                            "break-words flex-1 text-foreground",
-                            isHidden && "line-through",
-                          )}
-                          title={cleanDescription}
-                        >
-                          {cleanDescription}
-                        </span>
-                        {isSaving && (
-                          <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0 mt-0.5" />
-                        )}
-                        {isSaved && !isSaving && (
-                          <Check className="w-3 h-3 text-success shrink-0 mt-0.5" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {accountName(tx.account_id) || "—"}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <div className="flex items-center gap-1">
-                      {isLocked ? (
-                        <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
-                          {getMovementLabel(movement)}
-                        </PillBadge>
-                      ) : (
-                        <Select
-                          value={movement}
-                          onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
-                          disabled={isHidden}
-                        >
-                          <SelectTrigger className="h-8 w-full min-w-[120px] text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50 [&>svg]:ml-2 [&>svg]:flex-shrink-0">
-                            <SelectValue>
-                              <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
-                                {getMovementLabel(movement)}
-                              </PillBadge>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="INCOME">
-                              <PillBadge variant="solid" tone="green" icon={<Plus className="w-3 h-3" />}>
-                                {getMovementLabel("INCOME")}
-                              </PillBadge>
-                            </SelectItem>
-                            <SelectItem value="EXPENSE">
-                              <PillBadge variant="solid" tone="red" icon={<Minus className="w-3 h-3" />}>
-                                {getMovementLabel("EXPENSE")}
-                              </PillBadge>
-                            </SelectItem>
-                            <SelectItem value="TRANSFER">
-                              <PillBadge variant="solid" tone="amber" icon={<ArrowRightLeft className="w-3 h-3" />}>
-                                {getMovementLabel("TRANSFER")}
-                              </PillBadge>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                      {tx.transfer_pair_id && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="text-amber-500">
-                              <ArrowRightLeft className="w-3.5 h-3.5" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="text-xs">
-                            Paired with another account
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {isLocked ? (
-                        <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
-                          <CategoryIcon
-                            iconName={getCategoryIcon(category)}
-                            colorVar={getCategoryColor(category)}
-                            size="sm"
-                            showBackground={false}
+                      >
+                        {editingNoteId === tx.id ? (
+                          <Input
+                            ref={noteInputRef}
+                            value={editingNoteValue}
+                            onChange={(e) => setEditingNoteValue(e.target.value)}
+                            onBlur={() => {
+                              if (editingNoteValue !== (tx.user_notes || "")) {
+                                setPendingFor(tx.id, { user_notes: editingNoteValue });
+                                commitRow(tx, false, { ...pendingByTx[tx.id], user_notes: editingNoteValue });
+                              }
+                              setEditingNoteId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              if (e.key === "Escape") { setEditingNoteId(null); }
+                            }}
+                            className="h-6 text-[13px] px-1 py-0 border-primary/40"
+                            placeholder={t("imports.userNotesPlaceholder")}
                           />
-                          <span className="truncate max-w-[140px]" title={getCategoryLabel(category)}>
-                            {getCategoryLabel(category)}
-                          </span>
-                        </PillBadge>
-                      ) : (
-                        <Select
-                          value={category}
-                          onValueChange={(v) => handleCategoryChange(tx, v)}
-                          disabled={isHidden}
-                        >
-                          <SelectTrigger className="h-8 w-full min-w-[160px] text-sm border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1.5 [&>svg]:opacity-50 [&>svg]:ml-2 [&>svg]:flex-shrink-0">
-                            <SelectValue>
-                              <PillBadge colorVar={getCategoryColor(category)} className="text-[13px]">
-                                <CategoryIcon
-                                  iconName={getCategoryIcon(category)}
-                                  colorVar={getCategoryColor(category)}
-                                  size="sm"
-                                  showBackground={false}
-                                />
-                                <span className="truncate max-w-[140px]" title={getCategoryLabel(category)}>
-                                  {getCategoryLabel(category)}
+                        ) : (
+                          <div className="flex items-start gap-1.5 min-w-0">
+                            <div className="min-w-0 flex-1">
+                              <span
+                                className={cn(
+                                  "block truncate text-foreground",
+                                  isHidden && "line-through",
+                                )}
+                                title={cleanDescription}
+                              >
+                                {cleanDescription}
+                              </span>
+                              {tx.user_notes && (
+                                <span className="block truncate text-[11px] text-muted-foreground italic" title={tx.user_notes}>
+                                  {tx.user_notes}
                                 </span>
-                              </PillBadge>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableCategories.map((slug) => (
-                              <SelectItem key={slug} value={slug}>
-                                <div className="flex items-center gap-2">
-                                  <CategoryIcon
-                                    iconName={getCategoryIcon(slug)}
-                                    colorVar={getCategoryColor(slug)}
-                                    size="sm"
-                                    showBackground
-                                  />
-                                  {getCategoryLabel(slug)}
-                                </div>
+                              )}
+                            </div>
+                            {isSaving && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0 mt-0.5" />}
+                            {isSaved && !isSaving && <Check className="w-3 h-3 text-success shrink-0 mt-0.5" />}
+                          </div>
+                        )}
+                      </TableCell>
+
+                      {/* Movement */}
+                      <TableCell className="text-[13px]">
+                        {isLocked ? (
+                          <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                            {getMovementLabel(movement)}
+                          </PillBadge>
+                        ) : (
+                          <Select
+                            value={movement}
+                            onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
+                            disabled={isHidden}
+                          >
+                            <SelectTrigger className="h-7 w-full min-w-[100px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&>svg]:opacity-50 [&>svg]:ml-1 [&>svg]:flex-shrink-0">
+                              <SelectValue>
+                                <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                                  {getMovementLabel(movement)}
+                                </PillBadge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="INCOME">
+                                <PillBadge variant="solid" tone="green" icon={<Plus className="w-3 h-3" />}>
+                                  {getMovementLabel("INCOME")}
+                                </PillBadge>
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right text-sm tabular-nums font-medium text-foreground">
-                      {displayAmount < 0 ? "-" : ""}
-                      {formatCurrency(Math.abs(displayAmount))}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {!isLocked && isPending ? (
-                        (() => {
-                          const categoryChanged =
-                            !!pending?.category && pending.category !== tx.category;
-                          const movementChangedTransfer =
-                            !!pending?.movement && pending.movement !== tx.movement &&
-                            (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER');
-                          if (!categoryChanged && !movementChangedTransfer) return null;
-                          return (
-                            <Button
+                              <SelectItem value="EXPENSE">
+                                <PillBadge variant="solid" tone="red" icon={<Minus className="w-3 h-3" />}>
+                                  {getMovementLabel("EXPENSE")}
+                                </PillBadge>
+                              </SelectItem>
+                              <SelectItem value="TRANSFER">
+                                <PillBadge variant="solid" tone="amber" icon={<ArrowRightLeft className="w-3 h-3" />}>
+                                  {getMovementLabel("TRANSFER")}
+                                </PillBadge>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </TableCell>
+
+                      {/* Category */}
+                      <TableCell className="text-[13px]">
+                        {isLocked ? (
+                          <PillBadge colorVar={getCategoryColor(category)} className="text-[12px]">
+                            <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                            <span className="truncate max-w-[120px]" title={getCategoryLabel(category)}>
+                              {getCategoryLabel(category)}
+                            </span>
+                          </PillBadge>
+                        ) : (
+                          <Select
+                            value={category}
+                            onValueChange={(v) => handleCategoryChange(tx, v)}
+                            disabled={isHidden}
+                          >
+                            <SelectTrigger className="h-7 w-full min-w-[130px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&>svg]:opacity-50 [&>svg]:ml-1 [&>svg]:flex-shrink-0">
+                              <SelectValue>
+                                <PillBadge colorVar={getCategoryColor(category)} className="text-[12px]">
+                                  <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                                  <span className="truncate max-w-[120px]" title={getCategoryLabel(category)}>
+                                    {getCategoryLabel(category)}
+                                  </span>
+                                </PillBadge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableCategories.map((slug) => (
+                                <SelectItem key={slug} value={slug}>
+                                  <div className="flex items-center gap-2">
+                                    <CategoryIcon iconName={getCategoryIcon(slug)} colorVar={getCategoryColor(slug)} size="sm" showBackground />
+                                    {getCategoryLabel(slug)}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </TableCell>
+
+                      {/* Amount — double-click to edit */}
+                      <TableCell
+                        className={cn("text-right text-[13px] tabular-nums font-medium", amountColor)}
+                        onDoubleClick={() => {
+                          if (isLocked || isHidden) return;
+                          setEditingAmountId(tx.id);
+                          setEditingAmountValue(String(Math.abs(displayAmount)).replace(".", ","));
+                          setTimeout(() => amountInputRef.current?.focus(), 50);
+                        }}
+                      >
+                        {editingAmountId === tx.id ? (
+                          <Input
+                            ref={amountInputRef}
+                            value={editingAmountValue}
+                            onChange={(e) => setEditingAmountValue(e.target.value)}
+                            onBlur={() => {
+                              handleAmountChange(tx, editingAmountValue);
+                              setEditingAmountId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              if (e.key === "Escape") setEditingAmountId(null);
+                            }}
+                            inputMode="decimal"
+                            className="h-6 text-[13px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
+                          />
+                        ) : (
+                          <span>
+                            {amountSign}{formatCurrency(Math.abs(displayAmount))}
+                          </span>
+                        )}
+                      </TableCell>
+
+                      {/* Actions: three-dot menu / pending save+discard */}
+                      <TableCell className="w-[36px] px-0 text-center">
+                        {!isLocked && isPending ? (
+                          <div className="flex items-center gap-0.5 justify-center">
+                            <button
                               type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 mx-auto rounded-full bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
-                              onClick={() => commitRow(tx, true)}
+                              onClick={() => commitRow(tx, false)}
                               disabled={isSaving}
-                              title="Save & create rule for this description"
-                              aria-label="Save and create categorization rule"
+                              className="h-6 w-6 inline-flex items-center justify-center rounded-full bg-success/15 text-success hover:bg-success/25"
+                              title={t("imports.save")}
                             >
-                              <Sparkles className="w-[16px] h-[16px]" />
-                            </Button>
-                          );
-                        })()
-                      ) : !isLocked ? (
-                        <AmountEditButton
-                          originalAmount={displayAmount}
-                          formatCurrency={formatCurrency}
-                          onChangeAmount={(v) => handleAmountChange(tx, v)}
-                          onApplySplit={(n) => handleSplit(tx, n)}
-                          disabled={isHidden}
-                        />
-                      ) : (
-                        <div
-                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/40 cursor-not-allowed"
-                          title="Unlock the month to split"
-                          aria-disabled="true"
-                        >
-                          <SplitIcon className="w-3.5 h-3.5" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="px-0 text-center">
-                      {!isLocked && isPending ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 mx-auto rounded-full bg-success/15 text-success hover:bg-success/25 hover:text-success"
-                          onClick={() => commitRow(tx, false)}
-                          disabled={isSaving}
-                          title="Save changes"
-                          aria-label="Save changes"
-                        >
-                          <Check className="w-[16px] h-[16px]" />
-                        </Button>
-                      ) : !isLocked && !isManual ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 mx-auto text-muted-foreground hover:text-foreground"
-                          onClick={() => handleToggleHidden(tx)}
-                          title={isHidden ? "Include in totals" : "Hide from totals"}
-                        >
-                          {isHidden ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
-                        </Button>
-                      ) : !isLocked ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 mx-auto text-muted-foreground hover:text-destructive"
-                          onClick={() => deleteWithUndo(tx)}
-                          title={t("imports.deleteEntry", "Delete entry")}
-                        >
-                          <Trash2 className="w-[16px] h-[16px]" />
-                        </Button>
-                      ) : (
-                        <div
-                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/40 cursor-not-allowed"
-                          title="Unlock the month to edit visibility"
-                          aria-disabled="true"
-                        >
-                          {isHidden ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
-                        </div>
-                      )}
-                    </TableCell>
-
-                    <TableCell className="px-0 text-center">
-                      {!isLocked && isPending ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 mx-auto rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => clearPendingFor(tx.id)}
-                          title="Discard pending changes"
-                          aria-label="Discard pending changes"
-                        >
-                          <X className="w-[16px] h-[16px]" />
-                        </Button>
-                      ) : !isLocked && isEdited && originalSnapshot && !isManual ? (
-                        <RevertToOriginalButton
-                          original={originalSnapshot.values}
-                          fields={originalSnapshot.fields}
-                          current={{
-                            movement: tx.movement,
-                            category: tx.category,
-                            category_id: tx.category_id,
-                            amount: tx.amount,
-                            is_hidden: tx.is_hidden,
-                          }}
-                          formatCurrency={formatCurrency}
-                          getCategoryLabel={getCategoryLabel}
-                          onConfirm={() => {
-                            const payload: Record<string, unknown> = {
-                              ...originalSnapshot.values,
-                              __action: "revert",
-                            };
-                            if ("category" in originalSnapshot.values) {
-                              payload.category_source = "DEFAULT";
-                              payload.user_corrected = false;
-                            }
-                            saveMutation.mutate({
-                              id: tx.id,
-                              payload,
-                              before: {
-                                movement: tx.movement,
-                                category: tx.category,
-                                category_id: tx.category_id,
-                                amount: tx.amount,
-                                is_hidden: tx.is_hidden,
-                              },
-                            });
-                          }}
-                        />
-                      ) : (
-                        <div
-                          className="h-7 w-7 mx-auto inline-flex items-center justify-center text-muted-foreground/30 cursor-not-allowed"
-                          title="Nothing to undo"
-                          aria-disabled="true"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                        </div>
-                      )}
-                    </TableCell>
-
-                  </TableRow>
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => clearPendingFor(tx.id)}
+                              className="h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              title={t("imports.cancel")}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="h-6 w-6 mx-auto inline-flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-colors"
+                              >
+                                <MoreHorizontal className="w-4 h-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              {!isLocked && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditingNoteId(tx.id);
+                                    setEditingNoteValue(tx.user_notes || "");
+                                    setTimeout(() => noteInputRef.current?.focus(), 50);
+                                  }}
+                                  className="gap-2 text-[13px]"
+                                >
+                                  <MessageSquarePlus className="w-4 h-4" />
+                                  {t("imports.addNote")}
+                                </DropdownMenuItem>
+                              )}
+                              {!isLocked && !isHidden && (
+                                <DropdownMenuItem
+                                  onClick={() => handleSplit(tx, 2)}
+                                  className="gap-2 text-[13px]"
+                                >
+                                  <SplitIcon className="w-4 h-4" />
+                                  {t("imports.splitAmount")}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              {!isLocked && (
+                                <DropdownMenuItem onClick={() => handleToggleHidden(tx)} className="gap-2 text-[13px]">
+                                  {isHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                  {isHidden ? t("imports.showEntry") : t("imports.hideEntry")}
+                                </DropdownMenuItem>
+                              )}
+                              {!isLocked && isEdited && originalSnapshot && !isManual && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    const payload: Record<string, unknown> = { ...originalSnapshot.values, __action: "revert" };
+                                    if ("category" in originalSnapshot.values) {
+                                      payload.category_source = "DEFAULT";
+                                      payload.user_corrected = false;
+                                    }
+                                    saveMutation.mutate({
+                                      id: tx.id,
+                                      payload,
+                                      before: { movement: tx.movement, category: tx.category, category_id: tx.category_id, amount: tx.amount, is_hidden: tx.is_hidden },
+                                    });
+                                  }}
+                                  className="gap-2 text-[13px]"
+                                >
+                                  <RotateCcw className="w-4 h-4" />
+                                  {t("imports.revertToOriginal")}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  navigator.clipboard.writeText(cleanDescription);
+                                  sonnerToast("Copied");
+                                }}
+                                className="gap-2 text-[13px]"
+                              >
+                                <Copy className="w-4 h-4" />
+                                {t("imports.copyDescription")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  navigator.clipboard.writeText(formatCurrency(Math.abs(displayAmount)));
+                                  sonnerToast("Copied");
+                                }}
+                                className="gap-2 text-[13px]"
+                              >
+                                <Copy className="w-4 h-4" />
+                                {t("imports.copyAmount")}
+                              </DropdownMenuItem>
+                              {!isLocked && isManual && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => deleteWithUndo(tx)}
+                                    className="gap-2 text-[13px] text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    {t("imports.deleteEntry")}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  </TransactionContextMenu>
                 );
               })}
             </TableBody>
           </Table>
-        </div>
-
-        {/* Desktop-only: summary strip (mobile uses ManualEntryFooter sticky bar) */}
-        <div className="hidden md:block border-b border-border bg-muted/30">
-          <div className="flex items-center justify-between px-3 py-2">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <Plus className="w-3 h-3 text-success" />
-                <span className="text-xs font-semibold tabular-nums text-success">
-                  {formatCurrency(summary.income)}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Minus className="w-3 h-3 text-destructive" />
-                <span className="text-xs font-semibold tabular-nums text-destructive">
-                  {formatCurrency(summary.expenses)}
-                </span>
-              </div>
-              {summary.transfers > 0 && (
-                <div className="flex items-center gap-1">
-                  <ArrowRightLeft className="w-3 h-3 text-warning" />
-                  <span className="text-xs font-semibold tabular-nums text-warning">
-                    {summary.transfers}
-                  </span>
-                </div>
-              )}
-            </div>
-            <span className="text-[11px] tabular-nums text-muted-foreground">
-              {summary.total} row{summary.total !== 1 ? "s" : ""}
-            </span>
-          </div>
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
