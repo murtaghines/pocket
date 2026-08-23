@@ -22,7 +22,7 @@ import {
   EyeOff,
 } from "@/components/ui/filter-chip";
 import { Transaction, Category } from "@/lib/mockData";
-import { Plus, Minus, ArrowRightLeft, TrendingUp } from "lucide-react";
+import { ArrowRightLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
@@ -42,7 +42,14 @@ const movementBadgeTone: Record<MovementType, PillTone> = {
   income: 'green',
   expense: 'red',
   transfer: 'neutral',
-  investment: 'purple',
+  investment: 'blue',
+};
+
+const movementDotColor: Record<MovementType, string> = {
+  income: '#2E9E6B',
+  expense: '#E0704A',
+  transfer: '#8A919C',
+  investment: '#1B76FF',
 };
 
 const categoriesByMovement: Record<MovementType, string[]> = {
@@ -292,13 +299,11 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount 
         <DataTable>
           <DataTableHeader>
             <DataTableRow className="hover:bg-transparent">
-              <DataTableHead rowNumber />
-              <DataTableHead type="date" className="hidden sm:table-cell w-[60px]">{t('transactions.month', { defaultValue: 'Month' })}</DataTableHead>
-              <DataTableHead type="date" className="hidden sm:table-cell w-[100px]">{t('transactions.date')}</DataTableHead>
-              <DataTableHead type="movement" className="hidden md:table-cell w-[120px]">{t('transactions.movement', { defaultValue: 'Movement' })}</DataTableHead>
+              <DataTableHead type="date" className="w-[100px]">{t('transactions.date')}</DataTableHead>
               <DataTableHead type="text">{t('transactions.description')}</DataTableHead>
+              <DataTableHead type="movement" className="hidden md:table-cell w-[120px]">{t('transactions.movement', { defaultValue: 'Type' })}</DataTableHead>
               <DataTableHead type="select" className="hidden md:table-cell w-[180px]">{t('transactions.category')}</DataTableHead>
-              <DataTableHead type="account" className="hidden lg:table-cell w-[140px]">Account</DataTableHead>
+              <DataTableHead type="account" className="hidden lg:table-cell w-[130px]">{t('transactions.bank', { defaultValue: 'Account' })}</DataTableHead>
               <DataTableHead type="currency" numeric className="w-[110px]">{t('transactions.amount')}</DataTableHead>
               <DataTableHead type="number" numeric className="hidden lg:table-cell w-[100px]">{t('transactions.balance', { defaultValue: 'Balance' })}</DataTableHead>
             </DataTableRow>
@@ -306,49 +311,42 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount 
           <DataTableBody>
             {filteredTransactions.length === 0 ? (
               <DataTableRow className="hover:bg-transparent">
-                <DataTableCell colSpan={9} className="text-center py-10 text-muted-foreground">
+                <DataTableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                   {t('transactions.noTransactions')}
                 </DataTableCell>
               </DataTableRow>
             ) : (
-              filteredTransactions.map((transaction, idx) => {
+              filteredTransactions.map((transaction) => {
                 const movementType = getMovementType(transaction);
-                const movementIcon =
-                  movementType === 'income' ? <Plus className="w-3 h-3" /> :
-                  movementType === 'transfer' ? <ArrowRightLeft className="w-3 h-3" /> :
-                  movementType === 'investment' ? <TrendingUp className="w-3 h-3" /> :
-                  <Minus className="w-3 h-3" />;
+                const isTransfer = movementType === 'transfer';
+                const dotColor = movementDotColor[movementType];
                 return (
                   <DataTableRow key={transaction.id}>
-                    <DataTableCell rowNumber={idx + 1} />
-                    <DataTableCell muted className="hidden sm:table-cell text-xs whitespace-nowrap">
-                      <div className="leading-tight">
-                        <div className="font-medium text-foreground/80">{formatMonth(transaction.date).month}</div>
-                        <div className="opacity-70">{formatMonth(transaction.date).year}</div>
-                      </div>
-                    </DataTableCell>
-                    <DataTableCell muted className="hidden sm:table-cell whitespace-nowrap">
+                    <DataTableCell className="whitespace-nowrap text-[13px] text-[#8A919C]">
                       {formatTransactionDate(transaction.date)}
-                    </DataTableCell>
-                    <DataTableCell className="hidden md:table-cell">
-                      <PillBadge tone={movementBadgeTone[movementType]} icon={movementIcon}>
-                        {movementLabels[movementType]}
-                      </PillBadge>
                     </DataTableCell>
                     <DataTableCell>
                       <div className="flex items-start gap-2">
-                        <span className="break-words line-clamp-2 text-foreground/90">
+                        <span className="break-words line-clamp-1 text-[13px] text-[#0C0D0E]">
                           {transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}
                         </span>
                         {transaction.userCorrected && (
                           <span
                             title={t('transactions.edited')}
-                            className="mt-1 inline-flex shrink-0 items-center rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-warning-foreground"
+                            className="mt-0.5 inline-flex shrink-0 items-center rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-warning-foreground"
                           >
                             {t('transactions.edited')}
                           </span>
                         )}
                       </div>
+                    </DataTableCell>
+                    <DataTableCell className="hidden md:table-cell">
+                      <PillBadge
+                        tone={movementBadgeTone[movementType]}
+                        icon={<span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />}
+                      >
+                        {movementLabels[movementType]}
+                      </PillBadge>
                     </DataTableCell>
                     <DataTableCell className="hidden md:table-cell">
                       <PillBadge colorVar={getCategoryColor(transaction.category)}>
@@ -363,14 +361,20 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount 
                         </span>
                       </PillBadge>
                     </DataTableCell>
-                    <DataTableCell muted className="hidden lg:table-cell">
+                    <DataTableCell className="hidden lg:table-cell text-[13px] text-[#8A919C]">
                       <span className="truncate block">{transaction.account}</span>
                     </DataTableCell>
-                    <DataTableCell numeric className="font-semibold text-foreground">
+                    <DataTableCell
+                      numeric
+                      className={cn(
+                        "text-[13px] font-medium tabular-nums",
+                        isTransfer ? "text-[#8A919C]" : "text-[#0C0D0E]",
+                      )}
+                    >
                       {transaction.amount >= 0 ? '+' : ''}
                       {formatCurrency(transaction.amount)}
                     </DataTableCell>
-                    <DataTableCell numeric muted className="hidden lg:table-cell">
+                    <DataTableCell numeric className="hidden lg:table-cell text-[13px] font-normal text-[#8A919C] tabular-nums">
                       {computedBalanceMap.has(transaction.id)
                         ? formatCurrency(computedBalanceMap.get(transaction.id)!)
                         : '—'}
@@ -381,7 +385,36 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount 
             )}
           </DataTableBody>
         </DataTable>
-        <p className="text-sm text-muted-foreground mt-3">
+
+        {/* Footer */}
+        {filteredTransactions.length > 0 && (
+          <div className="flex items-center justify-between bg-[#FAFBFC] border-t border-[#F1F2F4] px-3 py-2.5 rounded-b-xl">
+            <div className="flex items-center gap-4 text-[13px] text-[#6B7280]">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2E9E6B]" />
+                {filteredTransactions.filter(tx => getMovementType(tx) === 'income').length} {t('stats.income').toLowerCase()}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E0704A]" />
+                {filteredTransactions.filter(tx => getMovementType(tx) === 'expense').length} {t('stats.expenses').toLowerCase()}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#8A919C]" />
+                {filteredTransactions.filter(tx => getMovementType(tx) === 'transfer').length} {t('transactions.transfer', { defaultValue: 'transfers' }).toLowerCase()}
+              </span>
+            </div>
+            {(() => {
+              const last = filteredTransactions[filteredTransactions.length - 1];
+              const closingBalance = last ? computedBalanceMap.get(last.id) : undefined;
+              return closingBalance !== undefined ? (
+                <span className="text-[13px] font-semibold tabular-nums text-foreground">
+                  {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance)}
+                </span>
+              ) : null;
+            })()}
+          </div>
+        )}
+        <p className="text-[12px] text-[#9AA1AC] mt-2">
           {filteredTransactions.length} / {totalCount ?? transactions.length}
         </p>
         </div>

@@ -8,6 +8,8 @@ interface PeriodSelectionContextValue {
   setAvailablePeriods: (g: Granularity, keys: string[]) => void;
   openingBalance: number | null;
   setOpeningBalance: (b: number | null) => void;
+  transactionCount: number | null;
+  setTransactionCount: (n: number | null) => void;
 }
 
 const EMPTY_SELECTED: Record<Granularity, string | null> = { week: null, month: null, year: null };
@@ -24,6 +26,7 @@ export function PeriodSelectionProvider({ children }: { children: ReactNode }) {
   const [selectedPeriod, setSelectedPeriodState] = useState<Record<Granularity, string | null>>(EMPTY_SELECTED);
   const [availablePeriods, setAvailablePeriodsState] = useState<Record<Granularity, string[]>>(EMPTY_AVAILABLE);
   const [openingBalance, setOpeningBalance] = useState<number | null>(null);
+  const [transactionCount, setTransactionCount] = useState<number | null>(null);
 
   const setSelectedPeriod = (g: Granularity, key: string | null) =>
     setSelectedPeriodState((prev) => (prev[g] === key ? prev : { ...prev, [g]: key }));
@@ -40,6 +43,8 @@ export function PeriodSelectionProvider({ children }: { children: ReactNode }) {
         setAvailablePeriods,
         openingBalance,
         setOpeningBalance,
+        transactionCount,
+        setTransactionCount,
       }}
     >
       {children}
@@ -57,6 +62,8 @@ export function usePeriodSelection(): PeriodSelectionContextValue {
       setAvailablePeriods: () => {},
       openingBalance: null,
       setOpeningBalance: () => {},
+      transactionCount: null,
+      setTransactionCount: () => {},
     };
   }
   return ctx;
@@ -67,7 +74,7 @@ export function usePeriodSelection(): PeriodSelectionContextValue {
  * `usePeriodSelection`, so month-scoped call sites don't need to change.
  */
 export function useMonthSelection() {
-  const { selectedPeriod, setSelectedPeriod, availablePeriods, setAvailablePeriods, openingBalance, setOpeningBalance } =
+  const { selectedPeriod, setSelectedPeriod, availablePeriods, setAvailablePeriods, openingBalance, setOpeningBalance, transactionCount, setTransactionCount } =
     usePeriodSelection();
   return {
     selectedMonth: selectedPeriod.month,
@@ -76,5 +83,7 @@ export function useMonthSelection() {
     setAvailableMonths: (m: string[]) => setAvailablePeriods("month", m),
     openingBalance,
     setOpeningBalance,
+    transactionCount,
+    setTransactionCount,
   };
 }

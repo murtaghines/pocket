@@ -19,9 +19,9 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="">
+      <Card variant="bento">
         <CardHeader className="pb-2">
-          <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
+          <CardTitle>
             {t('topExpenses.title')}
           </CardTitle>
         </CardHeader>
@@ -33,38 +33,38 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
   }
 
   return (
-    <Card variant="bento" className="">
+    <Card variant="bento">
       <CardHeader className="px-5 pt-[18px] pb-2">
-        <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
+        <CardTitle>
           {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1.5 px-5 pb-[18px] pt-0">
+      <CardContent className="px-5 pb-[18px] pt-0">
         {topExpenses.map((expense, index) => (
-            <div
-              key={expense.id}
-              className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/80 text-sm font-medium text-muted-foreground shrink-0">
+          <div key={expense.id}>
+            {index > 0 && <div className="h-px bg-[#F4F5F7]" />}
+            <div className="flex items-center gap-3 py-[9px]">
+              <span className="text-[12px] font-medium text-[#C2C7CE] w-4 shrink-0 text-center tabular-nums">
                 {index + 1}
-              </div>
+              </span>
               <CategoryIcon
                 iconName={getCategoryIcon(expense.category)}
                 colorVar={getCategoryColor(expense.category)}
                 size="md"
                 showBackground
-                className="flex-shrink-0"
+                className="flex-shrink-0 !w-8 !h-8 !rounded-[10px]"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{expense.description}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDayMonth(expense.date)} • {getCategoryLabel(expense.category)}
+                <p className="text-[13.5px] font-medium truncate text-foreground">{expense.description}</p>
+                <p className="text-[12px] text-[#9AA1AC]">
+                  {formatDayMonth(expense.date)} · {getCategoryLabel(expense.category)}
                 </p>
               </div>
-              <span className="text-sm font-semibold text-destructive flex-shrink-0">
+              <span className="text-[13.5px] font-semibold tabular-nums text-foreground flex-shrink-0">
                 -{formatCurrency(expense.amount)}
               </span>
             </div>
+          </div>
         ))}
       </CardContent>
     </Card>

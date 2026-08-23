@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
 import type { DailyTotal } from "@/hooks/usePeriodAggregates";
@@ -46,16 +46,15 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
   const hasData = points.some(p => p.balance !== 0);
   const isPositive = netChange >= 0;
 
-  // Only tick every ~7 days to keep x-axis readable
   const tickDays = new Set([1, 8, 15, 22, points.length]);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null;
     const { label, balance } = payload[0].payload;
     return (
-      <div className="bg-card border border-border/50 rounded-xl shadow-lg p-3 min-w-[150px]">
-        <p className="text-xs text-muted-foreground mb-1">{label}</p>
-        <p className="text-sm font-semibold" style={{ color: balance >= 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))' }}>
+      <div className="bg-card rounded-xl shadow-lg p-3 min-w-[150px]">
+        <p className="text-xs text-[#9AA1AC] mb-1">{label}</p>
+        <p className="text-sm font-semibold" style={{ color: balance >= 0 ? '#1B76FF' : 'hsl(var(--destructive))' }}>
           {balance >= 0 ? '+' : ''}{formatCurrency(balance)}
         </p>
       </div>
@@ -63,25 +62,22 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
   };
 
   return (
-    <div
-      className="bg-card rounded-xl p-[20px_22px_18px] border border-border shadow-section"
-    >
-      {/* Header */}
+    <div className="bg-card rounded-xl p-[20px_22px_16px] shadow-section">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
+          <p className="text-[15px] font-heading font-semibold text-foreground">
             {t('charts.dailyBalance', 'Daily balance')}
           </p>
-          <p className="text-[12px] text-muted-foreground mt-0.5">
+          <p className="text-[12.5px] text-[#9AA1AC] mt-0.5">
             {t('charts.dailyBalanceSubtitle', 'How your balance moved through {{month}}', { month: monthName })}
           </p>
         </div>
         {hasData && (
           <span
-            className="text-[13px] font-semibold whitespace-nowrap"
+            className="text-[13px] font-semibold whitespace-nowrap tabular-nums"
             style={{ color: isPositive ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}
           >
-            {isPositive ? '+' : ''}{formatCurrency(netChange)} this month
+            {isPositive ? '+' : ''}{formatCurrency(netChange)}
           </span>
         )}
       </div>
@@ -91,19 +87,19 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
       ) : (
         <div className="h-[230px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={points} margin={{ top: 8, right: 4, left: -14, bottom: 0 }}>
+            <AreaChart data={points} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
               <defs>
                 <linearGradient id="balanceGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#1B76FF" stopOpacity={0.16} />
+                  <stop offset="100%" stopColor="#1B76FF" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.35} vertical={false} />
+              <CartesianGrid stroke="#F1F2F4" vertical={false} />
               <XAxis
                 dataKey="day"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                tick={{ fill: '#9AA1AC', fontSize: 11 }}
                 tickFormatter={(d) => {
                   if (!monthKey) return '';
                   const [, m] = monthKey.split('-');
@@ -112,22 +108,15 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
                 interval={0}
                 dy={8}
               />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v < -1000 ? `-${Math.abs(v / 1000).toFixed(0)}k` : `${Math.round(v)}`}
-                width={38}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '4 2' }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#1B76FF', strokeWidth: 1, strokeDasharray: '4 2' }} />
               <Area
                 type="monotone"
                 dataKey="balance"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
+                stroke="#1B76FF"
+                strokeWidth={2.2}
                 fill="url(#balanceGrad)"
                 dot={false}
-                activeDot={{ r: 4, fill: 'hsl(var(--primary))', strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: '#1B76FF', strokeWidth: 0 }}
                 isAnimationActive={false}
               />
             </AreaChart>

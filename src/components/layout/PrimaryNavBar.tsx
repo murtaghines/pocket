@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_SECTIONS, getActiveSection } from "@/config/navigation";
 import { Logo } from "@/components/brand/Logo";
@@ -11,12 +12,12 @@ export function PrimaryNavBar() {
   const activeSection = getActiveSection(location.pathname);
 
   return (
-    <div className="hidden md:flex items-center h-16 px-[28px] bg-primary">
-      <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-white shrink-0 mr-8">
-        <Logo variant="mark" size={22} />
+    <div className="hidden md:flex items-center h-[58px] px-[26px] bg-primary">
+      <Link to="/dashboard" aria-label="Pocket" className="flex items-center text-white shrink-0 mr-[28px]">
+        <Logo variant="mark" size={21} />
       </Link>
 
-      <nav className="flex items-center gap-2 h-full font-heading">
+      <nav className="flex items-center gap-[28px] h-full font-heading">
         {NAV_SECTIONS.map((section) => {
           const active = activeSection?.key === section.key;
           return (
@@ -25,13 +26,14 @@ export function PrimaryNavBar() {
               to={section.path}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center h-full px-[18px] border-b-[2.5px] text-[14px] lowercase transition-colors duration-200",
+                "flex items-center gap-[5px] h-full border-b-2 text-[15px] lowercase transition-colors duration-200",
                 active
-                  ? "border-white text-white font-bold"
-                  : "border-transparent text-white/70 font-semibold hover:text-white/90",
+                  ? "border-white text-white font-semibold"
+                  : "border-transparent text-white/[.62] font-medium hover:text-white/80",
               )}
             >
               {t(section.i18nKey)}
+              {active && <ChevronDown className="w-[13px] h-[13px]" strokeWidth={2.5} />}
             </Link>
           );
         })}

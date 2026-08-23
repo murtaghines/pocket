@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, Loader2 } from "lucide-react";
+import { Plus, Minus, Loader2, Wallet, TrendingUp } from "lucide-react";
 
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { NetBalanceCard } from "@/components/dashboard/NetBalanceCard";
 import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
@@ -13,7 +12,7 @@ import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
 import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { WeeklyIncomeExpensesChart } from "@/components/dashboard/WeeklyIncomeExpensesChart";
-import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscretionaryCard";
+import { MonthlyFlowSankey } from "@/components/dashboard/MonthlyFlowSankey";
 
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useTransactions } from "@/hooks/useTransactions";
@@ -38,7 +37,7 @@ export function MonthTab() {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance } = useMonthSelection();
+  const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance, setTransactionCount } = useMonthSelection();
 
   const availableMonths = [...monthlyData]
     .map((m) => m.month)
@@ -107,6 +106,10 @@ export function MonthTab() {
     }
   }, [latestMonthLabel, openingBalanceByMonth, userCurrency]);
 
+  useEffect(() => {
+    setTransactionCount(transactions.length);
+  }, [transactions.length]);
+
   const convertedCurrentMonth = {
     ...currentMonth,
     income: convertToUserCurrency(currentMonth.income),
@@ -164,56 +167,65 @@ export function MonthTab() {
               </p>
             )}
 
-            <div className="flex flex-col gap-[18px]">
-              {/* KPI area: income + expenses, then the net-balance hero (with sent-to-invest
-                  tucked in) next to the savings-rate ring */}
-              {/* All four KPIs on a single row on desktop; on mobile the two pairs stack
-                  (income+expenses, then the net-balance hero + savings ring) unchanged. */}
-              <div className="flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-stretch">
-                <div className="grid grid-cols-2 gap-3 md:gap-4 lg:flex-[2]">
-                  <TrendKpiCard
-                    kind="income"
-                    label={t('stats.income')}
-                    icon={<Plus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                    bgClass="bg-success"
-                    monthKey={latestMonthLabel}
-                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                    total={convertedCurrentMonth.income}
-                    previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                    formatCurrency={formatCurrency}
-                    positiveIsGood
-                  />
-                  <TrendKpiCard
-                    kind="expense"
-                    label={t('stats.expenses')}
-                    icon={<Minus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                    bgClass="bg-destructive"
-                    monthKey={latestMonthLabel}
-                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                    total={convertedCurrentMonth.expenses}
-                    previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
-                    formatCurrency={formatCurrency}
-                    positiveIsGood={false}
-                  />
-                </div>
-                <div className="grid grid-cols-[1.7fr_0.82fr] gap-3 md:gap-4 lg:flex-[2.5] lg:grid-cols-[1.8fr_0.85fr]">
-                  <NetBalanceCard
-                    balance={convertedCurrentMonth.balance}
-                    previousBalance={hasPreviousData ? convertedPreviousMonth.balance : undefined}
-                    sentToInvest={convertedCurrentMonth.sentToInvest}
-                    monthKey={latestMonthLabel}
-                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                    formatCurrency={formatCurrency}
-                  />
-                  <SavingsRateRingCard
-                    income={convertedCurrentMonth.income}
-                    expenses={convertedCurrentMonth.expenses}
-                  />
-                </div>
+            <div className="flex flex-col gap-[14px]">
+              {/* KPI row — 5 cards */}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-[12px]">
+                <TrendKpiCard
+                  kind="income"
+                  label={t('stats.income')}
+                  icon={<Plus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-success"
+                  monthKey={latestMonthLabel}
+                  previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                  total={convertedCurrentMonth.income}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood
+                />
+                <TrendKpiCard
+                  kind="expense"
+                  label={t('stats.expenses')}
+                  icon={<Minus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-destructive"
+                  monthKey={latestMonthLabel}
+                  previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                  total={convertedCurrentMonth.expenses}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood={false}
+                />
+                <TrendKpiCard
+                  kind="balance"
+                  label={t('stats.netBalance')}
+                  icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-foreground"
+                  monthKey={latestMonthLabel}
+                  previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                  total={convertedCurrentMonth.balance}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood
+                />
+                <SavingsRateRingCard
+                  income={convertedCurrentMonth.income}
+                  expenses={convertedCurrentMonth.expenses}
+                />
+                <TrendKpiCard
+                  kind="invest"
+                  label={t('stats.sentToInvest')}
+                  icon={<TrendingUp className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                  bgClass="bg-primary"
+                  monthKey={latestMonthLabel}
+                  previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                  total={convertedCurrentMonth.sentToInvest}
+                  previousTotal={hasPreviousData ? convertedPreviousMonth.sentToInvest : undefined}
+                  formatCurrency={formatCurrency}
+                  positiveIsGood
+                />
               </div>
 
               {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px]">
                 <WeeklyIncomeExpensesChart weekly={agg.subBreakdown as WeeklyPoint[]} />
                 <AccountsStackCard
                   startDate={range?.start}
@@ -224,7 +236,7 @@ export function MonthTab() {
               </div>
 
               {/* Row 3: Daily balance chart (wide) + Daily view heatmap (with stats, in its square) */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px]">
                 <DailyFlowChart
                   dailyTotals={agg.dailyTotals}
                   monthKey={latestMonthLabel}
@@ -237,21 +249,27 @@ export function MonthTab() {
                 />
               </div>
 
-              {/* Row 4: Spending by category (donut + month-over-month list) + Top expenses */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+              {/* Row 4: Income by category (blue, 1fr) + Spending by category (1.62fr) */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] gap-[14px]">
+                <CategoryChart data={agg.incomeCategoryData} />
                 <SpendingByCategoryChart data={agg.expenseCategoryData} />
-                <TopExpensesCard topExpenses={agg.topExpenses} />
               </div>
 
-              {/* Row 5: essential vs discretionary + income by category */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
-                <FixedVsDiscretionaryCard split={agg.essentialSplit} />
-                <CategoryChart data={agg.incomeCategoryData} />
+              {/* Row 5: Monthly flow Sankey (1.62fr) + Top expenses (1fr) */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.62fr_1fr] gap-[14px]">
+                <MonthlyFlowSankey
+                  incomeCategories={agg.incomeCategoryData}
+                  expenseCategories={agg.expenseCategoryData}
+                  openingBalance={latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null
+                    ? convertToUserCurrency(openingBalanceByMonth[latestMonthLabel])
+                    : 0}
+                />
+                <TopExpensesCard topExpenses={agg.topExpenses} />
               </div>
 
               {/* Row 6: Transactions table */}
               <div
-                className="bg-card rounded-xl p-[20px_22px_10px] shadow-section border border-border"
+                className="bg-card rounded-xl p-[20px_22px_10px] shadow-section"
               >
                 <div className="max-h-[500px] overflow-y-auto">
                   <TransactionTable transactions={transactions} />

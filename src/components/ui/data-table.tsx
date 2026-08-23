@@ -89,7 +89,7 @@ export function DataTable({ className, children, ...props }: DataTableProps) {
 
 export function DataTableHeader({ className, children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={cn("bg-muted/30", className)} {...props}>
+    <thead className={cn("bg-[#FAFBFC]", className)} {...props}>
       {children}
     </thead>
   );
@@ -113,8 +113,8 @@ export function DataTableHead({
   return (
     <th
       className={cn(
-        "h-9 px-3 text-left align-middle font-medium text-[11px] uppercase tracking-[0.06em] text-muted-foreground",
-        "border-b border-border/60",
+        "h-[34px] px-3 text-left align-middle font-medium text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC]",
+        "border-y border-[#F1F2F4]",
         numeric && "text-right",
         rowNumber && "w-[44px] text-center text-muted-foreground/60",
         className,
@@ -151,7 +151,7 @@ export function DataTableRow({ className, accent, children, ...props }: DataTabl
   return (
     <tr
       className={cn(
-        "transition-colors hover:bg-muted/30 group",
+        "transition-colors hover:bg-[#FAFBFC] group",
         accent && "bg-primary/5 hover:bg-primary/5",
         className,
       )}
@@ -182,8 +182,8 @@ export function DataTableCell({
   return (
     <td
       className={cn(
-        "align-middle border-b border-border/50",
-        !noPadding && "h-11 px-3 py-2",
+        "align-middle border-b border-[#F4F5F7]",
+        !noPadding && "h-[40px] px-3 py-1.5",
         numeric && "text-right tabular-nums",
         rowNumber !== undefined && "w-[44px] text-center text-xs text-muted-foreground/70 font-normal",
         muted && "text-muted-foreground",

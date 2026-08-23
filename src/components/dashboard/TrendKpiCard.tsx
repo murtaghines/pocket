@@ -1,4 +1,4 @@
-import { useMemo, ReactNode } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -7,14 +7,11 @@ export type TrendKind = "income" | "expense" | "balance" | "invest";
 interface TrendKpiCardProps {
   kind: TrendKind;
   label: string;
-  icon: ReactNode;
+  icon: React.ReactNode;
   bgClass: string;
-  /** When true: filled brand-blue card (Net Balance) */
-  filled?: boolean;
   transactions?: Array<{ date: string; amount: number; type: string }>;
   monthKey: string | null;
   previousMonthKey?: string | null;
-  /** Override the "vs X" label — needed when monthKey isn't a YYYY-MM month (e.g. week/year tabs). */
   previousPeriodLabel?: string;
   total: number;
   previousTotal?: number;
@@ -25,11 +22,16 @@ interface TrendKpiCardProps {
   className?: string;
 }
 
+const DOT_COLORS: Record<TrendKind, string> = {
+  income: "bg-[#2E9E6B]",
+  expense: "bg-[#E0704A]",
+  balance: "bg-[#0C0D0E]",
+  invest: "bg-primary",
+};
+
 export function TrendKpiCard({
   kind,
   label,
-  icon,
-  filled = false,
   monthKey,
   previousMonthKey,
   previousPeriodLabel,
@@ -60,72 +62,43 @@ export function TrendKpiCard({
     return new Intl.DateTimeFormat(i18n.language || "en", { month: "short" }).format(d);
   }, [monthKey, previousMonthKey, previousPeriodLabel, i18n.language]);
 
-  // Styling per variant. Borderless — elevation is the shadow token, not a gray outline.
-  const cardClasses = filled
-    ? "bg-primary text-primary-foreground border border-primary"
-    : "bg-card border border-border";
-
-  const labelClass = filled ? "text-primary-foreground/78" : "text-muted-foreground";
-  const valueClass = filled ? "text-primary-foreground" : "text-foreground";
-  const subtextClass = filled ? "text-primary-foreground/82" : "text-muted-foreground";
-
-  const iconBgClass = filled
-    ? "bg-white/[0.18] text-primary-foreground"
-    : kind === "income"
-    ? "bg-success/10 text-success"
-    : kind === "expense"
-    ? "bg-destructive/10 text-destructive"
-    : kind === "invest"
-    ? "bg-primary/10 text-primary"
-    : "bg-primary/10 text-primary";
-
   const deltaColor =
     change === undefined
-      ? subtextClass
+      ? "text-[#9AA1AC]"
       : isGoodChange
-      ? "text-success"
-      : filled
-      ? "text-primary-foreground/82"
-      : "text-destructive";
+      ? "text-[#2E9E6B]"
+      : kind === "invest"
+      ? "text-primary"
+      : "text-[#D9542B]";
 
-  const shadowClass = filled ? "shadow-glow" : "shadow-section";
+  const valueColor = kind === "balance" && total < 0 ? "text-[#D9542B]" : "text-[#0C0D0E]";
 
   return (
     <div
-      className={cn("flex h-full flex-col rounded-xl p-[16px] transition-all", cardClasses, shadowClass, className)}
+      className={cn("flex h-full flex-col rounded-xl bg-card p-[16px_18px] shadow-section", className)}
       style={{ animationDelay: `${delay}ms` }}
     >
-      {/* Header row: label + icon badge */}
-      <div className="flex items-center justify-between mb-[10px]">
-        <span className={cn("text-[12px] font-semibold uppercase tracking-[.04em]", labelClass)}>
+      <div className="flex items-center gap-[6px] mb-[14px]">
+        <span className={cn("w-[7px] h-[7px] rounded-full shrink-0", DOT_COLORS[kind])} />
+        <span className="text-[13px] font-medium text-[#6B7280]">
           {label}
         </span>
-        <div
-          className={cn(
-            "flex items-center justify-center w-[30px] h-[30px] rounded-[9px] shrink-0",
-            iconBgClass,
-          )}
-        >
-          {icon}
-        </div>
       </div>
 
-      {/* Value + delta, anchored to the bottom so cards line up across the row */}
       <div className="mt-auto">
         <div
           className={cn(
-            "text-[17px] md:text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none",
-            valueClass,
+            "text-[22px] font-semibold tracking-[-0.025em] tabular-nums leading-none",
+            valueColor,
           )}
         >
           {formatCurrency(total)}
         </div>
-        <div className={cn("text-[12px] mt-[5px]", subtextClass)}>
+        <div className="text-[12.5px] text-[#9AA1AC] mt-[5px]">
           {change !== undefined ? (
             <>
-              <span className={cn("font-semibold", deltaColor)}>
-                {isUp ? "▲" : isDown ? "▼" : "–"}{" "}
-                {Math.abs(change)}%
+              <span className={cn("font-medium", deltaColor)}>
+                {isUp ? "+" : isDown ? "" : ""}{change}%
               </span>{" "}
               vs {prevMonthLabel}
             </>
