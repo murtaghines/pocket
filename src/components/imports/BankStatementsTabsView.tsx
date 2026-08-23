@@ -1,10 +1,9 @@
 import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Upload, Plus, Minus, ArrowRightLeft } from "lucide-react";
+import { Upload, Plus, Minus, ArrowRightLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { uploadFileRejection } from "@/lib/fileExtract";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useImports, type Import } from "@/hooks/useImports";
 import { useAccounts } from "@/hooks/useAccounts";
@@ -12,11 +11,12 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
 import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
-import { UploadedFilesDropdown } from "./cashflow/UploadedFiles";
 import { MonthTabStrip } from "./cashflow/MonthTabStrip";
 import { MonthWorkspace } from "./cashflow/MonthWorkspace";
+import { DataToolbar, type SortColumn, type SortDirection, type DataFilters } from "./cashflow/DataToolbar";
 import { MobileUploadFAB } from "./MobileUploadFAB";
 import { DEFAULT_MONTHS, MIN_MONTHS, MONTHS_INCREMENT } from "./cashflow/helpers";
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from "@/lib/categoryTranslations";
 import type { MovementType } from "./cashflow/types";
 
 /* ─────────────────────────  Main component  ───────────────────────── */
@@ -36,10 +36,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
     addFilesForMonth,
     addFiles,
     isProcessingMonth,
-    isProcessingAny,
     pendingFilesByMonth,
-    retryImport,
-    retryingImportIds,
   } = useMonthlyFileUpload();
 
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
@@ -53,6 +50,15 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [defaultMovement, setDefaultMovement] = useState<MovementType>("EXPENSE");
 
+  const [sortColumn, setSortColumn] = useState<SortColumn>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [filters, setFilters] = useState<DataFilters>({ accounts: [], movements: [], categories: [] });
+
+  const allCategories = useMemo(
+    () => [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES, ...TRANSFER_CATEGORIES],
+    [],
+  );
+
   // Pending (unsaved) edits live in the parent so they survive when the
   // user switches to another month tab or navigates the rest of the app.
   // Each row stays visually "yellow" until the user explicitly saves or
@@ -65,37 +71,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   };
   const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
   const pendingTxIds = useMemo(() => new Set(Object.keys(pendingByTx)), [pendingByTx]);
-
-  // Map pending tx ids → their parent import_id, so the file list in the
-  // "Manage files" sheet can show a yellow indicator on any file that has
-  // unconfirmed edits.
-  const { data: pendingTxImportMap = {} } = useQuery({
-    queryKey: ["pending-tx-imports", user?.id, Array.from(pendingTxIds).sort().join(",")],
-    enabled: !!user?.id && pendingTxIds.size > 0,
-    queryFn: async () => {
-      const ids = Array.from(pendingTxIds);
-      if (ids.length === 0) return {} as Record<string, string>;
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("id, import_id")
-        .in("id", ids);
-      if (error) throw error;
-      const map: Record<string, string> = {};
-      (data || []).forEach((row: { id: string; import_id: string | null }) => {
-        if (row.import_id) map[row.id] = row.import_id;
-      });
-      return map;
-    },
-  });
-
-  const pendingImportIds = useMemo(() => {
-    const set = new Set<string>();
-    pendingTxIds.forEach((txId) => {
-      const importId = pendingTxImportMap[txId];
-      if (importId) set.add(importId);
-    });
-    return set;
-  }, [pendingTxIds, pendingTxImportMap]);
 
   // Build month slots: latest first
   const monthSlots = useMemo(() => {
@@ -122,6 +97,30 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const setActiveKey = onMonthChange;
 
   const activeSlot = monthSlots.find((s) => s.key === activeKey) ?? monthSlots[0];
+  const activeIdx = monthSlots.findIndex((s) => s.key === activeKey);
+
+  const goPrevMonth = () => {
+    if (activeIdx < monthSlots.length - 1) setActiveKey(monthSlots[activeIdx + 1].key);
+    else setMonthsToShow((n) => n + MONTHS_INCREMENT);
+  };
+  const goNextMonth = () => {
+    if (activeIdx > 0) setActiveKey(monthSlots[activeIdx - 1].key);
+  };
+  const handleMonthJump = (date: Date) => {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const slot = monthSlots.find((s) => s.key === key);
+    if (slot) {
+      setActiveKey(key);
+    } else {
+      const now = new Date();
+      const diff = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth()) + 1;
+      setMonthsToShow(Math.max(monthsToShow, diff));
+      setTimeout(() => setActiveKey(key), 0);
+    }
+  };
+
+  const activeImports = importsByMonth[activeKey] || [];
+  const isLocked = activeImports.some((i) => i.locked);
 
   const { data: activeTxCount } = useQuery({
     queryKey: ["tx-count", activeKey, user?.id],
@@ -149,6 +148,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingDate, setPendingDate] = useState<Date | null>(new Date());
   const globalFileInputRef = useRef<HTMLInputElement>(null);
+  const exportTransactionsRef = useRef<(() => void) | null>(null);
 
   // Keep only uploadable files; tell the user why any were skipped (bad type / too large).
   const filterUploadable = (files: FileList): File[] => {
@@ -218,36 +218,31 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         }}
       />
 
-      {/* ============= Toolbar (desktop only): actions ============= */}
-      <div className="hidden md:flex items-center justify-end gap-2 px-10 py-4 border-b border-border bg-card">
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={() => globalFileInputRef.current?.click()}
-            disabled={isProcessingAny()}
-            className="flex gap-2 h-9 px-5 font-medium"
-          >
-            {isProcessingAny() ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-            Add file
-          </Button>
-          <UploadedFilesDropdown
-            imports={imports}
-            cashAccounts={cashAccounts}
-            deleteImport={deleteImport}
-            isDeleting={isDeleting}
-            toggleLockImport={toggleLockImport}
-            pendingImportIds={pendingImportIds}
-            retryImport={retryImport}
-            retryingImportIds={retryingImportIds}
-          />
-        </div>
-      </div>
+      {/* ============= Data Toolbar (desktop only) ============= */}
+      <DataToolbar
+        monthLabel={activeSlot?.label ?? ""}
+        monthDate={activeSlot?.date ?? new Date()}
+        txCount={activeTxCount ?? 0}
+        onPrev={goPrevMonth}
+        onNext={goNextMonth}
+        canGoNext={activeIdx > 0}
+        onMonthJump={handleMonthJump}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSortChange={(col, dir) => { setSortColumn(col); setSortDirection(dir); }}
+        filters={filters}
+        onFiltersChange={setFilters}
+        accounts={cashAccounts}
+        availableCategories={allCategories}
+        onAddExpense={() => { setDefaultMovement("EXPENSE"); setManualEntryOpen(true); }}
+        onAddIncome={() => { setDefaultMovement("INCOME"); setManualEntryOpen(true); }}
+        onAddTransfer={() => { setDefaultMovement("TRANSFER"); setManualEntryOpen(true); }}
+        onUploadFile={() => globalFileInputRef.current?.click()}
+        onExport={() => exportTransactionsRef.current?.()}
+        isLocked={isLocked}
+      />
 
-      {/* ============= Month Tab Strip (Airtable style) ============= */}
+      {/* ============= Month Tab Strip (mobile only) ============= */}
       <MonthTabStrip
         slots={monthSlots}
         activeKey={activeKey}
@@ -285,6 +280,10 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
           onManualEntryOpenChange={setManualEntryOpen}
           defaultMovement={defaultMovement}
           txCount={activeTxCount ?? 0}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          filters={filters}
+          exportTransactionsRef={exportTransactionsRef}
         />
       )}
 
