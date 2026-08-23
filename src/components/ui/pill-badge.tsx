@@ -21,11 +21,11 @@ export type PillTone =
   | "orange";
 
 const TONE_CLASSES: Record<PillTone, string> = {
-  neutral: "bg-muted text-foreground/80",
+  neutral: "bg-[rgba(138,145,156,.14)] text-[#5A6270]",
   blue: "bg-[hsl(216_100%_94%)] text-[hsl(216_85%_38%)]",
-  green: "bg-[hsl(150_60%_92%)] text-[hsl(150_70%_28%)]",
+  green: "bg-[rgba(46,158,107,.14)] text-[#217A49]",
   amber: "bg-[hsl(38_95%_92%)] text-[hsl(28_85%_38%)]",
-  red: "bg-[hsl(0_85%_95%)] text-[hsl(0_70%_42%)]",
+  red: "bg-[rgba(224,112,74,.14)] text-[#C24A22]",
   purple: "bg-[hsl(265_70%_94%)] text-[hsl(265_55%_42%)]",
   teal: "bg-[hsl(180_60%_92%)] text-[hsl(180_55%_28%)]",
   yellow: "bg-[hsl(48_100%_90%)] text-[hsl(35_85%_32%)]",
@@ -105,7 +105,7 @@ export function PillBadge({
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full font-medium leading-none whitespace-nowrap",
-        size === "sm" ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-sm",
+        size === "sm" ? "px-[10px] py-[3px] text-xs" : "px-2.5 py-1.5 text-sm",
         !useCustom && (variant === "solid" ? TONE_CLASSES_SOLID[tone] : TONE_CLASSES[tone]),
         className,
       )}

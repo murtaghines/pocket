@@ -26,7 +26,7 @@ export function DashboardLayout({ children, fullBleed = false }: DashboardLayout
           "w-full relative z-10",
           fullBleed
             ? "bg-card min-h-screen"
-            : "px-4 md:px-[30px] pt-4 md:pt-[8px] pb-6 md:pb-[40px]",
+            : "px-4 md:px-[28px] pt-4 md:pt-[8px] pb-6 md:pb-[30px]",
         )}
       >
         {children}

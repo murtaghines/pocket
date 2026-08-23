@@ -96,7 +96,7 @@
 
   /* Dashboard light theme - New Pocket brand: #1b76ff blue, #ffd027 yellow, light-gray bg */
   .dashboard-theme {
-    --background: 220 14% 96%;
+    --background: 210 25% 97%;
     --foreground: 0 0% 3%;
 
     --card: 0 0% 100%;
@@ -142,15 +142,15 @@
     --shadow-md: none;
     --shadow-lg: 0 6px 16px -4px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
     --shadow-glow: 0 0 20px hsl(216 100% 55% / 0.08);
-    --shadow-card: none;
-    --shadow-bento: none;
-    --shadow-section: none;
+    --shadow-card: 0 1px 2px rgba(16,24,40,.04), 0 6px 16px -6px rgba(16,24,40,.10);
+    --shadow-bento: 0 1px 2px rgba(16,24,40,.04), 0 6px 16px -6px rgba(16,24,40,.10);
+    --shadow-section: 0 1px 2px rgba(16,24,40,.04), 0 6px 16px -6px rgba(16,24,40,.10);
   }
 
   /* Card border-radius — tighter than the original 18px */
   .dashboard-theme .rounded-xl,
   .dashboard-theme .rounded-2xl {
-    border-radius: 14px;
+    border-radius: 12px;
   }
 
   /* Dashboard DARK theme — applied when .dark is on body alongside dashboard-theme */

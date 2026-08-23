@@ -66,6 +66,7 @@
     "accountsSubtitle": "Month-end balance",
     "manageAccounts": "Manage accounts",
     "weekShort": "W{{n}}",
+    "weekShortLabel": "sem",
     "byWeekThisMonth": "By week · this month",
     "byDayThisWeek": "By day · this week",
     "byMonthThisYear": "By month · this year",
@@ -77,7 +78,10 @@
     "txCount": "tx",
     "currentBalance": "Balance",
     "netFlow": "Net flow",
-    "otherCategories": "Other"
+    "otherCategories": "Other",
+    "monthlyFlow": "Monthly flow",
+    "sankeyEntries": "ENTRIES",
+    "sankeyExpenses": "EXPENSES"
   },
   "transactions": {
     "title": "Transactions",
@@ -90,8 +94,10 @@
     "movement": "Movement",
     "amount": "Amount",
     "balance": "Balance",
-    "bank": "Bank",
-    "edited": "edited"
+    "bank": "Account",
+    "edited": "edited",
+    "transfer": "Transfer",
+    "closingBalance": "Closing balance"
   },
   "topExpenses": {
     "title": "Top Expenses",
@@ -305,7 +311,8 @@
       "year": "Yearly View",
       "history": "History"
     },
-    "filter": "Filter"
+    "filter": "Filters",
+    "openingBalanceSubtitle": "Opening balance {{amount}} · {{count}} transactions"
   },
   "heatmap": {
     "title": "Daily view",

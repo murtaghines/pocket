@@ -155,15 +155,15 @@ export function AccountsStackCard({
   return (
     <>
       <div
-        className="bg-card rounded-xl p-[20px_22px_18px] h-full border border-border shadow-section"
+        className="bg-card rounded-xl p-[20px_22px_18px] h-full shadow-section"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
+            <p className="text-[15px] font-heading font-semibold text-foreground">
               {t('charts.accounts', 'Accounts')}
             </p>
-            <p className="text-[12px] text-muted-foreground mt-0.5">
+            <p className="text-[12.5px] text-[#9AA1AC] mt-0.5">
               {t('charts.accountsSubtitle', 'Month-end balance')}
             </p>
           </div>
@@ -184,14 +184,14 @@ export function AccountsStackCard({
           <div className="flex flex-col">
             {orderedAccounts.map((acc, idx) => (
               <div key={acc.id}>
-                {idx > 0 && <div className="h-px bg-border my-3" />}
+                {idx > 0 && <div className="h-px bg-[#F1F2F4]" />}
                 <button
                   type="button"
                   onClick={() => setDetailAccountId(acc.id)}
-                  className="flex items-center gap-3 w-full text-left group"
+                  className="flex items-center gap-3 w-full text-left group py-[11px]"
                 >
                   <div
-                    className="w-[38px] h-[38px] rounded-[11px] flex items-center justify-center shrink-0"
+                    className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0"
                     style={{
                       background: hexToRgba(acc.color, 0.12),
                       color: acc.color,
@@ -200,10 +200,10 @@ export function AccountsStackCard({
                     <AccountTypeIcon institution={acc.institution} name={acc.name} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13.5px] font-semibold text-foreground truncate">
+                    <p className="text-[13.5px] font-medium text-foreground truncate">
                       {acc.displayName}
                     </p>
-                    <p className="text-[11.5px] text-muted-foreground truncate">
+                    <p className="text-[12px] text-[#9AA1AC] truncate">
                       {acc.transactionCount} {t('charts.txCount', 'tx')}
                     </p>
                   </div>

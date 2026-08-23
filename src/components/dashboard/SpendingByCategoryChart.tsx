@@ -50,7 +50,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
     return (
       <Card variant="bento" className="">
         <CardHeader className="pb-2">
-          <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
+          <CardTitle>
             {t("charts.spendingByCategory", "Spending by category")}
           </CardTitle>
         </CardHeader>
@@ -64,14 +64,14 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
   return (
     <Card variant="bento" className="flex h-full flex-col">
       <CardHeader className="px-5 pt-[18px] pb-2">
-        <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
+        <CardTitle>
           {t("charts.spendingByCategory", "Spending by category")}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 items-center px-5 pb-[18px] pt-0">
-        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row sm:items-center sm:gap-9">
+        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row sm:items-center sm:gap-[26px]">
           {/* Donut gauge — centre shows the month total, or the selected category's amount */}
-          <div className="relative shrink-0" style={{ width: 216, height: 200 }}>
+          <div className="relative shrink-0" style={{ width: 200, height: 186 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -121,7 +121,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
           </div>
 
           {/* Category list with month-over-month trend + % change; rows are tap-to-select too */}
-          <ul className="w-full flex-1 space-y-0.5">
+          <ul className="w-full flex-1">
             {sorted.map((entry, i) => {
               const prev = entry.previousValue;
               const pct = prev !== undefined && prev > 0 ? Math.round(((entry.value - prev) / prev) * 100) : undefined;
@@ -135,22 +135,22 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
                     onClick={() => toggle(entry.name)}
                     aria-pressed={active === entry.name}
                     className={cn(
-                      "-mx-1 flex w-full items-center gap-2.5 rounded-lg px-1 py-1 text-left transition-colors",
+                      "-mx-1 flex w-full items-center gap-[10px] rounded-lg px-1 py-[3px] text-left transition-colors",
                       active === entry.name && "bg-muted/50",
                       dimmed && "opacity-45",
                     )}
                   >
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: entry.color }} />
-                    <span className="min-w-0 flex-1 truncate text-[14px] text-foreground">{entry.name}</span>
-                    <span className="w-[44px] shrink-0 text-right text-[13px] font-medium tabular-nums text-foreground">
+                    <span className="min-w-0 w-[134px] truncate text-[13.5px] text-foreground">{entry.name}</span>
+                    <span className="w-[46px] shrink-0 text-right text-[13px] font-medium tabular-nums text-foreground">
                       {pctLabel(entry.value)}
                     </span>
-                    <span className="w-[88px] shrink-0 text-right text-[13px] tabular-nums text-muted-foreground">
+                    <span className="w-[92px] shrink-0 text-right text-[13px] tabular-nums text-muted-foreground">
                       {formatCurrency(entry.value)}
                     </span>
                     <span
                       className={cn(
-                        "flex w-[52px] shrink-0 items-center justify-end gap-0.5 text-[12px] font-medium tabular-nums",
+                        "flex w-[54px] shrink-0 items-center justify-end gap-0.5 text-[12px] font-medium tabular-nums",
                         up ? "text-destructive" : down ? "text-success" : "text-muted-foreground/50",
                       )}
                     >

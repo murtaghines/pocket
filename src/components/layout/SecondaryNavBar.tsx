@@ -22,25 +22,27 @@ export function SecondaryNavBar() {
   };
 
   return (
-    <div className="hidden md:flex items-center h-[34px] pl-[82px] pr-[28px] bg-primary font-heading">
-      {section.subTabs.map((sub) => {
-        const active = activeTab === sub.key;
-        return (
-          <Link
-            key={sub.key}
-            to={linkFor(sub.key)}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex items-center h-full px-5 text-[13px] lowercase transition-colors duration-200",
-              active
-                ? "text-white font-extrabold"
-                : "text-white/65 font-medium hover:bg-white/[0.08]",
-            )}
-          >
-            {t(sub.i18nKey, { ns: sub.ns ?? "common" })}
-          </Link>
-        );
-      })}
+    <div className="hidden md:flex items-center pt-[11px] pb-[13px] pl-[75px] pr-[26px] bg-primary font-heading">
+      <nav className="flex items-center gap-[28px]">
+        {section.subTabs.map((sub) => {
+          const active = activeTab === sub.key;
+          return (
+            <Link
+              key={sub.key}
+              to={linkFor(sub.key)}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "text-[13.5px] lowercase transition-colors duration-200",
+                active
+                  ? "text-white font-bold"
+                  : "text-white/[.55] font-medium hover:text-white/75",
+              )}
+            >
+              {t(sub.i18nKey, { ns: sub.ns ?? "common" })}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

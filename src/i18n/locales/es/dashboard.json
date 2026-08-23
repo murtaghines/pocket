@@ -65,6 +65,7 @@
     "accountsSubtitle": "Saldo a fin de mes",
     "manageAccounts": "Gestionar cuentas",
     "weekShort": "S{{n}}",
+    "weekShortLabel": "sem",
     "byWeekThisMonth": "Por semana · este mes",
     "byDayThisWeek": "Por día · esta semana",
     "byMonthThisYear": "Por mes · este año",
@@ -76,7 +77,10 @@
     "txCount": "mov.",
     "currentBalance": "Balance",
     "netFlow": "Flujo neto",
-    "otherCategories": "Otros"
+    "otherCategories": "Otros",
+    "monthlyFlow": "Flujo del mes",
+    "sankeyEntries": "ENTRADAS",
+    "sankeyExpenses": "GASTOS"
   },
   "transactions": {
     "title": "Transacciones",
@@ -89,8 +93,10 @@
     "movement": "Movimiento",
     "amount": "Monto",
     "balance": "Saldo",
-    "bank": "Banco",
-    "edited": "editado"
+    "bank": "Cuenta",
+    "edited": "editado",
+    "transfer": "Transferencia",
+    "closingBalance": "Saldo final"
   },
   "topExpenses": {
     "title": "Gastos Principales",
@@ -274,7 +280,8 @@
       "year": "Vista Anual",
       "history": "Historial"
     },
-    "filter": "Filtro"
+    "filter": "Filtros",
+    "openingBalanceSubtitle": "Balance inicial {{amount}} · {{count}} movimientos"
   },
   "heatmap": {
     "title": "Vista diaria",

@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { SlidersHorizontal, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { useGranularity } from "@/hooks/useGranularity";
@@ -9,7 +9,9 @@ import { formatPeriodLabel } from "@/lib/analytics";
 import { GranularityToggle } from "./GranularityToggle";
 import { EmptyStateBanner } from "./EmptyStateBanner";
 
-const PILL = "flex items-center gap-[6px] text-[13px] font-medium text-foreground bg-card border border-border rounded-full px-[14px] py-2 cursor-pointer whitespace-nowrap select-none hover:bg-muted/40 transition-colors";
+const PILL = "flex items-center gap-[6px] text-[13px] font-medium text-[#414750] bg-card rounded-[10px] px-[13px] py-[8px] cursor-pointer whitespace-nowrap select-none hover:bg-muted/40 transition-colors shadow-[0_1px_2px_rgba(16,24,40,.05)]";
+
+const NAV_PILL = "flex items-center bg-card rounded-[10px] p-[5px] shadow-[0_1px_2px_rgba(16,24,40,.05)]";
 
 function MonthPill() {
   const { formatMonth } = useLocalization();
@@ -22,14 +24,13 @@ function MonthPill() {
   const label = selectedMonth ? formatMonth(selectedMonth + "-01") : "–";
 
   return (
-    <span className={PILL}>
-      <button type="button" onClick={() => hasOlder && setSelectedMonth(availableMonths[idx + 1])} disabled={!hasOlder} aria-label="Previous month" className="disabled:opacity-30 hover:opacity-60 transition-opacity">
-        <ChevronLeft className="w-[14px] h-[14px]" strokeWidth={2} />
+    <span className={NAV_PILL}>
+      <button type="button" onClick={() => hasOlder && setSelectedMonth(availableMonths[idx + 1])} disabled={!hasOlder} aria-label="Previous month" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
+        <ChevronLeft className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
       </button>
-      <Calendar className="w-[14px] h-[14px] shrink-0 text-muted-foreground" strokeWidth={2} />
-      <span className="capitalize min-w-[80px] text-center">{label}</span>
-      <button type="button" onClick={() => hasNewer && setSelectedMonth(availableMonths[idx - 1])} disabled={!hasNewer} aria-label="Next month" className="disabled:opacity-30 hover:opacity-60 transition-opacity">
-        <ChevronRight className="w-[14px] h-[14px]" strokeWidth={2} />
+      <span className="capitalize min-w-[88px] text-center text-[13px] font-medium text-[#414750]">{label}</span>
+      <button type="button" onClick={() => hasNewer && setSelectedMonth(availableMonths[idx - 1])} disabled={!hasNewer} aria-label="Next month" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
+        <ChevronRight className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
       </button>
     </span>
   );
@@ -48,14 +49,13 @@ function WeekPill() {
   const label = selected ? formatPeriodLabel(selected, "week", i18n.language) : "–";
 
   return (
-    <span className={PILL}>
-      <button type="button" onClick={() => hasOlder && setSelectedPeriod("week", weeks[idx - 1])} disabled={!hasOlder} aria-label="Previous week" className="disabled:opacity-30 hover:opacity-60 transition-opacity">
-        <ChevronLeft className="w-[14px] h-[14px]" strokeWidth={2} />
+    <span className={NAV_PILL}>
+      <button type="button" onClick={() => hasOlder && setSelectedPeriod("week", weeks[idx - 1])} disabled={!hasOlder} aria-label="Previous week" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
+        <ChevronLeft className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
       </button>
-      <Calendar className="w-[14px] h-[14px] shrink-0 text-muted-foreground" strokeWidth={2} />
-      <span className="capitalize min-w-[80px] text-center">{label}</span>
-      <button type="button" onClick={() => hasNewer && setSelectedPeriod("week", weeks[idx + 1])} disabled={!hasNewer} aria-label="Next week" className="disabled:opacity-30 hover:opacity-60 transition-opacity">
-        <ChevronRight className="w-[14px] h-[14px]" strokeWidth={2} />
+      <span className="capitalize min-w-[88px] text-center text-[13px] font-medium text-[#414750]">{label}</span>
+      <button type="button" onClick={() => hasNewer && setSelectedPeriod("week", weeks[idx + 1])} disabled={!hasNewer} aria-label="Next week" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
+        <ChevronRight className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
       </button>
     </span>
   );
@@ -73,14 +73,13 @@ function YearPill() {
   const label = selected ?? "–";
 
   return (
-    <span className={PILL}>
-      <button type="button" onClick={() => hasOlder && setSelectedPeriod("year", years[idx - 1])} disabled={!hasOlder} aria-label="Previous year" className="disabled:opacity-30 hover:opacity-60 transition-opacity">
-        <ChevronLeft className="w-[14px] h-[14px]" strokeWidth={2} />
+    <span className={NAV_PILL}>
+      <button type="button" onClick={() => hasOlder && setSelectedPeriod("year", years[idx - 1])} disabled={!hasOlder} aria-label="Previous year" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
+        <ChevronLeft className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
       </button>
-      <Calendar className="w-[14px] h-[14px] shrink-0 text-muted-foreground" strokeWidth={2} />
-      <span className="min-w-[40px] text-center">{label}</span>
-      <button type="button" onClick={() => hasNewer && setSelectedPeriod("year", years[idx + 1])} disabled={!hasNewer} aria-label="Next year" className="disabled:opacity-30 hover:opacity-60 transition-opacity">
-        <ChevronRight className="w-[14px] h-[14px]" strokeWidth={2} />
+      <span className="min-w-[40px] text-center text-[13px] font-medium text-[#414750]">{label}</span>
+      <button type="button" onClick={() => hasNewer && setSelectedPeriod("year", years[idx + 1])} disabled={!hasNewer} aria-label="Next year" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
+        <ChevronRight className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
       </button>
     </span>
   );
@@ -94,20 +93,44 @@ function HistoryControls() {
 export function DashboardGreeting() {
   const [searchParams] = useSearchParams();
   const { t } = useTranslation("dashboard");
+  const { formatMonth, formatCurrency } = useLocalization();
+  const { selectedMonth, openingBalance, transactionCount } = useMonthSelection();
 
   const tab = searchParams.get("tab") ?? "month";
-  const viewKey = (["month", "week", "year", "history"] as const).includes(tab as never)
-    ? `greeting.subtitle.${tab}`
-    : "greeting.subtitle.month";
+
+  const title = tab === "month" && selectedMonth
+    ? formatMonth(selectedMonth + "-01")
+    : t(`greeting.subtitle.${tab}` as never);
 
   return (
-    <div className="hidden md:block pt-3 pb-5 sticky top-0 z-30 bg-background">
-      <div className="flex items-start justify-between">
-        <h1 className="text-[18px] font-semibold text-foreground">{t(viewKey)}</h1>
+    <div className="hidden md:block py-[18px] sticky top-0 z-30 bg-background">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[21px] font-heading font-semibold text-[#0C0D0E] tracking-[-0.01em] capitalize">
+            {title}
+          </h1>
+          {tab === "month" && openingBalance != null && (
+            <p className="text-[13px] text-[#8A919C] mt-[2px]">
+              {t("greeting.openingBalanceSubtitle", {
+                amount: formatCurrency(openingBalance),
+                count: transactionCount ?? 0,
+              }).split(formatCurrency(openingBalance)).map((part, i, arr) =>
+                i < arr.length - 1 ? (
+                  <span key={i}>
+                    {part}
+                    <span className="font-medium text-[#414750] tabular-nums">{formatCurrency(openingBalance)}</span>
+                  </span>
+                ) : (
+                  <span key={i}>{part}</span>
+                )
+              )}
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-2 mt-[2px]">
           <EmptyStateBanner />
           <span className={PILL}>
-            <SlidersHorizontal className="w-[14px] h-[14px]" strokeWidth={2} />
+            <SlidersHorizontal className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={2} />
             {t("greeting.filter")}
           </span>
           {tab === "month" && <MonthPill />}

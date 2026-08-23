@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  "text-card-foreground transition-all duration-200 border border-border",
+  "text-card-foreground transition-all duration-200",
   {
     variants: {
       variant: {
@@ -51,7 +51,7 @@ CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn("text-[13px] font-semibold uppercase tracking-[0.05em] leading-none text-foreground", className)} {...props} />
+    <h3 ref={ref} className={cn("text-[15px] font-heading font-semibold normal-case tracking-normal leading-none text-foreground", className)} {...props} />
   ),
 );
 CardTitle.displayName = "CardTitle";

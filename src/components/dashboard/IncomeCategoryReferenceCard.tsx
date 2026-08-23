@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 
 interface CategoryData {
@@ -12,36 +11,44 @@ interface IncomeCategoryReferenceCardProps {
   data: CategoryData[];
 }
 
-const SVG_SIZE = 360;
+const VB_W = 420;
+const VB_H = 238;
+const CX = 300;
+const CY = 112;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
-const OUTER_RADIUS = 150;
-const INNER_RADIUS = 56;
+const STROKE_WIDTH = 13;
+const RADII = [100, 67, 34];
 const RING_STYLES = ["white", "black", "striped", "soft", "softer"] as const;
 
 type RingStyle = (typeof RING_STYLES)[number];
 
 const getRingStroke = (style: RingStyle) => {
   switch (style) {
-    case "white":
-      return "hsl(var(--primary-foreground))";
-    case "black":
-      return "hsl(var(--sidebar-background))";
-    case "striped":
-      return "url(#income-category-stripes)";
-    case "soft":
-      return "hsl(var(--primary-foreground) / 0.34)";
-    case "softer":
-      return "hsl(var(--primary-foreground) / 0.22)";
+    case "white": return "rgba(255,255,255,1)";
+    case "black": return "#080808";
+    case "striped": return "url(#income-category-stripes)";
+    case "soft": return "rgba(255,255,255,0.34)";
+    case "softer": return "rgba(255,255,255,0.22)";
   }
 };
 
-/** Colour for the legend dot, matching each ring's style. */
-const getDotBackground = (style: RingStyle) => {
-  if (style === "white") return "hsl(var(--primary-foreground))";
-  if (style === "black") return "hsl(var(--sidebar-background))";
-  return "transparent";
+const getDotFill = (style: RingStyle) => {
+  if (style === "white") return "#fff";
+  if (style === "black") return "#080808";
+  if (style === "striped") return "rgba(255,255,255,0.7)";
+  if (style === "soft") return "rgba(255,255,255,0.34)";
+  return "rgba(255,255,255,0.22)";
 };
+
+function degToRad(deg: number) {
+  return (deg * Math.PI) / 180;
+}
+
+function pointOnCircle(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = degToRad(angleDeg - 90);
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
 
 export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCardProps) {
   const { t } = useTranslation("dashboard");
@@ -53,9 +60,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
   const totalAll = filtered.reduce((sum, item) => sum + item.value, 0);
   const hasData = filtered.length > 0 && totalAll > 0;
 
-  // Cap visible rings at 6: collapse the long tail into a single "Other" ring
-  // so the chart never gets visually cluttered with too many concentric rings.
-  const MAX_RINGS = 6;
+  const MAX_RINGS = RADII.length;
   let sorted = filtered;
   if (filtered.length > MAX_RINGS) {
     const head = filtered.slice(0, MAX_RINGS - 1);
@@ -63,134 +68,150 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     const tailValue = tail.reduce((sum, item) => sum + item.value, 0);
     sorted = [
       ...head,
-      {
-        name: t("charts.otherCategories", "Other"),
-        value: tailValue,
-        color: tail[0]?.color ?? "",
-      },
+      { name: t("charts.otherCategories", "Other"), value: tailValue, color: tail[0]?.color ?? "" },
     ];
   }
   const total = sorted.reduce((sum, item) => sum + item.value, 0);
 
   if (!hasData) {
     return (
-      <Card variant="bento" className="h-[300px] w-full">
-        <CardHeader className="p-4 pb-1">
-          <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-foreground">
-            {t("charts.incomeByCategory", "Income by Category")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 pt-1">
-          <EmptyState height="h-[220px]" />
-        </CardContent>
-      </Card>
+      <div className="h-[300px] w-full rounded-xl bg-[#5191FF] p-5 shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)]">
+        <p className="text-[15px] font-heading font-semibold text-white">
+          {t("charts.incomeByCategory", "Income by Category")}
+        </p>
+        <EmptyState height="h-[220px]" />
+      </div>
     );
   }
 
-  const ringCount = sorted.length;
-  const ringSpacing = ringCount > 1 ? (OUTER_RADIUS - INNER_RADIUS) / (ringCount - 1) : 0;
-  // Scale stroke width down as we add rings so they never overlap.
-  // 1 ring -> 30, 2 -> 28, 3 -> 24, 4 -> 20, 5 -> 17, 6 -> 14
-  const strokeWidth = ringCount === 1 ? 30 : Math.max(12, Math.min(28, ringSpacing * 0.78));
-  const cx = SVG_SIZE * 0.5;
-  const cy = SVG_SIZE * 0.5;
-  const radiiByIndex = sorted.map((_, index) =>
-    ringCount === 1 ? OUTER_RADIUS : OUTER_RADIUS - ringSpacing * index,
-  );
+  const endAngle = TRACK_START_DEG + TRACK_SWEEP_DEG;
+  const markerPoints = sorted.map((_, i) => {
+    const r = RADII[i] ?? RADII[RADII.length - 1];
+    return pointOnCircle(CX, CY, r, endAngle);
+  });
+
+  const sortedByMarkerY = sorted.map((cat, i) => ({ cat, i, markerY: markerPoints[i].y }))
+    .sort((a, b) => a.markerY - b.markerY);
+
+  const LEGEND_X = 14;
+  const LEGEND_START_Y = 140;
+  const LEGEND_LINE_H = 22;
 
   return (
-    <Card
-      variant="bento"
-      className="relative flex h-[300px] w-full flex-col overflow-hidden border-0 bg-primary text-primary-foreground"
-    >
-      <CardHeader className="shrink-0 p-5 pb-0">
-        <CardTitle className="text-[13px] md:text-[14px] font-semibold uppercase tracking-[0.05em] text-primary-foreground">
+    <div className="relative flex h-[300px] w-full flex-col overflow-hidden rounded-xl bg-[#5191FF] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)]">
+      <div className="shrink-0 px-5 pt-5 pb-0">
+        <p className="text-[15px] font-heading font-semibold text-white">
           {t("charts.incomeByCategory", "Income by Category")}
-        </CardTitle>
-      </CardHeader>
+        </p>
+      </div>
 
-      <CardContent className="flex min-h-0 flex-1 items-center justify-between gap-2 p-5 pt-3">
-        {/* Legend — left, compact single column (name + %) that stays hugged to the left;
-            scrolls vertically when there are many categories */}
-        <ul className="flex max-h-full shrink-0 flex-col gap-2 overflow-y-auto pr-1">
+      <div className="flex-1 min-h-0 px-2 pb-2">
+        <svg
+          viewBox={`0 0 ${VB_W} ${VB_H}`}
+          preserveAspectRatio="xMidYMid meet"
+          className="h-full w-full"
+          aria-hidden
+        >
+          <defs>
+            <pattern
+              id="income-category-stripes"
+              width="12"
+              height="12"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(10)"
+            >
+              <rect width="12" height="12" fill="transparent" />
+              <rect width="4" height="12" fill="rgba(255,255,255,1)" />
+            </pattern>
+          </defs>
+
           {sorted.map((category, index) => {
-            const pct = (category.value / total) * 100;
+            const radius = RADII[index] ?? RADII[RADII.length - 1];
+            const pct = category.value / total;
             const ringStyle = RING_STYLES[index % RING_STYLES.length];
+            const circumference = 2 * Math.PI * radius;
+            const trackLength = (TRACK_SWEEP_DEG / 360) * circumference;
+            const fillLength = Math.max(trackLength * pct, pct > 0 ? STROKE_WIDTH * 0.9 : 0);
+
             return (
-              <li
-                key={`${category.name}-legend-${index}`}
-                className="flex items-center gap-2.5 text-primary-foreground"
-              >
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full border border-primary-foreground/80"
-                  style={{ backgroundColor: getDotBackground(ringStyle) }}
+              <g key={index} transform={`rotate(${TRACK_START_DEG} ${CX} ${CY})`}>
+                <circle
+                  cx={CX}
+                  cy={CY}
+                  r={radius}
+                  fill="none"
+                  stroke="rgba(255,255,255,0.15)"
+                  strokeWidth={STROKE_WIDTH}
+                  strokeLinecap="round"
+                  strokeDasharray={`${trackLength} ${circumference}`}
                 />
-                <span className="w-[100px] truncate text-[13px] font-medium sm:w-[150px]">{category.name}</span>
-                <span className="w-[40px] shrink-0 text-right text-[13px] font-semibold tabular-nums">
-                  {pct.toFixed(0)}%
-                </span>
-              </li>
+                <circle
+                  cx={CX}
+                  cy={CY}
+                  r={radius}
+                  fill="none"
+                  stroke={getRingStroke(ringStyle)}
+                  strokeWidth={STROKE_WIDTH}
+                  strokeLinecap="round"
+                  strokeDasharray={`${fillLength} ${circumference}`}
+                />
+              </g>
             );
           })}
-        </ul>
 
-        {/* Chart — right, fixed size (never grows with the category count) and fully contained */}
-        <div className="h-[130px] w-[130px] shrink-0 sm:h-[200px] sm:w-[200px]">
-          <svg
-            viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
-            preserveAspectRatio="xMidYMid meet"
-            className="h-full w-full"
-            aria-hidden
-          >
-            <defs>
-              <pattern
-                id="income-category-stripes"
-                width="12"
-                height="12"
-                patternUnits="userSpaceOnUse"
-                patternTransform="rotate(10)"
-              >
-                <rect width="12" height="12" fill="transparent" />
-                <rect width="4" height="12" fill="hsl(var(--primary-foreground))" />
-              </pattern>
-            </defs>
+          {sortedByMarkerY.map(({ cat, i }, rowIdx) => {
+            const ringStyle = RING_STYLES[i % RING_STYLES.length];
+            const marker = markerPoints[i];
+            const legendY = LEGEND_START_Y + rowIdx * LEGEND_LINE_H;
+            const pct = Math.round((cat.value / total) * 100);
 
-            {sorted.map((category, index) => {
-              const radius = radiiByIndex[index];
-              const pct = category.value / total;
-              const ringStyle = RING_STYLES[index % RING_STYLES.length];
-              const circumference = 2 * Math.PI * radius;
-              const trackLength = (TRACK_SWEEP_DEG / 360) * circumference;
-              const fillLength = Math.max(trackLength * pct, pct > 0 ? strokeWidth * 0.9 : 0);
-
-              return (
-                <g key={`${category.name}-${index}`} transform={`rotate(${TRACK_START_DEG} ${cx} ${cy})`}>
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={radius}
-                    fill="none"
-                    stroke="hsl(var(--primary-foreground) / 0.15)"
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeDasharray={`${trackLength} ${circumference}`}
-                  />
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={radius}
-                    fill="none"
-                    stroke={getRingStroke(ringStyle)}
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeDasharray={`${fillLength} ${circumference}`}
-                  />
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-      </CardContent>
-    </Card>
+            return (
+              <g key={`connector-${i}`}>
+                <line
+                  x1={LEGEND_X + 110}
+                  y1={legendY}
+                  x2={marker.x - 8}
+                  y2={marker.y}
+                  stroke="rgba(255,255,255,0.65)"
+                  strokeWidth={1}
+                  strokeDasharray="3 4"
+                />
+                <circle
+                  cx={marker.x}
+                  cy={marker.y}
+                  r={4.5}
+                  fill={getDotFill(ringStyle)}
+                  stroke="white"
+                  strokeWidth={1.4}
+                />
+                <text
+                  x={LEGEND_X}
+                  y={legendY + 1}
+                  fill="white"
+                  fontSize="13.5"
+                  fontWeight="500"
+                  fontFamily="Inter, sans-serif"
+                  dominantBaseline="middle"
+                >
+                  {cat.name}
+                </text>
+                <text
+                  x={LEGEND_X + 118}
+                  y={legendY + 1}
+                  fill="white"
+                  fontSize="13.5"
+                  fontWeight="600"
+                  fontFamily="Inter, sans-serif"
+                  dominantBaseline="middle"
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
+                  {pct}%
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
   );
 }
