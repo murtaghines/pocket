@@ -12,22 +12,12 @@ interface IncomeCategoryReferenceCardProps {
 }
 
 const VB_W = 420;
-const VB_H = 238;
 const CX = 300;
 const CY = 112;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
 const STROKE_WIDTH = 13;
 const RADII = [100, 67, 34];
-
-function degToRad(deg: number) {
-  return (deg * Math.PI) / 180;
-}
-
-function pointOnCircle(cx: number, cy: number, r: number, angleDeg: number) {
-  const rad = degToRad(angleDeg - 90);
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-}
 
 export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCardProps) {
   const { t } = useTranslation("dashboard");
@@ -52,37 +42,36 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
   }
   const total = sorted.reduce((sum, item) => sum + item.value, 0);
 
-  if (!hasData) {
-    return (
-      <div className="w-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
-        <p className="text-[15px] font-heading font-semibold text-white mb-[6px]">
-          {t("charts.incomeByCategory", "Income by Category")}
-        </p>
-        <EmptyState height="h-[220px]" />
-      </div>
-    );
-  }
-
   const ringFills: Array<{ stroke: string; dotFill: string; dotStroke: string }> = [
     { stroke: "#fff", dotFill: "#fff", dotStroke: "#fff" },
     { stroke: "#0C0D0E", dotFill: "#0C0D0E", dotStroke: "#fff" },
     { stroke: "url(#inc-stripes)", dotFill: "url(#inc-stripes)", dotStroke: "#fff" },
   ];
 
-  const endAngle = TRACK_START_DEG + TRACK_SWEEP_DEG;
+  const numItems = sorted.length;
+  const LEGEND_START_Y = numItems <= 1 ? 162 : numItems === 2 ? 155 : 147.3;
+  const LEGEND_GAP = 29.9;
+  const lastLegendY = LEGEND_START_Y + (numItems - 1) * LEGEND_GAP;
+  const vbH = Math.max(CY + RADII[0] + 14, lastLegendY + 20);
 
+  if (!hasData) {
+    return (
+      <div className="w-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
+        <p className="text-[15px] font-heading font-semibold text-white mb-[6px]">
+          {t("charts.incomeByCategory", "Income by Category")}
+        </p>
+        <EmptyState height="h-[200px]" />
+      </div>
+    );
+  }
+
+  // Build legend items: inner rings (smallest) at top, outer rings (largest) at bottom
   const legendItems = sorted.map((cat, i) => {
     const pct = Math.round((cat.value / total) * 100);
     const r = RADII[i] ?? RADII[RADII.length - 1];
-    const marker = pointOnCircle(CX, CY, r, endAngle);
-    return { cat, pct, marker, ringIndex: i };
+    return { cat, pct, ringIndex: i, r };
   });
-
-  legendItems.sort((a, b) => a.marker.y - b.marker.y);
-
-  const LEGEND_X = 16;
-  const LEGEND_START_Y = 147.3;
-  const LEGEND_GAP = 29.9;
+  legendItems.sort((a, b) => b.ringIndex - a.ringIndex);
 
   return (
     <div className="w-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
@@ -90,10 +79,10 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
         {t("charts.incomeByCategory", "Income by Category")}
       </p>
       <svg
-        viewBox={`0 0 ${VB_W} ${VB_H}`}
+        viewBox={`0 0 ${VB_W} ${vbH}`}
         preserveAspectRatio="xMidYMid meet"
         className="w-full flex-1"
-        style={{ minHeight: 230, display: "block" }}
+        style={{ display: "block" }}
         aria-hidden
       >
         <defs>
@@ -143,41 +132,55 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
           );
         })}
 
-        {legendItems.map(({ cat, pct, marker, ringIndex }, rowIdx) => {
+        {legendItems.map(({ cat, pct, ringIndex }, rowIdx) => {
           const fill = ringFills[ringIndex] ?? ringFills[ringFills.length - 1];
-          const legendY = LEGEND_START_Y + rowIdx * LEGEND_GAP;
-          const lineEndX = marker.x - 8;
+          const legendTextY = LEGEND_START_Y + rowIdx * LEGEND_GAP;
+          const legendLineY = legendTextY - 4.5;
+          const r = RADII[ringIndex] ?? RADII[RADII.length - 1];
+
+          const dy = legendLineY - CY;
+          const d2 = r * r - dy * dy;
+          let markerX: number;
+          if (d2 > 0) {
+            markerX = CX + Math.sqrt(d2);
+          } else {
+            markerX = CX + r * 0.85;
+          }
+
           const lineStartX = 122;
+          const lineEndX = markerX - 8.5;
 
           return (
             <g key={`legend-${ringIndex}`}>
               <text
-                x={LEGEND_X}
-                y={legendY}
+                x={16}
+                y={legendTextY}
                 style={{ font: "500 13.5px Inter, sans-serif", fill: "#fff" }}
               >
                 {cat.name}
               </text>
-              <line
-                x1={lineStartX}
-                y1={legendY - 4.5}
-                x2={lineEndX}
-                y2={legendY - 4.5}
-                stroke="rgba(255,255,255,0.65)"
-                strokeWidth={1.2}
-                strokeDasharray="3 4"
-              />
+              {lineEndX > lineStartX && (
+                <line
+                  x1={lineStartX}
+                  y1={legendLineY}
+                  x2={lineEndX}
+                  y2={legendLineY}
+                  stroke="rgba(255,255,255,0.65)"
+                  strokeWidth={1.2}
+                  strokeDasharray="3 4"
+                />
+              )}
               <circle
-                cx={marker.x}
-                cy={marker.y}
+                cx={markerX}
+                cy={legendLineY}
                 r={4.5}
                 fill={fill.dotFill}
                 stroke={fill.dotStroke}
                 strokeWidth={1.4}
               />
               <text
-                x={marker.x + 13}
-                y={legendY}
+                x={markerX + 13}
+                y={legendTextY}
                 style={{
                   font: "600 13.5px Inter, sans-serif",
                   fill: "#fff",

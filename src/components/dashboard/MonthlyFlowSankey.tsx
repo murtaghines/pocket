@@ -29,10 +29,34 @@ const SVG_W = 680;
 const LEFT_X = 0;
 const MID_X = 325;
 const RIGHT_X = 650;
-const GAP = 6;
-const MIN_H = 6;
+const GAP = 8;
+const MIN_H = 8;
+const TARGET_H = 268;
 
 const ACCOUNT_COLORS = ["#1B76FF", "#4E97FF", "#8FBEFF", "#B6D4FF", "#D4E6FF"];
+
+type Node = { name: string; value: number; color: string; x: number; y: number; h: number };
+type Band = {
+  sx: number; sy: number; sh: number;
+  dx: number; dy: number; dh: number;
+  sColor: string; dColor: string;
+  id: string;
+};
+
+function buildColumn(items: Array<{ name: string; value: number; color: string }>, x: number): Node[] {
+  if (items.length === 0) return [];
+  const total = items.reduce((s, it) => s + it.value, 0);
+  if (total <= 0) return [];
+  const gapTotal = (items.length - 1) * GAP;
+  const barArea = TARGET_H - gapTotal;
+  let y = 0;
+  return items.map((item) => {
+    const h = Math.max(MIN_H, (item.value / total) * barArea);
+    const node: Node = { ...item, x, y, h };
+    y += h + GAP;
+    return node;
+  });
+}
 
 export function MonthlyFlowSankey({
   incomeCategories,
@@ -43,65 +67,34 @@ export function MonthlyFlowSankey({
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
 
-  const { leftNodes, midNodes, rightNodes, leftMidBands, midRightBands, svgH } = useMemo(() => {
+  const { leftNodes, midNodes, rightNodes, allBands } = useMemo(() => {
     const leftCats = incomeCategories.filter((c) => c.value > 0).sort((a, b) => b.value - a.value);
     const rightCats = expenseCategories.filter((c) => c.value > 0).sort((a, b) => b.value - a.value);
     const accounts = accountFlows.filter(a => a.income > 0 || a.expenses > 0);
 
     if (leftCats.length === 0 && rightCats.length === 0) {
-      return { leftNodes: [], midNodes: [], rightNodes: [], leftMidBands: [], midRightBands: [], svgH: 200 };
+      return { leftNodes: [], midNodes: [], rightNodes: [], allBands: [] };
     }
 
     const incomeTotal = leftCats.reduce((s, c) => s + c.value, 0);
     const expenseTotal = rightCats.reduce((s, c) => s + c.value, 0);
-    const accountIncomeTotal = accounts.reduce((s, a) => s + a.income, 0);
-    const accountExpenseTotal = accounts.reduce((s, a) => s + a.expenses, 0);
 
     const needsBalance = expenseTotal > incomeTotal && openingBalance > 0;
     const balanceValue = needsBalance ? Math.min(openingBalance, expenseTotal - incomeTotal) : 0;
-    const finalLeft = needsBalance
+    const finalLeft: CategoryData[] = needsBalance
       ? [...leftCats, { name: t("stats.openingBalance", "Opening balance"), value: balanceValue, color: "#8A919C" }]
       : leftCats;
 
-    const topN = 4;
     let finalRight = rightCats;
-    if (rightCats.length > topN) {
-      const head = rightCats.slice(0, topN);
-      const tail = rightCats.slice(topN);
+    if (rightCats.length > 4) {
+      const head = rightCats.slice(0, 4);
+      const tail = rightCats.slice(4);
       const restVal = tail.reduce((s, c) => s + c.value, 0);
       finalRight = [...head, { name: t("charts.other", "Other"), value: restVal, color: "#B4BAC3" }];
     }
 
-    const leftTotal = finalLeft.reduce((s, c) => s + c.value, 0);
-    const rightTotal = finalRight.reduce((s, c) => s + c.value, 0);
-    const midTotal = Math.max(
-      accounts.reduce((s, a) => s + a.income, 0),
-      accounts.reduce((s, a) => s + a.expenses, 0),
-      leftTotal,
-      rightTotal,
-    );
-
-    const maxTotal = Math.max(leftTotal, midTotal, rightTotal);
-    if (maxTotal === 0) return { leftNodes: [], midNodes: [], rightNodes: [], leftMidBands: [], midRightBands: [], svgH: 200 };
-
-    const maxNodes = Math.max(finalLeft.length, accounts.length, finalRight.length);
-    const availableH = Math.max(200, maxNodes * 32 + (maxNodes - 1) * GAP);
-    const scale = (availableH - (Math.max(finalLeft.length, accounts.length, finalRight.length) - 1) * GAP) / maxTotal;
-
-    type Node = { name: string; value: number; color: string; x: number; y: number; h: number };
-
-    const buildNodes = (items: Array<{ name: string; value: number; color: string }>, x: number): Node[] => {
-      let y = 0;
-      return items.map((item) => {
-        const h = Math.max(MIN_H, item.value * scale);
-        const node = { ...item, x, y, h };
-        y += h + GAP;
-        return node;
-      });
-    };
-
-    const leftNodes = buildNodes(finalLeft, LEFT_X);
-    const midNodes = buildNodes(
+    const leftNodes = buildColumn(finalLeft, LEFT_X);
+    const midNodes = buildColumn(
       accounts.map((a, i) => ({
         name: a.name,
         value: Math.max(a.income, a.expenses),
@@ -109,73 +102,64 @@ export function MonthlyFlowSankey({
       })),
       MID_X,
     );
-    const rightNodes = buildNodes(finalRight, RIGHT_X);
+    const rightNodes = buildColumn(finalRight, RIGHT_X);
 
-    type Band = {
-      sx: number; sy: number; sh: number;
-      dx: number; dy: number; dh: number;
-      sColor: string; dColor: string;
-      id: string;
-    };
+    const leftTotal = finalLeft.reduce((s, c) => s + c.value, 0);
+    const accIncomeTotal = accounts.reduce((s, a) => s + a.income, 0);
+    const accExpenseTotal = accounts.reduce((s, a) => s + a.expenses, 0);
+    const rightTotal = finalRight.reduce((s, c) => s + c.value, 0);
 
-    const leftMidBands: Band[] = [];
-    if (midNodes.length > 0 && leftNodes.length > 0) {
-      const midOffsets = midNodes.map(() => 0);
+    const bands: Band[] = [];
+
+    if (midNodes.length > 0 && leftNodes.length > 0 && accIncomeTotal > 0 && leftTotal > 0) {
+      const leftOffsets = leftNodes.map(() => 0);
+      const midInOffsets = midNodes.map(() => 0);
+
       leftNodes.forEach((ln, li) => {
-        let leftOffset = 0;
         midNodes.forEach((mn, mi) => {
           const acc = accounts[mi];
-          const flow = (ln.value / leftTotal) * acc.income;
-          if (flow <= 0) return;
-          const sh = Math.max(1, (flow / ln.value) * ln.h);
-          const dh = Math.max(1, (flow / mn.value) * mn.h);
-          leftMidBands.push({
-            sx: ln.x + BAR_W, sy: ln.y + leftOffset, sh,
-            dx: mn.x, dy: mn.y + midOffsets[mi], dh,
+          if (!acc || acc.income <= 0) return;
+          const incomeFrac = acc.income / accIncomeTotal;
+          const sh = Math.max(0.5, incomeFrac * ln.h);
+          const dh = Math.max(0.5, (ln.value / leftTotal) * mn.h);
+          bands.push({
+            sx: ln.x + BAR_W, sy: ln.y + leftOffsets[li], sh,
+            dx: mn.x, dy: mn.y + midInOffsets[mi], dh,
             sColor: ln.color, dColor: mn.color,
             id: `lm-${li}-${mi}`,
           });
-          leftOffset += sh;
-          midOffsets[mi] += dh;
+          leftOffsets[li] += sh;
+          midInOffsets[mi] += dh;
         });
       });
     }
 
-    const midRightBands: Band[] = [];
-    if (midNodes.length > 0 && rightNodes.length > 0) {
+    if (midNodes.length > 0 && rightNodes.length > 0 && accExpenseTotal > 0 && rightTotal > 0) {
+      const midOutOffsets = midNodes.map(() => 0);
       const rightOffsets = rightNodes.map(() => 0);
+
       midNodes.forEach((mn, mi) => {
-        let midOffset = midNodes.length > 0
-          ? leftMidBands.filter(b => b.dx === mn.x).reduce((max, b) => Math.max(max, b.dy + b.dh - mn.y), 0)
-          : 0;
+        const acc = accounts[mi];
+        if (!acc || acc.expenses <= 0) return;
         rightNodes.forEach((rn, ri) => {
-          const acc = accounts[mi];
-          const flow = (acc.expenses / (accountExpenseTotal || 1)) * rn.value;
-          if (flow <= 0) return;
-          const sh = Math.max(1, (flow / mn.value) * mn.h);
-          const dh = Math.max(1, (flow / rn.value) * rn.h);
-          midRightBands.push({
-            sx: mn.x + BAR_W, sy: mn.y + midOffset, sh,
+          const expFrac = rn.value / rightTotal;
+          const sh = Math.max(0.5, expFrac * mn.h);
+          const dh = Math.max(0.5, (acc.expenses / accExpenseTotal) * rn.h);
+          bands.push({
+            sx: mn.x + BAR_W, sy: mn.y + midOutOffsets[mi], sh,
             dx: rn.x, dy: rn.y + rightOffsets[ri], dh,
             sColor: mn.color, dColor: rn.color,
             id: `mr-${mi}-${ri}`,
           });
-          midOffset += sh;
+          midOutOffsets[mi] += sh;
           rightOffsets[ri] += dh;
         });
       });
     }
 
-    const totalH = Math.max(
-      leftNodes.length > 0 ? leftNodes[leftNodes.length - 1].y + leftNodes[leftNodes.length - 1].h : 0,
-      midNodes.length > 0 ? midNodes[midNodes.length - 1].y + midNodes[midNodes.length - 1].h : 0,
-      rightNodes.length > 0 ? rightNodes[rightNodes.length - 1].y + rightNodes[rightNodes.length - 1].h : 0,
-    );
-
-    return { leftNodes, midNodes, rightNodes, leftMidBands, midRightBands, svgH: totalH };
+    return { leftNodes, midNodes, rightNodes, allBands: bands };
   }, [incomeCategories, expenseCategories, accountFlows, openingBalance, t]);
 
-  const allBands = [...leftMidBands, ...midRightBands];
   const hasData = leftNodes.length > 0 || rightNodes.length > 0;
 
   return (
@@ -187,9 +171,9 @@ export function MonthlyFlowSankey({
       {!hasData ? (
         <EmptyState height="h-[200px]" />
       ) : (
-        <div className="overflow-x-auto pt-0">
+        <div className="overflow-x-auto">
           <svg
-            viewBox={`0 -32 ${SVG_W} ${svgH + 44}`}
+            viewBox={`0 -32 ${SVG_W} ${TARGET_H + 44}`}
             className="w-full"
             preserveAspectRatio="xMidYMid meet"
             style={{ display: "block" }}
