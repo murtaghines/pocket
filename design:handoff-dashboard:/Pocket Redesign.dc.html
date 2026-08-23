@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics="">
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#eceef1;font-family:Inter,system-ui,sans-serif}
+a{color:#1B76FF}a:hover{color:#0f5fd6}
+.dv-turn{padding:40px 44px 36px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 Inter,system-ui,sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 Inter,system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-card{max-width:100%;background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 12px 32px -12px rgba(0,0,0,.16);overflow:hidden}
+.dv-opt:target .dv-oid{background:#1B76FF;color:#fff}
+.dv-next{margin:24px 0 0;font:12px/1.6 Inter,system-ui,sans-serif;color:rgba(0,0,0,.5)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Pocket · más suave, más simple</span></div>
+
+<div style="max-width: 1200px; background: #fff; border-radius: 12px; padding: 26px 30px; margin: 0 0 30px; box-shadow: 0 1px 3px rgba(0,0,0,.06); width: 1180px; height: 400px">
+<p style="margin:0 0 4px;font:700 17px/1.2 Quicksand,sans-serif;color:#0C0D0E">Lo que asumí</p>
+<p style="margin: 0 0 18px; font: 400 13.5px/1.65 Inter,sans-serif; color: #5A6069; max-width: 1200ch; text-wrap: pretty; height: 67px; width: 800px">Los lineamientos de la versión nueva, para pasar directo al código. Salen de leer el repo (<code style="font:500 12px ui-monospace,monospace;background:#F2F4F7;padding:1px 5px;border-radius:4px">index.css</code>, <code style="font:500 12px ui-monospace,monospace;background:#F2F4F7;padding:1px 5px;border-radius:4px">design-system.md</code>, dashboard y tabla) y de reemplazar lo que hoy hace que se vea vieja.</p>
+
+<div style="display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0px">
+<div style="height: 283px; width: 490px">
+<p style="margin:0 0 7px;font:600 11px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#9AA1AC">Qué se reemplaza</p>
+<ul style="margin:0;padding-left:17px;font:400 13px/1.7 Inter,sans-serif;color:#5A6069">
+<li>Cada contenedor tiene borde <code style="font:500 11.5px ui-monospace,monospace">#E5E7EB</code> sobre fondo <code style="font:500 11.5px ui-monospace,monospace">#F4F5F7</code>: 8 px de diferencia entre el borde y el fondo, así que la pantalla se lee como una grilla de recuadros y no como tarjetas.</li>
+<li><code style="font:500 11.5px ui-monospace,monospace">--shadow-section: none</code> — hoy no hay ninguna sombra en el dashboard.</li>
+<li>Todos los títulos son iguales: 13 px, 600, MAYÚSCULA, tracking .05em. Nueve veces por pantalla. Por eso se siente aburrida y plana.</li>
+<li>Filas de tabla de 74 px con badges sólidos rojo/amarillo saturado: mucho aire y mucho color al mismo tiempo.</li>
+</ul>
+</div>
+<div>
+
+<p style="margin:0 0 7px;font:600 11px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#9AA1AC">El sistema nuevo</p><ul style="margin:0;padding-left:17px;font:400 13px/1.7 Inter,sans-serif;color:#5A6069">
+<li>Fondo <code style="font:500 11.5px ui-monospace,monospace">#F5F7F9</code>, tarjetas blancas sin borde, radio 12 y sombra <code style="font:500 11.5px ui-monospace,monospace">0 1px 2px /.04 + 0 6px 16px -6px /.10</code>.</li>
+<li>Jerarquía tipográfica real: Quicksand 600 para títulos de sección, Inter 600 para números, Inter 400 sentence-case para todo lo demás. Se van las MAYÚSCULAS.</li>
+<li>Azul solo en acciones y estados activos. La tarjeta azul de Net Balance pasa a blanca; el dato manda, no el fondo.</li>
+<li>Filas de 40 px, sin líneas verticales; el tipo de movimiento es una pill translúcida de su color y la categoría una pill del color de la categoría con su icono.</li>
+<li>Un quinto KPI para lo enviado a invertir, balance inicial en el subtítulo y una columna de balance corrido que cierra el mes.</li>
+<li>Popups tipo ajustes de iOS: blanco, radio 12, sombra sola, 34 px por ítem, sin bordes ni relleno de color.</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Dashboard mensual</div>
+<div class="dv-card" style="width:1240px">
+<div style="background:#1B76FF;height:58px;display:flex;align-items:center;padding:0 26px">
+<svg width="21" height="21" viewBox="0 0 24 24" style="margin-right:28px;flex:none"><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(45 12 12)"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(90 12 12)"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(135 12 12)"></rect></svg>
+<div style="display:flex;align-self:stretch;gap:28px">
+<span style="display:flex;align-items:center;gap:8px;height:100%;padding:0 2px;font:600 15px Quicksand,sans-serif;color:#fff;border-bottom:2px solid #fff">dashboard<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">investments</span>
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">planning</span>
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">data</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px;color:#fff">
+<span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></span>
+<span style="display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:999px;background:rgba(255,255,255,.14)">
+<span style="width:24px;height:24px;border-radius:999px;background:#fff;color:#1B76FF;display:flex;align-items:center;justify-content:center;font:600 11px Inter,sans-serif">AD</span>
+<span style="font:500 13.5px Inter,sans-serif;color:#fff">Ana Demo</span>
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</div>
+</div>
+<div style="background:#1B76FF;padding:11px 26px 13px 75px;display:flex;align-items:center;gap:28px">
+<span style="font:700 13.5px Quicksand,sans-serif;color:#fff">month</span>
+<span style="font:500 13.5px Quicksand,sans-serif;color:rgba(255,255,255,.55)">week</span>
+<span style="font:500 13.5px Quicksand,sans-serif;color:rgba(255,255,255,.55)">year</span>
+<span style="font:500 13.5px Quicksand,sans-serif;color:rgba(255,255,255,.55)">historical</span>
+</div>
+
+<div style="background:#F5F7F9;padding:8px 28px 30px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 0 18px">
+<div>
+<h1 style="margin:0;font:600 21px Quicksand,sans-serif;color:#0C0D0E;letter-spacing:-.01em">Julio 2026</h1>
+<p style="margin:4px 0 0;font:400 13px Inter,sans-serif;color:#8A919C">Balance inicial <span style="font-weight:500;color:#414750;font-variant-numeric:tabular-nums">4.823,05 €</span> · 218 movimientos</p>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:7px;font:500 13px Inter,sans-serif;color:#414750;background:#fff;border-radius:10px;padding:8px 13px;box-shadow:0 1px 2px rgba(16,24,40,.05)">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A919C" stroke-width="1.9" stroke-linecap="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>Filtros</span>
+<span style="display:flex;align-items:center;gap:2px;background:#fff;border-radius:10px;padding:5px;box-shadow:0 1px 2px rgba(16,24,40,.05)">
+<span style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#414750" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"></path></svg></span>
+<span style="min-width:88px;text-align:center;font:500 13px Inter,sans-serif;color:#0C0D0E">julio 2026</span>
+<span style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#414750" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"></path></svg></span>
+</span>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px">
+<div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10)">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:14px"><span style="width:7px;height:7px;border-radius:999px;background:#2E9E6B"></span><span style="font:500 13px Inter,sans-serif;color:#6B7280">Ingresos</span></div>
+<div style="font:600 22px Inter,sans-serif;letter-spacing:-.025em;font-variant-numeric:tabular-nums;color:#0C0D0E">3.620,71 €</div>
+<div style="margin-top:8px;font:400 12.5px Inter,sans-serif;color:#9AA1AC"><span style="font-weight:500;color:#2E9E6B">+45%</span> vs junio</div>
+</div>
+<div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10)">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:14px"><span style="width:7px;height:7px;border-radius:999px;background:#E0704A"></span><span style="font:500 13px Inter,sans-serif;color:#6B7280">Gastos</span></div>
+<div style="font:600 22px Inter,sans-serif;letter-spacing:-.025em;font-variant-numeric:tabular-nums;color:#0C0D0E">4.131,68 €</div>
+<div style="margin-top:8px;font:400 12.5px Inter,sans-serif;color:#9AA1AC"><span style="font-weight:500;color:#D9542B">+52%</span> vs junio</div>
+</div>
+<div style="border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10); background-color: #1B75FFE6">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:14px"><span style="width: 7px; height: 7px; border-radius: 999px; background-color: #FFFFFF"></span><span style="font: 500 13px Inter,sans-serif; color: #FFFFFF">Balance neto</span>
+</div>
+<div style="font: 600 22px Inter,sans-serif; letter-spacing: -.025em; font-variant-numeric: tabular-nums; color: #FFFFFF">−510,97 €</div>
+<div style="margin-top: 8px; font: 400 12.5px Inter,sans-serif; color: #B6BAC2"><span style="font-weight: 500; color: #FFFFFF">−146%</span> vs junio</div>
+</div>
+<div style="border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10); background-color: #CBE0FF">
+<div style="flex:1"><div style="font: 500 13px Inter,sans-serif; color: #1B75FF; margin-bottom: 14px">Tasa de ahorro</div><div style="font: 600 22px Inter,sans-serif; letter-spacing: -.025em; font-variant-numeric: tabular-nums; color: #1B75FF">−14%</div><div style="margin-top:8px;font:400 12.5px Inter,sans-serif;color:#9AA1AC"><span style="color: #1B75FF">−6%<span style="color: #1B75FF"> vs junio</span></span></div></div>
+<svg width="52" height="52" viewBox="0 0 58 58" style="flex: none; width: 74px; height: 66px"><circle cx="29" cy="29" r="24" fill="none" stroke="#1B75FF" stroke-width="7"></circle><circle cx="29" cy="29" r="24" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-dasharray="21 151" transform="rotate(-90 29 29)"></circle></svg>
+</div>
+<div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10)">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:14px"><span style="width:7px;height:7px;border-radius:999px;background:#1B76FF"></span><span style="font:500 13px Inter,sans-serif;color:#6B7280">Enviado a invertir</span></div>
+<div style="font:600 22px Inter,sans-serif;letter-spacing:-.025em;font-variant-numeric:tabular-nums;color:#0C0D0E">301,85 €</div>
+<div style="margin-top:8px;font:400 12.5px Inter,sans-serif;color:#9AA1AC"><span style="font-weight: 500; color: rgb(27, 118, 255);">+220,00 €</span> en julio</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-bottom:14px">
+<div style="background:#fff;border-radius:12px;padding:20px 22px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10)">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+<div><p style="margin:0;font:600 15px Quicksand,sans-serif;color:#0C0D0E">Evolución Semanal</p></div>
+<div style="display:flex;gap:14px;font:400 12px Inter,sans-serif;color:#6B7280">
+<span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:#1B76FF"></span>Ingresos</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:#DCE0E6"></span>Gastos</span>
+</div>
+</div>
+<div style="display:flex;align-items:flex-end;height:172px">
+<div style="flex:1;display:flex;align-items:flex-end;justify-content:center;gap:5px;height:100%"><span style="width:20px;height:5px;background:#1B76FF;border-radius:6px"></span><span style="width:20px;height:118px;background:#DCE0E6;border-radius:6px"></span></div>
+<div style="flex:1;display:flex;align-items:flex-end;justify-content:center;gap:5px;height:100%"><span style="width:20px;height:72px;background:#1B76FF;border-radius:6px"></span><span style="width:20px;height:86px;background:#DCE0E6;border-radius:6px"></span></div>
+<div style="flex:1;display:flex;align-items:flex-end;justify-content:center;gap:5px;height:100%"><span style="width:20px;height:20px;background:#1B76FF;border-radius:6px"></span><span style="width:20px;height:18px;background:#DCE0E6;border-radius:6px"></span></div>
+<div style="flex:1;display:flex;align-items:flex-end;justify-content:center;gap:5px;height:100%"><span style="width:20px;height:4px;background:#EAECEF;border-radius:6px"></span><span style="width:20px;height:26px;background:#DCE0E6;border-radius:6px"></span></div>
+<div style="flex:1;display:flex;align-items:flex-end;justify-content:center;gap:5px;height:100%"><span style="width:20px;height:156px;background:#1B76FF;border-radius:6px"></span><span style="width:20px;height:16px;background:#DCE0E6;border-radius:6px"></span></div>
+</div>
+<div style="display:flex;margin-top:10px">
+<span style="flex:1;text-align:center;font:400 11.5px Inter,sans-serif;color:#9AA1AC">sem 1</span>
+<span style="flex:1;text-align:center;font:400 11.5px Inter,sans-serif;color:#9AA1AC">sem 2</span>
+<span style="flex:1;text-align:center;font:400 11.5px Inter,sans-serif;color:#9AA1AC">sem 3</span>
+<span style="flex:1;text-align:center;font:400 11.5px Inter,sans-serif;color:#9AA1AC">sem 4</span>
+<span style="flex:1;text-align:center;font:400 11.5px Inter,sans-serif;color:#9AA1AC">sem 5</span>
+</div>
+</div>
+
+<div style="background:#fff;border-radius:12px;padding:20px 22px 14px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10)">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+<div><p style="margin:0;font:600 15px Quicksand,sans-serif;color:#0C0D0E">Cuentas</p><p style="margin:2px 0 0;font:400 12.5px Inter,sans-serif;color:#9AA1AC">Saldo a fin de mes<br><br></p></div>
+<span style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#F5F7F9"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A919C" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1.5" fill="#8A919C"></circle><circle cx="19" cy="12" r="1.5" fill="#8A919C"></circle><circle cx="5" cy="12" r="1.5" fill="#8A919C"></circle></svg></span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F1F2F4">
+<span style="width:34px;height:34px;border-radius:10px;background:#EFF5FF;color:#1B76FF;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"></path></svg></span>
+<div style="flex:1;min-width:0"><p style="margin:0;font:500 13.5px Inter,sans-serif;color:#0C0D0E">Revolut · Personal</p><p style="margin:1px 0 0;font:400 12px Inter,sans-serif;color:#9AA1AC">152 movimientos</p></div>
+<span style="font:600 14px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">229,85 €</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F1F2F4">
+<span style="width:34px;height:34px;border-radius:10px;background:#F0EFFB;color:#6E6EDB;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+<div style="flex:1;min-width:0"><p style="margin:0;font:500 13.5px Inter,sans-serif;color:#0C0D0E">Revolut · Joint</p><p style="margin:1px 0 0;font:400 12px Inter,sans-serif;color:#9AA1AC">59 movimientos</p></div>
+<span style="font:600 14px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">869,31 €</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0">
+<span style="width:34px;height:34px;border-radius:10px;background:#FCEFEB;color:#D9542B;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"></path></svg></span>
+<div style="flex:1;min-width:0"><p style="margin:0;font:500 13.5px Inter,sans-serif;color:#0C0D0E">Santander · Personal</p><p style="margin:1px 0 0;font:400 12px Inter,sans-serif;color:#9AA1AC">7 movimientos</p></div>
+<span style="font:600 14px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">22,56 €</span>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1.55fr 1fr;gap:14px">
+<div style="background:#fff;border-radius:12px;padding:20px 22px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10)">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+<div><p style="margin:0;font:600 15px Quicksand,sans-serif;color:#0C0D0E">Balance diario</p><p style="margin:2px 0 0;font:400 12.5px Inter,sans-serif;color:#9AA1AC">Cómo se movió tu saldo en julio</p></div>
+<span style="font:600 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#D9542B">−510,97 €</span>
+</div>
+<svg viewBox="0 0 620 150" style="width: 100%; height: 200px; display: block">
+<defs><linearGradient id="pk-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1B76FF" stop-opacity=".16"></stop><stop offset="100%" stop-color="#1B76FF" stop-opacity="0"></stop></linearGradient></defs>
+<line x1="0" y1="20" x2="620" y2="20" stroke="#F1F2F4"></line><line x1="0" y1="60" x2="620" y2="60" stroke="#F1F2F4"></line><line x1="0" y1="100" x2="620" y2="100" stroke="#F1F2F4"></line><line x1="0" y1="140" x2="620" y2="140" stroke="#F1F2F4"></line>
+<path d="M0 20 C 30 44 44 76 70 92 C 110 116 150 118 190 120 C 250 124 300 126 360 128 C 420 130 470 132 520 133 C 545 133 552 108 566 74 C 578 46 590 60 600 66 L 620 66" fill="none" stroke="#1B76FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M0 20 C 30 44 44 76 70 92 C 110 116 150 118 190 120 C 250 124 300 126 360 128 C 420 130 470 132 520 133 C 545 133 552 108 566 74 C 578 46 590 60 600 66 L 620 66 L 620 150 L 0 150 Z" fill="url(#pk-grad)"></path>
+</svg><div style="display:flex;justify-content:space-between;margin-top:8px;font:400 11.5px Inter,sans-serif;color:#9AA1AC"><span>1 jul</span><span>8 jul</span><span>15 jul</span><span>22 jul</span><span>31 jul</span></div>
+
+</div>
+
+<div style="background:#fff;border-radius:12px;padding:20px 22px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10)">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+<p style="margin:0;font:600 15px Quicksand,sans-serif;color:#0C0D0E">Gasto por día</p>
+
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:stretch">
+<div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:7px">
+<span style="text-align:center;font:500 10.5px Inter,sans-serif;color:#B4BAC3">L</span><span style="text-align:center;font:500 10.5px Inter,sans-serif;color:#B4BAC3">M</span><span style="text-align:center;font:500 10.5px Inter,sans-serif;color:#B4BAC3">X</span><span style="text-align:center;font:500 10.5px Inter,sans-serif;color:#B4BAC3">J</span><span style="text-align:center;font:500 10.5px Inter,sans-serif;color:#B4BAC3">V</span><span style="text-align:center;font:500 10.5px Inter,sans-serif;color:#B4BAC3">S</span><span style="text-align:center;font:500 10.5px Inter,sans-serif;color:#B4BAC3">D</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+<span style="aspect-ratio:1;border-radius:8px"></span>
+<span style="aspect-ratio:1;border-radius:8px"></span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.3);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">1</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,1);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#fff">2</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.22);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">3</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.18);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">4</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.44);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#2E64B4">5</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.4);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#2E64B4">6</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.28);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">7</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.16);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">8</span>
+<span style="aspect-ratio:1;border-radius:8px;background:#F7F8FA;display:flex;align-items:center;justify-content:center;font:400 11px Inter,sans-serif;color:#C2C7CE">9</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.8);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#fff">10</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.36);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">11</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.24);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">12</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.18);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">13</span>
+<span style="aspect-ratio:1;border-radius:8px;background:#F7F8FA;display:flex;align-items:center;justify-content:center;font:400 11px Inter,sans-serif;color:#C2C7CE">14</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.4);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#2E64B4">15</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.3);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">16</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.18);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">17</span>
+<span style="aspect-ratio:1;border-radius:8px;background:#F7F8FA;display:flex;align-items:center;justify-content:center;font:400 11px Inter,sans-serif;color:#C2C7CE">18</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.22);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">19</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.34);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">20</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.26);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">21</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.14);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">22</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.52);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#2E64B4">23</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.3);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">24</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.2);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">25</span>
+<span style="aspect-ratio:1;border-radius:8px;background:#F7F8FA;display:flex;align-items:center;justify-content:center;font:400 11px Inter,sans-serif;color:#C2C7CE">26</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.46);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#2E64B4">27</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.28);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">28</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.18);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">29</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.12);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#7C9BCB">30</span>
+<span style="aspect-ratio:1;border-radius:8px;background:rgba(27,118,255,0.34);display:flex;align-items:center;justify-content:center;font:500 11px Inter,sans-serif;color:#4A81C9">31</span>
+<span style="aspect-ratio:1;border-radius:8px"></span>
+<span style="aspect-ratio:1;border-radius:8px"></span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;justify-content:flex-end;gap:18px;min-width:96px;height:100%">
+<div><p style="margin: 0; font: 400 11px Inter,sans-serif; color: #9AA1AC; text-align: right">Día más alto</p><p style="margin: 4px 0 0; font: 600 15px Inter,sans-serif; font-variant-numeric: tabular-nums; color: #0C0D0E; text-align: right">1.502,71 €</p><p style="margin: 2px 0 0; font: 400 11px Inter,sans-serif; color: #B4BAC3; text-align: right">2 de julio</p></div>
+<div><p style="margin: 0; font: 400 11px Inter,sans-serif; color: #9AA1AC; text-align: right">Día más bajo</p><p style="margin: 4px 0 0; font: 600 15px Inter,sans-serif; font-variant-numeric: tabular-nums; color: #0C0D0E; text-align: right">1,20 €</p><p style="margin: 2px 0 0; font: 400 11px Inter,sans-serif; color: #B4BAC3; text-align: right">30 de julio</p></div>
+<div><p style="margin: 0; font: 400 11px Inter,sans-serif; color: #9AA1AC; text-align: right">Promedio diario</p><p style="margin: 4px 0 0; font: 600 15px Inter,sans-serif; font-variant-numeric: tabular-nums; color: #0C0D0E; text-align: right">133,28 €</p></div>
+</div>
+</div>
+
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1.62fr;gap:14px;margin-top:14px">
+<div style="border-radius: 12px; padding: 20px 22px 20px; box-shadow: 0 1px 2px rgba(27,118,255,.18),0 8px 20px -8px rgba(27,118,255,.45); display: flex; flex-direction: column; overflow: hidden; background-color: #5191FF">
+<p style="margin:0 0 6px;font:600 15px Quicksand,sans-serif;color:#fff">Ingresos por categoría</p>
+<svg viewBox="0 0 420 238" preserveAspectRatio="xMidYMid meet" style="width:100%;flex:1;min-height:230px;display:block">
+<defs><pattern id="inc-stripes" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(10)"><rect width="12" height="12" fill="transparent"></rect><rect width="4" height="12" fill="#fff"></rect></pattern></defs>
+<g transform="rotate(205 300 112)">
+<circle cx="300" cy="112" r="100" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="13" stroke-linecap="round" stroke-dasharray="384.0 628.3"></circle>
+<circle cx="300" cy="112" r="100" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round" stroke-dasharray="339.4 628.3"></circle>
+</g>
+<g transform="rotate(205 300 112)">
+<circle cx="300" cy="112" r="67" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="13" stroke-linecap="round" stroke-dasharray="257.3 421.0"></circle>
+<circle cx="300" cy="112" r="67" fill="none" stroke="#0C0D0E" stroke-width="13" stroke-linecap="round" stroke-dasharray="19.9 421.0"></circle>
+</g>
+<g transform="rotate(205 300 112)">
+<circle cx="300" cy="112" r="34" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="13" stroke-linecap="round" stroke-dasharray="130.6 213.6"></circle>
+<circle cx="300" cy="112" r="34" fill="none" stroke="url(#inc-stripes)" stroke-width="13" stroke-linecap="round" stroke-dasharray="11.7 213.6"></circle>
+</g>
+<g>
+<text x="16" y="147.3" style="font:500 13.5px Inter,sans-serif;fill:#fff">Otros ingresos</text>
+<line x1="122" y1="142.8" x2="305.9" y2="142.8" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-dasharray="3 4"></line>
+<circle cx="314.4" cy="142.8" r="4.5" fill="url(#inc-stripes)" stroke="#fff" stroke-width="1.4"></circle>
+<text x="327.4" y="147.3" style="font:600 13.5px Inter,sans-serif;fill:#fff;font-variant-numeric:tabular-nums">4%</text>
+</g>
+<g>
+<text x="16" y="177.2" style="font:500 13.5px Inter,sans-serif;fill:#fff">Reintegros</text>
+<line x1="122" y1="172.7" x2="319.8" y2="172.7" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-dasharray="3 4"></line>
+<circle cx="328.3" cy="172.7" r="4.5" fill="#0C0D0E" stroke="#fff" stroke-width="1.4"></circle>
+<text x="341.3" y="177.2" style="font:600 13.5px Inter,sans-serif;fill:#fff;font-variant-numeric:tabular-nums">8%</text>
+</g>
+<g>
+<text x="16" y="207.1" style="font:500 13.5px Inter,sans-serif;fill:#fff">Nómina</text>
+<line x1="122" y1="202.6" x2="333.8" y2="202.6" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-dasharray="3 4"></line>
+<circle cx="342.3" cy="202.6" r="4.5" fill="#fff" stroke="#fff" stroke-width="1.4"></circle>
+<text x="355.3" y="207.1" style="font:600 13.5px Inter,sans-serif;fill:#fff;font-variant-numeric:tabular-nums">88%</text>
+</g>
+</svg>
+</div>
+<div style="background:#fff;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10);padding:18px 22px 16px;display:flex;flex-direction:column">
+<p style="margin:0 0 2px;font:600 15px Quicksand,sans-serif;color:#0C0D0E">Gasto por categoría</p>
+<div style="display:flex;flex:1;align-items:center;justify-content:center;gap:26px">
+
+<div style="flex:none">
+<div style="display: grid; grid-template-columns: 134px 46px 92px 54px; align-items: center; gap: 20px; padding: 3px 0; padding-top: 6px; padding-bottom: 6px">
+<span style="display:flex;align-items:center;gap:9px;font:400 13.5px Inter,sans-serif;color:#0C0D0E;min-width:0"><span style="width:9px;height:9px;border-radius:999px;background:#7F868F;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Otros</span></span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">51%</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#6B7280">2.117,35 €</span>
+
+</div>
+<div style="display: grid; grid-template-columns: 134px 46px 92px 54px; align-items: center; gap: 20px; padding: 3px 0">
+<span style="display:flex;align-items:center;gap:9px;font:400 13.5px Inter,sans-serif;color:#0C0D0E;min-width:0"><span style="width:9px;height:9px;border-radius:999px;background:#FFD027;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Viajes</span></span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">25%</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#6B7280">1.031,65 €</span>
+
+</div>
+<div style="display: grid; grid-template-columns: 134px 46px 92px 54px; align-items: center; gap: 20px; padding: 3px 0; padding-top: 6px; padding-bottom: 6px">
+<span style="display:flex;align-items:center;gap:9px;font:400 13.5px Inter,sans-serif;color:#0C0D0E;min-width:0"><span style="width:9px;height:9px;border-radius:999px;background:#3B8AE0;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Transporte</span></span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">11%</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#6B7280">441,44 €</span>
+
+</div>
+<div style="display: grid; grid-template-columns: 134px 46px 92px 54px; align-items: center; gap: 20px; padding: 3px 0; padding-top: 6px; padding-bottom: 6px">
+<span style="display:flex;align-items:center;gap:9px;font:400 13.5px Inter,sans-serif;color:#0C0D0E;min-width:0"><span style="width:9px;height:9px;border-radius:999px;background:#30A664;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Supermercado</span></span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">8,9%</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#6B7280">365,89 €</span>
+
+</div>
+<div style="display: grid; grid-template-columns: 134px 46px 92px 54px; align-items: center; gap: 20px; padding: 3px 0; padding-top: 6px; padding-bottom: 6px">
+<span style="display:flex;align-items:center;gap:9px;font:400 13.5px Inter,sans-serif;color:#0C0D0E;min-width:0"><span style="width:9px;height:9px;border-radius:999px;background:#EC6B45;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Vivienda</span></span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">1,9%</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#6B7280">76,45 €</span>
+
+</div>
+<div style="display: grid; grid-template-columns: 134px 46px 92px 54px; align-items: center; gap: 20px; padding: 3px 0; padding-top: 6px; padding-bottom: 6px">
+<span style="display:flex;align-items:center;gap:9px;font:400 13.5px Inter,sans-serif;color:#0C0D0E;min-width:0"><span style="width:9px;height:9px;border-radius:999px;background:#6E6EDB;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Compras</span></span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">1,2%</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#6B7280">48,98 €</span>
+
+</div>
+<div style="display: grid; grid-template-columns: 134px 46px 92px 54px; align-items: center; gap: 20px; padding: 3px 0; padding-top: 6px; padding-bottom: 6px">
+<span style="display:flex;align-items:center;gap:9px;font:400 13.5px Inter,sans-serif;color:#0C0D0E;min-width:0"><span style="width:9px;height:9px;border-radius:999px;background:#FA7A2B;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Restaurantes</span></span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">0,8%</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#6B7280">33,52 €</span>
+
+</div>
+<div style="display: grid; grid-template-columns: 134px 46px 92px 54px; align-items: center; gap: 20px; padding: 3px 0; padding-top: 6px; padding-bottom: 6px">
+<span style="display:flex;align-items:center;gap:9px;font:400 13.5px Inter,sans-serif;color:#0C0D0E;min-width:0"><span style="width:9px;height:9px;border-radius:999px;background:#6E5BCB;flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Suscripciones</span></span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">0,4%</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#6B7280">16,40 €</span>
+
+</div>
+</div><div style="position:relative;width:200px;height:186px;flex:none">
+<svg viewBox="0 0 200 186" style="width:100%;height:100%;display:block">
+<path d="M35.05 153.88 A87 87 0 0 1 89.24 9.67 L90.29 25.42 A71.24 71.24 0 0 0 46.22 142.72 Z" fill="#7F868F" stroke="#7F868F" stroke-width="10" stroke-linejoin="round"></path>
+<path d="M102.25 9.03 A87 87 0 0 1 174.43 50.96 L160.48 58.35 A71.24 71.24 0 0 0 102.75 24.81 Z" fill="#FFD027" stroke="#FFD027" stroke-width="10" stroke-linejoin="round"></path>
+<path d="M180.32 62.57 A87 87 0 0 1 186.96 93.22 L171.17 92.82 A71.24 71.24 0 0 0 166.11 69.47 Z" fill="#3B8AE0" stroke="#3B8AE0" stroke-width="10" stroke-linejoin="round"></path>
+<path d="M186.40 106.24 A87 87 0 0 1 180.18 129.77 L166.00 122.82 A71.24 71.24 0 0 0 170.63 105.28 Z" fill="#30A664" stroke="#30A664" stroke-width="10" stroke-linejoin="round"></path>
+<path d="M175.10 139.91 A87 87 0 0 1 174.81 140.41 L161.26 132.36 A71.24 71.24 0 0 0 161.50 131.96 Z" fill="#EC6B45" stroke="#EC6B45" stroke-width="10" stroke-linejoin="round"></path>
+<path d="M170.14 147.47 A87 87 0 0 1 169.93 147.76 L157.26 138.39 A71.24 71.24 0 0 0 157.44 138.14 Z" fill="#6E6EDB" stroke="#6E6EDB" stroke-width="10" stroke-linejoin="round"></path>
+<path d="M165.80 152.92 A87 87 0 0 1 165.63 153.11 L153.74 142.76 A71.24 71.24 0 0 0 153.88 142.61 Z" fill="#FA7A2B" stroke="#FA7A2B" stroke-width="10" stroke-linejoin="round"></path>
+<path d="M162.10 156.93 A87 87 0 0 1 162.02 157.01 L150.78 145.96 A71.24 71.24 0 0 0 150.85 145.89 Z" fill="#6E5BCB" stroke="#6E5BCB" stroke-width="10" stroke-linejoin="round"></path>
+</svg>
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:10px">
+<span style="font:600 19px Inter,sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#0C0D0E">4.131,68 €</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1.62fr 1fr;gap:14px;margin-top:14px">
+<div style="background:#fff;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10);padding:20px 22px 18px">
+<p style="margin:0 0 4px;font:600 15px Quicksand,sans-serif;color:#0C0D0E">Flujo del mes</p>
+<div style="padding: 22px 0 0; padding-top: 0px">
+
+<svg viewBox="0 -32 680 312" style="width:100%;height:auto;display:block">
+<defs><linearGradient id="sk0" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1B76FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#1B76FF" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1B76FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#4E97FF" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3FA9EE" stop-opacity=".34"></stop><stop offset="100%" stop-color="#4E97FF" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk3" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6E6EDB" stop-opacity=".34"></stop><stop offset="100%" stop-color="#4E97FF" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk4" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8A919C" stop-opacity=".34"></stop><stop offset="100%" stop-color="#4E97FF" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk5" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8A919C" stop-opacity=".34"></stop><stop offset="100%" stop-color="#8FBEFF" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk6" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1B76FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#7F868F" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk7" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1B76FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#1FA8A0" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk8" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1B76FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#3B8AE0" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk9" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4E97FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#7F868F" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk10" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4E97FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#1FA8A0" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk11" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4E97FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#30A664" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk12" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4E97FF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#B4BAC3" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk13" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8FBEFF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#3B8AE0" stop-opacity=".20"></stop></linearGradient><linearGradient id="sk14" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8FBEFF" stop-opacity=".34"></stop><stop offset="100%" stop-color="#B4BAC3" stop-opacity=".20"></stop></linearGradient></defs>
+<path d="M30 0.0 C162.75 0.0 192.25 0.0 325 0.0 L325 123.0 C192.25 123.0 162.75 116.4 30 116.4 Z" fill="url(#sk0)"></path>
+<path d="M30 116.4 C162.75 116.4 192.25 136.0 325 136.0 L325 200.4 C192.25 200.4 162.75 177.4 30 177.4 Z" fill="url(#sk1)"></path>
+<path d="M30 190.4 C162.75 190.4 192.25 200.4 325 200.4 L325 216.9 C192.25 216.9 162.75 205.9 30 205.9 Z" fill="url(#sk2)"></path>
+<path d="M30 218.9 C162.75 218.9 192.25 216.9 325 216.9 L325 225.1 C192.25 225.1 162.75 226.7 30 226.7 Z" fill="url(#sk3)"></path>
+<path d="M30 239.7 C162.75 239.7 192.25 225.1 325 225.1 L325 229.7 C192.25 229.7 162.75 244.1 30 244.1 Z" fill="url(#sk4)"></path>
+<path d="M30 244.1 C162.75 244.1 192.25 242.7 325 242.7 L325 268.0 C192.25 268.0 162.75 268.0 30 268.0 Z" fill="url(#sk5)"></path>
+<path d="M355 0.0 C487.75 0.0 517.25 0.0 650 0.0 L650 81.0 C517.25 81.0 487.75 90.8 355 90.8 Z" fill="url(#sk6)"></path>
+<path d="M355 90.8 C487.75 90.8 517.25 123.7 650 123.7 L650 144.6 C517.25 144.6 487.75 114.2 355 114.2 Z" fill="url(#sk7)"></path>
+<path d="M355 114.2 C487.75 114.2 517.25 190.6 650 190.6 L650 198.5 C517.25 198.5 487.75 123.0 355 123.0 Z" fill="url(#sk8)"></path>
+<path d="M355 136.0 C487.75 136.0 517.25 81.0 650 81.0 L650 110.7 C517.25 110.7 487.75 169.2 355 169.2 Z" fill="url(#sk9)"></path>
+<path d="M355 169.2 C487.75 169.2 517.25 144.6 650 144.6 L650 177.6 C517.25 177.6 487.75 206.2 355 206.2 Z" fill="url(#sk10)"></path>
+<path d="M355 206.2 C487.75 206.2 517.25 226.7 650 226.7 L650 245.8 C517.25 245.8 487.75 227.7 355 227.7 Z" fill="url(#sk11)"></path>
+<path d="M355 227.7 C487.75 227.7 517.25 258.8 650 258.8 L650 260.7 C517.25 260.7 487.75 229.7 355 229.7 Z" fill="url(#sk12)"></path>
+<path d="M355 242.7 C487.75 242.7 517.25 198.5 650 198.5 L650 213.7 C517.25 213.7 487.75 259.8 355 259.8 Z" fill="url(#sk13)"></path>
+<path d="M355 259.8 C487.75 259.8 517.25 260.7 650 260.7 L650 268.0 C517.25 268.0 487.75 268.0 355 268.0 Z" fill="url(#sk14)"></path>
+<rect x="0" y="0.0" width="30" height="177.4" rx="7" fill="#1B76FF"></rect>
+<rect x="0" y="190.4" width="30" height="15.6" rx="7" fill="#3FA9EE"></rect>
+<rect x="0" y="218.9" width="30" height="7.8" rx="7" fill="#6E6EDB"></rect>
+<rect x="0" y="239.7" width="30" height="28.3" rx="7" fill="#8A919C"></rect>
+<rect x="325" y="0.0" width="30" height="123.0" rx="7" fill="#1B76FF"></rect>
+<rect x="325" y="136.0" width="30" height="93.7" rx="7" fill="#4E97FF"></rect>
+<rect x="325" y="242.7" width="30" height="25.3" rx="7" fill="#8FBEFF"></rect>
+<rect x="650" y="0.0" width="30" height="110.7" rx="7" fill="#7F868F"></rect>
+<rect x="650" y="123.7" width="30" height="53.9" rx="7" fill="#1FA8A0"></rect>
+<rect x="650" y="190.6" width="30" height="23.1" rx="7" fill="#3B8AE0"></rect>
+<rect x="650" y="226.7" width="30" height="19.1" rx="7" fill="#30A664"></rect>
+<rect x="650" y="258.8" width="30" height="9.2" rx="7" fill="#B4BAC3"></rect>
+<text x="40" y="92.7" text-anchor="start" xml:space="preserve" style="letter-spacing:0"><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Nómina</tspan><tspan> </tspan><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">3.200,00 €</tspan></text>
+<text x="40" y="202.1" text-anchor="start" xml:space="preserve" style="letter-spacing:0"><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Reintegros</tspan><tspan> </tspan><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">280,71 €</tspan></text>
+<text x="40" y="226.8" text-anchor="start" xml:space="preserve" style="letter-spacing:0"><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Otros ingresos</tspan><tspan> </tspan><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">140,00 €</tspan></text>
+<text x="40" y="257.8" text-anchor="start" xml:space="preserve" style="letter-spacing:0"><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Saldo anterior</tspan><tspan> </tspan><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">510,97 €</tspan></text>
+<text x="365" y="65.5" text-anchor="start" xml:space="preserve" style="letter-spacing:0"><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Revolut · Personal</tspan><tspan> </tspan><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">2.100,00 €</tspan></text>
+<text x="365" y="186.9" text-anchor="start" xml:space="preserve" style="letter-spacing:0"><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Revolut · Joint</tspan><tspan> </tspan><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">1.600,00 €</tspan></text>
+<text x="365" y="259.4" text-anchor="start" xml:space="preserve" style="letter-spacing:0"><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Santander</tspan><tspan> </tspan><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">431,68 €</tspan></text>
+<text x="640" y="59.3" text-anchor="end" xml:space="preserve" style="letter-spacing:0"><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">2.117,35 €</tspan><tspan> </tspan><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Otros</tspan></text>
+<text x="640" y="154.7" text-anchor="end" xml:space="preserve" style="letter-spacing:0"><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">1.031,65 €</tspan><tspan> </tspan><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Viajes</tspan></text>
+<text x="640" y="206.2" text-anchor="end" xml:space="preserve" style="letter-spacing:0"><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">441,44 €</tspan><tspan> </tspan><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Transporte</tspan></text>
+<text x="640" y="240.3" text-anchor="end" xml:space="preserve" style="letter-spacing:0"><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">365,89 €</tspan><tspan> </tspan><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Supermercado</tspan></text>
+<text x="640" y="267.4" text-anchor="end" xml:space="preserve" style="letter-spacing:0"><tspan style="font:400 11px Inter,sans-serif;fill:#9AA1AC">175,35 €</tspan><tspan> </tspan><tspan style="font:500 11px Inter,sans-serif;fill:#414750">Resto</tspan></text>
+<text x="0" y="-14" text-anchor="start" style="font:500 10.5px Inter,sans-serif;fill:#C2C7CE;letter-spacing:.06em;text-transform:uppercase">Entradas</text>
+<text x="340" y="-14" text-anchor="middle" style="font:500 10.5px Inter,sans-serif;fill:#C2C7CE;letter-spacing:.06em;text-transform:uppercase">Cuentas</text>
+<text x="680" y="-14" text-anchor="end" style="font:500 10.5px Inter,sans-serif;fill:#C2C7CE;letter-spacing:.06em;text-transform:uppercase">Gastos</text>
+</svg></div>
+</div>
+<div style="background:#fff;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10);padding:20px 22px 12px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+<div><p style="margin:0;font:600 15px Quicksand,sans-serif;color:#0C0D0E">Mayores gastos</p><p style="margin:2px 0 0;font:400 12.5px Inter,sans-serif;color:#9AA1AC">Top 5 del mes<br><br></p></div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F4F5F7">
+<span style="width:18px;text-align:center;font:500 12px Inter,sans-serif;color:#C2C7CE;flex:none">1</span>
+<span style="width:32px;height:32px;border-radius:10px;background:rgba(127,134,143,.13);display:flex;align-items:center;justify-content:center;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7F868F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0M20 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0M6 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0"></path></svg></span>
+<span style="flex:1;min-width:0"><span style="display:block;font:500 13.5px Inter,sans-serif;color:#0C0D0E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">to lucev vladimir</span><span style="display:block;margin-top:2px;font:400 12px Inter,sans-serif;color:#9AA1AC">2 jul · Otros</span></span>
+<span style="font:600 13.5px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E;flex:none">1.451,00 €</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F4F5F7">
+<span style="width:18px;text-align:center;font:500 12px Inter,sans-serif;color:#C2C7CE;flex:none">2</span>
+<span style="width:32px;height:32px;border-radius:10px;background:rgba(255,208,39,.20);display:flex;align-items:center;justify-content:center;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E0AC00" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a1 1 0 0 0-.9 1.7l5.1 3.6-2 2H4l-1 1 3.3 1.4L7.7 19 9 18v-3l2-2 3.6 5.1a1 1 0 0 0 1.7-.9Z"></path></svg></span>
+<span style="flex:1;min-width:0"><span style="display:block;font:500 13.5px Inter,sans-serif;color:#0C0D0E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">booking.com</span><span style="display:block;margin-top:2px;font:400 12px Inter,sans-serif;color:#9AA1AC">10 jul · Viajes</span></span>
+<span style="font:600 13.5px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E;flex:none">1.014,75 €</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F4F5F7">
+<span style="width:18px;text-align:center;font:500 12px Inter,sans-serif;color:#C2C7CE;flex:none">3</span>
+<span style="width:32px;height:32px;border-radius:10px;background:rgba(255,208,39,.20);display:flex;align-items:center;justify-content:center;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E0AC00" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a1 1 0 0 0-.9 1.7l5.1 3.6-2 2H4l-1 1 3.3 1.4L7.7 19 9 18v-3l2-2 3.6 5.1a1 1 0 0 0 1.7-.9Z"></path></svg></span>
+<span style="flex:1;min-width:0"><span style="display:block;font:500 13.5px Inter,sans-serif;color:#0C0D0E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">edreams</span><span style="display:block;margin-top:2px;font:400 12px Inter,sans-serif;color:#9AA1AC">5 jul · Viajes</span></span>
+<span style="font:600 13.5px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E;flex:none">185,94 €</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F4F5F7">
+<span style="width:18px;text-align:center;font:500 12px Inter,sans-serif;color:#C2C7CE;flex:none">4</span>
+<span style="width:32px;height:32px;border-radius:10px;background:rgba(127,134,143,.13);display:flex;align-items:center;justify-content:center;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7F868F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0M20 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0M6 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0"></path></svg></span>
+<span style="flex:1;min-width:0"><span style="display:block;font:500 13.5px Inter,sans-serif;color:#0C0D0E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">booking.com*amsterdam</span><span style="display:block;margin-top:2px;font:400 12px Inter,sans-serif;color:#9AA1AC">30 jul · Otros</span></span>
+<span style="font:600 13.5px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E;flex:none">92,48 €</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F4F5F7">
+<span style="width:18px;text-align:center;font:500 12px Inter,sans-serif;color:#C2C7CE;flex:none">5</span>
+<span style="width:32px;height:32px;border-radius:10px;background:rgba(48,166,100,.13);display:flex;align-items:center;justify-content:center;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#30A664" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2M19 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2M2 3h2l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 7H5"></path></svg></span>
+<span style="flex:1;min-width:0"><span style="display:block;font:500 13.5px Inter,sans-serif;color:#0C0D0E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">mercadona</span><span style="display:block;margin-top:2px;font:400 12px Inter,sans-serif;color:#9AA1AC">6 jul · Supermercado</span></span>
+<span style="font:600 13.5px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E;flex:none">61,12 €</span>
+</div>
+</div>
+</div>
+
+<div style="background:#fff;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px -6px rgba(16,24,40,.10);padding:20px 0 6px;margin-top:14px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:0 22px 14px">
+<div style="flex:none"><p style="margin:0;font:600 15px Quicksand,sans-serif;color:#0C0D0E">Movimientos</p><p style="margin:2px 0 0;font:400 12.5px Inter,sans-serif;color:#9AA1AC;white-space:nowrap">Los últimos de julio</p></div>
+<span style="display:flex;align-items:center;gap:6px;font:500 13px Inter,sans-serif;color:#1B76FF">Ver todos<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"></path></svg></span>
+</div>
+<div style="display:grid;grid-template-columns:72px 1fr 132px 176px 132px 106px 106px;align-items:center;padding:0 22px;height:34px;background:#FAFBFC;border-top:1px solid #F1F2F4;border-bottom:1px solid #F1F2F4">
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Fecha</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Descripción</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Tipo</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Categoría</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Cuenta</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC;text-align:right">Importe</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC;text-align:right">Balance</span>
+</div>
+<sc-for list="{{ julyRows }}" as="t" hint-placeholder-count="8">
+<div style="display:grid;grid-template-columns:72px 1fr 132px 176px 132px 106px 106px;align-items:center;padding:0 22px;height:40px;border-bottom:1px solid #F4F5F7">
+<span style="font:400 13px Inter,sans-serif;color:#6B7280;font-variant-numeric:tabular-nums">{{ t.date }}</span>
+<span style="font:400 13.5px Inter,sans-serif;color:#0C0D0E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:16px">{{ t.desc }}</span>
+<span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font:500 12.5px Inter,sans-serif;background:{{ t.mvSoftBg }};color:{{ t.mvSoftFg }};width:fit-content"><span style="width:6px;height:6px;border-radius:999px;background:{{ t.mvDot }}"></span>{{ t.mv }}</span>
+<span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;font:500 12.5px Inter,sans-serif;background:{{ t.catSoft }};color:{{ t.catFg }};width:fit-content"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ t.catDot }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.catPath }}"></path></svg>{{ t.cat }}</span>
+<span style="font:400 12.5px Inter,sans-serif;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.account }}</span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:{{ t.amtColor }}">{{ t.amount }}</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#8A919C">{{ t.balance }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Tabla de transacciones</div>
+<div class="dv-card" style="width:1180px">
+<div style="background:#1B76FF;height:58px;display:flex;align-items:center;padding:0 26px">
+<svg width="21" height="21" viewBox="0 0 24 24" style="margin-right:28px;flex:none"><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(45 12 12)"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(90 12 12)"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(135 12 12)"></rect></svg>
+<div style="display:flex;align-self:stretch;gap:28px">
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">dashboard</span>
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">investments</span>
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">planning</span>
+<span style="display:flex;align-items:center;gap:8px;height:100%;padding:0 2px;font:600 15px Quicksand,sans-serif;color:#fff;border-bottom:2px solid #fff">data<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px;color:#fff">
+<span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></span>
+<span style="display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:999px;background:rgba(255,255,255,.14)">
+<span style="width:24px;height:24px;border-radius:999px;background:#fff;color:#1B76FF;display:flex;align-items:center;justify-content:center;font:600 11px Inter,sans-serif">AD</span>
+<span style="font:500 13.5px Inter,sans-serif;color:#fff">Ana Demo</span>
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</div>
+</div>
+<div style="background:#1B76FF;padding:11px 26px 13px 75px;display:flex;align-items:center;gap:28px">
+<span style="font:700 13.5px Quicksand,sans-serif;color:#fff">extractos</span>
+<span style="font:500 13.5px Quicksand,sans-serif;color:rgba(255,255,255,.55)">inversiones</span>
+<span style="font:500 13.5px Quicksand,sans-serif;color:rgba(255,255,255,.55)">categorías</span>
+</div>
+<div style="background:#fff;padding:20px 24px 16px;display:flex;align-items:center;gap:14px">
+<div>
+<h2 style="margin:0;font:600 20px Quicksand,sans-serif;color:#0C0D0E;letter-spacing:-.01em">Agosto 2026</h2>
+<p style="margin:3px 0 0;font:400 12.5px Inter,sans-serif;color:#9AA1AC">Saldo inicial <span style="font-weight:500;color:#414750;font-variant-numeric:tabular-nums">4.312,08 €</span></p>
+</div>
+<span style="display:flex;align-items:center;gap:2px;background:#F5F7F9;border-radius:9px;padding:3px;margin-left:6px">
+<span style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#414750" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"></path></svg></span>
+<span style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#414750" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"></path></svg></span>
+<span style="width:28px;height:28px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(16,24,40,.07)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#414750" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="3"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span>
+</span>
+<div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+<span style="display:flex;align-items:center;gap:6px;font:500 13px Inter,sans-serif;color:#414750;padding:7px 11px;border-radius:9px;background:#F5F7F9"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A919C" stroke-width="1.9" stroke-linecap="round"><path d="M7 20V4m0 0L3 8m4-4 4 4M17 4v16m0 0 4-4m-4 4-4-4"></path></svg>Ordenar</span>
+<span style="display:flex;align-items:center;gap:6px;font:500 13px Inter,sans-serif;color:#414750;padding:7px 11px;border-radius:9px;background:#F5F7F9"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A919C" stroke-width="1.9" stroke-linecap="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path></svg>Filtrar</span>
+<span style="display:flex;align-items:center;gap:6px;font:500 13px Inter,sans-serif;color:#414750;padding:7px 11px;border-radius:9px;background:#F5F7F9"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A919C" stroke-width="1.9" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>Exportar</span>
+<span style="display:flex;align-items:center;gap:6px;font:500 13px Inter,sans-serif;color:#fff;background:#1B76FF;border-radius:9px;padding:8px 14px;box-shadow:0 1px 2px rgba(27,118,255,.3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Nuevo</span>
+</div>
+</div>
+<div>
+<div style="display:grid;grid-template-columns:44px 84px 84px 1fr 136px 184px 106px 106px 40px;align-items:center;padding:0 12px;height:34px;background:#FAFBFC;border-top:1px solid #F1F2F4;border-bottom:1px solid #F1F2F4">
+<span style="display:flex;justify-content:center"><span style="width:15px;height:15px;border:1.5px solid #D5D9DF;border-radius:4px;display:block"></span></span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Fecha</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Cuenta</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Descripción</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Tipo</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC">Categoría</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC;text-align:right">Importe</span>
+<span style="font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9AA1AC;text-align:right">Balance</span>
+<span></span>
+</div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+<div style="display:grid;grid-template-columns:44px 84px 84px 1fr 136px 184px 106px 106px 40px;align-items:center;padding:0 12px;height:40px;border-bottom:1px solid #F4F5F7" style-hover="background:#FAFBFC">
+<span style="display:flex;justify-content:center"><span style="width:15px;height:15px;border:1.5px solid #D5D9DF;border-radius:4px;display:block"></span></span>
+<span style="font:400 13px Inter,sans-serif;color:#6B7280;font-variant-numeric:tabular-nums">{{ r.dateShort }}</span>
+<span style="font:400 13px Inter,sans-serif;color:#6B7280">{{ r.account }}</span>
+<span style="font:400 13.5px Inter,sans-serif;color:#0C0D0E;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:16px">{{ r.desc }}</span>
+<span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font:500 12.5px Inter,sans-serif;background:{{ r.mvSoftBg }};color:{{ r.mvSoftFg }};width:fit-content"><span style="width:6px;height:6px;border-radius:999px;background:{{ r.mvDot }}"></span>{{ r.mv }}</span>
+<span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;font:500 12.5px Inter,sans-serif;background:{{ r.catSoft }};color:{{ r.catFg }};width:fit-content"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ r.catDot }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ r.catPath }}"></path></svg>{{ r.cat }}</span>
+<span style="text-align:right;font:500 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:{{ r.amtColor }}">{{ r.amount }}</span>
+<span style="text-align:right;font:400 13px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#8A919C">{{ r.balance }}</span>
+<span style="text-align:center;color:#C2C7CE;font:600 14px Inter,sans-serif">···</span>
+</div>
+</sc-for>
+<div style="display:flex;align-items:center;gap:20px;padding:14px 20px;background:#FAFBFC;border-top:1px solid #F1F2F4">
+<span style="font:400 13px Inter,sans-serif;color:#6B7280">113 filas</span>
+<span style="display:flex;align-items:center;gap:6px;font:400 13px Inter,sans-serif;color:#6B7280"><span style="width:6px;height:6px;border-radius:999px;background:#2E9E6B"></span>12,00 €</span>
+<span style="display:flex;align-items:center;gap:6px;font:400 13px Inter,sans-serif;color:#6B7280"><span style="width:6px;height:6px;border-radius:999px;background:#E0704A"></span>3.234,45 €</span>
+<span style="display:flex;align-items:center;gap:6px;font:400 13px Inter,sans-serif;color:#6B7280"><span style="width:6px;height:6px;border-radius:999px;background:#B4BAC3"></span>44 transferencias</span>
+<span style="margin-left:auto;font:400 13px Inter,sans-serif;color:#6B7280">Saldo final <span style="font-weight:600;color:#0C0D0E;font-variant-numeric:tabular-nums">4.513,14 €</span></span>
+<span style="display:flex;align-items:center;gap:7px;font:500 13px Inter,sans-serif;color:#414750;background:#fff;border-radius:9px;padding:7px 12px;box-shadow:0 1px 2px rgba(16,24,40,.06)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A919C" stroke-width="1.9"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Cerrar mes</span>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1e">
+<div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Menús y popups — nada de formato, como los ajustes de iOS</div>
+<div class="dv-card" style="width:1000px;background:#F5F7F9;padding:34px 30px;display:flex;gap:26px;flex-wrap:wrap">
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="margin:0;font:500 11.5px Inter,sans-serif;color:#9AA1AC">Click derecho en una fila</p>
+<div style="width:238px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 10px 34px -8px rgba(16,24,40,.20),0 2px 6px rgba(16,24,40,.06)">
+<div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E;background:#F5F7F9">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.8" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"></path></svg>Editar
+</div>
+<div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Duplicar
+<span style="margin-left:auto;font:400 12px Inter,sans-serif;color:#B4BAC3">⌘D</span>
+</div>
+<div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.8" stroke-linecap="round"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0l-8-8V4a2 2 0 0 1 2-2h8.59l7.41 7.41a2 2 0 0 1 0 4Z"></path><circle cx="7.5" cy="7.5" r="1.2" fill="#6B7280"></circle></svg>Cambiar categoría
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B4BAC3" stroke-width="2" stroke-linecap="round" style="margin-left:auto"><path d="m9 18 6-6-6-6"></path></svg>
+</div>
+<div style="height:1px;background:#F1F2F4;margin:5px 8px"></div>
+<div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.8" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>Ocultar del análisis
+</div>
+<div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.8" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Copiar enlace
+</div>
+<div style="height:1px;background:#F1F2F4;margin:5px 8px"></div>
+<div style="display:flex;align-items:center;gap:11px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#E03E20">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>Eliminar
+<span style="margin-left:auto;font:400 12px Inter,sans-serif;color:#EBA192">Supr</span>
+</div>
+<div style="padding:9px 10px 5px;font:400 11.5px Inter,sans-serif;color:#B4BAC3;line-height:1.4">Editado por Ana · 15 ago 2026, 15:58</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="margin:0;font:500 11.5px Inter,sans-serif;color:#9AA1AC">Selector de categoría</p>
+<div style="width:226px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 10px 34px -8px rgba(16,24,40,.20),0 2px 6px rgba(16,24,40,.06)">
+<div style="padding:8px 10px 6px;font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#B4BAC3">Gastos</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E"><span style="width:7px;height:7px;border-radius:999px;background:#30A664"></span>Supermercado</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E;background:#F5F7F9"><span style="width:7px;height:7px;border-radius:999px;background:#6E6EDB"></span>Compras<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1B76FF" stroke-width="2.4" stroke-linecap="round" style="margin-left:auto"><path d="M20 6 9 17l-5-5"></path></svg></div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E"><span style="width:7px;height:7px;border-radius:999px;background:#E86A2E"></span>Restaurantes</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E"><span style="width:7px;height:7px;border-radius:999px;background:#3B8AE0"></span>Transporte</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E"><span style="width:7px;height:7px;border-radius:999px;background:#6E5BCB"></span>Suscripciones</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E"><span style="width:7px;height:7px;border-radius:999px;background:#7F868F"></span>Otros</div>
+<div style="height:1px;background:#F1F2F4;margin:5px 8px"></div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#1B76FF"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Nueva categoría</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="margin:0;font:500 11.5px Inter,sans-serif;color:#9AA1AC">Confirmación destructiva</p>
+<div style="width:320px;background:#fff;border-radius:14px;padding:22px;box-shadow:0 18px 48px -12px rgba(16,24,40,.24)">
+<p style="margin:0;font:600 16px Quicksand,sans-serif;color:#0C0D0E">¿Eliminar 3 movimientos?</p>
+<p style="margin:7px 0 20px;font:400 13.5px/1.55 Inter,sans-serif;color:#6B7280">Se quitan del mes de agosto y de todos los gráficos. No se puede deshacer.</p>
+<div style="display:flex;gap:8px">
+<span style="flex:1;text-align:center;font:500 13.5px Inter,sans-serif;color:#414750;background:#F3F4F6;border-radius:10px;padding:10px 0">Cancelar</span>
+<span style="flex:1;text-align:center;font:500 13.5px Inter,sans-serif;color:#fff;background:#E03E20;border-radius:10px;padding:10px 0">Eliminar</span>
+</div>
+</div>
+<p style="margin:2px 0 0;font:500 11.5px Inter,sans-serif;color:#9AA1AC">Toast</p>
+<div style="width:320px;background:#fff;border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:11px;box-shadow:0 10px 30px -10px rgba(16,24,40,.22)">
+<span style="width:22px;height:22px;border-radius:999px;background:#E9F6EF;color:#2E9E6B;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+<span style="font:400 13.5px Inter,sans-serif;color:#0C0D0E">3 movimientos eliminados</span>
+<span style="margin-left:auto;font:500 13px Inter,sans-serif;color:#1B76FF">Deshacer</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="margin:0;font:500 11.5px Inter,sans-serif;color:#9AA1AC">Selector de mes — saltar a cualquier año</p>
+<div style="width:252px;background:#fff;border-radius:12px;padding:12px;box-shadow:0 10px 34px -8px rgba(16,24,40,.20),0 2px 6px rgba(16,24,40,.06)">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px">
+<span style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#414750" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"></path></svg></span>
+<span style="font:600 14px Inter,sans-serif;color:#0C0D0E;font-variant-numeric:tabular-nums">2026</span>
+<span style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C2C7CE" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"></path></svg></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">
+<span style="height:32px;border-radius:9px;color:#0C0D0E;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">ene</span>
+<span style="height:32px;border-radius:9px;color:#0C0D0E;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">feb</span>
+<span style="height:32px;border-radius:9px;color:#0C0D0E;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">mar</span>
+<span style="height:32px;border-radius:9px;color:#0C0D0E;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">abr</span>
+<span style="height:32px;border-radius:9px;color:#0C0D0E;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">may</span>
+<span style="height:32px;border-radius:9px;color:#0C0D0E;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">jun</span>
+<span style="height:32px;border-radius:9px;color:#0C0D0E;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">jul</span>
+<span style="height:32px;border-radius:9px;background:#1B76FF;color:#fff;display:flex;align-items:center;justify-content:center;font:600 13px Inter,sans-serif">ago</span>
+<span style="height:32px;border-radius:9px;color:#C2C7CE;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">sep</span>
+<span style="height:32px;border-radius:9px;color:#C2C7CE;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">oct</span>
+<span style="height:32px;border-radius:9px;color:#C2C7CE;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">nov</span>
+<span style="height:32px;border-radius:9px;color:#C2C7CE;display:flex;align-items:center;justify-content:center;font:400 13px Inter,sans-serif">dic</span>
+</div>
+<div style="height:1px;background:#F1F2F4;margin:10px 2px 6px"></div>
+<div style="display:flex;align-items:center;height:32px;padding:0 8px;border-radius:8px;font:400 13.5px Inter,sans-serif;color:#0C0D0E">Ir a hoy<span style="margin-left:auto;font:400 12px Inter,sans-serif;color:#B4BAC3">ago 2026</span></div>
+<div style="display:flex;align-items:center;height:32px;padding:0 8px;border-radius:8px;font:400 13.5px Inter,sans-serif;color:#0C0D0E">Primer mes con datos<span style="margin-left:auto;font:400 12px Inter,sans-serif;color:#B4BAC3">mar 2023</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1f">
+<div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Modal de editar transacción</div>
+<div class="dv-card" style="width:1000px;background:#F5F7F9;padding:34px 30px;display:flex;justify-content:center">
+<div style="width:520px;background:#fff;border-radius:16px;padding:24px 26px 22px;box-shadow:0 24px 60px -16px rgba(16,24,40,.26)">
+<div style="display:flex;align-items:center;margin-bottom:20px">
+<p style="margin:0;font:600 17px Quicksand,sans-serif;color:#0C0D0E">Editar movimiento</p>
+<span style="margin-left:auto;width:28px;height:28px;border-radius:8px;background:#F3F4F6;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></span>
+</div>
+
+<div style="display:flex;gap:3px;background:#F3F4F6;border-radius:11px;padding:3px;margin-bottom:22px">
+<span style="flex:1;text-align:center;font:500 13.5px Inter,sans-serif;color:#0C0D0E;background:#fff;border-radius:9px;padding:8px 0;box-shadow:0 1px 2px rgba(16,24,40,.08)">Gasto</span>
+<span style="flex:1;text-align:center;font:500 13.5px Inter,sans-serif;color:#8A919C;padding:8px 0">Ingreso</span>
+<span style="flex:1;text-align:center;font:500 13.5px Inter,sans-serif;color:#8A919C;padding:8px 0">Transferencia</span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div>
+<p style="margin:0 0 7px;font:500 12.5px Inter,sans-serif;color:#6B7280">Descripción</p>
+<div style="background:#F5F7F9;border-radius:10px;padding:11px 13px;font:400 14px Inter,sans-serif;color:#0C0D0E">decathlon</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div>
+<p style="margin:0 0 7px;font:500 12.5px Inter,sans-serif;color:#6B7280">Importe</p>
+<div style="background:#F5F7F9;border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:8px"><span style="font:400 14px Inter,sans-serif;color:#9AA1AC">€</span><span style="font:500 14px Inter,sans-serif;font-variant-numeric:tabular-nums;color:#0C0D0E">77,97</span></div>
+</div>
+<div>
+<p style="margin:0 0 7px;font:500 12.5px Inter,sans-serif;color:#6B7280">Fecha</p>
+<div style="background:#F5F7F9;border-radius:10px;padding:11px 13px;display:flex;align-items:center"><span style="font:400 14px Inter,sans-serif;color:#0C0D0E">15 ago 2026</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AC" stroke-width="2" stroke-linecap="round" style="margin-left:auto"><path d="m6 9 6 6 6-6"></path></svg></div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div>
+<p style="margin:0 0 7px;font:500 12.5px Inter,sans-serif;color:#6B7280">Cuenta</p>
+<div style="background:#F5F7F9;border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:999px;background:#6E6EDB"></span><span style="font:400 14px Inter,sans-serif;color:#0C0D0E">Revolut · Joint</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AC" stroke-width="2" stroke-linecap="round" style="margin-left:auto"><path d="m6 9 6 6 6-6"></path></svg></div>
+</div>
+<div>
+<p style="margin:0 0 7px;font:500 12.5px Inter,sans-serif;color:#6B7280">Categoría</p>
+<div style="background:#F5F7F9;border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:999px;background:#6E6EDB"></span><span style="font:400 14px Inter,sans-serif;color:#0C0D0E">Compras</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA1AC" stroke-width="2" stroke-linecap="round" style="margin-left:auto"><path d="m6 9 6 6 6-6"></path></svg></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#F5F7F9;border-radius:10px">
+<div style="flex:1"><p style="margin:0;font:500 13.5px Inter,sans-serif;color:#0C0D0E">Dividir con Ignacio</p><p style="margin:2px 0 0;font:400 12px Inter,sans-serif;color:#9AA1AC">50% · 38,99 € cada uno</p></div>
+<span style="width:40px;height:24px;border-radius:999px;background:#1B76FF;display:flex;align-items:center;justify-content:flex-end;padding:0 3px"><span style="width:18px;height:18px;border-radius:999px;background:#fff;display:block"></span></span>
+</div>
+<div style="display:flex;align-items:center;gap:9px;padding:2px 2px 0;font:400 12.5px Inter,sans-serif;color:#9AA1AC">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B4BAC3" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
+Al guardar, Pocket aprende la regla y categoriza «decathlon» solo la próxima vez.
+</div>
+</div>
+
+<div style="display:flex;gap:9px;margin-top:24px">
+<span style="flex:1;text-align:center;font:500 14px Inter,sans-serif;color:#414750;background:#F3F4F6;border-radius:11px;padding:12px 0">Cancelar</span>
+<span style="flex:1.6;text-align:center;font:500 14px Inter,sans-serif;color:#fff;background:#1B76FF;border-radius:11px;padding:12px 0;box-shadow:0 2px 8px -2px rgba(27,118,255,.45)">Guardar</span>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1g">
+<div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Header y filtros — la barra azul, suavizada</div>
+<div class="dv-card" style="width:1000px">
+<div style="background:#1B76FF;height:58px;display:flex;align-items:center;padding:0 26px">
+<svg width="21" height="21" viewBox="0 0 24 24" style="margin-right:28px;flex:none"><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(45 12 12)"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(90 12 12)"></rect><rect x="10.7" y="1.6" width="2.6" height="20.8" rx="1.3" fill="#fff" transform="rotate(135 12 12)"></rect></svg>
+<div style="display:flex;align-self:stretch;gap:28px">
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">dashboard</span>
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">investments</span>
+<span style="display:flex;align-items:center;height:100%;padding:0 2px;font:500 15px Quicksand,sans-serif;color:rgba(255,255,255,.62);border-bottom:2px solid transparent">planning</span>
+<span style="display:flex;align-items:center;gap:8px;height:100%;padding:0 2px;font:600 15px Quicksand,sans-serif;color:#fff;border-bottom:2px solid #fff">data<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px;color:#fff">
+<span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;position:relative"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><span style="position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:999px;background:#FFD027;border:1.5px solid #1B76FF"></span></span>
+<span style="display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:999px;background:rgba(255,255,255,.14)">
+<span style="width:24px;height:24px;border-radius:999px;background:#fff;color:#1B76FF;display:flex;align-items:center;justify-content:center;font:600 11px Inter,sans-serif">AD</span>
+<span style="font:500 13.5px Inter,sans-serif;color:#fff">Ana Demo</span>
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</div>
+</div>
+<div style="background:#1B76FF;padding:11px 26px 13px 75px;display:flex;align-items:center;gap:28px">
+<span style="font:700 13.5px Quicksand,sans-serif;color:#fff">extractos</span>
+<span style="font:500 13.5px Quicksand,sans-serif;color:rgba(255,255,255,.55)">inversiones</span>
+<span style="font:500 13.5px Quicksand,sans-serif;color:rgba(255,255,255,.55)">categorías</span>
+</div>
+<div style="background:#F5F7F9;padding:22px 26px 30px;min-height:300px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+<span style="display:flex;align-items:center;gap:7px;font:500 13px Inter,sans-serif;color:#fff;background:#1B76FF;border-radius:10px;padding:8px 13px">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>Filtros<span style="background:rgba(255,255,255,.24);border-radius:999px;padding:1px 6px;font:600 11px Inter,sans-serif">2</span></span>
+<span style="display:flex;align-items:center;gap:7px;font:400 13px Inter,sans-serif;color:#414750;background:#fff;border-radius:10px;padding:8px 12px;box-shadow:0 1px 2px rgba(16,24,40,.05)"><span style="width:6px;height:6px;border-radius:999px;background:#30A664"></span>Supermercado<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#B4BAC3" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></span>
+<span style="display:flex;align-items:center;gap:7px;font:400 13px Inter,sans-serif;color:#414750;background:#fff;border-radius:10px;padding:8px 12px;box-shadow:0 1px 2px rgba(16,24,40,.05)">Cuenta: Joint<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#B4BAC3" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></span>
+<span style="font:500 13px Inter,sans-serif;color:#8A919C;padding:8px 6px">Limpiar</span>
+<span style="margin-left:auto;display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:8px 12px;width:200px;box-shadow:0 1px 2px rgba(16,24,40,.05)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B4BAC3" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg><span style="font:400 13px Inter,sans-serif;color:#B4BAC3">Buscar movimientos</span></span>
+</div>
+
+<div style="width:270px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 10px 34px -8px rgba(16,24,40,.20),0 2px 6px rgba(16,24,40,.06)">
+<div style="padding:9px 10px 7px;font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#B4BAC3">Tipo de movimiento</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E"><span style="width:16px;height:16px;border-radius:5px;background:#1B76FF;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Gastos</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E"><span style="width:16px;height:16px;border-radius:5px;border:1.5px solid #D5D9DF"></span>Ingresos</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E"><span style="width:16px;height:16px;border-radius:5px;background:#1B76FF;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M20 6 9 17l-5-5"></path></svg></span>Transferencias</div>
+<div style="height:1px;background:#F1F2F4;margin:5px 8px"></div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:8px;font:400 14px Inter,sans-serif;color:#0C0D0E">Solo sin categorizar<span style="margin-left:auto;width:36px;height:21px;border-radius:999px;background:#E4E7EB;display:flex;align-items:center;padding:0 3px"><span style="width:15px;height:15px;border-radius:999px;background:#fff;display:block"></span></span></div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<p class="dv-next">Probá pedirme: «aplicá el estilo de <a class="dv-oid" href="#1b">1b</a> a Investments» · «la barra azul más finita en <a class="dv-oid" href="#1g">1g</a>» · «los KPI de <a class="dv-oid" href="#1b">1b</a> con más contraste» · «versión oscura»</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;spanishCopy&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Contenido&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const nf = new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: "always" });
+    const money = (v) => (v < 0 ? "\u2212" : "") + nf.format(Math.abs(v)) + " \u20ac";
+    const OLD_MV = {
+      Expense: { bg: "#E53114", fg: "#fff", icon: "\u2014" },
+      Transfer: { bg: "#F0B429", fg: "#3A2A00", icon: "\u21c4" },
+      Income: { bg: "#2E9E6B", fg: "#fff", icon: "+" },
+    };
+    const MV_SOFT = {
+      Expense: { bg: "rgba(224,112,74,.14)", fg: "#C24A22", dot: "#E0704A" },
+      Income: { bg: "rgba(46,158,107,.14)", fg: "#217A49", dot: "#2E9E6B" },
+      Transfer: { bg: "rgba(122,132,148,.14)", fg: "#5A6270", dot: "#8A919C" },
+    };
+    const CAT = {
+      "Shopping": { dot: "#6E6EDB", soft: "rgba(110,110,219,.13)", fg: "#4F4FB5", old: ["rgba(110,110,219,.18)", "#6E6EDB"], es: "Compras",
+        path: "M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0" },
+      "To Myself": { dot: "#737C8C", soft: "rgba(115,124,140,.14)", fg: "#5A6270", old: ["rgba(115,124,140,.18)", "#737C8C"], es: "A m\u00ed mismo",
+        path: "M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4" },
+      "Groceries": { dot: "#30A664", soft: "rgba(48,166,100,.13)", fg: "#217A49", old: ["rgba(48,166,100,.18)", "#2E9E6B"], es: "Supermercado",
+        path: "M8 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2M19 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2M2 3h2l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 7H5" },
+      "Subscriptions": { dot: "#6E5BCB", soft: "rgba(110,91,203,.13)", fg: "#5344A6", old: ["rgba(110,91,203,.18)", "#6E5BCB"], es: "Suscripciones",
+        path: "m17 2 4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3" },
+      "To Investment": { dot: "#1B5CB8", soft: "rgba(27,92,184,.13)", fg: "#1B5CB8", old: ["rgba(27,92,184,.18)", "#1B5CB8"], es: "A inversi\u00f3n",
+        path: "M22 7l-8.5 8.5-5-5L2 17M16 7h6v6" },
+      "Housing": { dot: "#EC6B45", soft: "rgba(236,107,69,.13)", fg: "#C24A22", old: ["rgba(236,107,69,.18)", "#C24A22"], es: "Vivienda",
+        path: "m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2ZM9 22V12h6v10" },
+      "Transport": { dot: "#3B8AE0", soft: "rgba(59,138,224,.13)", fg: "#2E6FB8", old: ["rgba(59,138,224,.18)", "#3B8AE0"], es: "Transporte",
+        path: "M19 17h2v-5l-2-5H5L3 12v5h2m2 0h8M7 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0" },
+      "Other": { dot: "#7F868F", soft: "rgba(127,134,143,.13)", fg: "#656C75", old: ["rgba(127,134,143,.18)", "#7F868F"], es: "Otros",
+        path: "M13 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0M20 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0M6 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0" },
+    };
+    const OPENING = 4312.08;
+    const raw = [
+      ["15/08/2026", "15 ago", "Joint", "decathlon", "Expense", "Shopping", -77.97],
+      ["15/08/2026", "15 ago", "Personal", "from instant access savings", "Transfer", "To Myself", 100],
+      ["15/08/2026", "15 ago", "Joint", "mercadona", "Expense", "Groceries", -42.3],
+      ["15/08/2026", "15 ago", "Personal", "transfer to ignacio rodriguez mariani & ines murtagh", "Transfer", "To Myself", 100],
+      ["15/08/2026", "15 ago", "Personal", "vodafone", "Expense", "Subscriptions", -10],
+      ["15/08/2026", "15 ago", "Personal", "net interest paid to 'savings challenge' for aug 15, 2026", "Transfer", "To Investment", 0.03],
+      ["15/08/2026", "15 ago", "Joint", "transfer from ignacio rodriguez mariani", "Transfer", "To Myself", 100],
+      ["15/08/2026", "15 ago", "Joint", "transfer from ines murtagh", "Transfer", "To Myself", 100],
+      ["14/08/2026", "14 ago", "Personal", "net interest paid to 'savings challenge' for aug 14, 2026", "Transfer", "To Investment", 0.03],
+      ["14/08/2026", "14 ago", "Personal", "compra k kiosk airsidecenter, zurich flugha, tarjeta 5489010398\u2026", "Expense", "Other", -2.09],
+      ["14/08/2026", "14 ago", "Personal", "compra sbb cff ffs mobile tic, bern, tarjeta 5489010398501526 \u2026", "Expense", "Other", -7.71],
+      ["14/08/2026", "14 ago", "Joint", "carrefour", "Expense", "Groceries", -9.97],
+      ["13/08/2026", "13 ago", "Personal", "net interest paid to 'savings challenge' for aug 13, 2026", "Transfer", "To Investment", 0.03],
+      ["13/08/2026", "13 ago", "Joint", "mercadona", "Expense", "Groceries", -48.99],
+    ];
+    // Running balance: the table lists newest first, so accumulate from the oldest row up.
+    const running = new Array(raw.length);
+    let bal = OPENING;
+    for (let i = raw.length - 1; i >= 0; i--) { bal = Math.round((bal + raw[i][6]) * 100) / 100; running[i] = bal; }
+
+    const spanish = this.props.spanishCopy ?? true;
+    const rows = raw.map(([dateLong, dateShort, account, desc, mv, cat, value], i) => {
+      const c = CAT[cat];
+      const m = OLD_MV[mv];
+      const s = MV_SOFT[mv];
+      return {
+        i, dateLong, dateShort, account, desc,
+        mv: spanish ? (mv === "Expense" ? "Gasto" : mv === "Income" ? "Ingreso" : "Transferencia") : mv,
+        mvOld: mv, catOld: cat,
+        mvBg: m.bg, mvFg: m.fg, mvIcon: m.icon,
+        mvSoftBg: s.bg, mvSoftFg: s.fg, mvDot: s.dot,
+        cat: spanish ? c.es : cat,
+        catDot: c.dot, catSoft: c.soft, catFg: c.fg, catPath: c.path,
+        catBgOld: c.old[0], catFgOld: c.old[1],
+        amount: (mv === "Transfer" && value > 0 ? "+" : "") + money(value),
+        balance: nf.format(running[i]) + " \u20ac",
+        // Amounts stay neutral — the movement pill already carries the colour.
+        amtColor: mv === "Transfer" ? "#8A919C" : "#0C0D0E",
+        amtOldColor: value < 0 ? "#E04A26" : "#080808",
+      };
+    });
+    // July rows for the dashboard's transactions card — closes at 4.312,08 €, August's opening.
+    const julyRaw = [
+      ["31/07", "mercadona", "Expense", "Groceries", "Revolut · Joint", -21.08],
+      ["31/07", "iberdrola clientes, s,a,u", "Expense", "Housing", "Revolut · Joint", -38.3],
+      ["31/07", "net interest paid to 'savings challenge' for jul 31, 2026", "Transfer", "To Investment", "Revolut · Personal", 0.03],
+      ["31/07", "alma nomad bakery", "Expense", "Other", "Revolut · Personal", -15.6],
+      ["30/07", "decathlon", "Expense", "Shopping", "Revolut · Personal", -29.99],
+      ["30/07", "transfer from ignacio rodriguez mariani", "Transfer", "To Myself", "Revolut · Personal", 54.78],
+      ["30/07", "blablacar", "Expense", "Transport", "Revolut · Personal", -54.78],
+      ["30/07", "mercadona", "Expense", "Groceries", "Revolut · Joint", -32.4],
+    ];
+    let jb = 4312.08;
+    const julyRows = julyRaw.map(([date, desc, mv, cat, account, value]) => {
+      const c = CAT[cat];
+      const s = MV_SOFT[mv];
+      const row = {
+        date, desc, account,
+        mv: spanish ? (mv === "Expense" ? "Gasto" : mv === "Income" ? "Ingreso" : "Transferencia") : mv,
+        mvSoftBg: s.bg, mvSoftFg: s.fg, mvDot: s.dot,
+        cat: spanish ? c.es : cat, catDot: c.dot, catSoft: c.soft, catFg: c.fg, catPath: c.path,
+        amount: (mv === "Transfer" && value > 0 ? "+" : "") + money(value),
+        amtColor: mv === "Transfer" ? "#8A919C" : "#0C0D0E",
+        balance: nf.format(jb) + " \u20ac",
+      };
+      jb = Math.round((jb - value) * 100) / 100;
+      return row;
+    });
+
+    return { rows, julyRows };
+  }
+}
+</script>
+</body>
+</html>
