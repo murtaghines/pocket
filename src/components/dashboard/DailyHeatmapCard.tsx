@@ -67,6 +67,14 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
     return Math.min(1, Math.max(0.1, ratio));
   };
 
+  const getTextColor = (intensity: number, hasValue: boolean) => {
+    if (!hasValue) return "#C2C7CE";
+    if (intensity >= 0.8) return "#fff";
+    if (intensity >= 0.4) return "#2E64B4";
+    if (intensity >= 0.24) return "#4A81C9";
+    return "#7C9BCB";
+  };
+
   const isCount = metric === "count";
   const formatStat = (value: number, isAvg = false) =>
     isCount ? (isAvg ? value.toFixed(1) : String(Math.round(value))) : formatCurrency(value);
@@ -130,10 +138,10 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
       </div>
 
       {!monthKey || daysInMonth === 0 ? (
-        <EmptyState height="h-[200px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
+        <EmptyState height="h-[160px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
-        <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end gap-4 sm:gap-x-6">
-          <div className="flex w-full max-w-[400px] flex-col gap-2">
+        <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] gap-4 sm:gap-[20px]">
+          <div className="flex w-full max-w-[280px] flex-col gap-2">
             <div className="grid grid-cols-7 gap-[6px]">
               {WEEKDAY_KEYS.map((k) => (
                 <div key={k} className="text-center text-[10.5px] font-medium text-[#B4BAC3]">
@@ -151,6 +159,7 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
                 const cell = cells[dayIndex];
                 const intensity = getIntensity(cell.value);
                 const hasValue = cell.value > 0;
+                const textColor = getTextColor(intensity, hasValue);
                 return (
                   <button
                     key={i}
@@ -160,10 +169,13 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
                     onClick={() => setHoveredDay((d) => (d === cell.day ? null : cell.day))}
                     className={cn(
                       "flex aspect-square items-center justify-center rounded-[8px] text-[11px] transition-transform hover:scale-105",
-                      hasValue ? "font-medium text-white" : "font-normal text-[#C2C7CE] bg-[#F7F8FA]",
+                      hasValue ? "font-medium" : "font-normal bg-[#F7F8FA]",
                       hoveredDay === cell.day && "ring-2 ring-primary/60 ring-offset-1 ring-offset-card",
                     )}
-                    style={{ backgroundColor: hasValue ? `rgba(27,118,255,${intensity})` : undefined }}
+                    style={{
+                      backgroundColor: hasValue ? `rgba(27,118,255,${intensity})` : undefined,
+                      color: textColor,
+                    }}
                   >
                     {cell.day}
                   </button>
@@ -172,13 +184,13 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
             </div>
           </div>
 
-          <div className="flex flex-row sm:flex-col items-start sm:items-end gap-4 sm:gap-3.5 text-left sm:text-right sm:justify-self-end">
+          <div className="flex flex-row sm:flex-col items-start sm:items-end gap-4 sm:gap-[18px] text-left sm:text-right sm:justify-end" style={{ minWidth: 96 }}>
             {stats.map((s, i) => (
               <div key={i}>
                 <div className="text-[11px] text-[#9AA1AC]">
                   {s.label}
                 </div>
-                <div className="mt-0.5 text-[15px] font-semibold tabular-nums leading-none text-foreground">
+                <div className="mt-1 text-[15px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
                 {s.hint && <div className="mt-0.5 text-[11px] text-[#B4BAC3]">{s.hint}</div>}
