@@ -38,6 +38,9 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
         <CardTitle>
           {t('topExpenses.title')}
         </CardTitle>
+        <p className="text-[12.5px] text-[#9AA1AC] mt-0.5">
+          {t('topExpenses.subtitle', 'Top 5 of the month')}
+        </p>
       </CardHeader>
       <CardContent className="px-5 pb-[18px] pt-0">
         {topExpenses.map((expense, index) => (

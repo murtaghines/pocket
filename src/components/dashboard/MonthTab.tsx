@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Minus, Loader2, Wallet, TrendingUp } from "lucide-react";
 
@@ -110,6 +110,21 @@ export function MonthTab() {
     setTransactionCount(transactions.length);
   }, [transactions.length]);
 
+  const sankeyAccountFlows = useMemo(() => {
+    const accMap = new Map<string, { name: string; income: number; expenses: number }>();
+    for (const tx of transactions) {
+      if (!tx.account_id || tx.type === "transfer") continue;
+      const entry = accMap.get(tx.account_id) || { name: tx.account || "Unknown", income: 0, expenses: 0 };
+      if (tx.type === "income") entry.income += Math.abs(convertToUserCurrency(tx.amount));
+      else if (tx.type === "expense") entry.expenses += Math.abs(convertToUserCurrency(tx.amount));
+      accMap.set(tx.account_id, entry);
+    }
+    return Array.from(accMap.entries())
+      .map(([id, data]) => ({ id, name: data.name, income: data.income, expenses: data.expenses }))
+      .filter(a => a.income > 0 || a.expenses > 0)
+      .sort((a, b) => (b.income + b.expenses) - (a.income + a.expenses));
+  }, [transactions, convertToUserCurrency]);
+
   const convertedCurrentMonth = {
     ...currentMonth,
     income: convertToUserCurrency(currentMonth.income),
@@ -209,6 +224,9 @@ export function MonthTab() {
                 <SavingsRateRingCard
                   income={convertedCurrentMonth.income}
                   expenses={convertedCurrentMonth.expenses}
+                  previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                  previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                  monthKey={latestMonthLabel}
                 />
                 <TrendKpiCard
                   kind="invest"
@@ -260,6 +278,7 @@ export function MonthTab() {
                 <MonthlyFlowSankey
                   incomeCategories={agg.incomeCategoryData}
                   expenseCategories={agg.expenseCategoryData}
+                  accountFlows={sankeyAccountFlows}
                   openingBalance={latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null
                     ? convertToUserCurrency(openingBalanceByMonth[latestMonthLabel])
                     : 0}
