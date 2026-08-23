@@ -25,7 +25,7 @@ interface TrendKpiCardProps {
 const DOT_COLORS: Record<TrendKind, string> = {
   income: "bg-[#2E9E6B]",
   expense: "bg-[#E0704A]",
-  balance: "bg-[#0C0D0E]",
+  balance: "bg-white",
   invest: "bg-primary",
 };
 
@@ -62,25 +62,32 @@ export function TrendKpiCard({
     return new Intl.DateTimeFormat(i18n.language || "en", { month: "short" }).format(d);
   }, [monthKey, previousMonthKey, previousPeriodLabel, i18n.language]);
 
-  const deltaColor =
-    change === undefined
-      ? "text-[#9AA1AC]"
-      : isGoodChange
-      ? "text-[#2E9E6B]"
-      : kind === "invest"
-      ? "text-primary"
-      : "text-[#D9542B]";
+  const isBalance = kind === "balance";
 
-  const valueColor = kind === "balance" && total < 0 ? "text-[#D9542B]" : "text-[#0C0D0E]";
+  const deltaColor = isBalance
+    ? "text-white"
+    : change === undefined
+    ? "text-[#9AA1AC]"
+    : isGoodChange
+    ? "text-[#2E9E6B]"
+    : kind === "invest"
+    ? "text-primary"
+    : "text-[#D9542B]";
+
+  const valueColor = isBalance ? "text-white" : "text-[#0C0D0E]";
 
   return (
     <div
-      className={cn("flex h-full flex-col rounded-xl bg-card p-[16px_18px] shadow-section", className)}
+      className={cn(
+        "flex h-full flex-col rounded-xl p-[16px_18px] shadow-section",
+        isBalance ? "bg-[#1B75FFE6]" : "bg-card",
+        className,
+      )}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center gap-[6px] mb-[14px]">
         <span className={cn("w-[7px] h-[7px] rounded-full shrink-0", DOT_COLORS[kind])} />
-        <span className="text-[13px] font-medium text-[#6B7280]">
+        <span className={cn("text-[13px] font-medium", isBalance ? "text-white" : "text-[#6B7280]")}>
           {label}
         </span>
       </div>
@@ -94,7 +101,7 @@ export function TrendKpiCard({
         >
           {formatCurrency(total)}
         </div>
-        <div className="text-[12.5px] text-[#9AA1AC] mt-[5px]">
+        <div className={cn("text-[12.5px] mt-[5px]", isBalance ? "text-[#B6BAC2]" : "text-[#9AA1AC]")}>
           {change !== undefined ? (
             <>
               <span className={cn("font-medium", deltaColor)}>

@@ -41,7 +41,7 @@
     }
   },
   "charts": {
-    "monthlyBalance": "Ingresos vs gastos",
+    "monthlyBalance": "Evolución Semanal",
     "categoryBreakdown": "Desglose por Categoría",
     "spendingByCategory": "Gastos por Categoría",
     "incomeByCategory": "Ingresos por Categoría",
@@ -99,7 +99,8 @@
     "closingBalance": "Saldo final"
   },
   "topExpenses": {
-    "title": "Gastos Principales",
+    "title": "Mayores gastos",
+    "subtitle": "Top 5 del mes",
     "noExpenses": "Sin gastos registrados"
   },
   "investments": {
@@ -284,7 +285,7 @@
     "openingBalanceSubtitle": "Balance inicial {{amount}} · {{count}} movimientos"
   },
   "heatmap": {
-    "title": "Vista diaria",
+    "title": "Gasto por día",
     "view": "Vista",
     "expense": "Gastos",
     "income": "Ingresos",
