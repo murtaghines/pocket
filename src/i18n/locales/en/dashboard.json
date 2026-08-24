@@ -41,7 +41,7 @@
     }
   },
   "charts": {
-    "monthlyBalance": "Weekly Evolution",
+    "monthlyBalance": "Evolution by week",
     "categoryBreakdown": "Category Breakdown",
     "spendingByCategory": "Spending by Category",
     "incomeByCategory": "Income by Category",

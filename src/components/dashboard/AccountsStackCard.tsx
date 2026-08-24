@@ -160,7 +160,7 @@ export function AccountsStackCard({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[15px] font-heading font-semibold text-foreground">
+            <p className="text-[15px] font-heading font-bold text-foreground">
               {t('charts.accounts', 'Accounts')}
             </p>
             <p className="text-[12.5px] text-[#9AA1AC] mt-0.5">

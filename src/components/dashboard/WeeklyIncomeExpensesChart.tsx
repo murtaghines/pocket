@@ -44,11 +44,8 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
     <div className="flex h-full flex-col bg-card rounded-xl p-[20px_22px_16px] shadow-section">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-[15px] font-heading font-semibold text-foreground leading-tight">
-            {t("charts.monthlyBalance", "Income vs expenses")}
-          </p>
-          <p className="text-[12.5px] text-[#9AA1AC] mt-[3px]">
-            {t("charts.byWeekThisMonth", "By week · this month")}
+          <p className="text-[15px] font-heading font-bold text-foreground leading-tight">
+            {t("charts.monthlyBalance", "Evolution by week")}
           </p>
         </div>
         <div className="flex items-center gap-[14px] text-[12px] text-[#9AA1AC] shrink-0">

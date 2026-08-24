@@ -111,7 +111,7 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
   return (
     <div className="bg-card rounded-xl p-[20px_22px_16px] h-full shadow-section">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <p className="text-[15px] font-heading font-semibold text-foreground">
+        <p className="text-[15px] font-heading font-bold text-foreground">
           {t("heatmap.title", "Daily view")}
         </p>
         <DropdownMenu>

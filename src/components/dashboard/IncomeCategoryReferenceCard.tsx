@@ -57,7 +57,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
   if (!hasData) {
     return (
       <div className="w-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
-        <p className="text-[15px] font-heading font-semibold text-white mb-[6px]">
+        <p className="text-[15px] font-heading font-bold text-white mb-[6px]">
           {t("charts.incomeByCategory", "Income by Category")}
         </p>
         <EmptyState height="h-[200px]" />
@@ -75,7 +75,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
 
   return (
     <div className="w-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
-      <p className="text-[15px] font-heading font-semibold text-white mb-[6px]">
+      <p className="text-[15px] font-heading font-bold text-white mb-[6px]">
         {t("charts.incomeByCategory", "Income by Category")}
       </p>
       <svg

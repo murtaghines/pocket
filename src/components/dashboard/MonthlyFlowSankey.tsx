@@ -164,7 +164,7 @@ export function MonthlyFlowSankey({
 
   return (
     <div className="bg-card rounded-xl p-[20px_22px_18px] shadow-section h-full">
-      <p className="text-[15px] font-heading font-semibold text-foreground mb-1">
+      <p className="text-[15px] font-heading font-bold text-foreground mb-1">
         {t("charts.monthlyFlow", "Monthly flow")}
       </p>
 

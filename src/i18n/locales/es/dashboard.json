@@ -41,7 +41,7 @@
     }
   },
   "charts": {
-    "monthlyBalance": "Evolución Semanal",
+    "monthlyBalance": "Evolución por semana",
     "categoryBreakdown": "Desglose por Categoría",
     "spendingByCategory": "Gastos por Categoría",
     "incomeByCategory": "Ingresos por Categoría",

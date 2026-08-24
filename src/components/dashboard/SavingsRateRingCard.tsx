@@ -41,7 +41,7 @@ export function SavingsRateRingCard({
     if (!monthKey) return "";
     const [y, m] = monthKey.split("-").map(Number);
     const d = new Date(y, m - 2, 1);
-    return new Intl.DateTimeFormat(i18n.language || "en", { month: "short" }).format(d);
+    return new Intl.DateTimeFormat(i18n.language || "en", { month: "long" }).format(d).toLowerCase();
   }, [monthKey, previousPeriodLabel, i18n.language]);
 
   return (

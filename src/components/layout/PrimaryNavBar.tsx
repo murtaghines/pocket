@@ -28,8 +28,8 @@ export function PrimaryNavBar() {
               className={cn(
                 "flex items-center gap-[5px] h-full border-b-2 text-[15px] lowercase transition-colors duration-200",
                 active
-                  ? "border-white text-white font-semibold"
-                  : "border-transparent text-white/[.62] font-medium hover:text-white/80",
+                  ? "border-white text-white font-bold"
+                  : "border-transparent text-white/[.62] font-semibold hover:text-white/80",
               )}
             >
               {t(section.i18nKey)}

@@ -29,6 +29,13 @@ const DOT_COLORS: Record<TrendKind, string> = {
   invest: "bg-primary",
 };
 
+const LABEL_COLORS: Record<TrendKind, string> = {
+  income: "text-[#2E9E6B]",
+  expense: "text-[#E0704A]",
+  balance: "text-white",
+  invest: "text-primary",
+};
+
 export function TrendKpiCard({
   kind,
   label,
@@ -59,7 +66,7 @@ export function TrendKpiCard({
     if (!key) return "last month";
     const [y, m] = key.split("-").map(Number);
     const d = previousMonthKey ? new Date(y, m - 1, 1) : new Date(y, m - 2, 1);
-    return new Intl.DateTimeFormat(i18n.language || "en", { month: "short" }).format(d);
+    return new Intl.DateTimeFormat(i18n.language || "en", { month: "long" }).format(d).toLowerCase();
   }, [monthKey, previousMonthKey, previousPeriodLabel, i18n.language]);
 
   const isBalance = kind === "balance";
@@ -87,7 +94,7 @@ export function TrendKpiCard({
     >
       <div className="flex items-center gap-[6px] mb-[14px]">
         <span className={cn("w-[7px] h-[7px] rounded-full shrink-0", DOT_COLORS[kind])} />
-        <span className={cn("text-[13px] font-medium", isBalance ? "text-white" : "text-[#6B7280]")}>
+        <span className={cn("text-[13px] font-medium", LABEL_COLORS[kind])}>
           {label}
         </span>
       </div>
