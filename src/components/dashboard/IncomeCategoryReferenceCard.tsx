@@ -12,33 +12,13 @@ interface IncomeCategoryReferenceCardProps {
   data: CategoryData[];
 }
 
-const VB_W = 420;
-const CX = 300;
-const CY = 112;
-const TRACK_START_DEG = 205;
-const TRACK_SWEEP_DEG = 220;
-
-const MAX_RADIUS = 100;
-const MIN_RADIUS = 22;
-const MAX_STROKE = 13;
-const MIN_STROKE = 8;
-
-const RING_FILLS = [
-  { stroke: "#fff", dotFill: "#fff", dotStroke: "#fff" },
-  { stroke: "#0C0D0E", dotFill: "#0C0D0E", dotStroke: "#fff" },
-  { stroke: "url(#inc-stripes)", dotFill: "url(#inc-stripes)", dotStroke: "#fff" },
-  { stroke: "rgba(255,255,255,0.55)", dotFill: "rgba(255,255,255,0.55)", dotStroke: "#fff" },
-  { stroke: "#fff", dotFill: "#fff", dotStroke: "#0C0D0E" },
-  { stroke: "#0C0D0E", dotFill: "#0C0D0E", dotStroke: "#fff" },
-  { stroke: "url(#inc-stripes)", dotFill: "url(#inc-stripes)", dotStroke: "#fff" },
-  { stroke: "rgba(255,255,255,0.55)", dotFill: "rgba(255,255,255,0.55)", dotStroke: "#fff" },
-];
-
-function computeRadii(count: number): number[] {
-  if (count <= 1) return [MAX_RADIUS];
-  const step = (MAX_RADIUS - MIN_RADIUS) / (count - 1);
-  return Array.from({ length: count }, (_, i) => Math.round(MAX_RADIUS - i * step));
-}
+const VB_W = 500;
+const RING_CX = 340;
+const RING_CY = 150;
+const ARC_START = 150;
+const ARC_SWEEP = 240;
+const R_MAX = 135;
+const R_MIN = 28;
 
 export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCardProps) {
   const { t } = useTranslation("dashboard");
@@ -47,21 +27,36 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     () => [...data].filter((item) => item.value > 0).sort((a, b) => b.value - a.value),
     [data],
   );
-
-  const total = sorted.reduce((sum, item) => sum + item.value, 0);
+  const total = sorted.reduce((s, c) => s + c.value, 0);
   const hasData = sorted.length > 0 && total > 0;
 
-  const radii = useMemo(() => computeRadii(sorted.length), [sorted.length]);
-  const strokeWidth = sorted.length <= 3 ? MAX_STROKE : Math.max(MIN_STROKE, Math.round(MAX_STROKE - (sorted.length - 3) * 1.2));
+  const n = sorted.length;
+  const sw = n <= 3 ? 14 : Math.max(9, Math.round(14 - (n - 3) * 1.2));
 
-  const legendGap = sorted.length <= 3 ? 29.9 : Math.max(20, 29.9 - (sorted.length - 3) * 2.5);
-  const legendStartY = sorted.length <= 1 ? 162 : sorted.length <= 3 ? 147 : 140;
-  const lastLegendY = legendStartY + (sorted.length - 1) * legendGap;
-  const vbH = Math.max(CY + MAX_RADIUS + 14, lastLegendY + 20);
+  const radii = useMemo(() => {
+    if (n <= 1) return [R_MAX];
+    return Array.from({ length: n }, (_, i) => Math.round(R_MAX - i * (R_MAX - R_MIN) / (n - 1)));
+  }, [n]);
+
+  const legendGap = n <= 4 ? 36 : Math.max(28, Math.round(36 - (n - 4) * 1.5));
+  const legendY0 = RING_CY + R_MAX + 55;
+
+  const legend = useMemo(() => {
+    return [...sorted].reverse().map((cat, i) => {
+      const origIdx = n - 1 - i;
+      const pct = (cat.value / total) * 100;
+      const label = pct < 1 && pct > 0
+        ? pct.toFixed(1).replace(".", ",") + "%"
+        : Math.round(pct) + "%";
+      return { cat, label, r: radii[origIdx] };
+    });
+  }, [sorted, total, n, radii]);
+
+  const vbH = legendY0 + (n - 1) * legendGap + 30;
 
   if (!hasData) {
     return (
-      <div className="w-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
+      <div className="w-full h-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
         <p className="text-[15px] font-heading font-bold text-white mb-[6px]">
           {t("charts.incomeByCategory", "Income by Category")}
         </p>
@@ -70,14 +65,8 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     );
   }
 
-  const legendItems = sorted.map((cat, i) => {
-    const pct = Math.round((cat.value / total) * 100);
-    return { cat, pct, ringIndex: i, r: radii[i] };
-  });
-  legendItems.sort((a, b) => b.ringIndex - a.ringIndex);
-
   return (
-    <div className="w-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
+    <div className="w-full h-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
       <p className="text-[15px] font-heading font-bold text-white mb-[6px]">
         {t("charts.incomeByCategory", "Income by Category")}
       </p>
@@ -88,110 +77,53 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
         style={{ display: "block" }}
         aria-hidden
       >
-        <defs>
-          <pattern
-            id="inc-stripes"
-            width="12"
-            height="12"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(10)"
-          >
-            <rect width="12" height="12" fill="transparent" />
-            <rect width="4" height="12" fill="#fff" />
-          </pattern>
-        </defs>
-
         {sorted.map((category, index) => {
-          const radius = radii[index];
+          const r = radii[index];
           const pct = category.value / total;
-          const circumference = 2 * Math.PI * radius;
-          const trackLength = (TRACK_SWEEP_DEG / 360) * circumference;
-          const fillLength = Math.max(trackLength * pct, pct > 0 ? strokeWidth * 0.9 : 0);
-          const fill = RING_FILLS[index % RING_FILLS.length];
-
+          const c = 2 * Math.PI * r;
+          const track = (ARC_SWEEP / 360) * c;
+          const fill = Math.max(track * pct, pct > 0 ? sw * 0.8 : 0);
           return (
-            <g key={index} transform={`rotate(${TRACK_START_DEG} ${CX} ${CY})`}>
+            <g key={index} transform={`rotate(${ARC_START} ${RING_CX} ${RING_CY})`}>
               <circle
-                cx={CX}
-                cy={CY}
-                r={radius}
-                fill="none"
-                stroke="rgba(255,255,255,0.15)"
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={`${trackLength} ${circumference}`}
+                cx={RING_CX} cy={RING_CY} r={r}
+                fill="none" stroke="rgba(255,255,255,0.12)"
+                strokeWidth={sw} strokeLinecap="round"
+                strokeDasharray={`${track} ${c}`}
               />
               <circle
-                cx={CX}
-                cy={CY}
-                r={radius}
-                fill="none"
-                stroke={fill.stroke}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={`${fillLength} ${circumference}`}
+                cx={RING_CX} cy={RING_CY} r={r}
+                fill="none" stroke="#fff"
+                strokeWidth={sw} strokeLinecap="round"
+                strokeDasharray={`${fill} ${c}`}
               />
             </g>
           );
         })}
 
-        {legendItems.map(({ cat, pct, ringIndex }, rowIdx) => {
-          const fill = RING_FILLS[ringIndex % RING_FILLS.length];
-          const legendTextY = legendStartY + rowIdx * legendGap;
-          const legendLineY = legendTextY - 4.5;
-          const r = radii[ringIndex];
-
-          const dy = legendLineY - CY;
-          const d2 = r * r - dy * dy;
-          let markerX: number;
-          if (d2 > 0) {
-            markerX = CX + Math.sqrt(d2);
-          } else {
-            markerX = CX + r * 0.85;
-          }
-
-          const lineStartX = 122;
-          const lineEndX = markerX - 8.5;
-
+        {legend.map(({ cat, label, r }, i) => {
+          const y = legendY0 + i * legendGap;
+          const lineY = y - 5;
+          const lineStart = 190;
+          const lineEnd = Math.min(RING_CX + r, VB_W - 5);
           return (
-            <g key={`legend-${ringIndex}`}>
-              <text
-                x={16}
-                y={legendTextY}
-                style={{ font: "500 13.5px Inter, sans-serif", fill: "#fff" }}
-              >
-                {cat.name}
+            <g key={i}>
+              <text x={20} y={y} xmlSpace="preserve">
+                <tspan style={{ font: "500 14.5px Inter, sans-serif", fill: "#fff" }}>
+                  {cat.name}
+                </tspan>
+                <tspan dx={10} style={{ font: "600 14.5px Inter, sans-serif", fill: "#fff", fontVariantNumeric: "tabular-nums" }}>
+                  {label}
+                </tspan>
               </text>
-              {lineEndX > lineStartX && (
+              {lineEnd > lineStart && (
                 <line
-                  x1={lineStartX}
-                  y1={legendLineY}
-                  x2={lineEndX}
-                  y2={legendLineY}
-                  stroke="rgba(255,255,255,0.65)"
-                  strokeWidth={1.2}
-                  strokeDasharray="3 4"
+                  x1={lineStart} y1={lineY} x2={lineEnd} y2={lineY}
+                  stroke="rgba(255,255,255,0.45)"
+                  strokeWidth={1.4}
+                  strokeDasharray="4 5"
                 />
               )}
-              <circle
-                cx={markerX}
-                cy={legendLineY}
-                r={4.5}
-                fill={fill.dotFill}
-                stroke={fill.dotStroke}
-                strokeWidth={1.4}
-              />
-              <text
-                x={markerX + 13}
-                y={legendTextY}
-                style={{
-                  font: "600 13.5px Inter, sans-serif",
-                  fill: "#fff",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {pct}%
-              </text>
             </g>
           );
         })}
