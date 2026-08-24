@@ -65,7 +65,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
     <div className="bg-card rounded-xl p-[20px_22px_16px] shadow-section">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-[15px] font-heading font-semibold text-foreground">
+          <p className="text-[15px] font-heading font-bold text-foreground">
             {t('charts.dailyBalance', 'Daily balance')}
           </p>
           <p className="text-[12.5px] text-[#9AA1AC] mt-0.5">

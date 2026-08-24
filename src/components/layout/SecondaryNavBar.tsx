@@ -34,8 +34,8 @@ export function SecondaryNavBar() {
               className={cn(
                 "text-[13.5px] lowercase transition-colors duration-200",
                 active
-                  ? "text-white font-bold"
-                  : "text-white/[.55] font-medium hover:text-white/75",
+                  ? "text-white font-extrabold"
+                  : "text-white/[.55] font-semibold hover:text-white/75",
               )}
             >
               {t(sub.i18nKey, { ns: sub.ns ?? "common" })}

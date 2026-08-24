@@ -183,63 +183,67 @@ export function MonthTab() {
             )}
 
             <div className="flex flex-col gap-[14px]">
-              {/* KPI row — 5 cards */}
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-[12px]">
-                <TrendKpiCard
-                  kind="income"
-                  label={t('stats.income')}
-                  icon={<Plus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-success"
-                  monthKey={latestMonthLabel}
-                  previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                  total={convertedCurrentMonth.income}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood
-                />
-                <TrendKpiCard
-                  kind="expense"
-                  label={t('stats.expenses')}
-                  icon={<Minus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-destructive"
-                  monthKey={latestMonthLabel}
-                  previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                  total={convertedCurrentMonth.expenses}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood={false}
-                />
-                <TrendKpiCard
-                  kind="balance"
-                  label={t('stats.netBalance')}
-                  icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-foreground"
-                  monthKey={latestMonthLabel}
-                  previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                  total={convertedCurrentMonth.balance}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood
-                />
-                <SavingsRateRingCard
-                  income={convertedCurrentMonth.income}
-                  expenses={convertedCurrentMonth.expenses}
-                  previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                  previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
-                  monthKey={latestMonthLabel}
-                />
-                <TrendKpiCard
-                  kind="invest"
-                  label={t('stats.sentToInvest')}
-                  icon={<TrendingUp className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                  bgClass="bg-primary"
-                  monthKey={latestMonthLabel}
-                  previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                  total={convertedCurrentMonth.sentToInvest}
-                  previousTotal={hasPreviousData ? convertedPreviousMonth.sentToInvest : undefined}
-                  formatCurrency={formatCurrency}
-                  positiveIsGood
-                />
+              {/* KPI row — 5 cards, split to align with chart grid below */}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-[12px]">
+                  <TrendKpiCard
+                    kind="income"
+                    label={t('stats.income')}
+                    icon={<Plus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                    bgClass="bg-success"
+                    monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                    total={convertedCurrentMonth.income}
+                    previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                    formatCurrency={formatCurrency}
+                    positiveIsGood
+                  />
+                  <TrendKpiCard
+                    kind="expense"
+                    label={t('stats.expenses')}
+                    icon={<Minus className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                    bgClass="bg-destructive"
+                    monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                    total={convertedCurrentMonth.expenses}
+                    previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                    formatCurrency={formatCurrency}
+                    positiveIsGood={false}
+                  />
+                  <TrendKpiCard
+                    kind="balance"
+                    label={t('stats.netBalance')}
+                    icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                    bgClass="bg-foreground"
+                    monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                    total={convertedCurrentMonth.balance}
+                    previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
+                    formatCurrency={formatCurrency}
+                    positiveIsGood
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3 lg:gap-[12px]">
+                  <SavingsRateRingCard
+                    income={convertedCurrentMonth.income}
+                    expenses={convertedCurrentMonth.expenses}
+                    previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                    previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                    monthKey={latestMonthLabel}
+                  />
+                  <TrendKpiCard
+                    kind="invest"
+                    label={t('stats.sentToInvest')}
+                    icon={<TrendingUp className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                    bgClass="bg-primary"
+                    monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                    total={convertedCurrentMonth.sentToInvest}
+                    previousTotal={hasPreviousData ? convertedPreviousMonth.sentToInvest : undefined}
+                    formatCurrency={formatCurrency}
+                    positiveIsGood
+                  />
+                </div>
               </div>
 
               {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
