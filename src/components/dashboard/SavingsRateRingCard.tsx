@@ -38,8 +38,9 @@ export function SavingsRateRingCard({
 
   const prevLabel = useMemo(() => {
     if (previousPeriodLabel) return previousPeriodLabel;
-    if (!monthKey) return "";
+    if (!monthKey || !monthKey.includes("-")) return "";
     const [y, m] = monthKey.split("-").map(Number);
+    if (isNaN(y) || isNaN(m)) return "";
     const d = new Date(y, m - 2, 1);
     return new Intl.DateTimeFormat(i18n.language || "en", { month: "long" }).format(d).toLowerCase();
   }, [monthKey, previousPeriodLabel, i18n.language]);
