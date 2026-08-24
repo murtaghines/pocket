@@ -1680,6 +1680,9 @@ serve(async (req) => {
       message += `, ${insertFailedCount} failed to save`;
     }
 
+    // Refresh materialized views so dashboard reads fresh data
+    await supabase.rpc("refresh_dashboard_views");
+
     // Log categorization savings
     const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer;
     const aiSavingsPercent = stats.newTransactions > 0 

@@ -64,6 +64,15 @@ export interface PeriodAggregates {
   isLoading: boolean;
 }
 
+interface DashboardAggregatesResponse {
+  daily_totals: Array<{ day: string; income: number; expenses: number; tx_count: number }>;
+  expense_categories: Array<{ category: string; total: number; tx_count: number }>;
+  income_categories: Array<{ category: string; total: number; tx_count: number }>;
+  prev_expense_categories: Array<{ category: string; total: number }>;
+  top_expenses: Array<{ id: string; description: string; date: string; amount: number; category: string }>;
+  essential_split: Array<{ category: string; kind: string; total: number }>;
+}
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 function buildSubBreakdown(
@@ -188,110 +197,50 @@ export function usePeriodAggregates({
 
   const enabled = !!user && !!startDate && !!endDate;
 
-  const { data: dailyTotals = [], isLoading: isDailyLoading } = useQuery({
-    queryKey: ["daily-totals", user?.id, domain, startDate, endDate],
+  const { data: agg, isLoading } = useQuery({
+    queryKey: ["dashboard-aggregates", user?.id, domain, startDate, endDate, prevStartDate, prevEndDate],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_daily_totals", {
-        p_user_id: user!.id, p_domain: domain, p_start_date: startDate!, p_end_date: endDate!,
+      const { data, error } = await supabase.rpc("get_dashboard_aggregates" as any, {
+        p_user_id: user!.id,
+        p_domain: domain,
+        p_start_date: startDate!,
+        p_end_date: endDate!,
+        p_prev_start: prevStartDate ?? null,
+        p_prev_end: prevEndDate ?? null,
       });
       if (error) throw error;
-      return (data ?? []).map((r: any) => ({
-        day: r.day,
-        income: Number(r.income),
-        expenses: Number(r.expenses),
-        txCount: Number(r.tx_count),
-      }));
+      return data as unknown as DashboardAggregatesResponse;
     },
     enabled,
+    staleTime: 30_000,
   });
-
-  const { data: expenseCategories = [], isLoading: isExpCatLoading } = useQuery({
-    queryKey: ["category-breakdown-range", user?.id, domain, startDate, endDate, "EXPENSE"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_category_breakdown_range", {
-        p_user_id: user!.id, p_domain: domain, p_start_date: startDate!, p_end_date: endDate!, p_movement: "EXPENSE" as any,
-      });
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({ category: r.category, total: Number(r.total) }));
-    },
-    enabled,
-  });
-
-  const { data: incomeCategories = [], isLoading: isIncCatLoading } = useQuery({
-    queryKey: ["category-breakdown-range", user?.id, domain, startDate, endDate, "INCOME"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_category_breakdown_range", {
-        p_user_id: user!.id, p_domain: domain, p_start_date: startDate!, p_end_date: endDate!, p_movement: "INCOME" as any,
-      });
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({ category: r.category, total: Number(r.total) }));
-    },
-    enabled,
-  });
-
-  const hasPrev = !!prevStartDate && !!prevEndDate;
-  const { data: prevExpenseCategories = [] } = useQuery({
-    queryKey: ["category-breakdown-range", user?.id, domain, prevStartDate, prevEndDate, "EXPENSE"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_category_breakdown_range", {
-        p_user_id: user!.id, p_domain: domain, p_start_date: prevStartDate!, p_end_date: prevEndDate!, p_movement: "EXPENSE" as any,
-      });
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({ category: r.category, total: Number(r.total) }));
-    },
-    enabled: enabled && hasPrev,
-  });
-
-  const { data: topExpensesRaw = [], isLoading: isTopLoading } = useQuery({
-    queryKey: ["top-expenses", user?.id, domain, startDate, endDate],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_top_expenses", {
-        p_user_id: user!.id, p_domain: domain, p_start_date: startDate!, p_end_date: endDate!, p_limit: 5,
-      });
-      if (error) throw error;
-      return (data ?? []).map((r: any): TopExpenseRow => ({
-        id: r.id,
-        description: r.description_norm || r.description,
-        date: r.date,
-        amount: Number(r.amount),
-        category: r.category,
-      }));
-    },
-    enabled,
-  });
-
-  const { data: essentialRows = [], isLoading: isEssLoading } = useQuery({
-    queryKey: ["essential-split", user?.id, domain, startDate, endDate],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_essential_split", {
-        p_user_id: user!.id, p_domain: domain, p_start_date: startDate!, p_end_date: endDate!,
-      });
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({ category: r.category as string, kind: r.kind as string, total: Number(r.total) }));
-    },
-    enabled,
-  });
-
-  const isLoading = isDailyLoading || isExpCatLoading || isIncCatLoading || isTopLoading || isEssLoading;
 
   const cvt = convertFn ?? ((n: number) => n);
 
+  const dailyTotals: DailyTotal[] = (agg?.daily_totals ?? []).map((r) => ({
+    day: r.day,
+    income: Number(r.income),
+    expenses: Number(r.expenses),
+    txCount: Number(r.tx_count),
+  }));
+
   const prevByCat: Record<string, number> = {};
-  for (const r of prevExpenseCategories) {
+  for (const r of agg?.prev_expense_categories ?? []) {
     prevByCat[r.category] = Number(r.total);
   }
-  const expenseCategoryData = buildCategoryBreakdown(expenseCategories, cvt).map((d) => ({
+
+  const expenseCategoryData = buildCategoryBreakdown(agg?.expense_categories ?? [], cvt).map((d) => ({
     ...d,
     previousValue: round2(cvt(prevByCat[d.category] ?? 0)),
   }));
-  const incomeCategoryData = buildCategoryBreakdown(incomeCategories, cvt);
-  const essentialSplit = buildEssentialSplit(essentialRows, cvt);
+  const incomeCategoryData = buildCategoryBreakdown(agg?.income_categories ?? [], cvt);
+  const essentialSplit = buildEssentialSplit(agg?.essential_split ?? [], cvt);
   const subBreakdown = startDate
     ? buildSubBreakdown(dailyTotals, granularity, startDate, cvt)
     : [];
-  const topExpenses = topExpensesRaw.map((r) => ({
+  const topExpenses = (agg?.top_expenses ?? []).map((r) => ({
     ...r,
-    amount: round2(cvt(r.amount)),
+    amount: round2(cvt(Number(r.amount))),
   }));
   const spendPoints = granularity === "month"
     ? dailyTotals.map((d) => cvt(d.expenses))
