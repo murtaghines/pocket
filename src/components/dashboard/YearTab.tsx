@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Minus, Loader2, Wallet, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
-import { NetBalanceCard } from "@/components/dashboard/NetBalanceCard";
 import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
 import { PeriodBreakdownChart } from "@/components/dashboard/PeriodBreakdownChart";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
@@ -115,9 +114,10 @@ export function YearTab() {
       )}
 
       {!isLoading && !isDashLoading && !prefsLoading && !agg.isLoading && (
-        <div className="flex flex-col gap-[18px]">
-          <div className="flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-stretch">
-            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:flex-[2]">
+        <div className="flex flex-col gap-[14px]">
+          {/* KPI row — 5 cards, split to align with chart grid below */}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-[12px]">
               <TrendKpiCard
                 kind="income"
                 label={t("stats.income")}
@@ -142,25 +142,44 @@ export function YearTab() {
                 formatCurrency={formatCurrency}
                 positiveIsGood={false}
               />
-            </div>
-            <div className="grid grid-cols-[1.7fr_0.82fr] gap-3 md:gap-4 lg:flex-[2.5] lg:grid-cols-[1.8fr_0.85fr]">
-              <NetBalanceCard
-                balance={convertToUserCurrency(current.balance)}
-                previousBalance={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
-                sentToInvest={convertToUserCurrency(current.sentToInvest ?? 0)}
+              <TrendKpiCard
+                kind="balance"
+                label={t("stats.netBalance")}
+                icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                bgClass="bg-foreground"
                 monthKey={selectedYear}
                 previousPeriodLabel={previousPeriodLabel}
+                total={convertToUserCurrency(current.balance)}
+                previousTotal={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
                 formatCurrency={formatCurrency}
+                positiveIsGood
               />
+            </div>
+            <div className="grid grid-cols-2 gap-3 lg:gap-[12px]">
               <SavingsRateRingCard
                 income={convertToUserCurrency(current.income)}
                 expenses={convertToUserCurrency(current.expenses)}
+                previousIncome={hasPreviousData ? convertToUserCurrency(previous.income) : undefined}
+                previousExpenses={hasPreviousData ? convertToUserCurrency(previous.expenses) : undefined}
+                monthKey={selectedYear}
+              />
+              <TrendKpiCard
+                kind="invest"
+                label={t("stats.sentToInvest")}
+                icon={<TrendingUp className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                bgClass="bg-primary"
+                monthKey={selectedYear}
+                previousPeriodLabel={previousPeriodLabel}
+                total={convertToUserCurrency(current.sentToInvest ?? 0)}
+                previousTotal={hasPreviousData ? convertToUserCurrency(previous.sentToInvest ?? 0) : undefined}
+                formatCurrency={formatCurrency}
+                positiveIsGood
               />
             </div>
           </div>
 
           {/* Row 2: income vs expenses breakdown + accounts */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px]">
             <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byMonthThisYear", "By month · this year")} />
             <AccountsStackCard
               startDate={range?.start}
@@ -171,7 +190,7 @@ export function YearTab() {
           </div>
 
           {/* Row 3: balance line + heatmap */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px]">
             <DailyFlowChart
               dailyTotals={agg.dailyTotals}
               monthKey={displayMonthKey}
@@ -184,18 +203,20 @@ export function YearTab() {
             />
           </div>
 
-          {/* Row 4: spending by category + top expenses */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[16px]">
+          {/* Row 4: Income by category + Spending by category */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] gap-[14px]">
+            <CategoryChart data={agg.incomeCategoryData} />
             <SpendingByCategoryChart data={agg.expenseCategoryData} />
+          </div>
+
+          {/* Row 5: Fixed vs discretionary + Top expenses */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-[14px]">
+            <FixedVsDiscretionaryCard split={agg.essentialSplit} />
             <TopExpensesCard topExpenses={agg.topExpenses} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-[16px]">
-            <FixedVsDiscretionaryCard split={agg.essentialSplit} />
-            <CategoryChart data={agg.incomeCategoryData} />
-          </div>
-
-          <div className="bg-card rounded-xl p-[20px_0_6px] shadow-section border border-border">
+          {/* Row 6: Transactions table */}
+          <div className="bg-card rounded-xl p-[20px_0_6px] shadow-section">
             <div className="max-h-[500px] overflow-y-auto">
               <TransactionTable transactions={transactions} totalCount={totalCount ?? undefined} />
             </div>

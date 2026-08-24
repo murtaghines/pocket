@@ -6,7 +6,12 @@ import { NAV_SECTIONS, getActiveSection } from "@/config/navigation";
 import { Logo } from "@/components/brand/Logo";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 
-export function PrimaryNavBar() {
+interface PrimaryNavBarProps {
+  subNavOpen: boolean;
+  onToggleSubNav: () => void;
+}
+
+export function PrimaryNavBar({ subNavOpen, onToggleSubNav }: PrimaryNavBarProps) {
   const location = useLocation();
   const { t } = useTranslation("common");
   const activeSection = getActiveSection(location.pathname);
@@ -20,21 +25,44 @@ export function PrimaryNavBar() {
       <nav className="flex items-center gap-[28px] h-full font-heading">
         {NAV_SECTIONS.map((section) => {
           const active = activeSection?.key === section.key;
+          const hasSubTabs = section.subTabs && section.subTabs.length > 1;
           return (
-            <Link
+            <div
               key={section.key}
-              to={section.path}
-              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-[5px] h-full border-b-2 text-[15px] lowercase transition-colors duration-200",
-                active
-                  ? "border-white text-white font-bold"
-                  : "border-transparent text-white/[.62] font-semibold hover:text-white/80",
+                "flex items-center h-full border-b-2",
+                active ? "border-white" : "border-transparent",
               )}
             >
-              {t(section.i18nKey)}
-              {active && <ChevronDown className="w-[13px] h-[13px]" strokeWidth={2.5} />}
-            </Link>
+              <Link
+                to={section.path}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "text-[15px] lowercase transition-colors duration-200",
+                  active
+                    ? "text-white font-bold"
+                    : "text-white/[.62] font-semibold hover:text-white/80",
+                )}
+              >
+                {t(section.i18nKey)}
+              </Link>
+              {active && hasSubTabs && (
+                <button
+                  type="button"
+                  onClick={onToggleSubNav}
+                  aria-label={subNavOpen ? "Hide sub-navigation" : "Show sub-navigation"}
+                  className="ml-[4px] p-0.5 text-white/80 hover:text-white transition-colors"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "w-[13px] h-[13px] transition-transform duration-200",
+                      !subNavOpen && "-rotate-90",
+                    )}
+                    strokeWidth={2.5}
+                  />
+                </button>
+              )}
+            </div>
           );
         })}
       </nav>

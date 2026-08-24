@@ -3,13 +3,18 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { getActiveSection, getActiveTabKey } from "@/config/navigation";
 
-export function SecondaryNavBar() {
+interface SecondaryNavBarProps {
+  visible: boolean;
+}
+
+export function SecondaryNavBar({ visible }: SecondaryNavBarProps) {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { t } = useTranslation(["common", "dashboard"]);
   const section = getActiveSection(location.pathname);
 
   if (!section?.subTabs || section.subTabs.length <= 1) return null;
+  if (!visible) return null;
 
   const activeTab = getActiveTabKey(section, searchParams);
 
