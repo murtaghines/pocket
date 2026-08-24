@@ -96,7 +96,9 @@
     "bank": "Cuenta",
     "edited": "editado",
     "transfer": "Transferencia",
-    "closingBalance": "Saldo final"
+    "closingBalance": "Saldo final",
+    "type": "Tipo",
+    "editInData": "editar en data"
   },
   "topExpenses": {
     "title": "Mayores gastos",

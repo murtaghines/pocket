@@ -86,11 +86,19 @@ export function MonthlyFlowSankey({
       : leftCats;
 
     let finalRight = rightCats;
-    if (rightCats.length > 4) {
-      const head = rightCats.slice(0, 4);
-      const tail = rightCats.slice(4);
+    if (rightCats.length > 8) {
+      const head = rightCats.slice(0, 7);
+      const tail = rightCats.slice(7);
       const restVal = tail.reduce((s, c) => s + c.value, 0);
-      finalRight = [...head, { name: t("charts.other", "Other"), value: restVal, color: "#B4BAC3" }];
+      const restLabel = t("charts.other", "Other");
+      const existingOther = head.findIndex((c) => c.name === restLabel);
+      if (existingOther >= 0) {
+        finalRight = head.map((c, i) =>
+          i === existingOther ? { ...c, value: c.value + restVal } : c,
+        );
+      } else {
+        finalRight = [...head, { name: restLabel, value: restVal, color: "#B4BAC3" }];
+      }
     }
 
     const leftNodes = buildColumn(finalLeft, LEFT_X);
