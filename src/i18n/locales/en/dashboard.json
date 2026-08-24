@@ -97,7 +97,9 @@
     "bank": "Account",
     "edited": "edited",
     "transfer": "Transfer",
-    "closingBalance": "Closing balance"
+    "closingBalance": "Closing balance",
+    "type": "Type",
+    "editInData": "edit in data"
   },
   "topExpenses": {
     "title": "Top Expenses",

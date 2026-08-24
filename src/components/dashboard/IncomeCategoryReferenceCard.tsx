@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -16,43 +17,47 @@ const CX = 300;
 const CY = 112;
 const TRACK_START_DEG = 205;
 const TRACK_SWEEP_DEG = 220;
-const STROKE_WIDTH = 13;
-const RADII = [100, 67, 34];
+
+const MAX_RADIUS = 100;
+const MIN_RADIUS = 22;
+const MAX_STROKE = 13;
+const MIN_STROKE = 8;
+
+const RING_FILLS = [
+  { stroke: "#fff", dotFill: "#fff", dotStroke: "#fff" },
+  { stroke: "#0C0D0E", dotFill: "#0C0D0E", dotStroke: "#fff" },
+  { stroke: "url(#inc-stripes)", dotFill: "url(#inc-stripes)", dotStroke: "#fff" },
+  { stroke: "rgba(255,255,255,0.55)", dotFill: "rgba(255,255,255,0.55)", dotStroke: "#fff" },
+  { stroke: "#fff", dotFill: "#fff", dotStroke: "#0C0D0E" },
+  { stroke: "#0C0D0E", dotFill: "#0C0D0E", dotStroke: "#fff" },
+  { stroke: "url(#inc-stripes)", dotFill: "url(#inc-stripes)", dotStroke: "#fff" },
+  { stroke: "rgba(255,255,255,0.55)", dotFill: "rgba(255,255,255,0.55)", dotStroke: "#fff" },
+];
+
+function computeRadii(count: number): number[] {
+  if (count <= 1) return [MAX_RADIUS];
+  const step = (MAX_RADIUS - MIN_RADIUS) / (count - 1);
+  return Array.from({ length: count }, (_, i) => Math.round(MAX_RADIUS - i * step));
+}
 
 export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCardProps) {
   const { t } = useTranslation("dashboard");
 
-  const filtered = [...data]
-    .filter((item) => item.value > 0)
-    .sort((a, b) => b.value - a.value);
+  const sorted = useMemo(
+    () => [...data].filter((item) => item.value > 0).sort((a, b) => b.value - a.value),
+    [data],
+  );
 
-  const totalAll = filtered.reduce((sum, item) => sum + item.value, 0);
-  const hasData = filtered.length > 0 && totalAll > 0;
-
-  const MAX_RINGS = RADII.length;
-  let sorted = filtered;
-  if (filtered.length > MAX_RINGS) {
-    const head = filtered.slice(0, MAX_RINGS - 1);
-    const tail = filtered.slice(MAX_RINGS - 1);
-    const tailValue = tail.reduce((sum, item) => sum + item.value, 0);
-    sorted = [
-      ...head,
-      { name: t("charts.otherCategories", "Other"), value: tailValue, color: tail[0]?.color ?? "" },
-    ];
-  }
   const total = sorted.reduce((sum, item) => sum + item.value, 0);
+  const hasData = sorted.length > 0 && total > 0;
 
-  const ringFills: Array<{ stroke: string; dotFill: string; dotStroke: string }> = [
-    { stroke: "#fff", dotFill: "#fff", dotStroke: "#fff" },
-    { stroke: "#0C0D0E", dotFill: "#0C0D0E", dotStroke: "#fff" },
-    { stroke: "url(#inc-stripes)", dotFill: "url(#inc-stripes)", dotStroke: "#fff" },
-  ];
+  const radii = useMemo(() => computeRadii(sorted.length), [sorted.length]);
+  const strokeWidth = sorted.length <= 3 ? MAX_STROKE : Math.max(MIN_STROKE, Math.round(MAX_STROKE - (sorted.length - 3) * 1.2));
 
-  const numItems = sorted.length;
-  const LEGEND_START_Y = numItems <= 1 ? 162 : numItems === 2 ? 155 : 147.3;
-  const LEGEND_GAP = 29.9;
-  const lastLegendY = LEGEND_START_Y + (numItems - 1) * LEGEND_GAP;
-  const vbH = Math.max(CY + RADII[0] + 14, lastLegendY + 20);
+  const legendGap = sorted.length <= 3 ? 29.9 : Math.max(20, 29.9 - (sorted.length - 3) * 2.5);
+  const legendStartY = sorted.length <= 1 ? 162 : sorted.length <= 3 ? 147 : 140;
+  const lastLegendY = legendStartY + (sorted.length - 1) * legendGap;
+  const vbH = Math.max(CY + MAX_RADIUS + 14, lastLegendY + 20);
 
   if (!hasData) {
     return (
@@ -65,11 +70,9 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     );
   }
 
-  // Build legend items: inner rings (smallest) at top, outer rings (largest) at bottom
   const legendItems = sorted.map((cat, i) => {
     const pct = Math.round((cat.value / total) * 100);
-    const r = RADII[i] ?? RADII[RADII.length - 1];
-    return { cat, pct, ringIndex: i, r };
+    return { cat, pct, ringIndex: i, r: radii[i] };
   });
   legendItems.sort((a, b) => b.ringIndex - a.ringIndex);
 
@@ -99,12 +102,12 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
         </defs>
 
         {sorted.map((category, index) => {
-          const radius = RADII[index] ?? RADII[RADII.length - 1];
+          const radius = radii[index];
           const pct = category.value / total;
           const circumference = 2 * Math.PI * radius;
           const trackLength = (TRACK_SWEEP_DEG / 360) * circumference;
-          const fillLength = Math.max(trackLength * pct, pct > 0 ? STROKE_WIDTH * 0.9 : 0);
-          const fill = ringFills[index] ?? ringFills[ringFills.length - 1];
+          const fillLength = Math.max(trackLength * pct, pct > 0 ? strokeWidth * 0.9 : 0);
+          const fill = RING_FILLS[index % RING_FILLS.length];
 
           return (
             <g key={index} transform={`rotate(${TRACK_START_DEG} ${CX} ${CY})`}>
@@ -114,7 +117,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
                 r={radius}
                 fill="none"
                 stroke="rgba(255,255,255,0.15)"
-                strokeWidth={STROKE_WIDTH}
+                strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 strokeDasharray={`${trackLength} ${circumference}`}
               />
@@ -124,7 +127,7 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
                 r={radius}
                 fill="none"
                 stroke={fill.stroke}
-                strokeWidth={STROKE_WIDTH}
+                strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 strokeDasharray={`${fillLength} ${circumference}`}
               />
@@ -133,10 +136,10 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
         })}
 
         {legendItems.map(({ cat, pct, ringIndex }, rowIdx) => {
-          const fill = ringFills[ringIndex] ?? ringFills[ringFills.length - 1];
-          const legendTextY = LEGEND_START_Y + rowIdx * LEGEND_GAP;
+          const fill = RING_FILLS[ringIndex % RING_FILLS.length];
+          const legendTextY = legendStartY + rowIdx * legendGap;
           const legendLineY = legendTextY - 4.5;
-          const r = RADII[ringIndex] ?? RADII[RADII.length - 1];
+          const r = radii[ringIndex];
 
           const dy = legendLineY - CY;
           const d2 = r * r - dy * dy;

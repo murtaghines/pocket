@@ -191,7 +191,7 @@ export function WeekTab() {
             <CategoryChart data={agg.incomeCategoryData} />
           </div>
 
-          <div className="bg-card rounded-xl p-[20px_22px_10px] shadow-section border border-border">
+          <div className="bg-card rounded-xl p-[20px_0_6px] shadow-section border border-border">
             <div className="max-h-[500px] overflow-y-auto">
               <TransactionTable transactions={transactions} />
             </div>

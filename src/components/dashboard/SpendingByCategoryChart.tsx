@@ -69,7 +69,7 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 items-center px-5 pb-[18px] pt-0">
-        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row sm:items-center sm:gap-[26px]">
+        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row-reverse sm:items-center sm:gap-[26px]">
           {/* Donut gauge — centre shows the month total, or the selected category's amount */}
           <div className="relative shrink-0" style={{ width: 200, height: 186 }}>
             <ResponsiveContainer width="100%" height="100%">

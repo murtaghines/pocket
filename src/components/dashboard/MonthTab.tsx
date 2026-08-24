@@ -291,11 +291,9 @@ export function MonthTab() {
               </div>
 
               {/* Row 6: Transactions table */}
-              <div
-                className="bg-card rounded-xl p-[20px_22px_10px] shadow-section"
-              >
+              <div className="bg-card rounded-xl p-[20px_0_6px] shadow-section">
                 <div className="max-h-[500px] overflow-y-auto">
-                  <TransactionTable transactions={transactions} />
+                  <TransactionTable transactions={transactions} monthKey={latestMonthLabel ?? undefined} />
                 </div>
               </div>
             </div>
