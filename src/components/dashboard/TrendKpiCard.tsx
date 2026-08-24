@@ -63,8 +63,9 @@ export function TrendKpiCard({
   const prevMonthLabel = useMemo(() => {
     if (previousPeriodLabel !== undefined) return previousPeriodLabel;
     const key = previousMonthKey || monthKey;
-    if (!key) return "last month";
+    if (!key || !key.includes("-")) return "last month";
     const [y, m] = key.split("-").map(Number);
+    if (isNaN(y) || isNaN(m)) return "last month";
     const d = previousMonthKey ? new Date(y, m - 1, 1) : new Date(y, m - 2, 1);
     return new Intl.DateTimeFormat(i18n.language || "en", { month: "long" }).format(d).toLowerCase();
   }, [monthKey, previousMonthKey, previousPeriodLabel, i18n.language]);

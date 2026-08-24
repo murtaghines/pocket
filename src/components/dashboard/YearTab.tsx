@@ -161,6 +161,7 @@ export function YearTab() {
                 expenses={convertToUserCurrency(current.expenses)}
                 previousIncome={hasPreviousData ? convertToUserCurrency(previous.income) : undefined}
                 previousExpenses={hasPreviousData ? convertToUserCurrency(previous.expenses) : undefined}
+                previousPeriodLabel={previousPeriodLabel}
                 monthKey={selectedYear}
               />
               <TrendKpiCard
