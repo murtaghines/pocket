@@ -59,7 +59,7 @@ export function HistoryTab() {
           <div
             className="bg-card rounded-xl p-[20px_0_6px] shadow-section"
           >
-            <div className="max-h-[500px] overflow-y-auto">
+            <div className="max-h-[700px] overflow-y-auto">
               <TransactionTable
                 transactions={sortedTransactions}
                 initialSearch={initialSearch}
