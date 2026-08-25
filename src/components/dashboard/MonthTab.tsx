@@ -274,7 +274,7 @@ export function MonthTab() {
               {/* Row 4: Income by category (blue, 1fr) + Spending by category (1.62fr) */}
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] gap-[14px]">
                 <CategoryChart data={agg.incomeCategoryData} />
-                <SpendingByCategoryChart data={agg.expenseCategoryData} />
+                <SpendingByCategoryChart data={agg.expenseCategoryData} monthKey={latestMonthLabel} />
               </div>
 
               {/* Row 5: Monthly flow Sankey (1.62fr) + Top expenses (1fr) */}
