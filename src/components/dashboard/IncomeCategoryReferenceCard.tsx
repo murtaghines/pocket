@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
-import { cn } from "@/lib/utils";
 
 interface CategoryData {
   name: string;
@@ -17,28 +16,17 @@ interface IncomeCategoryReferenceCardProps {
 
 const SLICE_FILLS = [
   "#ffffff",
-  "#0C0D0E",
+  "#1A1D23",
   "url(#inc-ring-stripe)",
   "rgba(255,255,255,0.35)",
   "#7A8494",
   "rgba(255,255,255,0.55)",
   "#C4CDD8",
-  "rgba(255,255,255,0.18)",
+  "rgba(255,255,255,0.20)",
 ];
 
-const DOT_CSS: React.CSSProperties[] = [
-  { backgroundColor: "#ffffff" },
-  { backgroundColor: "#0C0D0E" },
-  {
-    backgroundImage:
-      "repeating-linear-gradient(45deg, #fff 0px, #fff 1.5px, transparent 1.5px, transparent 3px)",
-  },
-  { backgroundColor: "rgba(255,255,255,0.35)" },
-  { backgroundColor: "#7A8494" },
-  { backgroundColor: "rgba(255,255,255,0.55)" },
-  { backgroundColor: "#C4CDD8" },
-  { backgroundColor: "rgba(255,255,255,0.18)" },
-];
+const RADIAN = Math.PI / 180;
+const LABEL_MIN_PCT = 0.015;
 
 export function IncomeCategoryReferenceCard({
   data,
@@ -48,10 +36,27 @@ export function IncomeCategoryReferenceCard({
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const hasData = data.length > 0 && total > 0;
-  const sorted = useMemo(
-    () => [...data].sort((a, b) => b.value - a.value),
-    [data],
-  );
+
+  const sorted = useMemo(() => {
+    if (total === 0) return [];
+    const s = [...data]
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+    const significant: CategoryData[] = [];
+    let otherTotal = 0;
+    for (const item of s) {
+      if (item.value / total >= 0.01) significant.push(item);
+      else otherTotal += item.value;
+    }
+    if (otherTotal > 0) {
+      significant.push({
+        name: t("charts.otherCategories", "Other"),
+        value: otherTotal,
+        color: "#7A8494",
+      });
+    }
+    return significant;
+  }, [data, total, t]);
 
   const [active, setActive] = useState<string | null>(null);
   const activeEntry = active
@@ -62,14 +67,68 @@ export function IncomeCategoryReferenceCard({
     setActive((cur) => (cur === name ? null : name));
   };
 
-  const pctLabel = (value: number) => {
-    const p = (value / total) * 100;
-    const rounded = p < 10 ? Math.round(p * 10) / 10 : Math.round(p);
-    const s = Number.isInteger(rounded)
-      ? String(rounded)
-      : rounded.toFixed(1).replace(".", ",");
-    return `${s}%`;
-  };
+  const pctLabel = useCallback(
+    (value: number) => {
+      const p = (value / total) * 100;
+      const rounded = p < 10 ? Math.round(p * 10) / 10 : Math.round(p);
+      const s = Number.isInteger(rounded)
+        ? String(rounded)
+        : rounded.toFixed(1).replace(".", ",");
+      return `${s}%`;
+    },
+    [total],
+  );
+
+  const renderLabel = useCallback(
+    (props: {
+      cx: number;
+      cy: number;
+      midAngle: number;
+      outerRadius: number;
+      name: string;
+      percent: number;
+    }) => {
+      const { cx, cy, midAngle, outerRadius, name, percent } = props;
+      if (percent < LABEL_MIN_PCT) return null;
+
+      const cos = Math.cos(-RADIAN * midAngle);
+      const sin = Math.sin(-RADIAN * midAngle);
+
+      const sx = cx + outerRadius * cos;
+      const sy = cy + outerRadius * sin;
+      const mx = cx + (outerRadius + 14) * cos;
+      const my = cy + (outerRadius + 14) * sin;
+      const ex = mx + (cos >= 0 ? 1 : -1) * 18;
+      const ey = my;
+      const textAnchor = cos >= 0 ? "start" : "end";
+      const tx = ex + (cos >= 0 ? 5 : -5);
+      const pct = Math.round(percent * 100);
+
+      return (
+        <g>
+          <path
+            d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
+            stroke="rgba(255,255,255,0.4)"
+            fill="none"
+            strokeWidth={1}
+          />
+          <circle cx={sx} cy={sy} r={2} fill="rgba(255,255,255,0.6)" />
+          <text
+            x={tx}
+            y={ey + 4}
+            textAnchor={textAnchor}
+            fill="#fff"
+            fontSize={12}
+            fontWeight={500}
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            {name} ({pct}%)
+          </text>
+        </g>
+      );
+    },
+    [],
+  );
 
   if (!hasData) {
     return (
@@ -99,98 +158,67 @@ export function IncomeCategoryReferenceCard({
         </defs>
       </svg>
 
-      <div className="px-5 pt-[18px] pb-2">
+      <div className="px-5 pt-[18px] pb-0">
         <p className="text-[15px] font-heading font-bold text-white">
           {t("charts.incomeByCategory", "Income by Category")}
         </p>
       </div>
 
-      <div className="flex flex-1 items-center px-5 pb-[18px] pt-0">
-        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row-reverse sm:items-center sm:gap-[26px]">
-          <div className="relative shrink-0" style={{ width: 200, height: 186 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={sorted}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="72%"
-                  outerRadius="100%"
-                  startAngle={225}
-                  endAngle={-45}
-                  paddingAngle={2}
-                  cornerRadius={5}
-                  stroke="none"
-                  isAnimationActive={false}
-                  onClick={(d: { name?: string }) => toggle(d?.name)}
-                >
-                  {sorted.map((entry, i) => (
-                    <Cell
-                      key={i}
-                      fill={SLICE_FILLS[i % SLICE_FILLS.length]}
-                      fillOpacity={active && active !== entry.name ? 0.25 : 1}
-                      className="cursor-pointer outline-none transition-[fill-opacity] duration-150 focus:outline-none"
-                    />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 pb-3 text-center">
-              {activeEntry ? (
-                <>
-                  <span className="max-w-full truncate text-[12px] font-medium text-white/70">
-                    {activeEntry.name}
-                  </span>
-                  <span className="text-[16px] md:text-[19px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-white">
-                    {formatCurrency(activeEntry.value)}
-                  </span>
-                  <span className="text-[12px] tabular-nums text-white/70">
-                    {pctLabel(activeEntry.value)}
-                  </span>
-                </>
-              ) : (
-                <span className="text-[17px] md:text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-white">
-                  {formatCurrency(total)}
-                </span>
-              )}
-            </div>
-          </div>
+      <div className="flex-1 relative min-h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={sorted}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius="36%"
+              outerRadius="52%"
+              startAngle={90}
+              endAngle={-270}
+              paddingAngle={2}
+              cornerRadius={4}
+              stroke="none"
+              isAnimationActive={false}
+              label={renderLabel}
+              labelLine={false}
+              onClick={(d: { name?: string }) => toggle(d?.name)}
+            >
+              {sorted.map((entry, i) => (
+                <Cell
+                  key={i}
+                  fill={SLICE_FILLS[i % SLICE_FILLS.length]}
+                  fillOpacity={
+                    active && active !== entry.name ? 0.25 : 1
+                  }
+                  className="cursor-pointer outline-none transition-[fill-opacity] duration-150 focus:outline-none"
+                />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
 
-          <ul className="w-full flex-1">
-            {sorted.map((entry, i) => {
-              const dimmed = active !== null && active !== entry.name;
-              return (
-                <li key={i}>
-                  <button
-                    type="button"
-                    onClick={() => toggle(entry.name)}
-                    aria-pressed={active === entry.name}
-                    className={cn(
-                      "-mx-1 flex w-full items-center gap-[10px] rounded-lg px-1 py-[3px] text-left transition-colors",
-                      active === entry.name && "bg-white/10",
-                      dimmed && "opacity-45",
-                    )}
-                  >
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={DOT_CSS[i % DOT_CSS.length]}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[13.5px] text-white">
-                      {entry.name}
-                    </span>
-                    <span className="w-[46px] shrink-0 text-right text-[13px] font-medium tabular-nums text-white">
-                      {pctLabel(entry.value)}
-                    </span>
-                    <span className="w-[92px] shrink-0 text-right text-[13px] tabular-nums text-white/70">
-                      {formatCurrency(entry.value)}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            {activeEntry ? (
+              <>
+                <p className="max-w-[90px] mx-auto truncate text-[11px] font-medium text-white/70 mb-0.5">
+                  {activeEntry.name}
+                </p>
+                <p className="text-[17px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-white">
+                  {formatCurrency(activeEntry.value)}
+                </p>
+                <p className="text-[11px] tabular-nums text-white/70 mt-0.5">
+                  {pctLabel(activeEntry.value)}
+                </p>
+              </>
+            ) : (
+              <p className="text-[17px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-white">
+                {formatCurrency(total)}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
