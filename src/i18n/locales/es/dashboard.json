@@ -80,7 +80,12 @@
     "otherCategories": "Otros",
     "monthlyFlow": "Flujo del mes",
     "sankeyEntries": "ENTRADAS",
-    "sankeyExpenses": "GASTOS"
+    "sankeyExpenses": "GASTOS",
+    "treemapInCategories": "en {{count}} categorías",
+    "treemapWeight": "Peso",
+    "treemapToggleLabel": "Modo de visualización",
+    "treemapNew": "nuevo",
+    "treemapNoExpenses": "Sin gastos en {{month}}"
   },
   "transactions": {
     "title": "Transacciones",
