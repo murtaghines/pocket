@@ -32,6 +32,7 @@ export interface MonthWorkspaceProps {
   sortDirection?: SortDirection;
   filters?: DataFilters;
   exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
+  openingBalance?: number | null;
 }
 
 export function MonthWorkspace({
@@ -57,6 +58,7 @@ export function MonthWorkspace({
   sortDirection,
   filters,
   exportTransactionsRef,
+  openingBalance,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -189,6 +191,7 @@ export function MonthWorkspace({
         sortDirection={sortDirection}
         filters={filters}
         exportTransactionsRef={exportTransactionsRef}
+        openingBalance={openingBalance}
       />
     </div>
   );

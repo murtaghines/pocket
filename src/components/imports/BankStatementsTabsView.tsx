@@ -9,6 +9,7 @@ import { useImports, type Import } from "@/hooks/useImports";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
 import { MonthTabStrip } from "./cashflow/MonthTabStrip";
@@ -39,6 +40,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
     pendingFilesByMonth,
   } = useMonthlyFileUpload();
 
+  const { openingBalanceByMonth } = useDashboardData();
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const [monthsToShow, setMonthsToShow] = useState(() => {
     if (!activeMonth) return DEFAULT_MONTHS;
@@ -91,6 +93,12 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
     });
     return g;
   }, [imports]);
+
+  const monthsWithData = useMemo(() => new Set(Object.keys(importsByMonth)), [importsByMonth]);
+  const firstMonthWithData = useMemo(() => {
+    const keys = Object.keys(importsByMonth).sort();
+    return keys.length > 0 ? keys[0] : null;
+  }, [importsByMonth]);
 
   const defaultMonth = monthSlots[0]?.key ?? "";
   const activeKey = activeMonth && monthSlots.some((s) => s.key === activeMonth) ? activeMonth : defaultMonth;
@@ -223,6 +231,8 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         monthLabel={activeSlot?.label ?? ""}
         monthDate={activeSlot?.date ?? new Date()}
         txCount={activeTxCount ?? 0}
+        openingBalance={activeKey ? openingBalanceByMonth[activeKey] ?? null : null}
+        formatCurrency={formatCurrency}
         onPrev={goPrevMonth}
         onNext={goNextMonth}
         canGoNext={activeIdx > 0}
@@ -240,6 +250,8 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         onUploadFile={() => globalFileInputRef.current?.click()}
         onExport={() => exportTransactionsRef.current?.()}
         isLocked={isLocked}
+        monthsWithData={monthsWithData}
+        firstMonthWithData={firstMonthWithData}
       />
 
       {/* ============= Month Tab Strip (mobile only) ============= */}
@@ -284,6 +296,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
           sortDirection={sortDirection}
           filters={filters}
           exportTransactionsRef={exportTransactionsRef}
+          openingBalance={activeKey ? openingBalanceByMonth[activeKey] ?? null : null}
         />
       )}
 

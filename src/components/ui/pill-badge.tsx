@@ -72,7 +72,7 @@ export function PillBadge({
   // For "soft" custom-color pills, we want a very light background of the
   // category color but keep the icon/label readable. Text uses a darker
   // foreground while the icon keeps the saturated category color.
-  const softBgAlpha = 0.18;
+  const softBgAlpha = 0.13;
   const customStyle = colorVar
     ? variant === "solid"
       ? {
@@ -104,8 +104,8 @@ export function PillBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full font-medium leading-none whitespace-nowrap",
-        size === "sm" ? "px-[10px] py-[3px] text-xs" : "px-2.5 py-1.5 text-sm",
+        "inline-flex items-center rounded-full font-medium leading-none whitespace-nowrap",
+        size === "sm" ? "px-[10px] py-[3px] text-xs gap-[6px]" : "px-2.5 py-1.5 text-sm gap-1.5",
         !useCustom && (variant === "solid" ? TONE_CLASSES_SOLID[tone] : TONE_CLASSES[tone]),
         className,
       )}

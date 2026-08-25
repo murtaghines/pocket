@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ChevronLeft,
@@ -13,14 +13,12 @@ import {
   CalendarDays,
   Check,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +43,8 @@ interface DataToolbarProps {
   monthLabel: string;
   monthDate: Date;
   txCount: number;
+  openingBalance?: number | null;
+  formatCurrency: (amount: number) => string;
   onPrev: () => void;
   onNext: () => void;
   canGoNext: boolean;
@@ -62,6 +62,8 @@ interface DataToolbarProps {
   onUploadFile: () => void;
   onExport: () => void;
   isLocked?: boolean;
+  monthsWithData?: Set<string>;
+  firstMonthWithData?: string | null;
 }
 
 const SORT_COLUMNS: SortColumn[] = ["date", "description", "account", "movement", "category", "amount"];
@@ -70,6 +72,8 @@ export function DataToolbar({
   monthLabel,
   monthDate,
   txCount,
+  openingBalance,
+  formatCurrency,
   onPrev,
   onNext,
   canGoNext,
@@ -87,9 +91,22 @@ export function DataToolbar({
   onUploadFile,
   onExport,
   isLocked,
+  monthsWithData,
+  firstMonthWithData,
 }: DataToolbarProps) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [viewYear, setViewYear] = useState(() => monthDate.getFullYear());
+
+  const shortMonthLabels = useMemo(() => {
+    const fmt = new Intl.DateTimeFormat(i18n.language, { month: "short" });
+    return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(2026, i, 1)));
+  }, [i18n.language]);
+
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+  const selectedYear = monthDate.getFullYear();
+  const selectedMonth = monthDate.getMonth();
 
   const hasActiveFilters =
     filters.accounts.length > 0 ||
@@ -120,81 +137,163 @@ export function DataToolbar({
   const sortLabel = (col: SortColumn) => t(`imports.sort${col.charAt(0).toUpperCase() + col.slice(1)}`);
 
   return (
-    <div className="hidden md:flex items-center justify-between gap-4 px-6 py-3 border-b border-border bg-card">
-      {/* Left: Month navigation */}
-      <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold text-foreground capitalize">
-          {monthLabel}
-        </h2>
-        {txCount > 0 && (
-          <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold tabular-nums bg-primary/15 text-primary">
-            {txCount} {t("imports.transactions")}
-          </span>
-        )}
-        <div className="flex items-center gap-0.5 ml-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={onPrev}
-            aria-label="Previous month"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={onNext}
-            disabled={!canGoNext}
-            aria-label="Next month"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+    <div className="hidden md:flex items-center justify-between gap-4 bg-card px-6 py-[20px] pb-[16px]">
+      {/* Left: Month title + opening balance + nav buttons */}
+      <div className="flex items-center gap-[14px]">
+        <div className="flex flex-col">
+          <h2 className="font-heading font-semibold text-[20px] text-[#0C0D0E] tracking-[-0.01em] capitalize">
+            {monthLabel}
+          </h2>
+          {openingBalance != null && (
+            <p className="text-[12.5px] text-[#9AA1AC]">
+              {t("imports.openingBalance")}{" "}
+              <span className="font-medium text-[#414750] tabular-nums">
+                {formatCurrency(openingBalance)}
+              </span>
+            </p>
+          )}
         </div>
 
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              aria-label="Jump to month"
+        {/* Month navigation — ‹ › calendar in #F5F7F9 container */}
+        <div className="flex items-center gap-[2px] bg-[#F5F7F9] rounded-[9px] p-[3px] ml-[6px]">
+          <button
+            type="button"
+            onClick={onPrev}
+            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-[#414750] hover:bg-white/60 transition-colors"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="w-[15px] h-[15px]" />
+          </button>
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={!canGoNext}
+            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-[#414750] hover:bg-white/60 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            aria-label="Next month"
+          >
+            <ChevronRight className="w-[15px] h-[15px]" />
+          </button>
+
+          <Popover open={calendarOpen} onOpenChange={(open) => { setCalendarOpen(open); if (open) setViewYear(selectedYear); }}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.07)] text-[#414750] hover:bg-white/90 transition-colors"
+                aria-label="Jump to month"
+              >
+                <CalendarDays className="w-[15px] h-[15px]" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[252px] p-[12px] rounded-[12px] shadow-[0_10px_34px_-8px_rgba(16,24,40,0.20),0_2px_6px_rgba(16,24,40,0.06)] border-0"
+              align="start"
             >
-              <CalendarDays className="w-4 h-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={monthDate}
-              onSelect={(d) => {
-                if (d) {
-                  onMonthJump(d);
+              {/* Year navigator */}
+              <div className="flex items-center justify-between mb-[8px]">
+                <button
+                  type="button"
+                  onClick={() => setViewYear((y) => y - 1)}
+                  disabled={firstMonthWithData ? viewYear <= parseInt(firstMonthWithData.slice(0, 4)) : false}
+                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[7px] hover:bg-[#F5F7F9] transition-colors disabled:text-[#C2C7CE] disabled:pointer-events-none"
+                >
+                  <ChevronLeft className="w-[14px] h-[14px]" />
+                </button>
+                <span className="text-[14px] font-semibold text-[#0C0D0E] tabular-nums select-none">
+                  {viewYear}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setViewYear((y) => y + 1)}
+                  disabled={viewYear >= currentYear}
+                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[7px] hover:bg-[#F5F7F9] transition-colors disabled:text-[#C2C7CE] disabled:pointer-events-none"
+                >
+                  <ChevronRight className="w-[14px] h-[14px]" />
+                </button>
+              </div>
+
+              {/* Month grid */}
+              <div className="grid grid-cols-3 gap-[4px]">
+                {shortMonthLabels.map((label, i) => {
+                  const monthKey = `${viewYear}-${String(i + 1).padStart(2, "0")}`;
+                  const isSelected = viewYear === selectedYear && i === selectedMonth;
+                  const isFuture = viewYear > currentYear || (viewYear === currentYear && i > currentMonth);
+                  const hasData = monthsWithData?.has(monthKey);
+                  const isClickable = !isFuture && (hasData || (viewYear === currentYear && i <= currentMonth));
+
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      disabled={!isClickable}
+                      onClick={() => {
+                        onMonthJump(new Date(viewYear, i, 1));
+                        setCalendarOpen(false);
+                      }}
+                      className={cn(
+                        "h-[32px] rounded-[9px] text-[13px] transition-colors",
+                        isSelected
+                          ? "bg-primary text-white font-semibold"
+                          : isClickable
+                            ? "text-[#0C0D0E] hover:bg-[#F5F7F9]"
+                            : "text-[#C2C7CE] cursor-default",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-[#F1F2F4] mx-[2px] mt-[10px] mb-[6px]" />
+
+              {/* Shortcuts */}
+              <button
+                type="button"
+                onClick={() => {
+                  onMonthJump(new Date(currentYear, currentMonth, 1));
                   setCalendarOpen(false);
-                }
-              }}
-              defaultMonth={monthDate}
-              initialFocus
-              className="p-3 pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
+                }}
+                className="flex items-center justify-between w-full h-[32px] rounded-[8px] px-[8px] text-[13.5px] text-[#0C0D0E] hover:bg-[#F5F7F9] transition-colors"
+              >
+                <span>{t("imports.goToToday")}</span>
+                <span className="text-[12px] text-[#B4BAC3]">
+                  {shortMonthLabels[currentMonth]} {currentYear}
+                </span>
+              </button>
+              {firstMonthWithData && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const [y, m] = firstMonthWithData.split("-").map(Number);
+                    onMonthJump(new Date(y, m - 1, 1));
+                    setCalendarOpen(false);
+                  }}
+                  className="flex items-center justify-between w-full h-[32px] rounded-[8px] px-[8px] text-[13.5px] text-[#0C0D0E] hover:bg-[#F5F7F9] transition-colors"
+                >
+                  <span>{t("imports.firstMonth")}</span>
+                  <span className="text-[12px] text-[#B4BAC3]">
+                    {shortMonthLabels[parseInt(firstMonthWithData.slice(5, 7)) - 1]} {firstMonthWithData.slice(0, 4)}
+                  </span>
+                </button>
+              )}
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-      {/* Right: Actions */}
-      <div className="flex items-center gap-2">
-        {/* Order By */}
+      {/* Right: Sort · Filter · Export · New */}
+      <div className="flex items-center gap-[6px] ml-auto">
+        {/* Sort */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-sm font-medium text-foreground/70 hover:text-foreground"
+            <button
+              type="button"
+              className="inline-flex items-center gap-[6px] bg-[#F5F7F9] rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] hover:bg-[#EBEEF2] transition-colors"
             >
-              <ArrowUpDown className="w-3.5 h-3.5" />
-              {t("imports.orderBy")}
-            </Button>
+              <ArrowUpDown className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
+              {t("imports.sort")}
+            </button>
           </PopoverTrigger>
           <PopoverContent className="w-52 p-1.5" align="end">
             <div className="space-y-0.5">
@@ -228,31 +327,27 @@ export function DataToolbar({
           </PopoverContent>
         </Popover>
 
-        {/* Filters */}
+        {/* Filter */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
+              type="button"
               className={cn(
-                "h-8 gap-1.5 text-sm font-medium",
-                hasActiveFilters
-                  ? "text-primary hover:text-primary"
-                  : "text-foreground/70 hover:text-foreground",
+                "inline-flex items-center gap-[6px] bg-[#F5F7F9] rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] hover:bg-[#EBEEF2] transition-colors",
+                hasActiveFilters && "ring-1 ring-primary/30",
               )}
             >
-              <Filter className="w-3.5 h-3.5" />
-              {t("imports.filters")}
+              <Filter className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
+              {t("filter")}
               {hasActiveFilters && (
                 <span className="ml-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
                   {filters.accounts.length + filters.movements.length + filters.categories.length}
                 </span>
               )}
-            </Button>
+            </button>
           </PopoverTrigger>
           <PopoverContent className="w-72 p-3" align="end">
             <div className="space-y-4">
-              {/* Account filter */}
               {accounts.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
@@ -277,7 +372,6 @@ export function DataToolbar({
                 </div>
               )}
 
-              {/* Movement filter */}
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
                   {t("imports.movement")}
@@ -300,7 +394,6 @@ export function DataToolbar({
                 </div>
               </div>
 
-              {/* Category filter */}
               {availableCategories.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
@@ -326,37 +419,39 @@ export function DataToolbar({
               )}
 
               {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-xs text-muted-foreground"
+                <button
+                  type="button"
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground py-1"
                   onClick={() => onFiltersChange({ accounts: [], movements: [], categories: [] })}
                 >
                   Clear all filters
-                </Button>
+                </button>
               )}
             </div>
           </PopoverContent>
         </Popover>
 
         {/* Export */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 text-sm font-medium"
+        <button
+          type="button"
           onClick={onExport}
+          className="inline-flex items-center gap-[6px] bg-[#F5F7F9] rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] hover:bg-[#EBEEF2] transition-colors"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
           {t("export")}
-        </Button>
+        </button>
 
-        {/* Add new transaction */}
+        {/* New — primary */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" className="h-8 gap-1.5 text-sm font-medium" disabled={isLocked}>
-              <Plus className="w-3.5 h-3.5" />
-              {t("imports.addNewTransaction")}
-            </Button>
+            <button
+              type="button"
+              disabled={isLocked}
+              className="inline-flex items-center gap-[6px] bg-primary rounded-[9px] px-[14px] py-[8px] text-[13px] font-medium text-white shadow-[0_1px_2px_rgba(27,118,255,0.3)] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            >
+              <Plus className="w-[14px] h-[14px]" />
+              {t("imports.new")}
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={onAddExpense} className="gap-2">
