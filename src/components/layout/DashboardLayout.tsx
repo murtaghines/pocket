@@ -17,7 +17,10 @@ export function DashboardLayout({ children, fullBleed = false }: DashboardLayout
   }, []);
 
   return (
-    <div className="min-h-screen bg-background dashboard-theme relative">
+    <div className={cn(
+      "bg-background dashboard-theme relative",
+      fullBleed ? "h-dvh flex flex-col overflow-hidden" : "min-h-screen",
+    )}>
       <MobileNav />
       <AppHeader />
 
@@ -25,7 +28,7 @@ export function DashboardLayout({ children, fullBleed = false }: DashboardLayout
         className={cn(
           "w-full relative z-10",
           fullBleed
-            ? "bg-card min-h-screen"
+            ? "bg-card flex-1 min-h-0 flex flex-col"
             : "px-4 md:px-[28px] pt-4 md:pt-[8px] pb-6 md:pb-[30px]",
         )}
       >

@@ -193,7 +193,7 @@ export function InlineTransactionsEditor({
 
   const toggleSelectAll = useCallback((ids: string[]) => {
     setSelectedIds((prev) => {
-      if (prev.size === ids.length) return new Set();
+      if (prev.size > 0) return new Set();
       return new Set(ids);
     });
   }, []);
