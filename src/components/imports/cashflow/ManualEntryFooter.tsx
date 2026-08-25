@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, ArrowRightLeft, EyeOff } from "lucide-react";
+import { Plus, Minus, ArrowRightLeft, EyeOff, Lock, Unlock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
@@ -24,6 +25,7 @@ export interface ManualEntryFooterProps {
     transfers: number;
     hidden?: number;
   };
+  closingBalance?: number | null;
   rightSlot?: React.ReactNode;
   externalOpen?: boolean;
   onExternalOpenChange?: (open: boolean) => void;
@@ -35,6 +37,7 @@ export function ManualEntryFooter({
   monthLabel,
   isLocked,
   summary,
+  closingBalance,
   rightSlot,
   externalOpen,
   onExternalOpenChange,
@@ -46,6 +49,7 @@ export function ManualEntryFooter({
   const { accounts } = useAccounts();
   const { categories } = useCategories("CASHFLOW");
   const { formatCurrency } = useLocalization();
+  const { t } = useTranslation("common");
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen ?? internalOpen;
   const setOpen = (v: boolean) => {
@@ -208,43 +212,49 @@ export function ManualEntryFooter({
         </div>
       </div>
 
-      {/* Desktop: full sticky footer bar */}
-      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex md:flex-wrap md:items-center md:gap-3 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 px-4 py-3 text-sm shadow-[0_-2px_8px_-4px_rgba(0,0,0,0.08)]">
-        <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-          <span className="tabular-nums font-medium text-foreground">{summary.total}</span>
-          row{summary.total !== 1 ? "s" : ""}
-        </div>
-        <div className="inline-flex items-center gap-1.5">
-          <Plus className="w-3.5 h-3.5 text-success" />
-          <span className="text-success font-semibold tabular-nums">
+      {/* Desktop: redesigned footer — row count, 3 summaries with dots, closing balance, lock button */}
+      <div className="hidden md:flex items-center gap-[20px] border-t border-[#F1F2F4] bg-[#FAFBFC] px-[20px] py-[14px]">
+        <span className="text-[13px] text-[#6B7280]">
+          {summary.total} {summary.total === 1 ? t("imports.row") : t("imports.rows")}
+        </span>
+
+        {/* Income summary */}
+        <div className="inline-flex items-center gap-[6px]">
+          <span className="w-[6px] h-[6px] rounded-full bg-[#2E9E6B] shrink-0" />
+          <span className="text-[13px] text-[#6B7280] tabular-nums">
             {formatCurrency(summary.income)}
           </span>
         </div>
-        <div className="inline-flex items-center gap-1.5">
-          <Minus className="w-3.5 h-3.5 text-destructive" />
-          <span className="text-destructive font-semibold tabular-nums">
+
+        {/* Expense summary */}
+        <div className="inline-flex items-center gap-[6px]">
+          <span className="w-[6px] h-[6px] rounded-full bg-[#E0704A] shrink-0" />
+          <span className="text-[13px] text-[#6B7280] tabular-nums">
             {formatCurrency(summary.expenses)}
           </span>
         </div>
-        <div className="inline-flex items-center gap-1.5">
-          <ArrowRightLeft className="w-3.5 h-3.5 text-warning" />
-          <span className="text-warning font-semibold tabular-nums">
-            {summary.transfers} transfer{summary.transfers !== 1 ? "s" : ""}
+
+        {/* Transfer summary */}
+        <div className="inline-flex items-center gap-[6px]">
+          <span className="w-[6px] h-[6px] rounded-full bg-[#B4BAC3] shrink-0" />
+          <span className="text-[13px] text-[#6B7280] tabular-nums">
+            {summary.transfers}
           </span>
         </div>
-        {summary.hidden !== undefined && summary.hidden > 0 && (
-          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <EyeOff className="w-3.5 h-3.5" />
-            <span className="tabular-nums">
-              {summary.hidden} excluded from analysis
+
+        {/* Closing balance + lock button — pushed right */}
+        <div className="ml-auto inline-flex items-center gap-[16px]">
+          {closingBalance != null && (
+            <span className="text-[13px] text-[#6B7280]">
+              {t("imports.closingBalance")}{" "}
+              <span className="font-semibold text-[#0C0D0E] tabular-nums">
+                {formatCurrency(closingBalance)}
+              </span>
             </span>
-          </div>
-        )}
-        {rightSlot && (
-          <div className="ml-auto inline-flex items-center gap-3 text-sm text-muted-foreground">
-            {rightSlot}
-          </div>
-        )}
+          )}
+
+          {rightSlot}
+        </div>
       </div>
 
       <AddManualEntryDialog

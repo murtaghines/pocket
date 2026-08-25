@@ -135,6 +135,7 @@ export interface InlineTransactionsEditorProps {
   sortDirection?: SortDirection;
   filters?: DataFilters;
   exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
+  openingBalance?: number | null;
 }
 
 export function InlineTransactionsEditor({
@@ -159,6 +160,7 @@ export function InlineTransactionsEditor({
   sortDirection: sortDirectionProp = "desc",
   filters: filtersProp,
   exportTransactionsRef,
+  openingBalance,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -885,6 +887,22 @@ export function InlineTransactionsEditor({
     return { income, expenses, transfers, hidden, total: transactions.length };
   }, [transactions]);
 
+  const runningBalanceMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (openingBalance == null) return map;
+    const sorted = [...transactions].sort((a, b) => {
+      const dateCmp = a.date.localeCompare(b.date);
+      if (dateCmp !== 0) return dateCmp;
+      return a.id.localeCompare(b.id);
+    });
+    let balance = openingBalance;
+    for (const tx of sorted) {
+      balance += tx.amount;
+      map.set(tx.id, Math.round(balance * 100) / 100);
+    }
+    return map;
+  }, [transactions, openingBalance]);
+
   const filteredSorted = useMemo(() => {
     let result = [...transactions];
     if (filtersProp) {
@@ -985,9 +1003,9 @@ export function InlineTransactionsEditor({
       <div className="bg-card flex-1 flex flex-col">
         {/* Desktop / tablet: compact Excel-like spreadsheet */}
         <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-180px)]">
-          <Table className="w-full min-w-[780px] table-fixed [&_th]:border-r [&_th]:border-border/60 [&_th:last-child]:border-r-0 [&_td]:border-r [&_td]:border-border/40 [&_td:last-child]:border-r-0">
-            <TableHeader className="sticky top-0 z-10 bg-card">
-              <TableRow className="hover:bg-transparent border-b border-border [&>th]:h-8">
+          <Table className="w-full min-w-[780px] table-fixed">
+            <TableHeader className="sticky top-0 z-10">
+              <TableRow className="hover:bg-transparent bg-[#FAFBFC] border-y border-[#F1F2F4] [&>th]:h-[34px]">
                 <TableHead className="w-[36px] text-center">
                   <Checkbox
                     checked={selectedIds.size > 0 && selectedIds.size === allVisibleIds.length}
@@ -995,23 +1013,26 @@ export function InlineTransactionsEditor({
                     aria-label="Select all"
                   />
                 </TableHead>
-                <TableHead className="w-[9%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.date")}
                 </TableHead>
-                <TableHead className="w-[10%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[10%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.account")}
                 </TableHead>
-                <TableHead className="w-[28%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[25%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.description")}
                 </TableHead>
-                <TableHead className="w-[11%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[11%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.movement")}
                 </TableHead>
-                <TableHead className="w-[16%] text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[16%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.category")}
                 </TableHead>
-                <TableHead className="w-[13%] text-right text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                <TableHead className="w-[10%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.amount")}
+                </TableHead>
+                <TableHead className="w-[10%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                  {t("imports.balance")}
                 </TableHead>
                 <TableHead className="w-[36px]" />
               </TableRow>
@@ -1053,17 +1074,15 @@ export function InlineTransactionsEditor({
                 const amountColor =
                   displayAmount === 0
                     ? "text-muted-foreground"
-                    : movement === "INCOME"
-                      ? "text-success"
-                      : movement === "TRANSFER"
-                        ? "text-muted-foreground"
-                        : "text-destructive";
+                    : movement === "TRANSFER"
+                      ? "text-[#8A919C]"
+                      : "text-[#0C0D0E]";
                 const amountSign =
-                  displayAmount === 0 || movement === "TRANSFER"
+                  displayAmount === 0
                     ? ""
-                    : movement === "INCOME"
-                      ? "+"
-                      : "−";
+                    : movement === "TRANSFER"
+                      ? (displayAmount >= 0 ? "+" : "−")
+                      : "";
 
                 const rowContextActions = {
                   onToggleHidden: () => handleToggleHidden(tx),
@@ -1136,7 +1155,7 @@ export function InlineTransactionsEditor({
                   >
                     <TableRow
                       className={cn(
-                        "transition-colors [&>td]:py-1.5 cursor-default",
+                        "transition-colors h-[40px] [&>td]:py-0 cursor-default border-b border-[#F4F5F7] hover:bg-[#FAFBFC]",
                         isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                         isEdited && !isMismatch && !isPending && "bg-primary/[0.04]",
                         isPending && "bg-warning/10 border-l-2 border-l-warning",
@@ -1220,7 +1239,7 @@ export function InlineTransactionsEditor({
                       {/* Movement */}
                       <TableCell className="text-[13px]">
                         {isLocked ? (
-                          <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                          <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
                             {getMovementLabel(movement)}
                           </PillBadge>
                         ) : (
@@ -1229,26 +1248,26 @@ export function InlineTransactionsEditor({
                             onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
                             disabled={isHidden}
                           >
-                            <SelectTrigger className="h-7 w-full min-w-[100px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&>svg]:opacity-50 [&>svg]:ml-1 [&>svg]:flex-shrink-0">
+                            <SelectTrigger className="h-7 w-full min-w-[100px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
-                                <PillBadge variant="solid" tone={getMovementTone(movement)} icon={getMovementIcon(movement)}>
+                                <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
                                   {getMovementLabel(movement)}
                                 </PillBadge>
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="INCOME">
-                                <PillBadge variant="solid" tone="green" icon={<Plus className="w-3 h-3" />}>
+                                <PillBadge tone="green" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#2E9E6B]" />}>
                                   {getMovementLabel("INCOME")}
                                 </PillBadge>
                               </SelectItem>
                               <SelectItem value="EXPENSE">
-                                <PillBadge variant="solid" tone="red" icon={<Minus className="w-3 h-3" />}>
+                                <PillBadge tone="red" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#E0704A]" />}>
                                   {getMovementLabel("EXPENSE")}
                                 </PillBadge>
                               </SelectItem>
                               <SelectItem value="TRANSFER">
-                                <PillBadge variant="solid" tone="amber" icon={<ArrowRightLeft className="w-3 h-3" />}>
+                                <PillBadge tone="neutral" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#8A919C]" />}>
                                   {getMovementLabel("TRANSFER")}
                                 </PillBadge>
                               </SelectItem>
@@ -1260,8 +1279,8 @@ export function InlineTransactionsEditor({
                       {/* Category */}
                       <TableCell className="text-[13px]">
                         {isLocked ? (
-                          <PillBadge colorVar={getCategoryColor(category)} className="text-[12px]">
-                            <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                          <PillBadge colorVar={getCategoryColor(category)} className="text-[12.5px]">
+                            <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} className="w-[13px] h-[13px]" />
                             <span className="truncate max-w-[120px]" title={getCategoryLabel(category)}>
                               {getCategoryLabel(category)}
                             </span>
@@ -1272,10 +1291,10 @@ export function InlineTransactionsEditor({
                             onValueChange={(v) => handleCategoryChange(tx, v)}
                             disabled={isHidden}
                           >
-                            <SelectTrigger className="h-7 w-full min-w-[130px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&>svg]:opacity-50 [&>svg]:ml-1 [&>svg]:flex-shrink-0">
+                            <SelectTrigger className="h-7 w-full min-w-[130px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
-                                <PillBadge colorVar={getCategoryColor(category)} className="text-[12px]">
-                                  <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} />
+                                <PillBadge colorVar={getCategoryColor(category)} className="text-[12.5px]">
+                                  <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} className="w-[13px] h-[13px]" />
                                   <span className="truncate max-w-[120px]" title={getCategoryLabel(category)}>
                                     {getCategoryLabel(category)}
                                   </span>
@@ -1327,6 +1346,11 @@ export function InlineTransactionsEditor({
                             {amountSign}{formatCurrency(Math.abs(displayAmount))}
                           </span>
                         )}
+                      </TableCell>
+
+                      {/* Balance */}
+                      <TableCell className="text-right text-[13px] text-[#8A919C] tabular-nums">
+                        {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!) : "—"}
                       </TableCell>
 
                       {/* Actions: three-dot menu / pending save+discard */}
@@ -1666,6 +1690,7 @@ export function InlineTransactionsEditor({
           monthLabel={monthLabel}
           isLocked={isLocked}
           summary={summary}
+          closingBalance={openingBalance != null ? openingBalance + transactions.reduce((sum, tx) => sum + tx.amount, 0) : null}
           externalOpen={externalManualEntryOpen}
           onExternalOpenChange={onManualEntryOpenChange}
           defaultMovement={defaultMovement}
@@ -1673,7 +1698,6 @@ export function InlineTransactionsEditor({
             <button
               type="button"
               onClick={() => {
-                // Toggle lock on every file of the month at once
                 const nextLocked = !isLocked;
                 imports.forEach((imp) => {
                   if (!!imp.locked !== nextLocked) {
@@ -1689,23 +1713,20 @@ export function InlineTransactionsEditor({
               }}
               disabled={imports.length === 0}
               className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium transition-colors",
-                isLocked
-                  ? "bg-foreground/90 text-background hover:bg-foreground"
-                  : "bg-muted text-foreground/80 hover:bg-muted/70",
+                "inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[12px] py-[7px] text-[13px] font-medium text-[#414750] shadow-[0_1px_2px_rgba(16,24,40,0.06)] hover:bg-[#F5F7F9] transition-colors",
                 imports.length === 0 && "opacity-50 cursor-not-allowed",
               )}
-              title={isLocked ? "Unlock month — allow editing" : "Lock month — prevent edits"}
+              title={isLocked ? t("imports.openMonth") : t("imports.closeMonth")}
             >
               {isLocked ? (
                 <>
-                  <Lock className="w-3.5 h-3.5" />
-                  Locked
+                  <Unlock className="w-[14px] h-[14px] text-[#8A919C]" />
+                  {t("imports.openMonth")}
                 </>
               ) : (
                 <>
-                  <Unlock className="w-3.5 h-3.5" />
-                  Lock month
+                  <Lock className="w-[14px] h-[14px] text-[#8A919C]" />
+                  {t("imports.closeMonth")}
                 </>
               )}
             </button>
