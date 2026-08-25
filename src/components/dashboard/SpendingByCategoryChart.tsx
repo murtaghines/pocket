@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -29,57 +29,176 @@ interface TreemapEntry {
   pctChange: number | null;
 }
 
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface LayoutNode extends TreemapEntry {
+  rect: Rect;
+}
+
 type ToggleMode = "weight" | "vs";
 
-const MAIN_THRESHOLD = 0.02;
-const MAX_MAIN = 6;
+const GAP = 5;
+const STRIP_H = 68;
 
-export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryChartProps) {
+function squarify(
+  items: TreemapEntry[],
+  container: Rect,
+): LayoutNode[] {
+  if (items.length === 0) return [];
+  if (items.length === 1) {
+    return [{ ...items[0], rect: container }];
+  }
+
+  const totalValue = items.reduce((s, it) => s + it.value, 0);
+  const results: LayoutNode[] = [];
+  let remaining = [...items];
+  let rect = { ...container };
+
+  while (remaining.length > 0) {
+    const shorter = Math.min(rect.w, rect.h);
+    const isHorizontal = rect.w >= rect.h;
+    const areaLeft = rect.w * rect.h;
+    const valueLeft = remaining.reduce((s, it) => s + it.value, 0);
+
+    let row = [remaining[0]];
+    let bestWorst = worstRatio(row, shorter, areaLeft, valueLeft);
+
+    for (let i = 1; i < remaining.length; i++) {
+      const candidate = [...row, remaining[i]];
+      const candidateWorst = worstRatio(candidate, shorter, areaLeft, valueLeft);
+      if (candidateWorst <= bestWorst) {
+        row = candidate;
+        bestWorst = candidateWorst;
+      } else {
+        break;
+      }
+    }
+
+    const rowValue = row.reduce((s, it) => s + it.value, 0);
+    const rowFraction = rowValue / valueLeft;
+
+    if (isHorizontal) {
+      const rowW = rect.w * rowFraction;
+      let y = rect.y;
+      for (const item of row) {
+        const itemH = (item.value / rowValue) * rect.h;
+        results.push({ ...item, rect: { x: rect.x, y, w: rowW, h: itemH } });
+        y += itemH;
+      }
+      rect = { x: rect.x + rowW, y: rect.y, w: rect.w - rowW, h: rect.h };
+    } else {
+      const rowH = rect.h * rowFraction;
+      let x = rect.x;
+      for (const item of row) {
+        const itemW = (item.value / rowValue) * rect.w;
+        results.push({ ...item, rect: { x, y: rect.y, w: itemW, h: rowH } });
+        x += itemW;
+      }
+      rect = { x: rect.x, y: rect.y + rowH, w: rect.w, h: rect.h - rowH };
+    }
+
+    remaining = remaining.slice(row.length);
+  }
+
+  return results;
+}
+
+function worstRatio(
+  row: TreemapEntry[],
+  side: number,
+  totalArea: number,
+  totalValue: number,
+): number {
+  const rowValue = row.reduce((s, it) => s + it.value, 0);
+  const rowArea = (rowValue / totalValue) * totalArea;
+  const rowLen = rowArea / side;
+
+  let worst = 0;
+  for (const item of row) {
+    const itemArea = (item.value / totalValue) * totalArea;
+    const itemLen = itemArea / rowLen;
+    const ratio = Math.max(rowLen / itemLen, itemLen / rowLen);
+    if (ratio > worst) worst = ratio;
+  }
+  return worst;
+}
+
+export function SpendingByCategoryChart({
+  data,
+  monthKey,
+}: SpendingByCategoryChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const [mode, setMode] = useState<ToggleMode>("weight");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      setContainerSize({ w: width, h: height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const hasData = data.length > 0 && total > 0;
 
-  const { main, strip } = useMemo(() => {
-    if (total === 0) return { main: [] as TreemapEntry[], strip: [] as TreemapEntry[] };
-
-    const sorted = [...data]
+  const entries = useMemo(() => {
+    if (total === 0) return [] as TreemapEntry[];
+    return [...data]
       .filter((d) => d.value > 0)
-      .sort((a, b) => b.value - a.value);
-
-    const mainItems: TreemapEntry[] = [];
-    const stripItems: TreemapEntry[] = [];
-
-    for (const item of sorted) {
-      const weight = item.value / total;
-      const prev = item.previousValue ?? 0;
-      const pctChange =
-        prev > 0 ? Math.round(((item.value - prev) / prev) * 100) : null;
-
-      const entry: TreemapEntry = {
-        name: item.name,
-        value: item.value,
-        color: item.color,
-        category: item.category ?? "",
-        weight,
-        previousValue: prev,
-        pctChange,
-      };
-
-      if (weight >= MAIN_THRESHOLD && mainItems.length < MAX_MAIN) {
-        mainItems.push(entry);
-      } else {
-        stripItems.push(entry);
-      }
-    }
-
-    return { main: mainItems, strip: stripItems };
+      .sort((a, b) => b.value - a.value)
+      .map((item) => {
+        const weight = item.value / total;
+        const prev = item.previousValue ?? 0;
+        const pctChange =
+          prev > 0 ? Math.round(((item.value - prev) / prev) * 100) : null;
+        return {
+          name: item.name,
+          value: item.value,
+          color: item.color,
+          category: item.category ?? "",
+          weight,
+          previousValue: prev,
+          pctChange,
+        };
+      });
   }, [data, total]);
 
-  const categoryCount = [...main, ...strip].length;
+  const categoryCount = entries.length;
+
+  const { mainEntries, stripEntries } = useMemo(() => {
+    const main: TreemapEntry[] = [];
+    const strip: TreemapEntry[] = [];
+    for (const e of entries) {
+      if (e.weight >= 0.02 && main.length < 6) main.push(e);
+      else strip.push(e);
+    }
+    return { mainEntries: main, stripEntries: strip };
+  }, [entries]);
+
+  const hasStrip = stripEntries.length > 0;
+  const stripRows = hasStrip ? Math.ceil(stripEntries.length / 4) : 0;
+  const totalStripH = hasStrip ? stripRows * STRIP_H + (stripRows - 1) * GAP : 0;
+
+  const layoutNodes = useMemo(() => {
+    if (containerSize.w === 0 || containerSize.h === 0) return [];
+    const mainH = hasStrip
+      ? containerSize.h - totalStripH - GAP
+      : containerSize.h;
+    if (mainH <= 0 || mainEntries.length === 0) return [];
+    return squarify(mainEntries, { x: 0, y: 0, w: containerSize.w, h: mainH });
+  }, [mainEntries, containerSize, hasStrip, totalStripH]);
 
   const prevMonthLabel = useMemo(() => {
     if (monthKey) {
@@ -88,10 +207,11 @@ export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryCh
       return prev.toLocaleDateString(undefined, { month: "long" });
     }
     const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString(
-      undefined,
-      { month: "long" },
-    );
+    return new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1,
+    ).toLocaleDateString(undefined, { month: "long" });
   }, [monthKey]);
 
   if (!hasData) {
@@ -156,73 +276,81 @@ export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryCh
     };
   };
 
-  type TileSize = "major" | "large" | "medium" | "strip";
-
-  const scales: Record<TileSize, {
-    padding: string; gap: number; icon: number;
-    nameSize: number; amountSize: number; detailSize: number;
-  }> = {
-    major:  { padding: "15px 17px", gap: 5, icon: 15, nameSize: 13,   amountSize: 27,   detailSize: 13 },
-    large:  { padding: "13px 15px", gap: 4, icon: 14, nameSize: 12.5, amountSize: 22,   detailSize: 12 },
-    medium: { padding: "11px 13px", gap: 3, icon: 13, nameSize: 11.5, amountSize: 17,   detailSize: 11.5 },
-    strip:  { padding: "9px 11px 10px", gap: 2, icon: 12, nameSize: 11, amountSize: 13.5, detailSize: 10.5 },
-  };
-
-  const getTileSize = (weight: number, isStrip: boolean): TileSize => {
-    if (isStrip) return "strip";
-    if (weight >= 0.4) return "major";
-    if (weight >= 0.15) return "large";
-    return "medium";
-  };
-
-  const renderTile = (entry: TreemapEntry, size: TileSize) => {
-    const s = scales[size];
+  const tileContent = (
+    entry: TreemapEntry,
+    areaW: number,
+    areaH: number,
+    isStrip: boolean,
+  ) => {
     const colors = tileColors(entry.category);
     const iconName = getCategoryIcon(entry.category);
     const colorVar = getCategoryColor(entry.category);
-    const radius = size === "strip" ? 9 : 11;
+
+    const tiny = !isStrip && (areaW < 100 || areaH < 80);
+    const nameSize = isStrip ? 11 : tiny ? 11 : areaW > 180 ? 13 : 12;
+    const amountSize = isStrip
+      ? 13.5
+      : tiny
+        ? 14
+        : areaW > 180 && areaH > 120
+          ? 27
+          : areaW > 140
+            ? 20
+            : 16;
+    const detailSize = isStrip ? 10.5 : tiny ? 10 : amountSize > 20 ? 13 : 11.5;
+    const pad = isStrip
+      ? "9px 11px 10px"
+      : tiny
+        ? "8px 10px"
+        : amountSize > 20
+          ? "15px 17px"
+          : "11px 13px";
+    const gapVal = isStrip ? 2 : tiny ? 2 : amountSize > 20 ? 5 : 3;
+    const showName = !tiny || areaW >= 72;
 
     return (
       <div
-        className="flex flex-col items-end justify-start min-w-0 min-h-0 h-full"
+        className="flex flex-col items-end justify-start w-full h-full overflow-hidden"
         style={{
           backgroundColor: colors.bg,
-          borderRadius: radius,
-          padding: s.padding,
-          gap: s.gap,
+          borderRadius: isStrip ? 9 : 11,
+          padding: pad,
+          gap: gapVal,
         }}
       >
-        <div
-          className="flex items-center gap-[6px] self-end min-w-0"
-          style={{ whiteSpace: "nowrap" }}
-        >
-          <CategoryIcon
-            iconName={iconName}
-            colorVar={colorVar}
-            size="sm"
-            showBackground={false}
-            className="flex-shrink-0"
-          />
-          <span
-            className="truncate"
-            style={{
-              fontSize: s.nameSize,
-              color: colors.name,
-              fontWeight: 400,
-              lineHeight: 1.2,
-            }}
+        {showName && (
+          <div
+            className="flex items-center gap-[5px] self-end min-w-0 max-w-full"
+            style={{ whiteSpace: "nowrap" }}
           >
-            {entry.name}
-          </span>
-        </div>
+            <CategoryIcon
+              iconName={iconName}
+              colorVar={colorVar}
+              size="sm"
+              showBackground={false}
+              className="flex-shrink-0"
+            />
+            <span
+              className="truncate"
+              style={{
+                fontSize: nameSize,
+                color: colors.name,
+                fontWeight: 400,
+                lineHeight: 1.2,
+              }}
+            >
+              {entry.name}
+            </span>
+          </div>
+        )}
 
         <span
           className="tabular-nums"
           style={{
-            fontSize: s.amountSize,
+            fontSize: amountSize,
             fontWeight: 600,
             color: colors.number,
-            letterSpacing: s.amountSize >= 22 ? "-0.025em" : "-0.02em",
+            letterSpacing: amountSize >= 20 ? "-0.025em" : "-0.02em",
             lineHeight: 1,
           }}
         >
@@ -232,9 +360,10 @@ export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryCh
         <span
           className="tabular-nums"
           style={{
-            fontSize: s.detailSize,
+            fontSize: detailSize,
             fontWeight: 500,
-            color: mode === "weight" ? "rgba(12,13,14,.42)" : changeColor(entry),
+            color:
+              mode === "weight" ? "rgba(12,13,14,.42)" : changeColor(entry),
             lineHeight: 1.2,
           }}
         >
@@ -249,74 +378,9 @@ export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryCh
     );
   };
 
-  const renderMainLayout = () => {
-    if (main.length === 0) return null;
-
-    if (main.length === 1) {
-      return (
-        <div className="flex-1 min-h-0">
-          {renderTile(main[0], getTileSize(main[0].weight, false))}
-        </div>
-      );
-    }
-
-    if (main.length <= 3) {
-      return (
-        <div className="flex-1 flex min-h-0" style={{ gap: 6 }}>
-          {main.map((entry) => (
-            <div key={entry.category} style={{ flex: entry.weight }} className="min-w-0">
-              {renderTile(entry, getTileSize(entry.weight, false))}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    const largest = main[0];
-    const rest = main.slice(1);
-    const largestW = largest.weight;
-    const restW = rest.reduce((s, e) => s + e.weight, 0);
-    const totalW = largestW + restW;
-
-    return (
-      <div className="flex-1 flex min-h-0" style={{ gap: 6 }}>
-        <div className="min-w-0" style={{ flex: (largestW / totalW) * 100 }}>
-          {renderTile(largest, getTileSize(largest.weight, false))}
-        </div>
-        <div
-          className="flex flex-col min-w-0"
-          style={{ flex: (restW / totalW) * 100, gap: 6 }}
-        >
-          {rest.length <= 2 ? (
-            rest.map((entry) => (
-              <div key={entry.category} className="min-h-0" style={{ flex: entry.weight }}>
-                {renderTile(entry, getTileSize(entry.weight, false))}
-              </div>
-            ))
-          ) : (
-            <>
-              <div className="min-h-0" style={{ flex: rest[0].weight }}>
-                {renderTile(rest[0], getTileSize(rest[0].weight, false))}
-              </div>
-              <div
-                className="flex min-h-0"
-                style={{
-                  flex: rest.slice(1).reduce((s, e) => s + e.weight, 0),
-                  gap: 6,
-                }}
-              >
-                {rest.slice(1).map((entry) => (
-                  <div key={entry.category} className="min-w-0" style={{ flex: entry.weight }}>
-                    {renderTile(entry, getTileSize(entry.weight, false))}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const mainH = hasStrip
+    ? containerSize.h - totalStripH - GAP
+    : containerSize.h;
 
   return (
     <Card
@@ -407,20 +471,47 @@ export function SpendingByCategoryChart({ data, monthKey }: SpendingByCategoryCh
       </div>
 
       <div
-        className="flex-1 flex flex-col px-[22px] pb-4"
-        style={{ gap: 6, minHeight: 276 }}
+        ref={containerRef}
+        className="flex-1 mx-[22px] mb-4 relative"
+        style={{ minHeight: 276 }}
       >
-        {renderMainLayout()}
+        {layoutNodes.map((node) => {
+          const half = GAP / 2;
+          return (
+            <div
+              key={node.category}
+              className="absolute"
+              style={{
+                left: node.rect.x + half,
+                top: node.rect.y + half,
+                width: node.rect.w - GAP,
+                height: node.rect.h - GAP,
+              }}
+            >
+              {tileContent(
+                node,
+                node.rect.w - GAP,
+                node.rect.h - GAP,
+                false,
+              )}
+            </div>
+          );
+        })}
 
-        {strip.length > 0 && (
+        {hasStrip && (
           <div
-            className="grid"
+            className="absolute left-0 right-0 grid"
             style={{
-              gridTemplateColumns: `repeat(${Math.min(strip.length, 4)}, 1fr)`,
-              gap: 6,
+              top: mainH + GAP / 2,
+              gridTemplateColumns: `repeat(${Math.min(stripEntries.length, 4)}, 1fr)`,
+              gap: GAP,
             }}
           >
-            {strip.map((entry) => renderTile(entry, "strip"))}
+            {stripEntries.map((entry) => (
+              <div key={entry.category} style={{ height: STRIP_H }}>
+                {tileContent(entry, 999, STRIP_H, true)}
+              </div>
+            ))}
           </div>
         )}
       </div>
