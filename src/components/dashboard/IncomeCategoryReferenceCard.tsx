@@ -1,5 +1,9 @@
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useLocalization } from "@/hooks/useLocalization";
+import { cn } from "@/lib/utils";
 
 interface CategoryData {
   name: string;
@@ -11,50 +15,65 @@ interface IncomeCategoryReferenceCardProps {
   data: CategoryData[];
 }
 
-const VB_W = 420;
-const VB_H = 238;
-const CX = 300;
-const CY = 112;
-const TRACK_START_DEG = 205;
-const TRACK_SWEEP_DEG = 220;
-const STROKE_WIDTH = 13;
-const RADII = [100, 67, 34];
+const SLICE_FILLS = [
+  "#ffffff",
+  "#0C0D0E",
+  "url(#inc-ring-stripe)",
+  "rgba(255,255,255,0.35)",
+  "#7A8494",
+  "rgba(255,255,255,0.55)",
+  "#C4CDD8",
+  "rgba(255,255,255,0.18)",
+];
 
-function degToRad(deg: number) {
-  return (deg * Math.PI) / 180;
-}
+const DOT_CSS: React.CSSProperties[] = [
+  { backgroundColor: "#ffffff" },
+  { backgroundColor: "#0C0D0E" },
+  {
+    backgroundImage:
+      "repeating-linear-gradient(45deg, #fff 0px, #fff 1.5px, transparent 1.5px, transparent 3px)",
+  },
+  { backgroundColor: "rgba(255,255,255,0.35)" },
+  { backgroundColor: "#7A8494" },
+  { backgroundColor: "rgba(255,255,255,0.55)" },
+  { backgroundColor: "#C4CDD8" },
+  { backgroundColor: "rgba(255,255,255,0.18)" },
+];
 
-function pointOnCircle(cx: number, cy: number, r: number, angleDeg: number) {
-  const rad = degToRad(angleDeg - 90);
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-}
-
-export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCardProps) {
+export function IncomeCategoryReferenceCard({
+  data,
+}: IncomeCategoryReferenceCardProps) {
   const { t } = useTranslation("dashboard");
+  const { formatCurrency } = useLocalization();
 
-  const filtered = [...data]
-    .filter((item) => item.value > 0)
-    .sort((a, b) => b.value - a.value);
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const hasData = data.length > 0 && total > 0;
+  const sorted = useMemo(
+    () => [...data].sort((a, b) => b.value - a.value),
+    [data],
+  );
 
-  const totalAll = filtered.reduce((sum, item) => sum + item.value, 0);
-  const hasData = filtered.length > 0 && totalAll > 0;
+  const [active, setActive] = useState<string | null>(null);
+  const activeEntry = active
+    ? sorted.find((e) => e.name === active) ?? null
+    : null;
+  const toggle = (name?: string) => {
+    if (!name) return;
+    setActive((cur) => (cur === name ? null : name));
+  };
 
-  const MAX_RINGS = RADII.length;
-  let sorted = filtered;
-  if (filtered.length > MAX_RINGS) {
-    const head = filtered.slice(0, MAX_RINGS - 1);
-    const tail = filtered.slice(MAX_RINGS - 1);
-    const tailValue = tail.reduce((sum, item) => sum + item.value, 0);
-    sorted = [
-      ...head,
-      { name: t("charts.otherCategories", "Other"), value: tailValue, color: tail[0]?.color ?? "" },
-    ];
-  }
-  const total = sorted.reduce((sum, item) => sum + item.value, 0);
+  const pctLabel = (value: number) => {
+    const p = (value / total) * 100;
+    const rounded = p < 10 ? Math.round(p * 10) / 10 : Math.round(p);
+    const s = Number.isInteger(rounded)
+      ? String(rounded)
+      : rounded.toFixed(1).replace(".", ",");
+    return `${s}%`;
+  };
 
   if (!hasData) {
     return (
-      <div className="w-full h-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
+      <div className="w-full h-full rounded-xl bg-[#5191FF] p-[20px_22px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
         <p className="text-[15px] font-heading font-bold text-white mb-[6px]">
           {t("charts.incomeByCategory", "Income by Category")}
         </p>
@@ -63,133 +82,117 @@ export function IncomeCategoryReferenceCard({ data }: IncomeCategoryReferenceCar
     );
   }
 
-  const ringFills: Array<{ stroke: string; dotFill: string; dotStroke: string }> = [
-    { stroke: "#fff", dotFill: "#fff", dotStroke: "#fff" },
-    { stroke: "#0C0D0E", dotFill: "#0C0D0E", dotStroke: "#fff" },
-    { stroke: "url(#inc-stripes)", dotFill: "url(#inc-stripes)", dotStroke: "#fff" },
-  ];
-
-  const endAngle = TRACK_START_DEG + TRACK_SWEEP_DEG;
-
-  const legendItems = sorted.map((cat, i) => {
-    const pct = Math.round((cat.value / total) * 100);
-    const r = RADII[i] ?? RADII[RADII.length - 1];
-    const marker = pointOnCircle(CX, CY, r, endAngle);
-    return { cat, pct, marker, ringIndex: i };
-  });
-
-  legendItems.sort((a, b) => a.marker.y - b.marker.y);
-
-  const LEGEND_X = 16;
-  const LEGEND_START_Y = 147.3;
-  const LEGEND_GAP = 29.9;
-
   return (
-    <div className="w-full h-full rounded-xl bg-[#5191FF] p-[20px_22px_20px] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] flex flex-col overflow-hidden">
-      <p className="text-[15px] font-heading font-bold text-white mb-[6px]">
-        {t("charts.incomeByCategory", "Income by Category")}
-      </p>
-      <svg
-        viewBox={`0 0 ${VB_W} ${VB_H}`}
-        preserveAspectRatio="xMidYMid meet"
-        className="w-full flex-1"
-        style={{ minHeight: 230, display: "block" }}
-        aria-hidden
-      >
+    <div className="flex h-full flex-col rounded-xl bg-[#5191FF] shadow-[0_1px_2px_rgba(27,118,255,.18),0_8px_20px_-8px_rgba(27,118,255,.45)] overflow-hidden">
+      <svg width="0" height="0" className="absolute" aria-hidden>
         <defs>
           <pattern
-            id="inc-stripes"
-            width="12"
-            height="12"
+            id="inc-ring-stripe"
+            width="8"
+            height="8"
             patternUnits="userSpaceOnUse"
-            patternTransform="rotate(10)"
+            patternTransform="rotate(45)"
           >
-            <rect width="12" height="12" fill="transparent" />
-            <rect width="4" height="12" fill="#fff" />
+            <rect width="8" height="8" fill="transparent" />
+            <rect width="3.5" height="8" fill="#ffffff" />
           </pattern>
         </defs>
-
-        {sorted.map((category, index) => {
-          const radius = RADII[index] ?? RADII[RADII.length - 1];
-          const pct = category.value / total;
-          const circumference = 2 * Math.PI * radius;
-          const trackLength = (TRACK_SWEEP_DEG / 360) * circumference;
-          const fillLength = Math.max(trackLength * pct, pct > 0 ? STROKE_WIDTH * 0.9 : 0);
-          const fill = ringFills[index] ?? ringFills[ringFills.length - 1];
-
-          return (
-            <g key={index} transform={`rotate(${TRACK_START_DEG} ${CX} ${CY})`}>
-              <circle
-                cx={CX}
-                cy={CY}
-                r={radius}
-                fill="none"
-                stroke="rgba(255,255,255,0.15)"
-                strokeWidth={STROKE_WIDTH}
-                strokeLinecap="round"
-                strokeDasharray={`${trackLength} ${circumference}`}
-              />
-              <circle
-                cx={CX}
-                cy={CY}
-                r={radius}
-                fill="none"
-                stroke={fill.stroke}
-                strokeWidth={STROKE_WIDTH}
-                strokeLinecap="round"
-                strokeDasharray={`${fillLength} ${circumference}`}
-              />
-            </g>
-          );
-        })}
-
-        {legendItems.map(({ cat, pct, marker, ringIndex }, rowIdx) => {
-          const fill = ringFills[ringIndex] ?? ringFills[ringFills.length - 1];
-          const legendY = LEGEND_START_Y + rowIdx * LEGEND_GAP;
-          const lineEndX = marker.x - 8;
-          const lineStartX = 122;
-
-          return (
-            <g key={`legend-${ringIndex}`}>
-              <text
-                x={LEGEND_X}
-                y={legendY}
-                style={{ font: "500 13.5px Inter, sans-serif", fill: "#fff" }}
-              >
-                {cat.name}
-              </text>
-              <line
-                x1={lineStartX}
-                y1={legendY - 4.5}
-                x2={lineEndX}
-                y2={legendY - 4.5}
-                stroke="rgba(255,255,255,0.65)"
-                strokeWidth={1.2}
-                strokeDasharray="3 4"
-              />
-              <circle
-                cx={marker.x}
-                cy={marker.y}
-                r={4.5}
-                fill={fill.dotFill}
-                stroke={fill.dotStroke}
-                strokeWidth={1.4}
-              />
-              <text
-                x={marker.x + 13}
-                y={legendY}
-                style={{
-                  font: "600 13.5px Inter, sans-serif",
-                  fill: "#fff",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {pct}%
-              </text>
-            </g>
-          );
-        })}
       </svg>
+
+      <div className="px-5 pt-[18px] pb-2">
+        <p className="text-[15px] font-heading font-bold text-white">
+          {t("charts.incomeByCategory", "Income by Category")}
+        </p>
+      </div>
+
+      <div className="flex flex-1 items-center px-5 pb-[18px] pt-0">
+        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row-reverse sm:items-center sm:gap-[26px]">
+          <div className="relative shrink-0" style={{ width: 200, height: 186 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={sorted}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="72%"
+                  outerRadius="100%"
+                  startAngle={225}
+                  endAngle={-45}
+                  paddingAngle={2}
+                  cornerRadius={5}
+                  stroke="none"
+                  isAnimationActive={false}
+                  onClick={(d: { name?: string }) => toggle(d?.name)}
+                >
+                  {sorted.map((entry, i) => (
+                    <Cell
+                      key={i}
+                      fill={SLICE_FILLS[i % SLICE_FILLS.length]}
+                      fillOpacity={active && active !== entry.name ? 0.25 : 1}
+                      className="cursor-pointer outline-none transition-[fill-opacity] duration-150 focus:outline-none"
+                    />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 pb-3 text-center">
+              {activeEntry ? (
+                <>
+                  <span className="max-w-full truncate text-[12px] font-medium text-white/70">
+                    {activeEntry.name}
+                  </span>
+                  <span className="text-[16px] md:text-[19px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-white">
+                    {formatCurrency(activeEntry.value)}
+                  </span>
+                  <span className="text-[12px] tabular-nums text-white/70">
+                    {pctLabel(activeEntry.value)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-[17px] md:text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-white">
+                  {formatCurrency(total)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <ul className="w-full flex-1">
+            {sorted.map((entry, i) => {
+              const dimmed = active !== null && active !== entry.name;
+              return (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onClick={() => toggle(entry.name)}
+                    aria-pressed={active === entry.name}
+                    className={cn(
+                      "-mx-1 flex w-full items-center gap-[10px] rounded-lg px-1 py-[3px] text-left transition-colors",
+                      active === entry.name && "bg-white/10",
+                      dimmed && "opacity-45",
+                    )}
+                  >
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={DOT_CSS[i % DOT_CSS.length]}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-[13.5px] text-white">
+                      {entry.name}
+                    </span>
+                    <span className="w-[46px] shrink-0 text-right text-[13px] font-medium tabular-nums text-white">
+                      {pctLabel(entry.value)}
+                    </span>
+                    <span className="w-[92px] shrink-0 text-right text-[13px] tabular-nums text-white/70">
+                      {formatCurrency(entry.value)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }
