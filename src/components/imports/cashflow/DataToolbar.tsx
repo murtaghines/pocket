@@ -141,7 +141,7 @@ export function DataToolbar({
       {/* Left: Month title + opening balance + nav buttons */}
       <div className="flex items-center gap-[14px]">
         <div className="flex flex-col">
-          <h2 className="font-heading font-semibold text-[20px] text-[#0C0D0E] tracking-[-0.01em] capitalize">
+          <h2 className="font-heading font-semibold text-[16px] text-[#0C0D0E] tracking-[-0.01em] capitalize">
             {monthLabel}
           </h2>
           {openingBalance != null && (

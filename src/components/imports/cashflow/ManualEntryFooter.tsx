@@ -213,7 +213,7 @@ export function ManualEntryFooter({
       </div>
 
       {/* Desktop: redesigned footer — row count, 3 summaries with dots, closing balance, lock button */}
-      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex items-center gap-[20px] border-t border-[#F1F2F4] bg-[#FAFBFC] px-[20px] py-[14px]">
+      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex items-center gap-[20px] border-t border-[#F1F2F4] bg-[#FAFBFC] px-[20px] py-[9px]">
         <span className="text-[13px] text-[#6B7280]">
           {summary.total} {summary.total === 1 ? t("imports.row") : t("imports.rows")}
         </span>

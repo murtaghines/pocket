@@ -193,7 +193,7 @@ export function InlineTransactionsEditor({
 
   const toggleSelectAll = useCallback((ids: string[]) => {
     setSelectedIds((prev) => {
-      if (prev.size === ids.length) return new Set();
+      if (prev.size > 0) return new Set();
       return new Set(ids);
     });
   }, []);
@@ -1014,13 +1014,13 @@ export function InlineTransactionsEditor({
                 <TableHead className="w-[10%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.account")}
                 </TableHead>
-                <TableHead className="w-[25%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[22%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.description")}
                 </TableHead>
-                <TableHead className="w-[11%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[13%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.movement")}
                 </TableHead>
-                <TableHead className="w-[16%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[18%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
                   {t("imports.category")}
                 </TableHead>
                 <TableHead className="w-[10%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">

@@ -212,7 +212,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Shared hidden file input */}
       <input
         ref={globalFileInputRef}
