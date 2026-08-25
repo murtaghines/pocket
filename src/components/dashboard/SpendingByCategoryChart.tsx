@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,7 +11,6 @@ interface CategoryData {
   value: number;
   color: string;
   category?: string;
-  /** Same category's spend in the previous month, for the trend arrow + % change. */
   previousValue?: number;
 }
 
@@ -20,29 +18,44 @@ interface SpendingByCategoryChartProps {
   data: CategoryData[];
 }
 
+const MAX_BARS = 8;
+
 export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const hasData = data.length > 0 && total > 0;
-  const sorted = useMemo(() => [...data].sort((a, b) => b.value - a.value), [data]);
 
-  // Tapping a slice (or a list row) selects that category: the other slices dim, its row is
-  // highlighted and the donut centre shows that category's amount instead of the month total.
-  // Tapping the same one again clears the selection.
-  const [active, setActive] = useState<string | null>(null);
-  const activeEntry = active ? sorted.find((e) => e.name === active) ?? null : null;
-  const toggle = (name?: string) => {
-    if (!name) return;
-    setActive((cur) => (cur === name ? null : name));
-  };
+  const sorted = useMemo(() => {
+    const s = [...data].sort((a, b) => b.value - a.value);
+    if (s.length <= MAX_BARS) return s;
+    const head = s.slice(0, MAX_BARS - 1);
+    const tail = s.slice(MAX_BARS - 1);
+    const otherValue = tail.reduce((sum, item) => sum + item.value, 0);
+    const otherPrevRaw = tail.reduce(
+      (sum, item) => sum + (item.previousValue ?? 0),
+      0,
+    );
+    return [
+      ...head,
+      {
+        name: t("charts.otherCategories", "Other"),
+        value: otherValue,
+        color: "hsl(220, 10%, 50%)",
+        previousValue: otherPrevRaw || undefined,
+      },
+    ];
+  }, [data, t]);
 
-  // One-decimal percentage with a comma separator, integers when whole (e.g. "40%", "1,5%").
+  const maxValue = sorted.length > 0 ? sorted[0].value : 0;
+
   const pctLabel = (value: number) => {
     const p = (value / total) * 100;
     const rounded = p < 10 ? Math.round(p * 10) / 10 : Math.round(p);
-    const s = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(".", ",");
+    const s = Number.isInteger(rounded)
+      ? String(rounded)
+      : rounded.toFixed(1).replace(".", ",");
     return `${s}%`;
   };
 
@@ -63,106 +76,78 @@ export function SpendingByCategoryChart({ data }: SpendingByCategoryChartProps) 
 
   return (
     <Card variant="bento" className="flex h-full flex-col">
-      <CardHeader className="px-5 pt-[18px] pb-2">
+      <CardHeader className="px-5 pt-[18px] pb-3">
         <CardTitle>
           {t("charts.spendingByCategory", "Spending by category")}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 items-center px-5 pb-[18px] pt-0">
-        <div className="flex w-full select-none flex-col items-center justify-center gap-5 [-webkit-tap-highlight-color:transparent] sm:flex-row-reverse sm:items-center sm:gap-[26px]">
-          {/* Donut gauge — centre shows the month total, or the selected category's amount */}
-          <div className="relative shrink-0" style={{ width: 200, height: 186 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={sorted}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="72%"
-                  outerRadius="100%"
-                  startAngle={225}
-                  endAngle={-45}
-                  paddingAngle={2}
-                  cornerRadius={5}
-                  stroke="none"
-                  isAnimationActive={false}
-                  onClick={(d: { name?: string }) => toggle(d?.name)}
-                >
-                  {sorted.map((entry, i) => (
-                    <Cell
-                      key={i}
-                      fill={entry.color}
-                      fillOpacity={active && active !== entry.name ? 0.25 : 1}
-                      className="cursor-pointer outline-none transition-[fill-opacity] duration-150 focus:outline-none"
-                    />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 pb-3 text-center">
-              {activeEntry ? (
-                <>
-                  <span className="max-w-full truncate text-[12px] font-medium text-muted-foreground">
-                    {activeEntry.name}
-                  </span>
-                  <span className="text-[16px] md:text-[19px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-foreground">
-                    {formatCurrency(activeEntry.value)}
-                  </span>
-                  <span className="text-[12px] tabular-nums text-muted-foreground">{pctLabel(activeEntry.value)}</span>
-                </>
-              ) : (
-                <span className="text-[17px] md:text-[20px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-foreground">
-                  {formatCurrency(total)}
-                </span>
-              )}
-            </div>
-          </div>
+      <CardContent className="flex-1 px-5 pb-[18px] pt-0">
+        <div className="flex flex-col gap-[10px]">
+          {sorted.map((entry, i) => {
+            const prev = entry.previousValue;
+            const pct =
+              prev !== undefined && prev > 0
+                ? Math.round(((entry.value - prev) / prev) * 100)
+                : undefined;
+            const up = pct !== undefined && pct > 0;
+            const down = pct !== undefined && pct < 0;
+            const barWidth =
+              maxValue > 0 ? (entry.value / maxValue) * 100 : 0;
 
-          {/* Category list with month-over-month trend + % change; rows are tap-to-select too */}
-          <ul className="w-full flex-1">
-            {sorted.map((entry, i) => {
-              const prev = entry.previousValue;
-              const pct = prev !== undefined && prev > 0 ? Math.round(((entry.value - prev) / prev) * 100) : undefined;
-              const up = pct !== undefined && pct > 0;
-              const down = pct !== undefined && pct < 0;
-              const dimmed = active !== null && active !== entry.name;
-              return (
-                <li key={i}>
-                  <button
-                    type="button"
-                    onClick={() => toggle(entry.name)}
-                    aria-pressed={active === entry.name}
-                    className={cn(
-                      "-mx-1 flex w-full items-center gap-[10px] rounded-lg px-1 py-[3px] text-left transition-colors",
-                      active === entry.name && "bg-muted/50",
-                      dimmed && "opacity-45",
-                    )}
-                  >
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: entry.color }} />
-                    <span className="min-w-0 w-[134px] truncate text-[13.5px] text-foreground">{entry.name}</span>
-                    <span className="w-[46px] shrink-0 text-right text-[13px] font-medium tabular-nums text-foreground">
+            return (
+              <div key={i}>
+                <div className="flex items-center justify-between mb-[3px]">
+                  <div className="flex items-center gap-[8px] min-w-0">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="truncate text-[13px] text-foreground">
+                      {entry.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-[10px] shrink-0 ml-3">
+                    <span className="text-[12.5px] font-medium tabular-nums text-foreground">
                       {pctLabel(entry.value)}
                     </span>
-                    <span className="w-[92px] shrink-0 text-right text-[13px] tabular-nums text-muted-foreground">
+                    <span className="text-[12.5px] tabular-nums text-muted-foreground w-[80px] text-right">
                       {formatCurrency(entry.value)}
                     </span>
                     <span
                       className={cn(
-                        "flex w-[54px] shrink-0 items-center justify-end gap-0.5 text-[12px] font-medium tabular-nums",
-                        up ? "text-destructive" : down ? "text-success" : "text-muted-foreground/50",
+                        "flex w-[40px] items-center justify-end gap-0.5 text-[11px] font-medium tabular-nums",
+                        up
+                          ? "text-destructive"
+                          : down
+                            ? "text-success"
+                            : "text-muted-foreground/50",
                       )}
                     >
-                      {up && <ArrowUp className="h-3 w-3" strokeWidth={2.6} />}
-                      {down && <ArrowDown className="h-3 w-3" strokeWidth={2.6} />}
-                      {up || down ? `${Math.abs(pct as number)}%` : "0%"}
+                      {up && (
+                        <ArrowUp className="h-2.5 w-2.5" strokeWidth={2.6} />
+                      )}
+                      {down && (
+                        <ArrowDown
+                          className="h-2.5 w-2.5"
+                          strokeWidth={2.6}
+                        />
+                      )}
+                      {up || down ? `${Math.abs(pct!)}%` : "—"}
                     </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                  </div>
+                </div>
+                <div className="h-[5px] rounded-full bg-muted/40 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${barWidth}%`,
+                      backgroundColor: entry.color,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

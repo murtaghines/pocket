@@ -169,9 +169,6 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
           transactions={filteredTransactions}
           emptyLabel={t('transactions.noTransactions')}
         />
-        <p className="text-sm text-muted-foreground mt-3">
-          {filteredTransactions.length} / {totalCount ?? transactions.length}
-        </p>
       </div>
 
       {/* Desktop: full table */}
@@ -286,9 +283,6 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
               })()}
             </div>
           )}
-          <p className="text-[12px] text-[#9AA1AC] py-1.5 px-[22px]">
-            {filteredTransactions.length} / {totalCount ?? transactions.length}
-          </p>
         </div>
       </div>
     </div>
