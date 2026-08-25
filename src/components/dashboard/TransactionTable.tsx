@@ -128,8 +128,8 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 px-[22px] pb-[14px]">
+      {/* Header — sticky at scroll-container top */}
+      <div className="flex items-center justify-between gap-4 px-[22px] pb-[14px] sticky top-0 z-20 bg-card">
         <div className="flex flex-col items-start gap-[3px]">
           <h3 className="text-[15px] font-heading font-semibold text-[#0C0D0E] leading-tight">
             {t('transactions.title')}
@@ -177,7 +177,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
       {/* Desktop: full table */}
       <div className="hidden md:block">
         <DataTable className="rounded-none bg-transparent">
-          <DataTableHeader>
+          <DataTableHeader className="sticky top-[52px] z-10">
             <DataTableRow className="hover:bg-transparent">
               <DataTableHead type="date" className="w-[96px] pl-[22px]">{t('transactions.date')}</DataTableHead>
               <DataTableHead type="account" className="w-[130px]">{t('transactions.bank', { defaultValue: 'Account' })}</DataTableHead>
@@ -257,37 +257,39 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
           </DataTableBody>
         </DataTable>
 
-        {/* Footer */}
-        {filteredTransactions.length > 0 && (
-          <div className="flex items-center justify-between bg-[#FAFBFC] border-t border-[#F1F2F4] px-[22px] py-2.5">
-            <div className="flex items-center gap-4 text-[13px] text-[#6B7280]">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#2E9E6B]" />
-                {filteredTransactions.filter(tx => getMovementType(tx) === 'income').length} {t('stats.income').toLowerCase()}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E0704A]" />
-                {filteredTransactions.filter(tx => getMovementType(tx) === 'expense').length} {t('stats.expenses').toLowerCase()}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#8A919C]" />
-                {filteredTransactions.filter(tx => getMovementType(tx) === 'transfer').length} {t('transactions.transfer', { defaultValue: 'transfers' }).toLowerCase()}
-              </span>
-            </div>
-            {(() => {
-              const last = filteredTransactions[filteredTransactions.length - 1];
-              const closingBalance = last ? computedBalanceMap.get(last.id) : undefined;
-              return closingBalance !== undefined ? (
-                <span className="text-[13px] font-semibold tabular-nums text-foreground">
-                  {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance)}
+        {/* Footer — sticky at scroll-container bottom */}
+        <div className="sticky bottom-0 z-20 bg-card">
+          {filteredTransactions.length > 0 && (
+            <div className="flex items-center justify-between bg-[#FAFBFC] border-t border-[#F1F2F4] px-[22px] py-2.5">
+              <div className="flex items-center gap-4 text-[13px] text-[#6B7280]">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2E9E6B]" />
+                  {filteredTransactions.filter(tx => getMovementType(tx) === 'income').length} {t('stats.income').toLowerCase()}
                 </span>
-              ) : null;
-            })()}
-          </div>
-        )}
-        <p className="text-[12px] text-[#9AA1AC] mt-2 px-[22px]">
-          {filteredTransactions.length} / {totalCount ?? transactions.length}
-        </p>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#E0704A]" />
+                  {filteredTransactions.filter(tx => getMovementType(tx) === 'expense').length} {t('stats.expenses').toLowerCase()}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#8A919C]" />
+                  {filteredTransactions.filter(tx => getMovementType(tx) === 'transfer').length} {t('transactions.transfer', { defaultValue: 'transfers' }).toLowerCase()}
+                </span>
+              </div>
+              {(() => {
+                const last = filteredTransactions[filteredTransactions.length - 1];
+                const closingBalance = last ? computedBalanceMap.get(last.id) : undefined;
+                return closingBalance !== undefined ? (
+                  <span className="text-[13px] font-semibold tabular-nums text-foreground">
+                    {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance)}
+                  </span>
+                ) : null;
+              })()}
+            </div>
+          )}
+          <p className="text-[12px] text-[#9AA1AC] py-1.5 px-[22px]">
+            {filteredTransactions.length} / {totalCount ?? transactions.length}
+          </p>
+        </div>
       </div>
     </div>
   );
