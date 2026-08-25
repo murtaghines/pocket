@@ -16,7 +16,6 @@ interface CategoryData {
 
 interface SpendingByCategoryChartProps {
   data: CategoryData[];
-  monthKey?: string | null;
 }
 
 interface TreemapEntry {
@@ -130,7 +129,6 @@ function worstRatio(
 
 export function SpendingByCategoryChart({
   data,
-  monthKey,
 }: SpendingByCategoryChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
@@ -200,19 +198,6 @@ export function SpendingByCategoryChart({
     return squarify(mainEntries, { x: 0, y: 0, w: containerSize.w, h: mainH });
   }, [mainEntries, containerSize, hasStrip, totalStripH]);
 
-  const prevMonthLabel = useMemo(() => {
-    if (monthKey) {
-      const [y, m] = monthKey.split("-").map(Number);
-      const prev = new Date(y, m - 2, 1);
-      return prev.toLocaleDateString(undefined, { month: "long" });
-    }
-    const now = new Date();
-    return new Date(
-      now.getFullYear(),
-      now.getMonth() - 1,
-      1,
-    ).toLocaleDateString(undefined, { month: "long" });
-  }, [monthKey]);
 
   if (!hasData) {
     return (
@@ -465,7 +450,7 @@ export function SpendingByCategoryChart({
                 mode === "vs" ? "0 1px 2px rgba(16,24,40,.10)" : "none",
             }}
           >
-            vs. {prevMonthLabel}
+            {t("charts.treemapVsPrev", "vs. prev month")}
           </button>
         </div>
       </div>
