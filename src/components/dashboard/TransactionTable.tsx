@@ -176,8 +176,8 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
 
       {/* Desktop: full table */}
       <div className="hidden md:block">
-        <DataTable className="rounded-none bg-transparent">
-          <DataTableHeader className="sticky top-[52px] z-10">
+        <DataTable className="rounded-none bg-transparent overflow-visible">
+          <DataTableHeader className="sticky top-[52px] z-10 [&_th]:bg-[#FAFBFC]">
             <DataTableRow className="hover:bg-transparent">
               <DataTableHead type="date" className="w-[96px] pl-[22px]">{t('transactions.date')}</DataTableHead>
               <DataTableHead type="account" className="w-[130px]">{t('transactions.bank', { defaultValue: 'Account' })}</DataTableHead>

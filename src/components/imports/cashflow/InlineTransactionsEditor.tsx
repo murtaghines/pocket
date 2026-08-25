@@ -9,8 +9,6 @@ import {
   EyeOff,
   Sparkles,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
   Lock,
   Unlock,
   ArrowRightLeft,
@@ -87,7 +85,6 @@ import {
 } from "@/lib/userRules";
 import {
   USER_TRACKED_FIELDS,
-  ROW_THRESHOLD,
   getCategoriesForMovement,
   getMovementIcon,
   getMovementTone,
@@ -171,7 +168,6 @@ export function InlineTransactionsEditor({
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const { t } = useTranslation("common");
 
-  const [expanded, setExpanded] = useState(false);
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
@@ -940,8 +936,7 @@ export function InlineTransactionsEditor({
   }, [transactions, sortColumnProp, sortDirectionProp, filtersProp]);
 
   const visibleAll = filteredSorted;
-  const showCollapsedHint = !expanded && visibleAll.length > ROW_THRESHOLD;
-  const rowsToRender = showCollapsedHint ? visibleAll.slice(0, ROW_THRESHOLD) : visibleAll;
+  const rowsToRender = visibleAll;
   const allVisibleIds = rowsToRender.map((tx) => tx.id);
 
   useEffect(() => {
@@ -1000,15 +995,15 @@ export function InlineTransactionsEditor({
       )}
 
       {/* The spreadsheet — flush, no padding, no inner card */}
-      <div className="bg-card flex-1 flex flex-col">
+      <div className="bg-card flex-1 flex flex-col min-h-0">
         {/* Desktop / tablet: compact Excel-like spreadsheet */}
-        <div className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-180px)]">
+        <div className="hidden md:block overflow-x-auto overflow-y-auto flex-1">
           <Table className="w-full min-w-[780px] table-fixed">
             <TableHeader className="sticky top-0 z-10">
               <TableRow className="hover:bg-transparent bg-[#FAFBFC] border-y border-[#F1F2F4] [&>th]:h-[34px]">
-                <TableHead className="w-[36px] text-center">
+                <TableHead className="w-[36px] px-0 text-center">
                   <Checkbox
-                    checked={selectedIds.size > 0 && selectedIds.size === allVisibleIds.length}
+                    checked={selectedIds.size > 0 ? (selectedIds.size === allVisibleIds.length ? true : "indeterminate") : false}
                     onCheckedChange={() => toggleSelectAll(allVisibleIds)}
                     aria-label="Select all"
                   />
@@ -1157,7 +1152,6 @@ export function InlineTransactionsEditor({
                       className={cn(
                         "transition-colors h-[40px] [&>td]:py-0 cursor-default border-b border-[#F4F5F7] hover:bg-[#FAFBFC]",
                         isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                        isEdited && !isMismatch && !isPending && "bg-primary/[0.04]",
                         isPending && "bg-warning/10 border-l-2 border-l-warning",
                         isHidden && "opacity-50 bg-muted/20",
                         isSaved && !isMismatch && "bg-success/5",
@@ -1549,7 +1543,6 @@ export function InlineTransactionsEditor({
                         className={cn(
                           "flex items-center gap-2.5 px-3 py-2.5 bg-card",
                           isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
-                          isEdited && !isMismatch && "bg-primary/[0.04] border-r border-r-primary/60",
                           isHidden && "opacity-60 bg-muted/20",
                           isSaved && !isMismatch && "bg-success/5",
                         )}
@@ -1652,28 +1645,6 @@ export function InlineTransactionsEditor({
           );
         })()}
 
-
-        {/* Collapsed-rows hint */}
-        {showCollapsedHint && (
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-border bg-muted/30 text-sm">
-            <span className="text-muted-foreground">
-              Showing first <strong className="text-foreground">{ROW_THRESHOLD}</strong> of{" "}
-              <strong className="text-foreground">{visibleAll.length}</strong> rows
-            </span>
-            <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setExpanded(true)}>
-              <ChevronDown className="w-4 h-4" />
-              Show all
-            </Button>
-          </div>
-        )}
-        {expanded && visibleAll.length > ROW_THRESHOLD && (
-          <div className="flex items-center justify-end gap-3 px-4 py-2.5 border-t border-border bg-muted/30 text-sm">
-            <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setExpanded(false)}>
-              <ChevronUp className="w-4 h-4" />
-              Collapse
-            </Button>
-          </div>
-        )}
 
         {/* Live processing panel — only rendered while files are being processed. */}
         {pendingFiles && pendingFiles.length > 0 && (
