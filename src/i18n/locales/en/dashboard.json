@@ -83,7 +83,8 @@
     "sankeyEntries": "ENTRIES",
     "sankeyExpenses": "EXPENSES",
     "treemapInCategories": "in {{count}} categories",
-    "treemapWeight": "Weight",
+    "treemapWeight": "weight",
+    "treemapVsPrev": "vs. prev month",
     "treemapToggleLabel": "Display mode",
     "treemapNew": "new",
     "treemapNoExpenses": "No expenses in {{month}}"

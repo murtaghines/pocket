@@ -82,7 +82,8 @@
     "sankeyEntries": "ENTRADAS",
     "sankeyExpenses": "GASTOS",
     "treemapInCategories": "en {{count}} categorías",
-    "treemapWeight": "Peso",
+    "treemapWeight": "peso",
+    "treemapVsPrev": "vs. mes anterior",
     "treemapToggleLabel": "Modo de visualización",
     "treemapNew": "nuevo",
     "treemapNoExpenses": "Sin gastos en {{month}}"
