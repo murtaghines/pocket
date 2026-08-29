@@ -85,7 +85,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
       {!hasData ? (
         <EmptyState height="h-[160px]" />
       ) : (
-        <div className="h-[220px]">
+        <div className="h-[180px] md:h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={points} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
               <defs>

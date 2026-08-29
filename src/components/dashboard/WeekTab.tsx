@@ -113,7 +113,7 @@ export function WeekTab() {
         <div className="flex flex-col gap-[14px]">
           {/* KPI row — 5 cards, split to align with chart grid below */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-[12px]">
+            <div className="contents lg:grid lg:grid-cols-3 lg:gap-[12px]">
               <TrendKpiCard
                 kind="income"
                 label={t("stats.income")}
@@ -151,7 +151,7 @@ export function WeekTab() {
                 positiveIsGood
               />
             </div>
-            <div className="grid grid-cols-2 gap-3 lg:gap-[12px]">
+            <div className="contents lg:grid lg:grid-cols-2 lg:gap-[12px]">
               <SavingsRateRingCard
                 income={convertToUserCurrency(current.income)}
                 expenses={convertToUserCurrency(current.expenses)}

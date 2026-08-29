@@ -63,7 +63,7 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
       {!hasData ? (
         <EmptyState height="h-[172px]" />
       ) : (
-        <div className="h-[172px] flex-1">
+        <div className="h-[150px] md:h-[172px] flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }} barGap={5} barCategoryGap="28%">
               <XAxis

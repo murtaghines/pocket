@@ -74,7 +74,7 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={chartData} layout="vertical">
             <XAxis type="number" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
-            <YAxis type="category" dataKey="name" width={100} />
+            <YAxis type="category" dataKey="name" width={70} />
             <Tooltip
               formatter={(value: number) => [formatCurrency(value), t('byAssetType.invested')]}
             />
