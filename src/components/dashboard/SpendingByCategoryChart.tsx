@@ -186,7 +186,10 @@ export function SpendingByCategoryChart({
   }, [entries]);
 
   const hasStrip = stripEntries.length > 0;
-  const stripRows = hasStrip ? Math.ceil(stripEntries.length / 4) : 0;
+  const stripCols = containerSize.w < 400
+    ? Math.min(stripEntries.length, 2)
+    : Math.min(stripEntries.length, 4);
+  const stripRows = hasStrip ? Math.ceil(stripEntries.length / stripCols) : 0;
   const totalStripH = hasStrip ? stripRows * STRIP_H + (stripRows - 1) * GAP : 0;
 
   const layoutNodes = useMemo(() => {
@@ -488,7 +491,7 @@ export function SpendingByCategoryChart({
             className="absolute left-0 right-0 grid"
             style={{
               top: mainH + GAP / 2,
-              gridTemplateColumns: `repeat(${Math.min(stripEntries.length, 4)}, 1fr)`,
+              gridTemplateColumns: `repeat(${stripCols}, 1fr)`,
               gap: GAP,
             }}
           >

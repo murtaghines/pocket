@@ -147,18 +147,18 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
           <ToolbarButton
             icon={<ArrowUpDown className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />}
             label={t('transactions.sort', { defaultValue: 'Sort' })}
-            className="h-[31px] px-[11px] bg-[#F5F7F9] rounded-[9px] text-[13px] font-medium text-[#414750] gap-[6px] hover:bg-[#EBEEF2]"
+            className="h-[31px] px-[11px] bg-[#F5F7F9] rounded-[9px] text-[13px] font-medium text-[#414750] gap-[6px] hover:bg-[#EBEEF2] [&>span:last-of-type]:hidden [&>span:last-of-type]:md:inline"
           />
           <ToolbarButton
             icon={<FilterIcon className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />}
             label={t('transactions.filter', { defaultValue: 'Filter' })}
-            className="h-[31px] px-[11px] bg-[#F5F7F9] rounded-[9px] text-[13px] font-medium text-[#414750] gap-[6px] hover:bg-[#EBEEF2]"
+            className="h-[31px] px-[11px] bg-[#F5F7F9] rounded-[9px] text-[13px] font-medium text-[#414750] gap-[6px] hover:bg-[#EBEEF2] [&>span:last-of-type]:hidden [&>span:last-of-type]:md:inline"
           />
           <ToolbarSearch
             value={search}
             onChange={setSearch}
             placeholder={tc('search')}
-            className="w-[172px] [&_input]:h-[31px] [&_input]:bg-[#F5F7F9] [&_input]:rounded-[9px] [&_input]:border-0 [&_input]:text-[13px] [&_input]:placeholder:text-[#B4BAC3] [&_input]:pl-[30px] [&_.absolute.left-2]:text-[#B4BAC3] [&_svg]:w-[14px] [&_svg]:h-[14px]"
+            className="w-[120px] md:w-[172px] [&_input]:h-[31px] [&_input]:bg-[#F5F7F9] [&_input]:rounded-[9px] [&_input]:border-0 [&_input]:text-[13px] [&_input]:placeholder:text-[#B4BAC3] [&_input]:pl-[30px] [&_.absolute.left-2]:text-[#B4BAC3] [&_svg]:w-[14px] [&_svg]:h-[14px]"
           />
         </div>
       </div>

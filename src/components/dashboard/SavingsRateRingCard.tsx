@@ -46,12 +46,12 @@ export function SavingsRateRingCard({
   }, [monthKey, previousPeriodLabel, i18n.language]);
 
   return (
-    <div className="flex h-full items-center gap-[14px] rounded-xl bg-[#CBE0FF] p-[16px_18px] shadow-section">
+    <div className="flex h-full items-center gap-[10px] md:gap-[14px] rounded-xl bg-[#CBE0FF] p-[14px_14px] md:p-[16px_18px] shadow-section">
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-medium text-[#1B75FF] mb-[14px]">
           {t("stats.savingsRate")}
         </div>
-        <div className="text-[22px] font-semibold tracking-[-0.025em] tabular-nums leading-none text-[#1B75FF]">
+        <div className="text-[18px] md:text-[22px] font-semibold tracking-[-0.025em] tabular-nums leading-none text-[#1B75FF]">
           {rate}%
         </div>
         <div className="text-[12.5px] text-[#9AA1AC] mt-[5px]">
@@ -65,7 +65,8 @@ export function SavingsRateRingCard({
           )}
         </div>
       </div>
-      <svg width="74" height="66" viewBox="0 0 58 58" className="shrink-0">
+      <div className="w-[58px] h-[52px] md:w-[74px] md:h-[66px] shrink-0">
+        <svg width="100%" height="100%" viewBox="0 0 58 58">
         <circle cx="29" cy="29" r={radius} fill="none" stroke="#1B75FF" strokeWidth={stroke} />
         <circle
           cx="29"
@@ -78,7 +79,8 @@ export function SavingsRateRingCard({
           strokeDasharray={`${dash} ${circumference}`}
           transform="rotate(-90 29 29)"
         />
-      </svg>
+        </svg>
+      </div>
     </div>
   );
 }

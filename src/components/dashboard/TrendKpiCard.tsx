@@ -87,7 +87,7 @@ export function TrendKpiCard({
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-xl p-[16px_18px] shadow-section",
+        "flex h-full flex-col rounded-xl p-[14px_14px] md:p-[16px_18px] shadow-section",
         isBalance ? "bg-[#1B75FFE6]" : "bg-card",
         className,
       )}
@@ -103,7 +103,7 @@ export function TrendKpiCard({
       <div className="mt-auto">
         <div
           className={cn(
-            "text-[22px] font-semibold tracking-[-0.025em] tabular-nums leading-none",
+            "text-[18px] md:text-[22px] font-semibold tracking-[-0.025em] tabular-nums leading-none",
             valueColor,
           )}
         >
