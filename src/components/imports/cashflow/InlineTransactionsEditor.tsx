@@ -100,6 +100,7 @@ import { exportTransactionsCsv } from "@/lib/exportCsv";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { ProcessingPanel } from "./ProcessingPanel";
 import { SwipeableRow } from "./SwipeableRow";
+import { MobileTransactionActions } from "./MobileTransactionActions";
 import { TransactionEditDrawer } from "./TransactionEditDrawer";
 import type {
   MonthTransaction,
@@ -219,6 +220,7 @@ export function InlineTransactionsEditor({
 
   // Mobile: transaction being edited in the bottom drawer
   const [editingTx, setEditingTx] = useState<MonthTransaction | null>(null);
+  const [actionTx, setActionTx] = useState<MonthTransaction | null>(null);
 
   // Pending (unsaved) edits live in the parent (`BankStatementsTabsView`)
   // so navigating to another month tab does NOT discard them. The row
@@ -1475,7 +1477,7 @@ export function InlineTransactionsEditor({
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
-        <div className="md:hidden">
+        <div className="md:hidden flex-1 overflow-y-auto min-h-0">
           {dayGroups.map((group) => (
             <div key={group.dateKey}>
               <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">
@@ -1516,14 +1518,14 @@ export function InlineTransactionsEditor({
                         : movement === "TRANSFER"
                           ? "text-muted-foreground"
                           : "text-destructive";
-                  // Sign follows the movement, not the stored number: transfers
-                  // move money between your own accounts, so they carry none.
                   const amountSign =
-                    tx.amount === 0 || movement === "TRANSFER"
+                    tx.amount === 0
                       ? ""
-                      : movement === "INCOME"
-                        ? "+"
-                        : "−";
+                      : movement === "TRANSFER"
+                        ? (tx.amount >= 0 ? "+" : "−")
+                        : movement === "INCOME"
+                          ? "+"
+                          : "−";
 
                   return (
                     <SwipeableRow
@@ -1546,7 +1548,7 @@ export function InlineTransactionsEditor({
                           isHidden && "opacity-60 bg-muted/20",
                           isSaved && !isMismatch && "bg-success/5",
                         )}
-                        onClick={() => !isLocked && setEditingTx(tx)}
+                        onClick={() => setActionTx(tx)}
                       >
                         <div
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -1606,6 +1608,49 @@ export function InlineTransactionsEditor({
             </div>
           ))}
         </div>
+
+        {/* Mobile action sheet */}
+        {(() => {
+          const atx = actionTx;
+          if (!atx) return <MobileTransactionActions tx={null} isLocked={isLocked} isManual={false} isHidden={false} isEdited={false} onClose={() => setActionTx(null)} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onAddNote={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} description="" formattedAmount="" amountColorClass="" amountSign="" />;
+          const atxManual = isManualTransaction(atx);
+          const atxMovement = (atx.movement || "EXPENSE") as MovementType;
+          const atxHist = auditByTx[atx.id] || [];
+          const atxEdits = atxHist.filter((h) => h.action !== "revert");
+          const atxSnap = atxEdits.length > 0 ? buildOriginalSnapshot(atxHist) : null;
+          const atxIsEdited = !atxManual && atxEdits.length > 0 && !(atxSnap && isBackToOriginal(atx as unknown as Record<string, unknown>, atxSnap.values));
+          const atxCleanDesc = (atx.description_norm || atx.description).replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "").trim();
+          const atxAmountColor = atx.amount === 0 ? "text-muted-foreground" : atxMovement === "INCOME" ? "text-success" : atxMovement === "TRANSFER" ? "text-muted-foreground" : "text-destructive";
+          const atxAmountSign = atx.amount === 0 ? "" : atxMovement === "TRANSFER" ? (atx.amount >= 0 ? "+" : "−") : atxMovement === "INCOME" ? "+" : "−";
+          return (
+            <MobileTransactionActions
+              tx={atx}
+              isLocked={isLocked}
+              isManual={atxManual}
+              isHidden={atx.is_hidden}
+              isEdited={atxIsEdited}
+              onClose={() => setActionTx(null)}
+              onEdit={() => { setActionTx(null); setEditingTx(atx); }}
+              onToggleHidden={() => handleToggleHidden(atx)}
+              onDelete={() => deleteWithUndo(atx)}
+              onAddNote={() => { setActionTx(null); setEditingTx(atx); }}
+              onSplit={() => handleSplit(atx, 2)}
+              onRevert={() => {
+                if (atxSnap) {
+                  const payload: Record<string, unknown> = { ...atxSnap.values, __action: "revert" };
+                  if ("category" in atxSnap.values) { payload.category_source = "DEFAULT"; payload.user_corrected = false; }
+                  saveMutation.mutate({ id: atx.id, payload, before: { movement: atx.movement, category: atx.category, category_id: atx.category_id, amount: atx.amount, is_hidden: atx.is_hidden } });
+                }
+              }}
+              onCopyDescription={() => { navigator.clipboard.writeText(atxCleanDesc); sonnerToast("Description copied"); }}
+              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(Math.abs(atx.amount))); sonnerToast("Amount copied"); }}
+              description={atx.user_notes || atxCleanDesc}
+              formattedAmount={formatCurrency(Math.abs(atx.amount))}
+              amountColorClass={atxAmountColor}
+              amountSign={atxAmountSign}
+            />
+          );
+        })()}
 
         {/* Mobile transaction edit drawer */}
         {(() => {

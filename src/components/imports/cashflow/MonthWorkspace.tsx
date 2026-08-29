@@ -100,7 +100,7 @@ export function MonthWorkspace({
   }
 
   return (
-    <div className="bg-card flex-1 flex flex-col">
+    <div className="bg-card flex-1 flex flex-col min-h-0">
       <input
         ref={fileInputRef}
         type="file"
