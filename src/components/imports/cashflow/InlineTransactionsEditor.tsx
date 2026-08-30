@@ -220,7 +220,10 @@ export function InlineTransactionsEditor({
 
   // Mobile: transaction being edited in the bottom drawer
   const [editingTx, setEditingTx] = useState<MonthTransaction | null>(null);
-  const [actionTx, setActionTx] = useState<MonthTransaction | null>(null);
+  const [actionMenu, setActionMenu] = useState<{ tx: MonthTransaction; rect: DOMRect } | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFiredRef = useRef(false);
+  const longPressStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Pending (unsaved) edits live in the parent (`BankStatementsTabsView`)
   // so navigating to another month tab does NOT discard them. The row
@@ -1548,7 +1551,41 @@ export function InlineTransactionsEditor({
                           isHidden && "opacity-60 bg-muted/20",
                           isSaved && !isMismatch && "bg-success/5",
                         )}
-                        onClick={() => setActionTx(tx)}
+                        onTouchStart={(e) => {
+                          if (isLocked) return;
+                          const target = e.currentTarget;
+                          const touch = e.touches[0];
+                          longPressStartRef.current = { x: touch.clientX, y: touch.clientY };
+                          longPressFiredRef.current = false;
+                          longPressTimerRef.current = setTimeout(() => {
+                            longPressFiredRef.current = true;
+                            if (navigator.vibrate) navigator.vibrate(10);
+                            setActionMenu({ tx, rect: target.getBoundingClientRect() });
+                          }, 450);
+                        }}
+                        onTouchMove={(e) => {
+                          if (!longPressStartRef.current || !longPressTimerRef.current) return;
+                          const touch = e.touches[0];
+                          const dx = Math.abs(touch.clientX - longPressStartRef.current.x);
+                          const dy = Math.abs(touch.clientY - longPressStartRef.current.y);
+                          if (dx > 10 || dy > 10) {
+                            clearTimeout(longPressTimerRef.current);
+                            longPressTimerRef.current = null;
+                          }
+                        }}
+                        onTouchEnd={() => {
+                          if (longPressTimerRef.current) {
+                            clearTimeout(longPressTimerRef.current);
+                            longPressTimerRef.current = null;
+                          }
+                        }}
+                        onClick={() => {
+                          if (longPressFiredRef.current) {
+                            longPressFiredRef.current = false;
+                            return;
+                          }
+                          if (!isLocked) setEditingTx(tx);
+                        }}
                       >
                         <div
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -1609,31 +1646,29 @@ export function InlineTransactionsEditor({
           ))}
         </div>
 
-        {/* Mobile action sheet */}
+        {/* Mobile long-press action menu */}
         {(() => {
-          const atx = actionTx;
-          if (!atx) return <MobileTransactionActions tx={null} isLocked={isLocked} isManual={false} isHidden={false} isEdited={false} onClose={() => setActionTx(null)} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onAddNote={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} description="" formattedAmount="" amountColorClass="" amountSign="" />;
+          const atx = actionMenu?.tx ?? null;
+          if (!atx) return <MobileTransactionActions tx={null} anchorRect={null} isLocked={isLocked} isManual={false} isHidden={false} isEdited={false} onClose={() => setActionMenu(null)} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onAddNote={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} />;
           const atxManual = isManualTransaction(atx);
-          const atxMovement = (atx.movement || "EXPENSE") as MovementType;
           const atxHist = auditByTx[atx.id] || [];
           const atxEdits = atxHist.filter((h) => h.action !== "revert");
           const atxSnap = atxEdits.length > 0 ? buildOriginalSnapshot(atxHist) : null;
           const atxIsEdited = !atxManual && atxEdits.length > 0 && !(atxSnap && isBackToOriginal(atx as unknown as Record<string, unknown>, atxSnap.values));
           const atxCleanDesc = (atx.description_norm || atx.description).replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "").trim();
-          const atxAmountColor = atx.amount === 0 ? "text-muted-foreground" : atxMovement === "INCOME" ? "text-success" : atxMovement === "TRANSFER" ? "text-muted-foreground" : "text-destructive";
-          const atxAmountSign = atx.amount === 0 ? "" : atxMovement === "TRANSFER" ? (atx.amount >= 0 ? "+" : "−") : atxMovement === "INCOME" ? "+" : "−";
           return (
             <MobileTransactionActions
               tx={atx}
+              anchorRect={actionMenu?.rect ?? null}
               isLocked={isLocked}
               isManual={atxManual}
               isHidden={atx.is_hidden}
               isEdited={atxIsEdited}
-              onClose={() => setActionTx(null)}
-              onEdit={() => { setActionTx(null); setEditingTx(atx); }}
+              onClose={() => setActionMenu(null)}
+              onEdit={() => { setActionMenu(null); setEditingTx(atx); }}
               onToggleHidden={() => handleToggleHidden(atx)}
               onDelete={() => deleteWithUndo(atx)}
-              onAddNote={() => { setActionTx(null); setEditingTx(atx); }}
+              onAddNote={() => { setActionMenu(null); setEditingTx(atx); }}
               onSplit={() => handleSplit(atx, 2)}
               onRevert={() => {
                 if (atxSnap) {
@@ -1644,10 +1679,6 @@ export function InlineTransactionsEditor({
               }}
               onCopyDescription={() => { navigator.clipboard.writeText(atxCleanDesc); sonnerToast("Description copied"); }}
               onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(Math.abs(atx.amount))); sonnerToast("Amount copied"); }}
-              description={atx.user_notes || atxCleanDesc}
-              formattedAmount={formatCurrency(Math.abs(atx.amount))}
-              amountColorClass={atxAmountColor}
-              amountSign={atxAmountSign}
             />
           );
         })()}
