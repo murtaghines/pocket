@@ -388,9 +388,13 @@ export function InlineTransactionsEditor({
           return n;
         });
       }, 1200);
+      supabase.rpc("refresh_dashboard_views");
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
     },
     onError: (err: any, vars) => {
       setSavingIds((prev) => {
@@ -423,9 +427,13 @@ export function InlineTransactionsEditor({
       return;
     }
 
+    supabase.rpc("refresh_dashboard_views");
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
 
     const { id: _id, created_at: _c, updated_at: _u, ...insertPayload } = fullRow;
 
@@ -435,9 +443,13 @@ export function InlineTransactionsEditor({
         label: "undo",
         onClick: async () => {
           await supabase.from("transactions").insert(insertPayload);
+          supabase.rpc("refresh_dashboard_views");
           queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
           sonnerToast.dismiss(undoId);
           sonnerToast("Entry restored");
         },

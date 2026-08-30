@@ -129,9 +129,13 @@ export function ManualEntryFooter({
 
       if (insertError) throw insertError;
 
+      await supabase.rpc("refresh_dashboard_views");
       await queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user.id] });
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       await queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user.id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
 
       if (entry.createRule && cleanDesc) {
         const built = buildRuleFromCorrection(cleanDesc, entry.movement, entry.categorySlug);
