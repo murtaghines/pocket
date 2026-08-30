@@ -1546,11 +1546,13 @@ export function InlineTransactionsEditor({
                     >
                       <div
                         className={cn(
-                          "flex items-center gap-2.5 px-3 py-2.5 bg-card",
+                          "relative flex items-center gap-2.5 px-3 py-2.5 bg-card select-none [-webkit-touch-callout:none]",
                           isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                           isHidden && "opacity-60 bg-muted/20",
                           isSaved && !isMismatch && "bg-success/5",
+                          actionMenu?.tx.id === tx.id && "z-20 bg-accent ring-2 ring-primary",
                         )}
+                        onContextMenu={(e) => e.preventDefault()}
                         onTouchStart={(e) => {
                           if (isLocked) return;
                           const target = e.currentTarget;
