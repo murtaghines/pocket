@@ -1492,7 +1492,7 @@ export function InlineTransactionsEditor({
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
-        <div className="md:hidden flex-1 overflow-y-auto min-h-0">
+        <div className="md:hidden flex-1 overflow-y-auto min-h-0 overscroll-contain">
           {dayGroups.map((group) => (
             <div key={group.dateKey}>
               <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">

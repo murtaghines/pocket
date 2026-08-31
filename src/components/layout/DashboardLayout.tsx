@@ -16,6 +16,17 @@ export function DashboardLayout({ children, fullBleed = false }: DashboardLayout
     };
   }, []);
 
+  useEffect(() => {
+    if (fullBleed) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+      };
+    }
+  }, [fullBleed]);
+
   return (
     <div className={cn(
       "bg-background dashboard-theme relative",
