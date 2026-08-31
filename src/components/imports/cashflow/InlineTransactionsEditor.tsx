@@ -373,7 +373,7 @@ export function InlineTransactionsEditor({
     onMutate: ({ id }) => {
       setSavingIds((prev) => new Set(prev).add(id));
     },
-    onSuccess: (id) => {
+    onSuccess: async (id) => {
       setSavingIds((prev) => {
         const n = new Set(prev);
         n.delete(id);
@@ -388,7 +388,7 @@ export function InlineTransactionsEditor({
           return n;
         });
       }, 1200);
-      supabase.rpc("refresh_dashboard_views");
+      await supabase.rpc("refresh_dashboard_views");
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
@@ -427,7 +427,7 @@ export function InlineTransactionsEditor({
       return;
     }
 
-    supabase.rpc("refresh_dashboard_views");
+    await supabase.rpc("refresh_dashboard_views");
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
@@ -443,7 +443,7 @@ export function InlineTransactionsEditor({
         label: "undo",
         onClick: async () => {
           await supabase.from("transactions").insert(insertPayload);
-          supabase.rpc("refresh_dashboard_views");
+          await supabase.rpc("refresh_dashboard_views");
           queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
@@ -1492,7 +1492,7 @@ export function InlineTransactionsEditor({
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
-        <div className="md:hidden flex-1 overflow-y-auto min-h-0 overscroll-contain">
+        <div className="md:hidden flex-1 overflow-y-auto min-h-0 overscroll-contain touch-pan-y" style={{ WebkitOverflowScrolling: "touch" }}>
           {dayGroups.map((group) => (
             <div key={group.dateKey}>
               <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">
