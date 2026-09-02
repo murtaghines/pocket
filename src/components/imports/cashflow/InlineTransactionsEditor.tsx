@@ -373,7 +373,7 @@ export function InlineTransactionsEditor({
     onMutate: ({ id }) => {
       setSavingIds((prev) => new Set(prev).add(id));
     },
-    onSuccess: (id) => {
+    onSuccess: async (id) => {
       setSavingIds((prev) => {
         const n = new Set(prev);
         n.delete(id);
@@ -388,9 +388,13 @@ export function InlineTransactionsEditor({
           return n;
         });
       }, 1200);
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
     },
     onError: (err: any, vars) => {
       setSavingIds((prev) => {
@@ -423,9 +427,13 @@ export function InlineTransactionsEditor({
       return;
     }
 
+    try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
 
     const { id: _id, created_at: _c, updated_at: _u, ...insertPayload } = fullRow;
 
@@ -435,9 +443,13 @@ export function InlineTransactionsEditor({
         label: "undo",
         onClick: async () => {
           await supabase.from("transactions").insert(insertPayload);
+          try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
           queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
           sonnerToast.dismiss(undoId);
           sonnerToast("Entry restored");
         },
@@ -1480,7 +1492,7 @@ export function InlineTransactionsEditor({
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
-        <div className="md:hidden flex-1 overflow-y-auto min-h-0">
+        <div className="md:hidden flex-1 overflow-y-auto min-h-0 overscroll-contain touch-pan-y" style={{ WebkitOverflowScrolling: "touch" }}>
           {dayGroups.map((group) => (
             <div key={group.dateKey}>
               <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">

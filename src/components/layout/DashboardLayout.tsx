@@ -16,6 +16,23 @@ export function DashboardLayout({ children, fullBleed = false }: DashboardLayout
     };
   }, []);
 
+  useEffect(() => {
+    if (fullBleed) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.height = "100%";
+      return () => {
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.width = "";
+        document.body.style.height = "";
+      };
+    }
+  }, [fullBleed]);
+
   return (
     <div className={cn(
       "bg-background dashboard-theme relative",
