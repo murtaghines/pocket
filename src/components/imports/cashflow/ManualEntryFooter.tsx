@@ -129,7 +129,7 @@ export function ManualEntryFooter({
 
       if (insertError) throw insertError;
 
-      await supabase.rpc("refresh_dashboard_views");
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       await queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user.id] });
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       await queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user.id] });

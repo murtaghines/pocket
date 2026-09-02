@@ -340,7 +340,7 @@ export function useMonthlyFileUpload() {
       }
 
       // Refresh data
-      await supabase.rpc("refresh_dashboard_views");
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["periods"] });
@@ -582,7 +582,7 @@ export function useMonthlyFileUpload() {
         }.`,
       });
 
-      await supabase.rpc("refresh_dashboard_views");
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["periods"] });

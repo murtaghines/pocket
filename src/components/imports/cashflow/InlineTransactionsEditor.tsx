@@ -388,7 +388,7 @@ export function InlineTransactionsEditor({
           return n;
         });
       }, 1200);
-      await supabase.rpc("refresh_dashboard_views");
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
@@ -427,7 +427,7 @@ export function InlineTransactionsEditor({
       return;
     }
 
-    await supabase.rpc("refresh_dashboard_views");
+    try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
@@ -443,7 +443,7 @@ export function InlineTransactionsEditor({
         label: "undo",
         onClick: async () => {
           await supabase.from("transactions").insert(insertPayload);
-          await supabase.rpc("refresh_dashboard_views");
+          try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
           queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
