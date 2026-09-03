@@ -15,6 +15,7 @@ interface AccountsStackCardProps {
   endDate?: string;
   convert: (amount: number) => number;
   formatCurrency: (amount: number) => string;
+  subtitleOverride?: string;
 }
 
 type AccountDisplay = {
@@ -64,6 +65,7 @@ export function AccountsStackCard({
   endDate,
   convert,
   formatCurrency,
+  subtitleOverride,
 }: AccountsStackCardProps) {
   const { t } = useTranslation("dashboard");
   const navigate = useNavigate();
@@ -164,7 +166,7 @@ export function AccountsStackCard({
               {t('charts.accounts', 'Accounts')}
             </p>
             <p className="text-[12.5px] text-[#9AA1AC] mt-0.5">
-              {t('charts.accountsSubtitle', 'Month-end balance')}
+              {subtitleOverride ?? t('charts.accountsSubtitle', 'Month-end balance')}
             </p>
           </div>
           <button

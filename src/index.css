@@ -70,7 +70,9 @@
     /* Category colors - Transfer */
     --category-own-transfer: 220 12% 50%;    /* neutral slate */
     --category-to-investment: 216 75% 42%;   /* deep brand blue */
+    --category-from-investment: 216 60% 55%; /* lighter brand blue */
     --category-to-joint-account: 200 85% 50%;/* bright sky blue */
+    --category-from-joint-account: 200 70% 58%;/* lighter sky blue */
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(216 100% 55%) 0%, hsl(216 100% 42%) 100%);

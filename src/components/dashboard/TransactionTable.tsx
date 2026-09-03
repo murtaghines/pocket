@@ -51,7 +51,7 @@ const movementDotColor: Record<MovementType, string> = {
 const getMovementType = (transaction: Transaction): MovementType => {
   if (transaction.movement === 'INCOME' || transaction.type === 'income') return 'income';
   if (transaction.movement === 'TRANSFER' || transaction.type === 'transfer') return 'transfer';
-  if (transaction.category === 'investment' || transaction.category === 'to_investment') return 'investment';
+  if (transaction.category === 'investment' || transaction.category === 'to_investment' || transaction.category === 'from_investment') return 'investment';
   return 'expense';
 };
 
