@@ -63,7 +63,7 @@ export type ExpenseCategory =
   | 'insurance'
   | 'other_expense';
 
-export type TransferCategory = 'own_transfer' | 'to_investment' | 'to_joint_account';
+export type TransferCategory = 'own_transfer' | 'to_investment' | 'from_investment' | 'to_joint_account' | 'from_joint_account';
 export type Category = IncomeCategory | ExpenseCategory | TransferCategory;
 
 export interface CategorizationResult {
@@ -3308,12 +3308,12 @@ export function categorize(
       for (const name of ctx.jointAccountNames) {
         const normName = normalize(name);
         if (new RegExp(normName, 'i').test(norm)) {
-          return {
+          return flipTransferDirection({
             movement:    'TRANSFER',
             category:    'to_joint_account',
             confidence:  0.99,
             matchedRule: 'JOINT_ACCOUNT_NAME_MATCH',
-          };
+          }, amount);
         }
       }
     }
@@ -3369,16 +3369,35 @@ export function categorize(
   for (const bucket of RULE_BUCKETS) {
     for (const rule of bucket.rules) {
       if (rule.pattern.test(norm)) {
-        return {
+        const result: CategorizationResult = {
           movement:    bucket.movement,
           category:    bucket.category,
           confidence:  rule.confidence,
           matchedRule: rule.label,
         };
+        return flipTransferDirection(result, amount);
       }
     }
   }
 
   // No rule fired → send to Capa 2 (ML model)
   return null;
+}
+
+/**
+ * Flip directional transfer categories based on amount sign.
+ * Description patterns match the platform/account name regardless of flow direction;
+ * the amount sign disambiguates: negative = outflow (to_*), positive = inflow (from_*).
+ * own_transfer is directionless — no flip needed.
+ */
+function flipTransferDirection(result: CategorizationResult, amount: number): CategorizationResult {
+  if (result.movement !== 'TRANSFER' || amount <= 0) return result;
+
+  if (result.category === 'to_investment') {
+    return { ...result, category: 'from_investment', matchedRule: result.matchedRule + ':FROM' };
+  }
+  if (result.category === 'to_joint_account') {
+    return { ...result, category: 'from_joint_account', matchedRule: result.matchedRule + ':FROM' };
+  }
+  return result;
 }

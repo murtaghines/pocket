@@ -5,7 +5,6 @@ import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { useGranularity } from "@/hooks/useGranularity";
 import { useLocalization } from "@/hooks/useLocalization";
-import { formatPeriodLabel } from "@/lib/analytics";
 import { GranularityToggle } from "./GranularityToggle";
 import { EmptyStateBanner } from "./EmptyStateBanner";
 
@@ -30,31 +29,6 @@ function MonthPill() {
       </button>
       <span className="capitalize min-w-[88px] text-center text-[13px] font-medium text-[#414750]">{label}</span>
       <button type="button" onClick={() => hasNewer && setSelectedMonth(availableMonths[idx - 1])} disabled={!hasNewer} aria-label="Next month" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
-        <ChevronRight className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
-      </button>
-    </span>
-  );
-}
-
-function WeekPill() {
-  const { i18n } = useTranslation();
-  const { selectedPeriod, setSelectedPeriod, availablePeriods } = usePeriodSelection();
-  const weeks = availablePeriods.week;
-  if (weeks.length === 0) return null;
-
-  const selected = selectedPeriod.week;
-  const idx = selected ? weeks.indexOf(selected) : -1;
-  const hasOlder = idx > 0;
-  const hasNewer = idx >= 0 && idx < weeks.length - 1;
-  const label = selected ? formatPeriodLabel(selected, "week", i18n.language) : "–";
-
-  return (
-    <span className={NAV_PILL}>
-      <button type="button" onClick={() => hasOlder && setSelectedPeriod("week", weeks[idx - 1])} disabled={!hasOlder} aria-label="Previous week" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
-        <ChevronLeft className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
-      </button>
-      <span className="capitalize min-w-[88px] text-center text-[13px] font-medium text-[#414750]">{label}</span>
-      <button type="button" onClick={() => hasNewer && setSelectedPeriod("week", weeks[idx + 1])} disabled={!hasNewer} aria-label="Next week" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
         <ChevronRight className="w-[14px] h-[14px] text-[#414750]" strokeWidth={2.2} />
       </button>
     </span>
@@ -134,7 +108,6 @@ export function DashboardGreeting() {
             {t("greeting.filter")}
           </span>
           {tab === "month" && <MonthPill />}
-          {tab === "week" && <WeekPill />}
           {tab === "year" && <YearPill />}
           {tab === "history" && <HistoryControls />}
         </div>

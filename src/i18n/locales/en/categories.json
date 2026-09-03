@@ -26,7 +26,9 @@
   "transfer": {
     "own_transfer": "To Myself",
     "to_investment": "To Investment",
-    "to_joint_account": "To Joint Account"
+    "from_investment": "From Investment",
+    "to_joint_account": "To Joint Account",
+    "from_joint_account": "From Joint Account"
   },
   "movement": {
     "INCOME": "Income",

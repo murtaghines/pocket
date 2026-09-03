@@ -86,7 +86,11 @@
     "treemapVsPrev": "vs. mes anterior",
     "treemapToggleLabel": "Modo de visualización",
     "treemapNew": "nuevo",
-    "treemapNoExpenses": "Sin gastos en {{month}}"
+    "treemapNoExpenses": "Sin gastos en {{month}}",
+    "accountsYearSubtitle": "Saldo a fin de año",
+    "evolutionByMonth": "Evolución por mes",
+    "monthlyFlowTitle": "Balance mensual",
+    "monthlyFlowSubtitle": "Balance neto acumulado durante {{year}}"
   },
   "transactions": {
     "title": "Transacciones",
@@ -109,6 +113,7 @@
   "topExpenses": {
     "title": "Mayores gastos",
     "subtitle": "Top 5 del mes",
+    "yearSubtitle": "Top 5 del año",
     "noExpenses": "Sin gastos registrados"
   },
   "investments": {
@@ -291,6 +296,10 @@
     },
     "filter": "Filtros",
     "openingBalanceSubtitle": "Balance inicial {{amount}} · {{count}} movimientos"
+  },
+  "monthlySpending": {
+    "title": "Gasto por mes",
+    "avgPerMonth": "Promedio mensual"
   },
   "heatmap": {
     "title": "Gasto por día",

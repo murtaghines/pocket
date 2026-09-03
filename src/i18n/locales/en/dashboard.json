@@ -87,7 +87,11 @@
     "treemapVsPrev": "vs. prev month",
     "treemapToggleLabel": "Display mode",
     "treemapNew": "new",
-    "treemapNoExpenses": "No expenses in {{month}}"
+    "treemapNoExpenses": "No expenses in {{month}}",
+    "accountsYearSubtitle": "Year-end balance",
+    "evolutionByMonth": "Evolution by month",
+    "monthlyFlowTitle": "Monthly balance",
+    "monthlyFlowSubtitle": "Cumulative net balance through {{year}}"
   },
   "transactions": {
     "title": "Transactions",
@@ -110,6 +114,7 @@
   "topExpenses": {
     "title": "Top Expenses",
     "subtitle": "Top 5 of the month",
+    "yearSubtitle": "Top 5 of the year",
     "noExpenses": "No expenses recorded"
   },
   "investments": {
@@ -322,6 +327,10 @@
     },
     "filter": "Filters",
     "openingBalanceSubtitle": "Opening balance {{amount}} · {{count}} transactions"
+  },
+  "monthlySpending": {
+    "title": "Spending by month",
+    "avgPerMonth": "Monthly average"
   },
   "heatmap": {
     "title": "Spending by day",

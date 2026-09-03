@@ -32,7 +32,10 @@ export type Category =
   | 'pets'
   // Transfer categories
   | 'own_transfer'
-  | 'to_investment';
+  | 'to_investment'
+  | 'from_investment'
+  | 'to_joint_account'
+  | 'from_joint_account';
 
 export type TransactionType = 'income' | 'expense' | 'transfer';
 

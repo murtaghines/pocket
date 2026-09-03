@@ -6,8 +6,8 @@ import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
 import { PeriodBreakdownChart } from "@/components/dashboard/PeriodBreakdownChart";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
-import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
-import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
+import { MonthlyFlowChart } from "@/components/dashboard/MonthlyFlowChart";
+import { MonthlySpendingCard } from "@/components/dashboard/MonthlySpendingCard";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
@@ -23,12 +23,11 @@ import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { usePeriodAggregates } from "@/hooks/usePeriodAggregates";
 import { periodRangeOf, type MonthOfYearPoint } from "@/lib/analytics";
 
-/** Dashboard's "year" tab — current calendar year vs. previous year. */
 const PAGE_SIZE = 100;
 
 export function YearTab() {
   const { t, i18n } = useTranslation("dashboard");
-  const { monthlyData: yearlyData, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
+  const { monthlyData: yearlyData, openingBalanceByMonth, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
@@ -87,11 +86,16 @@ export function YearTab() {
 
   const previousPeriodLabel = hasPreviousData ? previous.month : undefined;
 
-  const displayMonthKey = useMemo(() => {
-    if (!transactions.length) return selectedYear ? `${selectedYear}-01` : "2024-01";
-    const latest = transactions.reduce((a, b) => (a.date > b.date ? a : b));
-    return latest.date.slice(0, 7);
-  }, [transactions, selectedYear]);
+  const yearOpeningBalance = useMemo(() => {
+    if (!selectedYear || !openingBalanceByMonth) return null;
+    const janKey = `${selectedYear}-01`;
+    if (openingBalanceByMonth[janKey] != null) return openingBalanceByMonth[janKey];
+    const monthKeys = Object.keys(openingBalanceByMonth)
+      .filter((k) => k.startsWith(selectedYear))
+      .sort();
+    if (monthKeys.length > 0) return openingBalanceByMonth[monthKeys[0]];
+    return null;
+  }, [selectedYear, openingBalanceByMonth]);
 
   const breakdownPoints = useMemo(
     () =>
@@ -115,7 +119,7 @@ export function YearTab() {
 
       {!isLoading && !isDashLoading && !prefsLoading && !agg.isLoading && (
         <div className="flex flex-col gap-[14px]">
-          {/* KPI row — 5 cards, split to align with chart grid below */}
+          {/* Row 1: KPIs */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
             <div className="contents lg:grid lg:grid-cols-3 lg:gap-[12px]">
               <TrendKpiCard
@@ -179,27 +183,31 @@ export function YearTab() {
             </div>
           </div>
 
-          {/* Row 2: income vs expenses breakdown + accounts */}
+          {/* Row 2: Evolution by month + Accounts (year-end balance) */}
           <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px]">
-            <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byMonthThisYear", "By month · this year")} />
+            <PeriodBreakdownChart
+              points={breakdownPoints}
+              subtitle={t("charts.byMonthThisYear", "By month · this year")}
+            />
             <AccountsStackCard
               startDate={range?.start}
               endDate={range?.end}
               convert={convertToUserCurrency}
               formatCurrency={formatCurrency}
+              subtitleOverride={t("charts.accountsYearSubtitle", "Year-end balance")}
             />
           </div>
 
-          {/* Row 3: balance line + heatmap */}
+          {/* Row 3: Monthly cumulative balance + Spending by month */}
           <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px]">
-            <DailyFlowChart
+            <MonthlyFlowChart
               dailyTotals={agg.dailyTotals}
-              monthKey={displayMonthKey}
+              yearKey={selectedYear}
               convert={convertToUserCurrency}
             />
-            <DailyHeatmapCard
+            <MonthlySpendingCard
               dailyTotals={agg.dailyTotals}
-              monthKey={displayMonthKey}
+              yearKey={selectedYear}
               convert={convertToUserCurrency}
             />
           </div>
@@ -219,7 +227,13 @@ export function YearTab() {
           {/* Row 6: Transactions table */}
           <div className="bg-card rounded-xl p-[20px_0_6px] shadow-section">
             <div className="max-h-[700px] overflow-y-auto">
-              <TransactionTable transactions={transactions} totalCount={totalCount ?? undefined} />
+              <TransactionTable
+                transactions={transactions}
+                totalCount={totalCount ?? undefined}
+                openingBalance={yearOpeningBalance != null
+                  ? convertToUserCurrency(yearOpeningBalance)
+                  : null}
+              />
             </div>
             {totalCount != null && totalCount > PAGE_SIZE && (
               <div className="flex items-center justify-between px-1 pt-3 pb-2">
