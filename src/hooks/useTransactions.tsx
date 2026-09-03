@@ -75,7 +75,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       if (error) throw error;
 
       const rows = (data as DbTransaction[]).map((t): Transaction => {
-        const rawDesc = t.description_norm || t.description;
+        const rawDesc = t.description || t.description_norm;
         const cleanDesc = rawDesc.replace(
           /^value date:\s*\d{1,2}\s+\w{3}\s+\d{4}\s+/i,
           ''

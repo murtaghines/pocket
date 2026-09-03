@@ -114,7 +114,7 @@ export const getMovementTone = (m: MovementType): PillTone => {
     case "EXPENSE":
       return "red";
     case "TRANSFER":
-      return "amber";
+      return "neutral";
     default:
       return "neutral";
   }

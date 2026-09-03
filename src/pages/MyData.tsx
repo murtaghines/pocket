@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BankStatementsTabsView } from "@/components/imports/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
 import { CategoriesTab } from "@/components/imports/CategoriesTab";
+import { useMonthSelection } from "@/hooks/usePeriodSelection";
 
 export type DataTab = "bank" | "investments" | "categories";
 
@@ -14,16 +15,19 @@ export type DataTab = "bank" | "investments" | "categories";
  */
 export default function MyData() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { selectedMonth, setSelectedMonth } = useMonthSelection();
 
   const tabParam = searchParams.get("tab");
   const tab: DataTab = tabParam === "investments" ? "investments" : tabParam === "categories" ? "categories" : "bank";
 
   const monthParam = searchParams.get("month");
+  const activeMonth = monthParam ?? selectedMonth;
 
   const setMonth = (key: string) => {
     const params: Record<string, string> = { month: key };
     if (tab !== "bank") params.tab = tab;
     setSearchParams(params);
+    setSelectedMonth(key);
   };
 
   // Legacy deep-link support (?section=bank&month=YYYY-MM) — scroll & highlight
@@ -54,8 +58,8 @@ export default function MyData() {
 
   return (
     <DashboardLayout fullBleed>
-      {tab === "bank" && <BankStatementsTabsView activeMonth={monthParam} onMonthChange={setMonth} />}
-      {tab === "investments" && <InvestmentTabsView activeMonth={monthParam} onMonthChange={setMonth} />}
+      {tab === "bank" && <BankStatementsTabsView activeMonth={activeMonth} onMonthChange={setMonth} />}
+      {tab === "investments" && <InvestmentTabsView activeMonth={activeMonth} onMonthChange={setMonth} />}
       {tab === "categories" && <CategoriesTab />}
     </DashboardLayout>
   );
