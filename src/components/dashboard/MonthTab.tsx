@@ -293,7 +293,13 @@ export function MonthTab() {
               {/* Row 6: Transactions table */}
               <div className="bg-card rounded-xl p-[20px_0_6px] shadow-section">
                 <div className="max-h-[700px] overflow-y-auto">
-                  <TransactionTable transactions={transactions} monthKey={latestMonthLabel ?? undefined} />
+                  <TransactionTable
+                  transactions={transactions}
+                  monthKey={latestMonthLabel ?? undefined}
+                  openingBalance={latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null
+                    ? convertToUserCurrency(openingBalanceByMonth[latestMonthLabel])
+                    : null}
+                />
                 </div>
               </div>
             </div>

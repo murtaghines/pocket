@@ -37,7 +37,6 @@ export const NAV_SECTIONS: NavSection[] = [
     defaultTab: "month",
     subTabs: [
       { key: "month", i18nKey: "granularity.month", ns: "dashboard" },
-      { key: "week", i18nKey: "granularity.week", ns: "dashboard" },
       { key: "year", i18nKey: "granularity.year", ns: "dashboard" },
       { key: "history", i18nKey: "navigation.tabs.dashboard.history" },
     ],
