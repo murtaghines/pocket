@@ -29,6 +29,7 @@ interface TransactionTableProps {
   initialSearch?: string;
   totalCount?: number;
   monthKey?: string;
+  openingBalance?: number | null;
 }
 
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
@@ -54,7 +55,7 @@ const getMovementType = (transaction: Transaction): MovementType => {
   return 'expense';
 };
 
-export function TransactionTable({ transactions, initialSearch = "", totalCount, monthKey }: TransactionTableProps) {
+export function TransactionTable({ transactions, initialSearch = "", totalCount, monthKey, openingBalance }: TransactionTableProps) {
   const { t } = useTranslation('dashboard');
   const { t: tc } = useTranslation('common');
   const navigate = useNavigate();
@@ -70,43 +71,26 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
   };
 
   const computedBalanceMap = useMemo(() => {
-    const byAccount = new Map<string, typeof transactions>();
-    for (const tx of transactions) {
-      const key = tx.account || tx.bank || '__unknown__';
-      if (!byAccount.has(key)) byAccount.set(key, []);
-      byAccount.get(key)!.push(tx);
-    }
-
     const map = new Map<string, number>();
+    if (openingBalance == null) return map;
 
-    for (const [, accountTxs] of byAccount) {
-      const sorted = [...accountTxs].sort((a, b) => {
-        const dateCmp = a.date.localeCompare(b.date);
-        if (dateCmp !== 0) return dateCmp;
-        const order = { income: 0, transfer: 1, expense: 2 };
-        const typeA = getMovementType(a);
-        const typeB = getMovementType(b);
-        return (order[typeA === 'investment' ? 'expense' : typeA] || 2) - (order[typeB === 'investment' ? 'expense' : typeB] || 2);
-      });
+    const sorted = [...transactions].sort((a, b) => {
+      const dateCmp = a.date.localeCompare(b.date);
+      if (dateCmp !== 0) return dateCmp;
+      const order = { income: 0, transfer: 1, expense: 2 };
+      const typeA = getMovementType(a);
+      const typeB = getMovementType(b);
+      return (order[typeA === 'investment' ? 'expense' : typeA] || 2) - (order[typeB === 'investment' ? 'expense' : typeB] || 2);
+    });
 
-      let startingBalance = 0;
-      const firstWithBalance = sorted.find(tx => tx.runningBalance != null);
-      if (firstWithBalance) {
-        const idx = sorted.indexOf(firstWithBalance);
-        let sumUpTo = 0;
-        for (let i = 0; i <= idx; i++) sumUpTo += sorted[i].amount;
-        startingBalance = firstWithBalance.runningBalance! - sumUpTo;
-      }
-
-      let balance = startingBalance;
-      for (const tx of sorted) {
-        balance += tx.amount;
-        map.set(tx.id, Math.round(balance * 100) / 100);
-      }
+    let balance = openingBalance;
+    for (const tx of sorted) {
+      balance += tx.amount;
+      map.set(tx.id, Math.round(balance * 100) / 100);
     }
 
     return map;
-  }, [transactions]);
+  }, [transactions, openingBalance]);
 
   const filteredTransactions = useMemo(() => transactions.filter(t => {
     const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase());
