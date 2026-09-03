@@ -906,7 +906,7 @@ export function InlineTransactionsEditor({
     const sorted = [...transactions].sort((a, b) => {
       const dateCmp = a.date.localeCompare(b.date);
       if (dateCmp !== 0) return dateCmp;
-      return a.id.localeCompare(b.id);
+      return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
     });
     let balance = openingBalance;
     for (const tx of sorted) {
@@ -931,23 +931,9 @@ export function InlineTransactionsEditor({
     }
     result.sort((a, b) => {
       const dir = sortDirectionProp === "asc" ? 1 : -1;
-      switch (sortColumnProp) {
-        case "date": return dir * a.date.localeCompare(b.date);
-        case "description": {
-          const da = (a.description_norm || a.description || "").toLowerCase();
-          const db = (b.description_norm || b.description || "").toLowerCase();
-          return dir * da.localeCompare(db);
-        }
-        case "account": {
-          const na = accountName(a.account_id) || "";
-          const nb = accountName(b.account_id) || "";
-          return dir * na.localeCompare(nb);
-        }
-        case "movement": return dir * (a.movement || "").localeCompare(b.movement || "");
-        case "category": return dir * (a.category || "").localeCompare(b.category || "");
-        case "amount": return dir * (a.amount - b.amount);
-        default: return 0;
-      }
+      const dateCmp = a.date.localeCompare(b.date);
+      if (dateCmp !== 0) return dir * dateCmp;
+      return dir * (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
     });
     return result;
   }, [transactions, sortColumnProp, sortDirectionProp, filtersProp]);
