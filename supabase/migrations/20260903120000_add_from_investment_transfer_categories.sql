@@ -199,7 +199,7 @@ BEGIN
       FROM (
         SELECT
           t.id,
-          COALESCE(t.description_norm, t.description) AS description,
+          COALESCE(t.description, t.description_norm) AS description,
           t.date,
           ABS(t.amount) AS amount,
           t.category
