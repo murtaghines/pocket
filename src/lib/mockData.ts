@@ -56,6 +56,7 @@ export interface Transaction {
   account_id?: string | null;
   runningBalance?: number | null;
   userCorrected?: boolean;
+  fingerprint?: string;
 }
 
 export interface MonthlyData {

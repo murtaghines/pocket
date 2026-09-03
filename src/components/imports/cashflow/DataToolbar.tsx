@@ -11,7 +11,6 @@ import {
   ArrowRightLeft,
   Upload,
   CalendarDays,
-  Check,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -31,7 +30,7 @@ import { getAccountDisplayName } from "@/lib/accountColors";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import type { MovementType } from "./types";
 
-export type SortColumn = "date" | "description" | "account" | "movement" | "category" | "amount";
+export type SortColumn = "date";
 export type SortDirection = "asc" | "desc";
 export interface DataFilters {
   accounts: string[];
@@ -66,7 +65,6 @@ interface DataToolbarProps {
   firstMonthWithData?: string | null;
 }
 
-const SORT_COLUMNS: SortColumn[] = ["date", "description", "account", "movement", "category", "amount"];
 
 export function DataToolbar({
   monthLabel,
@@ -134,7 +132,6 @@ export function DataToolbar({
     onFiltersChange({ ...filters, categories: next });
   };
 
-  const sortLabel = (col: SortColumn) => t(`imports.sort${col.charAt(0).toUpperCase() + col.slice(1)}`);
 
   return (
     <div className="hidden md:flex items-center justify-between gap-4 bg-card px-6 py-[20px] pb-[16px]">
@@ -284,48 +281,15 @@ export function DataToolbar({
 
       {/* Right: Sort · Filter · Export · New */}
       <div className="flex items-center gap-[6px] ml-auto">
-        {/* Sort */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center gap-[6px] bg-[#F5F7F9] rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] hover:bg-[#EBEEF2] transition-colors"
-            >
-              <ArrowUpDown className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
-              {t("imports.sort")}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-52 p-1.5" align="end">
-            <div className="space-y-0.5">
-              {SORT_COLUMNS.map((col) => (
-                <button
-                  key={col}
-                  type="button"
-                  onClick={() => {
-                    if (sortColumn === col) {
-                      onSortChange(col, sortDirection === "asc" ? "desc" : "asc");
-                    } else {
-                      onSortChange(col, col === "amount" ? "desc" : "asc");
-                    }
-                  }}
-                  className={cn(
-                    "flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-sm transition-colors",
-                    sortColumn === col
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-foreground hover:bg-muted",
-                  )}
-                >
-                  <span>{sortLabel(col)}</span>
-                  {sortColumn === col && (
-                    <span className="text-xs text-primary/70">
-                      {sortDirection === "asc" ? "A→Z" : "Z→A"}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+        {/* Sort — date direction toggle */}
+        <button
+          type="button"
+          onClick={() => onSortChange("date", sortDirection === "asc" ? "desc" : "asc")}
+          className="inline-flex items-center gap-[6px] bg-[#F5F7F9] rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] hover:bg-[#EBEEF2] transition-colors"
+        >
+          <ArrowUpDown className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
+          {sortDirection === "desc" ? t("imports.newestFirst", { defaultValue: "Newest first" }) : t("imports.oldestFirst", { defaultValue: "Oldest first" })}
+        </button>
 
         {/* Filter */}
         <Popover>

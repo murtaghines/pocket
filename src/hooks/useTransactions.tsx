@@ -21,9 +21,10 @@ interface DbTransaction {
   account_id: string | null;
   running_balance: number | null;
   user_corrected: boolean | null;
+  fingerprint: string | null;
 }
 
-const TX_COLUMNS = "id, date, description, description_norm, amount, movement, category, currency, account_id, running_balance, user_corrected" as const;
+const TX_COLUMNS = "id, date, description, description_norm, amount, movement, category, currency, account_id, running_balance, user_corrected, fingerprint" as const;
 
 interface UseTransactionsOptions {
   domain?: AppDomain;
@@ -58,7 +59,8 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         .eq("user_id", user.id)
         .eq("domain", domain)
         .eq("is_hidden", false)
-        .order("date", { ascending: false });
+        .order("date", { ascending: false })
+        .order("fingerprint", { ascending: false });
 
       if (periodId) query = query.eq("period_id", periodId);
       if (startDate) query = query.gte("date", startDate);
@@ -109,6 +111,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
           account_id: t.account_id,
           runningBalance: t.running_balance,
           userCorrected: t.user_corrected ?? false,
+          fingerprint: t.fingerprint ?? undefined,
         };
       });
 

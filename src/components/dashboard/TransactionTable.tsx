@@ -14,7 +14,6 @@ import {
   ToolbarButton,
   ToolbarSearch,
   Filter as FilterIcon,
-  ArrowUpDown,
 } from "@/components/ui/filter-chip";
 import { Transaction } from "@/lib/mockData";
 import { ChevronRight } from "lucide-react";
@@ -77,10 +76,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
     const sorted = [...transactions].sort((a, b) => {
       const dateCmp = a.date.localeCompare(b.date);
       if (dateCmp !== 0) return dateCmp;
-      const order = { income: 0, transfer: 1, expense: 2 };
-      const typeA = getMovementType(a);
-      const typeB = getMovementType(b);
-      return (order[typeA === 'investment' ? 'expense' : typeA] || 2) - (order[typeB === 'investment' ? 'expense' : typeB] || 2);
+      return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
     });
 
     let balance = openingBalance;
@@ -128,11 +124,6 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
           </button>
         </div>
         <div className="flex items-center gap-[6px]">
-          <ToolbarButton
-            icon={<ArrowUpDown className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />}
-            label={t('transactions.sort', { defaultValue: 'Sort' })}
-            className="h-[31px] px-[11px] bg-[#F5F7F9] rounded-[9px] text-[13px] font-medium text-[#414750] gap-[6px] hover:bg-[#EBEEF2] [&>span:last-of-type]:hidden [&>span:last-of-type]:md:inline"
-          />
           <ToolbarButton
             icon={<FilterIcon className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />}
             label={t('transactions.filter', { defaultValue: 'Filter' })}
