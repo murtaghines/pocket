@@ -108,8 +108,7 @@ export function useUserPreferences() {
     // Only enable when we have both user AND a valid session token
     enabled: !!user && !!session?.access_token,
     retry: 1,
-    // Prevent stale data from causing issues
-    staleTime: 1000,
+    staleTime: 1000 * 60 * 5,
   });
 
   const updatePreferences = useMutation({
