@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, Minus, Loader2, Wallet, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
@@ -8,6 +9,7 @@ import { PeriodBreakdownChart } from "@/components/dashboard/PeriodBreakdownChar
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { MonthlyFlowChart } from "@/components/dashboard/MonthlyFlowChart";
 import { MonthlySpendingCard } from "@/components/dashboard/MonthlySpendingCard";
+import { MonthlyFlowSankey } from "@/components/dashboard/MonthlyFlowSankey";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
@@ -16,6 +18,10 @@ import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useAuth } from "@/hooks/useAuth";
+import { useAccounts } from "@/hooks/useAccounts";
+import { supabase } from "@/integrations/supabase/client";
+import { getAccountDisplayName } from "@/lib/accountColors";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -27,6 +33,8 @@ const PAGE_SIZE = 100;
 
 export function YearTab() {
   const { t, i18n } = useTranslation("dashboard");
+  const { user } = useAuth();
+  const { accounts: allAccounts } = useAccounts();
   const { monthlyData: yearlyData, openingBalanceByMonth, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
@@ -71,6 +79,39 @@ export function YearTab() {
     prevEndDate: prevRange?.end,
     granularity: "year",
     convert: convertToUserCurrency,
+  });
+
+  const { data: sankeyAccountFlows = [] } = useQuery({
+    queryKey: ["year-account-flows", user?.id, range?.start, range?.end],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("account_id, amount, type")
+        .eq("user_id", user!.id)
+        .gte("date", range!.start)
+        .lte("date", range!.end)
+        .neq("type", "transfer");
+      if (error) throw error;
+      const accMap = new Map<string, { name: string; income: number; expenses: number }>();
+      for (const tx of data ?? []) {
+        if (!tx.account_id) continue;
+        const entry = accMap.get(tx.account_id) || { name: "", income: 0, expenses: 0 };
+        const amt = Math.abs(convertToUserCurrency(Number(tx.amount)));
+        if (tx.type === "income") entry.income += amt;
+        else if (tx.type === "expense") entry.expenses += amt;
+        accMap.set(tx.account_id, entry);
+      }
+      for (const [accId, entry] of accMap) {
+        const match = allAccounts?.find((a) => a.id === accId);
+        entry.name = match ? getAccountDisplayName(match) : "Unknown";
+      }
+      return Array.from(accMap.entries())
+        .map(([id, d]) => ({ id, name: d.name, income: d.income, expenses: d.expenses }))
+        .filter((a) => a.income > 0 || a.expenses > 0)
+        .sort((a, b) => (b.income + b.expenses) - (a.income + a.expenses));
+    },
+    enabled: !!user && !!range?.start && !!range?.end,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -215,10 +256,21 @@ export function YearTab() {
           {/* Row 4: Income by category + Spending by category */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] gap-[14px]">
             <CategoryChart data={agg.incomeCategoryData} />
-            <SpendingByCategoryChart data={agg.expenseCategoryData} />
+            <SpendingByCategoryChart
+              data={agg.expenseCategoryData}
+              vsPrevLabel={t("charts.treemapVsPrevYear", "vs. prev year")}
+            />
           </div>
 
-          {/* Row 5: Fixed vs discretionary + Top expenses */}
+          {/* Row 5: Yearly flow Sankey */}
+          <MonthlyFlowSankey
+            incomeCategories={agg.incomeCategoryData}
+            expenseCategories={agg.expenseCategoryData}
+            accountFlows={sankeyAccountFlows}
+            openingBalance={yearOpeningBalance != null ? convertToUserCurrency(yearOpeningBalance) : 0}
+          />
+
+          {/* Row 6: Fixed vs discretionary + Top expenses */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-[14px]">
             <FixedVsDiscretionaryCard split={agg.essentialSplit} />
             <TopExpensesCard topExpenses={agg.topExpenses} />

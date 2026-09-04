@@ -9,7 +9,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
 import { cn } from "@/lib/utils";
-import { BarChart3, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import type { DailyTotal } from "@/hooks/usePeriodAggregates";
 
 type Metric = "expense" | "income" | "count";
@@ -24,6 +24,7 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
   const { t, i18n } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const [metric, setMetric] = useState<Metric>("expense");
+  const [hoveredMonth, setHoveredMonth] = useState<number | null>(null);
 
   const monthLabels = useMemo(
     () =>
@@ -35,10 +36,10 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
     [i18n.language],
   );
 
-  const { bars, maxValue, minNonZero, maxMonth, minMonth, avgActive } = useMemo(() => {
+  const { cells, maxValue, minNonZero, maxMonth, minMonth, avgActive } = useMemo(() => {
     if (!yearKey) {
       return {
-        bars: [] as Array<{ month: number; label: string; value: number }>,
+        cells: [] as Array<{ month: number; label: string; value: number }>,
         maxValue: 0,
         minNonZero: 0,
         maxMonth: 0,
@@ -56,7 +57,7 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
       else if (metric === "income") buckets[m - 1] += convert(dt.income);
     }
 
-    const bars = buckets.map((value, i) => ({
+    const cells = buckets.map((value, i) => ({
       month: i + 1,
       label: monthLabels[i],
       value: Math.round(value * 100) / 100,
@@ -68,8 +69,22 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
     const minMonth = minNonZero > 0 ? buckets.findIndex((v) => v === minNonZero) + 1 : 0;
     const avgActive = nonZero.length > 0 ? nonZero.reduce((s, v) => s + v, 0) / nonZero.length : 0;
 
-    return { bars, maxValue, minNonZero, maxMonth, minMonth, avgActive };
+    return { cells, maxValue, minNonZero, maxMonth, minMonth, avgActive };
   }, [dailyTotals, yearKey, metric, convert, monthLabels]);
+
+  const getIntensity = (value: number) => {
+    if (maxValue <= 0 || value <= 0) return 0;
+    const ratio = Math.sqrt(value / maxValue);
+    return Math.min(1, Math.max(0.1, ratio));
+  };
+
+  const getTextColor = (intensity: number, hasValue: boolean) => {
+    if (!hasValue) return "#C2C7CE";
+    if (intensity >= 0.8) return "#fff";
+    if (intensity >= 0.4) return "#2E64B4";
+    if (intensity >= 0.24) return "#4A81C9";
+    return "#7C9BCB";
+  };
 
   const isCount = metric === "count";
   const formatStat = (value: number, isAvg = false) =>
@@ -127,31 +142,43 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
         </DropdownMenu>
       </div>
 
-      {!yearKey || bars.length === 0 ? (
-        <EmptyState height="h-[160px]" icon={BarChart3} message={t("transactions.noTransactions")} />
+      {!yearKey || cells.length === 0 ? (
+        <EmptyState height="h-[160px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
         <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] gap-4 sm:gap-[20px]">
-          <div className="flex flex-col gap-[6px]">
-            {bars.map((bar) => {
-              const ratio = maxValue > 0 ? bar.value / maxValue : 0;
-              const hasValue = bar.value > 0;
+          <div className="grid grid-cols-4 gap-[6px]">
+            {cells.map((cell) => {
+              const intensity = getIntensity(cell.value);
+              const hasValue = cell.value > 0;
+              const textColor = getTextColor(intensity, hasValue);
               return (
-                <div key={bar.month} className="flex items-center gap-[8px]">
-                  <span className="text-[11px] font-medium text-[#9AA1AC] w-[28px] shrink-0 text-right">
-                    {bar.label}
+                <button
+                  key={cell.month}
+                  type="button"
+                  onMouseEnter={() => setHoveredMonth(cell.month)}
+                  onMouseLeave={() => setHoveredMonth((m) => (m === cell.month ? null : m))}
+                  onClick={() => setHoveredMonth((m) => (m === cell.month ? null : cell.month))}
+                  className={cn(
+                    "flex flex-col items-center justify-center rounded-[8px] py-[10px] transition-transform hover:scale-[1.03]",
+                    hasValue ? "font-medium" : "font-normal bg-[#F7F8FA]",
+                    hoveredMonth === cell.month && "ring-2 ring-primary/60 ring-offset-1 ring-offset-card",
+                  )}
+                  style={{
+                    backgroundColor: hasValue ? `rgba(27,118,255,${intensity})` : undefined,
+                    color: textColor,
+                  }}
+                >
+                  <span className="text-[10.5px] font-medium opacity-80 leading-none mb-[5px]">
+                    {cell.label}
                   </span>
-                  <div className="flex-1 h-[20px] rounded-[5px] bg-[#F7F8FA] overflow-hidden">
-                    {hasValue && (
-                      <div
-                        className="h-full rounded-[5px] transition-all"
-                        style={{
-                          width: `${Math.max(ratio * 100, 4)}%`,
-                          backgroundColor: `rgba(27,118,255,${0.25 + ratio * 0.55})`,
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
+                  <span className="text-[13px] font-semibold tabular-nums leading-none">
+                    {hasValue
+                      ? isCount
+                        ? String(Math.round(cell.value))
+                        : formatCurrency(cell.value)
+                      : "—"}
+                  </span>
+                </button>
               );
             })}
           </div>

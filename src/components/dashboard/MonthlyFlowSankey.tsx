@@ -24,7 +24,7 @@ interface MonthlyFlowSankeyProps {
 }
 
 const BAR_W = 30;
-const BAR_R = 7;
+const BAR_R = 0;
 const SVG_W = 680;
 const LEFT_X = 0;
 const MID_X = 325;
