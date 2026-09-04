@@ -224,6 +224,9 @@ export function UploadedFilesHistoryList({
     queryClient.invalidateQueries({ queryKey: ["imports"] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
   };
 
   const fileTypeLabel = (imp: Import) => {
