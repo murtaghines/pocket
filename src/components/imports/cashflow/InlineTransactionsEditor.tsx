@@ -279,7 +279,7 @@ export function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id, user_notes",
+          "id, date, description, description_norm, original_description, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id, user_notes",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -1052,9 +1052,7 @@ export function InlineTransactionsEditor({
                   hasEditHistory &&
                   !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
                 const originalSnapshot = isEdited ? snapshot : null;
-                const cleanDescription = (tx.description_norm || tx.description)
-                  .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-                  .trim();
+                const cleanDescription = tx.original_description || tx.description || tx.description_norm || "";
                 const pending = pendingByTx[tx.id];
                 const isPending = !!pending;
                 const movement = (pending?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
@@ -1506,9 +1504,7 @@ export function InlineTransactionsEditor({
                     hasEditHistory &&
                     !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
                   const originalSnapshot = isEdited ? snapshot : null;
-                  const cleanDescription = (tx.description_norm || tx.description)
-                    .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-                    .trim();
+                  const cleanDescription = tx.original_description || tx.description || tx.description_norm || "";
                   const movement = (tx.movement || "EXPENSE") as MovementType;
                   const category = normalizeCategory(tx.category || "other_expense");
                   const amountColor =
@@ -1655,7 +1651,7 @@ export function InlineTransactionsEditor({
           const atxEdits = atxHist.filter((h) => h.action !== "revert");
           const atxSnap = atxEdits.length > 0 ? buildOriginalSnapshot(atxHist) : null;
           const atxIsEdited = !atxManual && atxEdits.length > 0 && !(atxSnap && isBackToOriginal(atx as unknown as Record<string, unknown>, atxSnap.values));
-          const atxCleanDesc = (atx.description_norm || atx.description).replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "").trim();
+          const atxCleanDesc = atx.original_description || atx.description || atx.description_norm || "";
           return (
             <MobileTransactionActions
               tx={atx}

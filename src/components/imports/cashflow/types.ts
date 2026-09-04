@@ -23,6 +23,7 @@ export interface MonthTransaction {
   date: string;
   description: string;
   description_norm: string | null;
+  original_description: string | null;
   amount: number;
   movement: MovementType | null;
   category: string;
