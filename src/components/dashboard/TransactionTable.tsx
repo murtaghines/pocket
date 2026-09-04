@@ -182,7 +182,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                     </DataTableCell>
                     <DataTableCell className="pr-[16px]">
                       <span className="block truncate text-[13.5px] text-[#0C0D0E]">
-                        {transaction.description.replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, '').trim()}
+                        {transaction.description}
                       </span>
                     </DataTableCell>
                     <DataTableCell>

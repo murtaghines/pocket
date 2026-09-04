@@ -14,6 +14,7 @@ interface DbTransaction {
   date: string;
   description: string;
   description_norm: string | null;
+  original_description: string | null;
   amount: number;
   movement: MovementType | null;
   category: string;
@@ -24,7 +25,7 @@ interface DbTransaction {
   fingerprint: string | null;
 }
 
-const TX_COLUMNS = "id, date, description, description_norm, amount, movement, category, currency, account_id, running_balance, user_corrected, fingerprint" as const;
+const TX_COLUMNS = "id, date, description, description_norm, original_description, amount, movement, category, currency, account_id, running_balance, user_corrected, fingerprint" as const;
 
 interface UseTransactionsOptions {
   domain?: AppDomain;
@@ -77,11 +78,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       if (error) throw error;
 
       const rows = (data as DbTransaction[]).map((t): Transaction => {
-        const rawDesc = t.description || t.description_norm;
-        const cleanDesc = rawDesc.replace(
-          /^value date:\s*\d{1,2}\s+\w{3}\s+\d{4}\s+/i,
-          ''
-        ).trim() || rawDesc;
+        const cleanDesc = t.original_description || t.description || t.description_norm || "";
 
         const movement = t.movement;
 
