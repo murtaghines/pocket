@@ -139,6 +139,8 @@ export function useCategorizationRules() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user_rules"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
     },
   });
 
