@@ -16,6 +16,7 @@ interface CategoryData {
 
 interface SpendingByCategoryChartProps {
   data: CategoryData[];
+  vsPrevLabel?: string;
 }
 
 interface TreemapEntry {
@@ -129,6 +130,7 @@ function worstRatio(
 
 export function SpendingByCategoryChart({
   data,
+  vsPrevLabel,
 }: SpendingByCategoryChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
@@ -301,7 +303,7 @@ export function SpendingByCategoryChart({
         className="flex flex-col items-end justify-start w-full h-full overflow-hidden"
         style={{
           backgroundColor: colors.bg,
-          borderRadius: isStrip ? 9 : 11,
+          borderRadius: isStrip ? 4 : 5,
           padding: pad,
           gap: gapVal,
         }}
@@ -453,7 +455,7 @@ export function SpendingByCategoryChart({
                 mode === "vs" ? "0 1px 2px rgba(16,24,40,.10)" : "none",
             }}
           >
-            {t("charts.treemapVsPrev", "vs. prev month")}
+            {vsPrevLabel ?? t("charts.treemapVsPrev", "vs. prev month")}
           </button>
         </div>
       </div>

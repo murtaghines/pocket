@@ -84,6 +84,7 @@
     "treemapInCategories": "en {{count}} categorías",
     "treemapWeight": "peso",
     "treemapVsPrev": "vs. mes anterior",
+    "treemapVsPrevYear": "vs. año anterior",
     "treemapToggleLabel": "Modo de visualización",
     "treemapNew": "nuevo",
     "treemapNoExpenses": "Sin gastos en {{month}}",
