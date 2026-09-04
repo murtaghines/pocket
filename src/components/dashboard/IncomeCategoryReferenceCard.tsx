@@ -15,8 +15,6 @@ interface IncomeCategoryReferenceCardProps {
   data: CategoryData[];
 }
 
-const OTHER_COLOR = "hsl(220, 10%, 55%)";
-
 export function IncomeCategoryReferenceCard({
   data,
 }: IncomeCategoryReferenceCardProps) {
@@ -28,37 +26,11 @@ export function IncomeCategoryReferenceCard({
 
   const sorted = useMemo(() => {
     if (total === 0) return [];
-    const significant: (CategoryData & { pct: number })[] = [];
-    let otherTotal = 0;
-
-    const s = [...data].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
-
-    for (const item of s) {
-      if (item.value / total >= 0.01) {
-        significant.push({ ...item, pct: (item.value / total) * 100 });
-      } else {
-        otherTotal += item.value;
-      }
-    }
-
-    if (otherTotal > 0) {
-      const otherLabel = t("charts.otherCategories", "Other");
-      const existingOther = significant.find((e) => e.name === otherLabel);
-      if (existingOther) {
-        existingOther.value += otherTotal;
-        existingOther.pct = (existingOther.value / total) * 100;
-      } else {
-        significant.push({
-          name: otherLabel,
-          value: otherTotal,
-          color: OTHER_COLOR,
-          pct: (otherTotal / total) * 100,
-        });
-      }
-    }
-
-    return significant;
-  }, [data, total, t]);
+    return [...data]
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .map((item) => ({ ...item, pct: (item.value / total) * 100 }));
+  }, [data, total]);
 
   const [active, setActive] = useState<string | null>(null);
   const activeEntry = active
