@@ -176,23 +176,12 @@ function buildCategoryBreakdown(
   rows: Array<{ category: string; total: number }>,
   convert: (n: number) => number,
 ): CategoryBreakdownPoint[] {
-  const byName = new Map<string, CategoryBreakdownPoint>();
-  for (const r of rows) {
-    const name = getCategoryLabel(r.category);
-    const value = round2(convert(Number(r.total)));
-    const existing = byName.get(name);
-    if (existing) {
-      existing.value = round2(existing.value + value);
-    } else {
-      byName.set(name, {
-        name,
-        value,
-        category: r.category as Category,
-        color: getCategoryHslColor(r.category),
-      });
-    }
-  }
-  return Array.from(byName.values());
+  return rows.map((r) => ({
+    name: getCategoryLabel(r.category),
+    value: round2(convert(Number(r.total))),
+    category: r.category as Category,
+    color: getCategoryHslColor(r.category),
+  }));
 }
 
 export function usePeriodAggregates({
