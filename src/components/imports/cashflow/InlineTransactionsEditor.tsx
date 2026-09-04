@@ -756,6 +756,8 @@ export function InlineTransactionsEditor({
                                     title: `${matchingIds.length} transaction${matchingIds.length === 1 ? "" : "s"} updated`,
                                   });
                                   queryClient.invalidateQueries({ queryKey: ["transactions"] });
+                                  queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+                                  queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
                                 }
                               }}
                             >

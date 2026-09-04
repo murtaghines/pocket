@@ -221,6 +221,7 @@ export function UploadedFilesHistoryList({
   const changeAcct = async (importId: string, newId: string) => {
     await supabase.from("imports").update({ account_id: newId }).eq("id", importId);
     await supabase.from("transactions").update({ account_id: newId }).eq("import_id", importId);
+    try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
     queryClient.invalidateQueries({ queryKey: ["imports"] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });

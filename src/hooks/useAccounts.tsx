@@ -209,10 +209,15 @@ export function useAccounts() {
         .eq('id', deleteId);
       if (delErr) throw delErr;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
       toast.success('Account reassigned and deleted');
     },
     onError: (error) => {
