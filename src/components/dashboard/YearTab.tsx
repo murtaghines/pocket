@@ -86,19 +86,21 @@ export function YearTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
-        .select("account_id, amount, type")
+        .select("account_id, amount, movement")
         .eq("user_id", user!.id)
+        .eq("domain", "CASHFLOW")
+        .eq("is_hidden", false)
         .gte("date", range!.start)
         .lte("date", range!.end)
-        .neq("type", "transfer");
+        .neq("movement", "TRANSFER");
       if (error) throw error;
       const accMap = new Map<string, { name: string; income: number; expenses: number }>();
       for (const tx of data ?? []) {
         if (!tx.account_id) continue;
         const entry = accMap.get(tx.account_id) || { name: "", income: 0, expenses: 0 };
         const amt = Math.abs(convertToUserCurrency(Number(tx.amount)));
-        if (tx.type === "income") entry.income += amt;
-        else if (tx.type === "expense") entry.expenses += amt;
+        if (tx.movement === "INCOME") entry.income += amt;
+        else if (tx.movement === "EXPENSE") entry.expenses += amt;
         accMap.set(tx.account_id, entry);
       }
       for (const [accId, entry] of accMap) {
