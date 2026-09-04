@@ -173,7 +173,11 @@ export function useImports(domain?: AppDomain) {
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['periods'] });
-      
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+
       if (data.dateWarnings && data.dateWarnings.length > 0) {
         toast.warning(`${data.message}. ${data.dateWarnings.length} transactions with dates outside the month.`);
       } else {
@@ -230,6 +234,10 @@ export function useImports(domain?: AppDomain) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
       toast.success('File deleted successfully');
     },
     onError: (error) => {
@@ -269,9 +277,12 @@ export function useImports(domain?: AppDomain) {
         .delete()
         .eq("id", importId);
 
-      // Invalidate queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
     } catch (error) {
       console.error("Error auto-deleting failed import:", error);
     }
