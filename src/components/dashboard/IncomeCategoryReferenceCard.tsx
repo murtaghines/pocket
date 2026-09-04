@@ -42,12 +42,19 @@ export function IncomeCategoryReferenceCard({
     }
 
     if (otherTotal > 0) {
-      significant.push({
-        name: t("charts.otherCategories", "Other"),
-        value: otherTotal,
-        color: OTHER_COLOR,
-        pct: (otherTotal / total) * 100,
-      });
+      const otherLabel = t("charts.otherCategories", "Other");
+      const existingOther = significant.find((e) => e.name === otherLabel);
+      if (existingOther) {
+        existingOther.value += otherTotal;
+        existingOther.pct = (existingOther.value / total) * 100;
+      } else {
+        significant.push({
+          name: otherLabel,
+          value: otherTotal,
+          color: OTHER_COLOR,
+          pct: (otherTotal / total) * 100,
+        });
+      }
     }
 
     return significant;
