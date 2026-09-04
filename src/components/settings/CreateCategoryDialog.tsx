@@ -35,9 +35,10 @@ interface Props {
   onClose: () => void;
   onSave: (data: Omit<CustomCategoryRule, 'type'>) => Promise<void>;
   isSaving: boolean;
+  existingNames?: Record<'INCOME' | 'EXPENSE', string[]>;
 }
 
-export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props) {
+export function CreateCategoryDialog({ open, onClose, onSave, isSaving, existingNames }: Props) {
   const { t } = useTranslation('settings');
   const [name, setName] = useState('');
   const [movement, setMovement] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
@@ -45,6 +46,13 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
   const [keywordInput, setKeywordInput] = useState('');
   const [selectedColor, setSelectedColor] = useState(CURATED_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState<string>('tag');
+
+  const isDuplicate = (() => {
+    if (!name.trim() || !existingNames) return false;
+    const names = existingNames[movement] ?? [];
+    const lower = name.trim().toLowerCase();
+    return names.some((n) => n.toLowerCase() === lower);
+  })();
 
   const addKeyword = () => {
     const trimmed = keywordInput.trim();
@@ -102,8 +110,13 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('categories.customCategoryNamePlaceholder')}
-                className="h-9"
+                className={`h-9 ${isDuplicate ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
+              {isDuplicate && (
+                <p className="text-[11px] text-destructive mt-0.5">
+                  {t('categories.duplicateName', 'A category with this name already exists')}
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">{t('categories.customCategoryType')}</Label>
@@ -191,7 +204,7 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={handleClose}>{t('categories.cancel')}</Button>
-          <Button size="sm" onClick={handleSave} disabled={!name.trim() || keywords.length === 0 || isSaving}>
+          <Button size="sm" onClick={handleSave} disabled={!name.trim() || keywords.length === 0 || isSaving || isDuplicate}>
             {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
             {t('categories.save')}
           </Button>

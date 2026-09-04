@@ -53,6 +53,7 @@
     "customCategoryNamePlaceholder": "e.g. Hobbies, Side Projects...",
     "customCategoryType": "Category Type",
     "customCategorySaved": "Custom category created",
+    "duplicateName": "A category with this name already exists",
     "deleteCategory": "Delete Category",
     "categoryDeleted": "Category deleted",
     "confirmDeleteRule": "Are you sure you want to delete this rule?",

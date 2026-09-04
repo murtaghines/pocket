@@ -283,9 +283,6 @@ export function MonthTab() {
                   incomeCategories={agg.incomeCategoryData}
                   expenseCategories={agg.expenseCategoryData}
                   accountFlows={sankeyAccountFlows}
-                  openingBalance={latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null
-                    ? convertToUserCurrency(openingBalanceByMonth[latestMonthLabel])
-                    : 0}
                 />
                 <TopExpensesCard topExpenses={agg.topExpenses} />
               </div>

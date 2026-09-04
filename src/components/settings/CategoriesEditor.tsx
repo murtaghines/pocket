@@ -293,6 +293,16 @@ export function CategoriesEditor() {
         onClose={() => setShowCreateCategory(false)}
         onSave={handleCreateCategory}
         isSaving={isSaving}
+        existingNames={{
+          INCOME: [
+            ...incomeCategories.map((c) => getCategoryLabel(c.slug ?? c.name)),
+            ...incomeCustom.map((c) => c.name),
+          ],
+          EXPENSE: [
+            ...expenseCategories.map((c) => getCategoryLabel(c.slug ?? c.name)),
+            ...expenseCustom.map((c) => c.name),
+          ],
+        }}
       />
     </div>
   );

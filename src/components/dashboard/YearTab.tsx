@@ -267,7 +267,6 @@ export function YearTab() {
             incomeCategories={agg.incomeCategoryData}
             expenseCategories={agg.expenseCategoryData}
             accountFlows={sankeyAccountFlows}
-            openingBalance={yearOpeningBalance != null ? convertToUserCurrency(yearOpeningBalance) : 0}
           />
 
           {/* Row 6: Fixed vs discretionary + Top expenses */}

@@ -20,7 +20,6 @@ interface MonthlyFlowSankeyProps {
   incomeCategories: CategoryData[];
   expenseCategories: CategoryData[];
   accountFlows: AccountFlow[];
-  openingBalance?: number;
 }
 
 const BAR_W = 30;
@@ -62,7 +61,6 @@ export function MonthlyFlowSankey({
   incomeCategories,
   expenseCategories,
   accountFlows,
-  openingBalance = 0,
 }: MonthlyFlowSankeyProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
@@ -76,14 +74,7 @@ export function MonthlyFlowSankey({
       return { leftNodes: [], midNodes: [], rightNodes: [], allBands: [] };
     }
 
-    const incomeTotal = leftCats.reduce((s, c) => s + c.value, 0);
-    const expenseTotal = rightCats.reduce((s, c) => s + c.value, 0);
-
-    const needsBalance = expenseTotal > incomeTotal && openingBalance > 0;
-    const balanceValue = needsBalance ? Math.min(openingBalance, expenseTotal - incomeTotal) : 0;
-    const finalLeft: CategoryData[] = needsBalance
-      ? [...leftCats, { name: t("stats.openingBalance", "Opening balance"), value: balanceValue, color: "#8A919C" }]
-      : leftCats;
+    const finalLeft: CategoryData[] = leftCats;
 
     let finalRight = rightCats;
     if (rightCats.length > 8) {
@@ -166,7 +157,7 @@ export function MonthlyFlowSankey({
     }
 
     return { leftNodes, midNodes, rightNodes, allBands: bands };
-  }, [incomeCategories, expenseCategories, accountFlows, openingBalance, t]);
+  }, [incomeCategories, expenseCategories, accountFlows, t]);
 
   const hasData = leftNodes.length > 0 || rightNodes.length > 0;
 
