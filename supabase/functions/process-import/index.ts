@@ -1478,6 +1478,7 @@ serve(async (req) => {
         description: descriptionClean || 'Sin descripción',
         description_norm: normalizeDescription(descriptionRaw),
         description_clean: descriptionClean,
+        original_description: descriptionRaw || null,
         movement: movement,
         category: categorySlug,
         category_id: categoryId,
