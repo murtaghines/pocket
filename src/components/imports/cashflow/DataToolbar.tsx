@@ -182,7 +182,7 @@ export function DataToolbar({
               </button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-[252px] p-[12px] rounded-[12px] shadow-[0_10px_34px_-8px_rgba(16,24,40,0.20),0_2px_6px_rgba(16,24,40,0.06)] border-0"
+              className="w-[252px] p-[12px] rounded-[12px]"
               align="start"
             >
               {/* Year navigator */}

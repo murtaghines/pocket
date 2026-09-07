@@ -84,6 +84,7 @@
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
+    --shadow-popup: 0 0 0 1px rgba(255,255,255,0.07), 0 3px 6px rgba(0,0,0,0.3), 0 9px 24px rgba(0,0,0,0.5);
     --shadow-glow: 0 0 30px hsl(216 100% 55% / 0.2);
 
     --sidebar-background: 0 0% 4%;
@@ -143,6 +144,7 @@
     --shadow-sm: none;
     --shadow-md: none;
     --shadow-lg: 0 6px 16px -4px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+    --shadow-popup: 0 0 0 1px rgba(15,15,15,0.05), 0 3px 6px rgba(15,15,15,0.1), 0 9px 24px rgba(15,15,15,0.2);
     --shadow-glow: 0 0 20px hsl(216 100% 55% / 0.08);
     --shadow-card: 0 1px 2px rgba(16,24,40,.04), 0 6px 16px -6px rgba(16,24,40,.10);
     --shadow-bento: 0 1px 2px rgba(16,24,40,.04), 0 6px 16px -6px rgba(16,24,40,.10);
@@ -199,6 +201,7 @@
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     --shadow-md: 0 2px 8px -1px rgb(0 0 0 / 0.4);
     --shadow-lg: 0 8px 24px -4px rgb(0 0 0 / 0.5);
+    --shadow-popup: 0 0 0 1px rgba(255,255,255,0.07), 0 3px 6px rgba(0,0,0,0.3), 0 9px 24px rgba(0,0,0,0.5);
     --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3);
     --shadow-bento: 0 2px 8px -2px rgb(0 0 0 / 0.4);
     --shadow-section: 0 4px 20px -4px rgb(0 0 0 / 0.5);
@@ -248,6 +251,7 @@
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
+    --shadow-popup: 0 0 0 1px rgba(255,255,255,0.07), 0 3px 6px rgba(0,0,0,0.3), 0 9px 24px rgba(0,0,0,0.5);
     --shadow-glow: 0 0 30px hsl(216 100% 55% / 0.2);
 
     --sidebar-background: 0 0% 4%;

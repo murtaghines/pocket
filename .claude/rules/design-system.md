@@ -188,6 +188,7 @@ dot:         full-strength category color, 6–8px, rounded
 --shadow-card:    0 1px 2px 0 rgb(0 0 0 / 0.04), 0 4px 12px -2px rgb(0 0 0 / 0.06);
 --shadow-bento:   0 1px 2px 0 rgba(13,30,70,.05), 0 6px 16px -6px rgba(13,30,70,.08);
 --shadow-lg:      0 6px 16px -4px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+--shadow-popup:   0 0 0 1px rgba(15,15,15,0.05), 0 3px 6px rgba(15,15,15,0.1), 0 9px 24px rgba(15,15,15,0.2);  /* Notion-style floating panels */
 --shadow-glow:    0 4px 24px -6px rgba(27,118,255,.25);   /* Blue glow on filled KPI cards */
 ```
 
@@ -333,5 +334,5 @@ Pattern opacity: 10–40% max. Single fill color per tile. Always brand palette.
 8. Quicksand 700 → wordmark and hero headlines only; Poppins 700 → page titles only
 9. Charts/sparklines → always use `hsl(var(--success))` / `hsl(var(--destructive))` — never raw CSS colors
 10. Popups, dialogs, drawers, and modals → always `bg-card` (white), never `bg-background` (gray)
-11. Floating panels (Select dropdowns, Popovers, DropdownMenus) → `shadow-lg`, no `border` — shadow alone defines the edge
+11. Floating panels (Select dropdowns, Popovers, DropdownMenus) → `shadow-popup` (Notion-style), `rounded-lg`, `bg-card`, no `border`, fade-only animation — no zoom/slide
 12. Number inputs (amounts, splits, quantities) → always `inputMode="decimal"` so mobile shows a numeric keypad
