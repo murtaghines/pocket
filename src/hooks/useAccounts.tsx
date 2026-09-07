@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import { type AccountType, deriveAccountRole, deriveDomainDefault } from "@/lib/accountTypes";
 
 export type AccountRole = 'CASH' | 'INVESTMENT';
 export type AppDomain = 'CASHFLOW' | 'INVESTING';
@@ -12,24 +13,24 @@ export interface Account {
   name: string;
   institution: string;
   account_role: AccountRole;
+  account_type: AccountType;
   domain_default: AppDomain | null;
   currency_base: string;
   created_at: string;
   color: string | null;
   is_primary: boolean;
   hidden_from_dashboard?: boolean;
+  account_number?: string | null;
 }
 
-interface CreateAccountParams {
-  /** The bank/platform, e.g. "Revolut", "Santander". */
+export interface CreateAccountParams {
   institution: string;
-  /** Optional nickname to tell apart two accounts at the same bank, e.g. "Personal",
-   *  "Shared". Defaults to `institution` when left blank. */
   name?: string;
   color?: string;
-  account_role?: AccountRole;
-  domain_default?: AppDomain;
+  account_type: AccountType;
   currency_base?: string;
+  account_number?: string;
+  hidden_from_dashboard?: boolean;
 }
 
 export function useAccounts() {
@@ -63,6 +64,7 @@ export function useAccounts() {
 
       const institution = params.institution.trim();
       const name = params.name?.trim() || institution;
+      const accountType = params.account_type;
 
       const { data, error } = await supabase
         .from('accounts')
@@ -71,9 +73,12 @@ export function useAccounts() {
           name,
           institution,
           color: params.color,
-          account_role: params.account_role || 'CASH',
-          domain_default: params.domain_default,
-          currency_base: params.currency_base || 'EUR'
+          account_type: accountType,
+          account_role: deriveAccountRole(accountType),
+          domain_default: deriveDomainDefault(accountType),
+          currency_base: params.currency_base || 'EUR',
+          account_number: params.account_number || null,
+          hidden_from_dashboard: params.hidden_from_dashboard ?? false,
         })
         .select()
         .single();
@@ -125,6 +130,11 @@ export function useAccounts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
       toast.success('Account deleted successfully');
     },
     onError: (error) => {
@@ -195,7 +205,23 @@ export function useAccounts() {
         .eq('account_id', deleteId);
       if (importErr) throw importErr;
 
-      // Reassign transactions
+      // Before reassigning transactions, remove true duplicates from the source
+      // account that would violate UNIQUE(user_id, domain, account_id, fingerprint)
+      // on the target. These are the same transaction appearing on both accounts.
+      const [{ data: srcTx }, { data: dstTx }] = await Promise.all([
+        supabase.from('transactions').select('id, fingerprint, domain').eq('account_id', deleteId).not('fingerprint', 'is', null),
+        supabase.from('transactions').select('fingerprint, domain').eq('account_id', reassignToId).not('fingerprint', 'is', null),
+      ]);
+      if (srcTx && dstTx) {
+        const dstKeys = new Set(dstTx.map(t => `${t.domain}|${t.fingerprint}`));
+        const conflictIds = srcTx.filter(t => dstKeys.has(`${t.domain}|${t.fingerprint}`)).map(t => t.id);
+        if (conflictIds.length > 0) {
+          const { error: dupErr } = await supabase.from('transactions').delete().in('id', conflictIds);
+          if (dupErr) throw dupErr;
+        }
+      }
+
+      // Reassign remaining transactions
       const { error: txErr } = await supabase
         .from('transactions')
         .update({ account_id: reassignToId })
@@ -218,6 +244,7 @@ export function useAccounts() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
       toast.success('Account reassigned and deleted');
     },
     onError: (error) => {

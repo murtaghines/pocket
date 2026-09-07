@@ -141,6 +141,7 @@ export function useCategorizationRules() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     },
   });
 

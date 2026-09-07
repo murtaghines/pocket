@@ -41,10 +41,10 @@ const movementBadgeTone: Record<MovementType, PillTone> = {
 };
 
 const movementDotColor: Record<MovementType, string> = {
-  income: '#2E9E6B',
-  expense: '#E0704A',
-  transfer: '#8A919C',
-  investment: '#1B76FF',
+  income: 'hsl(var(--success))',
+  expense: 'hsl(var(--destructive))',
+  transfer: 'hsl(var(--muted-foreground))',
+  investment: 'hsl(var(--primary))',
 };
 
 const getMovementType = (transaction: Transaction): MovementType => {
@@ -111,7 +111,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
       {/* Header — sticky at scroll-container top */}
       <div className="flex items-center justify-between gap-4 px-[22px] pb-[14px] sticky top-0 z-20 bg-card">
         <div className="flex flex-col items-start gap-[3px]">
-          <h3 className="text-[15px] font-heading font-semibold text-[#0C0D0E] leading-tight">
+          <h3 className="text-[15px] font-heading font-semibold text-foreground leading-tight">
             {t('transactions.title')}
           </h3>
           <button
@@ -125,15 +125,15 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
         </div>
         <div className="flex items-center gap-[6px]">
           <ToolbarButton
-            icon={<FilterIcon className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />}
+            icon={<FilterIcon className="w-[14px] h-[14px] text-muted-foreground" strokeWidth={1.9} />}
             label={t('transactions.filter', { defaultValue: 'Filter' })}
-            className="h-[31px] px-[11px] bg-[#F5F7F9] rounded-[9px] text-[13px] font-medium text-[#414750] gap-[6px] hover:bg-[#EBEEF2] [&>span:last-of-type]:hidden [&>span:last-of-type]:md:inline"
+            className="h-[31px] px-[11px] bg-muted rounded-[9px] text-[13px] font-medium text-foreground/80 gap-[6px] hover:bg-muted/80 [&>span:last-of-type]:hidden [&>span:last-of-type]:md:inline"
           />
           <ToolbarSearch
             value={search}
             onChange={setSearch}
             placeholder={tc('search')}
-            className="w-[120px] md:w-[172px] [&_input]:h-[31px] [&_input]:bg-[#F5F7F9] [&_input]:rounded-[9px] [&_input]:border-0 [&_input]:text-[13px] [&_input]:placeholder:text-[#B4BAC3] [&_input]:pl-[30px] [&_.absolute.left-2]:text-[#B4BAC3] [&_svg]:w-[14px] [&_svg]:h-[14px]"
+            className="w-[120px] md:w-[172px] [&_input]:h-[31px] [&_input]:bg-muted [&_input]:rounded-[9px] [&_input]:border-0 [&_input]:text-[13px] [&_input]:placeholder:text-muted-foreground/60 [&_input]:pl-[30px] [&_.absolute.left-2]:text-muted-foreground/60 [&_svg]:w-[14px] [&_svg]:h-[14px]"
           />
         </div>
       </div>
@@ -149,7 +149,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
       {/* Desktop: full table */}
       <div className="hidden md:block">
         <DataTable className="rounded-none bg-transparent overflow-visible">
-          <DataTableHeader className="sticky top-[52px] z-10 [&_th]:bg-[#FAFBFC]">
+          <DataTableHeader className="sticky top-[52px] z-10 [&_th]:bg-muted/50">
             <DataTableRow className="hover:bg-transparent">
               <DataTableHead type="date" className="w-[96px] pl-[22px]">{t('transactions.date')}</DataTableHead>
               <DataTableHead type="account" className="w-[130px]">{t('transactions.bank', { defaultValue: 'Account' })}</DataTableHead>
@@ -174,14 +174,14 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                 const dotColor = movementDotColor[movementType];
                 return (
                   <DataTableRow key={transaction.id}>
-                    <DataTableCell className="whitespace-nowrap text-[13px] text-[#6B7280] tabular-nums pl-[22px]">
+                    <DataTableCell className="whitespace-nowrap text-[13px] text-muted-foreground tabular-nums pl-[22px]">
                       {formatShortDate(transaction.date)}
                     </DataTableCell>
-                    <DataTableCell className="text-[12.5px] text-[#6B7280] pr-[12px]">
+                    <DataTableCell className="text-[12.5px] text-muted-foreground pr-[12px]">
                       <span className="truncate block max-w-[118px]">{transaction.account}</span>
                     </DataTableCell>
                     <DataTableCell className="pr-[16px]">
-                      <span className="block truncate text-[13.5px] text-[#0C0D0E]">
+                      <span className="block truncate text-[13.5px] text-foreground">
                         {transaction.description}
                       </span>
                     </DataTableCell>
@@ -210,14 +210,14 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                       numeric
                       className={cn(
                         "text-[13px] font-medium tabular-nums",
-                        isTransfer ? "text-[#8A919C]" : "text-[#0C0D0E]",
+                        isTransfer ? "text-muted-foreground" : "text-foreground",
                       )}
                     >
                       {isTransfer
                         ? `${transaction.amount >= 0 ? '+' : '−'}${formatCurrency(Math.abs(transaction.amount))}`
                         : formatCurrency(transaction.amount)}
                     </DataTableCell>
-                    <DataTableCell numeric className="text-[13px] font-normal text-[#8A919C] tabular-nums pr-[22px]">
+                    <DataTableCell numeric className="text-[13px] font-normal text-muted-foreground tabular-nums pr-[22px]">
                       {computedBalanceMap.has(transaction.id)
                         ? formatCurrency(computedBalanceMap.get(transaction.id)!)
                         : '—'}
@@ -232,24 +232,24 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
         {/* Footer — sticky at scroll-container bottom */}
         <div className="sticky bottom-0 z-20 bg-card">
           {filteredTransactions.length > 0 && (
-            <div className="flex items-center justify-between bg-[#FAFBFC] border-t border-[#F1F2F4] px-[22px] py-2.5">
-              <div className="flex items-center gap-4 text-[13px] text-[#6B7280]">
+            <div className="flex items-center justify-between bg-muted/50 border-t border-border px-[22px] py-2.5">
+              <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2E9E6B]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
                   {filteredTransactions.filter(tx => getMovementType(tx) === 'income').length} {t('stats.income').toLowerCase()}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#E0704A]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
                   {filteredTransactions.filter(tx => getMovementType(tx) === 'expense').length} {t('stats.expenses').toLowerCase()}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#8A919C]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
                   {filteredTransactions.filter(tx => getMovementType(tx) === 'transfer').length} {t('transactions.transfer', { defaultValue: 'transfers' }).toLowerCase()}
                 </span>
               </div>
               {(() => {
-                const last = filteredTransactions[filteredTransactions.length - 1];
-                const closingBalance = last ? computedBalanceMap.get(last.id) : undefined;
+                const newest = filteredTransactions[0];
+                const closingBalance = newest ? computedBalanceMap.get(newest.id) : undefined;
                 return closingBalance !== undefined ? (
                   <span className="text-[13px] font-semibold tabular-nums text-foreground">
                     {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance)}

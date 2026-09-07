@@ -123,9 +123,9 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="inline-flex items-center gap-1 h-[26px] px-2 rounded-[7px] text-[11px] font-medium bg-[#F5F7F9] text-[#414750] hover:bg-muted/60 transition-colors">
+            <button className="inline-flex items-center gap-1 h-[26px] px-2 rounded-[7px] text-[11px] font-medium bg-muted text-foreground/80 hover:bg-muted/60 transition-colors">
               <span>{activeMetricLabel}</span>
-              <ChevronDown className="w-3 h-3 text-[#8A919C]" />
+              <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[130px]">
@@ -160,7 +160,7 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
                   onClick={() => setHoveredMonth((m) => (m === cell.month ? null : cell.month))}
                   className={cn(
                     "flex flex-col items-center justify-center rounded-[8px] py-[10px] transition-transform hover:scale-[1.03]",
-                    hasValue ? "font-medium" : "font-normal bg-[#F7F8FA]",
+                    hasValue ? "font-medium" : "font-normal bg-muted/60",
                     hoveredMonth === cell.month && "ring-2 ring-primary/60 ring-offset-1 ring-offset-card",
                   )}
                   style={{
@@ -189,11 +189,11 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
           >
             {stats.map((s, i) => (
               <div key={i}>
-                <div className="text-[11px] text-[#9AA1AC]">{s.label}</div>
+                <div className="text-[11px] text-muted-foreground">{s.label}</div>
                 <div className="mt-1 text-[15px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
-                {s.hint && <div className="mt-0.5 text-[11px] text-[#B4BAC3]">{s.hint}</div>}
+                {s.hint && <div className="mt-0.5 text-[11px] text-muted-foreground/60">{s.hint}</div>}
               </div>
             ))}
           </div>

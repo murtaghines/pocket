@@ -177,6 +177,7 @@ export function useImports(domain?: AppDomain) {
       queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
 
       if (data.dateWarnings && data.dateWarnings.length > 0) {
         toast.warning(`${data.message}. ${data.dateWarnings.length} transactions with dates outside the month.`);
@@ -239,6 +240,7 @@ export function useImports(domain?: AppDomain) {
       queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
       toast.success('File deleted successfully');
     },
     onError: (error) => {
@@ -285,6 +287,7 @@ export function useImports(domain?: AppDomain) {
       queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     } catch (error) {
       console.error("Error auto-deleting failed import:", error);
     }
