@@ -116,6 +116,7 @@ export default {
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
+        popup: "var(--shadow-popup)",
         glow: "var(--shadow-glow)",
         card: "var(--shadow-card)",
         bento: "var(--shadow-bento)",

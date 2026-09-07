@@ -49,7 +49,7 @@ export function LockedFieldLabel({
         <PopoverContent
           align="start"
           side="top"
-          className="w-56 rounded-2xl border-0 p-3 text-[12px] lowercase leading-snug text-muted-foreground shadow-lg"
+          className="w-56 rounded-2xl p-3 text-[12px] lowercase leading-snug text-muted-foreground"
         >
           {reason}
         </PopoverContent>
