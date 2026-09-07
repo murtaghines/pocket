@@ -82,7 +82,7 @@ export function MonthlyFlowSankey({
     const needsBalance = expenseTotal > incomeTotal && openingBalance > 0;
     const balanceValue = needsBalance ? Math.min(openingBalance, expenseTotal - incomeTotal) : 0;
     const finalLeft: CategoryData[] = needsBalance
-      ? [...leftCats, { name: t("stats.openingBalance", "Opening balance"), value: balanceValue, color: "#8A919C" }]
+      ? [...leftCats, { name: t("stats.openingBalance", "Opening balance"), value: balanceValue, color: "hsl(var(--muted-foreground))" }]
       : leftCats;
 
     let finalRight = rightCats;
@@ -97,7 +97,7 @@ export function MonthlyFlowSankey({
           i === existingOther ? { ...c, value: c.value + restVal } : c,
         );
       } else {
-        finalRight = [...head, { name: restLabel, value: restVal, color: "#B4BAC3" }];
+        finalRight = [...head, { name: restLabel, value: restVal, color: "hsl(var(--muted-foreground) / 0.6)" }];
       }
     }
 
@@ -196,13 +196,13 @@ export function MonthlyFlowSankey({
               ))}
             </defs>
 
-            <text x={0} y={-14} textAnchor="start" fill="#C2C7CE" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
+            <text x={0} y={-14} textAnchor="start" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
               {t("charts.sankeyEntries", "ENTRIES")}
             </text>
-            <text x={MID_X + BAR_W / 2} y={-14} textAnchor="middle" fill="#C2C7CE" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
+            <text x={MID_X + BAR_W / 2} y={-14} textAnchor="middle" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
               {t("charts.accounts", "Accounts")}
             </text>
-            <text x={SVG_W} y={-14} textAnchor="end" fill="#C2C7CE" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
+            <text x={SVG_W} y={-14} textAnchor="end" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
               {t("charts.sankeyExpenses", "EXPENSES")}
             </text>
 
@@ -218,9 +218,9 @@ export function MonthlyFlowSankey({
               <g key={`l-${i}`}>
                 <rect x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R} fill={n.color} />
                 <text x={n.x + BAR_W + 10} y={n.y + n.h / 2} dominantBaseline="middle" xmlSpace="preserve" style={{ letterSpacing: 0 }}>
-                  <tspan fill="#414750" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                  <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
                   <tspan> </tspan>
-                  <tspan fill="#9AA1AC" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                  <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
                 </text>
               </g>
             ))}
@@ -229,9 +229,9 @@ export function MonthlyFlowSankey({
               <g key={`m-${i}`}>
                 <rect x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R} fill={n.color} />
                 <text x={n.x + BAR_W + 10} y={n.y + n.h / 2} dominantBaseline="middle" xmlSpace="preserve" style={{ letterSpacing: 0 }}>
-                  <tspan fill="#414750" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                  <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
                   <tspan> </tspan>
-                  <tspan fill="#9AA1AC" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                  <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
                 </text>
               </g>
             ))}
@@ -240,9 +240,9 @@ export function MonthlyFlowSankey({
               <g key={`r-${i}`}>
                 <rect x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R} fill={n.color} />
                 <text x={n.x - 10} y={n.y + n.h / 2} dominantBaseline="middle" textAnchor="end" xmlSpace="preserve" style={{ letterSpacing: 0 }}>
-                  <tspan fill="#9AA1AC" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                  <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
                   <tspan> </tspan>
-                  <tspan fill="#414750" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                  <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
                 </text>
               </g>
             ))}

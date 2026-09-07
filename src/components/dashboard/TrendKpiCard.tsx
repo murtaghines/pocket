@@ -23,15 +23,15 @@ interface TrendKpiCardProps {
 }
 
 const DOT_COLORS: Record<TrendKind, string> = {
-  income: "bg-[#2E9E6B]",
-  expense: "bg-[#E0704A]",
+  income: "bg-success",
+  expense: "bg-destructive",
   balance: "bg-white",
   invest: "bg-primary",
 };
 
 const LABEL_COLORS: Record<TrendKind, string> = {
-  income: "text-[#2E9E6B]",
-  expense: "text-[#E0704A]",
+  income: "text-success",
+  expense: "text-destructive",
   balance: "text-white",
   invest: "text-primary",
 };
@@ -75,20 +75,20 @@ export function TrendKpiCard({
   const deltaColor = isBalance
     ? "text-white"
     : change === undefined
-    ? "text-[#9AA1AC]"
+    ? "text-muted-foreground"
     : isGoodChange
-    ? "text-[#2E9E6B]"
+    ? "text-success"
     : kind === "invest"
     ? "text-primary"
-    : "text-[#D9542B]";
+    : "text-destructive";
 
-  const valueColor = isBalance ? "text-white" : "text-[#0C0D0E]";
+  const valueColor = isBalance ? "text-white" : "text-foreground";
 
   return (
     <div
       className={cn(
         "flex h-full flex-col rounded-xl p-[14px_14px] md:p-[16px_18px] shadow-section",
-        isBalance ? "bg-[#1B75FFE6]" : "bg-card",
+        isBalance ? "bg-primary/90" : "bg-card",
         className,
       )}
       style={{ animationDelay: `${delay}ms` }}
@@ -109,7 +109,7 @@ export function TrendKpiCard({
         >
           {formatCurrency(total)}
         </div>
-        <div className={cn("text-[12.5px] mt-[5px]", isBalance ? "text-[#B6BAC2]" : "text-[#9AA1AC]")}>
+        <div className={cn("text-[12.5px] mt-[5px]", isBalance ? "text-white/70" : "text-muted-foreground")}>
           {change !== undefined ? (
             <>
               <span className={cn("font-medium", deltaColor)}>

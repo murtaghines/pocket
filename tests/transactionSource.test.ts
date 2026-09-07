@@ -2,37 +2,35 @@ import { describe, it, expect } from "vitest";
 import {
   isManualTransaction,
   buildManualFingerprint,
-  MANUAL_FINGERPRINT_PREFIX,
 } from "../src/lib/transactionSource";
 
 describe("transactionSource", () => {
-  it("mints manual fingerprints that are unique and prefixed", () => {
-    const a = buildManualFingerprint("user-1");
-    const b = buildManualFingerprint("user-1");
-    expect(a.startsWith(MANUAL_FINGERPRINT_PREFIX)).toBe(true);
-    expect(a).not.toBe(b);
+  it("mints content-based manual fingerprints (deterministic SHA-256)", async () => {
+    const a = await buildManualFingerprint("2024-01-01", -10, "EUR", "Test");
+    const b = await buildManualFingerprint("2024-01-01", -10, "EUR", "Test");
+    expect(a).toBe(b);
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
   });
 
-  it("treats a minted fingerprint as manual", () => {
-    expect(isManualTransaction({ fingerprint: buildManualFingerprint("u"), import_id: null })).toBe(true);
+  it("differs when any input differs", async () => {
+    const base = await buildManualFingerprint("2024-01-01", -10, "EUR", "Mercadona");
+    const diffDate = await buildManualFingerprint("2024-01-02", -10, "EUR", "Mercadona");
+    const diffAmt = await buildManualFingerprint("2024-01-01", -11, "EUR", "Mercadona");
+    const diffCur = await buildManualFingerprint("2024-01-01", -10, "USD", "Mercadona");
+    const diffDesc = await buildManualFingerprint("2024-01-01", -10, "EUR", "Lidl");
+    expect(base).not.toBe(diffDate);
+    expect(base).not.toBe(diffAmt);
+    expect(base).not.toBe(diffCur);
+    expect(base).not.toBe(diffDesc);
   });
 
-  it("treats a content sha256 as imported", () => {
-    expect(isManualTransaction({ fingerprint: "9f2ab7c4deadbeef", import_id: "imp-1" })).toBe(false);
-  });
-
-  // The regression this module exists for: manual entries added to a month that
-  // already had a statement used to be stamped with that statement's import_id.
-  // They must still read as manual, or the UI locks them and "delete file"
-  // takes them down with the statement.
-  it("still reads as manual when wrongly stamped with an import_id", () => {
-    expect(
-      isManualTransaction({ fingerprint: "manual-user-1-123-abcd", import_id: "imp-1" }),
-    ).toBe(true);
-  });
-
-  it("falls back to the import link when no fingerprint was selected", () => {
+  it("treats a row without import_id as manual", () => {
     expect(isManualTransaction({ import_id: null })).toBe(true);
+    expect(isManualTransaction({ import_id: undefined })).toBe(true);
+    expect(isManualTransaction({})).toBe(true);
+  });
+
+  it("treats a row with import_id as imported", () => {
     expect(isManualTransaction({ import_id: "imp-1" })).toBe(false);
   });
 });

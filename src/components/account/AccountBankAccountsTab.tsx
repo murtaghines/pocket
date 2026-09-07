@@ -15,7 +15,15 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
-import { Plus, Pencil, Star, Trash2, Eye, EyeOff, Building2, TrendingUp, Loader2 } from "lucide-react";
+import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
+import { Plus, Pencil, Star, Trash2, Eye, EyeOff, Building2, TrendingUp, Loader2, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 
 interface AccountCardStatsProps {
@@ -126,14 +134,24 @@ export function AccountBankAccountsTab() {
 
   const handleFormSubmit = (values: AccountFormValues) => {
     if (editingAccount) {
-      updateAccount({ id: editingAccount.id, institution: values.institution, name: values.name || values.institution, color: values.color });
+      updateAccount({
+        id: editingAccount.id,
+        institution: values.institution,
+        name: values.name || values.institution,
+        color: values.color,
+        currency_base: values.currency_base,
+        account_number: values.account_number || null,
+        hidden_from_dashboard: values.hidden_from_dashboard ?? false,
+      });
     } else {
       createAccount({
         institution: values.institution,
         name: values.name,
         color: values.color,
-        account_role: creatingRole,
-        domain_default: creatingRole === "INVESTMENT" ? "INVESTING" : "CASHFLOW",
+        account_type: values.account_type,
+        currency_base: values.currency_base,
+        account_number: values.account_number,
+        hidden_from_dashboard: values.hidden_from_dashboard,
       });
     }
     setFormOpen(false);
@@ -175,115 +193,124 @@ export function AccountBankAccountsTab() {
     (a) => a.id !== deleteTarget?.id && a.account_role === deleteTarget?.account_role,
   );
 
-  const renderAccountCards = (list: Account[], offset = 0) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  const renderAccountCards = (list: Account[]) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {list.map((account, idx) => {
-            const color = account.color || getDefaultAccountColor(idx);
-            return (
-              <div
-                key={account.id}
-                className="bg-card rounded-xl p-5 relative"
-                style={{ boxShadow: "var(--shadow-card)" }}
-              >
-                {/* Header row */}
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span
-                    className="w-3 h-3 rounded-full shrink-0 border border-foreground/10"
-                    style={{ backgroundColor: color }}
-                  />
-                  <span className="text-sm font-semibold text-foreground truncate flex-1">
+        const color = account.color || getDefaultAccountColor(idx);
+        const TypeIcon = getAccountTypeIcon(account.account_type);
+        const typeLabel = t(getAccountTypeI18nKey(account.account_type));
+        return (
+          <div
+            key={account.id}
+            className="bg-card rounded-xl border border-border overflow-hidden shadow-section group"
+          >
+            {/* Color accent bar */}
+            <div className="h-1" style={{ backgroundColor: color }} />
+
+            <div className="p-5 space-y-3">
+              {/* Header: icon + name + menu */}
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center"
+                  style={{ backgroundColor: `${color}18`, color }}
+                >
+                  <TypeIcon className="w-5 h-5" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-foreground truncate leading-tight">
                     {getAccountDisplayName(account)}
-                  </span>
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    {account.is_primary && (
-                      <span className="text-[10px] font-bold uppercase tracking-wide text-secondary px-1.5 py-0.5 rounded-full bg-secondary/10 mr-1">
-                        {t("accounts.primary", "Primary")}
-                      </span>
-                    )}
-                    {account.hidden_from_dashboard && (
-                      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted mr-1">
-                        {t("accounts.hiddenBadge", "Hidden")}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[11px] text-muted-foreground">
+                      {typeLabel}
+                    </span>
+                    {account.currency_base !== "EUR" && (
+                      <span className="text-[11px] text-muted-foreground">
+                        · {account.currency_base}
                       </span>
                     )}
                   </div>
                 </div>
-
-                {/* Stats */}
-                <AccountCardStats accountId={account.id} getLinkedDataCount={getLinkedDataCount} />
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`h-7 w-7 p-0 ${account.is_primary ? "text-secondary" : "text-muted-foreground hover:text-secondary"}`}
-                    onClick={() => handleTogglePrimary(account)}
-                    aria-label={account.is_primary ? t("accounts.unsetPrimary", "Remove primary") : t("accounts.setPrimary", "Set as primary")}
-                    title={account.is_primary ? t("accounts.unsetPrimary", "Remove primary") : t("accounts.setPrimary", "Set as primary")}
-                  >
-                    <Star className="w-3.5 h-3.5" fill={account.is_primary ? "currentColor" : "none"} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    onClick={() => handleOpenEdit(account)}
-                    aria-label={t("accounts.edit", "Edit")}
-                    title={t("accounts.edit", "Edit")}
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    onClick={() => handleToggleHide(account)}
-                    aria-label={
-                      account.hidden_from_dashboard
-                        ? t("accounts.showInDashboard", "Show in dashboard")
-                        : t("accounts.hideFromDashboard", "Hide from dashboard")
-                    }
-                    title={
-                      account.hidden_from_dashboard
-                        ? t("accounts.showInDashboard", "Show in dashboard")
-                        : t("accounts.hideFromDashboard", "Hide from dashboard")
-                    }
-                  >
-                    {account.hidden_from_dashboard ? (
-                      <Eye className="w-3.5 h-3.5" />
-                    ) : (
-                      <EyeOff className="w-3.5 h-3.5" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive ml-auto"
-                    onClick={() => handleDeleteClick(account)}
-                    disabled={isDeleting}
-                    aria-label={t("accounts.delete", "Delete")}
-                    title={t("accounts.delete", "Delete")}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                <div className="flex items-center gap-1 shrink-0">
+                  {account.is_primary && (
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-secondary px-1.5 py-0.5 rounded-full bg-secondary/10">
+                      {t("accounts.primary", "Primary")}
+                    </span>
+                  )}
+                  {account.hidden_from_dashboard && (
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
+                      {t("accounts.hiddenBadge", "Hidden")}
+                    </span>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => handleOpenEdit(account)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        {t("accounts.edit", "Edit")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleTogglePrimary(account)}>
+                        <Star className="w-4 h-4 mr-2" fill={account.is_primary ? "currentColor" : "none"} />
+                        {account.is_primary
+                          ? t("accounts.unsetPrimary", "Remove primary")
+                          : t("accounts.setPrimary", "Set as primary")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleToggleHide(account)}>
+                        {account.hidden_from_dashboard
+                          ? <Eye className="w-4 h-4 mr-2" />
+                          : <EyeOff className="w-4 h-4 mr-2" />}
+                        {account.hidden_from_dashboard
+                          ? t("accounts.showInDashboard", "Show in dashboard")
+                          : t("accounts.hideFromDashboard", "Hide from dashboard")}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => handleDeleteClick(account)}
+                        disabled={isDeleting}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {t("accounts.delete", "Delete")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
-            );
-          })}
+
+              {/* Stats */}
+              <AccountCardStats accountId={account.id} getLinkedDataCount={getLinkedDataCount} />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 
   return (
     <div className="space-y-6">
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="bg-card rounded-xl p-5 animate-pulse" style={{ minHeight: 100 }}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-3 h-3 rounded-full bg-muted" />
-                <div className="h-4 w-32 rounded bg-muted" />
+            <div key={i} className="bg-card rounded-xl border border-border overflow-hidden animate-pulse">
+              <div className="h-1 bg-muted" />
+              <div className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-32 rounded bg-muted" />
+                    <div className="h-3 w-20 rounded bg-muted" />
+                  </div>
+                </div>
+                <div className="h-3 w-48 rounded bg-muted mt-3" />
               </div>
-              <div className="h-3 w-48 rounded bg-muted mt-2" />
             </div>
           ))}
         </div>
@@ -299,12 +326,29 @@ export function AccountBankAccountsTab() {
         <>
           {/* ── Bank accounts ── */}
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-foreground">
-              {t("accounts.bankAccountsTitle", "Bank accounts")}
-            </h2>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-foreground">
+                  {t("accounts.bankAccountsTitle", "Bank accounts")}
+                </h2>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  ({cashAccounts.length})
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full gap-1.5 text-xs font-medium"
+                onClick={() => handleOpenCreate("CASH")}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                {t("accounts.addBankAccount", "Add bank account")}
+              </Button>
+            </div>
             {cashAccounts.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-8 text-center rounded-xl border border-dashed border-border">
-                <Building2 className="w-8 h-8 text-muted-foreground/40" />
+              <div className="flex flex-col items-center gap-2 py-10 text-center rounded-xl border border-dashed border-border bg-muted/30">
+                <Building2 className="w-10 h-10 text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">
                   {t("accounts.noBankAccounts", "No bank accounts yet.")}
                 </p>
@@ -312,20 +356,33 @@ export function AccountBankAccountsTab() {
             ) : (
               renderAccountCards(cashAccounts)
             )}
-            <Button variant="outline" size="sm" className="w-full" onClick={() => handleOpenCreate("CASH")}>
-              <Plus className="w-4 h-4 mr-1" />
-              {t("accounts.addBankAccount", "Add bank account")}
-            </Button>
           </div>
 
           {/* ── Investment accounts ── */}
-          <div className="space-y-4 pt-4 border-t border-border">
-            <h2 className="text-sm font-semibold text-foreground">
-              {t("accounts.investmentAccountsTitle", "Investment accounts")}
-            </h2>
+          <div className="space-y-4 pt-6 mt-2 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-foreground">
+                  {t("accounts.investmentAccountsTitle", "Investment accounts")}
+                </h2>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  ({investmentAccounts.length})
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full gap-1.5 text-xs font-medium"
+                onClick={() => handleOpenCreate("INVESTMENT")}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                {t("accounts.addInvestmentAccount", "Add investment account")}
+              </Button>
+            </div>
             {investmentAccounts.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-8 text-center rounded-xl border border-dashed border-border">
-                <TrendingUp className="w-8 h-8 text-muted-foreground/40" />
+              <div className="flex flex-col items-center gap-2 py-10 text-center rounded-xl border border-dashed border-border bg-muted/30">
+                <TrendingUp className="w-10 h-10 text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">
                   {t("accounts.noInvestmentAccounts", "No investment accounts yet.")}
                 </p>
@@ -333,10 +390,6 @@ export function AccountBankAccountsTab() {
             ) : (
               renderAccountCards(investmentAccounts)
             )}
-            <Button variant="outline" size="sm" className="w-full" onClick={() => handleOpenCreate("INVESTMENT")}>
-              <Plus className="w-4 h-4 mr-1" />
-              {t("accounts.addInvestmentAccount", "Add investment account")}
-            </Button>
           </div>
         </>
       )}
@@ -352,9 +405,14 @@ export function AccountBankAccountsTab() {
                 institution: editingAccount.institution,
                 name: editingAccount.name === editingAccount.institution ? "" : editingAccount.name,
                 color: editingAccount.color || getDefaultAccountColor(accounts.findIndex((a) => a.id === editingAccount.id)),
+                account_type: editingAccount.account_type,
+                currency_base: editingAccount.currency_base,
+                account_number: editingAccount.account_number ?? undefined,
+                hidden_from_dashboard: editingAccount.hidden_from_dashboard,
               }
             : undefined
         }
+        typeFilter={creatingRole === "INVESTMENT" ? "investment" : "bank"}
         isSubmitting={isCreating || isUpdating}
         onSubmit={handleFormSubmit}
       />

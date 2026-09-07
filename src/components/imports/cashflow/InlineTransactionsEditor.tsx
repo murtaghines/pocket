@@ -395,6 +395,7 @@ export function InlineTransactionsEditor({
       queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     },
     onError: (err: any, vars) => {
       setSavingIds((prev) => {
@@ -434,6 +435,7 @@ export function InlineTransactionsEditor({
     queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
     queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
     queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+    queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
 
     const { id: _id, created_at: _c, updated_at: _u, ...insertPayload } = fullRow;
 
@@ -450,6 +452,7 @@ export function InlineTransactionsEditor({
           queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
           queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
           queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+          queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
           sonnerToast.dismiss(undoId);
           sonnerToast("Entry restored");
         },
@@ -758,6 +761,7 @@ export function InlineTransactionsEditor({
                                   queryClient.invalidateQueries({ queryKey: ["transactions"] });
                                   queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
                                   queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+                                  queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
                                 }
                               }}
                             >

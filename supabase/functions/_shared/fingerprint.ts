@@ -28,30 +28,20 @@ export function normalizeDescription(desc: string): string {
     .replace(/ref\.?\s*\d+/gi, '')
     .replace(/\*{4}\d{4}/g, '')
     .replace(/\d{10,}/g, '')
+    .replace(/\s+/g, ' ')
     .trim()
     .substring(0, 200);
 }
 
 export async function calculateFingerprint(
-  userId: string,
-  accountId: string | null,
-  sourceTransactionId: string | null,
+  source: 'import' | 'manual',
   postedDate: string,
   amountSigned: number,
   currency: string,
   descriptionRaw: string,
-  _runningBalance?: number | null, // Kept for backwards-compat but NOT used in hash
 ): Promise<string> {
-  if (sourceTransactionId) {
-    const input = `${userId}|${accountId || 'no-account'}|${sourceTransactionId}`;
-    return await sha256(input);
-  }
-
-  // Dedup key: date, amount, currency, description, and ACCOUNT.
-  // NOT running_balance — it's dynamic (changes when reimporting with earlier-dated txs),
-  // causing false negatives on dedup. ALSO NOT user_id — already enforced by DB uniqueness.
   const normalizedDesc = normalizeDescription(descriptionRaw);
-  const input = `${accountId || 'no-account'}|${postedDate}|${amountSigned.toFixed(2)}|${currency}|${normalizedDesc}`;
+  const input = `${source}|${postedDate}|${amountSigned.toFixed(2)}|${currency}|${normalizedDesc}`;
   return await sha256(input);
 }
 

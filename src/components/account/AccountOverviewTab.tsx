@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAccountOverviewStats } from "@/hooks/useAccountOverviewStats";
 import { useAccounts } from "@/hooks/useAccounts";
 import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColors";
+import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
 import { cn } from "@/lib/utils";
 
 interface OverviewStatCardProps {
@@ -229,15 +230,22 @@ export function AccountOverviewTab({ onNavigateTab }: AccountOverviewTabProps) {
                 const fileCount = stats?.accountFileMap[account.id] || 0;
                 return (
                   <li key={account.id} className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
+                    {(() => {
+                      const TypeIcon = getAccountTypeIcon(account.account_type);
+                      return (
+                        <div
+                          className="w-6 h-6 rounded-md shrink-0 flex items-center justify-center"
+                          style={{ backgroundColor: `${color}20`, color }}
+                        >
+                          <TypeIcon className="w-3 h-3" strokeWidth={2} />
+                        </div>
+                      );
+                    })()}
                     <span className="text-sm font-medium truncate flex-1 text-foreground">
                       {getAccountDisplayName(account)}
                     </span>
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/60 shrink-0">
-                      {account.account_role === "INVESTMENT" ? "INV" : "BANK"}
+                      {t(getAccountTypeI18nKey(account.account_type))}
                     </span>
                     <span className="text-xs text-muted-foreground shrink-0">
                       {fileCount > 0

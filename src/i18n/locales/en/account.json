@@ -57,7 +57,32 @@
     "confirmDelete": "Are you sure you want to delete \"{{name}}\"? This account has no linked data.",
     "reassignPlaceholder": "Move data to...",
     "noOtherAccounts": "You need at least one other account to reassign data to.",
-    "reassignAndDelete": "Reassign & Delete"
+    "reassignAndDelete": "Reassign & Delete",
+    "accountType": "Account type",
+    "accountNumber": "Account number",
+    "accountNumberPlaceholder": "For your reference only",
+    "currency": "Currency",
+    "hiddenFromDashboard": "Hidden from dashboard",
+    "selectType": "Select account type",
+    "typeLocked": "Type cannot be changed after creation"
+  },
+  "accountTypes": {
+    "checking": "Checking Account",
+    "savings": "Savings Account",
+    "credit_card": "Credit Card",
+    "cash": "Cash",
+    "investments": "Investments",
+    "loan": "Loans & Mortgage",
+    "other": "Other"
+  },
+  "accountTypeDescriptions": {
+    "checking": "Main account for daily transactions",
+    "savings": "Bank savings with interest",
+    "credit_card": "Bank credit cards",
+    "cash": "Wallet, pocket money",
+    "investments": "Stocks, ETFs, crypto and other assets",
+    "loan": "Loan or mortgage",
+    "other": "Life insurance or anything else"
   },
   "preferences": {
     "title": "Preferences",

@@ -5,8 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings2, Landmark, PiggyBank, Users, CreditCard, Loader2 } from "lucide-react";
+import { Settings2, Loader2 } from "lucide-react";
 import { getAccountColorStyle, getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
+import { type AccountType, getAccountTypeIcon } from "@/lib/accountTypes";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -30,6 +31,7 @@ type AccountDisplay = {
   createdAt: string;
   color: string;
   isPrimary: boolean;
+  accountType: AccountType;
 };
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -39,17 +41,6 @@ function hexToRgba(hex: string, alpha: number): string {
   const g = parseInt(full.slice(2, 4), 16);
   const b = parseInt(full.slice(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function AccountTypeIcon({ institution, name }: { institution: string; name: string }) {
-  const lower = `${institution} ${name}`.toLowerCase();
-  if (lower.includes('sav') || lower.includes('ahorro') || lower.includes('piggy'))
-    return <PiggyBank className="w-[19px] h-[19px]" strokeWidth={2} />;
-  if (lower.includes('joint') || lower.includes('conjunt') || lower.includes('shared') || lower.includes('compartid'))
-    return <Users className="w-[19px] h-[19px]" strokeWidth={2} />;
-  if (lower.includes('credit') || lower.includes('card') || lower.includes('tarjeta'))
-    return <CreditCard className="w-[19px] h-[19px]" strokeWidth={2} />;
-  return <Landmark className="w-[19px] h-[19px]" strokeWidth={2} />;
 }
 
 interface DetailTx {
@@ -118,6 +109,7 @@ export function AccountsStackCard({
         createdAt: acc.created_at,
         color: acc.color || getDefaultAccountColor(i),
         isPrimary: !!acc.is_primary,
+        accountType: acc.account_type,
       };
     });
 
@@ -165,7 +157,7 @@ export function AccountsStackCard({
             <p className="text-[15px] font-heading font-bold text-foreground">
               {t('charts.accounts', 'Accounts')}
             </p>
-            <p className="text-[12.5px] text-[#9AA1AC] mt-0.5">
+            <p className="text-[12.5px] text-muted-foreground mt-0.5">
               {subtitleOverride ?? t('charts.accountsSubtitle', 'Month-end balance')}
             </p>
           </div>
@@ -184,9 +176,11 @@ export function AccountsStackCard({
           <EmptyState height="h-[160px]" />
         ) : (
           <div className="flex flex-col">
-            {orderedAccounts.map((acc, idx) => (
+            {orderedAccounts.map((acc, idx) => {
+              const TypeIcon = getAccountTypeIcon(acc.accountType);
+              return (
               <div key={acc.id}>
-                {idx > 0 && <div className="h-px bg-[#F1F2F4]" />}
+                {idx > 0 && <div className="h-px bg-border" />}
                 <button
                   type="button"
                   onClick={() => setDetailAccountId(acc.id)}
@@ -199,13 +193,13 @@ export function AccountsStackCard({
                       color: acc.color,
                     }}
                   >
-                    <AccountTypeIcon institution={acc.institution} name={acc.name} />
+                    <TypeIcon className="w-[19px] h-[19px]" strokeWidth={2} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13.5px] font-medium text-foreground truncate">
                       {acc.displayName}
                     </p>
-                    <p className="text-[12px] text-[#9AA1AC] truncate">
+                    <p className="text-[12px] text-muted-foreground truncate">
                       {acc.transactionCount} {t('charts.txCount', 'tx')}
                     </p>
                   </div>
@@ -214,7 +208,8 @@ export function AccountsStackCard({
                   </span>
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

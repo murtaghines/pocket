@@ -24,8 +24,6 @@
     "noAccounts": "Aún no hay cuentas",
     "noData": "Sube tu primer archivo en Mis datos para ver estadísticas aquí",
     "uploadCta": "Ir a Mis datos"
-    "noData": "Sube tu primer archivo en Mis datos para ver estadísticas aquí",
-    "uploadCta": "Ir a Mis datos"
   },
   "accounts": {
     "title": "Cuentas bancarias",
@@ -59,7 +57,32 @@
     "confirmDelete": "¿Seguro que quieres eliminar \"{{name}}\"? Esta cuenta no tiene datos vinculados.",
     "reassignPlaceholder": "Mover datos a...",
     "noOtherAccounts": "Necesitas al menos otra cuenta para reasignar los datos.",
-    "reassignAndDelete": "Reasignar y eliminar"
+    "reassignAndDelete": "Reasignar y eliminar",
+    "accountType": "Tipo de cuenta",
+    "accountNumber": "Número de cuenta",
+    "accountNumberPlaceholder": "Solo para tu referencia",
+    "currency": "Moneda",
+    "hiddenFromDashboard": "Oculta del panel",
+    "selectType": "Selecciona el tipo de cuenta",
+    "typeLocked": "El tipo no se puede cambiar después de la creación"
+  },
+  "accountTypes": {
+    "checking": "Cuenta corriente",
+    "savings": "Cuenta de ahorro",
+    "credit_card": "Tarjeta de crédito",
+    "cash": "Efectivo",
+    "investments": "Inversiones",
+    "loan": "Préstamos e hipotecas",
+    "other": "Otra"
+  },
+  "accountTypeDescriptions": {
+    "checking": "Cuenta principal para transacciones diarias",
+    "savings": "Ahorro bancario con intereses",
+    "credit_card": "Tarjetas de crédito bancarias",
+    "cash": "Billetera, dinero en efectivo",
+    "investments": "Acciones, ETFs, cripto y otros activos",
+    "loan": "Préstamo o hipoteca",
+    "other": "Seguro de vida o cualquier otra cuenta"
   },
   "preferences": {
     "title": "Preferencias",

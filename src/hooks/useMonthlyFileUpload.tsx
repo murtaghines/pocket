@@ -348,7 +348,8 @@ export function useMonthlyFileUpload() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
+
       // Run integrity check
       try {
         const { data: integrityData } = await supabase.functions.invoke(
@@ -590,6 +591,7 @@ export function useMonthlyFileUpload() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     } catch (err: any) {
       toast({
         title: "Retry failed",
