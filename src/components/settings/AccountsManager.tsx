@@ -68,14 +68,19 @@ export function AccountsManager({ className }: { className?: string }) {
         institution: values.institution,
         name: values.name || values.institution,
         color: values.color,
+        currency_base: values.currency_base,
+        account_number: values.account_number || null,
+        hidden_from_dashboard: values.hidden_from_dashboard ?? false,
       });
     } else {
       createAccount({
         institution: values.institution,
         name: values.name,
         color: values.color,
-        account_role: 'CASH',
-        domain_default: 'CASHFLOW',
+        account_type: values.account_type,
+        currency_base: values.currency_base,
+        account_number: values.account_number,
+        hidden_from_dashboard: values.hidden_from_dashboard,
       });
     }
     setFormOpen(false);
@@ -210,6 +215,10 @@ export function AccountsManager({ className }: { className?: string }) {
           institution: editingAccount.institution,
           name: editingAccount.name === editingAccount.institution ? '' : editingAccount.name,
           color: editingAccount.color || getDefaultAccountColor(cashAccounts.findIndex(a => a.id === editingAccount.id)),
+          account_type: editingAccount.account_type,
+          currency_base: editingAccount.currency_base,
+          account_number: editingAccount.account_number ?? undefined,
+          hidden_from_dashboard: editingAccount.hidden_from_dashboard,
         } : undefined}
         isSubmitting={isCreating || isUpdating}
         onSubmit={handleFormSubmit}

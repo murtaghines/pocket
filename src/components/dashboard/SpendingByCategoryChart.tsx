@@ -208,7 +208,7 @@ export function SpendingByCategoryChart({
     return (
       <Card variant="bento">
         <div className="p-[18px_22px_16px]">
-          <p className="text-[15px] font-heading font-semibold text-[#0C0D0E]">
+          <p className="text-[15px] font-heading font-semibold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
         </div>
@@ -239,7 +239,7 @@ export function SpendingByCategoryChart({
   const changeColor = (entry: TreemapEntry) => {
     if (entry.pctChange === null || entry.pctChange === 0)
       return "rgba(12,13,14,.42)";
-    return entry.pctChange > 0 ? "#C9502A" : "#1F7A45";
+    return entry.pctChange > 0 ? "hsl(var(--destructive))" : "hsl(var(--success))";
   };
 
   const tileColors = (category: string) => {
@@ -259,10 +259,10 @@ export function SpendingByCategoryChart({
       }
     }
     return {
-      bg: "rgba(127,134,143,.13)",
-      icon: "#656C75",
-      number: "#656C75",
-      name: "#7A8189",
+      bg: "hsl(var(--muted))",
+      icon: "hsl(var(--muted-foreground))",
+      number: "hsl(var(--muted-foreground))",
+      name: "hsl(var(--muted-foreground) / 0.7)",
     };
   };
 
@@ -375,24 +375,18 @@ export function SpendingByCategoryChart({
   return (
     <Card
       variant="bento"
-      className="flex h-full flex-col overflow-hidden"
-      style={{
-        borderRadius: 12,
-        boxShadow:
-          "0 1px 2px rgba(16,24,40,.04), 0 6px 16px -6px rgba(16,24,40,.10)",
-        border: "none",
-      }}
+      className="flex h-full flex-col overflow-hidden rounded-xl border-none shadow-bento"
     >
       <div
         className="flex items-start justify-between gap-3 px-[22px] pt-[18px] pb-0"
         style={{ marginBottom: 13 }}
       >
         <div className="min-w-0">
-          <p className="text-[15px] font-heading font-semibold text-[#0C0D0E]">
+          <p className="text-[15px] font-heading font-semibold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
           <p
-            className="text-[12.5px] text-[#9AA1AC] mt-[2px]"
+            className="text-[12.5px] text-muted-foreground mt-[2px]"
             style={{ whiteSpace: "nowrap" }}
           >
             {formatCurrency(total)}{" "}
@@ -407,7 +401,7 @@ export function SpendingByCategoryChart({
           role="radiogroup"
           aria-label={t("charts.treemapToggleLabel", "Display mode")}
           style={{
-            background: "#F1F3F5",
+            background: "hsl(var(--muted))",
             borderRadius: 8,
             padding: 2,
             gap: 2,
@@ -426,11 +420,11 @@ export function SpendingByCategoryChart({
               fontWeight: 500,
               cursor: "pointer",
               border: "none",
-              background: mode === "weight" ? "#fff" : "transparent",
-              color: mode === "weight" ? "#0C0D0E" : "#8A919C",
+              background: mode === "weight" ? "hsl(var(--card))" : "transparent",
+              color: mode === "weight" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
               boxShadow:
                 mode === "weight"
-                  ? "0 1px 2px rgba(16,24,40,.10)"
+                  ? "var(--shadow-sm)"
                   : "none",
             }}
           >
@@ -449,10 +443,10 @@ export function SpendingByCategoryChart({
               fontWeight: 500,
               cursor: "pointer",
               border: "none",
-              background: mode === "vs" ? "#fff" : "transparent",
-              color: mode === "vs" ? "#0C0D0E" : "#8A919C",
+              background: mode === "vs" ? "hsl(var(--card))" : "transparent",
+              color: mode === "vs" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
               boxShadow:
-                mode === "vs" ? "0 1px 2px rgba(16,24,40,.10)" : "none",
+                mode === "vs" ? "var(--shadow-sm)" : "none",
             }}
           >
             {vsPrevLabel ?? t("charts.treemapVsPrev", "vs. prev month")}

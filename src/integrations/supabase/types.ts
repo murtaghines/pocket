@@ -16,7 +16,9 @@ export type Database = {
     Tables: {
       accounts: {
         Row: {
+          account_number: string | null
           account_role: Database["public"]["Enums"]["account_role"]
+          account_type: Database["public"]["Enums"]["account_type"]
           color: string | null
           created_at: string | null
           currency_base: string
@@ -29,7 +31,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_number?: string | null
           account_role?: Database["public"]["Enums"]["account_role"]
+          account_type?: Database["public"]["Enums"]["account_type"]
           color?: string | null
           created_at?: string | null
           currency_base?: string
@@ -42,7 +46,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_number?: string | null
           account_role?: Database["public"]["Enums"]["account_role"]
+          account_type?: Database["public"]["Enums"]["account_type"]
           color?: string | null
           created_at?: string | null
           currency_base?: string
@@ -487,6 +493,7 @@ export type Database = {
           import_id: string | null
           is_hidden: boolean
           movement: Database["public"]["Enums"]["movement_type"]
+          original_description: string | null
           period_id: string | null
           running_balance: number | null
           source_row_hash: string | null
@@ -518,6 +525,7 @@ export type Database = {
           import_id?: string | null
           is_hidden?: boolean
           movement: Database["public"]["Enums"]["movement_type"]
+          original_description?: string | null
           period_id?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
@@ -549,6 +557,7 @@ export type Database = {
           import_id?: string | null
           is_hidden?: boolean
           movement?: Database["public"]["Enums"]["movement_type"]
+          original_description?: string | null
           period_id?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
@@ -735,7 +744,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      mv_daily_totals: {
+        Row: {
+          day: string | null
+          domain: Database["public"]["Enums"]["app_domain"] | null
+          expenses: number | null
+          income: number | null
+          sent_to_invest: number | null
+          tx_count: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      mv_opening_balances: {
+        Row: {
+          domain: Database["public"]["Enums"]["app_domain"] | null
+          month: string | null
+          opening_balance: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_account_breakdown: {
@@ -753,7 +782,12 @@ export type Database = {
         }[]
       }
       get_account_period_summary: {
-        Args: { p_end: string; p_start: string; p_user_id: string }
+        Args: {
+          p_domain?: Database["public"]["Enums"]["app_domain"]
+          p_end: string
+          p_start: string
+          p_user_id: string
+        }
         Returns: {
           account_id: string
           has_running_balance: boolean
@@ -822,6 +856,17 @@ export type Database = {
           income: number
           tx_count: number
         }[]
+      }
+      get_dashboard_aggregates: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_end_date: string
+          p_prev_end?: string
+          p_prev_start?: string
+          p_start_date: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       get_dashboard_summary: {
         Args: {
@@ -941,9 +986,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      refresh_dashboard_views: { Args: never; Returns: undefined }
     }
     Enums: {
       account_role: "CASH" | "INVESTMENT"
+      account_type:
+        | "CHECKING"
+        | "SAVINGS"
+        | "CREDIT_CARD"
+        | "CASH"
+        | "INVESTMENTS"
+        | "LOAN"
+        | "OTHER"
       app_domain: "CASHFLOW" | "INVESTING"
       import_status: "UPLOADED" | "PARSED" | "NORMALIZED" | "FAILED" | "PARTIAL"
       movement_type: "INCOME" | "EXPENSE" | "TRANSFER"
@@ -964,12 +1018,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -993,11 +1047,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1018,11 +1072,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1043,11 +1097,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1060,11 +1114,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1077,6 +1131,15 @@ export const Constants = {
   public: {
     Enums: {
       account_role: ["CASH", "INVESTMENT"],
+      account_type: [
+        "CHECKING",
+        "SAVINGS",
+        "CREDIT_CARD",
+        "CASH",
+        "INVESTMENTS",
+        "LOAN",
+        "OTHER",
+      ],
       app_domain: ["CASHFLOW", "INVESTING"],
       import_status: ["UPLOADED", "PARSED", "NORMALIZED", "FAILED", "PARTIAL"],
       movement_type: ["INCOME", "EXPENSE", "TRANSFER"],

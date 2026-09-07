@@ -94,11 +94,8 @@ export function ManualEntryFooter({
       const signedAmount = sign * Math.abs(entry.amount);
       const cleanDesc = entry.description.trim();
       const descNorm = cleanDesc.toLowerCase();
-      // Manual entries have no source file, so we mint a unique fingerprint/row-hash to
-      // satisfy the NOT NULL dedup key without colliding with imported rows. The
-      // `manual-` prefix is also what marks the row as user-created for the rest of
-      // the app (see lib/transactionSource.ts).
-      const uniqHash = buildManualFingerprint(user.id);
+      const currency = account?.currency_base || "EUR";
+      const uniqHash = await buildManualFingerprint(entry.date, signedAmount, currency, cleanDesc);
 
       const { error: insertError } = await supabase.from("transactions").insert({
         user_id: user.id,
@@ -108,7 +105,7 @@ export function ManualEntryFooter({
         description_norm: descNorm,
         description_clean: cleanDesc,
         amount: signedAmount,
-        currency: account?.currency_base || "EUR",
+        currency,
         movement: entry.movement,
         category: entry.categorySlug,
         category_id: category?.id || null,
@@ -136,6 +133,7 @@ export function ManualEntryFooter({
       queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
 
       if (entry.createRule && cleanDesc) {
         const built = buildRuleFromCorrection(cleanDesc, entry.movement, entry.categorySlug);

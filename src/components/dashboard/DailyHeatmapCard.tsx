@@ -117,10 +117,10 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="inline-flex items-center gap-1 h-[26px] px-2 rounded-[7px] text-[11px] font-medium bg-[#F5F7F9] text-[#414750] hover:bg-muted/60 transition-colors"
+              className="inline-flex items-center gap-1 h-[26px] px-2 rounded-[7px] text-[11px] font-medium bg-muted text-foreground/80 hover:bg-muted/60 transition-colors"
             >
               <span>{activeMetricLabel}</span>
-              <ChevronDown className="w-3 h-3 text-[#8A919C]" />
+              <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[130px]">
@@ -144,7 +144,7 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
           <div className="flex w-full max-w-[280px] flex-col gap-2">
             <div className="grid grid-cols-7 gap-[6px]">
               {WEEKDAY_KEYS.map((k) => (
-                <div key={k} className="text-center text-[10.5px] font-medium text-[#B4BAC3]">
+                <div key={k} className="text-center text-[10.5px] font-medium text-muted-foreground/60">
                   {t(`heatmap.weekdays.${k}`, k.charAt(0).toUpperCase())}
                 </div>
               ))}
@@ -169,7 +169,7 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
                     onClick={() => setHoveredDay((d) => (d === cell.day ? null : cell.day))}
                     className={cn(
                       "flex aspect-square items-center justify-center rounded-[8px] text-[11px] transition-transform hover:scale-105",
-                      hasValue ? "font-medium" : "font-normal bg-[#F7F8FA]",
+                      hasValue ? "font-medium" : "font-normal bg-muted/60",
                       hoveredDay === cell.day && "ring-2 ring-primary/60 ring-offset-1 ring-offset-card",
                     )}
                     style={{
@@ -187,13 +187,13 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
           <div className="flex flex-row sm:flex-col items-start sm:items-end gap-4 sm:gap-[18px] text-left sm:text-right sm:justify-end" style={{ minWidth: 96 }}>
             {stats.map((s, i) => (
               <div key={i}>
-                <div className="text-[11px] text-[#9AA1AC]">
+                <div className="text-[11px] text-muted-foreground">
                   {s.label}
                 </div>
                 <div className="mt-1 text-[15px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
-                {s.hint && <div className="mt-0.5 text-[11px] text-[#B4BAC3]">{s.hint}</div>}
+                {s.hint && <div className="mt-0.5 text-[11px] text-muted-foreground/60">{s.hint}</div>}
               </div>
             ))}
           </div>

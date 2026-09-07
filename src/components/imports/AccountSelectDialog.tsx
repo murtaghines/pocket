@@ -14,6 +14,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useTranslation } from "react-i18next";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
+import { type AccountType } from "@/lib/accountTypes";
 
 interface AccountSelectDialogProps {
   open: boolean;
@@ -46,9 +47,19 @@ export function AccountSelectDialog({
     }
   };
 
+  const lockedType: AccountType = accountRole === 'INVESTMENT' ? 'INVESTMENTS' : 'CHECKING';
+
   const handleCreateAccount = (values: AccountFormValues) => {
     createAccount(
-      { institution: values.institution, name: values.name, color: values.color, account_role: accountRole, domain_default: domainDefault },
+      {
+        institution: values.institution,
+        name: values.name,
+        color: values.color,
+        account_type: values.account_type,
+        currency_base: values.currency_base,
+        account_number: values.account_number,
+        hidden_from_dashboard: values.hidden_from_dashboard,
+      },
       {
         onSuccess: (data) => {
           setSelectedAccountId(data.id);
@@ -144,6 +155,7 @@ export function AccountSelectDialog({
         open={showNewForm}
         onOpenChange={setShowNewForm}
         mode="create"
+        lockedType={lockedType}
         isSubmitting={isCreating}
         onSubmit={handleCreateAccount}
       />

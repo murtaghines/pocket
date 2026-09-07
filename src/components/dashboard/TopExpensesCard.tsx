@@ -42,9 +42,9 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
       <CardContent className="px-5 pb-[18px] pt-0 overflow-y-auto">
         {topExpenses.map((expense, index) => (
           <div key={expense.id}>
-            {index > 0 && <div className="h-px bg-[#F4F5F7]" />}
+            {index > 0 && <div className="h-px bg-border" />}
             <div className="flex items-center gap-3 py-[9px]">
-              <span className="text-[12px] font-medium text-[#C2C7CE] w-4 shrink-0 text-center tabular-nums">
+              <span className="text-[12px] font-medium text-muted-foreground/50 w-4 shrink-0 text-center tabular-nums">
                 {index + 1}
               </span>
               <CategoryIcon
@@ -56,7 +56,7 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
               />
               <div className="flex-1 min-w-0">
                 <p className="text-[13.5px] font-medium truncate text-foreground">{expense.description}</p>
-                <p className="text-[12px] text-[#9AA1AC]">
+                <p className="text-[12px] text-muted-foreground">
                   {formatDayMonth(expense.date)} · {getCategoryLabel(expense.category)}
                 </p>
               </div>

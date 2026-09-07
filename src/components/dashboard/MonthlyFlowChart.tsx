@@ -51,10 +51,10 @@ export function MonthlyFlowChart({ dailyTotals, yearKey, convert }: MonthlyFlowC
     const { label, balance } = payload[0].payload;
     return (
       <div className="bg-card rounded-xl shadow-lg p-3 min-w-[150px]">
-        <p className="text-xs text-[#9AA1AC] mb-1">{label}</p>
+        <p className="text-xs text-muted-foreground mb-1">{label}</p>
         <p
           className="text-sm font-semibold"
-          style={{ color: balance >= 0 ? "#1B76FF" : "hsl(var(--destructive))" }}
+          style={{ color: balance >= 0 ? "hsl(var(--primary))" : "hsl(var(--destructive))" }}
         >
           {balance >= 0 ? "+" : ""}
           {formatCurrency(balance)}
@@ -70,7 +70,7 @@ export function MonthlyFlowChart({ dailyTotals, yearKey, convert }: MonthlyFlowC
           <p className="text-[15px] font-heading font-bold text-foreground">
             {t("charts.monthlyFlowTitle", "Monthly balance")}
           </p>
-          <p className="text-[12.5px] text-[#9AA1AC] mt-0.5">
+          <p className="text-[12.5px] text-muted-foreground mt-0.5">
             {t("charts.monthlyFlowSubtitle", "Cumulative net balance through {{year}}", {
               year: yearKey ?? "",
             })}
@@ -95,31 +95,31 @@ export function MonthlyFlowChart({ dailyTotals, yearKey, convert }: MonthlyFlowC
             <AreaChart data={points} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
               <defs>
                 <linearGradient id="monthlyBalanceGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1B76FF" stopOpacity={0.16} />
-                  <stop offset="100%" stopColor="#1B76FF" stopOpacity={0} />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.16} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="#F1F2F4" vertical={false} />
+              <CartesianGrid stroke="hsl(var(--border))" vertical={false} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#9AA1AC", fontSize: 11 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                 interval={0}
                 dy={8}
               />
               <Tooltip
                 content={<CustomTooltip />}
-                cursor={{ stroke: "#1B76FF", strokeWidth: 1, strokeDasharray: "4 2" }}
+                cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "4 2" }}
               />
               <Area
                 type="monotone"
                 dataKey="balance"
-                stroke="#1B76FF"
+                stroke="hsl(var(--primary))"
                 strokeWidth={2.2}
                 fill="url(#monthlyBalanceGrad)"
                 dot={false}
-                activeDot={{ r: 4, fill: "#1B76FF", strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 0 }}
                 isAnimationActive={false}
               />
             </AreaChart>

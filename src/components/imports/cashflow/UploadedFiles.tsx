@@ -220,10 +220,29 @@ export function UploadedFilesHistoryList({
 
   const changeAcct = async (importId: string, newId: string) => {
     await supabase.from("imports").update({ account_id: newId }).eq("id", importId);
+
+    // Remove true duplicates before reassigning to avoid unique constraint violation
+    const [{ data: srcTx }, { data: dstTx }] = await Promise.all([
+      supabase.from("transactions").select("id, fingerprint, domain").eq("import_id", importId).not("fingerprint", "is", null),
+      supabase.from("transactions").select("fingerprint, domain").eq("account_id", newId).not("fingerprint", "is", null),
+    ]);
+    if (srcTx && dstTx) {
+      const dstKeys = new Set(dstTx.map(t => `${t.domain}|${t.fingerprint}`));
+      const conflictIds = srcTx.filter(t => dstKeys.has(`${t.domain}|${t.fingerprint}`)).map(t => t.id);
+      if (conflictIds.length > 0) {
+        await supabase.from("transactions").delete().in("id", conflictIds);
+      }
+    }
+
     await supabase.from("transactions").update({ account_id: newId }).eq("import_id", importId);
+    try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
     queryClient.invalidateQueries({ queryKey: ["imports"] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+    queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
   };
 
   const fileTypeLabel = (imp: Import) => {

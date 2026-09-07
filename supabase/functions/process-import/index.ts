@@ -1191,6 +1191,7 @@ serve(async (req) => {
         .select('fingerprint, date, amount, description_norm')
         .eq('user_id', userId)
         .eq('domain', domain)
+        .eq('account_id', accountId)
         .gte('date', queryStart)
         .lt('date', queryEnd);
 
@@ -1276,14 +1277,11 @@ serve(async (req) => {
       const seenNaturalKeys = seenNaturalKeysByMonth[txMonthKey];
 
       const fingerprint = await calculateFingerprint(
-        userId,
-        accountId,
-        sourceTransactionId,
+        'import',
         postedDate,
         amountSigned,
         currency,
         descriptionRaw,
-        runningBalance
       );
 
       const rowHash = await sha256(JSON.stringify(t));
@@ -1478,6 +1476,7 @@ serve(async (req) => {
         description: descriptionClean || 'Sin descripción',
         description_norm: normalizeDescription(descriptionRaw),
         description_clean: descriptionClean,
+        original_description: descriptionRaw || null,
         movement: movement,
         category: categorySlug,
         category_id: categoryId,
@@ -1545,7 +1544,7 @@ serve(async (req) => {
 
         const { data: inserted, error: batchError } = await supabase
           .from('transactions')
-          .upsert(batchClean, { onConflict: 'user_id,domain,fingerprint', ignoreDuplicates: true })
+          .upsert(batchClean, { onConflict: 'user_id,domain,account_id,fingerprint', ignoreDuplicates: true })
           .select('fingerprint');
 
         if (batchError) {

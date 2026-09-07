@@ -173,7 +173,12 @@ export function useImports(domain?: AppDomain) {
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['periods'] });
-      
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
+
       if (data.dateWarnings && data.dateWarnings.length > 0) {
         toast.warning(`${data.message}. ${data.dateWarnings.length} transactions with dates outside the month.`);
       } else {
@@ -227,9 +232,15 @@ export function useImports(domain?: AppDomain) {
         });
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
       toast.success('File deleted successfully');
     },
     onError: (error) => {
@@ -269,9 +280,14 @@ export function useImports(domain?: AppDomain) {
         .delete()
         .eq("id", importId);
 
-      // Invalidate queries to refresh UI
+      try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     } catch (error) {
       console.error("Error auto-deleting failed import:", error);
     }

@@ -1,8 +1,7 @@
 /**
  * transactionSource.ts — tells a manual entry apart from an imported one.
  *
- * The distinction drives what the user is allowed to do with a row, so it has to
- * be right for rows that already exist, not just new ones:
+ * The distinction drives what the user is allowed to do with a row:
  *
  *   imported (from a statement) → amount/category editable; description, date and
  *     account are properties of the file, so they're read-only. Never hard-deleted
@@ -11,30 +10,48 @@
  *   manual → every field editable, and deletable outright, since nothing ties it
  *     to a source file.
  *
- * `import_id` alone is NOT a safe marker: manual entries added to a month that
- * already had a statement used to be stamped with that statement's import_id,
- * which both made them look imported and put them in the blast radius of
- * "delete file" (deleteImport removes every transaction carrying the id).
- * The fingerprint is the durable marker — manual inserts have minted a
- * `manual-…` one since day one, while imported rows carry a content sha256 —
- * so it classifies pre-existing rows correctly with no backfill required.
+ * Both use content-based SHA-256 fingerprints with a "manual" / "import" prefix
+ * so they never collide. The DB unique constraint includes account_id, so the
+ * same content on two different accounts is allowed.
  */
 
-export const MANUAL_FINGERPRINT_PREFIX = "manual-";
+async function sha256(text: string): Promise<string> {
+  const data = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
-/** Mints the unique dedup key for a manual entry. Never collides with the
- *  sha256 fingerprints that process-import computes from file contents. */
-export function buildManualFingerprint(userId: string): string {
-  return `${MANUAL_FINGERPRINT_PREFIX}${userId}-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 10)}`;
+function normalizeDescription(desc: string): string {
+  return (desc || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/ref\.?\s*\d+/gi, '')
+    .replace(/\*{4}\d{4}/g, '')
+    .replace(/\d{10,}/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 200);
+}
+
+/** Content-based dedup key for a manual entry. Uses the same formula as
+ *  imported fingerprints but with a "manual" prefix, so the two never collide. */
+export async function buildManualFingerprint(
+  date: string,
+  amount: number,
+  currency: string,
+  description: string,
+): Promise<string> {
+  const normalizedDesc = normalizeDescription(description);
+  const input = `manual|${date}|${amount.toFixed(2)}|${currency}|${normalizedDesc}`;
+  return sha256(input);
 }
 
 export function isManualTransaction(tx: {
   import_id?: string | null;
-  fingerprint?: string | null;
 }): boolean {
-  if (tx.fingerprint) return tx.fingerprint.startsWith(MANUAL_FINGERPRINT_PREFIX);
-  // Fingerprint not loaded on this query — fall back to the link to a source file.
   return !tx.import_id;
 }

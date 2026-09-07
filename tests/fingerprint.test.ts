@@ -28,7 +28,7 @@ describe('normalizeDescription', () => {
   it('scrubs reference numbers, masked card digits and long digit runs', () => {
     expect(normalizeDescription('COMPRA ref 12345')).toBe('compra');
     expect(normalizeDescription('PAGO ****1234')).toBe('pago');
-    expect(normalizeDescription('TX 01234567890 END')).toBe('tx  end');
+    expect(normalizeDescription('TX 01234567890 END')).toBe('tx end');
   });
 
   it('truncates to 200 chars', () => {
@@ -37,57 +37,42 @@ describe('normalizeDescription', () => {
 });
 
 describe('calculateFingerprint', () => {
-  it('uses ONLY the source transaction id when present (ignores date/amount/desc)', async () => {
-    const withDesc = await calculateFingerprint('u1', 'a1', 'TX123', '2024-01-01', -10, 'EUR', 'Something', 100);
-    const differentEverythingElse = await calculateFingerprint('u1', 'a1', 'TX123', '2099-12-31', 999, 'USD', 'Totally other', null);
-    expect(withDesc).toBe(differentEverythingElse);
-  });
-
-  it('falls back to account+date+amount+currency+desc when no source id', async () => {
-    const a = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', 100);
-    const b = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', 100);
-    const cDifferentAmount = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -11, 'EUR', 'Mercadona', 100);
-    const dDifferentAccount = await calculateFingerprint('u1', 'a2', null, '2024-01-01', -10, 'EUR', 'Mercadona', 100);
+  it('is deterministic for identical inputs', async () => {
+    const a = await calculateFingerprint('import', '2024-01-01', -10, 'EUR', 'Mercadona');
+    const b = await calculateFingerprint('import', '2024-01-01', -10, 'EUR', 'Mercadona');
     expect(a).toBe(b);
-    expect(a).not.toBe(cDifferentAmount);
-    expect(a).not.toBe(dDifferentAccount); // Different account = different fingerprint (fixed)
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
   });
 
-  it('running_balance is excluded from the fingerprint (fixes dedup on reimport)', async () => {
-    const withBalance = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', 100);
-    const noBalance = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', null);
-    const differentBalance = await calculateFingerprint('u1', 'a1', null, '2024-01-01', -10, 'EUR', 'Mercadona', 999);
-    // Same transaction with different running_balance values → SAME fingerprint (dedup survives reimport).
-    expect(withBalance).toBe(noBalance);
-    expect(withBalance).toBe(differentBalance);
+  it('differs when any content field differs', async () => {
+    const base = await calculateFingerprint('import', '2024-01-01', -10, 'EUR', 'Mercadona');
+    const diffDate = await calculateFingerprint('import', '2024-01-02', -10, 'EUR', 'Mercadona');
+    const diffAmount = await calculateFingerprint('import', '2024-01-01', -11, 'EUR', 'Mercadona');
+    const diffCurrency = await calculateFingerprint('import', '2024-01-01', -10, 'USD', 'Mercadona');
+    const diffDesc = await calculateFingerprint('import', '2024-01-01', -10, 'EUR', 'Lidl');
+    expect(base).not.toBe(diffDate);
+    expect(base).not.toBe(diffAmount);
+    expect(base).not.toBe(diffCurrency);
+    expect(base).not.toBe(diffDesc);
+  });
+
+  it('import and manual sources never collide even with identical content', async () => {
+    const imported = await calculateFingerprint('import', '2024-01-01', -10, 'EUR', 'Mercadona');
+    const manual = await calculateFingerprint('manual', '2024-01-01', -10, 'EUR', 'Mercadona');
+    expect(imported).not.toBe(manual);
   });
 });
 
 describe('user-edit invariant: re-upload dedup survives edits', () => {
-  // The dedup key is computed from the FILE's original values and stored frozen. A user can
-  // later reshape the row (edit amount/category/movement) in place, but the stored
-  // fingerprint is never recomputed. This test models that guarantee at the primitive level:
-  // re-uploading the same statement recomputes the SAME hash from the SAME original inputs,
-  // so it matches the frozen stored value and is skipped — independent of any edit the user
-  // made to the displayed row. See docs/epics/uploads.md "Modelo de integridad".
-
   it('re-hashing the ORIGINAL imported values reproduces the frozen fingerprint exactly', async () => {
-    // Import time: file row is -125.40 "Carrefour".
-    const atImport = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -125.4, 'EUR', 'Carrefour', 500);
-    // Re-upload later: process-import re-parses the SAME file row → same inputs → same hash.
-    const atReupload = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -125.4, 'EUR', 'Carrefour', 999);
-    expect(atReupload).toBe(atImport); // matches the frozen stored value ⇒ deduped, not duplicated
+    const atImport = await calculateFingerprint('import', '2025-06-10', -125.4, 'EUR', 'Carrefour');
+    const atReupload = await calculateFingerprint('import', '2025-06-10', -125.4, 'EUR', 'Carrefour');
+    expect(atReupload).toBe(atImport);
   });
 
-  it('an edited display amount does NOT change what the file re-hashes to (edit is a shaped view)', async () => {
-    // Stored fingerprint is frozen at the original -125.40; the user edits the row to -100.
-    const frozen = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -125.4, 'EUR', 'Carrefour', 500);
-    // On re-upload the file STILL says -125.40 (the user's edit lives only on the DB row),
-    // so the recomputed hash equals the frozen one and dedup holds.
-    const fileOnReupload = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -125.4, 'EUR', 'Carrefour', 500);
-    expect(fileOnReupload).toBe(frozen);
-    // Sanity: had the fingerprint been (wrongly) recomputed from the edited -100, it would differ.
-    const ifRecomputedFromEdit = await calculateFingerprint('u1', 'a1', null, '2025-06-10', -100, 'EUR', 'Carrefour', 500);
+  it('an edited display amount does NOT change what the file re-hashes to', async () => {
+    const frozen = await calculateFingerprint('import', '2025-06-10', -125.4, 'EUR', 'Carrefour');
+    const ifRecomputedFromEdit = await calculateFingerprint('import', '2025-06-10', -100, 'EUR', 'Carrefour');
     expect(ifRecomputedFromEdit).not.toBe(frozen);
   });
 });

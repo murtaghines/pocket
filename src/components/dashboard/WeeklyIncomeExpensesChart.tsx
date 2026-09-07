@@ -48,13 +48,13 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
             {t("charts.monthlyBalance", "Evolution by week")}
           </p>
         </div>
-        <div className="flex items-center gap-[14px] text-[12px] text-[#9AA1AC] shrink-0">
+        <div className="flex items-center gap-[14px] text-[12px] text-muted-foreground shrink-0">
           <span className="flex items-center gap-[6px]">
             <span className="w-2 h-2 rounded-full bg-primary" />
             {t("stats.income", "Income")}
           </span>
           <span className="flex items-center gap-[6px]">
-            <span className="w-2 h-2 rounded-full" style={{ background: "#DCE0E6" }} />
+            <span className="w-2 h-2 rounded-full bg-border" />
             {t("stats.expenses", "Expenses")}
           </span>
         </div>
@@ -70,14 +70,14 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#9AA1AC", fontSize: 11.5, fontWeight: 400 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11.5, fontWeight: 400 }}
                 dy={8}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.3 }} />
               <Bar
                 dataKey="income"
                 name={t("stats.income", "Income")}
-                fill="#1B76FF"
+                fill="hsl(var(--primary))"
                 radius={6}
                 maxBarSize={20}
                 isAnimationActive={false}
@@ -85,7 +85,7 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
               <Bar
                 dataKey="expenses"
                 name={t("stats.expenses", "Expenses")}
-                fill="#DCE0E6"
+                fill="hsl(var(--border))"
                 radius={6}
                 maxBarSize={20}
                 isAnimationActive={false}
