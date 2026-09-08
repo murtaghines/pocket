@@ -63,8 +63,7 @@
     "accountNumberPlaceholder": "Solo para tu referencia",
     "currency": "Moneda",
     "hiddenFromDashboard": "Oculta del panel",
-    "selectType": "Selecciona el tipo de cuenta",
-    "typeLocked": "El tipo no se puede cambiar después de la creación"
+    "selectType": "Selecciona el tipo de cuenta"
   },
   "accountTypes": {
     "checking": "Cuenta corriente",
