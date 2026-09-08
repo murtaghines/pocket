@@ -68,6 +68,7 @@ export function AccountsManager({ className }: { className?: string }) {
         institution: values.institution,
         name: values.name || values.institution,
         color: values.color,
+        account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number || null,
         hidden_from_dashboard: values.hidden_from_dashboard ?? false,

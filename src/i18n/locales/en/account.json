@@ -63,8 +63,7 @@
     "accountNumberPlaceholder": "For your reference only",
     "currency": "Currency",
     "hiddenFromDashboard": "Hidden from dashboard",
-    "selectType": "Select account type",
-    "typeLocked": "Type cannot be changed after creation"
+    "selectType": "Select account type"
   },
   "accountTypes": {
     "checking": "Checking Account",

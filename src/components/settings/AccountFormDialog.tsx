@@ -4,23 +4,33 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SheetPanel, SHEET_BUTTON } from "@/components/imports/SheetPanel";
 import { ACCOUNT_COLOR_PALETTE, getDefaultAccountColor } from "@/lib/accountColors";
 import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
 import {
   type AccountType,
+  BANK_ACCOUNT_TYPES,
+  INVESTMENT_ACCOUNT_TYPES,
+  ACCOUNT_TYPES,
   getAccountTypeIcon,
   getAccountTypeI18nKey,
+  deriveAccountRole,
 } from "@/lib/accountTypes";
-import { AccountTypePicker } from "./AccountTypePicker";
 
 export interface AccountFormValues {
   institution: string;
@@ -44,6 +54,22 @@ interface AccountFormDialogProps {
   defaultCurrency?: string;
 }
 
+function getAvailableTypes(
+  mode: "create" | "edit",
+  currentType: AccountType,
+  typeFilter?: "bank" | "investment",
+  lockedType?: AccountType,
+): AccountType[] {
+  if (lockedType) return [lockedType];
+  if (mode === "edit") {
+    const role = deriveAccountRole(currentType);
+    return role === "INVESTMENT" ? INVESTMENT_ACCOUNT_TYPES : BANK_ACCOUNT_TYPES;
+  }
+  if (typeFilter === "bank") return BANK_ACCOUNT_TYPES;
+  if (typeFilter === "investment") return INVESTMENT_ACCOUNT_TYPES;
+  return ACCOUNT_TYPES;
+}
+
 export function AccountFormDialog({
   open,
   onOpenChange,
@@ -57,7 +83,6 @@ export function AccountFormDialog({
 }: AccountFormDialogProps) {
   const { t } = useTranslation("account");
   const { t: tp } = useTranslation("profile");
-  const [step, setStep] = useState<"type" | "details">("type");
   const [accountType, setAccountType] = useState<AccountType>("CHECKING");
   const [institution, setInstitution] = useState("");
   const [name, setName] = useState("");
@@ -68,27 +93,22 @@ export function AccountFormDialog({
 
   useEffect(() => {
     if (open) {
+      const defaultType = lockedType
+        || initialValues?.account_type
+        || (typeFilter === "investment" ? "INVESTMENTS" : "CHECKING");
+      setAccountType(defaultType);
       setInstitution(initialValues?.institution || "");
       setName(initialValues?.name || "");
       setColor(initialValues?.color || getDefaultAccountColor(0));
-      setAccountType(initialValues?.account_type || lockedType || "CHECKING");
       setCurrencyBase(initialValues?.currency_base || defaultCurrency);
       setAccountNumber(initialValues?.account_number || "");
       setHiddenFromDashboard(initialValues?.hidden_from_dashboard ?? false);
-
-      if (mode === "edit" || lockedType) {
-        setStep("details");
-      } else {
-        setStep("type");
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const handleTypeSelect = (type: AccountType) => {
-    setAccountType(type);
-    setStep("details");
-  };
+  const availableTypes = getAvailableTypes(mode, accountType, typeFilter, lockedType);
+  const isTypeLocked = !!lockedType || availableTypes.length === 1;
 
   const canSubmit = institution.trim().length > 0 && !isSubmitting;
 
@@ -106,63 +126,64 @@ export function AccountFormDialog({
   };
 
   const TypeIcon = getAccountTypeIcon(accountType);
-  const typeLabel = t(getAccountTypeI18nKey(accountType));
 
-  const footer =
-    step === "details" ? (
-      <Button
-        className={cn(SHEET_BUTTON, "w-full")}
-        onClick={handleSubmit}
-        disabled={!canSubmit}
-      >
-        {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-        {mode === "create" ? tp("accounts.create", "Create") : tp("accounts.save", "Save")}
-      </Button>
-    ) : null;
+  const inputClass =
+    "h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
 
   return (
-    <SheetPanel
-      open={open}
-      onOpenChange={onOpenChange}
-      title={
-        step === "type" ? (
-          <span className="inline-flex items-center gap-2">
-            {t("accounts.selectType")}
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-2">
-            <TypeIcon className="w-4 h-4 text-primary" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[480px] gap-0 p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogTitle className="text-lg font-semibold text-foreground">
             {mode === "create"
-              ? tp("accounts.addAccount", "add account")
-              : tp("accounts.editAccount", "edit account")}
-          </span>
-        )
-      }
-      footer={footer}
-    >
-      {step === "type" ? (
-        <AccountTypePicker onSelect={handleTypeSelect} filter={typeFilter} />
-      ) : (
-        <>
-          {/* Account type header (read-only in edit, or locked) */}
-          <div className="flex items-center gap-3 rounded-xl bg-muted p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-primary/10 text-primary">
-              <TypeIcon className="h-[18px] w-[18px]" strokeWidth={2} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13.5px] font-semibold text-foreground">{typeLabel}</p>
-              {mode === "edit" && (
-                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  {t("accounts.typeLocked")}
-                </p>
-              )}
-            </div>
+              ? tp("accounts.addAccount", "Add account")
+              : tp("accounts.editAccount", "Edit account")}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {mode === "create"
+              ? t("accounts.selectType")
+              : tp("accounts.editAccount", "Edit account")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="px-6 pb-6 space-y-5 max-h-[70vh] overflow-y-auto">
+          {/* Account type */}
+          <div className="space-y-2">
+            <label className="text-[13px] font-medium text-muted-foreground">
+              {t("accounts.accountType", "Account type")}
+            </label>
+            {isTypeLocked ? (
+              <div className="flex items-center gap-2.5 h-11 rounded-full bg-muted px-5">
+                <TypeIcon className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
+                <span className="text-[13px] text-foreground">
+                  {t(getAccountTypeI18nKey(accountType))}
+                </span>
+              </div>
+            ) : (
+              <Select value={accountType} onValueChange={(v) => setAccountType(v as AccountType)}>
+                <SelectTrigger className={cn(inputClass, "[&>svg]:opacity-40")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTypes.map((type) => {
+                    const Icon = getAccountTypeIcon(type);
+                    return (
+                      <SelectItem key={type} value={type}>
+                        <span className="inline-flex items-center gap-2">
+                          <Icon className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
+                          {t(getAccountTypeI18nKey(type))}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Institution */}
           <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-foreground">
+            <label className="text-[13px] font-medium text-muted-foreground">
               {tp("accounts.institution", "Bank")}
             </label>
             <Input
@@ -171,15 +192,15 @@ export function AccountFormDialog({
               onChange={(e) => setInstitution(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               autoFocus
-              className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+              className={inputClass}
             />
           </div>
 
           {/* Nickname */}
           <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-foreground">
+            <label className="text-[13px] font-medium text-muted-foreground">
               {tp("accounts.nickname", "Nickname")}{" "}
-              <span className="font-normal text-muted-foreground">
+              <span className="text-muted-foreground/60">
                 ({tp("accounts.optional", "optional")})
               </span>
             </label>
@@ -188,7 +209,7 @@ export function AccountFormDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+              className={inputClass}
             />
             <p className="text-xs text-muted-foreground px-1">
               {institution.trim()
@@ -202,45 +223,45 @@ export function AccountFormDialog({
             </p>
           </div>
 
-          {/* Currency */}
-          <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-foreground">
-              {t("accounts.currency", "Currency")}
-            </label>
-            <Select value={currencyBase} onValueChange={setCurrencyBase}>
-              <SelectTrigger className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SUPPORTED_CURRENCIES.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    <span className="tabular-nums">{c.code}</span>
-                    <span className="text-muted-foreground ml-2">{c.symbol} — {c.name}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Account number */}
-          <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-foreground">
-              {t("accounts.accountNumber", "Account number")}{" "}
-              <span className="font-normal text-muted-foreground">
-                ({tp("accounts.optional", "optional")})
-              </span>
-            </label>
-            <Input
-              placeholder={t("accounts.accountNumberPlaceholder", "For your reference only")}
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
-            />
+          {/* Currency + Account number — two-column on wider screens */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                {t("accounts.currency", "Currency")}
+              </label>
+              <Select value={currencyBase} onValueChange={setCurrencyBase}>
+                <SelectTrigger className={cn(inputClass, "[&>svg]:opacity-40")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_CURRENCIES.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      <span className="tabular-nums">{c.code}</span>
+                      <span className="text-muted-foreground ml-2">{c.symbol} — {c.name}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                {t("accounts.accountNumber", "Account number")}{" "}
+                <span className="text-muted-foreground/60">
+                  ({tp("accounts.optional", "optional")})
+                </span>
+              </label>
+              <Input
+                placeholder={t("accounts.accountNumberPlaceholder", "For your reference only")}
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className={inputClass}
+              />
+            </div>
           </div>
 
           {/* Color */}
           <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-foreground">
+            <label className="text-[13px] font-medium text-muted-foreground">
               {tp("accounts.color", "Color")}
             </label>
             <div className="rounded-2xl bg-muted p-4 space-y-2.5">
@@ -283,7 +304,7 @@ export function AccountFormDialog({
 
           {/* Hidden from dashboard */}
           <div className="flex items-center justify-between rounded-xl bg-muted p-4">
-            <label className="text-[13px] font-semibold text-foreground">
+            <label className="text-[13px] font-medium text-foreground">
               {t("accounts.hiddenFromDashboard", "Hidden from dashboard")}
             </label>
             <Switch
@@ -291,8 +312,26 @@ export function AccountFormDialog({
               onCheckedChange={setHiddenFromDashboard}
             />
           </div>
-        </>
-      )}
-    </SheetPanel>
+        </div>
+
+        <DialogFooter className="px-6 pb-6 pt-2 flex-row gap-3 sm:gap-3">
+          <Button
+            variant="outline"
+            className="flex-1 h-11 rounded-full"
+            onClick={() => onOpenChange(false)}
+          >
+            {t("accounts.cancel", "Cancel")}
+          </Button>
+          <Button
+            className="flex-1 h-11 rounded-full font-semibold"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+          >
+            {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {mode === "create" ? tp("accounts.create", "Create") : tp("accounts.save", "Save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
