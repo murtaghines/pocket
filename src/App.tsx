@@ -15,11 +15,12 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Calendar = lazy(() => import("./pages/Calendar"));
 const Investments = lazy(() => import("./pages/Investments"));
+const Planning = lazy(() => import("./pages/Planning"));
+const Budgets = lazy(() => import("./pages/Budgets"));
 const Account = lazy(() => import("./pages/Account"));
 const MyData = lazy(() => import("./pages/MyData"));
-const Planning = lazy(() => import("./pages/Planning"));
-const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -117,7 +118,7 @@ const App = () => (
             <Route path="/total" element={<Navigate to="/dashboard?tab=history" replace />} />
             <Route path="/calendar" element={
               <ProtectedRoute>
-                <ComingSoon title="Calendar" subtitle="A monthly view of your activity" />
+                <Calendar />
               </ProtectedRoute>
             } />
             <Route path="/planning" element={
@@ -125,8 +126,13 @@ const App = () => (
                 <Planning />
               </ProtectedRoute>
             } />
-            <Route path="/planning/planned" element={<Navigate to="/planning?tab=planned" replace />} />
-            <Route path="/planning/budgets" element={<Navigate to="/planning?tab=budgets" replace />} />
+            <Route path="/planning/planned" element={<Navigate to="/planning" replace />} />
+            <Route path="/planning/budgets" element={<Navigate to="/budgets" replace />} />
+            <Route path="/budgets" element={
+              <ProtectedRoute>
+                <Budgets />
+              </ProtectedRoute>
+            } />
             <Route path="/investments" element={
               <ProtectedRoute>
                 <Investments />

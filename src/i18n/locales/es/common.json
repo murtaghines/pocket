@@ -33,8 +33,10 @@
   "required": "Requerido",
   "navigation": {
     "dashboard": "Panel",
+    "calendar": "Calendario",
     "investments": "Inversiones",
     "planning": "Planificación",
+    "budgets": "Presupuestos",
     "data": "Datos",
     "account": "Cuenta",
     "settings": "Configuración",
@@ -45,13 +47,13 @@
         "history": "Histórico"
       },
       "planning": {
-        "planned": "Pagos planificados",
-        "budgets": "Presupuestos"
+        "planned": "Pagos planificados"
       },
       "data": {
-        "bank": "Extractos",
+        "transactions": "Transacciones",
         "investments": "Archivos de inversión",
-        "categories": "Categorías"
+        "categories": "Categorías y reglas",
+        "accounts": "Cuentas"
       }
     }
   },

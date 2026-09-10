@@ -33,8 +33,10 @@
   "required": "Required",
   "navigation": {
     "dashboard": "Dashboard",
+    "calendar": "Calendar",
     "investments": "Investments",
     "planning": "Planning",
+    "budgets": "Budgets",
     "data": "Data",
     "account": "Account",
     "settings": "Settings",
@@ -45,13 +47,13 @@
         "history": "History"
       },
       "planning": {
-        "planned": "Planned payments",
-        "budgets": "Budgets"
+        "planned": "Planned payments"
       },
       "data": {
-        "bank": "Bank statements",
+        "transactions": "Transactions",
         "investments": "Investment files",
-        "categories": "Categories"
+        "categories": "Categories & rules",
+        "accounts": "Accounts"
       }
     }
   },

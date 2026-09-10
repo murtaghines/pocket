@@ -1,11 +1,11 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
-import { PlannedTab } from "@/components/planning/PlannedTab";
+import { BudgetsTab } from "@/components/planning/BudgetsTab";
 
-export default function Planning() {
+export default function Budgets() {
   return (
     <DashboardLayout>
-      <PlannedTab />
+      <BudgetsTab />
       <DashboardFooter />
     </DashboardLayout>
   );

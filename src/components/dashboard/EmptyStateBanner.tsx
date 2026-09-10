@@ -24,7 +24,7 @@ export function EmptyStateBanner({ hasData }: EmptyStateBannerProps) {
         {t('welcome.bannerMessage', 'Start by uploading your first bank statement to see your finances.')}
       </p>
       <button
-        onClick={() => navigate('/my-data?tab=bank')}
+        onClick={() => navigate('/my-data')}
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02] hover:bg-primary/90 active:scale-[0.98]"
       >
         <span>{t('welcome.uploadButton', 'Upload file')}</span>
