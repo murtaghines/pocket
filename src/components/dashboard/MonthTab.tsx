@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, Loader2, Wallet, TrendingUp } from "lucide-react";
+import { Plus, Minus, Wallet, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
@@ -168,21 +169,13 @@ export function MonthTab() {
 
       <main className="w-full">
 
-        {(isLoading || isDashLoading || prefsLoading || agg.isLoading) && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
+        {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
+          <p className="mb-5 text-sm tabular-nums text-muted-foreground md:hidden">
+            {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+          </p>
         )}
 
-        {!isLoading && !isDashLoading && !prefsLoading && !agg.isLoading && (
-          <>
-            {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
-              <p className="mb-5 text-sm tabular-nums text-muted-foreground md:hidden">
-                {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
-              </p>
-            )}
-
-            <div className="flex flex-col gap-[14px]">
+        <div className={cn("flex flex-col gap-[14px] transition-opacity duration-300", (isLoading || isDashLoading || prefsLoading || agg.isLoading) ? "opacity-0" : "opacity-100")}>
               {/* KPI row — 5 cards, split to align with chart grid below */}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
                 <div className="contents lg:grid lg:grid-cols-3 lg:gap-[12px]">
@@ -247,7 +240,7 @@ export function MonthTab() {
               </div>
 
               {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[340px] gap-[14px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[300px] gap-[14px]">
                 <WeeklyIncomeExpensesChart weekly={agg.subBreakdown as WeeklyPoint[]} />
                 <AccountsStackCard
                   startDate={range?.start}
@@ -302,9 +295,7 @@ export function MonthTab() {
                 />
                 </div>
               </div>
-            </div>
-          </>
-        )}
+        </div>
       </main>
     </>
   );

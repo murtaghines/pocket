@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, Loader2, Wallet, TrendingUp } from "lucide-react";
+import { Plus, Minus, Wallet, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
@@ -103,14 +104,7 @@ export function WeekTab() {
 
   return (
     <main className="w-full">
-      {(isLoading || isDashLoading || prefsLoading || agg.isLoading) && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {!isLoading && !isDashLoading && !prefsLoading && !agg.isLoading && (
-        <div className="flex flex-col gap-[14px]">
+      <div className={cn("flex flex-col gap-[14px] transition-opacity duration-300", (isLoading || isDashLoading || prefsLoading || agg.isLoading) ? "opacity-0" : "opacity-100")}>
           {/* KPI row — 5 cards, split to align with chart grid below */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
             <div className="contents lg:grid lg:grid-cols-3 lg:gap-[12px]">
@@ -176,7 +170,7 @@ export function WeekTab() {
           </div>
 
           {/* Row 2: income vs expenses breakdown + accounts */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[340px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[300px] gap-[14px]">
             <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byDayThisWeek", "By day · this week")} />
             <AccountsStackCard
               startDate={range?.start}
@@ -218,8 +212,7 @@ export function WeekTab() {
               <TransactionTable transactions={transactions} />
             </div>
           </div>
-        </div>
-      )}
+      </div>
     </main>
   );
 }
