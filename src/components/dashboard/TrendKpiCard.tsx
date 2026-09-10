@@ -25,14 +25,14 @@ interface TrendKpiCardProps {
 const DOT_COLORS: Record<TrendKind, string> = {
   income: "bg-success",
   expense: "bg-destructive",
-  balance: "bg-white",
+  balance: "bg-primary",
   invest: "bg-primary",
 };
 
 const LABEL_COLORS: Record<TrendKind, string> = {
   income: "text-success",
   expense: "text-destructive",
-  balance: "text-white",
+  balance: "text-primary",
   invest: "text-primary",
 };
 
@@ -70,11 +70,7 @@ export function TrendKpiCard({
     return new Intl.DateTimeFormat(i18n.language || "en", { month: "long" }).format(d).toLowerCase();
   }, [monthKey, previousMonthKey, previousPeriodLabel, i18n.language]);
 
-  const isBalance = kind === "balance";
-
-  const deltaColor = isBalance
-    ? "text-white"
-    : change === undefined
+  const deltaColor = change === undefined
     ? "text-muted-foreground"
     : isGoodChange
     ? "text-success"
@@ -82,13 +78,13 @@ export function TrendKpiCard({
     ? "text-primary"
     : "text-destructive";
 
-  const valueColor = isBalance ? "text-white" : "text-foreground";
+  const valueColor = "text-foreground";
 
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-xl p-[14px_14px] md:p-[16px_18px] shadow-section",
-        isBalance ? "bg-primary/90" : "bg-card",
+        "flex h-full flex-col rounded-xl p-[14px_14px] md:p-[16px_18px] shadow-section lg:h-[120px] overflow-hidden",
+        "bg-card",
         className,
       )}
       style={{ animationDelay: `${delay}ms` }}
@@ -103,13 +99,13 @@ export function TrendKpiCard({
       <div className="mt-auto">
         <div
           className={cn(
-            "text-[18px] md:text-[22px] font-semibold tracking-[-0.025em] tabular-nums leading-none",
+            "text-[18px] md:text-[22px] font-medium tracking-[-0.025em] tabular-nums leading-none",
             valueColor,
           )}
         >
           {formatCurrency(total)}
         </div>
-        <div className={cn("text-[12.5px] mt-[5px]", isBalance ? "text-white/70" : "text-muted-foreground")}>
+        <div className="text-[12.5px] mt-[5px] text-muted-foreground truncate">
           {change !== undefined ? (
             <>
               <span className={cn("font-medium", deltaColor)}>
