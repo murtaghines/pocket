@@ -83,7 +83,7 @@ export function TrendKpiCard({
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-xl p-[14px_14px] md:p-[16px_18px] shadow-section lg:h-[120px] overflow-hidden",
+        "flex h-full flex-col rounded-xl p-[14px_14px] md:p-[16px_18px] shadow-section lg:h-[110px] overflow-hidden",
         "bg-card",
         className,
       )}
