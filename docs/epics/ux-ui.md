@@ -4,7 +4,10 @@
 - .claude/rules/design-system.md (design system — source of truth, always loaded)
 - src/components/ui/* (shadcn primitives)
 - src/components/brand/* (AsteriskMark, Wordmark, Logo — never hand-assemble the logo)
-- src/components/layout/* (DashboardSidebar, DataRail, DashboardLayout, MobileBottomNav, ThemeToggle)
+- src/components/layout/* (AppHeader, PrimaryNavBar, SecondaryNavBar, DashboardLayout,
+  DashboardGreeting, Sidebar, BalanceBand, MobileNav, HeaderUserMenu, HeaderMonthSelector,
+  HeaderWeekSelector, HeaderYearSelector, HeaderGranularitySelector, ThemeToggle)
+- src/config/navigation.ts (NAV_SECTIONS — single source of truth for nav structure)
 
 ## Current state
 Design system documented and applied. This epic never "finishes": it's used for

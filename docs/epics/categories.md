@@ -1,7 +1,7 @@
 # Epic: Categories & rules
 
 ## Main files
-- src/pages/Categories.tsx
+- Categories UI is a tab in MyData (`/my-data?tab=categories`), not a standalone page
 - src/components/settings/: CategoriesEditor, CategoryRulesList, AddRuleDialog,
   CreateCategoryDialog, ColorIconPicker, AccountsManager, PreferencesForm
   (`CustomCategoriesManager` never existed — a stale reference removed from this list
