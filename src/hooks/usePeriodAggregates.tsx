@@ -50,6 +50,9 @@ interface UsePeriodAggregatesArgs {
   prevEndDate?: string;
   granularity: Granularity;
   convert?: (n: number) => number;
+  periodMonth?: string | null;
+  periodWeek?: string | null;
+  periodYear?: number | null;
 }
 
 export interface PeriodAggregates {
@@ -192,13 +195,16 @@ export function usePeriodAggregates({
   prevEndDate,
   granularity,
   convert: convertFn,
+  periodMonth,
+  periodWeek,
+  periodYear,
 }: UsePeriodAggregatesArgs): PeriodAggregates {
   const { user } = useAuth();
 
   const enabled = !!user && !!startDate && !!endDate;
 
   const { data: agg, isLoading } = useQuery({
-    queryKey: ["dashboard-aggregates", user?.id, domain, startDate, endDate, prevStartDate, prevEndDate],
+    queryKey: ["dashboard-aggregates", user?.id, domain, startDate, endDate, prevStartDate, prevEndDate, periodMonth, periodWeek, periodYear],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_dashboard_aggregates" as any, {
         p_user_id: user!.id,
@@ -207,6 +213,9 @@ export function usePeriodAggregates({
         p_end_date: endDate!,
         p_prev_start: prevStartDate ?? null,
         p_prev_end: prevEndDate ?? null,
+        p_month: periodMonth ?? null,
+        p_week: periodWeek ?? null,
+        p_year: periodYear ?? null,
       });
       if (error) throw error;
       return data as unknown as DashboardAggregatesResponse;

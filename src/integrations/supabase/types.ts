@@ -759,9 +759,12 @@ export type Database = {
           domain: Database["public"]["Enums"]["app_domain"] | null
           expenses: number | null
           income: number | null
+          month: string | null
           sent_to_invest: number | null
           tx_count: number | null
           user_id: string | null
+          week: string | null
+          year: number | null
         }
         Relationships: []
       }
@@ -866,17 +869,32 @@ export type Database = {
           tx_count: number
         }[]
       }
-      get_dashboard_aggregates: {
-        Args: {
-          p_domain: Database["public"]["Enums"]["app_domain"]
-          p_end_date: string
-          p_prev_end?: string
-          p_prev_start?: string
-          p_start_date: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      get_dashboard_aggregates:
+        | {
+            Args: {
+              p_domain: Database["public"]["Enums"]["app_domain"]
+              p_end_date: string
+              p_prev_end?: string
+              p_prev_start?: string
+              p_start_date: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_domain: Database["public"]["Enums"]["app_domain"]
+              p_end_date: string
+              p_month?: string
+              p_prev_end?: string
+              p_prev_start?: string
+              p_start_date: string
+              p_user_id: string
+              p_week?: string
+              p_year?: number
+            }
+            Returns: Json
+          }
       get_dashboard_summary: {
         Args: {
           p_domain: Database["public"]["Enums"]["app_domain"]
