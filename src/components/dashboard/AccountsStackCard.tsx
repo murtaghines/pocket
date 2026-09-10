@@ -149,10 +149,10 @@ export function AccountsStackCard({
   return (
     <>
       <div
-        className="bg-card rounded-xl p-[20px_22px_18px] h-full shadow-section"
+        className="bg-card rounded-xl p-[20px_22px_18px] h-full shadow-section flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 shrink-0">
           <div>
             <p className="text-[15px] font-heading font-bold text-foreground">
               {t('charts.accounts', 'Accounts')}
@@ -175,7 +175,7 @@ export function AccountsStackCard({
         {orderedAccounts.length === 0 ? (
           <EmptyState height="h-[160px]" />
         ) : (
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
             {orderedAccounts.map((acc, idx) => {
               const TypeIcon = getAccountTypeIcon(acc.accountType);
               return (
