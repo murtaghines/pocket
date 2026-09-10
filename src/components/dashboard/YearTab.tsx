@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Minus, Loader2, Wallet, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Minus, Wallet, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
@@ -154,14 +155,7 @@ export function YearTab() {
 
   return (
     <main className="w-full">
-      {(isLoading || isDashLoading || prefsLoading || agg.isLoading) && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {!isLoading && !isDashLoading && !prefsLoading && !agg.isLoading && (
-        <div className="flex flex-col gap-[14px]">
+      <div className={cn("flex flex-col gap-[14px] transition-opacity duration-300", (isLoading || isDashLoading || prefsLoading || agg.isLoading) ? "opacity-0" : "opacity-100")}>
           {/* Row 1: KPIs */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
             <div className="contents lg:grid lg:grid-cols-3 lg:gap-[12px]">
@@ -227,7 +221,7 @@ export function YearTab() {
           </div>
 
           {/* Row 2: Evolution by month + Accounts (year-end balance) */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[340px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[300px] gap-[14px]">
             <PeriodBreakdownChart
               points={breakdownPoints}
               subtitle={t("charts.byMonthThisYear", "By month · this year")}
@@ -320,8 +314,7 @@ export function YearTab() {
               </div>
             )}
           </div>
-        </div>
-      )}
+      </div>
     </main>
   );
 }
