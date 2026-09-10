@@ -46,15 +46,15 @@ export function SavingsRateRingCard({
   }, [monthKey, previousPeriodLabel, i18n.language]);
 
   return (
-    <div className="flex h-full items-center gap-[10px] md:gap-[14px] rounded-xl bg-accent p-[14px_14px] md:p-[16px_18px] shadow-section">
+    <div className="flex h-full items-center gap-[10px] md:gap-[14px] rounded-xl bg-accent p-[14px_14px] md:p-[16px_18px] shadow-section lg:h-[120px] overflow-hidden">
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-medium text-primary mb-[14px]">
           {t("stats.savingsRate")}
         </div>
-        <div className="text-[18px] md:text-[22px] font-semibold tracking-[-0.025em] tabular-nums leading-none text-primary">
+        <div className="text-[18px] md:text-[22px] font-medium tracking-[-0.025em] tabular-nums leading-none text-primary">
           {rate}%
         </div>
-        <div className="text-[12.5px] text-muted-foreground mt-[5px]">
+        <div className="text-[12.5px] text-muted-foreground mt-[5px] truncate">
           {change !== undefined ? (
             <>
               <span className="font-medium text-primary">{change > 0 ? "+" : ""}{change}%</span>{" "}

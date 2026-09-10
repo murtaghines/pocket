@@ -83,7 +83,7 @@ export function TrendKpiCard({
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-xl p-[14px_14px] md:p-[16px_18px] shadow-section",
+        "flex h-full flex-col rounded-xl p-[14px_14px] md:p-[16px_18px] shadow-section lg:h-[120px] overflow-hidden",
         "bg-card",
         className,
       )}
@@ -105,7 +105,7 @@ export function TrendKpiCard({
         >
           {formatCurrency(total)}
         </div>
-        <div className="text-[12.5px] mt-[5px] text-muted-foreground">
+        <div className="text-[12.5px] mt-[5px] text-muted-foreground truncate">
           {change !== undefined ? (
             <>
               <span className={cn("font-medium", deltaColor)}>
