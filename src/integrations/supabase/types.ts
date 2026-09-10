@@ -492,6 +492,7 @@ export type Database = {
           id: string
           import_id: string | null
           is_hidden: boolean
+          month: string | null
           movement: Database["public"]["Enums"]["movement_type"]
           original_description: string | null
           period_id: string | null
@@ -502,6 +503,8 @@ export type Database = {
           user_corrected: boolean | null
           user_id: string
           user_notes: string | null
+          week: string | null
+          year: number | null
         }
         Insert: {
           account_id?: string | null
@@ -524,6 +527,7 @@ export type Database = {
           id?: string
           import_id?: string | null
           is_hidden?: boolean
+          month?: string | null
           movement: Database["public"]["Enums"]["movement_type"]
           original_description?: string | null
           period_id?: string | null
@@ -534,6 +538,8 @@ export type Database = {
           user_corrected?: boolean | null
           user_id: string
           user_notes?: string | null
+          week?: string | null
+          year?: number | null
         }
         Update: {
           account_id?: string | null
@@ -556,6 +562,7 @@ export type Database = {
           id?: string
           import_id?: string | null
           is_hidden?: boolean
+          month?: string | null
           movement?: Database["public"]["Enums"]["movement_type"]
           original_description?: string | null
           period_id?: string | null
@@ -566,6 +573,8 @@ export type Database = {
           user_corrected?: boolean | null
           user_id?: string
           user_notes?: string | null
+          week?: string | null
+          year?: number | null
         }
         Relationships: [
           {
