@@ -329,6 +329,17 @@
     "filter": "Filters",
     "openingBalanceSubtitle": "Opening balance {{amount}} · {{count}} transactions"
   },
+  "band": {
+    "totalBalance": "Total balance",
+    "accounts": "accounts",
+    "openingBalance": "Opening balance",
+    "movements": "movements",
+    "period": {
+      "month": "month",
+      "week": "week",
+      "year": "year"
+    }
+  },
   "monthlySpending": {
     "title": "Spending by month",
     "avgPerMonth": "Monthly average"

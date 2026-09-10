@@ -298,6 +298,17 @@
     "filter": "Filtros",
     "openingBalanceSubtitle": "Balance inicial {{amount}} · {{count}} movimientos"
   },
+  "band": {
+    "totalBalance": "Saldo total",
+    "accounts": "cuentas",
+    "openingBalance": "Saldo inicial",
+    "movements": "movimientos",
+    "period": {
+      "month": "mes",
+      "week": "semana",
+      "year": "año"
+    }
+  },
   "monthlySpending": {
     "title": "Gasto por mes",
     "avgPerMonth": "Promedio mensual"
