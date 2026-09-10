@@ -1,4 +1,4 @@
-import { House, PiggyBank, Target, Database, type LucideIcon } from "lucide-react";
+import { House, CalendarDays, PiggyBank, Target, Wallet, Database, type LucideIcon } from "lucide-react";
 
 export interface NavSubTab {
   /** Value used in the `?tab=` search param. */
@@ -23,7 +23,7 @@ export interface NavSection {
 }
 
 /**
- * Single source of truth for the app's top-level navigation: the primary bar's 4 sections and
+ * Single source of truth for the app's top-level navigation: the primary bar's 6 sections and
  * each one's secondary-bar sub-tabs. Consumed by PrimaryNavBar, SecondaryNavBar and MobileNav so
  * there's exactly one place that knows the site's information architecture.
  */
@@ -37,9 +37,17 @@ export const NAV_SECTIONS: NavSection[] = [
     defaultTab: "month",
     subTabs: [
       { key: "month", i18nKey: "granularity.month", ns: "dashboard" },
+      { key: "week", i18nKey: "granularity.week", ns: "dashboard" },
       { key: "year", i18nKey: "granularity.year", ns: "dashboard" },
       { key: "history", i18nKey: "navigation.tabs.dashboard.history" },
     ],
+  },
+  {
+    key: "calendar",
+    path: "/calendar",
+    i18nKey: "navigation.calendar",
+    icon: CalendarDays,
+    match: ["/calendar"],
   },
   {
     key: "investments",
@@ -54,11 +62,13 @@ export const NAV_SECTIONS: NavSection[] = [
     i18nKey: "navigation.planning",
     icon: Target,
     match: ["/planning"],
-    defaultTab: "planned",
-    subTabs: [
-      { key: "planned", i18nKey: "navigation.tabs.planning.planned" },
-      { key: "budgets", i18nKey: "navigation.tabs.planning.budgets" },
-    ],
+  },
+  {
+    key: "budgets",
+    path: "/budgets",
+    i18nKey: "navigation.budgets",
+    icon: Wallet,
+    match: ["/budgets"],
   },
   {
     key: "data",
@@ -66,11 +76,12 @@ export const NAV_SECTIONS: NavSection[] = [
     i18nKey: "navigation.data",
     icon: Database,
     match: ["/my-data", "/categories"],
-    defaultTab: "bank",
+    defaultTab: "transactions",
     subTabs: [
-      { key: "bank", i18nKey: "navigation.tabs.data.bank" },
+      { key: "transactions", i18nKey: "navigation.tabs.data.transactions" },
       { key: "investments", i18nKey: "navigation.tabs.data.investments" },
       { key: "categories", i18nKey: "navigation.tabs.data.categories" },
+      { key: "accounts", i18nKey: "navigation.tabs.data.accounts" },
     ],
   },
 ];
