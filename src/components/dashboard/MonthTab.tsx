@@ -85,6 +85,7 @@ export function MonthTab() {
     prevEndDate: prevRange?.end,
     granularity: "month",
     convert: convertToUserCurrency,
+    periodMonth: latestMonthLabel,
   });
 
   // Sync month state into the layout header

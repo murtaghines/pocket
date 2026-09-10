@@ -79,10 +79,11 @@ export function YearTab() {
     prevEndDate: prevRange?.end,
     granularity: "year",
     convert: convertToUserCurrency,
+    periodYear: selectedYear ? Number(selectedYear) : null,
   });
 
   const { data: sankeyAccountFlows = [] } = useQuery({
-    queryKey: ["year-account-flows", user?.id, range?.start, range?.end],
+    queryKey: ["year-account-flows", user?.id, selectedYear],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
@@ -90,8 +91,7 @@ export function YearTab() {
         .eq("user_id", user!.id)
         .eq("domain", "CASHFLOW")
         .eq("is_hidden", false)
-        .gte("date", range!.start)
-        .lte("date", range!.end)
+        .eq("year", Number(selectedYear))
         .neq("movement", "TRANSFER");
       if (error) throw error;
       const accMap = new Map<string, { name: string; income: number; expenses: number }>();
@@ -112,7 +112,7 @@ export function YearTab() {
         .filter((a) => a.income > 0 || a.expenses > 0)
         .sort((a, b) => (b.income + b.expenses) - (a.income + a.expenses));
     },
-    enabled: !!user && !!range?.start && !!range?.end,
+    enabled: !!user && !!selectedYear,
     staleTime: 30_000,
   });
 
