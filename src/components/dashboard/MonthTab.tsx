@@ -247,7 +247,7 @@ export function MonthTab() {
               </div>
 
               {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[400px] gap-[14px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[340px] gap-[14px]">
                 <WeeklyIncomeExpensesChart weekly={agg.subBreakdown as WeeklyPoint[]} />
                 <AccountsStackCard
                   startDate={range?.start}
@@ -258,7 +258,7 @@ export function MonthTab() {
               </div>
 
               {/* Row 3: Daily balance chart (wide) + Daily view heatmap (with stats, in its square) */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[400px] gap-[14px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[340px] gap-[14px]">
                 <DailyFlowChart
                   dailyTotals={agg.dailyTotals}
                   monthKey={latestMonthLabel}
@@ -272,13 +272,13 @@ export function MonthTab() {
               </div>
 
               {/* Row 4: Income by category (blue, 1fr) + Spending by category (1.62fr) */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[400px] gap-[14px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[340px] gap-[14px]">
                 <CategoryChart data={agg.incomeCategoryData} />
                 <SpendingByCategoryChart data={agg.expenseCategoryData} />
               </div>
 
               {/* Row 5: Monthly flow Sankey (1.62fr) + Top expenses (1fr) */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.62fr_1fr] lg:h-[400px] gap-[14px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.62fr_1fr] lg:h-[340px] gap-[14px]">
                 <MonthlyFlowSankey
                   incomeCategories={agg.incomeCategoryData}
                   expenseCategories={agg.expenseCategoryData}
