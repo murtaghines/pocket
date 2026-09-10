@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Minus, Wallet, TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
@@ -175,7 +174,7 @@ export function MonthTab() {
           </p>
         )}
 
-        <div className={cn("flex flex-col gap-[14px] transition-opacity duration-300", (isLoading || isDashLoading || prefsLoading || agg.isLoading) ? "opacity-0" : "opacity-100")}>
+        <div className="flex flex-col gap-[14px]">
               {/* KPI row — 5 cards, split to align with chart grid below */}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
                 <div className="contents lg:grid lg:grid-cols-3 lg:gap-[12px]">
