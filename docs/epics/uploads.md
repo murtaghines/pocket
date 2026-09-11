@@ -7,9 +7,9 @@
   the actual review/edit table lives inline in BankStatementsTabsView)
 - Hooks: useImports, useMonthlyFileUpload, useMonthlyInvestmentUpload
 - src/lib/excelParser.ts
-- Edge functions: process-import, process-financial-file (dead, slated for deletion),
-  process-investment-file, check-data-integrity. (`apply-rules-retroactive` and
-  `fix-categorization` deleted 2026-07-07 — see Fase 4 notes below.)
+- Edge functions: process-import, process-investment-file, check-data-integrity.
+  (`process-financial-file` deleted 2026-07-06; `apply-rules-retroactive` and
+  `fix-categorization` deleted 2026-07-07 — see Fase 2/4 notes below.)
 - Shared module: supabase/functions/_shared/categorizer.ts (categorization engine — not
   a deployed function), _shared/userRules.ts (Deno-side copy of src/lib/userRules.ts,
   added 2026-07-11), _shared/categoryMap.ts, _shared/fingerprint.ts

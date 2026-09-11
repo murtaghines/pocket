@@ -268,14 +268,15 @@ single `src/config/navigation.ts` `NAV_SECTIONS` config — never hand-roll a na
 - Includes `EmptyStateBanner` and `GranularityToggle` (history tab) inline
 - Bottom padding `pb-5` for breathing room before KPI cards
 
-**All three dashboard tabs (Month, Week, Year) share the same 6-row layout:**
-- Row 1: KPIs (income, expenses, net balance, savings rate)
-- Row 2: Income vs expenses chart (1.55fr) + AccountsStackCard (1fr)
-- Row 3: DailyFlowChart (1.55fr) + DailyHeatmapCard (1fr)
-- Row 4: SpendingByCategoryChart (1.55fr) + TopExpensesCard (1fr)
-- Row 5: FixedVsDiscretionaryCard + CategoryChart (1:1)
+**All three dashboard tabs (Month, Week, Year) share a common row structure:**
+- Row 1: KPIs (income, expenses, net balance, savings rate, sent to invest)
+- Row 2: Period breakdown chart (1.55fr) + AccountsStackCard (1fr)
+- Row 3: Flow chart (1.55fr) + Heatmap or spending card (1fr)
+- Row 4: CategoryChart (1fr) + SpendingByCategoryChart (1.62fr)
+- Row 5: FixedVsDiscretionaryCard + TopExpensesCard (1:1)
 - Row 6: TransactionTable
-Only the data granularity changes between tabs.
+YearTab adds a MonthlyFlowSankey row and MonthlyFlowChart/MonthlySpendingCard in row 3.
+Only the data granularity and specific chart variants change between tabs.
 
 **Mobile drawer groups (`bg-primary`):**
 - Group labels: 10px · Inter 600 · white 30% · uppercase · tracking-wide

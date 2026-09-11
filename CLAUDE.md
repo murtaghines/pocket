@@ -9,10 +9,12 @@ Commands:
 - `npm run build` — production build
 
 ## Folder structure
-- `src/pages/` — one page per route: `Index` (=Dashboard, `/dashboard`), `History`,
-  `Investments`, `Planning`, `Account` (user hub at `/account`), `MyData` (uploads hub),
-  `Categories`, `Auth`, `Landing`, `ComingSoon`, `NotFound`. Routes in `App.tsx`. `/profile`
-  redirects to `/account`.
+- `src/pages/` — one page per route: `Dashboard` (`/dashboard`, month/week/year/history tabs),
+  `Calendar`, `Investments`, `Planning`, `Budgets`, `Account` (user hub at `/account`),
+  `MyData` (uploads hub, includes categories + accounts tabs), `Auth`, `Landing`, `ComingSoon`,
+  `NotFound`. Routes in `App.tsx`. `/profile` redirects to `/account`; `/history` redirects to
+  `/dashboard?tab=history`; `/planning/budgets` redirects to `/budgets`.
+  Navigation config lives in `src/config/navigation.ts` (`NAV_SECTIONS`).
 - `src/components/{dashboard,investments,landing,layout,onboarding,settings}/` — components grouped by module
 - `src/components/account/` — account hub tabs: `AccountHeader`, `AccountOverviewTab`,
   `AccountBankAccountsTab`, `AccountPreferencesTab`, `AccountSecurityTab`.

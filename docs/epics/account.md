@@ -52,11 +52,13 @@ Hub is at `/account` with URL-driven tabs (?tab=overview|accounts|preferences|se
 - `user_preferences.locale` — dead; `useLocalization` derives from `country`. Safe to drop.
 
 ## Next steps
-- **Migration pending**: `ALTER TABLE accounts ADD COLUMN hidden_from_dashboard boolean NOT NULL DEFAULT false;`
-  on project `ertwmshiupmickhfbaue`. After applying: regenerate types, hide toggle becomes live.
+- ~~Migration pending for `hidden_from_dashboard`~~ — DONE: column exists, types regenerated,
+  hide toggle is live.
 - Cross-device theme sync: write `user_preferences.theme` on change, read on login
   (currently only localStorage-backed).
 - Drop deprecated DB columns in a future explicit migration.
+- Nav references in decisions below mention DataRail/MobileBottomNav — these were replaced by
+  PrimaryNavBar/SecondaryNavBar/MobileNav in the 2026-09-10 navigation restructure.
 
 ## Decisions made (continued)
 - 2026-07-12: removed dead DB writes from Auth.tsx onboarding: `selected_categories`,

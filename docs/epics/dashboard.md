@@ -1,13 +1,16 @@
 # Epic: Dashboard
 
 ## Main files
-- src/pages/Index.tsx
-- src/components/dashboard/: TrendKpiCard, MonthlyChart, YearlyBalanceChart,
-  CategoryChart, SpendingByCategoryChart, DailyFlowChart, DailyHeatmapCard,
-  IncomeCategoryReferenceCard, TopExpensesCard, AccountsStackCard,
-  InvestmentSummaryCard, TransactionTable, TransactionCardList, TotalView,
-  SavingsRateGaugeCard, EmptyStateBanner
-- Hooks: useTransactions, useMonthSelection, useAccounts
+- src/pages/Dashboard.tsx (tab shell: month/week/year/history via `?tab=`)
+- src/components/dashboard/: MonthTab, WeekTab, YearTab, HistoryTab,
+  DashboardGreeting, TrendKpiCard, SavingsRateRingCard, PeriodBreakdownChart,
+  WeeklyIncomeExpensesChart, DailyFlowChart, DailyHeatmapCard, MonthlyFlowChart,
+  MonthlySpendingCard, MonthlyFlowSankey, CategoryChart, SpendingByCategoryChart,
+  TopExpensesCard, FixedVsDiscretionaryCard, AccountsStackCard,
+  InvestmentSummaryCard, TransactionTable, TransactionCardList, EmptyStateBanner,
+  GranularityToggle
+- Hooks: useTransactions, useMonthSelection, usePeriodSelection, usePeriodAggregates,
+  useDashboardData, useAccounts
 
 ## Current state
 `useTransactions.tsx` already excludes ALL `movement === 'TRANSFER'` rows from
@@ -52,11 +55,26 @@ the dashboard's selected/latest-data month.
   who only ever look at the actual current month — this only fixes historical/demo browsing.
   Files: `src/hooks/useInvestments.tsx`, `src/pages/Investments.tsx`.
 
+## Navigation restructure (2026-09-10)
+Dashboard is now at `/dashboard` with 4 URL-driven tabs (`?tab=month|week|year|history`).
+`/history` and `/total` redirect to `/dashboard?tab=history`. The old `Index.tsx` was replaced
+by `Dashboard.tsx` + per-tab components (`MonthTab`, `WeekTab`, `YearTab`, `HistoryTab`).
+
+Navigation uses a primary bar (PrimaryNavBar) + secondary bar (SecondaryNavBar) read from
+`src/config/navigation.ts`. The dashboard section's sub-tabs are month/week/year/history.
+
+## Period columns optimization (2026-09-10)
+Pre-computed `year`, `month`, `week` columns added to `transactions` (trigger-maintained from
+`date`). `mv_daily_totals` rebuilt with these columns. RPCs (`get_period_series`,
+`get_monthly_series`, `get_dashboard_aggregates`) rewritten to use equality filtering instead
+of `date BETWEEN` when period params are provided. `MonthTab` passes `periodMonth`, `YearTab`
+passes `periodYear`; `WeekTab` falls back to date range (ISO week format mismatch with
+frontend's Monday-date format).
+
+Migrations: `20260910160000_add_transaction_period_columns.sql` (columns + trigger + backfill),
+`20260910170000_optimize_period_columns_and_indexes.sql` (fix index collision + MV rebuild +
+RPC rewrites).
+
 ## Next step
-- Consider whether Net Balance should get a breakdown/tooltip distinguishing "idle leftover
-  cash" from "money already earmarked to invest" (`balance - sentToInvest`), per the original
-  ask: understanding what's truly idle vs deliberately invested.
-- `useInvestments.tsx`'s "this month" is still not connected to `Index.tsx`'s month selector —
-  if the user picks a different month in the top nav, `/investments` and `InvestmentSummaryCard`
-  won't follow it (they independently pick "latest month with data"). Wiring a real shared
-  month-selector across cashflow and investments is a bigger feature, not a bug fix.
+- Convert WeekTab to use the `week` column once frontend week format is aligned with ISO week
+- Consider wiring `useInvestments.tsx`'s "this month" to the dashboard's period selector

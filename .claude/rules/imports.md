@@ -26,6 +26,6 @@ paths:
   docs/epics/categories.md). Don't skip or merge steps without flagging it
 - `AccountSelectDialog.tsx` (in this folder) creates/picks bank accounts during
   upload — it goes through `useAccounts().createAccount` and the shared
-  `AccountFormDialog`, same as the settings page. See `.claude/rules/settings.md` for
+  `AccountFormDialog`, same as the settings page. See `.claude/rules/account.md` for
   the bank/nickname account model; don't reintroduce a direct
   `supabase.from('accounts').insert()` here

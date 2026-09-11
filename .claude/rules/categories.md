@@ -1,12 +1,12 @@
 ---
 paths:
-  - "src/pages/Categories.tsx"
   - "src/components/settings/**"
   - "src/hooks/useCategories.tsx"
   - "src/hooks/useCustomCategories.tsx"
   - "src/hooks/useCategorizationRules.tsx"
 ---
 # Categories & rules
+- Categories is now a tab within the Data section (`/my-data?tab=categories`), not a standalone page
 - Changes to categorization rules directly affect the imports pipeline
   (`categorizer`, `apply-rules-retroactive`) — see .claude/rules/imports.md
 - Custom category colors: never black, white, income green, expense red, brand
