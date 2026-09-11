@@ -30,7 +30,7 @@ export function WeekTab() {
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
-  const { selectedPeriod, setSelectedPeriod, setAvailablePeriods } = usePeriodSelection();
+  const { selectedPeriod, setSelectedPeriod, setAvailablePeriods, setTransactionCount } = usePeriodSelection();
 
   const userCurrency = preferences?.base_currency || "EUR";
   const convertToUserCurrency = useCallback(
@@ -78,6 +78,10 @@ export function WeekTab() {
       setSelectedPeriod("week", selectedWeek);
     }
   }, [selectedWeek]);
+
+  useEffect(() => {
+    setTransactionCount(transactions.length);
+  }, [transactions.length]);
 
   const previousPeriodLabel = hasPreviousData
     ? formatPeriodLabel(previous.month, "week", i18n.language)
