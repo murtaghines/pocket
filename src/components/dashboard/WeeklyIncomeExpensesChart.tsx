@@ -41,7 +41,7 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
   };
 
   return (
-    <div className="flex h-full flex-col bg-card rounded-xl p-[20px_22px_16px] shadow-section">
+    <div className="flex h-full flex-col bg-card rounded-xl p-3 md:p-5 shadow-section">
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[15px] font-heading font-bold text-foreground leading-tight">

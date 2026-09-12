@@ -62,7 +62,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
   };
 
   return (
-    <div className="bg-card rounded-xl p-[20px_22px_16px] h-full shadow-section flex flex-col overflow-hidden">
+    <div className="bg-card rounded-xl p-3 md:p-5 h-full shadow-section flex flex-col overflow-hidden">
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[15px] font-heading font-bold text-foreground">

@@ -196,7 +196,7 @@ export function MonthlyFlowSankey({
   const hasData = leftNodes.length > 0 || rightNodes.length > 0;
 
   return (
-    <div ref={containerRef} className="bg-card rounded-xl p-[14px_12px_12px] md:p-[20px_22px_18px] shadow-section h-full">
+    <div ref={containerRef} className="bg-card rounded-xl p-3 md:p-5 shadow-section h-full">
       <p className="text-[15px] font-heading font-bold text-foreground mb-1">
         {t("charts.monthlyFlow", "Monthly flow")}
       </p>

@@ -44,7 +44,7 @@ export function MonthlyChart({ data, granularity = "month" }: MonthlyChartProps)
 
   return (
     <div
-      className="bg-card rounded-xl p-[20px_22px_18px] shadow-section border border-border"
+      className="bg-card rounded-xl p-3 md:p-5 shadow-section border border-border"
     >
       {/* Header row: title + legend */}
       <div className="flex items-start justify-between mb-4">

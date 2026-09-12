@@ -57,7 +57,7 @@ export function HistoryTab() {
           </div>
 
           <div
-            className="bg-card rounded-xl p-[20px_0_6px] shadow-section"
+            className="bg-card rounded-xl pt-3 pb-[6px] md:pt-5 shadow-section"
           >
             <div className="max-h-[700px] overflow-y-auto">
               <TransactionTable
