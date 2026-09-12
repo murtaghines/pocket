@@ -52,7 +52,7 @@ export function DashboardLayout({ children, fullBleed = false }: DashboardLayout
           "w-full relative z-10 flex-1 min-w-0",
           fullBleed
             ? "bg-card flex flex-col min-h-0"
-            : "md:h-dvh md:overflow-y-auto px-4 md:px-0 pt-4 md:pt-0 pb-6 md:pb-0",
+            : "md:h-dvh md:overflow-y-auto pt-2 md:pt-0 pb-6 md:pb-0",
         )}
       >
         {children}

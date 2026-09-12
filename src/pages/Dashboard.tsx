@@ -27,7 +27,7 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       {/* Mobile: keep the old greeting/controls */}
-      <div className="md:hidden px-4 pt-4">
+      <div className="md:hidden px-3 pt-2">
         <DashboardGreeting />
       </div>
 
@@ -35,7 +35,7 @@ export default function Dashboard() {
       <BalanceBand />
 
       {/* Content area with negative margin to overlap KPIs over the band */}
-      <div className="px-4 md:px-[34px] md:mt-[-50px] pb-[32px]">
+      <div className="px-3 md:px-[34px] md:mt-[-50px] pb-[32px]">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsContent value="month" className="mt-0">
             <MonthTab />

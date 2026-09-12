@@ -375,10 +375,10 @@ export function SpendingByCategoryChart({
   return (
     <Card
       variant="bento"
-      className="flex h-full flex-col overflow-hidden rounded-xl border-none shadow-bento"
+      className="flex h-full flex-col overflow-hidden rounded-xl border-none shadow-section"
     >
       <div
-        className="flex items-start justify-between gap-3 px-[22px] pt-[18px] pb-0"
+        className="flex items-start justify-between gap-3 px-3 md:px-[22px] pt-[14px] md:pt-[18px] pb-0"
         style={{ marginBottom: 13 }}
       >
         <div className="min-w-0">
@@ -456,8 +456,8 @@ export function SpendingByCategoryChart({
 
       <div
         ref={containerRef}
-        className="flex-1 mx-[22px] mb-4 relative"
-        style={{ minHeight: 276 }}
+        className="flex-1 mx-3 md:mx-[22px] mb-3 md:mb-4 relative"
+        style={{ minHeight: 240 }}
       >
         {layoutNodes.map((node) => {
           const half = GAP / 2;
