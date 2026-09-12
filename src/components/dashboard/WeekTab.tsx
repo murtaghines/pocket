@@ -210,7 +210,7 @@ export function WeekTab() {
           </div>
 
           {/* Row 6: Transactions table */}
-          <div className="bg-card rounded-xl p-[20px_0_6px] shadow-section">
+          <div className="bg-card rounded-xl pt-3 pb-[6px] md:pt-5 shadow-section">
             <div className="max-h-[700px] overflow-y-auto">
               <TransactionTable transactions={transactions} />
             </div>

@@ -109,7 +109,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
   return (
     <div>
       {/* Header — sticky at scroll-container top */}
-      <div className="flex items-center justify-between gap-4 px-[22px] pb-[14px] sticky top-0 z-20 bg-card">
+      <div className="flex items-center justify-between gap-4 px-3 md:px-5 pb-[14px] sticky top-0 z-20 bg-card">
         <div className="flex flex-col items-start gap-[3px]">
           <h3 className="text-[15px] font-heading font-semibold text-foreground leading-tight">
             {t('transactions.title')}
@@ -139,7 +139,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
       </div>
 
       {/* Mobile: stacked card list */}
-      <div className="md:hidden px-[22px]">
+      <div className="md:hidden px-3">
         <TransactionCardList
           transactions={filteredTransactions}
           emptyLabel={t('transactions.noTransactions')}
@@ -151,13 +151,13 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
         <DataTable className="rounded-none bg-transparent overflow-visible">
           <DataTableHeader className="sticky top-[52px] z-10 [&_th]:bg-muted/50">
             <DataTableRow className="hover:bg-transparent">
-              <DataTableHead type="date" className="w-[96px] pl-[22px]">{t('transactions.date')}</DataTableHead>
+              <DataTableHead type="date" className="w-[96px] pl-5">{t('transactions.date')}</DataTableHead>
               <DataTableHead type="account" className="w-[130px]">{t('transactions.bank', { defaultValue: 'Account' })}</DataTableHead>
               <DataTableHead type="text">{t('transactions.description')}</DataTableHead>
               <DataTableHead type="movement" className="w-[132px]">{t('transactions.type')}</DataTableHead>
               <DataTableHead type="select" className="w-[176px]">{t('transactions.category')}</DataTableHead>
               <DataTableHead type="currency" numeric className="w-[106px]">{t('transactions.amount')}</DataTableHead>
-              <DataTableHead type="number" numeric className="w-[106px] pr-[22px]">{t('transactions.balance', { defaultValue: 'Balance' })}</DataTableHead>
+              <DataTableHead type="number" numeric className="w-[106px] pr-5">{t('transactions.balance', { defaultValue: 'Balance' })}</DataTableHead>
             </DataTableRow>
           </DataTableHeader>
           <DataTableBody>
@@ -174,7 +174,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                 const dotColor = movementDotColor[movementType];
                 return (
                   <DataTableRow key={transaction.id}>
-                    <DataTableCell className="whitespace-nowrap text-[13px] text-muted-foreground tabular-nums pl-[22px]">
+                    <DataTableCell className="whitespace-nowrap text-[13px] text-muted-foreground tabular-nums pl-5">
                       {formatShortDate(transaction.date)}
                     </DataTableCell>
                     <DataTableCell className="text-[12.5px] text-muted-foreground pr-[12px]">
@@ -217,7 +217,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                         ? `${transaction.amount >= 0 ? '+' : '−'}${formatCurrency(Math.abs(transaction.amount))}`
                         : formatCurrency(transaction.amount)}
                     </DataTableCell>
-                    <DataTableCell numeric className="text-[13px] font-normal text-muted-foreground tabular-nums pr-[22px]">
+                    <DataTableCell numeric className="text-[13px] font-normal text-muted-foreground tabular-nums pr-5">
                       {computedBalanceMap.has(transaction.id)
                         ? formatCurrency(computedBalanceMap.get(transaction.id)!)
                         : '—'}
@@ -232,7 +232,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
         {/* Footer — sticky at scroll-container bottom */}
         <div className="sticky bottom-0 z-20 bg-card">
           {filteredTransactions.length > 0 && (
-            <div className="flex items-center justify-between bg-muted/50 border-t border-border px-[22px] py-2.5">
+            <div className="flex items-center justify-between bg-muted/50 border-t border-border px-5 py-2.5">
               <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-success" />

@@ -149,7 +149,7 @@ export function AccountsStackCard({
   return (
     <>
       <div
-        className="bg-card rounded-xl p-[20px_22px_18px] h-full shadow-section flex flex-col overflow-hidden"
+        className="bg-card rounded-xl p-3 md:p-5 h-full shadow-section flex flex-col overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4 shrink-0">
