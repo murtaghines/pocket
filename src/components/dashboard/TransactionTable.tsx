@@ -109,7 +109,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
   return (
     <div>
       {/* Header — sticky at scroll-container top */}
-      <div className="flex items-center justify-between gap-4 px-3 md:px-5 pb-[14px] sticky top-0 z-20 bg-card">
+      <div className="flex items-center justify-between gap-4 px-[14px] md:px-5 pb-[14px] sticky top-0 z-20 bg-card">
         <div className="flex flex-col items-start gap-[3px]">
           <h3 className="text-[15px] font-heading font-semibold text-foreground leading-tight">
             {t('transactions.title')}
@@ -139,7 +139,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
       </div>
 
       {/* Mobile: stacked card list */}
-      <div className="md:hidden px-3">
+      <div className="md:hidden px-[14px]">
         <TransactionCardList
           transactions={filteredTransactions}
           emptyLabel={t('transactions.noTransactions')}

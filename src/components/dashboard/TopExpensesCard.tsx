@@ -34,12 +34,12 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
 
   return (
     <Card variant="bento" className="flex flex-col h-full overflow-hidden">
-      <CardHeader className="px-3 pt-3 pb-2 md:px-5 md:pt-5 shrink-0">
+      <CardHeader className="px-[14px] pt-3 pb-2 md:px-5 md:pt-[18px] shrink-0">
         <CardTitle>
           {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-3 pb-3 pt-0 md:px-5 md:pb-5 flex-1 min-h-0 overflow-y-auto">
+      <CardContent className="px-[14px] pb-3 pt-0 md:px-5 md:pb-[18px] flex-1 min-h-0 overflow-y-auto">
         {topExpenses.map((expense, index) => (
           <div key={expense.id}>
             {index > 0 && <div className="h-px bg-border" />}

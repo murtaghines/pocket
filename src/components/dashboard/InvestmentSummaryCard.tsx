@@ -17,7 +17,7 @@ export function InvestmentSummaryCard() {
 
   return (
     <div
-      className="bg-card rounded-xl p-3 md:p-5 flex flex-col h-full shadow-section"
+      className="bg-card rounded-xl px-[14px] py-3 md:px-5 md:py-[18px] flex flex-col h-full shadow-section"
     >
       {/* Icon + label */}
       <div className="flex items-center gap-3 mb-4">

@@ -207,12 +207,12 @@ export function SpendingByCategoryChart({
   if (!hasData) {
     return (
       <Card variant="bento">
-        <div className="p-3 pb-0 md:p-5 md:pb-0">
+        <div className="px-[14px] pt-3 pb-0 md:px-5 md:pt-[18px] md:pb-0">
           <p className="text-[15px] font-heading font-semibold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
         </div>
-        <div className="px-3 pb-3 md:px-5 md:pb-5">
+        <div className="px-[14px] pb-3 md:px-5 md:pb-[18px]">
           <EmptyState height="h-[276px]" />
         </div>
       </Card>
@@ -378,7 +378,7 @@ export function SpendingByCategoryChart({
       className="flex flex-col overflow-hidden rounded-xl border-none shadow-section lg:h-full"
     >
       <div
-        className="flex items-start justify-between gap-3 px-3 md:px-5 pt-3 md:pt-5 pb-0"
+        className="flex items-start justify-between gap-3 px-[14px] md:px-5 pt-3 md:pt-[18px] pb-0"
         style={{ marginBottom: 13 }}
       >
         <div className="min-w-0">
@@ -456,7 +456,7 @@ export function SpendingByCategoryChart({
 
       <div
         ref={containerRef}
-        className="flex-1 mx-3 md:mx-5 mb-3 md:mb-5 relative"
+        className="flex-1 mx-[14px] md:mx-5 mb-3 md:mb-[18px] relative"
         style={{ minHeight: 300 }}
       >
         {layoutNodes.map((node) => {
