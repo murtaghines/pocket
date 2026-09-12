@@ -117,6 +117,7 @@ export default function Calendar() {
 
   return (
     <DashboardLayout>
+      <div className="px-3 md:px-[34px]">
       <div className="hidden md:flex items-center justify-between py-[18px] sticky top-0 z-30 bg-background">
         <h1 className="text-[21px] font-heading font-semibold text-foreground tracking-[-0.01em] capitalize">
           {monthLabel}
@@ -187,6 +188,7 @@ export default function Calendar() {
             );
           })}
         </div>
+      </div>
       </div>
     </DashboardLayout>
   );

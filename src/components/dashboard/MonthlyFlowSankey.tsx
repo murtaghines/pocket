@@ -179,8 +179,8 @@ export function MonthlyFlowSankey({
       {!hasData ? (
         <EmptyState height="h-[200px]" />
       ) : (
-        <div className="overflow-x-auto -mx-[22px] px-[22px] lg:mx-0 lg:px-0">
-          <div className="min-w-[520px] lg:min-w-0">
+        <div className="overflow-x-auto -mx-[22px] px-[22px] md:mx-0 md:px-0">
+          <div className="min-w-[400px] md:min-w-0">
           <svg
             viewBox={`0 -32 ${SVG_W} ${TARGET_H + 44}`}
             className="w-full"
