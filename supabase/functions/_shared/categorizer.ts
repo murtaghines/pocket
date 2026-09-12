@@ -1020,14 +1020,15 @@ const RULE_BUCKETS: RuleBucket[] = [
   },
 
 
-  // ── income / transfers_in ─────────────────────────────────
-  // Generic incoming Bizum / transfer from a third party.
+  // ── transfer / transfers_in ────────────────────────────────
+  // Generic incoming Bizum / transfer.
   // LOW priority: only fires if no more specific income rule
   // (salary, sales, refunds, rents, gifts…) matched first.
-  // The sign-first guardrail in process-import ensures this
-  // only applies to positive amounts.
+  // Classified as TRANSFER (not INCOME) so it doesn't inflate
+  // income KPIs when money just moves between the user's own
+  // accounts.
   {
-    movement: 'INCOME',
+    movement: 'TRANSFER',
     category: 'transfers_in',
     rules: r([
       'BIZUM\\s*DE\\b',
