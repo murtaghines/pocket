@@ -142,9 +142,11 @@ export function SpendingByCategoryChart({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
-      setContainerSize({ w: width, h: height });
+    const ro = new ResizeObserver(() => {
+      const { width, height } = el.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        setContainerSize({ w: width, h: height });
+      }
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -456,8 +458,7 @@ export function SpendingByCategoryChart({
 
       <div
         ref={containerRef}
-        className="flex-1 mx-[14px] md:mx-5 mb-3 md:mb-[18px] relative"
-        style={{ minHeight: 300 }}
+        className="min-h-[300px] lg:flex-1 mx-[14px] md:mx-5 mb-3 md:mb-[18px] relative"
       >
         {layoutNodes.map((node) => {
           const half = GAP / 2;
