@@ -139,21 +139,26 @@ export function SpendingByCategoryChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const hasData = data.length > 0 && total > 0;
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => {
+    const measure = () => {
       const { width, height } = el.getBoundingClientRect();
       if (width > 0 && height > 0) {
         setContainerSize({ w: width, h: height });
       }
-    });
+    };
+    const raf = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  const hasData = data.length > 0 && total > 0;
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [hasData]);
 
   const entries = useMemo(() => {
     if (total === 0) return [] as TreemapEntry[];
@@ -377,7 +382,7 @@ export function SpendingByCategoryChart({
   return (
     <Card
       variant="bento"
-      className="flex flex-col overflow-hidden rounded-xl border-none shadow-section lg:h-full"
+      className="flex flex-col rounded-xl border-none shadow-section lg:h-full"
     >
       <div
         className="flex items-start justify-between gap-3 px-[14px] md:px-5 pt-3 md:pt-[18px] pb-0"
@@ -458,7 +463,7 @@ export function SpendingByCategoryChart({
 
       <div
         ref={containerRef}
-        className="min-h-[300px] lg:flex-1 mx-[14px] md:mx-5 mb-3 md:mb-[18px] relative"
+        className="min-h-[300px] lg:flex-1 mx-[14px] md:mx-5 mb-3 md:mb-[18px] relative overflow-hidden"
       >
         {layoutNodes.map((node) => {
           const half = GAP / 2;
