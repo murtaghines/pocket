@@ -113,7 +113,7 @@ export const categoryColors: Record<string, string> = {
 const legacySlugMap: Record<string, string> = {
   'investments_income': 'investment',
   'rental_income': 'rents',
-  'transfers_in': 'transfers',
+  'transfers_in': 'own_transfer',
   'gifts_received': 'other_income',
   'sales': 'other_income',
   'gifts_given': 'other_expense',
@@ -177,9 +177,9 @@ export function getMovementLabel(movement: string): string {
 }
 
 // Categories by movement type (for onboarding)
-export const INCOME_CATEGORIES = ['salary', 'refunds', 'transfers', 'other_income', 'investment', 'freelance', 'rents'];
+export const INCOME_CATEGORIES = ['salary', 'refunds', 'other_income', 'investment', 'freelance', 'rents'];
 export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
-export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account'];
+export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'transfers'];
 
 // Default selected categories for new users
 export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'other_income'];
