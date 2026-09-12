@@ -46,7 +46,7 @@ export function SavingsRateRingCard({
   }, [monthKey, previousPeriodLabel, i18n.language]);
 
   return (
-    <div className="flex h-full items-center gap-[10px] md:gap-[14px] rounded-xl bg-accent p-3 md:p-5 shadow-section lg:h-[110px] overflow-hidden">
+    <div className="flex h-full items-center gap-[10px] md:gap-[14px] rounded-xl bg-accent px-[14px] py-3 md:px-5 md:py-[18px] shadow-section lg:h-[110px] overflow-hidden">
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-medium text-primary mb-[14px]">
           {t("stats.savingsRate")}

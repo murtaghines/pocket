@@ -51,7 +51,7 @@ export function NetBalanceCard({
 
   return (
     <div
-      className="flex h-full items-stretch gap-3 rounded-xl bg-primary p-3 md:p-5 text-primary-foreground shadow-glow"
+      className="flex h-full items-stretch gap-3 rounded-xl bg-primary px-[14px] py-3 md:px-5 md:py-[18px] text-primary-foreground shadow-glow"
     >
       {/* Balance */}
       <div className="flex min-w-0 flex-1 flex-col">

@@ -116,7 +116,7 @@ export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySp
   ];
 
   return (
-    <div className="bg-card rounded-xl p-3 md:p-5 h-full shadow-section flex flex-col overflow-hidden">
+    <div className="bg-card rounded-xl px-[14px] py-3 md:px-5 md:py-[18px] h-full shadow-section flex flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 mb-3">
         <p className="text-[15px] font-heading font-bold text-foreground">
           {t("monthlySpending.title", "Spending by month")}

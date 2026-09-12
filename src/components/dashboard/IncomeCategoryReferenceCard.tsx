@@ -74,12 +74,12 @@ export function IncomeCategoryReferenceCard({
   if (!hasData) {
     return (
       <Card variant="bento">
-        <div className="p-3 pb-0 md:p-5 md:pb-0">
+        <div className="px-[14px] pt-3 pb-0 md:px-5 md:pt-[18px] md:pb-0">
           <p className="text-[15px] font-heading font-semibold text-foreground">
             {t("charts.incomeByCategory", "Income by Category")}
           </p>
         </div>
-        <div className="px-3 pb-3 md:px-5 md:pb-5">
+        <div className="px-[14px] pb-3 md:px-5 md:pb-[18px]">
           <EmptyState height="h-[220px]" />
         </div>
       </Card>
@@ -88,13 +88,13 @@ export function IncomeCategoryReferenceCard({
 
   return (
     <Card variant="bento" className="flex h-full flex-col overflow-hidden">
-      <div className="px-3 pt-3 pb-0 md:px-5 md:pt-5">
+      <div className="px-[14px] pt-3 pb-0 md:px-5 md:pt-[18px]">
         <p className="text-[15px] font-heading font-semibold text-foreground">
           {t("charts.incomeByCategory", "Income by Category")}
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-3 pb-3 md:px-5 md:pb-5">
+      <div className="flex-1 flex flex-col items-center justify-center px-[14px] pb-3 md:px-5 md:pb-[18px]">
         <div className="relative w-full" style={{ maxWidth: 180, aspectRatio: "1" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
