@@ -220,7 +220,7 @@ export function YearTab() {
           </div>
 
           {/* Row 2: Evolution by month + Accounts (year-end balance) */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[300px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[280px] gap-[14px]">
             <PeriodBreakdownChart
               points={breakdownPoints}
               subtitle={t("charts.byMonthThisYear", "By month · this year")}
@@ -235,7 +235,7 @@ export function YearTab() {
           </div>
 
           {/* Row 3: Monthly cumulative balance + Spending by month */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[340px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[300px] gap-[14px]">
             <MonthlyFlowChart
               dailyTotals={agg.dailyTotals}
               yearKey={selectedYear}
@@ -249,7 +249,7 @@ export function YearTab() {
           </div>
 
           {/* Row 4: Income by category + Spending by category */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[340px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[300px] gap-[14px]">
             <CategoryChart data={agg.incomeCategoryData} />
             <SpendingByCategoryChart
               data={agg.expenseCategoryData}
@@ -266,7 +266,7 @@ export function YearTab() {
           />
 
           {/* Row 6: Fixed vs discretionary + Top expenses */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:h-[340px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:h-[300px] gap-[14px]">
             <FixedVsDiscretionaryCard split={agg.essentialSplit} />
             <TopExpensesCard topExpenses={agg.topExpenses} />
           </div>

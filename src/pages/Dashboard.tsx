@@ -35,7 +35,7 @@ export default function Dashboard() {
       <BalanceBand />
 
       {/* Content area with negative margin to overlap KPIs over the band */}
-      <div className="px-4 md:px-[34px] md:mt-[-50px] pb-[32px]">
+      <div className="px-4 md:px-[28px] md:mt-[-50px] pb-[24px]">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsContent value="month" className="mt-0">
             <MonthTab />

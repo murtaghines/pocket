@@ -43,7 +43,7 @@ interface LayoutNode extends TreemapEntry {
 type ToggleMode = "weight" | "vs";
 
 const GAP = 5;
-const STRIP_H = 68;
+const STRIP_H = 54;
 
 function squarify(
   items: TreemapEntry[],
@@ -178,10 +178,11 @@ export function SpendingByCategoryChart({
   const categoryCount = entries.length;
 
   const { mainEntries, stripEntries } = useMemo(() => {
+    if (entries.length <= 10) return { mainEntries: entries, stripEntries: [] as TreemapEntry[] };
     const main: TreemapEntry[] = [];
     const strip: TreemapEntry[] = [];
     for (const e of entries) {
-      if (e.weight >= 0.02 && main.length < 6) main.push(e);
+      if (e.weight >= 0.01 && main.length < 10) main.push(e);
       else strip.push(e);
     }
     return { mainEntries: main, stripEntries: strip };
@@ -207,12 +208,12 @@ export function SpendingByCategoryChart({
   if (!hasData) {
     return (
       <Card variant="bento">
-        <div className="p-[18px_22px_16px]">
-          <p className="text-[15px] font-heading font-semibold text-foreground">
+        <div className="p-[16px_22px_16px]">
+          <p className="text-[15px] font-heading font-bold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
         </div>
-        <div className="px-[22px] pb-4">
+        <div className="px-[22px] pb-[20px]">
           <EmptyState height="h-[276px]" />
         </div>
       </Card>
@@ -378,11 +379,11 @@ export function SpendingByCategoryChart({
       className="flex h-full flex-col overflow-hidden rounded-xl border-none shadow-bento"
     >
       <div
-        className="flex items-start justify-between gap-3 px-[22px] pt-[18px] pb-0"
-        style={{ marginBottom: 13 }}
+        className="flex items-start justify-between gap-3 px-[22px] pt-[16px] pb-0"
+        style={{ marginBottom: 10 }}
       >
         <div className="min-w-0">
-          <p className="text-[15px] font-heading font-semibold text-foreground">
+          <p className="text-[15px] font-heading font-bold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
           <p
@@ -456,8 +457,7 @@ export function SpendingByCategoryChart({
 
       <div
         ref={containerRef}
-        className="flex-1 mx-[22px] mb-4 relative"
-        style={{ minHeight: 276 }}
+        className="flex-1 mx-[22px] mb-[20px] relative min-h-0"
       >
         {layoutNodes.map((node) => {
           const half = GAP / 2;

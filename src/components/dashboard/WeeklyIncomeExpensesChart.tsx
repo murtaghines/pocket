@@ -41,8 +41,8 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
   };
 
   return (
-    <div className="flex h-full flex-col bg-card rounded-xl p-[20px_22px_16px] shadow-section">
-      <div className="flex items-start justify-between mb-4">
+    <div className="flex h-full flex-col bg-card rounded-xl p-[16px_22px_20px] shadow-section">
+      <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-[15px] font-heading font-bold text-foreground leading-tight">
             {t("charts.monthlyBalance", "Evolution by week")}
@@ -63,7 +63,7 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
       {!hasData ? (
         <EmptyState height="h-[172px]" />
       ) : (
-        <div className="h-[150px] md:h-[172px] flex-1">
+        <div className="flex-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }} barGap={5} barCategoryGap="28%">
               <XAxis

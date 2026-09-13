@@ -62,8 +62,8 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
   };
 
   return (
-    <div className="bg-card rounded-xl p-[20px_22px_16px] h-full shadow-section flex flex-col overflow-hidden">
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-card rounded-xl p-[16px_22px_20px] h-full shadow-section flex flex-col overflow-hidden">
+      <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-[15px] font-heading font-bold text-foreground">
             {t('charts.dailyBalance', 'Daily balance')}
@@ -85,7 +85,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
       {!hasData ? (
         <EmptyState height="h-[160px]" />
       ) : (
-        <div className="h-[180px] md:h-[220px]">
+        <div className="flex-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={points} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
               <defs>

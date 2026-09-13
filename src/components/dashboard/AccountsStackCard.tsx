@@ -149,10 +149,10 @@ export function AccountsStackCard({
   return (
     <>
       <div
-        className="bg-card rounded-xl p-[20px_22px_18px] h-full shadow-section flex flex-col overflow-hidden"
+        className="bg-card rounded-xl p-[16px_22px_20px] h-full shadow-section flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4 shrink-0">
+        <div className="flex items-center justify-between mb-3 shrink-0">
           <div>
             <p className="text-[15px] font-heading font-bold text-foreground">
               {t('charts.accounts', 'Accounts')}

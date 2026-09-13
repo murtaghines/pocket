@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -23,12 +23,12 @@ interface MonthlyFlowSankeyProps {
   openingBalance?: number;
 }
 
-const BAR_W = 30;
-const BAR_R = 0;
+const BAR_W = 28;
+const BAR_R = 5;
 const SVG_W = 680;
 const LEFT_X = 0;
 const MID_X = 325;
-const RIGHT_X = 650;
+const RIGHT_X = 652;
 const GAP = 8;
 const MIN_H = 8;
 const TARGET_H = 268;
@@ -41,7 +41,11 @@ type Band = {
   dx: number; dy: number; dh: number;
   sColor: string; dColor: string;
   id: string;
+  srcCol: string; srcIdx: number;
+  dstCol: string; dstIdx: number;
 };
+
+type HoveredNode = { column: "left" | "mid" | "right"; index: number } | null;
 
 function buildColumn(items: Array<{ name: string; value: number; color: string }>, x: number): Node[] {
   if (items.length === 0) return [];
@@ -66,6 +70,9 @@ export function MonthlyFlowSankey({
 }: MonthlyFlowSankeyProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
+  const [hoveredNode, setHoveredNode] = useState<HoveredNode>(null);
+  const [tooltipInfo, setTooltipInfo] = useState<{ x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const { leftNodes, midNodes, rightNodes, allBands } = useMemo(() => {
     const leftCats = incomeCategories.filter((c) => c.value > 0).sort((a, b) => b.value - a.value);
@@ -135,6 +142,8 @@ export function MonthlyFlowSankey({
             dx: mn.x, dy: mn.y + midInOffsets[mi], dh,
             sColor: ln.color, dColor: mn.color,
             id: `lm-${li}-${mi}`,
+            srcCol: "left", srcIdx: li,
+            dstCol: "mid", dstIdx: mi,
           });
           leftOffsets[li] += sh;
           midInOffsets[mi] += dh;
@@ -158,6 +167,8 @@ export function MonthlyFlowSankey({
             dx: rn.x, dy: rn.y + rightOffsets[ri], dh,
             sColor: mn.color, dColor: rn.color,
             id: `mr-${mi}-${ri}`,
+            srcCol: "mid", srcIdx: mi,
+            dstCol: "right", dstIdx: ri,
           });
           midOutOffsets[mi] += sh;
           rightOffsets[ri] += dh;
@@ -168,10 +179,98 @@ export function MonthlyFlowSankey({
     return { leftNodes, midNodes, rightNodes, allBands: bands };
   }, [incomeCategories, expenseCategories, accountFlows, openingBalance, t]);
 
+  const connectedSet = useMemo(() => {
+    if (!hoveredNode) return null;
+    const bandIds = new Set<string>();
+    const nodeKeys = new Set<string>();
+    const { column, index } = hoveredNode;
+    nodeKeys.add(`${column}-${index}`);
+
+    for (const b of allBands) {
+      if (column === "left" && b.srcCol === "left" && b.srcIdx === index) {
+        bandIds.add(b.id);
+        nodeKeys.add(`mid-${b.dstIdx}`);
+      } else if (column === "right" && b.dstCol === "right" && b.dstIdx === index) {
+        bandIds.add(b.id);
+        nodeKeys.add(`mid-${b.srcIdx}`);
+      } else if (column === "mid") {
+        if ((b.srcCol === "left" && b.dstCol === "mid" && b.dstIdx === index) ||
+            (b.srcCol === "mid" && b.srcIdx === index)) {
+          bandIds.add(b.id);
+          if (b.srcCol === "left") nodeKeys.add(`left-${b.srcIdx}`);
+          if (b.dstCol === "right") nodeKeys.add(`right-${b.dstIdx}`);
+        }
+      }
+    }
+    return { bandIds, nodeKeys };
+  }, [hoveredNode, allBands]);
+
+  const isActive = hoveredNode !== null;
+
+  const bandOpacity = useCallback((id: string) => {
+    if (!isActive || !connectedSet) return 0.34;
+    return connectedSet.bandIds.has(id) ? 0.55 : 0.04;
+  }, [isActive, connectedSet]);
+
+  const nodeOpacity = useCallback((col: string, idx: number) => {
+    if (!isActive || !connectedSet) return 1;
+    return connectedSet.nodeKeys.has(`${col}-${idx}`) ? 1 : 0.2;
+  }, [isActive, connectedSet]);
+
+  const textOpacity = useCallback((col: string, idx: number) => {
+    if (!isActive || !connectedSet) return 1;
+    return connectedSet.nodeKeys.has(`${col}-${idx}`) ? 1 : 0.15;
+  }, [isActive, connectedSet]);
+
+  const tooltipContent = useMemo(() => {
+    if (!hoveredNode) return null;
+    const { column, index } = hoveredNode;
+    if (column === "left" && leftNodes[index]) {
+      const n = leftNodes[index];
+      const total = leftNodes.reduce((s, nd) => s + nd.value, 0);
+      const pct = total > 0 ? Math.round((n.value / total) * 100) : 0;
+      return { title: n.name, lines: [`${formatCurrency(n.value)} · ${pct}%`] };
+    }
+    if (column === "mid" && midNodes[index]) {
+      const n = midNodes[index];
+      const acc = accountFlows.filter(a => a.income > 0 || a.expenses > 0)[index];
+      if (!acc) return { title: n.name, lines: [formatCurrency(n.value)] };
+      return {
+        title: n.name,
+        lines: [
+          `${t("stats.income", "Income")}: ${formatCurrency(acc.income)}`,
+          `${t("stats.expenses", "Expenses")}: ${formatCurrency(acc.expenses)}`,
+        ],
+      };
+    }
+    if (column === "right" && rightNodes[index]) {
+      const n = rightNodes[index];
+      const total = rightNodes.reduce((s, nd) => s + nd.value, 0);
+      const pct = total > 0 ? Math.round((n.value / total) * 100) : 0;
+      return { title: n.name, lines: [`${formatCurrency(n.value)} · ${pct}%`] };
+    }
+    return null;
+  }, [hoveredNode, leftNodes, midNodes, rightNodes, accountFlows, formatCurrency, t]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setTooltipInfo({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }, []);
+
+  const handleNodeEnter = useCallback((column: "left" | "mid" | "right", index: number) => {
+    setHoveredNode({ column, index });
+  }, []);
+
+  const handleNodeLeave = useCallback(() => {
+    setHoveredNode(null);
+  }, []);
+
   const hasData = leftNodes.length > 0 || rightNodes.length > 0;
 
   return (
-    <div className="bg-card rounded-xl p-[20px_22px_18px] shadow-section h-full">
+    <div className="bg-card rounded-xl p-[16px_22px_20px] shadow-section h-full">
       <p className="text-[15px] font-heading font-bold text-foreground mb-1">
         {t("charts.monthlyFlow", "Monthly flow")}
       </p>
@@ -179,75 +278,154 @@ export function MonthlyFlowSankey({
       {!hasData ? (
         <EmptyState height="h-[200px]" />
       ) : (
-        <div className="overflow-x-auto -mx-[22px] px-[22px] lg:mx-0 lg:px-0">
+        <div
+          ref={containerRef}
+          className="overflow-x-auto -mx-[22px] px-[22px] lg:mx-0 lg:px-0 relative"
+          onMouseMove={handleMouseMove}
+        >
           <div className="min-w-[520px] lg:min-w-0">
-          <svg
-            viewBox={`0 -32 ${SVG_W} ${TARGET_H + 44}`}
-            className="w-full"
-            preserveAspectRatio="xMidYMid meet"
-            style={{ display: "block" }}
-          >
-            <defs>
-              {allBands.map((b) => (
-                <linearGradient key={b.id} id={b.id} x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor={b.sColor} stopOpacity={0.34} />
-                  <stop offset="100%" stopColor={b.dColor} stopOpacity={0.20} />
-                </linearGradient>
+            <svg
+              viewBox={`0 -32 ${SVG_W} ${TARGET_H + 44}`}
+              className="w-full select-none"
+              preserveAspectRatio="xMidYMid meet"
+              style={{ display: "block" }}
+            >
+              <defs>
+                {allBands.map((b) => (
+                  <linearGradient key={b.id} id={`sg-${b.id}`} x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={b.sColor} stopOpacity={1} />
+                    <stop offset="100%" stopColor={b.dColor} stopOpacity={1} />
+                  </linearGradient>
+                ))}
+              </defs>
+
+              <text x={0} y={-14} textAnchor="start" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
+                {t("charts.sankeyEntries", "ENTRIES")}
+              </text>
+              <text x={MID_X + BAR_W / 2} y={-14} textAnchor="middle" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
+                {t("charts.accounts", "Accounts")}
+              </text>
+              <text x={SVG_W} y={-14} textAnchor="end" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
+                {t("charts.sankeyExpenses", "EXPENSES")}
+              </text>
+
+              {allBands.map((b) => {
+                const cp1x = b.sx + (b.dx - b.sx) * 0.4;
+                const cp2x = b.sx + (b.dx - b.sx) * 0.6;
+                const top = `M${b.sx},${b.sy} C${cp1x},${b.sy} ${cp2x},${b.dy} ${b.dx},${b.dy}`;
+                const bot = `L${b.dx},${b.dy + b.dh} C${cp2x},${b.dy + b.dh} ${cp1x},${b.sy + b.sh} ${b.sx},${b.sy + b.sh} Z`;
+                return (
+                  <path
+                    key={b.id}
+                    d={`${top} ${bot}`}
+                    fill={`url(#sg-${b.id})`}
+                    opacity={bandOpacity(b.id)}
+                    className="transition-opacity duration-200"
+                  />
+                );
+              })}
+
+              {leftNodes.map((n, i) => (
+                <g
+                  key={`l-${i}`}
+                  onMouseEnter={() => handleNodeEnter("left", i)}
+                  onMouseLeave={handleNodeLeave}
+                  className="cursor-pointer"
+                >
+                  <rect
+                    x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R}
+                    fill={n.color}
+                    opacity={nodeOpacity("left", i)}
+                    className="transition-opacity duration-200"
+                  />
+                  <rect x={n.x} y={n.y - 4} width={BAR_W + 120} height={n.h + 8} fill="transparent" />
+                  <text
+                    x={n.x + BAR_W + 10} y={n.y + n.h / 2}
+                    dominantBaseline="middle" xmlSpace="preserve"
+                    opacity={textOpacity("left", i)}
+                    className="transition-opacity duration-200"
+                    style={{ letterSpacing: 0 }}
+                  >
+                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                    <tspan> </tspan>
+                    <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                  </text>
+                </g>
               ))}
-            </defs>
 
-            <text x={0} y={-14} textAnchor="start" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
-              {t("charts.sankeyEntries", "ENTRIES")}
-            </text>
-            <text x={MID_X + BAR_W / 2} y={-14} textAnchor="middle" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
-              {t("charts.accounts", "Accounts")}
-            </text>
-            <text x={SVG_W} y={-14} textAnchor="end" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
-              {t("charts.sankeyExpenses", "EXPENSES")}
-            </text>
+              {midNodes.map((n, i) => (
+                <g
+                  key={`m-${i}`}
+                  onMouseEnter={() => handleNodeEnter("mid", i)}
+                  onMouseLeave={handleNodeLeave}
+                  className="cursor-pointer"
+                >
+                  <rect
+                    x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R}
+                    fill={n.color}
+                    opacity={nodeOpacity("mid", i)}
+                    className="transition-opacity duration-200"
+                  />
+                  <rect x={n.x - 10} y={n.y - 4} width={BAR_W + 140} height={n.h + 8} fill="transparent" />
+                  <text
+                    x={n.x + BAR_W + 10} y={n.y + n.h / 2}
+                    dominantBaseline="middle" xmlSpace="preserve"
+                    opacity={textOpacity("mid", i)}
+                    className="transition-opacity duration-200"
+                    style={{ letterSpacing: 0 }}
+                  >
+                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                    <tspan> </tspan>
+                    <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                  </text>
+                </g>
+              ))}
 
-            {allBands.map((b) => {
-              const cp1x = b.sx + (b.dx - b.sx) * 0.45;
-              const cp2x = b.sx + (b.dx - b.sx) * 0.55;
-              const top = `M${b.sx},${b.sy} C${cp1x},${b.sy} ${cp2x},${b.dy} ${b.dx},${b.dy}`;
-              const bot = `L${b.dx},${b.dy + b.dh} C${cp2x},${b.dy + b.dh} ${cp1x},${b.sy + b.sh} ${b.sx},${b.sy + b.sh} Z`;
-              return <path key={b.id} d={`${top} ${bot}`} fill={`url(#${b.id})`} />;
-            })}
-
-            {leftNodes.map((n, i) => (
-              <g key={`l-${i}`}>
-                <rect x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R} fill={n.color} />
-                <text x={n.x + BAR_W + 10} y={n.y + n.h / 2} dominantBaseline="middle" xmlSpace="preserve" style={{ letterSpacing: 0 }}>
-                  <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
-                  <tspan> </tspan>
-                  <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
-                </text>
-              </g>
-            ))}
-
-            {midNodes.map((n, i) => (
-              <g key={`m-${i}`}>
-                <rect x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R} fill={n.color} />
-                <text x={n.x + BAR_W + 10} y={n.y + n.h / 2} dominantBaseline="middle" xmlSpace="preserve" style={{ letterSpacing: 0 }}>
-                  <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
-                  <tspan> </tspan>
-                  <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
-                </text>
-              </g>
-            ))}
-
-            {rightNodes.map((n, i) => (
-              <g key={`r-${i}`}>
-                <rect x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R} fill={n.color} />
-                <text x={n.x - 10} y={n.y + n.h / 2} dominantBaseline="middle" textAnchor="end" xmlSpace="preserve" style={{ letterSpacing: 0 }}>
-                  <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
-                  <tspan> </tspan>
-                  <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
-                </text>
-              </g>
-            ))}
-          </svg>
+              {rightNodes.map((n, i) => (
+                <g
+                  key={`r-${i}`}
+                  onMouseEnter={() => handleNodeEnter("right", i)}
+                  onMouseLeave={handleNodeLeave}
+                  className="cursor-pointer"
+                >
+                  <rect
+                    x={n.x} y={n.y} width={BAR_W} height={n.h} rx={BAR_R}
+                    fill={n.color}
+                    opacity={nodeOpacity("right", i)}
+                    className="transition-opacity duration-200"
+                  />
+                  <rect x={n.x - 120} y={n.y - 4} width={BAR_W + 120} height={n.h + 8} fill="transparent" />
+                  <text
+                    x={n.x - 10} y={n.y + n.h / 2}
+                    dominantBaseline="middle" textAnchor="end" xmlSpace="preserve"
+                    opacity={textOpacity("right", i)}
+                    className="transition-opacity duration-200"
+                    style={{ letterSpacing: 0 }}
+                  >
+                    <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                    <tspan> </tspan>
+                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                  </text>
+                </g>
+              ))}
+            </svg>
           </div>
+
+          {hoveredNode && tooltipInfo && tooltipContent && (
+            <div
+              className="pointer-events-none absolute z-10 bg-card rounded-lg shadow-lg border border-border/50 px-3 py-2 min-w-[140px]"
+              style={{
+                left: Math.min(tooltipInfo.x + 14, (containerRef.current?.offsetWidth ?? 400) - 180),
+                top: tooltipInfo.y - 10,
+                transform: "translateY(-100%)",
+              }}
+            >
+              <p className="text-[12px] font-semibold text-foreground mb-0.5">{tooltipContent.title}</p>
+              {tooltipContent.lines.map((line, i) => (
+                <p key={i} className="text-[11.5px] text-muted-foreground tabular-nums">{line}</p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
