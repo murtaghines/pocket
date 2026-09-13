@@ -38,9 +38,9 @@ export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProp
     open === "essential" ? split.essentialCategories : open === "discretionary" ? split.discretionaryCategories : [];
 
   return (
-    <div className="bg-card rounded-xl px-[14px] py-3 md:px-5 md:py-[18px] h-full shadow-section flex flex-col overflow-hidden">
-      <div className="mb-4 min-w-0">
-        <p className="text-[15px] font-heading font-semibold text-foreground">{t("insights.essential.title")}</p>
+    <div className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] h-full shadow-section flex flex-col overflow-hidden">
+      <div className="mb-3 min-w-0">
+        <p className="text-[15px] font-heading font-bold text-foreground">{t("insights.essential.title")}</p>
         {hasData && (
           <p className="text-[12px] text-muted-foreground mt-0.5">{t("insights.essential.tapHint")}</p>
         )}

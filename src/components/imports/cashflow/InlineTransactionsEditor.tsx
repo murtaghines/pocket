@@ -1079,12 +1079,6 @@ export function InlineTransactionsEditor({
                     : movement === "TRANSFER"
                       ? "text-[#8A919C]"
                       : "text-[#0C0D0E]";
-                const amountSign =
-                  displayAmount === 0
-                    ? ""
-                    : movement === "TRANSFER"
-                      ? (displayAmount >= 0 ? "+" : "−")
-                      : "";
 
                 const rowContextActions = {
                   onToggleHidden: () => handleToggleHidden(tx),
@@ -1095,7 +1089,7 @@ export function InlineTransactionsEditor({
                     setTimeout(() => noteInputRef.current?.focus(), 50);
                   },
                   onCopyAmount: () => {
-                    navigator.clipboard.writeText(formatCurrency(Math.abs(displayAmount)));
+                    navigator.clipboard.writeText(formatCurrency(displayAmount));
                     sonnerToast("Amount copied");
                   },
                   onCopyDescription: () => {
@@ -1344,7 +1338,7 @@ export function InlineTransactionsEditor({
                           />
                         ) : (
                           <span>
-                            {amountSign}{formatCurrency(Math.abs(displayAmount))}
+                            {formatCurrency(displayAmount)}
                           </span>
                         )}
                       </TableCell>
@@ -1449,7 +1443,7 @@ export function InlineTransactionsEditor({
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
-                                  navigator.clipboard.writeText(formatCurrency(Math.abs(displayAmount)));
+                                  navigator.clipboard.writeText(formatCurrency(displayAmount));
                                   sonnerToast("Copied");
                                 }}
                                 className="gap-2 text-[13px]"
@@ -1521,15 +1515,7 @@ export function InlineTransactionsEditor({
                         : movement === "TRANSFER"
                           ? "text-muted-foreground"
                           : "text-destructive";
-                  const amountSign =
-                    tx.amount === 0
-                      ? ""
-                      : movement === "TRANSFER"
-                        ? (tx.amount >= 0 ? "+" : "−")
-                        : movement === "INCOME"
-                          ? "+"
-                          : "−";
-
+  
                   return (
                     <SwipeableRow
                       key={tx.id}
@@ -1629,8 +1615,7 @@ export function InlineTransactionsEditor({
                               <Check className="h-3 w-3 text-success" />
                             ) : null}
                             <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
-                              {amountSign}
-                              {formatCurrency(Math.abs(tx.amount))}
+                              {formatCurrency(tx.amount)}
                             </span>
                           </div>
                           {accountLabel(tx.account_id) && (
@@ -1680,7 +1665,7 @@ export function InlineTransactionsEditor({
                 }
               }}
               onCopyDescription={() => { navigator.clipboard.writeText(atxCleanDesc); sonnerToast("Description copied"); }}
-              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(Math.abs(atx.amount))); sonnerToast("Amount copied"); }}
+              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(atx.amount)); sonnerToast("Amount copied"); }}
             />
           );
         })()}
@@ -1818,8 +1803,7 @@ export function InlineTransactionsEditor({
                         movementConfirm.tx.amount < 0 ? "text-destructive" : "text-success",
                       )}
                     >
-                      {movementConfirm.tx.amount < 0 ? "−" : "+"}
-                      {formatCurrency(Math.abs(movementConfirm.tx.amount))}
+                      {formatCurrency(movementConfirm.tx.amount)}
                     </span>
                   </span>
                   <span className="block text-xs text-muted-foreground">

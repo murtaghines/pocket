@@ -91,7 +91,7 @@ export default function Investments() {
                   iconClass="bg-success/10 text-success"
                   value={formatCurrency(totalCurrentValue)}
                   valueClass="text-success"
-                  subtext={netInvestedAllTime > 0 ? `${profitLoss >= 0 ? '+' : ''}${formatCurrency(profitLoss)} (${profitLossPercent}%)` : undefined}
+                  subtext={netInvestedAllTime > 0 ? `${formatCurrency(profitLoss)} (${profitLossPercent}%)` : undefined}
                   subtextClass={profitLoss >= 0 ? 'text-success' : 'text-destructive'}
                 />
                 <KpiCard

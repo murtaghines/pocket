@@ -20,12 +20,12 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
   if (!hasData) {
     return (
       <Card variant="bento">
-        <CardHeader className="pb-2">
+        <CardHeader className="px-[22px] pt-[16px] pb-2">
           <CardTitle>
             {t('topExpenses.title')}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-[22px] pb-[20px]">
           <EmptyState height="h-[220px]" />
         </CardContent>
       </Card>
@@ -34,12 +34,12 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
 
   return (
     <Card variant="bento" className="flex flex-col h-full overflow-hidden">
-      <CardHeader className="px-[14px] pt-3 pb-2 md:px-5 md:pt-[18px] shrink-0">
+      <CardHeader className="px-[14px] pt-3 pb-2 md:px-5 md:pt-[16px] shrink-0">
         <CardTitle>
           {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-[14px] pb-3 pt-0 md:px-5 md:pb-[18px] flex-1 min-h-0 overflow-y-auto">
+      <CardContent className="px-[14px] pb-3 pt-0 md:px-5 md:pb-[20px] flex-1 min-h-0 overflow-y-auto">
         {topExpenses.map((expense, index) => (
           <div key={expense.id}>
             {index > 0 && <div className="h-px bg-border" />}
@@ -55,13 +55,13 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
                 className="flex-shrink-0 !w-8 !h-8 !rounded-[10px]"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-[13.5px] font-medium truncate text-foreground">{expense.description}</p>
+                <p className="text-[12.5px] font-medium truncate text-foreground">{expense.description}</p>
                 <p className="text-[12px] text-muted-foreground">
                   {formatDayMonth(expense.date)} · {getCategoryLabel(expense.category)}
                 </p>
               </div>
-              <span className="text-[13.5px] font-semibold tabular-nums text-foreground flex-shrink-0">
-                -{formatCurrency(expense.amount)}
+              <span className="text-[13px] font-medium tabular-nums text-foreground flex-shrink-0">
+                {formatCurrency(-expense.amount)}
               </span>
             </div>
           </div>

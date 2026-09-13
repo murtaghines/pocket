@@ -55,15 +55,15 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
       <div className="bg-card rounded-xl shadow-lg p-3 min-w-[150px]">
         <p className="text-xs text-muted-foreground mb-1">{label}</p>
         <p className="text-sm font-semibold" style={{ color: balance >= 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))' }}>
-          {balance >= 0 ? '+' : ''}{formatCurrency(balance)}
+          {formatCurrency(balance)}
         </p>
       </div>
     );
   };
 
   return (
-    <div className="bg-card rounded-xl px-[14px] py-3 md:px-5 md:py-[18px] h-full shadow-section flex flex-col overflow-hidden">
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] h-full shadow-section flex flex-col overflow-hidden">
+      <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-[15px] font-heading font-bold text-foreground">
             {t('charts.dailyBalance', 'Daily balance')}
@@ -77,7 +77,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
             className="text-[13px] font-semibold whitespace-nowrap tabular-nums"
             style={{ color: isPositive ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}
           >
-            {isPositive ? '+' : ''}{formatCurrency(netChange)}
+            {formatCurrency(netChange)}
           </span>
         )}
       </div>
@@ -85,7 +85,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
       {!hasData ? (
         <EmptyState height="h-[160px]" />
       ) : (
-        <div className="h-[180px] md:h-[220px]">
+        <div className="flex-1 min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={points} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
               <defs>
