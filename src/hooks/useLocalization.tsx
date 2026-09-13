@@ -72,14 +72,15 @@ export function useLocalization() {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
         useGrouping: 'always' as any,
+        signDisplay: 'exceptZero',
       }).format(amount);
     } catch {
-      // Fallback for invalid currency codes
       return new Intl.NumberFormat(locale, {
         style: 'decimal',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
         useGrouping: 'always' as any,
+        signDisplay: 'exceptZero',
       }).format(amount) + ` ${currencyToUse}`;
     }
   }, [locale, baseCurrency]);
@@ -94,6 +95,7 @@ export function useLocalization() {
         notation: 'compact',
         maximumFractionDigits: 1,
         useGrouping: 'always' as any,
+        signDisplay: 'exceptZero',
       }).format(amount);
     } catch {
       return new Intl.NumberFormat(locale, {
@@ -101,6 +103,7 @@ export function useLocalization() {
         notation: 'compact',
         maximumFractionDigits: 1,
         useGrouping: 'always' as any,
+        signDisplay: 'exceptZero',
       }).format(amount) + ` ${currencyToUse}`;
     }
   }, [locale, baseCurrency]);

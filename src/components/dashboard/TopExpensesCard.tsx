@@ -61,7 +61,7 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
                 </p>
               </div>
               <span className="text-[13px] font-medium tabular-nums text-foreground flex-shrink-0">
-                -{formatCurrency(expense.amount)}
+                {formatCurrency(-expense.amount)}
               </span>
             </div>
           </div>

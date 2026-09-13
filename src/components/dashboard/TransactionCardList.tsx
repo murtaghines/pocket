@@ -46,14 +46,6 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
     <ul className="divide-y divide-border/60">
       {transactions.map((tx) => {
         const movementType = getMovementType(tx);
-        // Sign follows the movement, not the stored number: transfers move money
-        // between your own accounts, so they carry none.
-        const sign =
-          tx.amount === 0 || movementType === "transfer"
-            ? ""
-            : movementType === "income"
-              ? "+"
-              : "−";
         const amountClass =
           tx.amount === 0
             ? "text-muted-foreground"
@@ -99,8 +91,7 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
 
             {/* Amount */}
             <div className={cn("text-sm font-semibold whitespace-nowrap", amountClass)}>
-              {sign}
-              {formatCurrency(Math.abs(tx.amount))}
+              {formatCurrency(tx.amount)}
             </div>
           </li>
         );

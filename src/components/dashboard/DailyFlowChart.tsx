@@ -55,7 +55,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
       <div className="bg-card rounded-xl shadow-lg p-3 min-w-[150px]">
         <p className="text-xs text-muted-foreground mb-1">{label}</p>
         <p className="text-sm font-semibold" style={{ color: balance >= 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))' }}>
-          {balance >= 0 ? '+' : ''}{formatCurrency(balance)}
+          {formatCurrency(balance)}
         </p>
       </div>
     );
@@ -77,7 +77,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
             className="text-[13px] font-semibold whitespace-nowrap tabular-nums"
             style={{ color: isPositive ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}
           >
-            {isPositive ? '+' : ''}{formatCurrency(netChange)}
+            {formatCurrency(netChange)}
           </span>
         )}
       </div>
