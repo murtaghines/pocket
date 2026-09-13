@@ -86,7 +86,7 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
                   inv.type === "deposit" ? "text-success" : "text-destructive"
                 }`}
               >
-                {formatCurrency(inv.type === "deposit" ? inv.amount : -inv.amount)}
+                {formatCurrency(inv.type === "deposit" ? inv.amount : -inv.amount, undefined, true)}
               </div>
             </div>
           ))}
@@ -131,7 +131,7 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
                         <ArrowDownCircle className="w-4 h-4 text-destructive" />
                       )}
                       <span className={`tabular-nums ${inv.type === 'deposit' ? 'text-success' : 'text-destructive'}`}>
-                        {formatCurrency(inv.type === 'deposit' ? inv.amount : -inv.amount)}
+                        {formatCurrency(inv.type === 'deposit' ? inv.amount : -inv.amount, undefined, true)}
                       </span>
                     </div>
                   </TableCell>

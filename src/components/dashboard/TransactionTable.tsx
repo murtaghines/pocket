@@ -213,7 +213,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                         isTransfer ? "text-muted-foreground" : "text-foreground",
                       )}
                     >
-                      {formatCurrency(transaction.amount)}
+                      {formatCurrency(transaction.amount, undefined, true)}
                     </DataTableCell>
                     <DataTableCell numeric className="text-[13px] font-normal text-muted-foreground tabular-nums pr-5">
                       {computedBalanceMap.has(transaction.id)
