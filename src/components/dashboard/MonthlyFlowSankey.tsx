@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -33,6 +33,12 @@ const GAP = 8;
 const MIN_H = 8;
 const TARGET_H = 268;
 
+const MOBILE_SVG_W = 420;
+const MOBILE_LEFT_X = 0;
+const MOBILE_MID_X = 195;
+const MOBILE_RIGHT_X = 390;
+const MOBILE_TARGET_H = 340;
+
 const ACCOUNT_COLORS = ["#1B76FF", "#4E97FF", "#8FBEFF", "#B6D4FF", "#D4E6FF"];
 
 type Node = { name: string; value: number; color: string; x: number; y: number; h: number };
@@ -47,12 +53,12 @@ type Band = {
 
 type HoveredNode = { column: "left" | "mid" | "right"; index: number } | null;
 
-function buildColumn(items: Array<{ name: string; value: number; color: string }>, x: number): Node[] {
+function buildColumn(items: Array<{ name: string; value: number; color: string }>, x: number, targetH = TARGET_H): Node[] {
   if (items.length === 0) return [];
   const total = items.reduce((s, it) => s + it.value, 0);
   if (total <= 0) return [];
   const gapTotal = (items.length - 1) * GAP;
-  const barArea = TARGET_H - gapTotal;
+  const barArea = targetH - gapTotal;
   let y = 0;
   return items.map((item) => {
     const h = Math.max(MIN_H, (item.value / total) * barArea);
@@ -73,6 +79,23 @@ export function MonthlyFlowSankey({
   const [hoveredNode, setHoveredNode] = useState<HoveredNode>(null);
   const [tooltipInfo, setTooltipInfo] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      setIsMobile(entries[0].contentRect.width < 500);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const svgW = isMobile ? MOBILE_SVG_W : SVG_W;
+  const leftX = isMobile ? MOBILE_LEFT_X : LEFT_X;
+  const midX = isMobile ? MOBILE_MID_X : MID_X;
+  const rightX = isMobile ? MOBILE_RIGHT_X : RIGHT_X;
+  const targetH = isMobile ? MOBILE_TARGET_H : TARGET_H;
 
   const { leftNodes, midNodes, rightNodes, allBands } = useMemo(() => {
     const leftCats = incomeCategories.filter((c) => c.value > 0).sort((a, b) => b.value - a.value);
@@ -108,16 +131,17 @@ export function MonthlyFlowSankey({
       }
     }
 
-    const leftNodes = buildColumn(finalLeft, LEFT_X);
+    const leftNodes = buildColumn(finalLeft, leftX, targetH);
     const midNodes = buildColumn(
       accounts.map((a, i) => ({
         name: a.name,
         value: Math.max(a.income, a.expenses),
         color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
       })),
-      MID_X,
+      midX,
+      targetH,
     );
-    const rightNodes = buildColumn(finalRight, RIGHT_X);
+    const rightNodes = buildColumn(finalRight, rightX, targetH);
 
     const leftTotal = finalLeft.reduce((s, c) => s + c.value, 0);
     const accIncomeTotal = accounts.reduce((s, a) => s + a.income, 0);
@@ -177,7 +201,7 @@ export function MonthlyFlowSankey({
     }
 
     return { leftNodes, midNodes, rightNodes, allBands: bands };
-  }, [incomeCategories, expenseCategories, accountFlows, openingBalance, t]);
+  }, [incomeCategories, expenseCategories, accountFlows, openingBalance, t, leftX, midX, rightX, targetH]);
 
   const connectedSet = useMemo(() => {
     if (!hoveredNode) return null;
@@ -268,9 +292,10 @@ export function MonthlyFlowSankey({
   }, []);
 
   const hasData = leftNodes.length > 0 || rightNodes.length > 0;
+  const fontSize = isMobile ? 9 : 11;
 
   return (
-    <div className="bg-card rounded-xl p-[16px_22px_20px] shadow-section h-full">
+    <div ref={containerRef} className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section h-full">
       <p className="text-[15px] font-heading font-bold text-foreground mb-1">
         {t("charts.monthlyFlow", "Monthly flow")}
       </p>
@@ -279,13 +304,12 @@ export function MonthlyFlowSankey({
         <EmptyState height="h-[200px]" />
       ) : (
         <div
-          ref={containerRef}
-          className="overflow-x-auto -mx-[22px] px-[22px] lg:mx-0 lg:px-0 relative"
+          className="overflow-x-auto -mx-[14px] px-[14px] md:-mx-[22px] md:px-[22px] lg:mx-0 lg:px-0 relative"
           onMouseMove={handleMouseMove}
         >
           <div className="min-w-[520px] lg:min-w-0">
             <svg
-              viewBox={`0 -32 ${SVG_W} ${TARGET_H + 44}`}
+              viewBox={`0 -32 ${svgW} ${targetH + 44}`}
               className="w-full select-none"
               preserveAspectRatio="xMidYMid meet"
               style={{ display: "block" }}
@@ -302,10 +326,10 @@ export function MonthlyFlowSankey({
               <text x={0} y={-14} textAnchor="start" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
                 {t("charts.sankeyEntries", "ENTRIES")}
               </text>
-              <text x={MID_X + BAR_W / 2} y={-14} textAnchor="middle" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
+              <text x={midX + BAR_W / 2} y={-14} textAnchor="middle" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
                 {t("charts.accounts", "Accounts")}
               </text>
-              <text x={SVG_W} y={-14} textAnchor="end" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
+              <text x={svgW} y={-14} textAnchor="end" fill="hsl(var(--muted-foreground) / 0.5)" fontSize="10.5" fontWeight="500" fontFamily="Inter, sans-serif" letterSpacing=".06em" style={{ textTransform: "uppercase" } as React.CSSProperties}>
                 {t("charts.sankeyExpenses", "EXPENSES")}
               </text>
 
@@ -346,9 +370,9 @@ export function MonthlyFlowSankey({
                     className="transition-opacity duration-200"
                     style={{ letterSpacing: 0 }}
                   >
-                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
                     <tspan> </tspan>
-                    <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                    <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
                   </text>
                 </g>
               ))}
@@ -374,9 +398,9 @@ export function MonthlyFlowSankey({
                     className="transition-opacity duration-200"
                     style={{ letterSpacing: 0 }}
                   >
-                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
                     <tspan> </tspan>
-                    <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                    <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
                   </text>
                 </g>
               ))}
@@ -402,9 +426,9 @@ export function MonthlyFlowSankey({
                     className="transition-opacity duration-200"
                     style={{ letterSpacing: 0 }}
                   >
-                    <tspan fill="hsl(var(--muted-foreground))" fontSize="11" fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                    <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
                     <tspan> </tspan>
-                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize="11" fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
                   </text>
                 </g>
               ))}

@@ -14,14 +14,14 @@ import {
 // The exhaustive set of categories the categorizer can output (from categorizer.ts type unions).
 const CATEGORIZER_INCOME = [
   'salary', 'freelance', 'refunds', 'sales', 'investments_income',
-  'gifts_received', 'rental_income', 'transfers_in', 'other_income',
+  'gifts_received', 'rental_income', 'other_income',
 ];
 const CATEGORIZER_EXPENSE = [
   'housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment',
   'shopping', 'education', 'subscriptions', 'travel', 'sports', 'pets',
   'gifts_given', 'personal_services', 'taxes', 'family', 'donations', 'insurance', 'other_expense',
 ];
-const CATEGORIZER_TRANSFER = ['own_transfer', 'to_investment', 'to_joint_account'];
+const CATEGORIZER_TRANSFER = ['own_transfer', 'to_investment', 'to_joint_account', 'transfers_in'];
 
 describe('mapCategorySlug', () => {
   it('passes through custom_ slugs untouched', () => {
@@ -31,7 +31,7 @@ describe('mapCategorySlug', () => {
   it('maps extended slugs to their app-level equivalent', () => {
     expect(mapCategorySlug('investments_income')).toBe('investment');
     expect(mapCategorySlug('rental_income')).toBe('rents');
-    expect(mapCategorySlug('transfers_in')).toBe('transfers');
+    expect(mapCategorySlug('transfers_in')).toBe('own_transfer');
     expect(mapCategorySlug('taxes')).toBe('other_expense');
   });
 

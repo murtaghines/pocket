@@ -1,11 +1,17 @@
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useAccounts } from "@/hooks/useAccounts";
-import { formatPeriodLabel } from "@/lib/analytics";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { supabase } from "@/integrations/supabase/client";
+import { formatPeriodLabel, periodRangeOf } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type PeriodKey = "month" | "week" | "year";
@@ -18,19 +24,42 @@ export function BalanceBand() {
     useMonthSelection();
   const { selectedPeriod, setSelectedPeriod, availablePeriods } = usePeriodSelection();
   const { getCashAccounts } = useAccounts();
+  const { user } = useAuth();
+  const { preferences } = useUserPreferences();
+  const { convertAmount } = useExchangeRates("EUR");
 
   const tab = (searchParams.get("tab") ?? "month") as PeriodKey | "history";
 
   const cashAccounts = getCashAccounts();
   const accountCount = cashAccounts.length;
 
-  const closingBalance =
-    openingBalance != null
-      ? openingBalance +
-        ((() => {
-          return 0;
-        })())
-      : null;
+  const userCurrency = preferences?.base_currency || "EUR";
+
+  const periodRange = useMemo(() => {
+    if (tab === "month" && selectedMonth) return periodRangeOf(selectedMonth, "month");
+    if (tab === "week" && selectedPeriod.week) return periodRangeOf(selectedPeriod.week, "week");
+    if (tab === "year" && selectedPeriod.year) return periodRangeOf(selectedPeriod.year, "year");
+    return null;
+  }, [tab, selectedMonth, selectedPeriod.week, selectedPeriod.year]);
+
+  const { data: totalBalance } = useQuery({
+    queryKey: ["band-total-balance", user?.id, periodRange?.start, periodRange?.end],
+    queryFn: async () => {
+      if (!user?.id || !periodRange) return null;
+      const { data, error } = await supabase.rpc("get_account_period_summary", {
+        p_user_id: user.id,
+        p_start: periodRange.start,
+        p_end: periodRange.end,
+      });
+      if (error) throw error;
+      const sum = (data ?? []).reduce(
+        (acc: number, r: { latest_balance: number }) => acc + convertAmount(Number(r.latest_balance), "EUR", userCurrency),
+        0,
+      );
+      return sum;
+    },
+    enabled: !!user?.id && !!periodRange,
+  });
 
   const handlePeriodChange = (period: PeriodKey) => {
     const next = new URLSearchParams(searchParams);
@@ -105,7 +134,7 @@ export function BalanceBand() {
             <Eye className="w-[14px] h-[14px] text-white/70 cursor-pointer" strokeWidth={1.9} />
           </div>
           <p className="mt-[5px] font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
-            {openingBalance != null ? formatCurrency(openingBalance) : "–"}
+            {totalBalance != null ? formatCurrency(totalBalance) : "–"}
           </p>
           <p className="mt-[10px] font-sans text-[13.5px] text-white/80">
             {t("band.openingBalance", { defaultValue: "Opening balance" })}{" "}

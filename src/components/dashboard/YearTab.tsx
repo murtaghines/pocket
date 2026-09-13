@@ -39,7 +39,7 @@ export function YearTab() {
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
-  const { selectedPeriod, setSelectedPeriod, setAvailablePeriods } = usePeriodSelection();
+  const { selectedPeriod, setSelectedPeriod, setAvailablePeriods, setOpeningBalance, setTransactionCount } = usePeriodSelection();
   const [txPage, setTxPage] = useState(1);
 
   const userCurrency = preferences?.base_currency || "EUR";
@@ -139,6 +139,18 @@ export function YearTab() {
     if (monthKeys.length > 0) return openingBalanceByMonth[monthKeys[0]];
     return null;
   }, [selectedYear, openingBalanceByMonth]);
+
+  useEffect(() => {
+    if (yearOpeningBalance != null) {
+      setOpeningBalance(convertToUserCurrency(yearOpeningBalance));
+    } else {
+      setOpeningBalance(null);
+    }
+  }, [yearOpeningBalance, userCurrency]);
+
+  useEffect(() => {
+    setTransactionCount(totalCount ?? transactions.length);
+  }, [totalCount, transactions.length]);
 
   const breakdownPoints = useMemo(
     () =>
@@ -272,7 +284,7 @@ export function YearTab() {
           </div>
 
           {/* Row 6: Transactions table */}
-          <div className="bg-card rounded-xl p-[20px_0_6px] shadow-section">
+          <div className="bg-card rounded-xl pt-3 pb-[6px] md:pt-[18px] shadow-section">
             <div className="max-h-[700px] overflow-y-auto">
               <TransactionTable
                 transactions={transactions}

@@ -14,6 +14,7 @@ interface ComingSoonProps {
 export default function ComingSoon({ title, subtitle }: ComingSoonProps) {
   return (
     <DashboardLayout>
+      <div className="px-3 md:px-[34px]">
       <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
           {title}
@@ -31,6 +32,7 @@ export default function ComingSoon({ title, subtitle }: ComingSoonProps) {
         <p className="text-sm text-muted-foreground mt-2 max-w-md">
           We're polishing this experience. It will land in an upcoming release.
         </p>
+      </div>
       </div>
     </DashboardLayout>
   );

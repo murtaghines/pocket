@@ -43,7 +43,7 @@ export default function Investments() {
 
   return (
     <DashboardLayout>
-      <main className="w-full">
+      <main className="w-full px-3 md:px-[34px]">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />

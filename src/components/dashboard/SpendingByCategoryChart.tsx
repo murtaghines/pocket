@@ -142,9 +142,11 @@ export function SpendingByCategoryChart({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
-      setContainerSize({ w: width, h: height });
+    const ro = new ResizeObserver(() => {
+      const { width, height } = el.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        setContainerSize({ w: width, h: height });
+      }
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -208,12 +210,12 @@ export function SpendingByCategoryChart({
   if (!hasData) {
     return (
       <Card variant="bento">
-        <div className="p-[16px_22px_16px]">
+        <div className="px-[14px] pt-3 pb-0 md:px-5 md:pt-[16px] md:pb-0">
           <p className="text-[15px] font-heading font-bold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
         </div>
-        <div className="px-[22px] pb-[20px]">
+        <div className="px-[14px] pb-3 md:px-5 md:pb-[20px]">
           <EmptyState height="h-[276px]" />
         </div>
       </Card>
@@ -376,10 +378,10 @@ export function SpendingByCategoryChart({
   return (
     <Card
       variant="bento"
-      className="flex h-full flex-col overflow-hidden rounded-xl border-none shadow-bento"
+      className="flex flex-col overflow-hidden rounded-xl border-none shadow-section lg:h-full"
     >
       <div
-        className="flex items-start justify-between gap-3 px-[22px] pt-[16px] pb-0"
+        className="flex items-start justify-between gap-3 px-[14px] md:px-5 pt-3 md:pt-[16px] pb-0"
         style={{ marginBottom: 10 }}
       >
         <div className="min-w-0">
@@ -457,7 +459,7 @@ export function SpendingByCategoryChart({
 
       <div
         ref={containerRef}
-        className="flex-1 mx-[22px] mb-[20px] relative min-h-0"
+        className="min-h-[300px] lg:flex-1 mx-[14px] md:mx-5 mb-3 md:mb-[20px] relative min-h-0"
       >
         {layoutNodes.map((node) => {
           const half = GAP / 2;
