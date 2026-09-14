@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
-import { Plus, Pencil, Star, Trash2, Eye, EyeOff, Building2, TrendingUp, Loader2, MoreHorizontal } from "lucide-react";
+import { Plus, Pencil, Star, Trash2, Eye, EyeOff, Building2, TrendingUp, Loader2, MoreHorizontal, Archive, ArchiveRestore } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,13 +102,19 @@ export function AccountBankAccountsTab() {
     getLinkedDataCount,
   } = useAccounts();
 
+  const sortByCreated = (a: Account, b: Account) => a.created_at.localeCompare(b.created_at);
+
   const cashAccounts = accounts
-    .filter((a) => a.account_role === "CASH")
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    .filter((a) => a.account_role === "CASH" && !a.archived)
+    .sort(sortByCreated);
 
   const investmentAccounts = accounts
-    .filter((a) => a.account_role === "INVESTMENT")
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    .filter((a) => a.account_role === "INVESTMENT" && !a.archived)
+    .sort(sortByCreated);
+
+  const archivedAccounts = accounts
+    .filter((a) => a.archived)
+    .sort(sortByCreated);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -168,6 +174,10 @@ export function AccountBankAccountsTab() {
 
   const handleToggleHide = (account: Account) => {
     updateAccount({ id: account.id, hidden_from_dashboard: !account.hidden_from_dashboard });
+  };
+
+  const handleToggleArchive = (account: Account) => {
+    updateAccount({ id: account.id, archived: !account.archived });
   };
 
   const handleDeleteClick = async (account: Account) => {
@@ -240,7 +250,12 @@ export function AccountBankAccountsTab() {
                       {t("accounts.primary", "Primary")}
                     </span>
                   )}
-                  {account.hidden_from_dashboard && (
+                  {account.archived && (
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
+                      {t("accounts.archivedBadge", "Archived")}
+                    </span>
+                  )}
+                  {!account.archived && account.hidden_from_dashboard && (
                     <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
                       {t("accounts.hiddenBadge", "Hidden")}
                     </span>
@@ -273,6 +288,14 @@ export function AccountBankAccountsTab() {
                         {account.hidden_from_dashboard
                           ? t("accounts.showInDashboard", "Show in dashboard")
                           : t("accounts.hideFromDashboard", "Hide from dashboard")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleToggleArchive(account)}>
+                        {account.archived
+                          ? <ArchiveRestore className="w-4 h-4 mr-2" />
+                          : <Archive className="w-4 h-4 mr-2" />}
+                        {account.archived
+                          ? t("accounts.unarchive", "Restore account")
+                          : t("accounts.archive", "Archive account")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -394,6 +417,24 @@ export function AccountBankAccountsTab() {
               renderAccountCards(investmentAccounts)
             )}
           </div>
+
+          {/* ── Archived accounts ── */}
+          {archivedAccounts.length > 0 && (
+            <div className="space-y-4 pt-6 mt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Archive className="w-4 h-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  {t("accounts.archivedTitle", "Archived")}
+                </h2>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  ({archivedAccounts.length})
+                </span>
+              </div>
+              <div className="opacity-60">
+                {renderAccountCards(archivedAccounts)}
+              </div>
+            </div>
+          )}
         </>
       )}
 

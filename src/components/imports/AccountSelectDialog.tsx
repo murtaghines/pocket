@@ -35,7 +35,7 @@ export function AccountSelectDialog({
 }: AccountSelectDialogProps) {
   const { accounts, createAccount, isCreating } = useAccounts();
   const { t } = useTranslation('profile');
-  const filteredAccounts = accounts.filter(a => a.account_role === accountRole);
+  const filteredAccounts = accounts.filter(a => a.account_role === accountRole && !a.archived);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [showNewForm, setShowNewForm] = useState(false);

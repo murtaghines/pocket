@@ -22,6 +22,7 @@ export interface Account {
   hidden_from_dashboard?: boolean;
   account_number?: string | null;
   initial_balance: number;
+  archived: boolean;
 }
 
 export interface CreateAccountParams {
@@ -292,14 +293,20 @@ export function useAccounts() {
     return accounts.find(a => a.name.toLowerCase() === name.toLowerCase());
   };
 
-  const getCashAccounts = ({ includeHidden = false }: { includeHidden?: boolean } = {}): Account[] => {
+  const getCashAccounts = ({ includeHidden = false, includeArchived = false }: { includeHidden?: boolean; includeArchived?: boolean } = {}): Account[] => {
     return accounts.filter(
-      (a) => a.account_role === 'CASH' && (includeHidden || !a.hidden_from_dashboard)
+      (a) => a.account_role === 'CASH'
+        && (includeHidden || !a.hidden_from_dashboard)
+        && (includeArchived || !a.archived)
     );
   };
 
-  const getInvestmentAccounts = (): Account[] => {
-    return accounts.filter(a => a.account_role === 'INVESTMENT');
+  const getInvestmentAccounts = ({ includeArchived = false }: { includeArchived?: boolean } = {}): Account[] => {
+    return accounts.filter(a => a.account_role === 'INVESTMENT' && (includeArchived || !a.archived));
+  };
+
+  const getActiveAccounts = (): Account[] => {
+    return accounts.filter(a => !a.archived);
   };
 
   return {
@@ -319,6 +326,7 @@ export function useAccounts() {
     getLinkedDataCount,
     getAccountByName,
     getCashAccounts,
-    getInvestmentAccounts
+    getInvestmentAccounts,
+    getActiveAccounts,
   };
 }

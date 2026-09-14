@@ -19,6 +19,7 @@ export type Database = {
           account_number: string | null
           account_role: Database["public"]["Enums"]["account_role"]
           account_type: Database["public"]["Enums"]["account_type"]
+          archived: boolean
           color: string | null
           created_at: string | null
           currency_base: string
@@ -35,6 +36,7 @@ export type Database = {
           account_number?: string | null
           account_role?: Database["public"]["Enums"]["account_role"]
           account_type?: Database["public"]["Enums"]["account_type"]
+          archived?: boolean
           color?: string | null
           created_at?: string | null
           currency_base?: string
@@ -51,6 +53,7 @@ export type Database = {
           account_number?: string | null
           account_role?: Database["public"]["Enums"]["account_role"]
           account_type?: Database["public"]["Enums"]["account_type"]
+          archived?: boolean
           color?: string | null
           created_at?: string | null
           currency_base?: string
