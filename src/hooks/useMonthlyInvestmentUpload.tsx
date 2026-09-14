@@ -67,7 +67,15 @@ export function useMonthlyInvestmentUpload() {
     }
     
     if (extension === "pdf") {
-      return await extractPdfText(file);
+      const result = await extractPdfText(file);
+      if (result.truncated) {
+        toast({
+          title: "PDF partially processed",
+          description: `Only ${result.processedPages} of ${result.totalPages} pages were processed. Some transactions may be missing.`,
+          variant: "destructive",
+        });
+      }
+      return result.text;
     }
 
     try {

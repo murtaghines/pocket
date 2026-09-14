@@ -27,7 +27,7 @@ export function useReviewQueue() {
         .from("transactions")
         .select("id, description, description_norm, movement, category, amount, confidence")
         .eq("user_id", user!.id)
-        .lt("confidence", 0.5)
+        .lte("confidence", 0.5)
         .eq("is_hidden", false)
         .order("date", { ascending: false })
         .limit(1000);

@@ -357,12 +357,18 @@ export function useMonthlyFileUpload() {
           { body: { userId: user.id } }
         );
         
-        if (integrityData?.stats?.duplicatesRemoved > 0 || integrityData?.stats?.transfersLinked > 0) {
+        if (integrityData?.stats?.transfersLinked > 0) {
           toast({
             title: "Integrity verified",
-            description: `${integrityData.stats.duplicatesRemoved} duplicates removed, ${integrityData.stats.transfersLinked} transfers linked`,
+            description: `${integrityData.stats.transfersLinked} transfers linked`,
           });
+          try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+          queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
         }
       } catch (integrityError) {
         console.error("Integrity check error:", integrityError);
@@ -497,7 +503,15 @@ export function useMonthlyFileUpload() {
     }
     
     if (extension === "pdf") {
-      return await extractPdfText(file);
+      const result = await extractPdfText(file);
+      if (result.truncated) {
+        toast({
+          title: "PDF partially processed",
+          description: `Only ${result.processedPages} of ${result.totalPages} pages were processed. Some transactions may be missing.`,
+          variant: "destructive",
+        });
+      }
+      return result.text;
     }
 
     try {

@@ -11,9 +11,7 @@ import {
   DataTableRow,
 } from "@/components/ui/data-table";
 import {
-  ToolbarButton,
   ToolbarSearch,
-  Filter as FilterIcon,
 } from "@/components/ui/filter-chip";
 import { Transaction } from "@/lib/mockData";
 import { ChevronRight } from "lucide-react";
@@ -124,11 +122,6 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
           </button>
         </div>
         <div className="flex items-center gap-[6px]">
-          <ToolbarButton
-            icon={<FilterIcon className="w-[14px] h-[14px] text-muted-foreground" strokeWidth={1.9} />}
-            label={t('transactions.filter', { defaultValue: 'Filter' })}
-            className="h-[31px] px-[11px] bg-muted rounded-[9px] text-[13px] font-medium text-foreground/80 gap-[6px] hover:bg-muted/80 [&>span:last-of-type]:hidden [&>span:last-of-type]:md:inline"
-          />
           <ToolbarSearch
             value={search}
             onChange={setSearch}
@@ -210,7 +203,13 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                       numeric
                       className={cn(
                         "text-[13px] font-medium tabular-nums",
-                        isTransfer ? "text-muted-foreground" : "text-foreground",
+                        transaction.amount === 0
+                          ? "text-muted-foreground"
+                          : movementType === "income"
+                            ? "text-success"
+                            : movementType === "expense"
+                              ? "text-destructive"
+                              : "text-muted-foreground",
                       )}
                     >
                       {formatCurrency(transaction.amount)}
