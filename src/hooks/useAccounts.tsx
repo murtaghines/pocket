@@ -21,6 +21,7 @@ export interface Account {
   is_primary: boolean;
   hidden_from_dashboard?: boolean;
   account_number?: string | null;
+  initial_balance: number;
 }
 
 export interface CreateAccountParams {
@@ -31,6 +32,7 @@ export interface CreateAccountParams {
   currency_base?: string;
   account_number?: string;
   hidden_from_dashboard?: boolean;
+  initial_balance?: number;
 }
 
 export function useAccounts() {
@@ -79,6 +81,7 @@ export function useAccounts() {
           currency_base: params.currency_base || 'EUR',
           account_number: params.account_number || null,
           hidden_from_dashboard: params.hidden_from_dashboard ?? false,
+          initial_balance: params.initial_balance ?? 0,
         })
         .select()
         .single();

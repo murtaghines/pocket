@@ -65,7 +65,12 @@
     "hiddenFromDashboard": "Hidden from dashboard",
     "selectType": "Select account type",
     "platform": "Platform",
-    "platformPlaceholder": "e.g. Degiro, Interactive Brokers, Binance"
+    "platformPlaceholder": "e.g. Degiro, Interactive Brokers, Binance",
+    "initialBalance": "Initial balance",
+    "initialBalancePlaceholder": "0,00",
+    "initialBalanceHelpCash": "How much cash is in this wallet right now",
+    "initialBalanceHelpManual": "Your account balance before the first transaction you track here",
+    "initialBalanceHelpFile": "Auto-set from your first statement. You can also set it manually."
   },
   "accountTypes": {
     "checking": "Checking Account",

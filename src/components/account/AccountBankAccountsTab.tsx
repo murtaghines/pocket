@@ -143,6 +143,7 @@ export function AccountBankAccountsTab() {
         currency_base: values.currency_base,
         account_number: values.account_number || null,
         hidden_from_dashboard: values.hidden_from_dashboard ?? false,
+        initial_balance: values.initial_balance ?? 0,
       });
     } else {
       createAccount({
@@ -153,6 +154,7 @@ export function AccountBankAccountsTab() {
         currency_base: values.currency_base,
         account_number: values.account_number,
         hidden_from_dashboard: values.hidden_from_dashboard,
+        initial_balance: values.initial_balance,
       });
     }
     setFormOpen(false);
@@ -410,6 +412,7 @@ export function AccountBankAccountsTab() {
                 currency_base: editingAccount.currency_base,
                 account_number: editingAccount.account_number ?? undefined,
                 hidden_from_dashboard: editingAccount.hidden_from_dashboard,
+                initial_balance: editingAccount.initial_balance,
               }
             : undefined
         }

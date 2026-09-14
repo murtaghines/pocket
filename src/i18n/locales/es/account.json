@@ -65,7 +65,12 @@
     "hiddenFromDashboard": "Oculta del panel",
     "selectType": "Selecciona el tipo de cuenta",
     "platform": "Plataforma",
-    "platformPlaceholder": "ej. Degiro, Interactive Brokers, Binance"
+    "platformPlaceholder": "ej. Degiro, Interactive Brokers, Binance",
+    "initialBalance": "Saldo inicial",
+    "initialBalancePlaceholder": "0,00",
+    "initialBalanceHelpCash": "Cuánto efectivo tenés en esta billetera ahora",
+    "initialBalanceHelpManual": "El saldo de tu cuenta antes de la primera transacción que registres aquí",
+    "initialBalanceHelpFile": "Se completa automáticamente con tu primer extracto. También podés ponerlo manualmente."
   },
   "accountTypes": {
     "checking": "Cuenta corriente",

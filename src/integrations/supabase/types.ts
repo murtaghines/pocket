@@ -25,6 +25,7 @@ export type Database = {
           domain_default: Database["public"]["Enums"]["app_domain"] | null
           hidden_from_dashboard: boolean
           id: string
+          initial_balance: number
           institution: string
           is_primary: boolean
           name: string
@@ -40,6 +41,7 @@ export type Database = {
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
           hidden_from_dashboard?: boolean
           id?: string
+          initial_balance?: number
           institution: string
           is_primary?: boolean
           name: string
@@ -55,6 +57,7 @@ export type Database = {
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
           hidden_from_dashboard?: boolean
           id?: string
+          initial_balance?: number
           institution?: string
           is_primary?: boolean
           name?: string
