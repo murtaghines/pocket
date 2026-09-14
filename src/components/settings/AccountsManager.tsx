@@ -71,7 +71,6 @@ export function AccountsManager({ className }: { className?: string }) {
         account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number || null,
-        hidden_from_dashboard: values.hidden_from_dashboard ?? false,
       });
     } else {
       createAccount({
@@ -81,7 +80,6 @@ export function AccountsManager({ className }: { className?: string }) {
         account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number,
-        hidden_from_dashboard: values.hidden_from_dashboard,
       });
     }
     setFormOpen(false);
@@ -219,7 +217,6 @@ export function AccountsManager({ className }: { className?: string }) {
           account_type: editingAccount.account_type,
           currency_base: editingAccount.currency_base,
           account_number: editingAccount.account_number ?? undefined,
-          hidden_from_dashboard: editingAccount.hidden_from_dashboard,
         } : undefined}
         isSubmitting={isCreating || isUpdating}
         onSubmit={handleFormSubmit}

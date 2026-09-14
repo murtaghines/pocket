@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +39,7 @@ export interface AccountFormValues {
   account_type: AccountType;
   currency_base: string;
   account_number?: string;
-  hidden_from_dashboard?: boolean;
+  initial_balance?: number;
 }
 
 interface AccountFormDialogProps {
@@ -90,7 +89,7 @@ export function AccountFormDialog({
   const [color, setColor] = useState("");
   const [currencyBase, setCurrencyBase] = useState(defaultCurrency);
   const [accountNumber, setAccountNumber] = useState("");
-  const [hiddenFromDashboard, setHiddenFromDashboard] = useState(false);
+  const [initialBalance, setInitialBalance] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -103,7 +102,11 @@ export function AccountFormDialog({
       setColor(initialValues?.color || getDefaultAccountColor(0));
       setCurrencyBase(initialValues?.currency_base || defaultCurrency);
       setAccountNumber(initialValues?.account_number || "");
-      setHiddenFromDashboard(initialValues?.hidden_from_dashboard ?? false);
+      setInitialBalance(
+        initialValues?.initial_balance != null && initialValues.initial_balance !== 0
+          ? String(initialValues.initial_balance)
+          : "",
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -115,6 +118,7 @@ export function AccountFormDialog({
 
   const handleSubmit = () => {
     if (!canSubmit) return;
+    const parsedBalance = parseFloat(initialBalance.replace(",", "."));
     onSubmit({
       institution: institution.trim(),
       name: name.trim(),
@@ -122,7 +126,7 @@ export function AccountFormDialog({
       account_type: accountType,
       currency_base: currencyBase,
       account_number: accountNumber.trim() || undefined,
-      hidden_from_dashboard: hiddenFromDashboard,
+      initial_balance: Number.isFinite(parsedBalance) ? parsedBalance : 0,
     });
   };
 
@@ -265,6 +269,29 @@ export function AccountFormDialog({
             </div>
           </div>
 
+          {/* Initial balance */}
+          <div className="space-y-2">
+            <label className="text-[13px] font-medium text-muted-foreground">
+              {t("accounts.initialBalance", "Initial balance")}{" "}
+              <span className="text-muted-foreground/60">
+                ({tp("accounts.optional", "optional")})
+              </span>
+            </label>
+            <Input
+              placeholder={t("accounts.initialBalancePlaceholder", "0,00")}
+              value={initialBalance}
+              onChange={(e) => setInitialBalance(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              inputMode="decimal"
+              className={cn(inputClass, "tabular-nums")}
+            />
+            <p className="text-xs text-muted-foreground px-1">
+              {accountType === "CASH"
+                ? t("accounts.initialBalanceHelpCash", "How much cash is in this wallet right now")
+                : t("accounts.initialBalanceHelpFile", "Auto-set from your first statement. You can also set it manually.")}
+            </p>
+          </div>
+
           {/* Color */}
           <div className="space-y-2">
             <label className="text-[13px] font-medium text-muted-foreground">
@@ -308,16 +335,6 @@ export function AccountFormDialog({
             </div>
           </div>
 
-          {/* Hidden from dashboard */}
-          <div className="flex items-center justify-between rounded-xl bg-muted p-4">
-            <label className="text-[13px] font-medium text-foreground">
-              {t("accounts.hiddenFromDashboard", "Hidden from dashboard")}
-            </label>
-            <Switch
-              checked={hiddenFromDashboard}
-              onCheckedChange={setHiddenFromDashboard}
-            />
-          </div>
         </div>
 
         <DialogFooter className="px-6 pb-6 pt-2 flex-row gap-3 sm:gap-3">

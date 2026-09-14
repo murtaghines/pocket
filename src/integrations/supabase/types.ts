@@ -19,12 +19,14 @@ export type Database = {
           account_number: string | null
           account_role: Database["public"]["Enums"]["account_role"]
           account_type: Database["public"]["Enums"]["account_type"]
+          archived: boolean
           color: string | null
           created_at: string | null
           currency_base: string
           domain_default: Database["public"]["Enums"]["app_domain"] | null
           hidden_from_dashboard: boolean
           id: string
+          initial_balance: number
           institution: string
           is_primary: boolean
           name: string
@@ -34,12 +36,14 @@ export type Database = {
           account_number?: string | null
           account_role?: Database["public"]["Enums"]["account_role"]
           account_type?: Database["public"]["Enums"]["account_type"]
+          archived?: boolean
           color?: string | null
           created_at?: string | null
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
           hidden_from_dashboard?: boolean
           id?: string
+          initial_balance?: number
           institution: string
           is_primary?: boolean
           name: string
@@ -49,12 +53,14 @@ export type Database = {
           account_number?: string | null
           account_role?: Database["public"]["Enums"]["account_role"]
           account_type?: Database["public"]["Enums"]["account_type"]
+          archived?: boolean
           color?: string | null
           created_at?: string | null
           currency_base?: string
           domain_default?: Database["public"]["Enums"]["app_domain"] | null
           hidden_from_dashboard?: boolean
           id?: string
+          initial_balance?: number
           institution?: string
           is_primary?: boolean
           name?: string

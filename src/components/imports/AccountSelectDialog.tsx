@@ -35,7 +35,7 @@ export function AccountSelectDialog({
 }: AccountSelectDialogProps) {
   const { accounts, createAccount, isCreating } = useAccounts();
   const { t } = useTranslation('profile');
-  const filteredAccounts = accounts.filter(a => a.account_role === accountRole);
+  const filteredAccounts = accounts.filter(a => a.account_role === accountRole && !a.archived);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [showNewForm, setShowNewForm] = useState(false);
@@ -59,7 +59,7 @@ export function AccountSelectDialog({
         account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number,
-        hidden_from_dashboard: values.hidden_from_dashboard,
+        initial_balance: values.initial_balance,
       },
       {
         onSuccess: (data) => {
