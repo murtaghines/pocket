@@ -22,6 +22,7 @@ export interface Account {
   hidden_from_dashboard?: boolean;
   account_number?: string | null;
   initial_balance: number;
+  split_percentage: number;
   archived: boolean;
 }
 
@@ -34,6 +35,7 @@ export interface CreateAccountParams {
   account_number?: string;
   hidden_from_dashboard?: boolean;
   initial_balance?: number;
+  split_percentage?: number;
 }
 
 export function useAccounts() {
@@ -83,6 +85,7 @@ export function useAccounts() {
           account_number: params.account_number || null,
           hidden_from_dashboard: params.hidden_from_dashboard ?? false,
           initial_balance: params.initial_balance ?? 0,
+          split_percentage: params.split_percentage ?? 100,
         })
         .select()
         .single();

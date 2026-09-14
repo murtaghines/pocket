@@ -61,6 +61,8 @@
     "deleteOptionDestroy": "Delete account and all data",
     "deleteOptionDestroyDesc": "All files, transactions and history will be permanently deleted",
     "deleteDestroyWarning": "This will permanently delete {{imports}} file(s) and {{transactions}} transaction(s). This cannot be undone.",
+    "splitPercentage": "Your share (%)",
+    "splitPercentageHelp": "Your percentage of this shared account. E.g. 50 means you pay half.",
     "reassignPlaceholder": "Move data to...",
     "reassignAndDelete": "Reassign & Delete",
     "deleteEverything": "Delete everything",

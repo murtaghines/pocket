@@ -151,6 +151,7 @@ export function AccountBankAccountsTab() {
         currency_base: values.currency_base,
         account_number: values.account_number || null,
         initial_balance: values.initial_balance ?? 0,
+        split_percentage: values.split_percentage ?? 100,
       });
     } else {
       createAccount({
@@ -161,6 +162,7 @@ export function AccountBankAccountsTab() {
         currency_base: values.currency_base,
         account_number: values.account_number,
         initial_balance: values.initial_balance,
+        split_percentage: values.split_percentage,
       });
     }
     setFormOpen(false);
@@ -251,6 +253,11 @@ export function AccountBankAccountsTab() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
+                  {account.split_percentage < 100 && (
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-primary px-1.5 py-0.5 rounded-full bg-primary/10 tabular-nums">
+                      {account.split_percentage}%
+                    </span>
+                  )}
                   {account.is_primary && (
                     <span className="text-[10px] font-bold uppercase tracking-wide text-secondary px-1.5 py-0.5 rounded-full bg-secondary/10">
                       {t("accounts.primary", "Primary")}
@@ -446,6 +453,7 @@ export function AccountBankAccountsTab() {
                 currency_base: editingAccount.currency_base,
                 account_number: editingAccount.account_number ?? undefined,
                 initial_balance: editingAccount.initial_balance,
+                split_percentage: editingAccount.split_percentage,
               }
             : undefined
         }

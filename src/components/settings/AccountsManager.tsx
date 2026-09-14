@@ -71,6 +71,7 @@ export function AccountsManager({ className }: { className?: string }) {
         account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number || null,
+        split_percentage: values.split_percentage ?? 100,
       });
     } else {
       createAccount({
@@ -80,6 +81,7 @@ export function AccountsManager({ className }: { className?: string }) {
         account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number,
+        split_percentage: values.split_percentage,
       });
     }
     setFormOpen(false);

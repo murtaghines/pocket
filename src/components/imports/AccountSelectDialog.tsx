@@ -60,6 +60,7 @@ export function AccountSelectDialog({
         currency_base: values.currency_base,
         account_number: values.account_number,
         initial_balance: values.initial_balance,
+        split_percentage: values.split_percentage,
       },
       {
         onSuccess: (data) => {

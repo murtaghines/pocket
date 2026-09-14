@@ -40,6 +40,7 @@ export interface AccountFormValues {
   currency_base: string;
   account_number?: string;
   initial_balance?: number;
+  split_percentage?: number;
 }
 
 interface AccountFormDialogProps {
@@ -90,6 +91,7 @@ export function AccountFormDialog({
   const [currencyBase, setCurrencyBase] = useState(defaultCurrency);
   const [accountNumber, setAccountNumber] = useState("");
   const [initialBalance, setInitialBalance] = useState("");
+  const [splitPercentage, setSplitPercentage] = useState("50");
 
   useEffect(() => {
     if (open) {
@@ -107,6 +109,11 @@ export function AccountFormDialog({
           ? String(initialValues.initial_balance)
           : "",
       );
+      setSplitPercentage(
+        initialValues?.split_percentage != null
+          ? String(initialValues.split_percentage)
+          : "50",
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -119,6 +126,7 @@ export function AccountFormDialog({
   const handleSubmit = () => {
     if (!canSubmit) return;
     const parsedBalance = parseFloat(initialBalance.replace(",", "."));
+    const parsedSplit = parseInt(splitPercentage, 10);
     onSubmit({
       institution: institution.trim(),
       name: name.trim(),
@@ -127,6 +135,9 @@ export function AccountFormDialog({
       currency_base: currencyBase,
       account_number: accountNumber.trim() || undefined,
       initial_balance: Number.isFinite(parsedBalance) ? parsedBalance : 0,
+      split_percentage: accountType === "JOINT" && parsedSplit > 0 && parsedSplit <= 100
+        ? parsedSplit
+        : 100,
     });
   };
 
@@ -291,6 +302,31 @@ export function AccountFormDialog({
                 : t("accounts.initialBalanceHelpFile", "Auto-set from your first statement. You can also set it manually.")}
             </p>
           </div>
+
+          {/* Split percentage — only for JOINT accounts */}
+          {accountType === "JOINT" && (
+            <div className="space-y-2">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                {t("accounts.splitPercentage", "Your share (%)")}
+              </label>
+              <Input
+                placeholder="50"
+                value={splitPercentage}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "");
+                  if (v === "" || (parseInt(v, 10) >= 0 && parseInt(v, 10) <= 100)) {
+                    setSplitPercentage(v);
+                  }
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                inputMode="numeric"
+                className={cn(inputClass, "tabular-nums")}
+              />
+              <p className="text-xs text-muted-foreground px-1">
+                {t("accounts.splitPercentageHelp", "Your percentage of this shared account. E.g. 50 means you pay half.")}
+              </p>
+            </div>
+          )}
 
           {/* Color */}
           <div className="space-y-2">
