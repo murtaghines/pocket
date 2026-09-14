@@ -63,7 +63,9 @@
     "accountNumberPlaceholder": "For your reference only",
     "currency": "Currency",
     "hiddenFromDashboard": "Hidden from dashboard",
-    "selectType": "Select account type"
+    "selectType": "Select account type",
+    "platform": "Platform",
+    "platformPlaceholder": "e.g. Degiro, Interactive Brokers, Binance"
   },
   "accountTypes": {
     "checking": "Checking Account",
@@ -72,7 +74,13 @@
     "cash": "Cash",
     "investments": "Investments",
     "loan": "Loans & Mortgage",
-    "other": "Other"
+    "other": "Other",
+    "joint": "Joint Account",
+    "brokerage": "Brokerage",
+    "crypto": "Crypto",
+    "retirement": "Retirement",
+    "real_estate": "Real Estate",
+    "other_investment": "Other Investment"
   },
   "accountTypeDescriptions": {
     "checking": "Main account for daily transactions",
@@ -81,7 +89,13 @@
     "cash": "Wallet, pocket money",
     "investments": "Stocks, ETFs, crypto and other assets",
     "loan": "Loan or mortgage",
-    "other": "Life insurance or anything else"
+    "other": "Life insurance or anything else",
+    "joint": "Shared account with a partner or family",
+    "brokerage": "Stocks, ETFs, bonds, commodities",
+    "crypto": "Bitcoin, Ethereum and other crypto assets",
+    "retirement": "Pension funds, 401(k), IRA",
+    "real_estate": "Property investments, REITs, crowdfunding",
+    "other_investment": "Any other investment account"
   },
   "preferences": {
     "title": "Preferences",

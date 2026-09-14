@@ -7,6 +7,12 @@ import {
   TrendingUp,
   HandCoins,
   Building2,
+  Users,
+  BarChart3,
+  Bitcoin,
+  Shield,
+  Home,
+  Layers,
 } from "lucide-react";
 
 export type AccountType =
@@ -16,16 +22,27 @@ export type AccountType =
   | "CASH"
   | "INVESTMENTS"
   | "LOAN"
-  | "OTHER";
+  | "OTHER"
+  | "JOINT"
+  | "BROKERAGE"
+  | "CRYPTO"
+  | "RETIREMENT"
+  | "REAL_ESTATE"
+  | "OTHER_INVESTMENT";
 
 export const ACCOUNT_TYPES: AccountType[] = [
   "CASH",
   "CHECKING",
   "CREDIT_CARD",
   "SAVINGS",
-  "INVESTMENTS",
+  "JOINT",
   "LOAN",
   "OTHER",
+  "BROKERAGE",
+  "CRYPTO",
+  "RETIREMENT",
+  "REAL_ESTATE",
+  "OTHER_INVESTMENT",
 ];
 
 export const BANK_ACCOUNT_TYPES: AccountType[] = [
@@ -33,11 +50,18 @@ export const BANK_ACCOUNT_TYPES: AccountType[] = [
   "CHECKING",
   "CREDIT_CARD",
   "SAVINGS",
+  "JOINT",
   "LOAN",
   "OTHER",
 ];
 
-export const INVESTMENT_ACCOUNT_TYPES: AccountType[] = ["INVESTMENTS"];
+export const INVESTMENT_ACCOUNT_TYPES: AccountType[] = [
+  "BROKERAGE",
+  "CRYPTO",
+  "RETIREMENT",
+  "REAL_ESTATE",
+  "OTHER_INVESTMENT",
+];
 
 const TYPE_TO_ROLE: Record<AccountType, "CASH" | "INVESTMENT"> = {
   CHECKING: "CASH",
@@ -47,6 +71,12 @@ const TYPE_TO_ROLE: Record<AccountType, "CASH" | "INVESTMENT"> = {
   INVESTMENTS: "INVESTMENT",
   LOAN: "CASH",
   OTHER: "CASH",
+  JOINT: "CASH",
+  BROKERAGE: "INVESTMENT",
+  CRYPTO: "INVESTMENT",
+  RETIREMENT: "INVESTMENT",
+  REAL_ESTATE: "INVESTMENT",
+  OTHER_INVESTMENT: "INVESTMENT",
 };
 
 const TYPE_TO_DOMAIN: Record<AccountType, "CASHFLOW" | "INVESTING"> = {
@@ -57,6 +87,12 @@ const TYPE_TO_DOMAIN: Record<AccountType, "CASHFLOW" | "INVESTING"> = {
   INVESTMENTS: "INVESTING",
   LOAN: "CASHFLOW",
   OTHER: "CASHFLOW",
+  JOINT: "CASHFLOW",
+  BROKERAGE: "INVESTING",
+  CRYPTO: "INVESTING",
+  RETIREMENT: "INVESTING",
+  REAL_ESTATE: "INVESTING",
+  OTHER_INVESTMENT: "INVESTING",
 };
 
 const TYPE_ICONS: Record<AccountType, LucideIcon> = {
@@ -67,6 +103,12 @@ const TYPE_ICONS: Record<AccountType, LucideIcon> = {
   INVESTMENTS: TrendingUp,
   LOAN: HandCoins,
   OTHER: Building2,
+  JOINT: Users,
+  BROKERAGE: BarChart3,
+  CRYPTO: Bitcoin,
+  RETIREMENT: Shield,
+  REAL_ESTATE: Home,
+  OTHER_INVESTMENT: Layers,
 };
 
 export function deriveAccountRole(type: AccountType): "CASH" | "INVESTMENT" {
@@ -90,6 +132,12 @@ export function getAccountTypeI18nKey(type: AccountType): string {
     INVESTMENTS: "accountTypes.investments",
     LOAN: "accountTypes.loan",
     OTHER: "accountTypes.other",
+    JOINT: "accountTypes.joint",
+    BROKERAGE: "accountTypes.brokerage",
+    CRYPTO: "accountTypes.crypto",
+    RETIREMENT: "accountTypes.retirement",
+    REAL_ESTATE: "accountTypes.real_estate",
+    OTHER_INVESTMENT: "accountTypes.other_investment",
   };
   return keys[type];
 }
@@ -103,6 +151,12 @@ export function getAccountTypeDescriptionKey(type: AccountType): string {
     INVESTMENTS: "accountTypeDescriptions.investments",
     LOAN: "accountTypeDescriptions.loan",
     OTHER: "accountTypeDescriptions.other",
+    JOINT: "accountTypeDescriptions.joint",
+    BROKERAGE: "accountTypeDescriptions.brokerage",
+    CRYPTO: "accountTypeDescriptions.crypto",
+    RETIREMENT: "accountTypeDescriptions.retirement",
+    REAL_ESTATE: "accountTypeDescriptions.real_estate",
+    OTHER_INVESTMENT: "accountTypeDescriptions.other_investment",
   };
   return keys[type];
 }

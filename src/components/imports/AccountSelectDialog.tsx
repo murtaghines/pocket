@@ -47,7 +47,8 @@ export function AccountSelectDialog({
     }
   };
 
-  const lockedType: AccountType = accountRole === 'INVESTMENT' ? 'INVESTMENTS' : 'CHECKING';
+  const lockedType: AccountType | undefined = accountRole === 'CASH' ? 'CHECKING' : undefined;
+  const typeFilter = accountRole === 'INVESTMENT' ? 'investment' as const : undefined;
 
   const handleCreateAccount = (values: AccountFormValues) => {
     createAccount(
@@ -156,6 +157,7 @@ export function AccountSelectDialog({
         onOpenChange={setShowNewForm}
         mode="create"
         lockedType={lockedType}
+        typeFilter={typeFilter}
         isSubmitting={isCreating}
         onSubmit={handleCreateAccount}
       />
