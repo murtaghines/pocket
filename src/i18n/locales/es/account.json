@@ -61,6 +61,8 @@
     "deleteOptionDestroy": "Eliminar cuenta y todos los datos",
     "deleteOptionDestroyDesc": "Todos los archivos, transacciones e historial se eliminarán permanentemente",
     "deleteDestroyWarning": "Esto eliminará permanentemente {{imports}} archivo(s) y {{transactions}} transacción/es. No se puede deshacer.",
+    "splitPercentage": "Tu parte (%)",
+    "splitPercentageHelp": "Tu porcentaje de esta cuenta compartida. Ej: 50 significa que pagás la mitad.",
     "reassignPlaceholder": "Mover datos a...",
     "reassignAndDelete": "Reasignar y eliminar",
     "deleteEverything": "Eliminar todo",
