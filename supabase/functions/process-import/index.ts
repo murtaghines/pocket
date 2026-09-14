@@ -927,20 +927,25 @@ serve(async (req) => {
         keywords: r.keywords as string[],
       }));
 
-    const userContext: UserContext | undefined = (userProfile?.first_name && userProfile?.last_name)
-      ? {
-          firstName: userProfile.first_name,
-          lastName: userProfile.last_name,
-          country: (userPrefs?.country as UserContext['country']) || undefined,
-          jointAccountNames: userPrefs?.joint_account_names || undefined,
-          customCategories: customCategories.length > 0 ? customCategories : undefined,
-        }
-      : undefined;
+    const hasCustomCats = customCategories.length > 0;
+    const hasJointNames = !!userPrefs?.joint_account_names?.length;
+    const hasName = !!(userProfile?.first_name && userProfile?.last_name);
+
+    const userContext: UserContext | undefined =
+      (hasName || hasCustomCats || hasJointNames || userPrefs?.country)
+        ? {
+            firstName: userProfile?.first_name || '',
+            lastName: userProfile?.last_name || '',
+            country: (userPrefs?.country as UserContext['country']) || undefined,
+            jointAccountNames: userPrefs?.joint_account_names || undefined,
+            customCategories: hasCustomCats ? customCategories : undefined,
+          }
+        : undefined;
 
     if (userContext) {
-      console.log(`[process-import] UserContext built: ${userContext.firstName} ${userContext.lastName}, country=${userContext.country || 'none'}`);
+      console.log(`[process-import] UserContext built: name=${hasName ? `${userContext.firstName} ${userContext.lastName}` : '(none)'}, country=${userContext.country || 'none'}, customCats=${hasCustomCats}, jointNames=${hasJointNames}`);
     } else {
-      console.log(`[process-import] No UserContext (missing profile name)`);
+      console.log(`[process-import] No UserContext (no profile data)`);
     }
 
     // Pre-fetch category IDs for all slugs
@@ -1679,8 +1684,9 @@ serve(async (req) => {
       message += `, ${insertFailedCount} failed to save`;
     }
 
-    // Refresh materialized views so dashboard reads fresh data
-    await supabase.rpc("refresh_dashboard_views");
+    // Refresh materialized views so dashboard reads fresh data (non-fatal)
+    try { await supabase.rpc("refresh_dashboard_views"); }
+    catch (e) { console.error("[process-import] refresh_dashboard_views failed (non-fatal):", e); }
 
     // Log categorization savings
     const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer;

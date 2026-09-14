@@ -8,7 +8,7 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 /** File extensions accepted by the bank-statement and investment upload flows. */
-export const VALID_EXTS = [".xlsx", ".xls", ".csv", ".pdf"] as const;
+export const VALID_EXTS = [".xlsx", ".csv", ".pdf"] as const;
 
 /** Hard cap on upload size — keeps huge files from hitting storage and the AI extractor. */
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15 MB
@@ -34,19 +34,28 @@ export function getMonthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
+export interface PdfExtractResult {
+  text: string;
+  totalPages: number;
+  processedPages: number;
+  truncated: boolean;
+}
+
+const PDF_MAX_PAGES = 30;
+
 /**
  * Extract selectable text from a PDF (first 30 pages), accepting either a File or a raw
  * ArrayBuffer. Throws if the PDF has essentially no text (i.e. a scanned/image-only PDF).
  */
-export async function extractPdfText(source: File | ArrayBuffer): Promise<string> {
+export async function extractPdfText(source: File | ArrayBuffer): Promise<PdfExtractResult> {
   const arrayBuffer = source instanceof File ? await source.arrayBuffer() : source;
   const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
   const pdf = await loadingTask.promise;
 
-  const maxPages = Math.min(pdf.numPages, 30);
+  const processedPages = Math.min(pdf.numPages, PDF_MAX_PAGES);
   let content = "";
 
-  for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+  for (let pageNum = 1; pageNum <= processedPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
 
@@ -65,5 +74,10 @@ export async function extractPdfText(source: File | ArrayBuffer): Promise<string
     );
   }
 
-  return trimmed;
+  return {
+    text: trimmed,
+    totalPages: pdf.numPages,
+    processedPages,
+    truncated: pdf.numPages > PDF_MAX_PAGES,
+  };
 }
