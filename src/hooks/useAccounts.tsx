@@ -201,6 +201,44 @@ export function useAccounts() {
     }
   });
 
+  const forceDeleteAccount = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: txErr } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('account_id', id);
+      if (txErr) throw txErr;
+
+      const { error: impErr } = await supabase
+        .from('imports')
+        .delete()
+        .eq('account_id', id);
+      if (impErr) throw impErr;
+
+      const { error: delErr } = await supabase
+        .from('accounts')
+        .delete()
+        .eq('id', id);
+      if (delErr) throw delErr;
+    },
+    onSuccess: async () => {
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['imports'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
+      toast.success('Account and all data deleted');
+    },
+    onError: (error) => {
+      console.error('Error force deleting account:', error);
+      toast.error('Error deleting account');
+    }
+  });
+
   const reassignAndDelete = useMutation({
     mutationFn: async ({ deleteId, reassignToId }: { deleteId: string; reassignToId: string }) => {
       // Reassign imports
@@ -293,10 +331,9 @@ export function useAccounts() {
     return accounts.find(a => a.name.toLowerCase() === name.toLowerCase());
   };
 
-  const getCashAccounts = ({ includeHidden = false, includeArchived = false }: { includeHidden?: boolean; includeArchived?: boolean } = {}): Account[] => {
+  const getCashAccounts = ({ includeArchived = false }: { includeArchived?: boolean } = {}): Account[] => {
     return accounts.filter(
       (a) => a.account_role === 'CASH'
-        && (includeHidden || !a.hidden_from_dashboard)
         && (includeArchived || !a.archived)
     );
   };
@@ -316,13 +353,14 @@ export function useAccounts() {
     createAccount: createAccount.mutate,
     updateAccount: updateAccount.mutate,
     deleteAccount: deleteAccount.mutate,
+    forceDeleteAccount: forceDeleteAccount.mutate,
     reassignAndDelete: reassignAndDelete.mutate,
     updateAccountColor: updateAccountColor.mutate,
     setPrimaryAccount: setPrimaryAccount.mutate,
     unsetPrimaryAccount: unsetPrimaryAccount.mutate,
     isCreating: createAccount.isPending,
     isUpdating: updateAccount.isPending,
-    isDeleting: deleteAccount.isPending || reassignAndDelete.isPending,
+    isDeleting: deleteAccount.isPending || forceDeleteAccount.isPending || reassignAndDelete.isPending,
     getLinkedDataCount,
     getAccountByName,
     getCashAccounts,
