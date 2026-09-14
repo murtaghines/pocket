@@ -63,7 +63,9 @@
     "accountNumberPlaceholder": "Solo para tu referencia",
     "currency": "Moneda",
     "hiddenFromDashboard": "Oculta del panel",
-    "selectType": "Selecciona el tipo de cuenta"
+    "selectType": "Selecciona el tipo de cuenta",
+    "platform": "Plataforma",
+    "platformPlaceholder": "ej. Degiro, Interactive Brokers, Binance"
   },
   "accountTypes": {
     "checking": "Cuenta corriente",
@@ -72,7 +74,13 @@
     "cash": "Efectivo",
     "investments": "Inversiones",
     "loan": "Préstamos e hipotecas",
-    "other": "Otra"
+    "other": "Otra",
+    "joint": "Cuenta conjunta",
+    "brokerage": "Broker",
+    "crypto": "Crypto",
+    "retirement": "Jubilación",
+    "real_estate": "Inmobiliario",
+    "other_investment": "Otra inversión"
   },
   "accountTypeDescriptions": {
     "checking": "Cuenta principal para transacciones diarias",
@@ -81,7 +89,13 @@
     "cash": "Billetera, dinero en efectivo",
     "investments": "Acciones, ETFs, cripto y otros activos",
     "loan": "Préstamo o hipoteca",
-    "other": "Seguro de vida o cualquier otra cuenta"
+    "other": "Seguro de vida o cualquier otra cuenta",
+    "joint": "Cuenta compartida con pareja o familia",
+    "brokerage": "Acciones, ETFs, bonos, commodities",
+    "crypto": "Bitcoin, Ethereum y otros criptoactivos",
+    "retirement": "Fondos de pensión, planes de jubilación",
+    "real_estate": "Inversiones inmobiliarias, REITs, crowdfunding",
+    "other_investment": "Cualquier otra cuenta de inversión"
   },
   "preferences": {
     "title": "Preferencias",

@@ -30,6 +30,7 @@ import {
   getAccountTypeIcon,
   getAccountTypeI18nKey,
   deriveAccountRole,
+  deriveDomainDefault,
 } from "@/lib/accountTypes";
 
 export interface AccountFormValues {
@@ -95,7 +96,7 @@ export function AccountFormDialog({
     if (open) {
       const defaultType = lockedType
         || initialValues?.account_type
-        || (typeFilter === "investment" ? "INVESTMENTS" : "CHECKING");
+        || (typeFilter === "investment" ? "BROKERAGE" : "CHECKING");
       setAccountType(defaultType);
       setInstitution(initialValues?.institution || "");
       setName(initialValues?.name || "");
@@ -126,6 +127,7 @@ export function AccountFormDialog({
   };
 
   const TypeIcon = getAccountTypeIcon(accountType);
+  const isInvestmentType = deriveDomainDefault(accountType) === "INVESTING";
 
   const inputClass =
     "h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
@@ -181,13 +183,17 @@ export function AccountFormDialog({
             )}
           </div>
 
-          {/* Institution */}
+          {/* Institution / Platform */}
           <div className="space-y-2">
             <label className="text-[13px] font-medium text-muted-foreground">
-              {tp("accounts.institution", "Bank")}
+              {isInvestmentType
+                ? t("accounts.platform", "Platform")
+                : tp("accounts.institution", "Bank")}
             </label>
             <Input
-              placeholder={tp("accounts.institutionPlaceholder", "e.g. Revolut, Santander, BBVA")}
+              placeholder={isInvestmentType
+                ? t("accounts.platformPlaceholder", "e.g. Degiro, Interactive Brokers, Binance")
+                : tp("accounts.institutionPlaceholder", "e.g. Revolut, Santander, BBVA")}
               value={institution}
               onChange={(e) => setInstitution(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
