@@ -71,17 +71,17 @@ export function CategoriesEditor() {
     });
   };
 
-  const handleSave = (pattern: string, matchType: string, matchingTransactionIds?: string[]) => {
+  const handleSave = (pattern: string, matchType: string, matchingTransactionIds?: string[], accountId?: string | null) => {
     if (!dialogState) return;
     const editing = dialogState.editingRule;
     if (editing) {
       updateRule.mutate(
-        { ruleId: editing.id, pattern, match_type: matchType },
+        { ruleId: editing.id, pattern, match_type: matchType, account_id: accountId },
         { onSuccess: () => setDialogState(null) }
       );
     } else {
       addRule.mutate(
-        { category_id: dialogState.category.id, pattern, match_type: matchType, match_field: 'description_norm', matchingTransactionIds },
+        { category_id: dialogState.category.id, pattern, match_type: matchType, match_field: 'description_norm', account_id: accountId, matchingTransactionIds },
         {
           onSuccess: () => {
             if (matchingTransactionIds && matchingTransactionIds.length > 0) {

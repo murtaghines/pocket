@@ -10,6 +10,7 @@ export interface SuggestedRule {
   movement: string;
   count: number;
   transactionIds: string[];
+  matchedTransactions: { id: string; date: string }[];
 }
 
 const MIN_OCCURRENCES = 3;
@@ -30,7 +31,7 @@ export function useSuggestedRules() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
-        .select("id, description, description_norm, movement")
+        .select("id, description, description_norm, movement, date")
         .eq("user_id", user!.id)
         .in("categorized_by", ["ai", "sign_fallback"])
         .order("date", { ascending: false })
@@ -46,6 +47,7 @@ export function useSuggestedRules() {
         if (existing) {
           existing.count++;
           existing.transactionIds.push(tx.id);
+          existing.matchedTransactions.push({ id: tx.id, date: tx.date as string });
         } else {
           groups.set(key, {
             key,
@@ -53,6 +55,7 @@ export function useSuggestedRules() {
             movement: tx.movement,
             count: 1,
             transactionIds: [tx.id],
+            matchedTransactions: [{ id: tx.id, date: tx.date as string }],
           });
         }
       }

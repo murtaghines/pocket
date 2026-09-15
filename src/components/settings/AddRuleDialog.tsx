@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Sparkles, Search, AlignLeft, AlignRight, Type, Code2, Check } from 'lucide-react';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
@@ -10,6 +11,10 @@ import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
 import { buildDbRuleFields } from '@/hooks/useCategorizationRules';
 import { useRulePreview } from '@/hooks/useRulePreview';
+import { useAccounts } from '@/hooks/useAccounts';
+import { getAccountDisplayName } from '@/lib/accountColors';
+import { RetroactiveApplyOptions } from '@/components/settings/RetroactiveApplyOptions';
+import { filterByScope, type RetroScope } from '@/hooks/useRetroactiveApply';
 import type { MatchType } from '@/lib/userRules';
 
 interface EditingRule {
@@ -32,7 +37,7 @@ interface Props {
   category: DialogCategory | null;
   editingRule?: EditingRule | null;
   onClose: () => void;
-  onSave: (pattern: string, matchType: string, matchingTransactionIds?: string[]) => void;
+  onSave: (pattern: string, matchType: string, matchingTransactionIds?: string[], accountId?: string | null) => void;
   isSaving: boolean;
 }
 
@@ -69,11 +74,17 @@ function placeholderFor(movement?: string | null): string {
   return 'e.g. Netflix, Mercadona, Spotify...';
 }
 
+const ALL_ACCOUNTS = "__all__";
+
 export function AddRuleDialog({ open, category, editingRule, onClose, onSave, isSaving }: Props) {
   const { t } = useTranslation('settings');
   const { getMovementLabel } = useCategoryTranslations();
+  const { accounts } = useAccounts();
   const [pattern, setPattern] = useState('');
   const [matchType, setMatchType] = useState('SMART');
+  const [accountId, setAccountId] = useState<string>(ALL_ACCOUNTS);
+  const [retroScope, setRetroScope] = useState<RetroScope>("all");
+  const [customSince, setCustomSince] = useState("");
 
   useEffect(() => {
     if (open && editingRule) {
@@ -82,41 +93,50 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
     } else if (open) {
       setPattern('');
       setMatchType('SMART');
+      setAccountId(ALL_ACCOUNTS);
+      setRetroScope("all");
+      setCustomSince("");
     }
   }, [open, editingRule]);
 
   const isEditing = !!editingRule;
 
-  // Preview uses the exact pattern/tokens/match_type that will actually be saved
-  // (same builder the addRule mutation uses), so the count shown here can never
-  // drift from what the retroactive apply on save actually updates.
   const { dbType, pattern: builtPattern, tokens: builtTokens } = buildDbRuleFields(
     pattern.trim(),
     matchType,
     category?.movement || 'EXPENSE',
     category?.slug || '',
   );
-  const { matchingIds, count: matchCount, isLoading: previewLoading } = useRulePreview({
+  const selectedAccountId = accountId === ALL_ACCOUNTS ? undefined : accountId;
+  const { matched, count: matchCount, isLoading: previewLoading } = useRulePreview({
     matchType: dbType as MatchType,
     pattern: builtPattern,
     tokens: builtTokens,
     movement: category?.movement || 'EXPENSE',
+    accountId: selectedAccountId,
     enabled: open && !isEditing && pattern.trim().length > 0,
   });
 
   const handleSave = () => {
     if (!pattern.trim()) return;
-    onSave(pattern.trim(), matchType, isEditing ? undefined : matchingIds);
+    let idsToApply: string[] | undefined;
+    if (!isEditing && matched.length > 0) {
+      idsToApply = filterByScope(matched, retroScope, customSince ? customSince + "-01" : undefined);
+    }
+    onSave(pattern.trim(), matchType, idsToApply, selectedAccountId || null);
   };
 
   const handleClose = () => {
     setPattern('');
     setMatchType('SMART');
+    setAccountId(ALL_ACCOUNTS);
     onClose();
   };
 
   const accent = category?.color ? `hsl(${category.color})` : 'hsl(var(--primary))';
   const CategoryIconCmp = category?.icon ? getLucideIcon(category.icon) : null;
+
+  const activeAccounts = accounts.filter(a => !a.archived);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
@@ -207,6 +227,38 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
               })}
             </div>
           </div>
+
+          {/* Account scope */}
+          {activeAccounts.length > 1 && (
+            <div className="space-y-2">
+              <Label className="text-sm">{t('categories.accountScope')}</Label>
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_ACCOUNTS}>{t('categories.accountScopeAll')}</SelectItem>
+                  {activeAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {getAccountDisplayName(a)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t('categories.accountScopeHelp')}</p>
+            </div>
+          )}
+
+          {/* Retroactive scope */}
+          {!isEditing && matched.length > 0 && (
+            <RetroactiveApplyOptions
+              transactions={matched}
+              scope={retroScope}
+              onScopeChange={setRetroScope}
+              customSince={customSince}
+              onCustomSinceChange={setCustomSince}
+            />
+          )}
         </div>
 
         <DialogFooter>

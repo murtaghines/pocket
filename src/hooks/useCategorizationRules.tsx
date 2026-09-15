@@ -15,6 +15,7 @@ export interface Rule {
   match_field: string;
   applied_count: number;
   last_applied_at: string | null;
+  account_id: string | null;
 }
 
 // UI match_types (uppercase, historical) → user_rules match_types (lowercase).
@@ -79,7 +80,7 @@ export function useCategorizationRules() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_rules")
-        .select("id, pattern, match_type, category, applied_count, last_applied_at")
+        .select("id, pattern, match_type, category, applied_count, last_applied_at, account_id")
         .eq("user_id", user!.id)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -92,6 +93,7 @@ export function useCategorizationRules() {
         match_field: 'description_norm',
         applied_count: r.applied_count ?? 0,
         last_applied_at: r.last_applied_at,
+        account_id: r.account_id ?? null,
       }));
     },
     enabled: !!user?.id && allCategories.length > 0,
@@ -103,6 +105,7 @@ export function useCategorizationRules() {
       pattern: string;
       match_type: string;
       match_field?: string;
+      account_id?: string | null;
       /** IDs of existing transactions the rule matches, for retroactive apply. */
       matchingTransactionIds?: string[];
     }) => {
@@ -119,6 +122,7 @@ export function useCategorizationRules() {
         movement: cat.movement,
         category: cat.slug,
         confidence: 0.99,
+        account_id: rule.account_id || null,
       });
       if (error) throw error;
 
@@ -146,7 +150,7 @@ export function useCategorizationRules() {
   });
 
   const updateRule = useMutation({
-    mutationFn: async (params: { ruleId: string; pattern: string; match_type: string }) => {
+    mutationFn: async (params: { ruleId: string; pattern: string; match_type: string; account_id?: string | null }) => {
       const dbType = UI_TO_DB_MATCH_TYPE[params.match_type] || params.match_type.toLowerCase();
       let pattern = params.pattern;
       let tokens: string[] = [];
@@ -154,9 +158,11 @@ export function useCategorizationRules() {
         pattern = normalize(params.pattern);
         tokens = extractKeyTokens(params.pattern);
       }
+      const updatePayload: Record<string, unknown> = { pattern, tokens, match_type: dbType };
+      if (params.account_id !== undefined) updatePayload.account_id = params.account_id || null;
       const { error } = await supabase
         .from("user_rules")
-        .update({ pattern, tokens, match_type: dbType })
+        .update(updatePayload)
         .eq("id", params.ruleId);
       if (error) throw error;
     },
