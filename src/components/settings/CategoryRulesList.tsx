@@ -11,6 +11,8 @@ import type { CustomCategoryRule, VisualOverride } from '@/hooks/useCustomCatego
 import type { Rule } from '@/hooks/useCategorizationRules';
 import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
+import { useAccounts } from '@/hooks/useAccounts';
+import { getAccountDisplayName } from '@/lib/accountColors';
 
 type Category = Database['public']['Tables']['categories']['Row'];
 
@@ -202,9 +204,10 @@ interface RuleRowProps {
   onDelete?: () => void;
   placeholder?: boolean;
   appliedCount?: number;
+  accountName?: string | null;
 }
 
-function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder, appliedCount }: RuleRowProps) {
+function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder, appliedCount, accountName }: RuleRowProps) {
   return (
     <div
       className={cn(
@@ -241,6 +244,11 @@ function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder, ap
             )}
           >
             {appliedCount ? `· applied ${appliedCount}×` : '· never applied'}
+          </span>
+        )}
+        {!placeholder && accountName && (
+          <span className="text-[10px] shrink-0 rounded-full bg-muted px-2 py-0.5 text-muted-foreground font-medium">
+            {accountName}
           </span>
         )}
       </div>
@@ -296,8 +304,11 @@ export function CategoryRulesList({
 }: Props) {
   const { t } = useTranslation('settings');
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+  const { accounts } = useAccounts();
   // Default: all groups expanded so the user sees the empty/example row right away
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const accountNameById = new Map(accounts.map(a => [a.id, getAccountDisplayName(a)]));
 
   const toggle = (id: string) =>
     setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -384,6 +395,7 @@ export function CategoryRulesList({
                   onEdit={() => onEditRule(rule, cat)}
                   onDelete={() => onDeleteRule(rule.id)}
                   appliedCount={rule.applied_count}
+                  accountName={rule.account_id ? accountNameById.get(rule.account_id) : null}
                 />
               ))
             )}

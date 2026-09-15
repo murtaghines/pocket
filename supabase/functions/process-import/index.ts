@@ -550,13 +550,18 @@ interface UserRuleRow {
   movement: string;
   category: string;
   source: string;
+  account_id: string | null;
 }
 
 function applyUserRulesMatch(
   description: string,
   rules: UserRuleRow[],
+  transactionMovement: string,
+  transactionAccountId: string,
 ): { movement: string; category: string; ruleId: string } | null {
   for (const rule of rules) {
+    if (rule.movement !== transactionMovement) continue;
+    if (rule.account_id && rule.account_id !== transactionAccountId) continue;
     const mt = (rule.match_type || '').toLowerCase() as MatchType;
     const matched = ruleMatchesDescription(mt, rule.pattern || '', rule.tokens || [], description);
     if (matched) {
@@ -965,7 +970,7 @@ serve(async (req) => {
     // applied before Settings rules and the generic categorizer.
     const { data: userRulesRaw } = await supabase
       .from('user_rules')
-      .select('id, match_type, pattern, tokens, movement, category, source')
+      .select('id, match_type, pattern, tokens, movement, category, source, account_id')
       .eq('user_id', userId)
       .eq('is_active', true)
       .order('source', { ascending: false })       // 'user_correction' > 'manual'
@@ -1412,8 +1417,8 @@ serve(async (req) => {
       
       // ── Priority 1: user_rules (unified rule table — both Categories page and
       //    "save as rule" flow in imports write here) ──
-      const userRuleHit = applyUserRulesMatch(descriptionRaw, userRules)
-                       || applyUserRulesMatch(descriptionClean, userRules);
+      const userRuleHit = applyUserRulesMatch(descriptionRaw, userRules, movement, accountId)
+                       || applyUserRulesMatch(descriptionClean, userRules, movement, accountId);
 
       if (userRuleHit) {
         const mappedCat = mapCategorySlug(userRuleHit.category);

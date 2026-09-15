@@ -83,6 +83,7 @@ import {
   ruleMatchesDescription,
   type MatchType,
 } from "@/lib/userRules";
+import { filterByScope } from "@/hooks/useRetroactiveApply";
 import {
   USER_TRACKED_FIELDS,
   getCategoriesForMovement,
@@ -707,16 +708,19 @@ export function InlineTransactionsEditor({
                   // Find similar past transactions for retroactive apply
                   const { data: allTx } = await supabase
                     .from("transactions")
-                    .select("id, description, description_norm, movement, categorized_by")
+                    .select("id, description, description_norm, movement, categorized_by, date")
                     .eq("user_id", user.id)
                     .limit(1500);
 
                   const matchingIds: string[] = [];
+                  const matchingWithDates: { id: string; date: string }[] = [];
                   for (const row of allTx || []) {
+                    if (row.movement && row.movement !== targetMovement) continue;
                     if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
                     const desc = (row.description_norm || row.description || "") as string;
                     if (ruleMatchesDescription(built.match_type as MatchType, built.pattern, built.tokens, desc)) {
                       matchingIds.push(row.id);
+                      matchingWithDates.push({ id: row.id, date: row.date as string });
                     }
                   }
 
@@ -733,41 +737,70 @@ export function InlineTransactionsEditor({
                     description: (
                       <div className="space-y-2">
                         <p className="text-sm opacity-90">
-                          {matchingIds.length > 0
-                            ? `${matchingIds.length} similar past transaction${matchingIds.length === 1 ? "" : "s"} found.`
+                          {matchingWithDates.length > 0
+                            ? `${matchingWithDates.length} similar past transaction${matchingWithDates.length === 1 ? "" : "s"} found.`
                             : "Future matching transactions will be categorized automatically."}
                         </p>
                         <div className="flex gap-1.5">
-                          {matchingIds.length > 0 && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={async () => {
-                                const { error: retroErr } = await supabase
-                                  .from("transactions")
-                                  .update({
-                                    movement: targetMovement,
-                                    category: savedPendingCategory,
-                                    category_id: savedPendingCategoryId,
-                                    category_source: "USER_RULE",
-                                    categorized_by: "user_rule",
-                                  })
-                                  .in("id", matchingIds);
-                                if (!retroErr) {
-                                  toast({
-                                    title: `${matchingIds.length} transaction${matchingIds.length === 1 ? "" : "s"} updated`,
-                                  });
-                                  queryClient.invalidateQueries({ queryKey: ["transactions"] });
-                                  queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
-                                  queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
-                                  queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
-                                }
-                              }}
-                            >
-                              Apply to all
-                            </Button>
-                          )}
+                          {matchingWithDates.length > 0 && (() => {
+                            const now = new Date();
+                            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                            const mo3 = new Date();
+                            mo3.setMonth(mo3.getMonth() - 3);
+                            const threeMonthsStart = new Date(mo3.getFullYear(), mo3.getMonth(), 1);
+                            const thisMonthCount = matchingWithDates.filter(mt => new Date(mt.date) >= thisMonthStart).length;
+                            const last3Count = matchingWithDates.filter(mt => new Date(mt.date) >= threeMonthsStart).length;
+                            const allCount = matchingWithDates.length;
+
+                            const applyRetro = async (scope: "this_month" | "last_3_months" | "all") => {
+                              const ids = filterByScope(matchingWithDates, scope);
+                              if (ids.length === 0) return;
+                              const { error: retroErr } = await supabase
+                                .from("transactions")
+                                .update({
+                                  movement: targetMovement,
+                                  category: savedPendingCategory,
+                                  category_id: savedPendingCategoryId,
+                                  category_source: "USER_RULE",
+                                  categorized_by: "user_rule",
+                                })
+                                .in("id", ids);
+                              if (!retroErr) {
+                                toast({
+                                  title: `${ids.length} transaction${ids.length === 1 ? "" : "s"} updated`,
+                                });
+                                queryClient.invalidateQueries({ queryKey: ["transactions"] });
+                                queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+                                queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+                                queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
+                              }
+                            };
+
+                            return (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="h-7 text-xs">
+                                    Apply ({allCount})
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                  {thisMonthCount > 0 && (
+                                    <DropdownMenuItem onClick={() => applyRetro("this_month")}>
+                                      This month ({thisMonthCount})
+                                    </DropdownMenuItem>
+                                  )}
+                                  {last3Count > thisMonthCount && (
+                                    <DropdownMenuItem onClick={() => applyRetro("last_3_months")}>
+                                      Last 3 months ({last3Count})
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem onClick={() => applyRetro("all")}>
+                                    All ({allCount})
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            );
+                          })()}
                           <Button
                             variant="outline"
                             size="sm"
