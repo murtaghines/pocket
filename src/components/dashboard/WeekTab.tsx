@@ -15,7 +15,7 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDashboardData, useOpeningBalance } from "@/hooks/useDashboardData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -30,7 +30,7 @@ export function WeekTab() {
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
-  const { selectedPeriod, setSelectedPeriod, setAvailablePeriods, setTransactionCount } = usePeriodSelection();
+  const { selectedPeriod, setSelectedPeriod, setAvailablePeriods, setOpeningBalance, setTransactionCount } = usePeriodSelection();
 
   const userCurrency = preferences?.base_currency || "EUR";
   const convertToUserCurrency = useCallback(
@@ -78,6 +78,16 @@ export function WeekTab() {
       setSelectedPeriod("week", selectedWeek);
     }
   }, [selectedWeek]);
+
+  const { openingBalance: weekOpeningBalance } = useOpeningBalance(range?.start ?? null);
+
+  useEffect(() => {
+    if (weekOpeningBalance != null) {
+      setOpeningBalance(convertToUserCurrency(weekOpeningBalance));
+    } else {
+      setOpeningBalance(null);
+    }
+  }, [weekOpeningBalance, userCurrency]);
 
   useEffect(() => {
     setTransactionCount(transactions.length);
@@ -212,7 +222,12 @@ export function WeekTab() {
           {/* Row 6: Transactions table */}
           <div className="bg-card rounded-xl pt-3 pb-[6px] md:pt-[18px] shadow-section">
             <div className="max-h-[700px] overflow-y-auto">
-              <TransactionTable transactions={transactions} />
+              <TransactionTable
+                transactions={transactions}
+                openingBalance={weekOpeningBalance != null
+                  ? convertToUserCurrency(weekOpeningBalance)
+                  : null}
+              />
             </div>
           </div>
       </div>
