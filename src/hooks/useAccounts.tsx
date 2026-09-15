@@ -116,8 +116,15 @@ export function useAccounts() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
       toast.success('Account updated successfully');
     },
     onError: (error) => {

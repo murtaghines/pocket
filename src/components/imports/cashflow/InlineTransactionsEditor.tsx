@@ -84,6 +84,7 @@ import {
   type MatchType,
 } from "@/lib/userRules";
 import { filterByScope } from "@/hooks/useRetroactiveApply";
+import { buildSplitMap, applySplitFast } from "@/lib/splitAmount";
 import {
   USER_TRACKED_FIELDS,
   getCategoriesForMovement,
@@ -169,6 +170,12 @@ export function InlineTransactionsEditor({
   const { formatCurrency, formatDate, formatWeekday } = useLocalization();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const { t } = useTranslation("common");
+
+  const splitMap = useMemo(() => buildSplitMap(accounts), [accounts]);
+  const splitAmt = useCallback(
+    (amount: number, accountId?: string | null) => applySplitFast(amount, accountId, splitMap),
+    [splitMap],
+  );
 
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
@@ -930,14 +937,14 @@ export function InlineTransactionsEditor({
     const visible = transactions.filter((t) => !t.is_hidden);
     const income = visible
       .filter((t) => t.movement === "INCOME")
-      .reduce((s, t) => s + Math.abs(t.amount), 0);
+      .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
     const expenses = visible
       .filter((t) => t.movement === "EXPENSE")
-      .reduce((s, t) => s + Math.abs(t.amount), 0);
+      .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
     const transfers = visible.filter((t) => t.movement === "TRANSFER").length;
     const hidden = transactions.filter((t) => t.is_hidden).length;
     return { income, expenses, transfers, hidden, total: transactions.length };
-  }, [transactions]);
+  }, [transactions, splitAmt]);
 
   const runningBalanceMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -949,11 +956,11 @@ export function InlineTransactionsEditor({
     });
     let balance = openingBalance;
     for (const tx of sorted) {
-      balance += tx.amount;
+      balance += splitAmt(tx.amount, tx.account_id);
       map.set(tx.id, Math.round(balance * 100) / 100);
     }
     return map;
-  }, [transactions, openingBalance]);
+  }, [transactions, openingBalance, splitAmt]);
 
   const filteredSorted = useMemo(() => {
     let result = [...transactions];
@@ -1098,7 +1105,8 @@ export function InlineTransactionsEditor({
                 const category = normalizeCategory(
                   pending?.category ?? tx.category ?? "other_expense",
                 );
-                const displayAmount = pending?.amount ?? tx.amount;
+                const rawAmount = pending?.amount ?? tx.amount;
+                const displayAmount = splitAmt(rawAmount, tx.account_id);
                 const availableCategories = getCategoriesForMovement(movement);
                 const hasPendingCategoryChange =
                   !!pending?.category && pending.category !== tx.category;
@@ -1349,7 +1357,7 @@ export function InlineTransactionsEditor({
                         onDoubleClick={() => {
                           if (isLocked || isHidden) return;
                           setEditingAmountId(tx.id);
-                          setEditingAmountValue(String(Math.abs(displayAmount)).replace(".", ","));
+                          setEditingAmountValue(String(Math.abs(rawAmount)).replace(".", ","));
                           setTimeout(() => amountInputRef.current?.focus(), 50);
                         }}
                       >
@@ -1648,7 +1656,7 @@ export function InlineTransactionsEditor({
                               <Check className="h-3 w-3 text-success" />
                             ) : null}
                             <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
-                              {formatCurrency(tx.amount)}
+                              {formatCurrency(splitAmt(tx.amount, tx.account_id))}
                             </span>
                           </div>
                           {accountLabel(tx.account_id) && (
@@ -1698,7 +1706,7 @@ export function InlineTransactionsEditor({
                 }
               }}
               onCopyDescription={() => { navigator.clipboard.writeText(atxCleanDesc); sonnerToast("Description copied"); }}
-              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(atx.amount)); sonnerToast("Amount copied"); }}
+              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(splitAmt(atx.amount, atx.account_id))); sonnerToast("Amount copied"); }}
             />
           );
         })()}
@@ -1757,7 +1765,7 @@ export function InlineTransactionsEditor({
           monthLabel={monthLabel}
           isLocked={isLocked}
           summary={summary}
-          closingBalance={openingBalance != null ? openingBalance + transactions.reduce((sum, tx) => sum + tx.amount, 0) : null}
+          closingBalance={openingBalance != null ? openingBalance + transactions.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0) : null}
           externalOpen={externalManualEntryOpen}
           onExternalOpenChange={onManualEntryOpenChange}
           defaultMovement={defaultMovement}
@@ -1836,7 +1844,7 @@ export function InlineTransactionsEditor({
                         movementConfirm.tx.amount < 0 ? "text-destructive" : "text-success",
                       )}
                     >
-                      {formatCurrency(movementConfirm.tx.amount)}
+                      {formatCurrency(splitAmt(movementConfirm.tx.amount, movementConfirm.tx.account_id))}
                     </span>
                   </span>
                   <span className="block text-xs text-muted-foreground">
