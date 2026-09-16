@@ -212,7 +212,7 @@ export function MonthTab() {
                     previousMonthKey={hasPreviousData ? previousMonth.month : null}
                     total={convertedCurrentMonth.balance}
                     previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
-                    formatCurrency={formatCurrency}
+                    formatCurrency={(n) => formatCurrency(n, undefined, true)}
                     positiveIsGood
                   />
                 </div>

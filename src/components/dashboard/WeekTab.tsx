@@ -154,7 +154,7 @@ export function WeekTab() {
                 previousPeriodLabel={previousPeriodLabel}
                 total={convertToUserCurrency(current.balance)}
                 previousTotal={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
-                formatCurrency={formatCurrency}
+                formatCurrency={(n) => formatCurrency(n, undefined, true)}
                 positiveIsGood
               />
             </div>

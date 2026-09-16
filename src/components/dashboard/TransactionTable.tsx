@@ -212,11 +212,11 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                               : "text-muted-foreground",
                       )}
                     >
-                      {formatCurrency(transaction.amount)}
+                      {formatCurrency(transaction.amount, undefined, true)}
                     </DataTableCell>
                     <DataTableCell numeric className="text-[13px] font-normal text-muted-foreground tabular-nums pr-5">
                       {computedBalanceMap.has(transaction.id)
-                        ? formatCurrency(computedBalanceMap.get(transaction.id)!)
+                        ? formatCurrency(computedBalanceMap.get(transaction.id)!, undefined, true)
                         : '—'}
                     </DataTableCell>
                   </DataTableRow>
@@ -249,7 +249,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                 const closingBalance = newest ? computedBalanceMap.get(newest.id) : undefined;
                 return closingBalance !== undefined ? (
                   <span className="text-[13px] font-semibold tabular-nums text-foreground">
-                    {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance)}
+                    {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance, undefined, true)}
                   </span>
                 ) : null;
               })()}
