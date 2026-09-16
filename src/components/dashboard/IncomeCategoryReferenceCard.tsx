@@ -75,7 +75,7 @@ export function IncomeCategoryReferenceCard({
     return (
       <Card variant="bento">
         <div className="px-[14px] pt-3 pb-0 md:px-5 md:pt-[16px] md:pb-0">
-          <p className="text-[15px] font-heading font-bold text-foreground">
+          <p className="text-[14px] font-heading font-bold text-foreground">
             {t("charts.incomeByCategory", "Income by Category")}
           </p>
         </div>
@@ -89,7 +89,7 @@ export function IncomeCategoryReferenceCard({
   return (
     <Card variant="bento" className="flex h-full flex-col overflow-hidden">
       <div className="px-[14px] pt-3 pb-0 md:px-5 md:pt-[16px]">
-        <p className="text-[15px] font-heading font-bold text-foreground">
+        <p className="text-[14px] font-heading font-bold text-foreground">
           {t("charts.incomeByCategory", "Income by Category")}
         </p>
       </div>
