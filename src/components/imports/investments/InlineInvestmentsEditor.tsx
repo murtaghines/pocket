@@ -696,7 +696,7 @@ export function InlineInvestmentsEditor({
                             <Check className="h-3 w-3 text-success" />
                           ) : null}
                           <span className="text-[13px] font-semibold tabular-nums text-foreground">
-                            {formatCurrency(type === 'deposit' ? inv.amount : -inv.amount)}
+                            {formatCurrency(type === 'deposit' ? inv.amount : -inv.amount, undefined, true)}
                           </span>
                         </div>
                         <div className="flex items-center gap-0.5">

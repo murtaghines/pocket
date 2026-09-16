@@ -1130,7 +1130,7 @@ export function InlineTransactionsEditor({
                     setTimeout(() => noteInputRef.current?.focus(), 50);
                   },
                   onCopyAmount: () => {
-                    navigator.clipboard.writeText(formatCurrency(displayAmount));
+                    navigator.clipboard.writeText(formatCurrency(displayAmount, undefined, true));
                     sonnerToast("Amount copied");
                   },
                   onCopyDescription: () => {
@@ -1379,14 +1379,14 @@ export function InlineTransactionsEditor({
                           />
                         ) : (
                           <span>
-                            {formatCurrency(displayAmount)}
+                            {formatCurrency(displayAmount, undefined, true)}
                           </span>
                         )}
                       </TableCell>
 
                       {/* Balance */}
                       <TableCell className="text-right text-[13px] text-[#8A919C] tabular-nums">
-                        {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!) : "—"}
+                        {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!, undefined, true) : "—"}
                       </TableCell>
 
                       {/* Actions: three-dot menu / pending save+discard */}
@@ -1484,7 +1484,7 @@ export function InlineTransactionsEditor({
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
-                                  navigator.clipboard.writeText(formatCurrency(displayAmount));
+                                  navigator.clipboard.writeText(formatCurrency(displayAmount, undefined, true));
                                   sonnerToast("Copied");
                                 }}
                                 className="gap-2 text-[13px]"
@@ -1656,7 +1656,7 @@ export function InlineTransactionsEditor({
                               <Check className="h-3 w-3 text-success" />
                             ) : null}
                             <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
-                              {formatCurrency(splitAmt(tx.amount, tx.account_id))}
+                              {formatCurrency(splitAmt(tx.amount, tx.account_id), undefined, true)}
                             </span>
                           </div>
                           {accountLabel(tx.account_id) && (
@@ -1706,7 +1706,7 @@ export function InlineTransactionsEditor({
                 }
               }}
               onCopyDescription={() => { navigator.clipboard.writeText(atxCleanDesc); sonnerToast("Description copied"); }}
-              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(splitAmt(atx.amount, atx.account_id))); sonnerToast("Amount copied"); }}
+              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(splitAmt(atx.amount, atx.account_id), undefined, true)); sonnerToast("Amount copied"); }}
             />
           );
         })()}
@@ -1844,7 +1844,7 @@ export function InlineTransactionsEditor({
                         movementConfirm.tx.amount < 0 ? "text-destructive" : "text-success",
                       )}
                     >
-                      {formatCurrency(splitAmt(movementConfirm.tx.amount, movementConfirm.tx.account_id))}
+                      {formatCurrency(splitAmt(movementConfirm.tx.amount, movementConfirm.tx.account_id), undefined, true)}
                     </span>
                   </span>
                   <span className="block text-xs text-muted-foreground">

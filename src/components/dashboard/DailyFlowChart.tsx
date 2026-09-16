@@ -77,7 +77,7 @@ export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChar
             className="text-[13px] font-semibold whitespace-nowrap tabular-nums"
             style={{ color: isPositive ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}
           >
-            {formatCurrency(netChange)}
+            {formatCurrency(netChange, undefined, true)}
           </span>
         )}
       </div>
