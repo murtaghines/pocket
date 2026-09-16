@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { MonthlyData } from "@/lib/mockData";
@@ -75,4 +76,26 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
     isLoading: isLoadingSeries || isLoadingBalances,
     hasData: monthlyData.length > 0,
   };
+}
+
+export function useOpeningBalance(date: string | null, domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW") {
+  const { user } = useAuth();
+
+  const { data: openingBalance = null, isLoading } = useQuery({
+    queryKey: ["opening-balance-at-date", user?.id, domain, date],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_balance_at_date", {
+        p_user_id: user!.id,
+        p_domain: domain,
+        p_date: date!,
+      });
+      if (error) throw error;
+      const n = Number(data);
+      return isNaN(n) ? 0 : n;
+    },
+    enabled: !!user && !!date,
+    staleTime: 30_000,
+  });
+
+  return { openingBalance, isLoading };
 }

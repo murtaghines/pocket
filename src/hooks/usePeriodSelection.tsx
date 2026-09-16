@@ -20,7 +20,7 @@ const PeriodSelectionContext = createContext<PeriodSelectionContextValue | undef
 /**
  * App-wide "which period is selected" state, keyed by granularity (week/month/year), so the
  * Dashboard's month/week/year tabs and their header selectors share one context instead of three
- * near-duplicate ones. `openingBalance` stays a single value — it's a month-only concept.
+ * near-duplicate ones. `openingBalance` is a single value set by whichever tab is active.
  */
 export function PeriodSelectionProvider({ children }: { children: ReactNode }) {
   const [selectedPeriod, setSelectedPeriodState] = useState<Record<Granularity, string | null>>(EMPTY_SELECTED);

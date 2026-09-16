@@ -17,7 +17,7 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDashboardData, useOpeningBalance } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +35,7 @@ export function YearTab() {
   const { t, i18n } = useTranslation("dashboard");
   const { user } = useAuth();
   const { accounts: allAccounts } = useAccounts();
-  const { monthlyData: yearlyData, openingBalanceByMonth, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
+  const { monthlyData: yearlyData, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
@@ -129,16 +129,7 @@ export function YearTab() {
 
   const previousPeriodLabel = hasPreviousData ? previous.month : undefined;
 
-  const yearOpeningBalance = useMemo(() => {
-    if (!selectedYear || !openingBalanceByMonth) return null;
-    const janKey = `${selectedYear}-01`;
-    if (openingBalanceByMonth[janKey] != null) return openingBalanceByMonth[janKey];
-    const monthKeys = Object.keys(openingBalanceByMonth)
-      .filter((k) => k.startsWith(selectedYear))
-      .sort();
-    if (monthKeys.length > 0) return openingBalanceByMonth[monthKeys[0]];
-    return null;
-  }, [selectedYear, openingBalanceByMonth]);
+  const { openingBalance: yearOpeningBalance } = useOpeningBalance(range?.start ?? null);
 
   useEffect(() => {
     if (yearOpeningBalance != null) {
