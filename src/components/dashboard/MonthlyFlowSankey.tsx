@@ -295,7 +295,7 @@ export function MonthlyFlowSankey({
   const fontSize = isMobile ? 9 : 11;
 
   return (
-    <div ref={containerRef} className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section h-full">
+    <div ref={containerRef} className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section h-full overflow-hidden flex flex-col">
       <p className="text-[15px] font-heading font-bold text-foreground mb-1">
         {t("charts.monthlyFlow", "Monthly flow")}
       </p>
