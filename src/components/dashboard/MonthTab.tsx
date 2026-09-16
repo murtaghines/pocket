@@ -264,14 +264,14 @@ export function MonthTab() {
                 />
               </div>
 
-              {/* Row 4: Income by category (blue, 1fr) + Spending by category (1.62fr) */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[370px] gap-[14px]">
+              {/* Row 4: Income by category + Spending by category */}
+              <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.82fr] lg:h-[370px] gap-[14px]">
                 <CategoryChart data={agg.incomeCategoryData} />
                 <SpendingByCategoryChart data={agg.expenseCategoryData} />
               </div>
 
-              {/* Row 5: Monthly flow Sankey (1.62fr) + Top expenses (1fr) */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.62fr_1fr] lg:h-[370px] gap-[14px]">
+              {/* Row 5: Monthly flow Sankey + Top expenses */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.82fr_0.8fr] lg:h-[370px] gap-[14px]">
                 <MonthlyFlowSankey
                   incomeCategories={agg.incomeCategoryData}
                   expenseCategories={agg.expenseCategoryData}
