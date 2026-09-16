@@ -223,7 +223,7 @@ export function YearTab() {
           </div>
 
           {/* Row 2: Evolution by month + Accounts (year-end balance) */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[280px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[250px] gap-[14px]">
             <PeriodBreakdownChart
               points={breakdownPoints}
               subtitle={t("charts.byMonthThisYear", "By month · this year")}

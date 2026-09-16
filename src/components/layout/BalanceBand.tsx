@@ -122,7 +122,7 @@ export function BalanceBand() {
   })();
 
   return (
-    <div className="hidden md:block bg-primary px-[34px] pt-[24px] pb-[78px]">
+    <div className="hidden md:block bg-primary px-[34px] pt-[24px] pb-[78px] sticky top-0 z-40">
       <div className="flex items-start gap-[24px]">
         {/* Left — balance info */}
         <div className="flex-1 min-w-0">

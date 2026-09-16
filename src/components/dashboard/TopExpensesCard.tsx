@@ -15,7 +15,8 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
   const { t } = useTranslation('dashboard');
   const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
-  const hasData = topExpenses.length > 0;
+  const items = topExpenses.slice(0, 5);
+  const hasData = items.length > 0;
 
   if (!hasData) {
     return (
@@ -39,8 +40,8 @@ export function TopExpensesCard({ topExpenses }: TopExpensesCardProps) {
           {t('topExpenses.title')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-[14px] pb-3 pt-0 md:px-5 md:pb-[20px] flex-1 min-h-0 overflow-y-auto">
-        {topExpenses.map((expense, index) => (
+      <CardContent className="px-[14px] pb-3 pt-0 md:px-5 md:pb-[20px] flex-1 min-h-0 flex flex-col justify-evenly">
+        {items.map((expense, index) => (
           <div key={expense.id}>
             {index > 0 && <div className="h-px bg-border" />}
             <div className="flex items-center gap-3 py-[9px]">

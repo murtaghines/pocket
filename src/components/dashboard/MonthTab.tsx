@@ -240,7 +240,7 @@ export function MonthTab() {
               </div>
 
               {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[280px] gap-[14px]">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[250px] gap-[14px]">
                 <WeeklyIncomeExpensesChart weekly={agg.subBreakdown as WeeklyPoint[]} />
                 <AccountsStackCard
                   startDate={range?.start}

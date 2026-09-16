@@ -297,18 +297,14 @@ export function MonthlyFlowSankey({
 
   return (
     <div ref={containerRef} className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section h-full overflow-hidden flex flex-col">
-      <p className="text-[14px] font-heading font-bold text-foreground mb-1">
-        {t("charts.monthlyFlow", "Monthly flow")}
-      </p>
-
       {!hasData ? (
         <EmptyState height="h-[200px]" />
       ) : (
         <div
-          className="overflow-x-auto -mx-[14px] px-[14px] md:-mx-[22px] md:px-[22px] lg:mx-0 lg:px-0 relative"
+          className="flex-1 relative"
           onMouseMove={handleMouseMove}
         >
-          <div className="min-w-[520px] lg:min-w-0">
+          <div>
             <svg
               viewBox={`0 -32 ${svgW} ${targetH + 44}`}
               className="w-full select-none"

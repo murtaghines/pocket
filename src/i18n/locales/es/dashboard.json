@@ -315,6 +315,9 @@
   },
   "heatmap": {
     "title": "Gasto por día",
+    "titleExpense": "Gasto por día",
+    "titleIncome": "Ingresos por día",
+    "titleCount": "Transacciones por día",
     "view": "Vista",
     "expense": "Gastos",
     "income": "Ingresos",
