@@ -15,8 +15,6 @@ interface IncomeCategoryReferenceCardProps {
   data: CategoryData[];
 }
 
-const OTHER_COLOR = "hsl(220, 10%, 55%)";
-
 export function IncomeCategoryReferenceCard({
   data,
 }: IncomeCategoryReferenceCardProps) {
@@ -28,30 +26,11 @@ export function IncomeCategoryReferenceCard({
 
   const sorted = useMemo(() => {
     if (total === 0) return [];
-    const significant: (CategoryData & { pct: number })[] = [];
-    let otherTotal = 0;
-
-    const s = [...data].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
-
-    for (const item of s) {
-      if (item.value / total >= 0.01) {
-        significant.push({ ...item, pct: (item.value / total) * 100 });
-      } else {
-        otherTotal += item.value;
-      }
-    }
-
-    if (otherTotal > 0) {
-      significant.push({
-        name: t("charts.otherCategories", "Other"),
-        value: otherTotal,
-        color: OTHER_COLOR,
-        pct: (otherTotal / total) * 100,
-      });
-    }
-
-    return significant;
-  }, [data, total, t]);
+    return [...data]
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .map((item) => ({ ...item, pct: (item.value / total) * 100 }));
+  }, [data, total]);
 
   const [active, setActive] = useState<string | null>(null);
   const activeEntry = active
@@ -94,7 +73,7 @@ export function IncomeCategoryReferenceCard({
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-end px-[14px] pb-3 md:px-5 md:pb-4">
+      <div className="flex-1 flex flex-col items-center justify-evenly px-[14px] pb-3 md:px-5 md:pb-4">
         <div className="relative w-full" style={{ maxWidth: 160, aspectRatio: "1" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -149,7 +128,7 @@ export function IncomeCategoryReferenceCard({
           </div>
         </div>
 
-        <div className="w-full mt-5 flex flex-wrap justify-center gap-x-3 gap-y-[6px]">
+        <div className="w-full flex flex-wrap justify-center gap-x-3 gap-y-[6px]">
           {sorted.map((entry, i) => {
             const dimmed = active !== null && active !== entry.name;
             return (
