@@ -183,7 +183,7 @@ export function WeekTab() {
           </div>
 
           {/* Row 2: income vs expenses breakdown + accounts */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[280px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[250px] gap-[14px]">
             <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byDayThisWeek", "By day · this week")} />
             <AccountsStackCard
               startDate={range?.start}

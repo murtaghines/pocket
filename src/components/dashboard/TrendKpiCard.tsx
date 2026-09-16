@@ -83,13 +83,13 @@ export function TrendKpiCard({
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-xl px-[14px] py-3 md:px-5 md:py-[18px] shadow-section lg:h-[110px] overflow-hidden",
+        "flex h-full flex-col rounded-xl px-[14px] py-3 md:px-5 md:py-[14px] shadow-section lg:h-[104px] overflow-hidden",
         "bg-card",
         className,
       )}
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="flex items-center gap-[6px] mb-[14px]">
+      <div className="flex items-center gap-[6px] mb-[10px]">
         <span className={cn("w-[7px] h-[7px] rounded-full shrink-0", DOT_COLORS[kind])} />
         <span className={cn("text-[13px] font-medium", LABEL_COLORS[kind])}>
           {label}
