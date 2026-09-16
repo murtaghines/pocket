@@ -94,8 +94,8 @@ export function IncomeCategoryReferenceCard({
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-[14px] pb-3 md:px-5 md:pb-[20px]">
-        <div className="relative w-full" style={{ maxWidth: 180, aspectRatio: "1" }}>
+      <div className="flex-1 flex flex-col items-center justify-end px-[14px] pb-3 md:px-5 md:pb-4">
+        <div className="relative w-full" style={{ maxWidth: 160, aspectRatio: "1" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -149,7 +149,7 @@ export function IncomeCategoryReferenceCard({
           </div>
         </div>
 
-        <div className="w-full mt-3 flex flex-wrap justify-center gap-x-4 gap-y-[5px]">
+        <div className="w-full mt-5 flex flex-wrap justify-center gap-x-3 gap-y-[6px]">
           {sorted.map((entry, i) => {
             const dimmed = active !== null && active !== entry.name;
             return (
