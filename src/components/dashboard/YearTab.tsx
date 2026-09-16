@@ -252,7 +252,7 @@ export function YearTab() {
           </div>
 
           {/* Row 4: Income by category + Spending by category */}
-          <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.82fr] lg:h-[370px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.72fr] lg:h-[370px] gap-[14px]">
             <CategoryChart data={agg.incomeCategoryData} />
             <SpendingByCategoryChart
               data={agg.expenseCategoryData}
