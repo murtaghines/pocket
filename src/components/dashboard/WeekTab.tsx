@@ -154,7 +154,7 @@ export function WeekTab() {
                 previousPeriodLabel={previousPeriodLabel}
                 total={convertToUserCurrency(current.balance)}
                 previousTotal={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
-                formatCurrency={(n) => formatCurrency(n, undefined, true)}
+                formatCurrency={formatCurrency}
                 positiveIsGood
               />
             </div>
@@ -208,13 +208,13 @@ export function WeekTab() {
           </div>
 
           {/* Row 4: Income by category + Spending by category */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[300px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[340px] gap-[14px]">
             <CategoryChart data={agg.incomeCategoryData} />
             <SpendingByCategoryChart data={agg.expenseCategoryData} />
           </div>
 
           {/* Row 5: Fixed vs discretionary + Top expenses */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:h-[300px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:h-[340px] gap-[14px]">
             <FixedVsDiscretionaryCard split={agg.essentialSplit} />
             <TopExpensesCard topExpenses={agg.topExpenses} />
           </div>

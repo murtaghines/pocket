@@ -216,7 +216,7 @@ export function SpendingByCategoryChart({
     return (
       <Card variant="bento">
         <div className="px-[14px] pt-3 pb-0 md:px-5 md:pt-[16px] md:pb-0">
-          <p className="text-[15px] font-heading font-bold text-foreground">
+          <p className="text-[14px] font-heading font-bold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
         </div>
@@ -390,7 +390,7 @@ export function SpendingByCategoryChart({
         style={{ marginBottom: 10 }}
       >
         <div className="min-w-0">
-          <p className="text-[15px] font-heading font-bold text-foreground">
+          <p className="text-[14px] font-heading font-bold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
           <p

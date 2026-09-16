@@ -249,7 +249,7 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                 const closingBalance = newest ? computedBalanceMap.get(newest.id) : undefined;
                 return closingBalance !== undefined ? (
                   <span className="text-[13px] font-semibold tabular-nums text-foreground">
-                    {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance, undefined, true)}
+                    {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance)}
                   </span>
                 ) : null;
               })()}
