@@ -202,36 +202,75 @@ export function BalanceBand() {
     <div
       ref={bandRef}
       className={cn(
-        "hidden md:block px-[34px] sticky top-0 z-40 transition-[padding] duration-200",
-        collapsed ? "py-[10px] bg-primary" : "pt-[24px] pb-[78px]",
+        "hidden md:block px-[34px] sticky top-0 z-40 pt-[24px] transition-all duration-300 ease-in-out",
+        collapsed ? "pb-[10px] bg-primary" : "pb-[78px]",
       )}
     >
-      {collapsed ? (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-[12px] min-w-0">
-            <span className="font-heading font-semibold text-[16px] text-white tabular-nums whitespace-nowrap">
-              {totalBalance != null ? formatCurrency(totalBalance) : "–"}
-            </span>
-            <span className="text-[12px] text-white/60 font-medium whitespace-nowrap">
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
+          {/* Label row — always visible; inline amount joins when collapsed */}
+          <div className="flex items-center gap-[10px] h-[27px]">
+            <span
+              className={cn(
+                "font-sans text-[13px] font-medium whitespace-nowrap transition-colors duration-300",
+                collapsed ? "text-white/60" : "text-white/80",
+              )}
+            >
               {t("band.totalBalance", { defaultValue: "Total balance" })}
             </span>
-          </div>
-          {selectors}
-        </div>
-      ) : (
-        <div className="flex items-start gap-[24px]">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-[10px] h-[27px]">
-              <span className="font-sans text-[13px] font-medium text-white/80 whitespace-nowrap">
-                {t("band.totalBalance", { defaultValue: "Total balance" })}
-                {accountCount > 0 && ` · ${accountCount} ${t("band.accounts", { defaultValue: "accounts", count: accountCount })}`}
-              </span>
+
+            {/* Account count — fades when collapsed */}
+            <span
+              className={cn(
+                "font-sans text-[13px] font-medium text-white/80 whitespace-nowrap transition-all duration-300 overflow-hidden",
+                collapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[200px]",
+              )}
+            >
+              {accountCount > 0
+                ? `· ${accountCount} ${t("band.accounts", { defaultValue: "accounts", count: accountCount })}`
+                : ""}
+            </span>
+
+            <span
+              className={cn(
+                "shrink-0 transition-all duration-300 overflow-hidden",
+                collapsed ? "w-0 opacity-0" : "w-[14px] opacity-100",
+              )}
+            >
               <Eye className="w-[14px] h-[14px] text-white/70 cursor-pointer" strokeWidth={1.9} />
-            </div>
-            <p className="mt-[5px] font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
+            </span>
+
+            {/* Inline amount — slides in when collapsed */}
+            <span
+              className={cn(
+                "font-heading font-semibold text-[16px] text-white tabular-nums whitespace-nowrap transition-all duration-300 overflow-hidden",
+                collapsed ? "opacity-100 max-w-[300px]" : "opacity-0 max-w-0",
+              )}
+            >
+              {totalBalance != null ? formatCurrency(totalBalance) : "–"}
+            </span>
+          </div>
+
+          {/* Large amount — collapses smoothly */}
+          <div
+            className={cn(
+              "overflow-hidden transition-all duration-300",
+              collapsed ? "max-h-0 opacity-0 mt-0" : "max-h-[34px] opacity-100 mt-[5px]",
+            )}
+          >
+            <p className="font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
               {totalBalance != null ? formatCurrency(totalBalance) : "–"}
             </p>
-            <p className="mt-[10px] font-sans text-[13.5px] text-white/80">
+          </div>
+
+          {/* Opening balance — collapses smoothly */}
+          <div
+            className={cn(
+              "overflow-hidden transition-all duration-300",
+              collapsed ? "max-h-0 opacity-0 mt-0" : "max-h-[22px] opacity-100 mt-[10px]",
+            )}
+          >
+            <p className="font-sans text-[13.5px] text-white/80">
               {t("band.openingBalance", { defaultValue: "Opening balance" })}{" "}
               <span className="font-semibold text-white tabular-nums">
                 {openingBalance != null ? formatCurrency(openingBalance) : "–"}
@@ -240,9 +279,10 @@ export function BalanceBand() {
               {transactionCount ?? 0} {t("band.movements", { defaultValue: "movements" })}
             </p>
           </div>
-          {selectors}
         </div>
-      )}
+
+        {selectors}
+      </div>
     </div>
   );
 }
