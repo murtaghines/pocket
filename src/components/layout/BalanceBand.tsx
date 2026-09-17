@@ -203,7 +203,7 @@ export function BalanceBand() {
       ref={bandRef}
       className={cn(
         "hidden md:block px-[34px] sticky top-0 z-40 transition-[padding] duration-200",
-        collapsed ? "py-[10px]" : "pt-[24px] pb-[78px]",
+        collapsed ? "py-[10px] bg-primary" : "pt-[24px] pb-[78px]",
       )}
     >
       {collapsed ? (
