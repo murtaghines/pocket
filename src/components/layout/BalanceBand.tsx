@@ -171,7 +171,7 @@ export function BalanceBand() {
 
   return (
     <>
-      {/* Sticky compact bar — always visible at top */}
+      {/* Compact sticky bar — stays at top, hidden behind expanded section initially */}
       <div className="hidden md:flex items-center justify-between px-[34px] py-[10px] sticky top-0 z-40 bg-primary">
         <div className="flex items-center gap-[12px] min-w-0">
           <span className="font-sans text-[13px] font-medium text-white/60 whitespace-nowrap">
@@ -184,26 +184,31 @@ export function BalanceBand() {
         {selectors}
       </div>
 
-      {/* Expanded details — scrolls behind the sticky bar */}
-      <div className="hidden md:block px-[34px] pt-[14px] pb-[78px]">
-        <div className="flex items-center gap-[10px] h-[27px]">
-          <span className="font-sans text-[13px] font-medium text-white/80 whitespace-nowrap">
-            {t("band.totalBalance", { defaultValue: "Total balance" })}
-            {accountCount > 0 && ` · ${accountCount} ${t("band.accounts", { defaultValue: "accounts", count: accountCount })}`}
-          </span>
-          <Eye className="w-[14px] h-[14px] text-white/70 cursor-pointer" strokeWidth={1.9} />
+      {/* Expanded section — covers compact bar, scrolls away to reveal it */}
+      <div className="hidden md:block px-[34px] pt-[24px] pb-[78px] relative z-50 -mt-[56px] bg-primary">
+        <div className="flex items-start justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-[10px] h-[27px]">
+              <span className="font-sans text-[13px] font-medium text-white/80 whitespace-nowrap">
+                {t("band.totalBalance", { defaultValue: "Total balance" })}
+                {accountCount > 0 && ` · ${accountCount} ${t("band.accounts", { defaultValue: "accounts", count: accountCount })}`}
+              </span>
+              <Eye className="w-[14px] h-[14px] text-white/70 cursor-pointer" strokeWidth={1.9} />
+            </div>
+            <p className="mt-[5px] font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
+              {totalBalance != null ? formatCurrency(totalBalance) : "–"}
+            </p>
+            <p className="mt-[10px] font-sans text-[13.5px] text-white/80">
+              {t("band.openingBalance", { defaultValue: "Opening balance" })}{" "}
+              <span className="font-semibold text-white tabular-nums">
+                {openingBalance != null ? formatCurrency(openingBalance) : "–"}
+              </span>
+              {" · "}
+              {transactionCount ?? 0} {t("band.movements", { defaultValue: "movements" })}
+            </p>
+          </div>
+          {selectors}
         </div>
-        <p className="mt-[5px] font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
-          {totalBalance != null ? formatCurrency(totalBalance) : "–"}
-        </p>
-        <p className="mt-[10px] font-sans text-[13.5px] text-white/80">
-          {t("band.openingBalance", { defaultValue: "Opening balance" })}{" "}
-          <span className="font-semibold text-white tabular-nums">
-            {openingBalance != null ? formatCurrency(openingBalance) : "–"}
-          </span>
-          {" · "}
-          {transactionCount ?? 0} {t("band.movements", { defaultValue: "movements" })}
-        </p>
       </div>
     </>
   );
