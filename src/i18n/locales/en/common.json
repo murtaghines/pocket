@@ -155,7 +155,11 @@
     "allCategories": "All categories",
     "splitAmount": "Split amount",
     "revertToOriginal": "Revert to original",
-    "saveAndCreateRule": "Save & create rule"
+    "saveAndCreateRule": "Save & create rule",
+    "openingBalanceLabel": "Opening",
+    "closingBalanceLabel": "Closing",
+    "txCountShort": "{{count}} txns",
+    "unassignedAccount": "Unassigned"
   },
   "status": {
     "active": "Active",

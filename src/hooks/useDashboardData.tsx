@@ -78,6 +78,31 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
   };
 }
 
+export function useAccountOpeningBalances(monthKey: string | null, domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW") {
+  const { user } = useAuth();
+
+  const { data: balances = {}, isLoading } = useQuery({
+    queryKey: ["account-opening-balances", user?.id, domain, monthKey],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_account_opening_balances", {
+        p_user_id: user!.id,
+        p_domain: domain,
+        p_month: monthKey!,
+      });
+      if (error) throw error;
+      const result: Record<string, number> = {};
+      (data ?? []).forEach((row: { account_id: string; opening_balance: number }) => {
+        result[row.account_id] = Number(row.opening_balance);
+      });
+      return result;
+    },
+    enabled: !!user && !!monthKey,
+    staleTime: 30_000,
+  });
+
+  return { accountOpeningBalances: balances, isLoading };
+}
+
 export function useOpeningBalance(date: string | null, domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW") {
   const { user } = useAuth();
 

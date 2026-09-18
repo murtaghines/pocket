@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -136,6 +136,7 @@ export interface InlineTransactionsEditorProps {
   filters?: DataFilters;
   exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
   openingBalance?: number | null;
+  accountOpeningBalances?: Record<string, number>;
 }
 
 export function InlineTransactionsEditor({
@@ -161,6 +162,7 @@ export function InlineTransactionsEditor({
   filters: filtersProp,
   exportTransactionsRef,
   openingBalance,
+  accountOpeningBalances,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -946,21 +948,43 @@ export function InlineTransactionsEditor({
     return { income, expenses, transfers, hidden, total: transactions.length };
   }, [transactions, splitAmt]);
 
+  const hasAccountBalances = accountOpeningBalances && Object.keys(accountOpeningBalances).length > 0;
+
   const runningBalanceMap = useMemo(() => {
     const map = new Map<string, number>();
-    if (openingBalance == null) return map;
-    const sorted = [...transactions].sort((a, b) => {
-      const dateCmp = a.date.localeCompare(b.date);
-      if (dateCmp !== 0) return dateCmp;
-      return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
-    });
-    let balance = openingBalance;
-    for (const tx of sorted) {
-      balance += splitAmt(tx.amount, tx.account_id);
-      map.set(tx.id, Math.round(balance * 100) / 100);
+    if (hasAccountBalances) {
+      const byAccount = new Map<string, MonthTransaction[]>();
+      for (const tx of transactions) {
+        const key = tx.account_id ?? "__unassigned__";
+        if (!byAccount.has(key)) byAccount.set(key, []);
+        byAccount.get(key)!.push(tx);
+      }
+      for (const [acctId, txs] of byAccount) {
+        const sorted = [...txs].sort((a, b) => {
+          const dateCmp = a.date.localeCompare(b.date);
+          if (dateCmp !== 0) return dateCmp;
+          return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
+        });
+        let balance = acctId === "__unassigned__" ? 0 : (accountOpeningBalances![acctId] ?? 0);
+        for (const tx of sorted) {
+          balance += splitAmt(tx.amount, tx.account_id);
+          map.set(tx.id, Math.round(balance * 100) / 100);
+        }
+      }
+    } else if (openingBalance != null) {
+      const sorted = [...transactions].sort((a, b) => {
+        const dateCmp = a.date.localeCompare(b.date);
+        if (dateCmp !== 0) return dateCmp;
+        return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
+      });
+      let balance = openingBalance;
+      for (const tx of sorted) {
+        balance += splitAmt(tx.amount, tx.account_id);
+        map.set(tx.id, Math.round(balance * 100) / 100);
+      }
     }
     return map;
-  }, [transactions, openingBalance, splitAmt]);
+  }, [transactions, openingBalance, hasAccountBalances, accountOpeningBalances, splitAmt]);
 
   const filteredSorted = useMemo(() => {
     let result = [...transactions];
@@ -983,6 +1007,41 @@ export function InlineTransactionsEditor({
     });
     return result;
   }, [transactions, sortColumnProp, sortDirectionProp, filtersProp]);
+
+  type AccountGroup = {
+    accountId: string | null;
+    accountName: string;
+    accountColor: string | null;
+    openingBalance: number;
+    closingBalance: number;
+    transactions: MonthTransaction[];
+  };
+
+  const accountGroups: AccountGroup[] | null = useMemo(() => {
+    if (!hasAccountBalances) return null;
+    const byAccount = new Map<string | null, MonthTransaction[]>();
+    for (const tx of filteredSorted) {
+      const key = tx.account_id ?? null;
+      if (!byAccount.has(key)) byAccount.set(key, []);
+      byAccount.get(key)!.push(tx);
+    }
+    const groups: AccountGroup[] = [];
+    for (const [acctId, txs] of byAccount) {
+      const acct = acctId ? accounts.find((a) => a.id === acctId) : null;
+      const name = acct ? getAccountDisplayName(acct) : t("imports.unassignedAccount", "Unassigned");
+      const color = acct?.color ?? null;
+      const opening = acctId ? (accountOpeningBalances![acctId] ?? 0) : 0;
+      const totalAmount = txs.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0);
+      const closing = Math.round((opening + totalAmount) * 100) / 100;
+      groups.push({ accountId: acctId, accountName: name, accountColor: color, openingBalance: opening, closingBalance: closing, transactions: txs });
+    }
+    groups.sort((a, b) => {
+      if (a.accountId === null) return 1;
+      if (b.accountId === null) return -1;
+      return a.accountName.localeCompare(b.accountName);
+    });
+    return groups;
+  }, [filteredSorted, hasAccountBalances, accountOpeningBalances, accounts, splitAmt, t]);
 
   const visibleAll = filteredSorted;
   const rowsToRender = visibleAll;
@@ -1016,17 +1075,6 @@ export function InlineTransactionsEditor({
         </p>
       </div>
     );
-  }
-
-  // Consecutive rows sharing a date, for the mobile day-grouped card list.
-  // Rows already come sorted date-desc from the query, so a single pass suffices.
-  // (Not memoized: this component already returns early above for loading/empty
-  // states, so a useMemo here would be a conditional hook call.)
-  const dayGroups: { dateKey: string; rows: MonthTransaction[] }[] = [];
-  for (const tx of rowsToRender) {
-    const last = dayGroups[dayGroups.length - 1];
-    if (last && last.dateKey === tx.date) last.rows.push(tx);
-    else dayGroups.push({ dateKey: tx.date, rows: [tx] });
   }
 
   return (
@@ -1082,7 +1130,38 @@ export function InlineTransactionsEditor({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rowsToRender.map((tx) => {
+              {(accountGroups ?? [{ accountId: null, accountName: "", accountColor: null, openingBalance: 0, closingBalance: 0, transactions: rowsToRender }] as AccountGroup[]).map((group, groupIdx) => {
+                const showGroupHeader = !!accountGroups;
+                const groupTxs = group.transactions;
+                return (
+                  <Fragment key={group.accountId ?? `__flat_${groupIdx}__`}>
+                    {showGroupHeader && (
+                      <TableRow className="hover:bg-transparent border-b-0">
+                        <TableCell colSpan={9} className="px-0 py-0 border-b-0">
+                          <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-y border-border/60">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-[3px] h-5 rounded-full shrink-0"
+                                style={{ backgroundColor: group.accountColor ?? "hsl(var(--primary))" }}
+                              />
+                              <span
+                                className="w-2 h-2 rounded-full shrink-0"
+                                style={{ backgroundColor: group.accountColor ?? "hsl(var(--primary))" }}
+                              />
+                              <span className="text-[13px] font-semibold text-foreground">
+                                {group.accountName}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4 text-[12px] text-muted-foreground tabular-nums">
+                              <span>{t("imports.openingBalanceLabel", "Opening")}: {formatCurrency(group.openingBalance, undefined, true)}</span>
+                              <span>{t("imports.closingBalanceLabel", "Closing")}: {formatCurrency(group.closingBalance, undefined, true)}</span>
+                              <span className="text-[11px]">{t("imports.txCountShort", "{{count}} txns", { count: groupTxs.length })}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {groupTxs.map((tx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
@@ -1512,13 +1591,46 @@ export function InlineTransactionsEditor({
                   </TransactionContextMenu>
                 );
               })}
+                  </Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
         <div className="md:hidden flex-1 overflow-y-auto min-h-0 overscroll-contain touch-pan-y" style={{ WebkitOverflowScrolling: "touch" }}>
-          {dayGroups.map((group) => (
+          {(accountGroups ?? [{ accountId: null, accountName: "", accountColor: null, openingBalance: 0, closingBalance: 0, transactions: rowsToRender } as AccountGroup]).map((acctGroup, acctIdx) => {
+            const mobileDayGroups: { dateKey: string; rows: MonthTransaction[] }[] = [];
+            for (const tx of acctGroup.transactions) {
+              const last = mobileDayGroups[mobileDayGroups.length - 1];
+              if (last && last.dateKey === tx.date) last.rows.push(tx);
+              else mobileDayGroups.push({ dateKey: tx.date, rows: [tx] });
+            }
+            return (
+              <Fragment key={acctGroup.accountId ?? `__mflat_${acctIdx}__`}>
+                {!!accountGroups && (
+                  <div className="flex items-center justify-between px-3 py-2.5 bg-muted/30 border-y border-border/60">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-[3px] h-5 rounded-full shrink-0"
+                        style={{ backgroundColor: acctGroup.accountColor ?? "hsl(var(--primary))" }}
+                      />
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: acctGroup.accountColor ?? "hsl(var(--primary))" }}
+                      />
+                      <span className="text-[13px] font-semibold text-foreground">
+                        {acctGroup.accountName}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5 text-[11px] text-muted-foreground tabular-nums">
+                      <span>{t("imports.openingBalanceLabel", "Opening")}: {formatCurrency(acctGroup.openingBalance, undefined, true)}</span>
+                      <span>{t("imports.closingBalanceLabel", "Closing")}: {formatCurrency(acctGroup.closingBalance, undefined, true)}</span>
+                    </div>
+                  </div>
+                )}
+                {mobileDayGroups.map((group) => (
             <div key={group.dateKey}>
               <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">
                 <span className="text-[13px] font-semibold tabular-nums text-foreground">
@@ -1671,7 +1783,10 @@ export function InlineTransactionsEditor({
                 })}
               </div>
             </div>
-          ))}
+                ))}
+              </Fragment>
+            );
+          })}
         </div>
 
         {/* Mobile long-press action menu */}
