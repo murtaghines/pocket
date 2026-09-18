@@ -1,8 +1,8 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { SlidersHorizontal, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -34,33 +34,6 @@ export function BalanceBand() {
   const accountCount = cashAccounts.length;
 
   const userCurrency = preferences?.base_currency || "EUR";
-
-  const [progress, setProgress] = useState(0);
-  const bandRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = bandRef.current;
-    if (!el) return;
-    const scrollParent = el.closest("main") ?? window;
-
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const y = scrollParent === window
-          ? window.scrollY
-          : (scrollParent as HTMLElement).scrollTop;
-        const p = Math.min(1, Math.max(0, y / 120));
-        setProgress(prev => Math.abs(prev - p) > 0.005 ? p : prev);
-        ticking = false;
-      });
-    };
-
-    scrollParent.addEventListener("scroll", onScroll, { passive: true });
-    return () => scrollParent.removeEventListener("scroll", onScroll);
-  }, []);
-
 
   const periodRange = useMemo(() => {
     if (tab === "month" && selectedMonth) return periodRangeOf(selectedMonth, "month");
@@ -170,16 +143,6 @@ export function BalanceBand() {
         </div>
       )}
 
-      <button
-        type="button"
-        className="flex items-center gap-[7px] bg-white/[0.16] rounded-[12px] px-[13px] h-[36px] hover:bg-white/[0.22] transition-colors"
-      >
-        <SlidersHorizontal className="w-[14px] h-[14px] text-white" strokeWidth={2} />
-        <span className="font-sans text-[13px] font-medium text-white">
-          {t("greeting.filter", { defaultValue: "Filters" })}
-        </span>
-      </button>
-
       {periodNav && (
         <div className="flex items-center gap-[2px] bg-white/[0.16] rounded-[12px] p-[4px]">
           <button
@@ -206,85 +169,42 @@ export function BalanceBand() {
     </div>
   );
 
-  const inv = 1 - progress;
-
   return (
-    <div
-      ref={bandRef}
-      className="hidden md:block px-[34px] sticky top-0 z-40 pt-[24px]"
-      style={{
-        paddingBottom: `${78 - 68 * progress}px`,
-        backgroundColor: `hsl(var(--primary) / ${Math.min(1, progress * 2)})`,
-      }}
-    >
-      <div className="flex items-start justify-between">
-        <div className="min-w-0">
-          <div className="flex items-center gap-[10px] h-[27px]">
-            <span
-              className="font-sans text-[13px] font-medium whitespace-nowrap"
-              style={{ color: `rgba(255,255,255,${0.8 - 0.2 * progress})` }}
-            >
-              {t("band.totalBalance", { defaultValue: "Total balance" })}
-            </span>
-
-            <span
-              className="font-sans text-[13px] font-medium text-white/80 whitespace-nowrap overflow-hidden"
-              style={{ opacity: inv, maxWidth: `${200 * inv}px` }}
-            >
-              {accountCount > 0
-                ? `· ${accountCount} ${t("band.accounts", { defaultValue: "accounts", count: accountCount })}`
-                : ""}
-            </span>
-
-            <span
-              className="shrink-0 overflow-hidden"
-              style={{ width: `${14 * inv}px`, opacity: inv }}
-            >
-              <Eye className="w-[14px] h-[14px] text-white/70 cursor-pointer" strokeWidth={1.9} />
-            </span>
-
-            <span
-              className="font-heading font-semibold text-[16px] text-white tabular-nums whitespace-nowrap overflow-hidden"
-              style={{ opacity: progress, maxWidth: `${300 * progress}px` }}
-            >
-              {totalBalance != null ? formatCurrency(totalBalance) : "–"}
-            </span>
-          </div>
-
-          <div
-            className="overflow-hidden"
-            style={{
-              maxHeight: `${34 * inv}px`,
-              opacity: inv,
-              marginTop: `${5 * inv}px`,
-            }}
-          >
-            <p className="font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
-              {totalBalance != null ? formatCurrency(totalBalance) : "–"}
-            </p>
-          </div>
-
-          <div
-            className="overflow-hidden"
-            style={{
-              maxHeight: `${22 * inv}px`,
-              opacity: inv,
-              marginTop: `${10 * inv}px`,
-            }}
-          >
-            <p className="font-sans text-[13.5px] text-white/80">
-              {t("band.openingBalance", { defaultValue: "Opening balance" })}{" "}
-              <span className="font-semibold text-white tabular-nums">
-                {openingBalance != null ? formatCurrency(openingBalance) : "–"}
-              </span>
-              {" · "}
-              {transactionCount ?? 0} {t("band.movements", { defaultValue: "movements" })}
-            </p>
-          </div>
+    <>
+      {/* Sticky compact bar — always visible at top */}
+      <div className="hidden md:flex items-center justify-between px-[34px] py-[10px] sticky top-0 z-40 bg-primary">
+        <div className="flex items-center gap-[12px] min-w-0">
+          <span className="font-sans text-[13px] font-medium text-white/60 whitespace-nowrap">
+            {t("band.totalBalance", { defaultValue: "Total balance" })}
+          </span>
+          <span className="font-heading font-semibold text-[16px] text-white tabular-nums whitespace-nowrap">
+            {totalBalance != null ? formatCurrency(totalBalance) : "–"}
+          </span>
         </div>
-
         {selectors}
       </div>
-    </div>
+
+      {/* Expanded details — scrolls behind the sticky bar */}
+      <div className="hidden md:block px-[34px] pt-[14px] pb-[78px]">
+        <div className="flex items-center gap-[10px] h-[27px]">
+          <span className="font-sans text-[13px] font-medium text-white/80 whitespace-nowrap">
+            {t("band.totalBalance", { defaultValue: "Total balance" })}
+            {accountCount > 0 && ` · ${accountCount} ${t("band.accounts", { defaultValue: "accounts", count: accountCount })}`}
+          </span>
+          <Eye className="w-[14px] h-[14px] text-white/70 cursor-pointer" strokeWidth={1.9} />
+        </div>
+        <p className="mt-[5px] font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
+          {totalBalance != null ? formatCurrency(totalBalance) : "–"}
+        </p>
+        <p className="mt-[10px] font-sans text-[13.5px] text-white/80">
+          {t("band.openingBalance", { defaultValue: "Opening balance" })}{" "}
+          <span className="font-semibold text-white tabular-nums">
+            {openingBalance != null ? formatCurrency(openingBalance) : "–"}
+          </span>
+          {" · "}
+          {transactionCount ?? 0} {t("band.movements", { defaultValue: "movements" })}
+        </p>
+      </div>
+    </>
   );
 }
