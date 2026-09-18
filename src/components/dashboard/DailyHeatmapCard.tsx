@@ -200,7 +200,7 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
                 <div className="text-[11px] text-muted-foreground">
                   {s.label}
                 </div>
-                <div className="mt-1 text-[15px] font-semibold tabular-nums leading-none text-foreground">
+                <div className="mt-1 text-[14px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
                 {s.hint && <div className="mt-0.5 text-[11px] text-muted-foreground/60">{s.hint}</div>}
