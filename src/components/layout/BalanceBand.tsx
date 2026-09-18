@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { SlidersHorizontal, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -34,6 +34,25 @@ export function BalanceBand() {
   const accountCount = cashAccounts.length;
 
   const userCurrency = preferences?.base_currency || "EUR";
+
+  const [collapsed, setCollapsed] = useState(false);
+  const bandRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = bandRef.current;
+    if (!el) return;
+    const scrollParent = el.closest("main") ?? window;
+
+    const onScroll = () => {
+      const scrollY = scrollParent === window
+        ? window.scrollY
+        : (scrollParent as HTMLElement).scrollTop;
+      setCollapsed(scrollY > 40);
+    };
+
+    scrollParent.addEventListener("scroll", onScroll, { passive: true });
+    return () => scrollParent.removeEventListener("scroll", onScroll);
+  }, []);
 
   const periodRange = useMemo(() => {
     if (tab === "month" && selectedMonth) return periodRangeOf(selectedMonth, "month");
@@ -143,6 +162,16 @@ export function BalanceBand() {
         </div>
       )}
 
+      <button
+        type="button"
+        className="flex items-center gap-[7px] bg-white/[0.16] rounded-[12px] px-[13px] h-[36px] hover:bg-white/[0.22] transition-colors"
+      >
+        <SlidersHorizontal className="w-[14px] h-[14px] text-white" strokeWidth={2} />
+        <span className="font-sans text-[13px] font-medium text-white">
+          {t("greeting.filter", { defaultValue: "Filters" })}
+        </span>
+      </button>
+
       {periodNav && (
         <div className="flex items-center gap-[2px] bg-white/[0.16] rounded-[12px] p-[4px]">
           <button
@@ -170,35 +199,78 @@ export function BalanceBand() {
   );
 
   return (
-    <>
-      {/* Compact sticky bar — stays at top, hidden behind expanded section initially */}
-      <div className="hidden md:flex items-center justify-between px-[34px] py-[10px] sticky top-0 z-40 bg-primary">
-        <div className="flex items-center gap-[12px] min-w-0">
-          <span className="font-sans text-[13px] font-medium text-white/60 whitespace-nowrap">
-            {t("band.totalBalance", { defaultValue: "Total balance" })}
-          </span>
-          <span className="font-heading font-semibold text-[16px] text-white tabular-nums whitespace-nowrap">
-            {totalBalance != null ? formatCurrency(totalBalance) : "–"}
-          </span>
-        </div>
-        {selectors}
-      </div>
+    <div
+      ref={bandRef}
+      className={cn(
+        "hidden md:block px-[34px] sticky top-0 z-40 pt-[24px] transition-all duration-300 ease-in-out",
+        collapsed ? "pb-[10px] bg-primary" : "pb-[78px]",
+      )}
+    >
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
+          {/* Label row — always visible; inline amount joins when collapsed */}
+          <div className="flex items-center gap-[10px] h-[27px]">
+            <span
+              className={cn(
+                "font-sans text-[13px] font-medium whitespace-nowrap transition-colors duration-300",
+                collapsed ? "text-white/60" : "text-white/80",
+              )}
+            >
+              {t("band.totalBalance", { defaultValue: "Total balance" })}
+            </span>
 
-      {/* Expanded section — covers compact bar, scrolls away to reveal it */}
-      <div className="hidden md:block px-[34px] pt-[24px] pb-[78px] relative z-50 -mt-[56px] bg-primary">
-        <div className="flex items-start justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-[10px] h-[27px]">
-              <span className="font-sans text-[13px] font-medium text-white/80 whitespace-nowrap">
-                {t("band.totalBalance", { defaultValue: "Total balance" })}
-                {accountCount > 0 && ` · ${accountCount} ${t("band.accounts", { defaultValue: "accounts", count: accountCount })}`}
-              </span>
+            {/* Account count — fades when collapsed */}
+            <span
+              className={cn(
+                "font-sans text-[13px] font-medium text-white/80 whitespace-nowrap transition-all duration-300 overflow-hidden",
+                collapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-[200px]",
+              )}
+            >
+              {accountCount > 0
+                ? `· ${accountCount} ${t("band.accounts", { defaultValue: "accounts", count: accountCount })}`
+                : ""}
+            </span>
+
+            <span
+              className={cn(
+                "shrink-0 transition-all duration-300 overflow-hidden",
+                collapsed ? "w-0 opacity-0" : "w-[14px] opacity-100",
+              )}
+            >
               <Eye className="w-[14px] h-[14px] text-white/70 cursor-pointer" strokeWidth={1.9} />
-            </div>
-            <p className="mt-[5px] font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
+            </span>
+
+            {/* Inline amount — slides in when collapsed */}
+            <span
+              className={cn(
+                "font-heading font-semibold text-[16px] text-white tabular-nums whitespace-nowrap transition-all duration-300 overflow-hidden",
+                collapsed ? "opacity-100 max-w-[300px]" : "opacity-0 max-w-0",
+              )}
+            >
+              {totalBalance != null ? formatCurrency(totalBalance) : "–"}
+            </span>
+          </div>
+
+          {/* Large amount — collapses smoothly */}
+          <div
+            className={cn(
+              "overflow-hidden transition-all duration-300",
+              collapsed ? "max-h-0 opacity-0 mt-0" : "max-h-[34px] opacity-100 mt-[5px]",
+            )}
+          >
+            <p className="font-heading font-semibold text-[26px] text-white leading-none tabular-nums whitespace-nowrap">
               {totalBalance != null ? formatCurrency(totalBalance) : "–"}
             </p>
-            <p className="mt-[10px] font-sans text-[13.5px] text-white/80">
+          </div>
+
+          {/* Opening balance — collapses smoothly */}
+          <div
+            className={cn(
+              "overflow-hidden transition-all duration-300",
+              collapsed ? "max-h-0 opacity-0 mt-0" : "max-h-[22px] opacity-100 mt-[10px]",
+            )}
+          >
+            <p className="font-sans text-[13.5px] text-white/80">
               {t("band.openingBalance", { defaultValue: "Opening balance" })}{" "}
               <span className="font-semibold text-white tabular-nums">
                 {openingBalance != null ? formatCurrency(openingBalance) : "–"}
@@ -207,9 +279,10 @@ export function BalanceBand() {
               {transactionCount ?? 0} {t("band.movements", { defaultValue: "movements" })}
             </p>
           </div>
-          {selectors}
         </div>
+
+        {selectors}
       </div>
-    </>
+    </div>
   );
 }
