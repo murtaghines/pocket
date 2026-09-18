@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { SlidersHorizontal, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -161,16 +161,6 @@ export function BalanceBand() {
           ))}
         </div>
       )}
-
-      <button
-        type="button"
-        className="flex items-center gap-[7px] bg-white/[0.16] rounded-[12px] px-[13px] h-[36px] hover:bg-white/[0.22] transition-colors"
-      >
-        <SlidersHorizontal className="w-[14px] h-[14px] text-white" strokeWidth={2} />
-        <span className="font-sans text-[13px] font-medium text-white">
-          {t("greeting.filter", { defaultValue: "Filters" })}
-        </span>
-      </button>
 
       {periodNav && (
         <div className="flex items-center gap-[2px] bg-white/[0.16] rounded-[12px] p-[4px]">
