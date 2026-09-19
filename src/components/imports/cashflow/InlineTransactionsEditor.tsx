@@ -21,6 +21,7 @@ import {
   MoreHorizontal,
   MessageSquarePlus,
   Copy,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -184,6 +185,16 @@ export function InlineTransactionsEditor({
 
   // Checkbox selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Account group collapse state
+  const [collapsedAccounts, setCollapsedAccounts] = useState<Set<string>>(new Set());
+  const toggleAccountCollapsed = (accountId: string) =>
+    setCollapsedAccounts((prev) => {
+      const next = new Set(prev);
+      if (next.has(accountId)) next.delete(accountId);
+      else next.add(accountId);
+      return next;
+    });
 
   // Inline editing state
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -1105,13 +1116,15 @@ export function InlineTransactionsEditor({
                     aria-label="Select all"
                   />
                 </TableHead>
-                <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium", accountGroups ? "w-[10%]" : "w-[9%]")}>
                   {t("imports.date")}
                 </TableHead>
-                <TableHead className="w-[10%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
-                  {t("imports.account")}
-                </TableHead>
-                <TableHead className="w-[22%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                {!accountGroups && (
+                  <TableHead className="w-[10%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                    {t("imports.account")}
+                  </TableHead>
+                )}
+                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium", accountGroups ? "w-[28%]" : "w-[22%]")}>
                   {t("imports.description")}
                 </TableHead>
                 <TableHead className="w-[13%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
@@ -1135,33 +1148,34 @@ export function InlineTransactionsEditor({
                 const groupTxs = group.transactions;
                 return (
                   <Fragment key={group.accountId ?? `__flat_${groupIdx}__`}>
-                    {showGroupHeader && (
-                      <TableRow className="hover:bg-transparent border-b-0">
-                        <TableCell colSpan={9} className="px-0 py-0 border-b-0">
-                          <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-y border-border/60">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="w-[3px] h-5 rounded-full shrink-0"
-                                style={{ backgroundColor: group.accountColor ?? "hsl(var(--primary))" }}
+                    {showGroupHeader && (() => {
+                      const groupKey = group.accountId ?? "__unassigned__";
+                      const isCollapsed = collapsedAccounts.has(groupKey);
+                      return (
+                        <TableRow
+                          className="hover:bg-muted/20 cursor-pointer border-b border-border/40"
+                          onClick={() => toggleAccountCollapsed(groupKey)}
+                        >
+                          <TableCell colSpan={8} className="px-0 py-0">
+                            <div className="flex items-center gap-1.5 px-3 py-1.5">
+                              <ChevronRight
+                                className={cn(
+                                  "w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
+                                  !isCollapsed && "rotate-90",
+                                )}
                               />
-                              <span
-                                className="w-2 h-2 rounded-full shrink-0"
-                                style={{ backgroundColor: group.accountColor ?? "hsl(var(--primary))" }}
-                              />
-                              <span className="text-[13px] font-semibold text-foreground">
+                              <span className="text-[12px] font-medium text-foreground">
                                 {group.accountName}
                               </span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {t("imports.txCountShort", "{{count}} txns", { count: groupTxs.length })}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-4 text-[12px] text-muted-foreground tabular-nums">
-                              <span>{t("imports.openingBalanceLabel", "Opening")}: {formatCurrency(group.openingBalance, undefined, true)}</span>
-                              <span>{t("imports.closingBalanceLabel", "Closing")}: {formatCurrency(group.closingBalance, undefined, true)}</span>
-                              <span className="text-[11px]">{t("imports.txCountShort", "{{count}} txns", { count: groupTxs.length })}</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {groupTxs.map((tx) => {
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })()}
+                    {(!showGroupHeader || !collapsedAccounts.has(group.accountId ?? "__unassigned__")) && groupTxs.map((tx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
@@ -1293,10 +1307,12 @@ export function InlineTransactionsEditor({
                         {formatDate(new Date(tx.date))}
                       </TableCell>
 
-                      {/* Account */}
-                      <TableCell className="text-[13px] text-muted-foreground truncate">
-                        {accountName(tx.account_id) || "—"}
-                      </TableCell>
+                      {/* Account — hidden when grouped by account */}
+                      {!accountGroups && (
+                        <TableCell className="text-[13px] text-muted-foreground truncate">
+                          {accountName(tx.account_id) || "—"}
+                        </TableCell>
+                      )}
 
                       {/* Description — double-click to add/edit user_notes */}
                       <TableCell
@@ -1609,28 +1625,30 @@ export function InlineTransactionsEditor({
             }
             return (
               <Fragment key={acctGroup.accountId ?? `__mflat_${acctIdx}__`}>
-                {!!accountGroups && (
-                  <div className="flex items-center justify-between px-3 py-2.5 bg-muted/30 border-y border-border/60">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-[3px] h-5 rounded-full shrink-0"
-                        style={{ backgroundColor: acctGroup.accountColor ?? "hsl(var(--primary))" }}
+                {!!accountGroups && (() => {
+                  const mGroupKey = acctGroup.accountId ?? "__unassigned__";
+                  const mIsCollapsed = collapsedAccounts.has(mGroupKey);
+                  return (
+                    <div
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/20 border-b border-border/40 cursor-pointer active:bg-muted/40"
+                      onClick={() => toggleAccountCollapsed(mGroupKey)}
+                    >
+                      <ChevronRight
+                        className={cn(
+                          "w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
+                          !mIsCollapsed && "rotate-90",
+                        )}
                       />
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: acctGroup.accountColor ?? "hsl(var(--primary))" }}
-                      />
-                      <span className="text-[13px] font-semibold text-foreground">
+                      <span className="text-[12px] font-medium text-foreground">
                         {acctGroup.accountName}
                       </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {t("imports.txCountShort", "{{count}} txns", { count: acctGroup.transactions.length })}
+                      </span>
                     </div>
-                    <div className="flex flex-col items-end gap-0.5 text-[11px] text-muted-foreground tabular-nums">
-                      <span>{t("imports.openingBalanceLabel", "Opening")}: {formatCurrency(acctGroup.openingBalance, undefined, true)}</span>
-                      <span>{t("imports.closingBalanceLabel", "Closing")}: {formatCurrency(acctGroup.closingBalance, undefined, true)}</span>
-                    </div>
-                  </div>
-                )}
-                {mobileDayGroups.map((group) => (
+                  );
+                })()}
+                {(!accountGroups || !collapsedAccounts.has(acctGroup.accountId ?? "__unassigned__")) && mobileDayGroups.map((group) => (
             <div key={group.dateKey}>
               <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">
                 <span className="text-[13px] font-semibold tabular-nums text-foreground">
