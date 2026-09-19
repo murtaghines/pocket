@@ -19,7 +19,7 @@ import {
   FileSpreadsheet,
   Trash2,
   MoreHorizontal,
-  MessageSquarePlus,
+  Pencil,
   Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -90,6 +90,7 @@ import {
   getMovementTone,
   buildOriginalSnapshot,
   isBackToOriginal,
+  filterRevertableSnapshot,
 } from "./helpers";
 import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
@@ -176,11 +177,11 @@ export function InlineTransactionsEditor({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Inline editing state
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [editingNoteValue, setEditingNoteValue] = useState("");
+  const [editingDescId, setEditingDescId] = useState<string | null>(null);
+  const [editingDescValue, setEditingDescValue] = useState("");
   const [editingAmountId, setEditingAmountId] = useState<string | null>(null);
   const [editingAmountValue, setEditingAmountValue] = useState("");
-  const noteInputRef = useRef<HTMLInputElement>(null);
+  const descInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSelected = useCallback((id: string) => {
@@ -626,10 +627,6 @@ export function InlineTransactionsEditor({
       before.account_id = tx.account_id;
       if (pending.currency) payload.currency = pending.currency;
     }
-    if (pending.user_notes !== undefined && pending.user_notes !== (tx.user_notes ?? "")) {
-      payload.user_notes = pending.user_notes || null;
-      before.user_notes = tx.user_notes;
-    }
     if (pending.is_hidden !== undefined && pending.is_hidden !== tx.is_hidden) {
       payload.is_hidden = pending.is_hidden;
       before.is_hidden = tx.is_hidden;
@@ -1058,7 +1055,9 @@ export function InlineTransactionsEditor({
                   hasEditHistory &&
                   !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
                 const originalSnapshot = isEdited ? snapshot : null;
-                const cleanDescription = tx.original_description || tx.description || tx.description_norm || "";
+                const cleanDescription = (tx.description_norm || tx.description || "")
+                  .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+                  .trim();
                 const pending = pendingByTx[tx.id];
                 const isPending = !!pending;
                 const movement = (pending?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
@@ -1083,10 +1082,10 @@ export function InlineTransactionsEditor({
                 const rowContextActions = {
                   onToggleHidden: () => handleToggleHidden(tx),
                   onDelete: () => deleteWithUndo(tx),
-                  onAddNote: () => {
-                    setEditingNoteId(tx.id);
-                    setEditingNoteValue(tx.user_notes || "");
-                    setTimeout(() => noteInputRef.current?.focus(), 50);
+                  onEditDescription: () => {
+                    setEditingDescId(tx.id);
+                    setEditingDescValue(cleanDescription);
+                    setTimeout(() => descInputRef.current?.focus(), 50);
                   },
                   onCopyAmount: () => {
                     navigator.clipboard.writeText(formatCurrency(displayAmount));
@@ -1099,25 +1098,17 @@ export function InlineTransactionsEditor({
                   onSplit: () => handleSplit(tx, 2),
                   onRevert: () => {
                     if (originalSnapshot) {
+                      const filtered = filterRevertableSnapshot(originalSnapshot);
+                      if (filtered.fields.length === 0) return;
                       const payload: Record<string, unknown> = {
-                        ...originalSnapshot.values,
+                        ...filtered.values,
                         __action: "revert",
                       };
-                      if ("category" in originalSnapshot.values) {
-                        payload.category_source = "DEFAULT";
-                        payload.user_corrected = false;
+                      const before: Record<string, unknown> = {};
+                      for (const f of filtered.fields) {
+                        before[f] = (tx as unknown as Record<string, unknown>)[f];
                       }
-                      saveMutation.mutate({
-                        id: tx.id,
-                        payload,
-                        before: {
-                          movement: tx.movement,
-                          category: tx.category,
-                          category_id: tx.category_id,
-                          amount: tx.amount,
-                          is_hidden: tx.is_hidden,
-                        },
-                      });
+                      saveMutation.mutate({ id: tx.id, payload, before });
                     }
                   },
                   onSaveWithRule: () => commitRow(tx, true),
@@ -1178,34 +1169,34 @@ export function InlineTransactionsEditor({
                         {accountName(tx.account_id) || "—"}
                       </TableCell>
 
-                      {/* Description — double-click to add/edit user_notes */}
+                      {/* Description — double-click to edit */}
                       <TableCell
                         className="text-[13px]"
                         onDoubleClick={() => {
                           if (isLocked || isHidden) return;
-                          setEditingNoteId(tx.id);
-                          setEditingNoteValue(tx.user_notes || "");
-                          setTimeout(() => noteInputRef.current?.focus(), 50);
+                          setEditingDescId(tx.id);
+                          setEditingDescValue(cleanDescription);
+                          setTimeout(() => descInputRef.current?.focus(), 50);
                         }}
                       >
-                        {editingNoteId === tx.id ? (
+                        {editingDescId === tx.id ? (
                           <Input
-                            ref={noteInputRef}
-                            value={editingNoteValue}
-                            onChange={(e) => setEditingNoteValue(e.target.value)}
+                            ref={descInputRef}
+                            value={editingDescValue}
+                            onChange={(e) => setEditingDescValue(e.target.value)}
                             onBlur={() => {
-                              if (editingNoteValue !== (tx.user_notes || "")) {
-                                setPendingFor(tx.id, { user_notes: editingNoteValue });
-                                commitRow(tx, false, { ...pendingByTx[tx.id], user_notes: editingNoteValue });
+                              if (editingDescValue !== cleanDescription) {
+                                setPendingFor(tx.id, { description: editingDescValue });
+                                commitRow(tx, false, { ...pendingByTx[tx.id], description: editingDescValue });
                               }
-                              setEditingNoteId(null);
+                              setEditingDescId(null);
                             }}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                              if (e.key === "Escape") { setEditingNoteId(null); }
+                              if (e.key === "Escape") { setEditingDescId(null); }
                             }}
                             className="h-6 text-[13px] px-1 py-0 border-primary/40"
-                            placeholder={t("imports.userNotesPlaceholder")}
+                            placeholder={t("imports.editDescription")}
                           />
                         ) : (
                           <div className="flex items-start gap-1.5 min-w-0">
@@ -1219,11 +1210,6 @@ export function InlineTransactionsEditor({
                               >
                                 {cleanDescription}
                               </span>
-                              {tx.user_notes && (
-                                <span className="block truncate text-[11px] text-muted-foreground italic" title={tx.user_notes}>
-                                  {tx.user_notes}
-                                </span>
-                              )}
                             </div>
                             {isSaving && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0 mt-0.5" />}
                             {isSaved && !isSaving && <Check className="w-3 h-3 text-success shrink-0 mt-0.5" />}
@@ -1384,14 +1370,14 @@ export function InlineTransactionsEditor({
                               {!isLocked && (
                                 <DropdownMenuItem
                                   onClick={() => {
-                                    setEditingNoteId(tx.id);
-                                    setEditingNoteValue(tx.user_notes || "");
-                                    setTimeout(() => noteInputRef.current?.focus(), 50);
+                                    setEditingDescId(tx.id);
+                                    setEditingDescValue(cleanDescription);
+                                    setTimeout(() => descInputRef.current?.focus(), 50);
                                   }}
                                   className="gap-2 text-[13px]"
                                 >
-                                  <MessageSquarePlus className="w-4 h-4" />
-                                  {t("imports.addNote")}
+                                  <Pencil className="w-4 h-4" />
+                                  {t("imports.editDescription")}
                                 </DropdownMenuItem>
                               )}
                               {!isLocked && !isHidden && (
@@ -1504,7 +1490,9 @@ export function InlineTransactionsEditor({
                     hasEditHistory &&
                     !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
                   const originalSnapshot = isEdited ? snapshot : null;
-                  const cleanDescription = tx.original_description || tx.description || tx.description_norm || "";
+                  const cleanDescription = (tx.description_norm || tx.description || "")
+                  .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+                  .trim();
                   const movement = (tx.movement || "EXPENSE") as MovementType;
                   const category = normalizeCategory(tx.category || "other_expense");
                   const amountColor =
@@ -1591,7 +1579,7 @@ export function InlineTransactionsEditor({
                         <div className="min-w-0 flex-1">
                           <p className={cn("truncate text-[13px] text-foreground", isHidden && "line-through")}>
                             <span className="font-medium">
-                              {tx.user_notes || cleanDescription}
+                              {cleanDescription}
                             </span>
                           </p>
                           <div className="mt-0.5 flex items-center gap-1.5">
@@ -1636,7 +1624,7 @@ export function InlineTransactionsEditor({
         {/* Mobile long-press action menu */}
         {(() => {
           const atx = actionMenu?.tx ?? null;
-          if (!atx) return <MobileTransactionActions tx={null} anchorRect={null} isLocked={isLocked} isManual={false} isHidden={false} isEdited={false} onClose={() => setActionMenu(null)} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onAddNote={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} />;
+          if (!atx) return <MobileTransactionActions tx={null} anchorRect={null} isLocked={isLocked} isManual={false} isHidden={false} isEdited={false} onClose={() => setActionMenu(null)} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onEditDescription={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} />;
           const atxManual = isManualTransaction(atx);
           const atxHist = auditByTx[atx.id] || [];
           const atxEdits = atxHist.filter((h) => h.action !== "revert");
@@ -1655,13 +1643,18 @@ export function InlineTransactionsEditor({
               onEdit={() => { setActionMenu(null); setEditingTx(atx); }}
               onToggleHidden={() => handleToggleHidden(atx)}
               onDelete={() => deleteWithUndo(atx)}
-              onAddNote={() => { setActionMenu(null); setEditingTx(atx); }}
+              onEditDescription={() => { setActionMenu(null); setEditingTx(atx); }}
               onSplit={() => handleSplit(atx, 2)}
               onRevert={() => {
                 if (atxSnap) {
-                  const payload: Record<string, unknown> = { ...atxSnap.values, __action: "revert" };
-                  if ("category" in atxSnap.values) { payload.category_source = "DEFAULT"; payload.user_corrected = false; }
-                  saveMutation.mutate({ id: atx.id, payload, before: { movement: atx.movement, category: atx.category, category_id: atx.category_id, amount: atx.amount, is_hidden: atx.is_hidden } });
+                  const filtered = filterRevertableSnapshot(atxSnap);
+                  if (filtered.fields.length === 0) return;
+                  const payload: Record<string, unknown> = { ...filtered.values, __action: "revert" };
+                  const before: Record<string, unknown> = {};
+                  for (const f of filtered.fields) {
+                    before[f] = (atx as unknown as Record<string, unknown>)[f];
+                  }
+                  saveMutation.mutate({ id: atx.id, payload, before });
                 }
               }}
               onCopyDescription={() => { navigator.clipboard.writeText(atxCleanDesc); sonnerToast("Description copied"); }}

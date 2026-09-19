@@ -1,14 +1,14 @@
 /**
  * transactionSource.ts — tells a manual entry apart from an imported one.
  *
- * The distinction drives what the user is allowed to do with a row:
+ * All fields are editable on both types. The distinction only affects deletion:
  *
- *   imported (from a statement) → amount/category editable; description, date and
- *     account are properties of the file, so they're read-only. Never hard-deleted
- *     (a deleted row has no fingerprint left to dedup against, so re-uploading the
- *     same file would silently re-insert it) — it can only be hidden from totals.
- *   manual → every field editable, and deletable outright, since nothing ties it
- *     to a source file.
+ *   imported (from a statement) → never hard-deleted (a deleted row has no
+ *     fingerprint left to dedup against, so re-uploading the same file would
+ *     silently re-insert it) — it can only be hidden from totals. Edits to
+ *     description write to `description_norm`, preserving the original
+ *     fingerprint (based on `description`).
+ *   manual → deletable outright, since nothing ties it to a source file.
  *
  * Both use content-based SHA-256 fingerprints with a "manual" / "import" prefix
  * so they never collide. The DB unique constraint includes account_id, so the

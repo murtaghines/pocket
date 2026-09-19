@@ -5,7 +5,6 @@ import {
   Pencil,
   Eye,
   EyeOff,
-  MessageSquarePlus,
   Copy,
   Trash2,
   Split as SplitIcon,
@@ -31,7 +30,7 @@ interface MobileTransactionActionsProps {
   onEdit: () => void;
   onToggleHidden: () => void;
   onDelete: () => void;
-  onAddNote: () => void;
+  onEditDescription: () => void;
   onSplit: () => void;
   onRevert: () => void;
   onCopyDescription: () => void;
@@ -49,7 +48,7 @@ export function MobileTransactionActions({
   onEdit,
   onToggleHidden,
   onDelete,
-  onAddNote,
+  onEditDescription,
   onSplit,
   onRevert,
   onCopyDescription,
@@ -87,7 +86,7 @@ export function MobileTransactionActions({
 
   const primaryActions: { icon: React.ReactNode; label: string; onClick: () => void }[] = [];
   if (!isLocked) primaryActions.push({ icon: <Pencil className="w-[17px] h-[17px]" />, label: t("imports.editTransaction"), onClick: () => act(onEdit) });
-  if (!isLocked) primaryActions.push({ icon: <MessageSquarePlus className="w-[17px] h-[17px]" />, label: t("imports.addNote"), onClick: () => act(onAddNote) });
+  if (!isLocked) primaryActions.push({ icon: <Pencil className="w-[17px] h-[17px]" />, label: t("imports.editDescription"), onClick: () => act(onEditDescription) });
   if (!isLocked) primaryActions.push({ icon: <SplitIcon className="w-[17px] h-[17px]" />, label: t("imports.splitAmount"), onClick: () => act(onSplit) });
   if (!isLocked) {
     primaryActions.push({
