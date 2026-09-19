@@ -47,11 +47,17 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
 
       const { data: accountsData } = await supabase
         .from("accounts")
-        .select("id, name, institution")
+        .select("id, name, institution, split_percentage")
         .eq("user_id", user.id);
 
       const accountMap: Record<string, string> = {};
-      (accountsData || []).forEach(a => { accountMap[a.id] = getAccountDisplayName(a); });
+      const splitMap: Record<string, number> = {};
+      (accountsData || []).forEach(a => {
+        accountMap[a.id] = getAccountDisplayName(a);
+        if (a.split_percentage != null && a.split_percentage !== 100) {
+          splitMap[a.id] = a.split_percentage;
+        }
+      });
 
       const selectOpts = page != null ? { count: 'exact' as const } : {};
       let query = supabase
@@ -93,11 +99,16 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         const finalCategory = t.category;
         const accountName = t.account_id ? accountMap[t.account_id] || "Unknown" : "Unknown";
 
+        const pct = t.account_id ? splitMap[t.account_id] : undefined;
+        const displayAmount = pct != null
+          ? Math.round((t.amount * pct) / 100 * 100) / 100
+          : t.amount;
+
         return {
           id: t.id,
           date: t.date,
           description: cleanDesc,
-          amount: t.amount,
+          amount: displayAmount,
           currency: t.currency || "EUR",
           type,
           movement,

@@ -31,11 +31,15 @@ export default function Dashboard() {
         <DashboardGreeting />
       </div>
 
-      {/* Desktop: blue balance band */}
-      <BalanceBand />
+      {/* Static blue background strip — decorative, stays at the top of the scroll viewport */}
+      <div className="hidden md:block sticky top-0 h-[180px] bg-primary -mb-[180px] z-0 pointer-events-none" />
 
-      {/* Content area with negative margin to overlap KPIs over the band */}
-      <div className="px-3 md:px-[28px] md:mt-[-50px] pb-[24px]">
+      {/* Single wrapper so BalanceBand's sticky has room to travel over all content */}
+      <div className="relative z-20">
+        <BalanceBand />
+
+        {/* Content area with negative margin to overlap KPIs over the band */}
+        <div className="px-3 md:px-[28px] md:mt-[-50px] pb-[24px]">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsContent value="month" className="mt-0">
             <MonthTab />
@@ -51,6 +55,7 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
         <DashboardFooter />
+        </div>
       </div>
     </DashboardLayout>
   );

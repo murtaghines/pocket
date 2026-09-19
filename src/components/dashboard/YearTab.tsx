@@ -17,7 +17,7 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDashboardData, useOpeningBalance } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +35,7 @@ export function YearTab() {
   const { t, i18n } = useTranslation("dashboard");
   const { user } = useAuth();
   const { accounts: allAccounts } = useAccounts();
-  const { monthlyData: yearlyData, openingBalanceByMonth, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
+  const { monthlyData: yearlyData, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
@@ -129,16 +129,7 @@ export function YearTab() {
 
   const previousPeriodLabel = hasPreviousData ? previous.month : undefined;
 
-  const yearOpeningBalance = useMemo(() => {
-    if (!selectedYear || !openingBalanceByMonth) return null;
-    const janKey = `${selectedYear}-01`;
-    if (openingBalanceByMonth[janKey] != null) return openingBalanceByMonth[janKey];
-    const monthKeys = Object.keys(openingBalanceByMonth)
-      .filter((k) => k.startsWith(selectedYear))
-      .sort();
-    if (monthKeys.length > 0) return openingBalanceByMonth[monthKeys[0]];
-    return null;
-  }, [selectedYear, openingBalanceByMonth]);
+  const { openingBalance: yearOpeningBalance } = useOpeningBalance(range?.start ?? null);
 
   useEffect(() => {
     if (yearOpeningBalance != null) {
@@ -232,7 +223,7 @@ export function YearTab() {
           </div>
 
           {/* Row 2: Evolution by month + Accounts (year-end balance) */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[280px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[250px] gap-[14px]">
             <PeriodBreakdownChart
               points={breakdownPoints}
               subtitle={t("charts.byMonthThisYear", "By month · this year")}
@@ -261,7 +252,7 @@ export function YearTab() {
           </div>
 
           {/* Row 4: Income by category + Spending by category */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[300px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.72fr] lg:h-[370px] gap-[14px]">
             <CategoryChart data={agg.incomeCategoryData} />
             <SpendingByCategoryChart
               data={agg.expenseCategoryData}
@@ -278,7 +269,7 @@ export function YearTab() {
           />
 
           {/* Row 6: Fixed vs discretionary + Top expenses */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:h-[300px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:h-[370px] gap-[14px]">
             <FixedVsDiscretionaryCard split={agg.essentialSplit} />
             <TopExpensesCard topExpenses={agg.topExpenses} />
           </div>

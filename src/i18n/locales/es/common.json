@@ -150,7 +150,14 @@
     "allCategories": "Todas las categorías",
     "splitAmount": "Dividir monto",
     "revertToOriginal": "Revertir al original",
-    "saveAndCreateRule": "Guardar y crear regla"
+    "saveAndCreateRule": "Guardar y crear regla",
+    "week": "Semana",
+    "source": "Origen",
+    "sourceManual": "Manual",
+    "openingBalanceLabel": "Apertura",
+    "closingBalanceLabel": "Cierre",
+    "txCountShort": "{{count}} transacciones",
+    "unassignedAccount": "Sin asignar"
   },
   "status": {
     "active": "Activo",

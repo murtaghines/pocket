@@ -91,7 +91,7 @@ export function TransactionCardList({ transactions, emptyLabel }: Props) {
 
             {/* Amount */}
             <div className={cn("text-sm font-semibold whitespace-nowrap", amountClass)}>
-              {formatCurrency(tx.amount)}
+              {formatCurrency(tx.amount, undefined, true)}
             </div>
           </li>
         );

@@ -35,7 +35,7 @@ function getCalendarDays(monthKey: string) {
   return days;
 }
 
-function TransactionEvent({ tx, formatCurrency }: { tx: Transaction; formatCurrency: (n: number) => string }) {
+function TransactionEvent({ tx, formatCurrency }: { tx: Transaction; formatCurrency: (n: number, currency?: string, signed?: boolean) => string }) {
   const isIncome = tx.movement === "INCOME";
   const isTransfer = tx.movement === "TRANSFER";
 
@@ -58,7 +58,7 @@ function TransactionEvent({ tx, formatCurrency }: { tx: Transaction; formatCurre
         <Minus className="w-3 h-3 shrink-0" strokeWidth={2.5} />
       )}
       <span className="truncate">{tx.description}</span>
-      <span className="ml-auto tabular-nums font-medium shrink-0">{formatCurrency(tx.amount)}</span>
+      <span className="ml-auto tabular-nums font-medium shrink-0">{formatCurrency(tx.amount, undefined, true)}</span>
     </div>
   );
 }

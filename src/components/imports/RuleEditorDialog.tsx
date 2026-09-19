@@ -4,6 +4,7 @@ import { Wand2, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import {
   buildRuleFromCorrection,
@@ -12,6 +13,9 @@ import {
   type MatchType,
 } from "@/lib/userRules";
 import { useRulePreview } from "@/hooks/useRulePreview";
+import { useAccounts } from "@/hooks/useAccounts";
+import { getAccountDisplayName } from "@/lib/accountColors";
+import { useTranslation } from "react-i18next";
 
 export interface RuleEditorPayload {
   match_type: MatchType;
@@ -21,6 +25,7 @@ export interface RuleEditorPayload {
   category: string;
   original_description: string;
   matchingTransactionIds: string[];
+  account_id: string | null;
 }
 
 interface RuleEditorDialogProps {
@@ -32,6 +37,7 @@ interface RuleEditorDialogProps {
   categoryLabel: string;
   categoryColorVar?: string;
   categoryIcon?: string;
+  defaultAccountId?: string | null;
   onConfirm: (payload: RuleEditorPayload) => void | Promise<void>;
   onSkip?: () => void;
   skipLabel?: string;
@@ -69,6 +75,8 @@ const MATCH_OPTIONS: {
   },
 ];
 
+const ALL_ACCOUNTS = "__all__";
+
 export function RuleEditorDialog({
   open,
   onOpenChange,
@@ -78,10 +86,13 @@ export function RuleEditorDialog({
   categoryLabel,
   categoryColorVar,
   categoryIcon,
+  defaultAccountId,
   onConfirm,
   onSkip,
   skipLabel = "Just this one",
 }: RuleEditorDialogProps) {
+  const { t } = useTranslation("settings");
+  const { accounts } = useAccounts();
   const allTokens = useMemo(() => extractTokens(description), [description]);
   const suggested = useMemo(
     () => buildRuleFromCorrection(description, movement, categorySlug),
@@ -92,6 +103,7 @@ export function RuleEditorDialog({
   const [selectedTokens, setSelectedTokens] = useState<string[]>(suggested.tokens);
   const [customPattern, setCustomPattern] = useState<string>(suggested.pattern);
   const [patternEdited, setPatternEdited] = useState(false);
+  const [accountId, setAccountId] = useState<string>(defaultAccountId || ALL_ACCOUNTS);
 
   useEffect(() => {
     if (open) {
@@ -99,8 +111,9 @@ export function RuleEditorDialog({
       setSelectedTokens(suggested.tokens);
       setCustomPattern(suggested.pattern);
       setPatternEdited(false);
+      setAccountId(defaultAccountId || ALL_ACCOUNTS);
     }
-  }, [open, suggested]);
+  }, [open, suggested, defaultAccountId]);
 
   const effectivePattern = useMemo(() => {
     if (matchType === "fuzzy") {
@@ -123,11 +136,13 @@ export function RuleEditorDialog({
     );
   };
 
+  const selectedAccountId = accountId === ALL_ACCOUNTS ? undefined : accountId;
   const { matchingIds: matchingTransactions, count: matchCount, isLoading: countLoading } = useRulePreview({
     matchType,
     pattern: effectivePattern,
     tokens: effectiveTokens,
     movement,
+    accountId: selectedAccountId,
     enabled: open,
   });
 
@@ -143,6 +158,7 @@ export function RuleEditorDialog({
       category: categorySlug,
       original_description: description,
       matchingTransactionIds: matchingTransactions,
+      account_id: selectedAccountId || null,
     });
   };
 
@@ -290,6 +306,32 @@ export function RuleEditorDialog({
             </p>
           )}
         </div>
+
+        {/* Account scope */}
+        {(() => {
+          const activeAccounts = accounts.filter(a => !a.archived);
+          if (activeAccounts.length <= 1) return null;
+          return (
+            <div className="space-y-2">
+              <label className="text-[13px] font-semibold text-foreground">
+                {t("categories.accountScope")}
+              </label>
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger className="h-11 rounded-full bg-muted border-0 shadow-none text-sm px-5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_ACCOUNTS}>{t("categories.accountScopeAll")}</SelectItem>
+                  {activeAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {getAccountDisplayName(a)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          );
+        })()}
 
         {/* Live preview */}
         <div className="rounded-2xl bg-muted px-5 py-4 flex items-center justify-between gap-3">

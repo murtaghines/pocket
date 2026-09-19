@@ -21,6 +21,9 @@ export interface Account {
   is_primary: boolean;
   hidden_from_dashboard?: boolean;
   account_number?: string | null;
+  initial_balance: number;
+  split_percentage: number;
+  archived: boolean;
 }
 
 export interface CreateAccountParams {
@@ -31,6 +34,8 @@ export interface CreateAccountParams {
   currency_base?: string;
   account_number?: string;
   hidden_from_dashboard?: boolean;
+  initial_balance?: number;
+  split_percentage?: number;
 }
 
 export function useAccounts() {
@@ -79,6 +84,8 @@ export function useAccounts() {
           currency_base: params.currency_base || 'EUR',
           account_number: params.account_number || null,
           hidden_from_dashboard: params.hidden_from_dashboard ?? false,
+          initial_balance: params.initial_balance ?? 0,
+          split_percentage: params.split_percentage ?? 100,
         })
         .select()
         .single();
@@ -109,8 +116,15 @@ export function useAccounts() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
       toast.success('Account updated successfully');
     },
     onError: (error) => {
@@ -194,6 +208,44 @@ export function useAccounts() {
     onError: (error) => {
       console.error('Error unsetting primary account:', error);
       toast.error('Error updating primary account');
+    }
+  });
+
+  const forceDeleteAccount = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: txErr } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('account_id', id);
+      if (txErr) throw txErr;
+
+      const { error: impErr } = await supabase
+        .from('imports')
+        .delete()
+        .eq('account_id', id);
+      if (impErr) throw impErr;
+
+      const { error: delErr } = await supabase
+        .from('accounts')
+        .delete()
+        .eq('id', id);
+      if (delErr) throw delErr;
+    },
+    onSuccess: async () => {
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['imports'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
+      toast.success('Account and all data deleted');
+    },
+    onError: (error) => {
+      console.error('Error force deleting account:', error);
+      toast.error('Error deleting account');
     }
   });
 
@@ -289,14 +341,19 @@ export function useAccounts() {
     return accounts.find(a => a.name.toLowerCase() === name.toLowerCase());
   };
 
-  const getCashAccounts = ({ includeHidden = false }: { includeHidden?: boolean } = {}): Account[] => {
+  const getCashAccounts = ({ includeArchived = false }: { includeArchived?: boolean } = {}): Account[] => {
     return accounts.filter(
-      (a) => a.account_role === 'CASH' && (includeHidden || !a.hidden_from_dashboard)
+      (a) => a.account_role === 'CASH'
+        && (includeArchived || !a.archived)
     );
   };
 
-  const getInvestmentAccounts = (): Account[] => {
-    return accounts.filter(a => a.account_role === 'INVESTMENT');
+  const getInvestmentAccounts = ({ includeArchived = false }: { includeArchived?: boolean } = {}): Account[] => {
+    return accounts.filter(a => a.account_role === 'INVESTMENT' && (includeArchived || !a.archived));
+  };
+
+  const getActiveAccounts = (): Account[] => {
+    return accounts.filter(a => !a.archived);
   };
 
   return {
@@ -306,16 +363,18 @@ export function useAccounts() {
     createAccount: createAccount.mutate,
     updateAccount: updateAccount.mutate,
     deleteAccount: deleteAccount.mutate,
+    forceDeleteAccount: forceDeleteAccount.mutate,
     reassignAndDelete: reassignAndDelete.mutate,
     updateAccountColor: updateAccountColor.mutate,
     setPrimaryAccount: setPrimaryAccount.mutate,
     unsetPrimaryAccount: unsetPrimaryAccount.mutate,
     isCreating: createAccount.isPending,
     isUpdating: updateAccount.isPending,
-    isDeleting: deleteAccount.isPending || reassignAndDelete.isPending,
+    isDeleting: deleteAccount.isPending || forceDeleteAccount.isPending || reassignAndDelete.isPending,
     getLinkedDataCount,
     getAccountByName,
     getCashAccounts,
-    getInvestmentAccounts
+    getInvestmentAccounts,
+    getActiveAccounts,
   };
 }

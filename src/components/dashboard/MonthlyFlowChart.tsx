@@ -67,7 +67,7 @@ export function MonthlyFlowChart({ dailyTotals, yearKey, convert }: MonthlyFlowC
     <div className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] h-full shadow-section flex flex-col overflow-hidden">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-[15px] font-heading font-bold text-foreground">
+          <p className="text-[14px] font-heading font-bold text-foreground">
             {t("charts.monthlyFlowTitle", "Monthly balance")}
           </p>
           <p className="text-[12.5px] text-muted-foreground mt-0.5">

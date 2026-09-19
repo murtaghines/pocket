@@ -35,7 +35,7 @@ export function AccountSelectDialog({
 }: AccountSelectDialogProps) {
   const { accounts, createAccount, isCreating } = useAccounts();
   const { t } = useTranslation('profile');
-  const filteredAccounts = accounts.filter(a => a.account_role === accountRole);
+  const filteredAccounts = accounts.filter(a => a.account_role === accountRole && !a.archived);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [showNewForm, setShowNewForm] = useState(false);
@@ -47,7 +47,8 @@ export function AccountSelectDialog({
     }
   };
 
-  const lockedType: AccountType = accountRole === 'INVESTMENT' ? 'INVESTMENTS' : 'CHECKING';
+  const lockedType: AccountType | undefined = accountRole === 'CASH' ? 'CHECKING' : undefined;
+  const typeFilter = accountRole === 'INVESTMENT' ? 'investment' as const : undefined;
 
   const handleCreateAccount = (values: AccountFormValues) => {
     createAccount(
@@ -58,7 +59,8 @@ export function AccountSelectDialog({
         account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number,
-        hidden_from_dashboard: values.hidden_from_dashboard,
+        initial_balance: values.initial_balance,
+        split_percentage: values.split_percentage,
       },
       {
         onSuccess: (data) => {
@@ -156,6 +158,7 @@ export function AccountSelectDialog({
         onOpenChange={setShowNewForm}
         mode="create"
         lockedType={lockedType}
+        typeFilter={typeFilter}
         isSubmitting={isCreating}
         onSubmit={handleCreateAccount}
       />

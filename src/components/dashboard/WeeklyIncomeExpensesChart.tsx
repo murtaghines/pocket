@@ -41,10 +41,10 @@ export function WeeklyIncomeExpensesChart({ weekly }: WeeklyIncomeExpensesChartP
   };
 
   return (
-    <div className="flex h-full flex-col bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section">
+    <div className="flex h-full flex-col bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section overflow-hidden">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-[15px] font-heading font-bold text-foreground leading-tight">
+          <p className="text-[14px] font-heading font-bold text-foreground leading-tight">
             {t("charts.monthlyBalance", "Evolution by week")}
           </p>
         </div>

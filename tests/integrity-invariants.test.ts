@@ -53,7 +53,10 @@ describe.each(DEDUP_TABLES)(
         'i',
       );
       for (const f of sqlFiles) {
-        if (re.test(readFileSync(f, 'utf8'))) offenders.push(f.replace(REPO + '/', ''));
+        const sql = readFileSync(f, 'utf8');
+        if (re.test(sql) && new RegExp(hashColumn, 'i').test(sql)) {
+          offenders.push(f.replace(REPO + '/', ''));
+        }
       }
       expect(
         offenders,

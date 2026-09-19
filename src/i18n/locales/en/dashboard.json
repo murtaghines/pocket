@@ -346,6 +346,9 @@
   },
   "heatmap": {
     "title": "Spending by day",
+    "titleExpense": "Spending by day",
+    "titleIncome": "Income by day",
+    "titleCount": "Transactions by day",
     "view": "View",
     "expense": "Expenses",
     "income": "Income",

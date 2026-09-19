@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -21,6 +21,7 @@ import {
   MoreHorizontal,
   Pencil,
   Copy,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -83,6 +84,8 @@ import {
   ruleMatchesDescription,
   type MatchType,
 } from "@/lib/userRules";
+import { filterByScope } from "@/hooks/useRetroactiveApply";
+import { buildSplitMap, applySplitFast } from "@/lib/splitAmount";
 import {
   USER_TRACKED_FIELDS,
   getCategoriesForMovement,
@@ -112,6 +115,14 @@ import type {
 } from "./types";
 import type { SortColumn, SortDirection, DataFilters } from "./DataToolbar";
 
+function getISOWeek(dateStr: string): number {
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+}
+
 export interface InlineTransactionsEditorProps {
   monthKey: string;
   monthLabel: string;
@@ -135,6 +146,7 @@ export interface InlineTransactionsEditorProps {
   filters?: DataFilters;
   exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
   openingBalance?: number | null;
+  accountOpeningBalances?: Record<string, number>;
 }
 
 export function InlineTransactionsEditor({
@@ -160,6 +172,7 @@ export function InlineTransactionsEditor({
   filters: filtersProp,
   exportTransactionsRef,
   openingBalance,
+  accountOpeningBalances,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -170,11 +183,27 @@ export function InlineTransactionsEditor({
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const { t } = useTranslation("common");
 
+  const splitMap = useMemo(() => buildSplitMap(accounts), [accounts]);
+  const splitAmt = useCallback(
+    (amount: number, accountId?: string | null) => applySplitFast(amount, accountId, splitMap),
+    [splitMap],
+  );
+
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   // Checkbox selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Account group collapse state
+  const [collapsedAccounts, setCollapsedAccounts] = useState<Set<string>>(new Set());
+  const toggleAccountCollapsed = (accountId: string) =>
+    setCollapsedAccounts((prev) => {
+      const next = new Set(prev);
+      if (next.has(accountId)) next.delete(accountId);
+      else next.add(accountId);
+      return next;
+    });
 
   // Inline editing state
   const [editingDescId, setEditingDescId] = useState<string | null>(null);
@@ -265,6 +294,24 @@ export function InlineTransactionsEditor({
   const accountLabel = (id: string | null) => {
     const acct = accounts.find((a) => a.id === id);
     return acct ? getAccountDisplayName(acct) : null;
+  };
+
+  const importFileExtMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const imp of imports) {
+      const ext = imp.file_name?.split(".").pop()?.toLowerCase() ?? "";
+      m.set(imp.id, ext);
+    }
+    return m;
+  }, [imports]);
+
+  const getSourceLabel = (tx: MonthTransaction) => {
+    if (!tx.import_id) return t("imports.sourceManual");
+    const ext = importFileExtMap.get(tx.import_id);
+    if (ext === "pdf") return "PDF";
+    if (ext === "csv") return "CSV";
+    if (ext === "xlsx" || ext === "xls") return "Excel";
+    return "File";
   };
 
   // Fetch transactions for this month
@@ -704,16 +751,19 @@ export function InlineTransactionsEditor({
                   // Find similar past transactions for retroactive apply
                   const { data: allTx } = await supabase
                     .from("transactions")
-                    .select("id, description, description_norm, movement, categorized_by")
+                    .select("id, description, description_norm, movement, categorized_by, date")
                     .eq("user_id", user.id)
                     .limit(1500);
 
                   const matchingIds: string[] = [];
+                  const matchingWithDates: { id: string; date: string }[] = [];
                   for (const row of allTx || []) {
+                    if (row.movement && row.movement !== targetMovement) continue;
                     if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
                     const desc = (row.description_norm || row.description || "") as string;
                     if (ruleMatchesDescription(built.match_type as MatchType, built.pattern, built.tokens, desc)) {
                       matchingIds.push(row.id);
+                      matchingWithDates.push({ id: row.id, date: row.date as string });
                     }
                   }
 
@@ -730,41 +780,70 @@ export function InlineTransactionsEditor({
                     description: (
                       <div className="space-y-2">
                         <p className="text-sm opacity-90">
-                          {matchingIds.length > 0
-                            ? `${matchingIds.length} similar past transaction${matchingIds.length === 1 ? "" : "s"} found.`
+                          {matchingWithDates.length > 0
+                            ? `${matchingWithDates.length} similar past transaction${matchingWithDates.length === 1 ? "" : "s"} found.`
                             : "Future matching transactions will be categorized automatically."}
                         </p>
                         <div className="flex gap-1.5">
-                          {matchingIds.length > 0 && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={async () => {
-                                const { error: retroErr } = await supabase
-                                  .from("transactions")
-                                  .update({
-                                    movement: targetMovement,
-                                    category: savedPendingCategory,
-                                    category_id: savedPendingCategoryId,
-                                    category_source: "USER_RULE",
-                                    categorized_by: "user_rule",
-                                  })
-                                  .in("id", matchingIds);
-                                if (!retroErr) {
-                                  toast({
-                                    title: `${matchingIds.length} transaction${matchingIds.length === 1 ? "" : "s"} updated`,
-                                  });
-                                  queryClient.invalidateQueries({ queryKey: ["transactions"] });
-                                  queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
-                                  queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
-                                  queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
-                                }
-                              }}
-                            >
-                              Apply to all
-                            </Button>
-                          )}
+                          {matchingWithDates.length > 0 && (() => {
+                            const now = new Date();
+                            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                            const mo3 = new Date();
+                            mo3.setMonth(mo3.getMonth() - 3);
+                            const threeMonthsStart = new Date(mo3.getFullYear(), mo3.getMonth(), 1);
+                            const thisMonthCount = matchingWithDates.filter(mt => new Date(mt.date) >= thisMonthStart).length;
+                            const last3Count = matchingWithDates.filter(mt => new Date(mt.date) >= threeMonthsStart).length;
+                            const allCount = matchingWithDates.length;
+
+                            const applyRetro = async (scope: "this_month" | "last_3_months" | "all") => {
+                              const ids = filterByScope(matchingWithDates, scope);
+                              if (ids.length === 0) return;
+                              const { error: retroErr } = await supabase
+                                .from("transactions")
+                                .update({
+                                  movement: targetMovement,
+                                  category: savedPendingCategory,
+                                  category_id: savedPendingCategoryId,
+                                  category_source: "USER_RULE",
+                                  categorized_by: "user_rule",
+                                })
+                                .in("id", ids);
+                              if (!retroErr) {
+                                toast({
+                                  title: `${ids.length} transaction${ids.length === 1 ? "" : "s"} updated`,
+                                });
+                                queryClient.invalidateQueries({ queryKey: ["transactions"] });
+                                queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+                                queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+                                queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
+                              }
+                            };
+
+                            return (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="h-7 text-xs">
+                                    Apply ({allCount})
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                  {thisMonthCount > 0 && (
+                                    <DropdownMenuItem onClick={() => applyRetro("this_month")}>
+                                      This month ({thisMonthCount})
+                                    </DropdownMenuItem>
+                                  )}
+                                  {last3Count > thisMonthCount && (
+                                    <DropdownMenuItem onClick={() => applyRetro("last_3_months")}>
+                                      Last 3 months ({last3Count})
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem onClick={() => applyRetro("all")}>
+                                    All ({allCount})
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            );
+                          })()}
                           <Button
                             variant="outline"
                             size="sm"
@@ -894,30 +973,52 @@ export function InlineTransactionsEditor({
     const visible = transactions.filter((t) => !t.is_hidden);
     const income = visible
       .filter((t) => t.movement === "INCOME")
-      .reduce((s, t) => s + Math.abs(t.amount), 0);
+      .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
     const expenses = visible
       .filter((t) => t.movement === "EXPENSE")
-      .reduce((s, t) => s + Math.abs(t.amount), 0);
+      .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
     const transfers = visible.filter((t) => t.movement === "TRANSFER").length;
     const hidden = transactions.filter((t) => t.is_hidden).length;
     return { income, expenses, transfers, hidden, total: transactions.length };
-  }, [transactions]);
+  }, [transactions, splitAmt]);
+
+  const hasAccountBalances = accountOpeningBalances && Object.keys(accountOpeningBalances).length > 0;
 
   const runningBalanceMap = useMemo(() => {
     const map = new Map<string, number>();
-    if (openingBalance == null) return map;
-    const sorted = [...transactions].sort((a, b) => {
-      const dateCmp = a.date.localeCompare(b.date);
-      if (dateCmp !== 0) return dateCmp;
-      return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
-    });
-    let balance = openingBalance;
-    for (const tx of sorted) {
-      balance += tx.amount;
-      map.set(tx.id, Math.round(balance * 100) / 100);
+    if (hasAccountBalances) {
+      const byAccount = new Map<string, MonthTransaction[]>();
+      for (const tx of transactions) {
+        const key = tx.account_id ?? "__unassigned__";
+        if (!byAccount.has(key)) byAccount.set(key, []);
+        byAccount.get(key)!.push(tx);
+      }
+      for (const [acctId, txs] of byAccount) {
+        const sorted = [...txs].sort((a, b) => {
+          const dateCmp = a.date.localeCompare(b.date);
+          if (dateCmp !== 0) return dateCmp;
+          return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
+        });
+        let balance = acctId === "__unassigned__" ? 0 : (accountOpeningBalances![acctId] ?? 0);
+        for (const tx of sorted) {
+          balance += splitAmt(tx.amount, tx.account_id);
+          map.set(tx.id, Math.round(balance * 100) / 100);
+        }
+      }
+    } else if (openingBalance != null) {
+      const sorted = [...transactions].sort((a, b) => {
+        const dateCmp = a.date.localeCompare(b.date);
+        if (dateCmp !== 0) return dateCmp;
+        return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
+      });
+      let balance = openingBalance;
+      for (const tx of sorted) {
+        balance += splitAmt(tx.amount, tx.account_id);
+        map.set(tx.id, Math.round(balance * 100) / 100);
+      }
     }
     return map;
-  }, [transactions, openingBalance]);
+  }, [transactions, openingBalance, hasAccountBalances, accountOpeningBalances, splitAmt]);
 
   const filteredSorted = useMemo(() => {
     let result = [...transactions];
@@ -940,6 +1041,41 @@ export function InlineTransactionsEditor({
     });
     return result;
   }, [transactions, sortColumnProp, sortDirectionProp, filtersProp]);
+
+  type AccountGroup = {
+    accountId: string | null;
+    accountName: string;
+    accountColor: string | null;
+    openingBalance: number;
+    closingBalance: number;
+    transactions: MonthTransaction[];
+  };
+
+  const accountGroups: AccountGroup[] | null = useMemo(() => {
+    if (!hasAccountBalances) return null;
+    const byAccount = new Map<string | null, MonthTransaction[]>();
+    for (const tx of filteredSorted) {
+      const key = tx.account_id ?? null;
+      if (!byAccount.has(key)) byAccount.set(key, []);
+      byAccount.get(key)!.push(tx);
+    }
+    const groups: AccountGroup[] = [];
+    for (const [acctId, txs] of byAccount) {
+      const acct = acctId ? accounts.find((a) => a.id === acctId) : null;
+      const name = acct ? getAccountDisplayName(acct) : t("imports.unassignedAccount", "Unassigned");
+      const color = acct?.color ?? null;
+      const opening = acctId ? (accountOpeningBalances![acctId] ?? 0) : 0;
+      const totalAmount = txs.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0);
+      const closing = Math.round((opening + totalAmount) * 100) / 100;
+      groups.push({ accountId: acctId, accountName: name, accountColor: color, openingBalance: opening, closingBalance: closing, transactions: txs });
+    }
+    groups.sort((a, b) => {
+      if (a.accountId === null) return 1;
+      if (b.accountId === null) return -1;
+      return a.accountName.localeCompare(b.accountName);
+    });
+    return groups;
+  }, [filteredSorted, hasAccountBalances, accountOpeningBalances, accounts, splitAmt, t]);
 
   const visibleAll = filteredSorted;
   const rowsToRender = visibleAll;
@@ -975,17 +1111,6 @@ export function InlineTransactionsEditor({
     );
   }
 
-  // Consecutive rows sharing a date, for the mobile day-grouped card list.
-  // Rows already come sorted date-desc from the query, so a single pass suffices.
-  // (Not memoized: this component already returns early above for loading/empty
-  // states, so a useMemo here would be a conditional hook call.)
-  const dayGroups: { dateKey: string; rows: MonthTransaction[] }[] = [];
-  for (const tx of rowsToRender) {
-    const last = dayGroups[dayGroups.length - 1];
-    if (last && last.dateKey === tx.date) last.rows.push(tx);
-    else dayGroups.push({ dateKey: tx.date, rows: [tx] });
-  }
-
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Mismatch warning */}
@@ -1003,43 +1128,83 @@ export function InlineTransactionsEditor({
       {/* The spreadsheet — flush, no padding, no inner card */}
       <div className="bg-card flex-1 flex flex-col min-h-0">
         {/* Desktop / tablet: compact Excel-like spreadsheet */}
-        <div className="hidden md:block overflow-x-auto overflow-y-auto flex-1">
-          <Table className="w-full min-w-[780px] table-fixed">
+        <div className="hidden md:block overflow-auto flex-1 min-h-0 [&>div]:!overflow-visible">
+          <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10">
               <TableRow className="hover:bg-transparent bg-[#FAFBFC] border-y border-[#F1F2F4] [&>th]:h-[34px]">
-                <TableHead className="w-[36px] px-0 text-center">
+                <TableHead className="w-[44px] px-0 text-center bg-[#FAFBFC]">
                   <Checkbox
                     checked={selectedIds.size > 0 ? (selectedIds.size === allVisibleIds.length ? true : "indeterminate") : false}
                     onCheckedChange={() => toggleSelectAll(allVisibleIds)}
                     aria-label="Select all"
                   />
                 </TableHead>
-                <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.date")}
                 </TableHead>
-                <TableHead className="w-[10%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
-                  {t("imports.account")}
+                <TableHead className="w-[4%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                  {t("imports.week")}
                 </TableHead>
-                <TableHead className="w-[22%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[5%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                  {t("imports.source")}
+                </TableHead>
+                {!accountGroups && (
+                  <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                    {t("imports.account")}
+                  </TableHead>
+                )}
+                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]", accountGroups ? "w-[28%]" : "w-[20%]")}>
                   {t("imports.description")}
                 </TableHead>
-                <TableHead className="w-[13%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[11%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.movement")}
                 </TableHead>
-                <TableHead className="w-[18%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[13%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.category")}
                 </TableHead>
-                <TableHead className="w-[10%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[9%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.amount")}
                 </TableHead>
-                <TableHead className="w-[10%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium">
+                <TableHead className="w-[9%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.balance")}
                 </TableHead>
-                <TableHead className="w-[36px]" />
+                <TableHead className="w-[36px] bg-[#FAFBFC]" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rowsToRender.map((tx) => {
+              {(accountGroups ?? [{ accountId: null, accountName: "", accountColor: null, openingBalance: 0, closingBalance: 0, transactions: rowsToRender }] as AccountGroup[]).map((group, groupIdx) => {
+                const showGroupHeader = !!accountGroups;
+                const groupTxs = group.transactions;
+                return (
+                  <Fragment key={group.accountId ?? `__flat_${groupIdx}__`}>
+                    {showGroupHeader && (() => {
+                      const groupKey = group.accountId ?? "__unassigned__";
+                      const isCollapsed = collapsedAccounts.has(groupKey);
+                      return (
+                        <TableRow
+                          className="hover:bg-muted/20 cursor-pointer border-b border-border/40"
+                          onClick={() => toggleAccountCollapsed(groupKey)}
+                        >
+                          <TableCell colSpan={accountGroups ? 10 : 11} className="px-0 py-0">
+                            <div className="flex items-center gap-3 px-3 py-1.5">
+                              <ChevronRight
+                                className={cn(
+                                  "w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
+                                  !isCollapsed && "rotate-90",
+                                )}
+                              />
+                              <span className="text-[12px] font-medium text-foreground">
+                                {group.accountName}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {t("imports.txCountShort", { count: groupTxs.length })}
+                              </span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })()}
+                    {(!showGroupHeader || !collapsedAccounts.has(group.accountId ?? "__unassigned__")) && groupTxs.map((tx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
@@ -1064,7 +1229,8 @@ export function InlineTransactionsEditor({
                 const category = normalizeCategory(
                   pending?.category ?? tx.category ?? "other_expense",
                 );
-                const displayAmount = pending?.amount ?? tx.amount;
+                const rawAmount = pending?.amount ?? tx.amount;
+                const displayAmount = splitAmt(rawAmount, tx.account_id);
                 const availableCategories = getCategoriesForMovement(movement);
                 const hasPendingCategoryChange =
                   !!pending?.category && pending.category !== tx.category;
@@ -1088,7 +1254,7 @@ export function InlineTransactionsEditor({
                     setTimeout(() => descInputRef.current?.focus(), 50);
                   },
                   onCopyAmount: () => {
-                    navigator.clipboard.writeText(formatCurrency(displayAmount));
+                    navigator.clipboard.writeText(formatCurrency(displayAmount, undefined, true));
                     sonnerToast("Amount copied");
                   },
                   onCopyDescription: () => {
@@ -1151,7 +1317,7 @@ export function InlineTransactionsEditor({
                       )}
                     >
                       {/* Checkbox */}
-                      <TableCell className="w-[36px] px-0 text-center">
+                      <TableCell className="w-[44px] px-0 text-center">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelected(tx.id)}
@@ -1164,10 +1330,24 @@ export function InlineTransactionsEditor({
                         {formatDate(new Date(tx.date))}
                       </TableCell>
 
-                      {/* Account */}
-                      <TableCell className="text-[13px] text-muted-foreground truncate">
-                        {accountName(tx.account_id) || "—"}
+                      {/* Week */}
+                      <TableCell className="text-[12px] text-muted-foreground tabular-nums whitespace-nowrap text-center">
+                        W{getISOWeek(tx.date)}
                       </TableCell>
+
+                      {/* Source — mini gray pill */}
+                      <TableCell className="text-[11px]">
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-[#F1F2F4] text-[#6B7280] text-[10px] font-medium lowercase">
+                          {getSourceLabel(tx)}
+                        </span>
+                      </TableCell>
+
+                      {/* Account — hidden when grouped by account */}
+                      {!accountGroups && (
+                        <TableCell className="text-[13px] text-muted-foreground truncate">
+                          {accountName(tx.account_id) || "—"}
+                        </TableCell>
+                      )}
 
                       {/* Description — double-click to edit */}
                       <TableCell
@@ -1229,7 +1409,7 @@ export function InlineTransactionsEditor({
                             onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
                             disabled={isHidden}
                           >
-                            <SelectTrigger className="h-7 w-full min-w-[100px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
+                            <SelectTrigger className="h-7 w-full text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
                                 <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
                                   {getMovementLabel(movement)}
@@ -1272,7 +1452,7 @@ export function InlineTransactionsEditor({
                             onValueChange={(v) => handleCategoryChange(tx, v)}
                             disabled={isHidden}
                           >
-                            <SelectTrigger className="h-7 w-full min-w-[130px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
+                            <SelectTrigger className="h-7 w-full text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
                                 <PillBadge colorVar={getCategoryColor(category)} className="text-[12.5px]">
                                   <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} className="w-[13px] h-[13px]" />
@@ -1298,11 +1478,11 @@ export function InlineTransactionsEditor({
 
                       {/* Amount — double-click to edit */}
                       <TableCell
-                        className={cn("text-right text-[13px] tabular-nums font-medium", amountColor)}
+                        className={cn("text-right text-[13px] tabular-nums", amountColor)}
                         onDoubleClick={() => {
                           if (isLocked || isHidden) return;
                           setEditingAmountId(tx.id);
-                          setEditingAmountValue(String(Math.abs(displayAmount)).replace(".", ","));
+                          setEditingAmountValue(String(Math.abs(rawAmount)).replace(".", ","));
                           setTimeout(() => amountInputRef.current?.focus(), 50);
                         }}
                       >
@@ -1324,14 +1504,14 @@ export function InlineTransactionsEditor({
                           />
                         ) : (
                           <span>
-                            {formatCurrency(displayAmount)}
+                            {formatCurrency(displayAmount, undefined, true)}
                           </span>
                         )}
                       </TableCell>
 
                       {/* Balance */}
                       <TableCell className="text-right text-[13px] text-[#8A919C] tabular-nums">
-                        {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!) : "—"}
+                        {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!, undefined, true) : "—"}
                       </TableCell>
 
                       {/* Actions: three-dot menu / pending save+discard */}
@@ -1429,7 +1609,7 @@ export function InlineTransactionsEditor({
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
-                                  navigator.clipboard.writeText(formatCurrency(displayAmount));
+                                  navigator.clipboard.writeText(formatCurrency(displayAmount, undefined, true));
                                   sonnerToast("Copied");
                                 }}
                                 className="gap-2 text-[13px]"
@@ -1457,13 +1637,48 @@ export function InlineTransactionsEditor({
                   </TransactionContextMenu>
                 );
               })}
+                  </Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
         <div className="md:hidden flex-1 overflow-y-auto min-h-0 overscroll-contain touch-pan-y" style={{ WebkitOverflowScrolling: "touch" }}>
-          {dayGroups.map((group) => (
+          {(accountGroups ?? [{ accountId: null, accountName: "", accountColor: null, openingBalance: 0, closingBalance: 0, transactions: rowsToRender } as AccountGroup]).map((acctGroup, acctIdx) => {
+            const mobileDayGroups: { dateKey: string; rows: MonthTransaction[] }[] = [];
+            for (const tx of acctGroup.transactions) {
+              const last = mobileDayGroups[mobileDayGroups.length - 1];
+              if (last && last.dateKey === tx.date) last.rows.push(tx);
+              else mobileDayGroups.push({ dateKey: tx.date, rows: [tx] });
+            }
+            return (
+              <Fragment key={acctGroup.accountId ?? `__mflat_${acctIdx}__`}>
+                {!!accountGroups && (() => {
+                  const mGroupKey = acctGroup.accountId ?? "__unassigned__";
+                  const mIsCollapsed = collapsedAccounts.has(mGroupKey);
+                  return (
+                    <div
+                      className="flex items-center gap-3 px-3 py-1.5 bg-muted/20 border-b border-border/40 cursor-pointer active:bg-muted/40"
+                      onClick={() => toggleAccountCollapsed(mGroupKey)}
+                    >
+                      <ChevronRight
+                        className={cn(
+                          "w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
+                          !mIsCollapsed && "rotate-90",
+                        )}
+                      />
+                      <span className="text-[12px] font-medium text-foreground">
+                        {acctGroup.accountName}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {t("imports.txCountShort", { count: acctGroup.transactions.length })}
+                      </span>
+                    </div>
+                  );
+                })()}
+                {(!accountGroups || !collapsedAccounts.has(acctGroup.accountId ?? "__unassigned__")) && mobileDayGroups.map((group) => (
             <div key={group.dateKey}>
               <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">
                 <span className="text-[13px] font-semibold tabular-nums text-foreground">
@@ -1602,8 +1817,8 @@ export function InlineTransactionsEditor({
                             ) : isSaved ? (
                               <Check className="h-3 w-3 text-success" />
                             ) : null}
-                            <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
-                              {formatCurrency(tx.amount)}
+                            <span className={cn("text-[13px] tabular-nums", amountColor)}>
+                              {formatCurrency(splitAmt(tx.amount, tx.account_id), undefined, true)}
                             </span>
                           </div>
                           {accountLabel(tx.account_id) && (
@@ -1618,7 +1833,10 @@ export function InlineTransactionsEditor({
                 })}
               </div>
             </div>
-          ))}
+                ))}
+              </Fragment>
+            );
+          })}
         </div>
 
         {/* Mobile long-press action menu */}
@@ -1658,7 +1876,7 @@ export function InlineTransactionsEditor({
                 }
               }}
               onCopyDescription={() => { navigator.clipboard.writeText(atxCleanDesc); sonnerToast("Description copied"); }}
-              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(atx.amount)); sonnerToast("Amount copied"); }}
+              onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(splitAmt(atx.amount, atx.account_id), undefined, true)); sonnerToast("Amount copied"); }}
             />
           );
         })()}
@@ -1717,7 +1935,8 @@ export function InlineTransactionsEditor({
           monthLabel={monthLabel}
           isLocked={isLocked}
           summary={summary}
-          closingBalance={openingBalance != null ? openingBalance + transactions.reduce((sum, tx) => sum + tx.amount, 0) : null}
+          openingBalance={openingBalance}
+          closingBalance={openingBalance != null ? openingBalance + transactions.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0) : null}
           externalOpen={externalManualEntryOpen}
           onExternalOpenChange={onManualEntryOpenChange}
           defaultMovement={defaultMovement}
@@ -1796,7 +2015,7 @@ export function InlineTransactionsEditor({
                         movementConfirm.tx.amount < 0 ? "text-destructive" : "text-success",
                       )}
                     >
-                      {formatCurrency(movementConfirm.tx.amount)}
+                      {formatCurrency(splitAmt(movementConfirm.tx.amount, movementConfirm.tx.account_id), undefined, true)}
                     </span>
                   </span>
                   <span className="block text-xs text-muted-foreground">

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Settings2, Loader2 } from "lucide-react";
 import { getAccountColorStyle, getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { type AccountType, getAccountTypeIcon } from "@/lib/accountTypes";
+import { applySplit } from "@/lib/splitAmount";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -154,7 +155,7 @@ export function AccountsStackCard({
         {/* Header */}
         <div className="flex items-center justify-between mb-3 shrink-0">
           <div>
-            <p className="text-[15px] font-heading font-bold text-foreground">
+            <p className="text-[14px] font-heading font-bold text-foreground">
               {t('charts.accounts', 'Accounts')}
             </p>
             <p className="text-[12.5px] text-muted-foreground mt-0.5">
@@ -257,7 +258,7 @@ export function AccountsStackCard({
                         </div>
                         <span className="text-sm font-semibold tabular-nums shrink-0 text-foreground">
                           {tx.movement === "EXPENSE" ? "-" : tx.movement === "INCOME" ? "+" : ""}
-                          {formatCurrency(convert(Math.abs(tx.amount)))}
+                          {formatCurrency(convert(Math.abs(applySplit(tx.amount, detailAccountId, accounts))))}
                         </span>
                       </li>
                     ))}

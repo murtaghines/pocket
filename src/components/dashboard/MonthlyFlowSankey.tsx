@@ -292,22 +292,19 @@ export function MonthlyFlowSankey({
   }, []);
 
   const hasData = leftNodes.length > 0 || rightNodes.length > 0;
-  const fontSize = isMobile ? 9 : 11;
+  const fontSize = isMobile ? 9 : 10;
+  const labelMinH = 16;
 
   return (
-    <div ref={containerRef} className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section h-full">
-      <p className="text-[15px] font-heading font-bold text-foreground mb-1">
-        {t("charts.monthlyFlow", "Monthly flow")}
-      </p>
-
+    <div ref={containerRef} className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section h-full overflow-hidden flex flex-col">
       {!hasData ? (
         <EmptyState height="h-[200px]" />
       ) : (
         <div
-          className="overflow-x-auto -mx-[14px] px-[14px] md:-mx-[22px] md:px-[22px] lg:mx-0 lg:px-0 relative"
+          className="flex-1 relative"
           onMouseMove={handleMouseMove}
         >
-          <div className="min-w-[520px] lg:min-w-0">
+          <div>
             <svg
               viewBox={`0 -32 ${svgW} ${targetH + 44}`}
               className="w-full select-none"
@@ -363,17 +360,19 @@ export function MonthlyFlowSankey({
                     className="transition-opacity duration-200"
                   />
                   <rect x={n.x} y={n.y - 4} width={BAR_W + 120} height={n.h + 8} fill="transparent" />
-                  <text
-                    x={n.x + BAR_W + 10} y={n.y + n.h / 2}
-                    dominantBaseline="middle" xmlSpace="preserve"
-                    opacity={textOpacity("left", i)}
-                    className="transition-opacity duration-200"
-                    style={{ letterSpacing: 0 }}
-                  >
-                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
-                    <tspan> </tspan>
-                    <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
-                  </text>
+                  {n.h >= labelMinH && (
+                    <text
+                      x={n.x + BAR_W + 10} y={n.y + n.h / 2}
+                      dominantBaseline="middle" xmlSpace="preserve"
+                      opacity={textOpacity("left", i)}
+                      className="transition-opacity duration-200"
+                      style={{ letterSpacing: 0 }}
+                    >
+                      <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                      <tspan> </tspan>
+                      <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                    </text>
+                  )}
                 </g>
               ))}
 
@@ -391,17 +390,19 @@ export function MonthlyFlowSankey({
                     className="transition-opacity duration-200"
                   />
                   <rect x={n.x - 10} y={n.y - 4} width={BAR_W + 140} height={n.h + 8} fill="transparent" />
-                  <text
-                    x={n.x + BAR_W + 10} y={n.y + n.h / 2}
-                    dominantBaseline="middle" xmlSpace="preserve"
-                    opacity={textOpacity("mid", i)}
-                    className="transition-opacity duration-200"
-                    style={{ letterSpacing: 0 }}
-                  >
-                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
-                    <tspan> </tspan>
-                    <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
-                  </text>
+                  {n.h >= labelMinH && (
+                    <text
+                      x={n.x + BAR_W + 10} y={n.y + n.h / 2}
+                      dominantBaseline="middle" xmlSpace="preserve"
+                      opacity={textOpacity("mid", i)}
+                      className="transition-opacity duration-200"
+                      style={{ letterSpacing: 0 }}
+                    >
+                      <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                      <tspan> </tspan>
+                      <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                    </text>
+                  )}
                 </g>
               ))}
 
@@ -419,17 +420,19 @@ export function MonthlyFlowSankey({
                     className="transition-opacity duration-200"
                   />
                   <rect x={n.x - 120} y={n.y - 4} width={BAR_W + 120} height={n.h + 8} fill="transparent" />
-                  <text
-                    x={n.x - 10} y={n.y + n.h / 2}
-                    dominantBaseline="middle" textAnchor="end" xmlSpace="preserve"
-                    opacity={textOpacity("right", i)}
-                    className="transition-opacity duration-200"
-                    style={{ letterSpacing: 0 }}
-                  >
-                    <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
-                    <tspan> </tspan>
-                    <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
-                  </text>
+                  {n.h >= labelMinH && (
+                    <text
+                      x={n.x - 10} y={n.y + n.h / 2}
+                      dominantBaseline="middle" textAnchor="end" xmlSpace="preserve"
+                      opacity={textOpacity("right", i)}
+                      className="transition-opacity duration-200"
+                      style={{ letterSpacing: 0 }}
+                    >
+                      <tspan fill="hsl(var(--muted-foreground))" fontSize={fontSize} fontWeight="400" fontFamily="Inter, sans-serif" style={{ fontVariantNumeric: "tabular-nums" }}>{formatCurrency(n.value)}</tspan>
+                      <tspan> </tspan>
+                      <tspan fill="hsl(var(--foreground) / 0.8)" fontSize={fontSize} fontWeight="500" fontFamily="Inter, sans-serif">{n.name}</tspan>
+                    </text>
+                  )}
                 </g>
               ))}
             </svg>

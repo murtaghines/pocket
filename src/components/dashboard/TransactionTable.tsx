@@ -212,11 +212,11 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                               : "text-muted-foreground",
                       )}
                     >
-                      {formatCurrency(transaction.amount)}
+                      {formatCurrency(transaction.amount, undefined, true)}
                     </DataTableCell>
                     <DataTableCell numeric className="text-[13px] font-normal text-muted-foreground tabular-nums pr-5">
                       {computedBalanceMap.has(transaction.id)
-                        ? formatCurrency(computedBalanceMap.get(transaction.id)!)
+                        ? formatCurrency(computedBalanceMap.get(transaction.id)!, undefined, true)
                         : '—'}
                     </DataTableCell>
                   </DataTableRow>

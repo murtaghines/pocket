@@ -63,48 +63,40 @@ export function useLocalization() {
   const shortDateFormat = patternToShortFormat(effectivePattern);
 
   // Format currency according to user preferences
-  const formatCurrency = useCallback((amount: number, currency?: string) => {
+  const formatCurrency = useCallback((amount: number, currency?: string, signed?: boolean) => {
     const currencyToUse = currency || baseCurrency;
+    const opts: Intl.NumberFormatOptions & { useGrouping: any } = {
+      style: 'currency',
+      currency: currencyToUse,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: 'always' as any,
+      ...(signed && { signDisplay: 'exceptZero' as const }),
+    };
     try {
-      return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: currencyToUse,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: 'always' as any,
-        signDisplay: 'exceptZero',
-      }).format(amount);
+      return new Intl.NumberFormat(locale, opts).format(amount);
     } catch {
-      return new Intl.NumberFormat(locale, {
-        style: 'decimal',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: 'always' as any,
-        signDisplay: 'exceptZero',
-      }).format(amount) + ` ${currencyToUse}`;
+      const { style: _s, currency: _c, ...rest } = opts;
+      return new Intl.NumberFormat(locale, { style: 'decimal', ...rest }).format(amount) + ` ${currencyToUse}`;
     }
   }, [locale, baseCurrency]);
 
   // Format compact currency (e.g., $1.2k, €500)
-  const formatCurrencyCompact = useCallback((amount: number, currency?: string) => {
+  const formatCurrencyCompact = useCallback((amount: number, currency?: string, signed?: boolean) => {
     const currencyToUse = currency || baseCurrency;
+    const opts: Intl.NumberFormatOptions & { useGrouping: any } = {
+      style: 'currency',
+      currency: currencyToUse,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+      useGrouping: 'always' as any,
+      ...(signed && { signDisplay: 'exceptZero' as const }),
+    };
     try {
-      return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: currencyToUse,
-        notation: 'compact',
-        maximumFractionDigits: 1,
-        useGrouping: 'always' as any,
-        signDisplay: 'exceptZero',
-      }).format(amount);
+      return new Intl.NumberFormat(locale, opts).format(amount);
     } catch {
-      return new Intl.NumberFormat(locale, {
-        style: 'decimal',
-        notation: 'compact',
-        maximumFractionDigits: 1,
-        useGrouping: 'always' as any,
-        signDisplay: 'exceptZero',
-      }).format(amount) + ` ${currencyToUse}`;
+      const { style: _s, currency: _c, ...rest } = opts;
+      return new Intl.NumberFormat(locale, { style: 'decimal', ...rest }).format(amount) + ` ${currencyToUse}`;
     }
   }, [locale, baseCurrency]);
 

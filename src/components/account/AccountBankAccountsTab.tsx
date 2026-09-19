@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
-import { Plus, Pencil, Star, Trash2, Eye, EyeOff, Building2, TrendingUp, Loader2, MoreHorizontal } from "lucide-react";
+import { Plus, Pencil, Star, Trash2, Building2, TrendingUp, Loader2, MoreHorizontal, Archive, ArchiveRestore, ArrowRightLeft, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,6 +93,7 @@ export function AccountBankAccountsTab() {
     createAccount,
     updateAccount,
     deleteAccount,
+    forceDeleteAccount,
     reassignAndDelete,
     setPrimaryAccount,
     unsetPrimaryAccount,
@@ -102,13 +103,19 @@ export function AccountBankAccountsTab() {
     getLinkedDataCount,
   } = useAccounts();
 
+  const sortByCreated = (a: Account, b: Account) => a.created_at.localeCompare(b.created_at);
+
   const cashAccounts = accounts
-    .filter((a) => a.account_role === "CASH")
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    .filter((a) => a.account_role === "CASH" && !a.archived)
+    .sort(sortByCreated);
 
   const investmentAccounts = accounts
-    .filter((a) => a.account_role === "INVESTMENT")
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    .filter((a) => a.account_role === "INVESTMENT" && !a.archived)
+    .sort(sortByCreated);
+
+  const archivedAccounts = accounts
+    .filter((a) => a.archived)
+    .sort(sortByCreated);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -123,6 +130,7 @@ export function AccountBankAccountsTab() {
     lastImportAt: string | null;
   } | null>(null);
   const [reassignToId, setReassignToId] = useState("");
+  const [deleteMode, setDeleteMode] = useState<"choose" | "reassign" | "destroy">("choose");
   const [checkingLinks, setCheckingLinks] = useState(false);
 
   const handleOpenCreate = (role: "CASH" | "INVESTMENT" = "CASH") => {
@@ -142,7 +150,8 @@ export function AccountBankAccountsTab() {
         account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number || null,
-        hidden_from_dashboard: values.hidden_from_dashboard ?? false,
+        initial_balance: values.initial_balance ?? 0,
+        split_percentage: values.split_percentage ?? 100,
       });
     } else {
       createAccount({
@@ -152,7 +161,8 @@ export function AccountBankAccountsTab() {
         account_type: values.account_type,
         currency_base: values.currency_base,
         account_number: values.account_number,
-        hidden_from_dashboard: values.hidden_from_dashboard,
+        initial_balance: values.initial_balance,
+        split_percentage: values.split_percentage,
       });
     }
     setFormOpen(false);
@@ -164,34 +174,44 @@ export function AccountBankAccountsTab() {
     else setPrimaryAccount(account.id);
   };
 
-  const handleToggleHide = (account: Account) => {
-    updateAccount({ id: account.id, hidden_from_dashboard: !account.hidden_from_dashboard });
+  const handleToggleArchive = (account: Account) => {
+    updateAccount({ id: account.id, archived: !account.archived });
   };
 
   const handleDeleteClick = async (account: Account) => {
     setCheckingLinks(true);
     setDeleteTarget(account);
+    setDeleteMode("choose");
+    setReassignToId("");
     const data = await getLinkedDataCount(account.id);
     setLinkedData(data);
     setCheckingLinks(false);
   };
 
-  const handleConfirmDelete = () => {
-    if (!deleteTarget) return;
-    const hasData = linkedData && (linkedData.importsCount > 0 || linkedData.transactionsCount > 0);
-    if (hasData && reassignToId) {
-      reassignAndDelete({ deleteId: deleteTarget.id, reassignToId });
-    } else if (!hasData) {
-      deleteAccount(deleteTarget.id);
-    }
+  const closeDeleteDialog = () => {
     setDeleteTarget(null);
     setLinkedData(null);
     setReassignToId("");
+    setDeleteMode("choose");
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    const hasData = linkedData && (linkedData.importsCount > 0 || linkedData.transactionsCount > 0);
+
+    if (!hasData) {
+      deleteAccount(deleteTarget.id);
+    } else if (deleteMode === "reassign" && reassignToId) {
+      reassignAndDelete({ deleteId: deleteTarget.id, reassignToId });
+    } else if (deleteMode === "destroy") {
+      forceDeleteAccount(deleteTarget.id);
+    }
+    closeDeleteDialog();
   };
 
   const hasLinkedData = linkedData && (linkedData.importsCount > 0 || linkedData.transactionsCount > 0);
   const otherAccounts = accounts.filter(
-    (a) => a.id !== deleteTarget?.id && a.account_role === deleteTarget?.account_role,
+    (a) => a.id !== deleteTarget?.id && !a.archived,
   );
 
   const renderAccountCards = (list: Account[]) => (
@@ -233,14 +253,19 @@ export function AccountBankAccountsTab() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
+                  {account.split_percentage < 100 && (
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-primary px-1.5 py-0.5 rounded-full bg-primary/10 tabular-nums">
+                      {account.split_percentage}%
+                    </span>
+                  )}
                   {account.is_primary && (
                     <span className="text-[10px] font-bold uppercase tracking-wide text-secondary px-1.5 py-0.5 rounded-full bg-secondary/10">
                       {t("accounts.primary", "Primary")}
                     </span>
                   )}
-                  {account.hidden_from_dashboard && (
+                  {account.archived && (
                     <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
-                      {t("accounts.hiddenBadge", "Hidden")}
+                      {t("accounts.archivedBadge", "Archived")}
                     </span>
                   )}
                   <DropdownMenu>
@@ -264,13 +289,13 @@ export function AccountBankAccountsTab() {
                           ? t("accounts.unsetPrimary", "Remove primary")
                           : t("accounts.setPrimary", "Set as primary")}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleToggleHide(account)}>
-                        {account.hidden_from_dashboard
-                          ? <Eye className="w-4 h-4 mr-2" />
-                          : <EyeOff className="w-4 h-4 mr-2" />}
-                        {account.hidden_from_dashboard
-                          ? t("accounts.showInDashboard", "Show in dashboard")
-                          : t("accounts.hideFromDashboard", "Hide from dashboard")}
+                      <DropdownMenuItem onClick={() => handleToggleArchive(account)}>
+                        {account.archived
+                          ? <ArchiveRestore className="w-4 h-4 mr-2" />
+                          : <Archive className="w-4 h-4 mr-2" />}
+                        {account.archived
+                          ? t("accounts.unarchive", "Restore account")
+                          : t("accounts.archive", "Archive account")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -392,6 +417,24 @@ export function AccountBankAccountsTab() {
               renderAccountCards(investmentAccounts)
             )}
           </div>
+
+          {/* ── Archived accounts ── */}
+          {archivedAccounts.length > 0 && (
+            <div className="space-y-4 pt-6 mt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Archive className="w-4 h-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  {t("accounts.archivedTitle", "Archived")}
+                </h2>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  ({archivedAccounts.length})
+                </span>
+              </div>
+              <div className="opacity-60">
+                {renderAccountCards(archivedAccounts)}
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -409,7 +452,8 @@ export function AccountBankAccountsTab() {
                 account_type: editingAccount.account_type,
                 currency_base: editingAccount.currency_base,
                 account_number: editingAccount.account_number ?? undefined,
-                hidden_from_dashboard: editingAccount.hidden_from_dashboard,
+                initial_balance: editingAccount.initial_balance,
+                split_percentage: editingAccount.split_percentage,
               }
             : undefined
         }
@@ -418,11 +462,10 @@ export function AccountBankAccountsTab() {
         onSubmit={handleFormSubmit}
       />
 
+      {/* ── Delete dialog ── */}
       <Dialog
         open={!!deleteTarget}
-        onOpenChange={(open) => {
-          if (!open) { setDeleteTarget(null); setLinkedData(null); setReassignToId(""); }
-        }}
+        onOpenChange={(open) => { if (!open) closeDeleteDialog(); }}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -434,11 +477,11 @@ export function AccountBankAccountsTab() {
               {checkingLinks
                 ? t("accounts.checking", "Checking linked data...")
                 : hasLinkedData
-                  ? t("accounts.hasLinkedData", {
+                  ? t("accounts.deleteHasData", {
                       name: deleteTarget?.name,
                       imports: linkedData?.importsCount,
                       transactions: linkedData?.transactionsCount,
-                      defaultValue: `"${deleteTarget?.name}" has linked files and transactions. Choose another account to reassign them to.`,
+                      defaultValue: `"${deleteTarget?.name}" has {{imports}} file(s) and {{transactions}} transaction(s). What would you like to do with the data?`,
                     })
                   : t("accounts.confirmDelete", {
                       name: deleteTarget?.name,
@@ -453,48 +496,107 @@ export function AccountBankAccountsTab() {
             </div>
           )}
 
-          {!checkingLinks && hasLinkedData && (
-            <div className="space-y-3 py-2">
-              {otherAccounts.length > 0 ? (
-                <Select value={reassignToId} onValueChange={setReassignToId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("accounts.reassignPlaceholder", "Move data to...")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {otherAccounts.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                          {getAccountDisplayName(a)}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <p className="text-sm text-destructive">
-                  {t("accounts.noOtherAccounts", "You need at least one other account to reassign data to.")}
-                </p>
+          {!checkingLinks && hasLinkedData && deleteMode === "choose" && (
+            <div className="space-y-2 py-2">
+              {otherAccounts.length > 0 && (
+                <button
+                  type="button"
+                  className="w-full flex items-start gap-3 rounded-xl border border-border p-4 text-left hover:bg-accent/50 transition-colors"
+                  onClick={() => setDeleteMode("reassign")}
+                >
+                  <ArrowRightLeft className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {t("accounts.deleteOptionReassign", "Move data to another account")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {t("accounts.deleteOptionReassignDesc", "Files and transactions will be transferred to the account you choose")}
+                    </p>
+                  </div>
+                </button>
               )}
+              <button
+                type="button"
+                className="w-full flex items-start gap-3 rounded-xl border border-destructive/30 p-4 text-left hover:bg-destructive/5 transition-colors"
+                onClick={() => setDeleteMode("destroy")}
+              >
+                <AlertTriangle className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-destructive">
+                    {t("accounts.deleteOptionDestroy", "Delete account and all data")}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("accounts.deleteOptionDestroyDesc", "All files, transactions and history will be permanently deleted")}
+                  </p>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {!checkingLinks && hasLinkedData && deleteMode === "reassign" && (
+            <div className="space-y-3 py-2">
+              <Select value={reassignToId} onValueChange={setReassignToId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("accounts.reassignPlaceholder", "Move data to...")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {otherAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        {getAccountDisplayName(a)}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {!checkingLinks && hasLinkedData && deleteMode === "destroy" && (
+            <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4">
+              <p className="text-sm text-destructive font-medium">
+                {t("accounts.deleteDestroyWarning", {
+                  imports: linkedData?.importsCount,
+                  transactions: linkedData?.transactionsCount,
+                  defaultValue: "This will permanently delete {{imports}} file(s) and {{transactions}} transaction(s). This cannot be undone.",
+                })}
+              </p>
             </div>
           )}
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => { setDeleteTarget(null); setLinkedData(null); setReassignToId(""); }}
-            >
-              {t("accounts.cancel", "Cancel")}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={checkingLinks || (hasLinkedData && (!reassignToId || otherAccounts.length === 0))}
-            >
-              {hasLinkedData
-                ? t("accounts.reassignAndDelete", "Reassign & Delete")
-                : t("accounts.delete", "Delete")}
-            </Button>
+            {hasLinkedData && deleteMode !== "choose" ? (
+              <>
+                <Button variant="outline" onClick={() => setDeleteMode("choose")}>
+                  {t("accounts.back", "Back")}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmDelete}
+                  disabled={deleteMode === "reassign" && !reassignToId}
+                >
+                  {deleteMode === "reassign"
+                    ? t("accounts.reassignAndDelete", "Reassign & Delete")
+                    : t("accounts.deleteEverything", "Delete everything")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={closeDeleteDialog}>
+                  {t("accounts.cancel", "Cancel")}
+                </Button>
+                {!hasLinkedData && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleConfirmDelete}
+                    disabled={checkingLinks}
+                  >
+                    {t("accounts.delete", "Delete")}
+                  </Button>
+                )}
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

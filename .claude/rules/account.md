@@ -34,7 +34,12 @@ paths:
   for dashboard consumers). Account manager views should pass `{ includeHidden: true }` or
   filter `accounts` directly.
 - `accounts.hidden_from_dashboard` (bool NOT NULL DEFAULT false) — controls visibility in
-  `AccountsStackCard` on the dashboard. Toggle exposed in Bank accounts tab.
+  `AccountsStackCard` on the dashboard. No longer exposed in UI but column kept in schema.
+- `accounts.split_percentage` (smallint NOT NULL DEFAULT 100, range 1–100) — the user's
+  ownership share of a joint account. Only shown in the form when `account_type === 'JOINT'`
+  (defaults to 50). All dashboard SQL RPCs and materialized views multiply amounts by
+  `split_percentage / 100.0` so the user sees only their share. When writing new aggregation
+  queries, always JOIN accounts and apply `COALESCE(a.split_percentage, 100) / 100.0`.
 - `user_preferences.theme` (text NOT NULL DEFAULT 'system') — DB column exists but theme is
   still localStorage-backed via `useTheme`. Column reserved for cross-device sync later.
 - `src/components/settings/` is shared with the Categories module — changes here may also

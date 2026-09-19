@@ -111,8 +111,12 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
   return (
     <div className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] h-full shadow-section flex flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <p className="text-[15px] font-heading font-bold text-foreground">
-          {t("heatmap.title", "Daily view")}
+        <p className="text-[14px] font-heading font-bold text-foreground">
+          {metric === "expense"
+            ? t("heatmap.titleExpense", "Spending by day")
+            : metric === "income"
+              ? t("heatmap.titleIncome", "Income by day")
+              : t("heatmap.titleCount", "Transactions by day")}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -140,7 +144,7 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
       {!monthKey || daysInMonth === 0 ? (
         <EmptyState height="h-[160px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
-        <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] gap-4 sm:gap-[20px]">
+        <div className="flex-1 flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] gap-4 sm:gap-[20px]">
           <div className="flex w-full max-w-[280px] flex-col gap-2">
             <div className="grid grid-cols-7 gap-[6px]">
               {WEEKDAY_KEYS.map((k) => (
@@ -168,7 +172,7 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
                     onMouseLeave={() => setHoveredDay((d) => (d === cell.day ? null : d))}
                     onClick={() => setHoveredDay((d) => (d === cell.day ? null : cell.day))}
                     className={cn(
-                      "flex aspect-square items-center justify-center rounded-[8px] text-[11px] transition-transform hover:scale-105",
+                      "relative flex aspect-square items-center justify-center rounded-[8px] text-[11px] transition-transform hover:scale-105",
                       hasValue ? "font-medium" : "font-normal bg-muted/60",
                       hoveredDay === cell.day && "ring-2 ring-primary/60 ring-offset-1 ring-offset-card",
                     )}
@@ -176,21 +180,27 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
                       backgroundColor: hasValue ? `rgba(27,118,255,${intensity})` : undefined,
                       color: textColor,
                     }}
+                    title={hasValue ? `${cell.day}: ${formatStat(cell.value)}` : undefined}
                   >
                     {cell.day}
+                    {hoveredDay === cell.day && hasValue && (
+                      <span className="pointer-events-none absolute -top-[30px] left-1/2 -translate-x-1/2 z-50 rounded-md bg-foreground text-card px-2 py-1 text-[10.5px] font-medium tabular-nums whitespace-nowrap shadow-lg">
+                        {formatStat(cell.value)}
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex flex-row sm:flex-col items-start sm:items-end gap-4 sm:gap-[18px] text-left sm:text-right sm:justify-end" style={{ minWidth: 96 }}>
+          <div className="flex flex-row sm:flex-col items-start sm:items-end gap-3 sm:gap-[14px] text-left sm:text-right sm:mt-auto" style={{ minWidth: 96 }}>
             {stats.map((s, i) => (
               <div key={i}>
                 <div className="text-[11px] text-muted-foreground">
                   {s.label}
                 </div>
-                <div className="mt-1 text-[15px] font-semibold tabular-nums leading-none text-foreground">
+                <div className="mt-1 text-[14px] font-semibold tabular-nums leading-none text-foreground">
                   {s.value}
                 </div>
                 {s.hint && <div className="mt-0.5 text-[11px] text-muted-foreground/60">{s.hint}</div>}

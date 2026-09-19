@@ -138,6 +138,8 @@ export function SpendingByCategoryChart({
   const [mode, setMode] = useState<ToggleMode>("weight");
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const [hoveredTile, setHoveredTile] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const hasData = data.length > 0 && total > 0;
@@ -216,7 +218,7 @@ export function SpendingByCategoryChart({
     return (
       <Card variant="bento">
         <div className="px-[14px] pt-3 pb-0 md:px-5 md:pt-[16px] md:pb-0">
-          <p className="text-[15px] font-heading font-bold text-foreground">
+          <p className="text-[14px] font-heading font-bold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
         </div>
@@ -274,6 +276,12 @@ export function SpendingByCategoryChart({
     };
   };
 
+  const AMOUNT_SIZE = 14;
+  const NAME_SIZE = 11.5;
+  const DETAIL_SIZE = 11;
+  const MIN_TILE_W = 70;
+  const MIN_TILE_H = 60;
+
   const tileContent = (
     entry: TreemapEntry,
     areaW: number,
@@ -284,71 +292,66 @@ export function SpendingByCategoryChart({
     const iconName = getCategoryIcon(entry.category);
     const colorVar = getCategoryColor(entry.category);
 
-    const tiny = !isStrip && (areaW < 100 || areaH < 80);
-    const nameSize = isStrip ? 11 : tiny ? 11 : areaW > 180 ? 13 : 12;
-    const amountSize = isStrip
-      ? 13.5
-      : tiny
-        ? 14
-        : areaW > 180 && areaH > 120
-          ? 27
-          : areaW > 140
-            ? 20
-            : 16;
-    const detailSize = isStrip ? 10.5 : tiny ? 10 : amountSize > 20 ? 13 : 11.5;
-    const pad = isStrip
-      ? "9px 11px 10px"
-      : tiny
-        ? "8px 10px"
-        : amountSize > 20
-          ? "15px 17px"
-          : "11px 13px";
-    const gapVal = isStrip ? 2 : tiny ? 2 : amountSize > 20 ? 5 : 3;
-    const showName = !tiny || areaW >= 72;
+    const tooSmall = !isStrip && (areaW < MIN_TILE_W || areaH < MIN_TILE_H);
+
+    if (tooSmall) {
+      return (
+        <div
+          className="w-full h-full cursor-pointer"
+          style={{ backgroundColor: colors.bg, borderRadius: 5 }}
+          onMouseEnter={() => setHoveredTile(entry.category)}
+          onMouseLeave={() => setHoveredTile(null)}
+        >
+          <span className="sr-only">
+            {entry.name}, {formatCurrency(entry.value)}, {pctLabel(entry.weight)}
+          </span>
+        </div>
+      );
+    }
 
     return (
       <div
-        className="flex flex-col items-end justify-start w-full h-full overflow-hidden"
+        className="flex flex-col items-end justify-start w-full h-full overflow-hidden cursor-pointer"
         style={{
           backgroundColor: colors.bg,
           borderRadius: isStrip ? 4 : 5,
-          padding: pad,
-          gap: gapVal,
+          padding: isStrip ? "9px 11px 10px" : "10px 12px",
+          gap: isStrip ? 2 : 3,
         }}
+        onMouseEnter={() => setHoveredTile(entry.category)}
+        onMouseLeave={() => setHoveredTile(null)}
       >
-        {showName && (
-          <div
-            className="flex items-center gap-[5px] self-end min-w-0 max-w-full"
-            style={{ whiteSpace: "nowrap" }}
+        <div
+          className="flex items-center gap-[5px] self-end min-w-0 max-w-full"
+          style={{ whiteSpace: "nowrap" }}
+        >
+          <CategoryIcon
+            iconName={iconName}
+            colorVar={colorVar}
+            size="sm"
+            showBackground={false}
+            className="flex-shrink-0"
+          />
+          <span
+            className="truncate"
+            style={{
+              fontSize: isStrip ? 11 : NAME_SIZE,
+              color: colors.name,
+              fontWeight: 400,
+              lineHeight: 1.2,
+            }}
           >
-            <CategoryIcon
-              iconName={iconName}
-              colorVar={colorVar}
-              size="sm"
-              showBackground={false}
-              className="flex-shrink-0"
-            />
-            <span
-              className="truncate"
-              style={{
-                fontSize: nameSize,
-                color: colors.name,
-                fontWeight: 400,
-                lineHeight: 1.2,
-              }}
-            >
-              {entry.name}
-            </span>
-          </div>
-        )}
+            {entry.name}
+          </span>
+        </div>
 
         <span
           className="tabular-nums"
           style={{
-            fontSize: amountSize,
+            fontSize: isStrip ? 13.5 : AMOUNT_SIZE,
             fontWeight: 600,
             color: colors.number,
-            letterSpacing: amountSize >= 20 ? "-0.025em" : "-0.02em",
+            letterSpacing: "-0.02em",
             lineHeight: 1,
           }}
         >
@@ -358,7 +361,7 @@ export function SpendingByCategoryChart({
         <span
           className="tabular-nums"
           style={{
-            fontSize: detailSize,
+            fontSize: isStrip ? 10.5 : DETAIL_SIZE,
             fontWeight: 500,
             color:
               mode === "weight" ? "rgba(12,13,14,.42)" : changeColor(entry),
@@ -383,14 +386,14 @@ export function SpendingByCategoryChart({
   return (
     <Card
       variant="bento"
-      className="flex flex-col rounded-xl border-none shadow-section lg:h-full"
+      className="flex flex-col overflow-hidden rounded-xl border-none shadow-section lg:h-full"
     >
       <div
         className="flex items-start justify-between gap-3 px-[14px] md:px-5 pt-3 md:pt-[16px] pb-0"
         style={{ marginBottom: 10 }}
       >
         <div className="min-w-0">
-          <p className="text-[15px] font-heading font-bold text-foreground">
+          <p className="text-[14px] font-heading font-bold text-foreground">
             {t("charts.spendingByCategory", "Spending by category")}
           </p>
           <p
@@ -464,7 +467,12 @@ export function SpendingByCategoryChart({
 
       <div
         ref={containerRef}
-        className="min-h-[300px] lg:flex-1 mx-[14px] md:mx-5 mb-3 md:mb-[20px] relative overflow-hidden"
+        className="min-h-[300px] lg:min-h-0 lg:flex-1 mx-[14px] md:mx-5 mb-3 md:mb-[20px] relative overflow-hidden"
+        onMouseMove={(e) => {
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (rect) setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        }}
+        onMouseLeave={() => { setHoveredTile(null); setTooltipPos(null); }}
       >
         {layoutNodes.map((node) => {
           const half = GAP / 2;
@@ -505,6 +513,44 @@ export function SpendingByCategoryChart({
             ))}
           </div>
         )}
+
+        {hoveredTile && tooltipPos && (() => {
+          const entry = entries.find((e) => e.category === hoveredTile);
+          if (!entry) return null;
+          const colors = tileColors(entry.category);
+          const flipX = tooltipPos.x > containerSize.w / 2;
+          const flipY = tooltipPos.y > containerSize.h / 2;
+          return (
+            <div
+              className="pointer-events-none absolute z-50"
+              style={{
+                left: flipX ? tooltipPos.x - 8 : tooltipPos.x + 8,
+                top: flipY ? tooltipPos.y - 8 : tooltipPos.y + 8,
+                transform: `translate(${flipX ? "-100%" : "0"}, ${flipY ? "-100%" : "0"})`,
+              }}
+            >
+              <div
+                className="rounded-lg px-3 py-2 text-foreground shadow-popup"
+                style={{ background: "hsl(var(--card))", minWidth: 140 }}
+              >
+                <p className="text-[11.5px] font-medium" style={{ color: colors.number }}>
+                  {entry.name}
+                </p>
+                <p className="text-[14px] font-semibold tabular-nums mt-0.5">
+                  {formatCurrency(entry.value)}
+                </p>
+                <p className="text-[11px] text-muted-foreground tabular-nums mt-0.5">
+                  {pctLabel(entry.weight)}
+                  {entry.pctChange !== null && (
+                    <span style={{ color: changeColor(entry), marginLeft: 6 }}>
+                      {changeLabel(entry)}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </Card>
   );

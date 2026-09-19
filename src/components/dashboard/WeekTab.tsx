@@ -15,7 +15,7 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDashboardData, useOpeningBalance } from "@/hooks/useDashboardData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -30,7 +30,7 @@ export function WeekTab() {
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
-  const { selectedPeriod, setSelectedPeriod, setAvailablePeriods, setTransactionCount } = usePeriodSelection();
+  const { selectedPeriod, setSelectedPeriod, setAvailablePeriods, setOpeningBalance, setTransactionCount } = usePeriodSelection();
 
   const userCurrency = preferences?.base_currency || "EUR";
   const convertToUserCurrency = useCallback(
@@ -78,6 +78,16 @@ export function WeekTab() {
       setSelectedPeriod("week", selectedWeek);
     }
   }, [selectedWeek]);
+
+  const { openingBalance: weekOpeningBalance } = useOpeningBalance(range?.start ?? null);
+
+  useEffect(() => {
+    if (weekOpeningBalance != null) {
+      setOpeningBalance(convertToUserCurrency(weekOpeningBalance));
+    } else {
+      setOpeningBalance(null);
+    }
+  }, [weekOpeningBalance, userCurrency]);
 
   useEffect(() => {
     setTransactionCount(transactions.length);
@@ -173,7 +183,7 @@ export function WeekTab() {
           </div>
 
           {/* Row 2: income vs expenses breakdown + accounts */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[280px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[250px] gap-[14px]">
             <PeriodBreakdownChart points={breakdownPoints} subtitle={t("charts.byDayThisWeek", "By day · this week")} />
             <AccountsStackCard
               startDate={range?.start}
@@ -198,13 +208,13 @@ export function WeekTab() {
           </div>
 
           {/* Row 4: Income by category + Spending by category */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.62fr] lg:h-[300px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.72fr] lg:h-[370px] gap-[14px]">
             <CategoryChart data={agg.incomeCategoryData} />
             <SpendingByCategoryChart data={agg.expenseCategoryData} />
           </div>
 
           {/* Row 5: Fixed vs discretionary + Top expenses */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:h-[300px] gap-[14px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:h-[370px] gap-[14px]">
             <FixedVsDiscretionaryCard split={agg.essentialSplit} />
             <TopExpensesCard topExpenses={agg.topExpenses} />
           </div>
@@ -212,7 +222,12 @@ export function WeekTab() {
           {/* Row 6: Transactions table */}
           <div className="bg-card rounded-xl pt-3 pb-[6px] md:pt-[18px] shadow-section">
             <div className="max-h-[700px] overflow-y-auto">
-              <TransactionTable transactions={transactions} />
+              <TransactionTable
+                transactions={transactions}
+                openingBalance={weekOpeningBalance != null
+                  ? convertToUserCurrency(weekOpeningBalance)
+                  : null}
+              />
             </div>
           </div>
       </div>

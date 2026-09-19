@@ -46,10 +46,10 @@ export function PeriodBreakdownChart({ points, subtitle }: PeriodBreakdownChartP
   };
 
   return (
-    <div className="flex h-full flex-col bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section">
+    <div className="flex h-full flex-col bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] shadow-section overflow-hidden">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-[15px] font-heading font-bold text-foreground leading-tight">
+          <p className="text-[14px] font-heading font-bold text-foreground leading-tight">
             {t("charts.monthlyBalance", "Income vs expenses")}
           </p>
           <p className="text-[12px] text-muted-foreground mt-[3px]">{subtitle}</p>

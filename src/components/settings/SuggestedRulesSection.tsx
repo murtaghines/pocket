@@ -12,6 +12,8 @@ import { useSuggestedRules, type SuggestedRule } from "@/hooks/useSuggestedRules
 import { useCategorizationRules } from "@/hooks/useCategorizationRules";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { useToast } from "@/hooks/use-toast";
+import { RetroactiveApplyOptions } from "@/components/settings/RetroactiveApplyOptions";
+import { filterByScope, type RetroScope } from "@/hooks/useRetroactiveApply";
 import type { Database } from "@/integrations/supabase/types";
 
 type Category = Database["public"]["Tables"]["categories"]["Row"];
@@ -31,6 +33,8 @@ export function SuggestedRulesSection({ incomeCategories, expenseCategories, tra
   const { toast } = useToast();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<Record<string, string>>({});
+  const [retroScopes, setRetroScopes] = useState<Record<string, RetroScope>>({});
+  const [retroCustomSince, setRetroCustomSince] = useState<Record<string, string>>({});
 
   const visible = suggestions.filter((s) => !dismissed.has(s.key));
   if (isLoading || visible.length === 0) return null;
@@ -44,12 +48,19 @@ export function SuggestedRulesSection({ incomeCategories, expenseCategories, tra
   const handleCreate = (s: SuggestedRule) => {
     const categoryId = selectedCategory[s.key];
     if (!categoryId) return;
+    const scope = retroScopes[s.key] || "all";
+    const customSince = retroCustomSince[s.key];
+    const filteredIds = filterByScope(
+      s.matchedTransactions,
+      scope,
+      customSince ? customSince + "-01" : undefined,
+    );
     addRule.mutate(
-      { category_id: categoryId, pattern: s.pattern, match_type: "SMART", matchingTransactionIds: s.transactionIds },
+      { category_id: categoryId, pattern: s.pattern, match_type: "SMART", matchingTransactionIds: filteredIds },
       {
         onSuccess: () => {
           toast({
-            title: `Rule created — ${s.transactionIds.length} transaction${s.transactionIds.length === 1 ? "" : "s"} updated`,
+            title: `Rule created — ${filteredIds.length} transaction${filteredIds.length === 1 ? "" : "s"} updated`,
           });
           setDismissed((prev) => new Set(prev).add(s.key));
         },
@@ -90,6 +101,18 @@ export function SuggestedRulesSection({ incomeCategories, expenseCategories, tra
                   ))}
                 </SelectContent>
               </Select>
+              {selectedCategory[s.key] && s.matchedTransactions.length > 0 && (
+                <div className="basis-full sm:basis-auto">
+                  <RetroactiveApplyOptions
+                    transactions={s.matchedTransactions}
+                    scope={retroScopes[s.key] || "all"}
+                    onScopeChange={(scope) => setRetroScopes((prev) => ({ ...prev, [s.key]: scope }))}
+                    customSince={retroCustomSince[s.key] || ""}
+                    onCustomSinceChange={(v) => setRetroCustomSince((prev) => ({ ...prev, [s.key]: v }))}
+                    compact
+                  />
+                </div>
+              )}
               <Button
                 size="sm"
                 className="h-8 shrink-0"
