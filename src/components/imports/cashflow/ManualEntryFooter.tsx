@@ -25,6 +25,7 @@ export interface ManualEntryFooterProps {
     transfers: number;
     hidden?: number;
   };
+  openingBalance?: number | null;
   closingBalance?: number | null;
   rightSlot?: React.ReactNode;
   externalOpen?: boolean;
@@ -37,6 +38,7 @@ export function ManualEntryFooter({
   monthLabel,
   isLocked,
   summary,
+  openingBalance,
   closingBalance,
   rightSlot,
   externalOpen,
@@ -244,12 +246,20 @@ export function ManualEntryFooter({
           </span>
         </div>
 
-        {/* Closing balance + lock button — pushed right */}
+        {/* Opening + closing balance + lock button — pushed right */}
         <div className="ml-auto inline-flex items-center gap-[16px]">
+          {openingBalance != null && (
+            <span className="text-[13px] text-[#6B7280] tabular-nums">
+              {t("imports.openingBalance")}{" "}
+              <span className="text-[#414750]">
+                {formatCurrency(openingBalance)}
+              </span>
+            </span>
+          )}
           {closingBalance != null && (
-            <span className="text-[13px] text-[#6B7280]">
+            <span className="text-[13px] text-[#6B7280] tabular-nums">
               {t("imports.closingBalance")}{" "}
-              <span className="font-semibold text-[#0C0D0E] tabular-nums">
+              <span className="text-[#414750]">
                 {formatCurrency(closingBalance)}
               </span>
             </span>

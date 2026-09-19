@@ -156,9 +156,12 @@
     "splitAmount": "Dividir monto",
     "revertToOriginal": "Revertir al original",
     "saveAndCreateRule": "Guardar y crear regla",
+    "week": "Semana",
+    "source": "Origen",
+    "sourceManual": "Manual",
     "openingBalanceLabel": "Apertura",
     "closingBalanceLabel": "Cierre",
-    "txCountShort": "{{count}} txns",
+    "txCountShort": "{{count}} transacciones",
     "unassignedAccount": "Sin asignar"
   },
   "status": {

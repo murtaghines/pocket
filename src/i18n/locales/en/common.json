@@ -156,9 +156,12 @@
     "splitAmount": "Split amount",
     "revertToOriginal": "Revert to original",
     "saveAndCreateRule": "Save & create rule",
+    "week": "Week",
+    "source": "Source",
+    "sourceManual": "Manual",
     "openingBalanceLabel": "Opening",
     "closingBalanceLabel": "Closing",
-    "txCountShort": "{{count}} txns",
+    "txCountShort": "{{count}} transactions",
     "unassignedAccount": "Unassigned"
   },
   "status": {
