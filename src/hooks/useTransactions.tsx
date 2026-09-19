@@ -84,7 +84,7 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
       if (error) throw error;
 
       const rows = (data as DbTransaction[]).map((t): Transaction => {
-        const cleanDesc = t.original_description || t.description || t.description_norm || "";
+        const cleanDesc = t.description_norm || t.description || "";
 
         const movement = t.movement;
 

@@ -25,6 +25,29 @@ export const USER_TRACKED_FIELDS = new Set<string>([
   "account_id",
 ]);
 
+/** Fields that "revert to original" restores — bank-statement data only.
+ *  Category/movement are user classification choices and are NOT reverted. */
+export const REVERTABLE_FIELDS = new Set<string>([
+  "description_norm",
+  "date",
+  "account_id",
+  "amount",
+]);
+
+export function filterRevertableSnapshot(
+  snapshot: { values: Record<string, unknown>; fields: string[] },
+): { values: Record<string, unknown>; fields: string[] } {
+  const values: Record<string, unknown> = {};
+  const fields: string[] = [];
+  for (const f of snapshot.fields) {
+    if (REVERTABLE_FIELDS.has(f)) {
+      values[f] = snapshot.values[f];
+      fields.push(f);
+    }
+  }
+  return { values, fields };
+}
+
 export const FIELD_LABELS: Record<string, string> = {
   movement: "Movement",
   category: "Category",

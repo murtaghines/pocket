@@ -9,7 +9,7 @@ import {
 import {
   Eye,
   EyeOff,
-  MessageSquarePlus,
+  Pencil,
   Copy,
   Trash2,
   SplitIcon,
@@ -28,7 +28,7 @@ interface TransactionContextMenuProps {
   selectedCount: number;
   onToggleHidden: () => void;
   onDelete: () => void;
-  onAddNote: () => void;
+  onEditDescription: () => void;
   onCopyAmount: () => void;
   onCopyDescription: () => void;
   onSplit: () => void;
@@ -49,7 +49,7 @@ export function TransactionContextMenu({
   selectedCount,
   onToggleHidden,
   onDelete,
-  onAddNote,
+  onEditDescription,
   onCopyAmount,
   onCopyDescription,
   onSplit,
@@ -82,9 +82,9 @@ export function TransactionContextMenu({
         ) : (
           <>
             {!isLocked && (
-              <ContextMenuItem onClick={onAddNote} className="gap-2">
-                <MessageSquarePlus className="w-4 h-4" />
-                {t("imports.addNote")}
+              <ContextMenuItem onClick={onEditDescription} className="gap-2">
+                <Pencil className="w-4 h-4" />
+                {t("imports.editDescription")}
               </ContextMenuItem>
             )}
 

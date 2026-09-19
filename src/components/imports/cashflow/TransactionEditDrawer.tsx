@@ -28,7 +28,7 @@ import {
   SHEET_BUTTON,
   SHEET_INPUT,
 } from "../SheetPanel";
-import { LockedFieldLabel } from "../LockedFieldLabel";
+import { filterRevertableSnapshot } from "./helpers";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,19 +50,6 @@ import {
 } from "@/lib/categoryTranslations";
 import type { MonthTransaction, PendingEditShape, MovementType } from "./types";
 
-/** Read-only rendering of a field that belongs to the imported statement. */
-function LockedValue({ value }: { value: string }) {
-  return (
-    <div
-      className={cn(
-        SHEET_PILL,
-        "flex items-center bg-muted/60 text-muted-foreground truncate",
-      )}
-    >
-      <span className="truncate">{value}</span>
-    </div>
-  );
-}
 
 interface TransactionEditDrawerProps {
   tx: MonthTransaction | null;
@@ -107,7 +94,6 @@ export function TransactionEditDrawer({
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [accountId, setAccountId] = useState("");
-  const [userNotes, setUserNotes] = useState("");
   const [pendingHidden, setPendingHidden] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -129,7 +115,6 @@ export function TransactionEditDrawer({
       setDescription(cleaned);
       setDate(tx.date);
       setAccountId(tx.account_id || "");
-      setUserNotes(tx.user_notes ?? "");
       setPendingHidden(tx.is_hidden);
       setIsReverting(false);
       setDeleteConfirmOpen(false);
@@ -189,17 +174,15 @@ export function TransactionEditDrawer({
 
   const handleUndoChanges = () => {
     if (!originalSnapshot) return;
-    const v = originalSnapshot.values;
-    if (v.movement !== undefined) setMovement(v.movement as MovementType);
-    if (v.category !== undefined) {
-      setCategory(normalizeCategory(v.category as string));
-      setCategoryId((v.category_id as string | null) ?? null);
-    }
+    const filtered = filterRevertableSnapshot(originalSnapshot);
+    const v = filtered.values;
+    if (v.description_norm !== undefined) setDescription(v.description_norm as string);
     if (v.amount !== undefined) {
       setAmount(v.amount as number);
       setAmountStr(String(Math.abs(v.amount as number)).replace(".", ","));
     }
-    if (v.is_hidden !== undefined) setPendingHidden(v.is_hidden as boolean);
+    if (v.date !== undefined) setDate(v.date as string);
+    if (v.account_id !== undefined) setAccountId(v.account_id as string);
     setIsReverting(true);
   };
 
@@ -214,10 +197,9 @@ export function TransactionEditDrawer({
     description !== cleanDescription ||
     date !== tx.date ||
     accountId !== origAccountId ||
-    userNotes !== (tx.user_notes ?? "") ||
     pendingHidden !== tx.is_hidden;
 
-  const invalid = isManual && (description.trim().length === 0 || !accountId);
+  const invalid = description.trim().length === 0 || !accountId;
 
   const ruleWorthy =
     category !== origCategory ||
@@ -238,7 +220,6 @@ export function TransactionEditDrawer({
       edits.account_id = accountId;
       if (selectedAccount) edits.currency = selectedAccount.currency_base;
     }
-    if (userNotes !== (tx.user_notes ?? "")) edits.user_notes = userNotes;
     if (pendingHidden !== tx.is_hidden) edits.is_hidden = pendingHidden;
     return edits;
   };
@@ -363,125 +344,82 @@ export function TransactionEditDrawer({
 
         {/* Description */}
         <div className="space-y-1.5">
-          <LockedFieldLabel
-            label={t("imports.description", "Description")}
-            locked={!isManual}
-            reason={t(
-              "imports.lockedDescription",
-              "this description comes from the uploaded bank statement and can't be edited",
-            )}
+          <label className={SHEET_LABEL}>
+            {t("imports.description", "Description")}
+          </label>
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={SHEET_INPUT}
           />
-          {isManual ? (
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className={SHEET_INPUT}
-            />
-          ) : (
-            <LockedValue value={description} />
-          )}
         </div>
-
-        {/* Notes — imported transactions only: the bank description is often
-            cryptic, so this field lets the user add their own recognizable text. */}
-        {!isManual && (
-          <div className="space-y-1.5">
-            <label className={SHEET_LABEL}>
-              {t("imports.userNotes", "My notes")}
-            </label>
-            <Input
-              value={userNotes}
-              onChange={(e) => setUserNotes(e.target.value)}
-              placeholder={t("imports.userNotesPlaceholder", "add your own description...")}
-              className={SHEET_INPUT}
-            />
-          </div>
-        )}
 
         {/* Account + Date row */}
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5 min-w-0">
-            <LockedFieldLabel
-              label={t("imports.account", "Account")}
-              locked={!isManual}
-              reason={t(
-                "imports.lockedAccount",
-                "the account belongs to the entire uploaded file statement — it can be changed in configuration",
-              )}
-            />
-            {isManual ? (
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger
-                  className={cn(SHEET_PILL, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
-                >
-                  <SelectValue placeholder={t("imports.selectAccount", "Select")}>
-                    <span className="truncate font-medium">
-                      {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
-                    </span>
-                  </SelectValue>
-                </SelectTrigger>
-                <MinimalSelectContent>
-                  {accounts.map((a) => (
-                    <MinimalSelectItem key={a.id} value={a.id}>
-                      <span className="truncate">{getAccountDisplayName(a)}</span>
-                    </MinimalSelectItem>
-                  ))}
-                </MinimalSelectContent>
-              </Select>
-            ) : (
-              <LockedValue value={selectedAccount ? getAccountDisplayName(selectedAccount) : "—"} />
-            )}
+            <label className={SHEET_LABEL}>
+              {t("imports.account", "Account")}
+            </label>
+            <Select value={accountId} onValueChange={setAccountId}>
+              <SelectTrigger
+                className={cn(SHEET_PILL, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
+              >
+                <SelectValue placeholder={t("imports.selectAccount", "Select")}>
+                  <span className="truncate font-medium">
+                    {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <MinimalSelectContent>
+                {accounts.map((a) => (
+                  <MinimalSelectItem key={a.id} value={a.id}>
+                    <span className="truncate">{getAccountDisplayName(a)}</span>
+                  </MinimalSelectItem>
+                ))}
+              </MinimalSelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5 min-w-0">
-            <LockedFieldLabel
-              label={t("imports.date", "Date")}
-              locked={!isManual}
-              reason={t(
-                "imports.lockedDate",
-                "the date comes from the bank statement, so it can't be changed on an imported transaction",
-              )}
-            />
-            {isManual ? (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      SHEET_PILL,
-                      "flex w-full items-center gap-2 text-foreground hover:bg-accent transition-colors",
-                    )}
-                  >
-                    <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="truncate">
-                      {format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={new Date(displayDate + "T00:00:00")}
-                    onSelect={(d) => {
-                      if (d) {
-                        const y = d.getFullYear();
-                        const m = String(d.getMonth() + 1).padStart(2, "0");
-                        const dd = String(d.getDate()).padStart(2, "0");
-                        setDate(`${y}-${m}-${dd}`);
-                      }
-                    }}
-                    defaultMonth={new Date(firstDay + "T00:00:00")}
-                    disabled={(d) => {
-                      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                      return iso < firstDay || iso > lastDay;
-                    }}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            ) : (
-              <LockedValue value={format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")} />
-            )}
+            <label className={SHEET_LABEL}>
+              {t("imports.date", "Date")}
+            </label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    SHEET_PILL,
+                    "flex w-full items-center gap-2 text-foreground hover:bg-accent transition-colors",
+                  )}
+                >
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate">
+                    {format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")}
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={new Date(displayDate + "T00:00:00")}
+                  onSelect={(d) => {
+                    if (d) {
+                      const y = d.getFullYear();
+                      const m = String(d.getMonth() + 1).padStart(2, "0");
+                      const dd = String(d.getDate()).padStart(2, "0");
+                      setDate(`${y}-${m}-${dd}`);
+                    }
+                  }}
+                  defaultMonth={new Date(firstDay + "T00:00:00")}
+                  disabled={(d) => {
+                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                    return iso < firstDay || iso > lastDay;
+                  }}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
