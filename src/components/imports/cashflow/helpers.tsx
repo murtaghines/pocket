@@ -20,6 +20,7 @@ export const USER_TRACKED_FIELDS = new Set<string>([
   "category_id",
   "amount",
   "is_hidden",
+  "description",
   "description_norm",
   "date",
   "account_id",
@@ -28,6 +29,7 @@ export const USER_TRACKED_FIELDS = new Set<string>([
 /** Fields that "revert to original" restores — bank-statement data only.
  *  Category/movement are user classification choices and are NOT reverted. */
 export const REVERTABLE_FIELDS = new Set<string>([
+  "description",
   "description_norm",
   "date",
   "account_id",
@@ -54,6 +56,7 @@ export const FIELD_LABELS: Record<string, string> = {
   category_id: "Category",
   amount: "Amount",
   is_hidden: "Visibility",
+  description: "Description",
   description_norm: "Description",
   date: "Date",
   account_id: "Account",
