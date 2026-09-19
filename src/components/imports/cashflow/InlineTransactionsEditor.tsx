@@ -22,8 +22,6 @@ import {
   MessageSquarePlus,
   Copy,
   ChevronRight,
-  FileUp,
-  PenLine,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -1134,44 +1132,44 @@ export function InlineTransactionsEditor({
       <div className="bg-card flex-1 flex flex-col min-h-0">
         {/* Desktop / tablet: compact Excel-like spreadsheet */}
         <div className="hidden md:block overflow-x-auto overflow-y-auto flex-1">
-          <Table className="w-full min-w-[780px]">
+          <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10">
               <TableRow className="hover:bg-transparent bg-[#FAFBFC] border-y border-[#F1F2F4] [&>th]:h-[34px]">
-                <TableHead className="w-[36px] px-0 text-center bg-[#FAFBFC]">
+                <TableHead className="w-[44px] px-0 text-center bg-[#FAFBFC]">
                   <Checkbox
                     checked={selectedIds.size > 0 ? (selectedIds.size === allVisibleIds.length ? true : "indeterminate") : false}
                     onCheckedChange={() => toggleSelectAll(allVisibleIds)}
                     aria-label="Select all"
                   />
                 </TableHead>
-                <TableHead className="text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium whitespace-nowrap bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.date")}
                 </TableHead>
-                <TableHead className="text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium whitespace-nowrap bg-[#FAFBFC]">
+                <TableHead className="w-[4%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.week")}
                 </TableHead>
+                <TableHead className="w-[5%] text-[11px] lowercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                  {t("imports.source")}
+                </TableHead>
                 {!accountGroups && (
-                  <TableHead className="text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium whitespace-nowrap bg-[#FAFBFC]">
+                  <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                     {t("imports.account")}
                   </TableHead>
                 )}
-                <TableHead className="w-full text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]", accountGroups ? "w-[30%]" : "w-[22%]")}>
                   {t("imports.description")}
                 </TableHead>
-                <TableHead className="text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium whitespace-nowrap bg-[#FAFBFC]">
+                <TableHead className="w-[10%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.movement")}
                 </TableHead>
-                <TableHead className="text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium whitespace-nowrap bg-[#FAFBFC]">
+                <TableHead className="w-[12%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.category")}
                 </TableHead>
-                <TableHead className="text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium whitespace-nowrap bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.amount")}
                 </TableHead>
-                <TableHead className="text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium whitespace-nowrap bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.balance")}
-                </TableHead>
-                <TableHead className="text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium whitespace-nowrap bg-[#FAFBFC]">
-                  {t("imports.source")}
                 </TableHead>
                 <TableHead className="w-[36px] bg-[#FAFBFC]" />
               </TableRow>
@@ -1191,7 +1189,7 @@ export function InlineTransactionsEditor({
                           onClick={() => toggleAccountCollapsed(groupKey)}
                         >
                           <TableCell colSpan={accountGroups ? 10 : 11} className="px-0 py-0">
-                            <div className="flex items-center gap-2.5 px-3 py-1.5">
+                            <div className="flex items-center gap-3 px-3 py-1.5">
                               <ChevronRight
                                 className={cn(
                                   "w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
@@ -1201,7 +1199,6 @@ export function InlineTransactionsEditor({
                               <span className="text-[12px] font-medium text-foreground">
                                 {group.accountName}
                               </span>
-                              <span className="text-[3px] text-muted-foreground/60">&#9679;</span>
                               <span className="text-[11px] text-muted-foreground">
                                 {t("imports.txCountShort", { count: groupTxs.length })}
                               </span>
@@ -1329,7 +1326,7 @@ export function InlineTransactionsEditor({
                       )}
                     >
                       {/* Checkbox */}
-                      <TableCell className="w-[36px] px-0 text-center">
+                      <TableCell className="w-[44px] px-0 text-center">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelected(tx.id)}
@@ -1345,6 +1342,13 @@ export function InlineTransactionsEditor({
                       {/* Week */}
                       <TableCell className="text-[12px] text-muted-foreground tabular-nums whitespace-nowrap text-center">
                         W{getISOWeek(tx.date)}
+                      </TableCell>
+
+                      {/* Source — mini gray pill */}
+                      <TableCell className="text-[11px]">
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-[#F1F2F4] text-[#6B7280] text-[10px] font-medium lowercase">
+                          {getSourceLabel(tx)}
+                        </span>
                       </TableCell>
 
                       {/* Account — hidden when grouped by account */}
@@ -1524,18 +1528,6 @@ export function InlineTransactionsEditor({
                         {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!, undefined, true) : "—"}
                       </TableCell>
 
-                      {/* Source */}
-                      <TableCell className="text-[12px] text-muted-foreground whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1">
-                          {tx.import_id ? (
-                            <FileUp className="w-3.5 h-3.5" />
-                          ) : (
-                            <PenLine className="w-3.5 h-3.5" />
-                          )}
-                          {getSourceLabel(tx)}
-                        </span>
-                      </TableCell>
-
                       {/* Actions: three-dot menu / pending save+discard */}
                       <TableCell className="w-[36px] px-0 text-center">
                         {!isLocked && isPending ? (
@@ -1682,7 +1674,7 @@ export function InlineTransactionsEditor({
                   const mIsCollapsed = collapsedAccounts.has(mGroupKey);
                   return (
                     <div
-                      className="flex items-center gap-2.5 px-3 py-1.5 bg-muted/20 border-b border-border/40 cursor-pointer active:bg-muted/40"
+                      className="flex items-center gap-3 px-3 py-1.5 bg-muted/20 border-b border-border/40 cursor-pointer active:bg-muted/40"
                       onClick={() => toggleAccountCollapsed(mGroupKey)}
                     >
                       <ChevronRight
@@ -1694,7 +1686,6 @@ export function InlineTransactionsEditor({
                       <span className="text-[12px] font-medium text-foreground">
                         {acctGroup.accountName}
                       </span>
-                      <span className="text-[3px] text-muted-foreground/60">&#9679;</span>
                       <span className="text-[11px] text-muted-foreground">
                         {t("imports.txCountShort", { count: acctGroup.transactions.length })}
                       </span>
