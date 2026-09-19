@@ -42,7 +42,6 @@ interface DataToolbarProps {
   monthLabel: string;
   monthDate: Date;
   txCount: number;
-  openingBalance?: number | null;
   formatCurrency: (amount: number) => string;
   onPrev: () => void;
   onNext: () => void;
@@ -70,7 +69,6 @@ export function DataToolbar({
   monthLabel,
   monthDate,
   txCount,
-  openingBalance,
   formatCurrency,
   onPrev,
   onNext,
@@ -137,19 +135,9 @@ export function DataToolbar({
     <div className="hidden md:flex items-center justify-between gap-4 bg-card px-6 py-[20px] pb-[16px]">
       {/* Left: Month title + opening balance + nav buttons */}
       <div className="flex items-center gap-[14px]">
-        <div className="flex flex-col">
-          <h2 className="font-heading font-semibold text-[16px] text-[#0C0D0E] tracking-[-0.01em] capitalize">
-            {monthLabel}
-          </h2>
-          {openingBalance != null && (
-            <p className="text-[12.5px] text-[#9AA1AC]">
-              {t("imports.openingBalance")}{" "}
-              <span className="font-medium text-[#414750] tabular-nums">
-                {formatCurrency(openingBalance)}
-              </span>
-            </p>
-          )}
-        </div>
+        <h2 className="font-heading font-semibold text-[16px] text-[#0C0D0E] tracking-[-0.01em] capitalize">
+          {monthLabel}
+        </h2>
 
         {/* Month navigation — ‹ › calendar in #F5F7F9 container */}
         <div className="flex items-center gap-[2px] bg-[#F5F7F9] rounded-[9px] p-[3px] ml-[6px]">

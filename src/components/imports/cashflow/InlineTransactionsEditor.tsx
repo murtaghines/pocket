@@ -1898,6 +1898,7 @@ export function InlineTransactionsEditor({
           monthLabel={monthLabel}
           isLocked={isLocked}
           summary={summary}
+          openingBalance={openingBalance}
           closingBalance={openingBalance != null ? openingBalance + transactions.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0) : null}
           externalOpen={externalManualEntryOpen}
           onExternalOpenChange={onManualEntryOpenChange}
