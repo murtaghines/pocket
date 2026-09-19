@@ -1131,7 +1131,7 @@ export function InlineTransactionsEditor({
       {/* The spreadsheet — flush, no padding, no inner card */}
       <div className="bg-card flex-1 flex flex-col min-h-0">
         {/* Desktop / tablet: compact Excel-like spreadsheet */}
-        <div className="hidden md:block overflow-x-auto overflow-y-auto flex-1">
+        <div className="hidden md:block overflow-auto flex-1 min-h-0 [&>div]:!overflow-visible">
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10">
               <TableRow className="hover:bg-transparent bg-[#FAFBFC] border-y border-[#F1F2F4] [&>th]:h-[34px]">
@@ -1148,7 +1148,7 @@ export function InlineTransactionsEditor({
                 <TableHead className="w-[4%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.week")}
                 </TableHead>
-                <TableHead className="w-[5%] text-[11px] lowercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[5%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.source")}
                 </TableHead>
                 {!accountGroups && (
@@ -1156,13 +1156,13 @@ export function InlineTransactionsEditor({
                     {t("imports.account")}
                   </TableHead>
                 )}
-                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]", accountGroups ? "w-[30%]" : "w-[22%]")}>
+                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]", accountGroups ? "w-[28%]" : "w-[20%]")}>
                   {t("imports.description")}
                 </TableHead>
-                <TableHead className="w-[10%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[11%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.movement")}
                 </TableHead>
-                <TableHead className="w-[12%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[13%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.category")}
                 </TableHead>
                 <TableHead className="w-[9%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
@@ -1423,7 +1423,7 @@ export function InlineTransactionsEditor({
                             onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
                             disabled={isHidden}
                           >
-                            <SelectTrigger className="h-7 w-full min-w-[100px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
+                            <SelectTrigger className="h-7 w-full text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
                                 <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
                                   {getMovementLabel(movement)}
@@ -1466,7 +1466,7 @@ export function InlineTransactionsEditor({
                             onValueChange={(v) => handleCategoryChange(tx, v)}
                             disabled={isHidden}
                           >
-                            <SelectTrigger className="h-7 w-full min-w-[130px] text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
+                            <SelectTrigger className="h-7 w-full text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
                                 <PillBadge colorVar={getCategoryColor(category)} className="text-[12.5px]">
                                   <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} className="w-[13px] h-[13px]" />
@@ -1492,7 +1492,7 @@ export function InlineTransactionsEditor({
 
                       {/* Amount — double-click to edit */}
                       <TableCell
-                        className={cn("text-right text-[13px] tabular-nums font-medium", amountColor)}
+                        className={cn("text-right text-[13px] tabular-nums", amountColor)}
                         onDoubleClick={() => {
                           if (isLocked || isHidden) return;
                           setEditingAmountId(tx.id);
@@ -1829,7 +1829,7 @@ export function InlineTransactionsEditor({
                             ) : isSaved ? (
                               <Check className="h-3 w-3 text-success" />
                             ) : null}
-                            <span className={cn("text-[13px] font-semibold tabular-nums", amountColor)}>
+                            <span className={cn("text-[13px] tabular-nums", amountColor)}>
                               {formatCurrency(splitAmt(tx.amount, tx.account_id), undefined, true)}
                             </span>
                           </div>
