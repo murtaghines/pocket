@@ -233,7 +233,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         monthLabel={activeSlot?.label ?? ""}
         monthDate={activeSlot?.date ?? new Date()}
         txCount={activeTxCount ?? 0}
-        openingBalance={activeKey ? openingBalanceByMonth[activeKey] ?? null : null}
         formatCurrency={formatCurrency}
         onPrev={goPrevMonth}
         onNext={goNextMonth}
