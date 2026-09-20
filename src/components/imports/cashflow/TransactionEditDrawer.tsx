@@ -109,7 +109,7 @@ export function TransactionEditDrawer({
       setCategoryId(tx.category_id);
       setAmount(tx.amount);
       setAmountStr(String(Math.abs(tx.amount)).replace(".", ","));
-      const cleaned = (tx.description_norm || tx.description)
+      const cleaned = (tx.description || tx.description_norm || "")
         .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
         .trim();
       setDescription(cleaned);
@@ -126,7 +126,7 @@ export function TransactionEditDrawer({
 
   const isManual = isManualTransaction(tx);
 
-  const cleanDescription = (tx.description_norm || tx.description)
+  const cleanDescription = (tx.description || tx.description_norm || "")
     .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
     .trim();
 
@@ -176,7 +176,8 @@ export function TransactionEditDrawer({
     if (!originalSnapshot) return;
     const filtered = filterRevertableSnapshot(originalSnapshot);
     const v = filtered.values;
-    if (v.description_norm !== undefined) setDescription(v.description_norm as string);
+    if (v.description !== undefined) setDescription(v.description as string);
+    else if (v.description_norm !== undefined) setDescription(v.description_norm as string);
     if (v.amount !== undefined) {
       setAmount(v.amount as number);
       setAmountStr(String(Math.abs(v.amount as number)).replace(".", ","));

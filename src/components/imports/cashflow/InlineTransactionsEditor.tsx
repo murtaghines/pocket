@@ -662,7 +662,9 @@ export function InlineTransactionsEditor({
       before.amount = tx.amount;
     }
     if (pending.description !== undefined) {
+      payload.description = pending.description;
       payload.description_norm = pending.description;
+      before.description = tx.description;
       before.description_norm = tx.description_norm;
     }
     if (pending.date !== undefined && pending.date !== tx.date) {
@@ -699,7 +701,7 @@ export function InlineTransactionsEditor({
           const movementChangedTransfer = pending.movement && pending.movement !== tx.movement &&
             (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER');
           if ((categoryChanged || movementChangedTransfer) && withRule && user) {
-            const cleanDesc = (tx.description_norm || tx.description || "")
+            const cleanDesc = (tx.description || tx.description_norm || "")
               .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
               .trim();
             const targetMovement =
@@ -890,7 +892,7 @@ export function InlineTransactionsEditor({
             const nudgeMovement = (pending.movement || 'EXPENSE') as MovementType;
             const nudgeLabel = nudgeMovement === 'INCOME' ? 'Income' : nudgeMovement === 'TRANSFER' ? 'Transfer' : 'Expense';
             const fromLabel = tx.movement === 'TRANSFER' ? 'Transfer' : tx.movement === 'INCOME' ? 'Income' : 'Expense';
-            const capturedDesc = (tx.description_norm || tx.description || "")
+            const capturedDesc = (tx.description || tx.description_norm || "")
               .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
               .trim();
             const capturedCategory = (pending.category ?? tx.category) || (nudgeMovement === 'INCOME' ? 'other_income' : nudgeMovement === 'TRANSFER' ? 'own_transfer' : 'other_expense');
@@ -1220,7 +1222,7 @@ export function InlineTransactionsEditor({
                   hasEditHistory &&
                   !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
                 const originalSnapshot = isEdited ? snapshot : null;
-                const cleanDescription = (tx.description_norm || tx.description || "")
+                const cleanDescription = (tx.description || tx.description_norm || "")
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
                 const pending = pendingByTx[tx.id];
@@ -1705,7 +1707,7 @@ export function InlineTransactionsEditor({
                     hasEditHistory &&
                     !(snapshot && isBackToOriginal(tx as unknown as Record<string, unknown>, snapshot.values));
                   const originalSnapshot = isEdited ? snapshot : null;
-                  const cleanDescription = (tx.description_norm || tx.description || "")
+                  const cleanDescription = (tx.description || tx.description_norm || "")
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
                   const movement = (tx.movement || "EXPENSE") as MovementType;
