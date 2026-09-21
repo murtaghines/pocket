@@ -141,6 +141,39 @@ export function useAccountPeriodSummary(monthKey: string | null, domain: Databas
   return { closingBalance: data.total, accountClosingBalances: data.byAccount, isLoading };
 }
 
+export function usePeriodSummaryByRange(
+  startDate: string | null,
+  endDate: string | null,
+  domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW",
+) {
+  const { user } = useAuth();
+
+  const { data = { total: null as number | null, byAccount: {} as Record<string, number> }, isLoading } = useQuery({
+    queryKey: ["account-period-summary", user?.id, domain, startDate, endDate],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_account_period_summary", {
+        p_user_id: user!.id,
+        p_start: startDate!,
+        p_end: endDate!,
+        p_domain: domain,
+      });
+      if (error) throw error;
+      const byAccount: Record<string, number> = {};
+      let total = 0;
+      (data ?? []).forEach((row: { account_id: string; latest_balance: number }) => {
+        const bal = Number(row.latest_balance);
+        byAccount[row.account_id] = bal;
+        total += bal;
+      });
+      return { total: Math.round(total * 100) / 100, byAccount };
+    },
+    enabled: !!user && !!startDate && !!endDate,
+    staleTime: 30_000,
+  });
+
+  return { closingBalance: data.total, accountClosingBalances: data.byAccount, isLoading };
+}
+
 export function useOpeningBalance(date: string | null, domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW") {
   const { user } = useAuth();
 

@@ -17,7 +17,7 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
-import { useDashboardData, useOpeningBalance } from "@/hooks/useDashboardData";
+import { useDashboardData, useOpeningBalance, usePeriodSummaryByRange } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,6 +130,7 @@ export function YearTab() {
   const previousPeriodLabel = hasPreviousData ? previous.month : undefined;
 
   const { openingBalance: yearOpeningBalance } = useOpeningBalance(range?.start ?? null);
+  const { closingBalance: yearClosingBalance } = usePeriodSummaryByRange(range?.start ?? null, range?.end ?? null);
 
   useEffect(() => {
     if (yearOpeningBalance != null) {
@@ -282,6 +283,9 @@ export function YearTab() {
                 totalCount={totalCount ?? undefined}
                 openingBalance={yearOpeningBalance != null
                   ? convertToUserCurrency(yearOpeningBalance)
+                  : null}
+                closingBalance={yearClosingBalance != null
+                  ? convertToUserCurrency(yearClosingBalance)
                   : null}
               />
             </div>
