@@ -32,6 +32,8 @@ export interface MonthWorkspaceProps {
   exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
   openingBalance?: number | null;
   accountOpeningBalances?: Record<string, number>;
+  closingBalance?: number | null;
+  accountClosingBalances?: Record<string, number>;
 }
 
 export function MonthWorkspace({
@@ -59,6 +61,8 @@ export function MonthWorkspace({
   exportTransactionsRef,
   openingBalance,
   accountOpeningBalances,
+  closingBalance,
+  accountClosingBalances,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -137,6 +141,8 @@ export function MonthWorkspace({
         exportTransactionsRef={exportTransactionsRef}
         openingBalance={openingBalance}
         accountOpeningBalances={accountOpeningBalances}
+        closingBalance={closingBalance}
+        accountClosingBalances={accountClosingBalances}
       />
     </div>
   );

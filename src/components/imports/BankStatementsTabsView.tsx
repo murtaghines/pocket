@@ -9,7 +9,7 @@ import { useImports, type Import } from "@/hooks/useImports";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
-import { useDashboardData, useAccountOpeningBalances } from "@/hooks/useDashboardData";
+import { useDashboardData, useAccountOpeningBalances, useAccountPeriodSummary } from "@/hooks/useDashboardData";
 import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
 import { MonthTabStrip } from "./cashflow/MonthTabStrip";
@@ -105,6 +105,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const setActiveKey = onMonthChange;
 
   const { accountOpeningBalances } = useAccountOpeningBalances(activeKey || null);
+  const { closingBalance, accountClosingBalances } = useAccountPeriodSummary(activeKey || null);
 
   const activeSlot = monthSlots.find((s) => s.key === activeKey) ?? monthSlots[0];
   const activeIdx = monthSlots.findIndex((s) => s.key === activeKey);
@@ -299,6 +300,8 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
           exportTransactionsRef={exportTransactionsRef}
           openingBalance={activeKey ? openingBalanceByMonth[activeKey] ?? null : null}
           accountOpeningBalances={accountOpeningBalances}
+          closingBalance={closingBalance}
+          accountClosingBalances={accountClosingBalances}
         />
       )}
 

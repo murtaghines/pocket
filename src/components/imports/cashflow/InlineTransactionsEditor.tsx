@@ -147,6 +147,8 @@ export interface InlineTransactionsEditorProps {
   exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
   openingBalance?: number | null;
   accountOpeningBalances?: Record<string, number>;
+  closingBalance?: number | null;
+  accountClosingBalances?: Record<string, number>;
 }
 
 export function InlineTransactionsEditor({
@@ -173,6 +175,8 @@ export function InlineTransactionsEditor({
   exportTransactionsRef,
   openingBalance,
   accountOpeningBalances,
+  closingBalance: closingBalanceProp,
+  accountClosingBalances,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -986,11 +990,16 @@ export function InlineTransactionsEditor({
 
   const hasAccountBalances = accountOpeningBalances && Object.keys(accountOpeningBalances).length > 0;
 
+  const visibleTransactions = useMemo(
+    () => transactions.filter((t) => !t.is_hidden),
+    [transactions],
+  );
+
   const runningBalanceMap = useMemo(() => {
     const map = new Map<string, number>();
     if (hasAccountBalances) {
       const byAccount = new Map<string, MonthTransaction[]>();
-      for (const tx of transactions) {
+      for (const tx of visibleTransactions) {
         const key = tx.account_id ?? "__unassigned__";
         if (!byAccount.has(key)) byAccount.set(key, []);
         byAccount.get(key)!.push(tx);
@@ -1008,7 +1017,7 @@ export function InlineTransactionsEditor({
         }
       }
     } else if (openingBalance != null) {
-      const sorted = [...transactions].sort((a, b) => {
+      const sorted = [...visibleTransactions].sort((a, b) => {
         const dateCmp = a.date.localeCompare(b.date);
         if (dateCmp !== 0) return dateCmp;
         return (a.fingerprint ?? a.id).localeCompare(b.fingerprint ?? b.id);
@@ -1020,7 +1029,7 @@ export function InlineTransactionsEditor({
       }
     }
     return map;
-  }, [transactions, openingBalance, hasAccountBalances, accountOpeningBalances, splitAmt]);
+  }, [visibleTransactions, openingBalance, hasAccountBalances, accountOpeningBalances, splitAmt]);
 
   const filteredSorted = useMemo(() => {
     let result = [...transactions];
@@ -1067,8 +1076,13 @@ export function InlineTransactionsEditor({
       const name = acct ? getAccountDisplayName(acct) : t("imports.unassignedAccount", "Unassigned");
       const color = acct?.color ?? null;
       const opening = acctId ? (accountOpeningBalances![acctId] ?? 0) : 0;
-      const totalAmount = txs.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0);
-      const closing = Math.round((opening + totalAmount) * 100) / 100;
+      const closing = acctId && accountClosingBalances?.[acctId] != null
+        ? accountClosingBalances[acctId]
+        : (() => {
+            const visibleTxs = txs.filter((tx) => !tx.is_hidden);
+            const totalAmount = visibleTxs.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0);
+            return Math.round((opening + totalAmount) * 100) / 100;
+          })();
       groups.push({ accountId: acctId, accountName: name, accountColor: color, openingBalance: opening, closingBalance: closing, transactions: txs });
     }
     groups.sort((a, b) => {
@@ -1077,7 +1091,7 @@ export function InlineTransactionsEditor({
       return a.accountName.localeCompare(b.accountName);
     });
     return groups;
-  }, [filteredSorted, hasAccountBalances, accountOpeningBalances, accounts, splitAmt, t]);
+  }, [filteredSorted, hasAccountBalances, accountOpeningBalances, accountClosingBalances, accounts, splitAmt, t]);
 
   const visibleAll = filteredSorted;
   const rowsToRender = visibleAll;
@@ -1938,7 +1952,7 @@ export function InlineTransactionsEditor({
           isLocked={isLocked}
           summary={summary}
           openingBalance={openingBalance}
-          closingBalance={openingBalance != null ? openingBalance + transactions.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0) : null}
+          closingBalance={closingBalanceProp ?? (openingBalance != null ? openingBalance + visibleTransactions.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0) : null)}
           externalOpen={externalManualEntryOpen}
           onExternalOpenChange={onManualEntryOpenChange}
           defaultMovement={defaultMovement}

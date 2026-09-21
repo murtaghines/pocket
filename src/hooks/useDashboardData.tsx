@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { MonthlyData } from "@/lib/mockData";
@@ -101,6 +101,44 @@ export function useAccountOpeningBalances(monthKey: string | null, domain: Datab
   });
 
   return { accountOpeningBalances: balances, isLoading };
+}
+
+export function useAccountPeriodSummary(monthKey: string | null, domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW") {
+  const { user } = useAuth();
+
+  const range = useMemo(() => {
+    if (!monthKey) return null;
+    const [y, m] = monthKey.split("-").map(Number);
+    const start = `${y}-${String(m).padStart(2, "0")}-01`;
+    const lastDay = new Date(y, m, 0).getDate();
+    const end = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    return { start, end };
+  }, [monthKey]);
+
+  const { data = { total: null as number | null, byAccount: {} as Record<string, number> }, isLoading } = useQuery({
+    queryKey: ["account-period-summary", user?.id, domain, monthKey],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_account_period_summary", {
+        p_user_id: user!.id,
+        p_start: range!.start,
+        p_end: range!.end,
+        p_domain: domain,
+      });
+      if (error) throw error;
+      const byAccount: Record<string, number> = {};
+      let total = 0;
+      (data ?? []).forEach((row: { account_id: string; latest_balance: number }) => {
+        const bal = Number(row.latest_balance);
+        byAccount[row.account_id] = bal;
+        total += bal;
+      });
+      return { total: Math.round(total * 100) / 100, byAccount };
+    },
+    enabled: !!user && !!range,
+    staleTime: 30_000,
+  });
+
+  return { closingBalance: data.total, accountClosingBalances: data.byAccount, isLoading };
 }
 
 export function useOpeningBalance(date: string | null, domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW") {
