@@ -1503,6 +1503,32 @@ serve(async (req) => {
       newTransactions.push(txRecord);
     }
 
+    // ── Running-balance consistency check ─────────────────────────
+    // Neobank exports (Revolut, etc.) can mix sub-account running_balances
+    // into one file. Detect this by checking consecutive pairs: if the
+    // previous rb + current amount ≠ current rb in too many cases, the
+    // running_balance data is unreliable — NULL it so Pocket falls back
+    // to the computed path (initial_balance + sum(amounts)).
+    const withRb = newTransactions
+      .filter((tx) => tx.running_balance != null)
+      .sort((a, b) => a.date.localeCompare(b.date) || (a.fingerprint ?? '').localeCompare(b.fingerprint ?? ''));
+    if (withRb.length >= 5) {
+      let mismatches = 0;
+      let checked = 0;
+      for (let i = 1; i < withRb.length; i++) {
+        const prevRb = Number(withRb[i - 1].running_balance);
+        const currAmount = Number(withRb[i].amount);
+        const currRb = Number(withRb[i].running_balance);
+        const expected = prevRb + currAmount;
+        if (Math.abs(expected - currRb) > 0.02) mismatches++;
+        checked++;
+      }
+      if (checked > 0 && mismatches / checked > 0.2) {
+        console.log(`[process-import] Running balance inconsistency detected: ${mismatches}/${checked} mismatches (${Math.round(mismatches / checked * 100)}%). NULLing running_balance for this import.`);
+        for (const tx of newTransactions) tx.running_balance = null;
+      }
+    }
+
     // Batch-upsert the import_rows audit records collected during the loop above — real
     // multi-row upserts (matches the plain UNIQUE (import_id, row_hash_sha256) constraint),
     // not one request per row.
