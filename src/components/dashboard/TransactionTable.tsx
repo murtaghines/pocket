@@ -27,6 +27,7 @@ interface TransactionTableProps {
   totalCount?: number;
   monthKey?: string;
   openingBalance?: number | null;
+  closingBalance?: number | null;
 }
 
 type MovementType = 'income' | 'expense' | 'transfer' | 'investment';
@@ -52,7 +53,7 @@ const getMovementType = (transaction: Transaction): MovementType => {
   return 'expense';
 };
 
-export function TransactionTable({ transactions, initialSearch = "", totalCount, monthKey, openingBalance }: TransactionTableProps) {
+export function TransactionTable({ transactions, initialSearch = "", totalCount, monthKey, openingBalance, closingBalance: closingBalanceProp }: TransactionTableProps) {
   const { t } = useTranslation('dashboard');
   const { t: tc } = useTranslation('common');
   const navigate = useNavigate();
@@ -245,11 +246,10 @@ export function TransactionTable({ transactions, initialSearch = "", totalCount,
                 </span>
               </div>
               {(() => {
-                const newest = filteredTransactions[0];
-                const closingBalance = newest ? computedBalanceMap.get(newest.id) : undefined;
-                return closingBalance !== undefined ? (
+                const closing = closingBalanceProp ?? (filteredTransactions[0] ? computedBalanceMap.get(filteredTransactions[0].id) : undefined);
+                return closing != null ? (
                   <span className="text-[13px] font-semibold tabular-nums text-foreground">
-                    {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closingBalance)}
+                    {t('transactions.closingBalance', { defaultValue: 'Closing balance' })} {formatCurrency(closing)}
                   </span>
                 ) : null;
               })()}

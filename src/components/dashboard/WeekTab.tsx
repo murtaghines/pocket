@@ -15,7 +15,7 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
-import { useDashboardData, useOpeningBalance } from "@/hooks/useDashboardData";
+import { useDashboardData, useOpeningBalance, usePeriodSummaryByRange } from "@/hooks/useDashboardData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -80,6 +80,7 @@ export function WeekTab() {
   }, [selectedWeek]);
 
   const { openingBalance: weekOpeningBalance } = useOpeningBalance(range?.start ?? null);
+  const { closingBalance: weekClosingBalance } = usePeriodSummaryByRange(range?.start ?? null, range?.end ?? null);
 
   useEffect(() => {
     if (weekOpeningBalance != null) {
@@ -226,6 +227,9 @@ export function WeekTab() {
                 transactions={transactions}
                 openingBalance={weekOpeningBalance != null
                   ? convertToUserCurrency(weekOpeningBalance)
+                  : null}
+                closingBalance={weekClosingBalance != null
+                  ? convertToUserCurrency(weekClosingBalance)
                   : null}
               />
             </div>

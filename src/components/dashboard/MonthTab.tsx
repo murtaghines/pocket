@@ -16,7 +16,7 @@ import { MonthlyFlowSankey } from "@/components/dashboard/MonthlyFlowSankey";
 
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useTransactions } from "@/hooks/useTransactions";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDashboardData, useAccountPeriodSummary } from "@/hooks/useDashboardData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -63,6 +63,7 @@ export function MonthTab() {
   const prevRange = previousMonth.month ? periodRangeOf(previousMonth.month, "month") : null;
 
   const { transactions, isLoading } = useTransactions({ startDate: range?.start, endDate: range?.end });
+  const { closingBalance: monthClosingBalance } = useAccountPeriodSummary(latestMonthLabel);
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {
@@ -291,6 +292,9 @@ export function MonthTab() {
                   monthKey={latestMonthLabel ?? undefined}
                   openingBalance={latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null
                     ? convertToUserCurrency(openingBalanceByMonth[latestMonthLabel])
+                    : null}
+                  closingBalance={monthClosingBalance != null
+                    ? convertToUserCurrency(monthClosingBalance)
                     : null}
                 />
                 </div>
