@@ -123,10 +123,65 @@ describe('categorize — more canonical merchants', () => {
     expect(categorize('SPOTIFY P0A1B2', -9.99)?.category).toBe('subscriptions');
   });
 
-  it('routes REVOLUT vault/savings to an investment transfer', () => {
+  it('routes REVOLUT vault/savings to own_transfer (not investment)', () => {
     const r = categorize('REVOLUT VAULT', -200);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('to_investment');
+    expect(r?.category).toBe('own_transfer');
+  });
+});
+
+describe('categorize — neobank savings pockets are own_transfer, not investment', () => {
+  it('routes "To Instant Access Savings" to own_transfer', () => {
+    const r = categorize('To Instant Access Savings', -500);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('own_transfer');
+  });
+
+  it('routes "From Instant Access Savings" to own_transfer', () => {
+    const r = categorize('From Instant Access Savings', 500);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('own_transfer');
+  });
+
+  it('routes "To EUR Savings Challenge" to own_transfer', () => {
+    const r = categorize('To EUR Savings Challenge', -100);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('own_transfer');
+  });
+
+  it('routes "From EUR Rendimientos Diarios" to own_transfer', () => {
+    const r = categorize('From EUR Rendimientos Diarios', 0.42);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('own_transfer');
+  });
+
+  it('routes Revolut Savings to own_transfer', () => {
+    const r = categorize('REVOLUT SAVINGS', -200);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('own_transfer');
+  });
+
+  it('routes Monzo Pot to own_transfer', () => {
+    const r = categorize('MONZO POT HOLIDAY FUND', -50);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('own_transfer');
+  });
+
+  it('routes Cuenta Remunerada to own_transfer', () => {
+    const r = categorize('TRASPASO CUENTA REMUNERADA', -1000);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('own_transfer');
+  });
+
+  it('keeps actual investment platforms as to_investment', () => {
+    expect(categorize('TRADE REPUBLIC TRANSFERENCIA', -500)?.category).toBe('to_investment');
+    expect(categorize('MYINVESTOR APORTACION', -300)?.category).toBe('to_investment');
+    expect(categorize('COCOS CAPITAL TRANSFERENCIA', -5000)?.category).toBe('to_investment');
+  });
+
+  it('keeps interest earned from savings as income (not own_transfer)', () => {
+    const r = categorize('NET INTEREST PAID FROM SAVINGS', 2.50);
+    expect(r?.movement).not.toBe('TRANSFER');
   });
 });
 
