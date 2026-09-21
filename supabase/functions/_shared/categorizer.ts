@@ -17,7 +17,7 @@
  *
  * OVERLAP DECISIONS DOCUMENTED:
  *   AMAZON       → subscriptions if PRIME/MUSIC/VIDEO, else shopping
- *   REVOLUT      → to_investment if SAVINGS/VAULT, else own_transfer
+ *   REVOLUT      → own_transfer always (savings pockets are not investments)
  *   BOOKING      → rental_income if PAYOUT/DEPOSIT, else travel
  *   GAS          → housing if GAS NATURAL/NATURGAS, else transport
  *   PENSION      → to_investment if PLAN/APORTACION, else other_income
@@ -485,22 +485,6 @@ const RULE_BUCKETS: RuleBucket[] = [
       'CRYPTO\\s*PURCHASE',
       'CRYPTO\\s*TRANSFER',
       'CRYPTOCURRENCY\\s*PURCHASE',
-      // ── Neobank sub-accounts tagged as investments ─────────
-      // (these are savings/investment sub-pockets, not the main account)
-      'REVOLUT\\s*SAVINGS',
-      'REVOLUT.*VAULT',
-      'REVOLUT.*INSTANT\\s*ACCESS',
-      'MONZO\\s*POT',
-      'MONZO\\s*SAVINGS',
-      'STARLING\\s*SAVINGS',
-      'N26\\s*SPACES',
-      'CUENTA\\s*REMUNERADA',
-      'CUENTA\\s*AHORRO\\s*PLUS',
-      // ── Generic savings sub-account keywords (without bank prefix) ─
-      'TO\\s*INSTANT\\s*ACCESS\\s*SAVINGS',
-      'TO\\s*SAVINGS\\s*ACCOUNT',
-      'TO\\s*SAVINGS\\s*POT',
-      'INSTANT\\s*ACCESS\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
       // ── Generic investment movement keywords ──────────────
       // Only phrases that unambiguously mean "moving money to invest"
       'TRASPASO\\s*FOND',
@@ -587,17 +571,33 @@ const RULE_BUCKETS: RuleBucket[] = [
         'TRANSFER\\s*TO\\s*MY\\s*CHECKING',
       ], 0.99),
 
-      // ── Named neobanks / cross-border fintechs ────────────
-      // Transfers to/from these are almost always own-account moves.
-      // Specific sub-accounts (Revolut Savings, Monzo Pot) are
-      // already caught by to_investment above.
+      // ── Neobank savings pockets / sub-accounts ────────────
+      // Moving money to/from savings vaults, pots, and sub-accounts
+      // within neobanks is an own-account transfer, NOT an investment.
       ...r([
-        'REVOLUT(?!.*SAVINGS)(?!.*VAULT)(?!.*INSTANT)',
+        'INSTANT\\s*ACCESS\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
+        'SAVINGS\\s*CHALLENGE',
+        'SAVINGS\\s*VAULT',
+        'SAVINGS\\s*POT',
+        'N26\\s*SPACES',
+        'RENDIMIENTOS\\s*DIARIOS',
+        'CUENTA\\s*REMUNERADA',
+        'CUENTA\\s*AHORRO\\s*PLUS',
+        'TO\\s*SAVINGS\\s*ACCOUNT',
+        'TO\\s*SAVINGS\\s*POT',
+        'FROM\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
+      ], 0.99),
+
+      // ── Named neobanks / cross-border fintechs ────────────
+      // Transfers to/from these are almost always own-account moves,
+      // including their savings pockets, vaults, and sub-accounts.
+      ...r([
+        'REVOLUT\\b',
         'WISE\\b',
         'TRANSFERWISE\\b',
         'N26\\b',
-        'MONZO(?!.*POT)(?!.*SAVINGS)',
-        'STARLING(?!.*SAVINGS)',
+        'MONZO\\b',
+        'STARLING\\b',
         'BUNQ\\b',
         'CHIME\\b',
         'BNEXT\\b',
