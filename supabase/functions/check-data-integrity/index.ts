@@ -67,7 +67,7 @@ serve(async (req) => {
       .eq('user_id', userId);
     const { data: profile } = await supabase
       .from('profiles').select('first_name, last_name')
-      .eq('id', userId).single();
+      .eq('user_id', userId).maybeSingle();
 
     if (accounts && accounts.length >= 2) {
       const userName = profile ? { firstName: profile.first_name, lastName: profile.last_name } : undefined;
