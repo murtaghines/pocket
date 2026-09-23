@@ -52,19 +52,31 @@ For each transaction, extract ONLY these essential fields:
 - amount_signed: Numeric value (positive for deposits/income, negative for withdrawals/expenses)
 - running_balance: Balance after transaction if shown, otherwise null
 - currency: Currency code if visible (EUR, USD, etc.)
+- movement: INCOME, EXPENSE or TRANSFER. TRANSFER only when clearly between the user's OWN
+  accounts/investments ("to/from savings", "own account", same person's wallets). A payment to
+  another person (Bizum, "payment to: NAME", "transfer to OTHER PERSON") is EXPENSE, not TRANSFER.
+- category_slug: best-fit category for the transaction, from the list for its movement:
+  * EXPENSE: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
+  * INCOME: salary, refunds, freelance, rents, investment, other_income
+  * TRANSFER: own_transfer (between own accounts) or to_investment (to own savings/investment)
+  Infer from the merchant/description (supermarket→groceries, café/bakery/restaurant→restaurants,
+  train/metro/toll→transport, clothing/sports store→shopping/sports). Use other_expense/other_income
+  ONLY when the description genuinely gives no clue.
 
 Example output:
 [
-  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA MERCADONA","amount_signed":-87.43,"running_balance":1234.56,"currency":"EUR"},
-  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE","amount_signed":2850.00,"running_balance":3084.56,"currency":"EUR"}
+  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA MERCADONA","amount_signed":-87.43,"running_balance":1234.56,"currency":"EUR","movement":"EXPENSE","category_slug":"groceries"},
+  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE","amount_signed":2850.00,"running_balance":3084.56,"currency":"EUR","movement":"INCOME","category_slug":"salary"}
 ]
 
 Extract ALL transactions visible in the data. Do not skip any.`;
 
 // ========== FULL PROMPT (for smaller files) ==========
-// bank/payment_channel/value_date/full category_slug removed below: none of them survive
-// downstream (grep-verified dead reads; category_slug for non-TRANSFER is always overwritten
-// by the local categorizer) — cutting them saves prompt + output tokens with no behavior change.
+// bank/payment_channel/value_date removed below: none of them survive downstream (grep-verified
+// dead reads) — cutting them saves prompt + output tokens with no behavior change.
+// category_slug IS used now: the AI's INCOME/EXPENSE category is kept whenever the local
+// categorizer (higher priority) doesn't match, so the AI covers the long tail of merchants the
+// finite regex dictionary can't — user_rules > categorizer > AI category > other_*.
 const CASHFLOW_ANALYSIS_PROMPT = `You are a financial data extraction expert specialized in bank statements from any country. Your task is to analyze messy, unstructured financial data and extract clean transaction data.
 
 CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
@@ -76,7 +88,7 @@ For each transaction, extract:
 - amount_signed: Numeric value (positive for income, negative for expenses/transfers out).
 - running_balance: Balance after transaction if shown, otherwise null.
 - movement: One of: INCOME, EXPENSE, TRANSFER (the fundamental type of money movement)
-- category_slug: See CATEGORY_SLUG rule below — null for INCOME/EXPENSE, required for TRANSFER.
+- category_slug: Best-fit category for the transaction — see CATEGORY_SLUG rule below.
 - currency: Currency code (EUR, USD, GBP, ARS, MXN, etc.) - detect from symbols or context
 
 === MOVEMENT CLASSIFICATION (Step 1 - CRITICAL) ===
@@ -132,20 +144,23 @@ If UNCERTAIN whether a transfer goes to own account or third party:
 
 === CATEGORY_SLUG (Step 2) ===
 
-The app assigns detailed INCOME/EXPENSE categories (groceries, salary, subscriptions, etc.)
-automatically using its own rules engine after extraction — do NOT guess these. Set
-category_slug to null for INCOME and EXPENSE movements.
+After the movement, assign the best-fit category_slug from the list for that movement:
+- INCOME: salary, refunds, freelance, rents, investment, other_income
+- EXPENSE: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
+- TRANSFER: own_transfer (between the user's own accounts) or to_investment (to the user's own investment/savings account)
 
-For TRANSFER movements only, set category_slug to:
-- own_transfer: transfer between the user's own bank accounts
-- to_investment: transfer to the user's own investment/savings account
+Infer the category from the merchant name or description: a supermarket → groceries, a
+restaurant/bakery/café → restaurants, a train/metro/toll/parking → transport, a clothing or
+sports store → shopping/sports, a utility/telco/rent → housing, a streaming/app subscription →
+subscriptions, a pharmacy/clinic → health. Use other_expense / other_income ONLY when the
+description genuinely doesn't indicate a category.
 
 Example output:
 [
-  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA *1234 MERCADONA","description_clean":"Supermercado Mercadona","amount_signed":-87.43,"running_balance":1234.56,"source_transaction_id":null,"counterparty_raw":"MERCADONA","movement":"EXPENSE","category_slug":null,"currency":"EUR"},
-  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE EMPRESA SA","description_clean":"Nómina Diciembre","amount_signed":2850.00,"running_balance":3084.56,"source_transaction_id":null,"counterparty_raw":"EMPRESA SA","movement":"INCOME","category_slug":null,"currency":"EUR"},
-  {"posted_date":"2024-12-13","description_raw":"TRF A CTA PROPIA REVOLUT","description_clean":"Traspaso a Revolut","amount_signed":-500.00,"running_balance":2584.56,"source_transaction_id":null,"counterparty_raw":null,"movement":"TRANSFER","category_slug":"own_transfer","currency":"EUR"},
-  {"posted_date":"2024-12-12","description_raw":"BIZUM A JUAN GARCIA","description_clean":"Bizum a Juan García","amount_signed":-30.00,"running_balance":2554.56,"source_transaction_id":null,"counterparty_raw":"JUAN GARCIA","movement":"EXPENSE","category_slug":null,"currency":"EUR"}
+  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA *1234 MERCADONA","description_clean":"Supermercado Mercadona","amount_signed":-87.43,"running_balance":1234.56,"movement":"EXPENSE","category_slug":"groceries","currency":"EUR"},
+  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE EMPRESA SA","description_clean":"Nómina Diciembre","amount_signed":2850.00,"running_balance":3084.56,"movement":"INCOME","category_slug":"salary","currency":"EUR"},
+  {"posted_date":"2024-12-13","description_raw":"TRF A CTA PROPIA REVOLUT","description_clean":"Traspaso a Revolut","amount_signed":-500.00,"running_balance":2584.56,"movement":"TRANSFER","category_slug":"own_transfer","currency":"EUR"},
+  {"posted_date":"2024-12-12","description_raw":"BIZUM A JUAN GARCIA","description_clean":"Bizum a Juan García","amount_signed":-30.00,"running_balance":2554.56,"movement":"EXPENSE","category_slug":"other_expense","currency":"EUR"}
 ]`;
 
 // platform/asset_type/value_date removed: this prompt feeds process-import's shared
@@ -1272,7 +1287,10 @@ serve(async (req) => {
       
       const postedDate = t.posted_date || t.date;
       const descriptionRaw = t.description_raw || t.description || '';
-      const descriptionClean = t.description_clean || normalizeDescription(descriptionRaw);
+      // When the AI didn't return a cleaned description (e.g. the compact chunked prompt), keep the
+      // RAW text — not normalizeDescription(), which lowercases and strips words. `description` is a
+      // display field; the lowercased/stripped form belongs only in description_norm (matching key).
+      const descriptionClean = t.description_clean || descriptionRaw;
       const amountSigned = t.amount_signed ?? t.amount;
       const runningBalance = t.running_balance ?? null;
       const currency = t.currency || 'EUR';
@@ -1421,16 +1439,18 @@ serve(async (req) => {
 
         console.log(`[process-import] Categorizer match: "${descriptionRaw.substring(0, 40)}" → ${categorizerMatch.category}→${categorySlug} (confidence: ${categorizerMatch.confidence}, rule: ${categorizerMatch.matchedRule.substring(0, 40)})`);
       } else {
-        // No (valid) categorizer match — fall back to sign-derived movement.
-        if (amountSigned > 0 && movement !== 'TRANSFER') {
-          movement = 'INCOME';
-          categorySlug = 'other_income';
-        } else if (amountSigned < 0 && movement !== 'TRANSFER') {
-          movement = 'EXPENSE';
-          categorySlug = 'other_expense';
+        // No categorizer match — KEEP the AI's own category suggestion (it generalizes across
+        // merchants/countries/languages far better than the finite regex dictionary) instead of
+        // dumping everything into other_*. `categorySlug` already holds the AI baseline from above.
+        // Re-derive movement from sign as a guardrail (except transfers), then re-validate the AI
+        // slug against that movement — an empty/invalid slug still resolves to other_income /
+        // other_expense, so nothing regresses when the AI gives no usable category.
+        if (movement !== 'TRANSFER') {
+          movement = amountSigned >= 0 ? 'INCOME' : 'EXPENSE';
         }
-        stats.categorizedByAI++;
+        categorySlug = validateCategorySlug(categorySlug, movement);
         categoryId = categorySlugToId[categorySlug] || null;
+        stats.categorizedByAI++;
       }
       
       // ── Priority 1: user_rules (unified rule table — both Categories page and
