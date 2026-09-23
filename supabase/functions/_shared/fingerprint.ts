@@ -39,9 +39,18 @@ export async function calculateFingerprint(
   amountSigned: number,
   currency: string,
   descriptionRaw: string,
+  // Occurrence index for rows that are otherwise identical WITHIN one import (same date +
+  // amount + normalized description). Neobank savings exports routinely list two identical
+  // withdrawals/deposits on the same day; without a tiebreaker both dedup to one and a real
+  // transaction is silently dropped. The bank statements here are date-only (no timestamp to
+  // separate them), so we distinguish by file order. `sequence === 0` keeps the hash
+  // byte-identical to the original formula, so dedup against already-imported data is unaffected
+  // and re-importing the same file (same order) still collapses correctly.
+  sequence = 0,
 ): Promise<string> {
   const normalizedDesc = normalizeDescription(descriptionRaw);
-  const input = `${source}|${postedDate}|${amountSigned.toFixed(2)}|${currency}|${normalizedDesc}`;
+  let input = `${source}|${postedDate}|${amountSigned.toFixed(2)}|${currency}|${normalizedDesc}`;
+  if (sequence > 0) input += `|#${sequence}`;
   return await sha256(input);
 }
 

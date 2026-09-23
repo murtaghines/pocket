@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { categorize, normalize as normalizeForCategorizer, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
+import { runningBalanceIsReliable } from "../_shared/runningBalance.ts";
 import {
   type MovementType,
   mapCategorySlug,
@@ -1022,11 +1023,30 @@ serve(async (req) => {
       console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
       
       const chunks = splitIntoChunks(fileContent);
-      
+
+      // Process chunks with bounded concurrency. Awaiting each AI call sequentially made large
+      // multi-page PDFs (a normal 17-page Revolut statement is ~15 chunks) exceed the edge
+      // function's ~150s wall-clock limit → HTTP 546 WORKER_RESOURCE_LIMIT, and the import
+      // stalled with 0 transactions. Running several calls at once keeps total time ≈ the
+      // slowest wave, not the sum. Cap concurrency so we don't burst the AI rate limit
+      // (callAIWithRetry already backs off on 429).
+      const CHUNK_CONCURRENCY = 5;
+      const chunkResults: Array<Awaited<ReturnType<typeof callAIWithRetry>>> = new Array(chunks.length);
+      let nextChunk = 0;
+      const runWorker = async () => {
+        while (true) {
+          const i = nextChunk++;
+          if (i >= chunks.length) return;
+          console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+          chunkResults[i] = await callAIWithRetry(chunks[i], prompt, true);
+        }
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(CHUNK_CONCURRENCY, chunks.length) }, () => runWorker()),
+      );
+
       for (let i = 0; i < chunks.length; i++) {
-        console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
-        
-        const result = await callAIWithRetry(chunks[i], prompt, true);
+        const result = chunkResults[i];
         aiInputTokens += result.usage?.input_tokens || 0;
         aiOutputTokens += result.usage?.output_tokens || 0;
 
@@ -1245,6 +1265,10 @@ serve(async (req) => {
     // Per-month dedupe trackers (so identical txs in different months stay distinct).
     const seenFingerprintsByMonth: Record<string, Set<string>> = {};
     const seenNaturalKeysByMonth: Record<string, Set<string>> = {};
+    // Nth occurrence of an identical (date|amount|normalized-description) key WITHIN this import,
+    // in file order. Feeds the fingerprint + natural-key so two genuinely-distinct same-day rows
+    // aren't collapsed into one (see calculateFingerprint's `sequence` note).
+    const occurrenceByKey: Record<string, number> = {};
     // Accumulates user_rule hits during the loop, batch-applied via increment_rule_stats
     // after the loop instead of one round-trip per matched transaction.
     const ruleHitCounts = new Map<string, number>();
@@ -1286,12 +1310,18 @@ serve(async (req) => {
       const seenFingerprints = seenFingerprintsByMonth[txMonthKey];
       const seenNaturalKeys = seenNaturalKeysByMonth[txMonthKey];
 
+      const normalizedDesc = normalizeDescription(descriptionRaw);
+      const baseKey = `${postedDate}|${amountSigned.toFixed(2)}|${normalizedDesc.toLowerCase()}`;
+      const occurrence = occurrenceByKey[baseKey] ?? 0;
+      occurrenceByKey[baseKey] = occurrence + 1;
+
       const fingerprint = await calculateFingerprint(
         'import',
         postedDate,
         amountSigned,
         currency,
         descriptionRaw,
+        occurrence,
       );
 
       const rowHash = await sha256(JSON.stringify(t));
@@ -1315,9 +1345,10 @@ serve(async (req) => {
         continue;
       }
 
-      const normalizedDesc = normalizeDescription(descriptionRaw);
-      const naturalKey = `${postedDate}|${amountSigned.toFixed(2)}|${normalizedDesc.toLowerCase()}`;
-      
+      // Same occurrence tiebreaker as the fingerprint: distinct same-day/same-amount rows keep
+      // distinct keys instead of collapsing into one.
+      const naturalKey = occurrence > 0 ? `${baseKey}|#${occurrence}` : baseKey;
+
       if (existingNaturalKeys.has(naturalKey) || seenNaturalKeys.has(naturalKey)) {
         stats.duplicatesIgnored++;
         if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
@@ -1503,30 +1534,16 @@ serve(async (req) => {
       newTransactions.push(txRecord);
     }
 
-    // ── Running-balance consistency check ─────────────────────────
-    // Neobank exports (Revolut, etc.) can mix sub-account running_balances
-    // into one file. Detect this by checking consecutive pairs: if the
-    // previous rb + current amount ≠ current rb in too many cases, the
-    // running_balance data is unreliable — NULL it so Pocket falls back
-    // to the computed path (initial_balance + sum(amounts)).
-    const withRb = newTransactions
-      .filter((tx) => tx.running_balance != null)
-      .sort((a, b) => a.date.localeCompare(b.date) || (a.fingerprint ?? '').localeCompare(b.fingerprint ?? ''));
-    if (withRb.length >= 5) {
-      let mismatches = 0;
-      let checked = 0;
-      for (let i = 1; i < withRb.length; i++) {
-        const prevRb = Number(withRb[i - 1].running_balance);
-        const currAmount = Number(withRb[i].amount);
-        const currRb = Number(withRb[i].running_balance);
-        const expected = prevRb + currAmount;
-        if (Math.abs(expected - currRb) > 0.02) mismatches++;
-        checked++;
-      }
-      if (checked > 0 && mismatches / checked > 0.2) {
-        console.log(`[process-import] Running balance inconsistency detected: ${mismatches}/${checked} mismatches (${Math.round(mismatches / checked * 100)}%). NULLing running_balance for this import.`);
-        for (const tx of newTransactions) tx.running_balance = null;
-      }
+    // ── Running-balance reliability check ─────────────────────────
+    // Neobank exports (Revolut, etc.) can interleave several sub-account running_balance tracks
+    // into one file, which makes the balance meaningless for a single Pocket account. When the
+    // rows can't be reconstructed into one consistent chain, NULL the balances so Pocket falls
+    // back to the computed path (initial_balance + Σamount). This reconstruction is order-
+    // independent, so clean statements with multiple same-day transactions are NOT false-flagged.
+    const rbRowCount = newTransactions.filter((tx) => tx.running_balance != null).length;
+    if (rbRowCount >= 5 && !runningBalanceIsReliable(newTransactions)) {
+      console.log(`[process-import] Running balance unreliable across ${rbRowCount} rows (couldn't form a single balance chain — likely mixed sub-accounts). NULLing running_balance for this import.`);
+      for (const tx of newTransactions) tx.running_balance = null;
     }
 
     // Batch-upsert the import_rows audit records collected during the loop above — real
