@@ -133,3 +133,29 @@ describe('extractMonthKey', () => {
     expect(extractMonthKey('')).toBe('');
   });
 });
+
+describe('calculateFingerprint — occurrence tiebreaker (sequence)', () => {
+  const DESC = "Withdrawal from 'Rendimientos Diarios'";
+
+  it('sequence 0 (default) is byte-identical to the original 5-arg formula', async () => {
+    // Guarantees the fix does NOT re-fingerprint already-imported single rows (dedup on
+    // re-upload against existing data keeps working).
+    const original = await calculateFingerprint('import', '2026-07-27', -50, 'EUR', DESC);
+    const seq0 = await calculateFingerprint('import', '2026-07-27', -50, 'EUR', DESC, 0);
+    expect(seq0).toBe(original);
+  });
+
+  it('distinguishes two identical same-day rows so a real transaction is not dropped', async () => {
+    // Revolut savings routinely lists two identical withdrawals on the same day; without a
+    // tiebreaker both dedup to one and the second (real) transaction vanishes.
+    const first = await calculateFingerprint('import', '2026-07-27', -50, 'EUR', DESC, 0);
+    const second = await calculateFingerprint('import', '2026-07-27', -50, 'EUR', DESC, 1);
+    expect(second).not.toBe(first);
+  });
+
+  it('the same occurrence index reproduces the same hash (re-importing the same file still dedups)', async () => {
+    const a = await calculateFingerprint('import', '2026-07-27', -50, 'EUR', DESC, 2);
+    const b = await calculateFingerprint('import', '2026-07-27', -50, 'EUR', DESC, 2);
+    expect(a).toBe(b);
+  });
+});

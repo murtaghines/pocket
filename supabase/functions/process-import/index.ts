@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { categorize, normalize as normalizeForCategorizer, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
+import { runningBalanceIsReliable } from "../_shared/runningBalance.ts";
 import {
   type MovementType,
   mapCategorySlug,
@@ -74,8 +75,6 @@ For each transaction, extract:
 - description_clean: Clean, readable description removing reference numbers and noise.
 - amount_signed: Numeric value (positive for income, negative for expenses/transfers out).
 - running_balance: Balance after transaction if shown, otherwise null.
-- source_transaction_id: External transaction ID/reference if visible (e.g., MercadoPago ID), otherwise null.
-- counterparty_raw: Name of the other party if identifiable (beneficiary, payer, merchant), otherwise null.
 - movement: One of: INCOME, EXPENSE, TRANSFER (the fundamental type of money movement)
 - category_slug: See CATEGORY_SLUG rule below — null for INCOME/EXPENSE, required for TRANSFER.
 - currency: Currency code (EUR, USD, GBP, ARS, MXN, etc.) - detect from symbols or context
@@ -204,14 +203,15 @@ function detectInternalTransfer(
   movement: MovementType,
   descriptionRaw: string,
   descriptionClean: string,
-  counterpartyRaw: string | null,
   userAccounts: Array<{ name: string; institution: string | null; account_role: string }>,
   userName?: { firstName: string | null; lastName: string | null }
 ): { isTransfer: boolean; categorySlug: string } {
   // DO NOT blindly trust AI's TRANSFER classification.
   // Only confirm as transfer if explicit signals are found below.
-  
-  const textToCheck = `${descriptionRaw} ${descriptionClean} ${counterpartyRaw || ''}`.toLowerCase();
+  // The counterparty is read straight from the description — banks put the other party there
+  // ("Bizum payment to: X", "Payment from Y", "From Instant Access Savings").
+
+  const textToCheck = `${descriptionRaw} ${descriptionClean}`.toLowerCase();
   
   const ownTransferPatterns = [
     /traspaso entre cuentas/i,
@@ -269,19 +269,6 @@ function detectInternalTransfer(
     }
   }
   
-  if (counterpartyRaw) {
-    const normalizedCounterparty = counterpartyRaw.toLowerCase();
-    for (const account of userAccounts) {
-      if (account.name && normalizedCounterparty.includes(account.name.toLowerCase())) {
-        const categorySlug = account.account_role === 'INVESTMENT' ? 'to_investment' : 'own_transfer';
-        return { isTransfer: true, categorySlug };
-      }
-      if (account.institution && normalizedCounterparty.includes(account.institution.toLowerCase())) {
-        return { isTransfer: true, categorySlug: 'own_transfer' };
-      }
-    }
-  }
-  
   return { isTransfer: false, categorySlug: '' };
 }
 
@@ -299,7 +286,6 @@ interface ReconciliationCandidate {
   currency: string;
   movement: string;
   categorized_by: string | null;
-  counterparty_raw: string | null;
   description: string;
   description_norm: string | null;
   transfer_pair_id: string | null;
@@ -319,7 +305,7 @@ async function reconcileTransferPairs(
   // 1. Fetch newly inserted transactions for THIS import
   const { data: newTxs } = await supabase
     .from('transactions')
-    .select('id, account_id, date, amount, currency, movement, categorized_by, counterparty_raw, description, description_norm, transfer_pair_id')
+    .select('id, account_id, date, amount, currency, movement, categorized_by, description, description_norm, transfer_pair_id')
     .eq('user_id', userId)
     .eq('account_id', accountId)
     .in('fingerprint', [...insertedFingerprints].slice(0, 500))
@@ -339,7 +325,7 @@ async function reconcileTransferPairs(
   const otherAccountIds = userAccounts.filter(a => a.id !== accountId).map(a => a.id);
   const { data: candidates } = await supabase
     .from('transactions')
-    .select('id, account_id, date, amount, currency, movement, categorized_by, counterparty_raw, description, description_norm, transfer_pair_id')
+    .select('id, account_id, date, amount, currency, movement, categorized_by, description, description_norm, transfer_pair_id')
     .eq('user_id', userId)
     .in('account_id', otherAccountIds)
     .is('transfer_pair_id', null)
@@ -354,8 +340,8 @@ async function reconcileTransferPairs(
     // Hard reject: user already decided
     if (tx.categorized_by === 'user' || tx.categorized_by === 'user_rule') continue;
 
-    // Hard reject: has a third-party counterparty
-    if (isThirdPartyCounterparty(tx.counterparty_raw, userAccounts, userName)) continue;
+    // Hard reject: the description names a third party (not the user / their accounts)
+    if (looksThirdParty(tx.description_norm || tx.description, userAccounts, userName)) continue;
 
     const bestMatch = findBestMatch(tx, candidates as ReconciliationCandidate[], userAccounts, userName, usedCandidateIds);
     if (bestMatch) {
@@ -393,13 +379,17 @@ async function reconcileTransferPairs(
   return pairsMatched;
 }
 
-function isThirdPartyCounterparty(
-  counterpartyRaw: string | null,
+// Does the transaction text (its description) name a THIRD PARTY — i.e. not the user and not one
+// of their own accounts? Used to reject false transfer pairings: a payment to someone else is not
+// an internal transfer. Reads the description, where banks put the other party
+// ("Bizum payment to: X", "Payment from Y", "From Instant Access Savings").
+function looksThirdParty(
+  text: string | null,
   userAccounts: Array<{ name: string; institution: string | null }>,
   userName: { firstName: string | null; lastName: string | null } | undefined,
 ): boolean {
-  if (!counterpartyRaw || counterpartyRaw.trim().length === 0) return false;
-  const cp = counterpartyRaw.toLowerCase();
+  if (!text || text.trim().length === 0) return false;
+  const cp = text.toLowerCase();
 
   // Check if counterparty matches any of the user's account names or institutions
   for (const account of userAccounts) {
@@ -441,8 +431,8 @@ function findBestMatch(
     if (c.categorized_by === 'user' || c.categorized_by === 'user_rule') continue;
     // Hard reject: already paired
     if (c.transfer_pair_id) continue;
-    // Hard reject: third-party counterparty on candidate
-    if (isThirdPartyCounterparty(c.counterparty_raw, userAccounts, userName)) continue;
+    // Hard reject: the candidate's description names a third party
+    if (looksThirdParty(c.description_norm || c.description, userAccounts, userName)) continue;
 
     // Opposite signs
     if ((tx.amount > 0 && c.amount > 0) || (tx.amount < 0 && c.amount < 0)) continue;
@@ -467,20 +457,21 @@ function findBestMatch(
     if (tx.movement === 'TRANSFER') signals++;
     if (c.movement === 'TRANSFER') signals++;
 
-    // Signal: counterparty matches the other account's name/institution
+    // Signal: this transaction's description names the OTHER account (its name/institution),
+    // e.g. "From Instant Access Savings" on the Personal side names the Savings account.
     const txAccount = accountById.get(tx.account_id);
     const cAccount = accountById.get(c.account_id);
-    if (tx.counterparty_raw && cAccount) {
-      const cpLower = tx.counterparty_raw.toLowerCase();
-      if ((cAccount.name && cpLower.includes(cAccount.name.toLowerCase())) ||
-          (cAccount.institution && cpLower.includes(cAccount.institution.toLowerCase()))) {
+    const txDescLower = (tx.description_norm || tx.description || '').toLowerCase();
+    const cDescLower = (c.description_norm || c.description || '').toLowerCase();
+    if (cAccount) {
+      if ((cAccount.name && txDescLower.includes(cAccount.name.toLowerCase())) ||
+          (cAccount.institution && txDescLower.includes(cAccount.institution.toLowerCase()))) {
         signals++;
       }
     }
-    if (c.counterparty_raw && txAccount) {
-      const cpLower = c.counterparty_raw.toLowerCase();
-      if ((txAccount.name && cpLower.includes(txAccount.name.toLowerCase())) ||
-          (txAccount.institution && cpLower.includes(txAccount.institution.toLowerCase()))) {
+    if (txAccount) {
+      if ((txAccount.name && cDescLower.includes(txAccount.name.toLowerCase())) ||
+          (txAccount.institution && cDescLower.includes(txAccount.institution.toLowerCase()))) {
         signals++;
       }
     }
@@ -1022,11 +1013,30 @@ serve(async (req) => {
       console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
       
       const chunks = splitIntoChunks(fileContent);
-      
+
+      // Process chunks with bounded concurrency. Awaiting each AI call sequentially made large
+      // multi-page PDFs (a normal 17-page Revolut statement is ~15 chunks) exceed the edge
+      // function's ~150s wall-clock limit → HTTP 546 WORKER_RESOURCE_LIMIT, and the import
+      // stalled with 0 transactions. Running several calls at once keeps total time ≈ the
+      // slowest wave, not the sum. Cap concurrency so we don't burst the AI rate limit
+      // (callAIWithRetry already backs off on 429).
+      const CHUNK_CONCURRENCY = 5;
+      const chunkResults: Array<Awaited<ReturnType<typeof callAIWithRetry>>> = new Array(chunks.length);
+      let nextChunk = 0;
+      const runWorker = async () => {
+        while (true) {
+          const i = nextChunk++;
+          if (i >= chunks.length) return;
+          console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+          chunkResults[i] = await callAIWithRetry(chunks[i], prompt, true);
+        }
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(CHUNK_CONCURRENCY, chunks.length) }, () => runWorker()),
+      );
+
       for (let i = 0; i < chunks.length; i++) {
-        console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
-        
-        const result = await callAIWithRetry(chunks[i], prompt, true);
+        const result = chunkResults[i];
         aiInputTokens += result.usage?.input_tokens || 0;
         aiOutputTokens += result.usage?.output_tokens || 0;
 
@@ -1245,6 +1255,10 @@ serve(async (req) => {
     // Per-month dedupe trackers (so identical txs in different months stay distinct).
     const seenFingerprintsByMonth: Record<string, Set<string>> = {};
     const seenNaturalKeysByMonth: Record<string, Set<string>> = {};
+    // Nth occurrence of an identical (date|amount|normalized-description) key WITHIN this import,
+    // in file order. Feeds the fingerprint + natural-key so two genuinely-distinct same-day rows
+    // aren't collapsed into one (see calculateFingerprint's `sequence` note).
+    const occurrenceByKey: Record<string, number> = {};
     // Accumulates user_rule hits during the loop, batch-applied via increment_rule_stats
     // after the loop instead of one round-trip per matched transaction.
     const ruleHitCounts = new Map<string, number>();
@@ -1261,8 +1275,6 @@ serve(async (req) => {
       const descriptionClean = t.description_clean || normalizeDescription(descriptionRaw);
       const amountSigned = t.amount_signed ?? t.amount;
       const runningBalance = t.running_balance ?? null;
-      const sourceTransactionId = t.source_transaction_id || null;
-      const counterpartyRaw = t.counterparty_raw || null;
       const currency = t.currency || 'EUR';
       
       if (!postedDate || amountSigned === undefined) {
@@ -1286,12 +1298,18 @@ serve(async (req) => {
       const seenFingerprints = seenFingerprintsByMonth[txMonthKey];
       const seenNaturalKeys = seenNaturalKeysByMonth[txMonthKey];
 
+      const normalizedDesc = normalizeDescription(descriptionRaw);
+      const baseKey = `${postedDate}|${amountSigned.toFixed(2)}|${normalizedDesc.toLowerCase()}`;
+      const occurrence = occurrenceByKey[baseKey] ?? 0;
+      occurrenceByKey[baseKey] = occurrence + 1;
+
       const fingerprint = await calculateFingerprint(
         'import',
         postedDate,
         amountSigned,
         currency,
         descriptionRaw,
+        occurrence,
       );
 
       const rowHash = await sha256(JSON.stringify(t));
@@ -1315,9 +1333,10 @@ serve(async (req) => {
         continue;
       }
 
-      const normalizedDesc = normalizeDescription(descriptionRaw);
-      const naturalKey = `${postedDate}|${amountSigned.toFixed(2)}|${normalizedDesc.toLowerCase()}`;
-      
+      // Same occurrence tiebreaker as the fingerprint: distinct same-day/same-amount rows keep
+      // distinct keys instead of collapsing into one.
+      const naturalKey = occurrence > 0 ? `${baseKey}|#${occurrence}` : baseKey;
+
       if (existingNaturalKeys.has(naturalKey) || seenNaturalKeys.has(naturalKey)) {
         stats.duplicatesIgnored++;
         if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
@@ -1350,7 +1369,6 @@ serve(async (req) => {
         movement,
         descriptionRaw,
         descriptionClean,
-        counterpartyRaw,
         accountsForDetection,
         userContext ? { firstName: userContext.firstName, lastName: userContext.lastName } : undefined
       );
@@ -1485,7 +1503,6 @@ serve(async (req) => {
         running_balance: runningBalance,
         description: descriptionClean || 'Sin descripción',
         description_norm: normalizeDescription(descriptionRaw),
-        description_clean: descriptionClean,
         original_description: descriptionRaw || null,
         movement: movement,
         category: categorySlug,
@@ -1494,8 +1511,6 @@ serve(async (req) => {
         category_source: categorySource,
         categorized_by: categorizedBy,
         confidence: confidence,
-        source_transaction_id: sourceTransactionId,
-        counterparty_raw: counterpartyRaw,
         fingerprint: fingerprint,
         source_row_hash: rowHash,
       };
@@ -1503,30 +1518,16 @@ serve(async (req) => {
       newTransactions.push(txRecord);
     }
 
-    // ── Running-balance consistency check ─────────────────────────
-    // Neobank exports (Revolut, etc.) can mix sub-account running_balances
-    // into one file. Detect this by checking consecutive pairs: if the
-    // previous rb + current amount ≠ current rb in too many cases, the
-    // running_balance data is unreliable — NULL it so Pocket falls back
-    // to the computed path (initial_balance + sum(amounts)).
-    const withRb = newTransactions
-      .filter((tx) => tx.running_balance != null)
-      .sort((a, b) => a.date.localeCompare(b.date) || (a.fingerprint ?? '').localeCompare(b.fingerprint ?? ''));
-    if (withRb.length >= 5) {
-      let mismatches = 0;
-      let checked = 0;
-      for (let i = 1; i < withRb.length; i++) {
-        const prevRb = Number(withRb[i - 1].running_balance);
-        const currAmount = Number(withRb[i].amount);
-        const currRb = Number(withRb[i].running_balance);
-        const expected = prevRb + currAmount;
-        if (Math.abs(expected - currRb) > 0.02) mismatches++;
-        checked++;
-      }
-      if (checked > 0 && mismatches / checked > 0.2) {
-        console.log(`[process-import] Running balance inconsistency detected: ${mismatches}/${checked} mismatches (${Math.round(mismatches / checked * 100)}%). NULLing running_balance for this import.`);
-        for (const tx of newTransactions) tx.running_balance = null;
-      }
+    // ── Running-balance reliability check ─────────────────────────
+    // Neobank exports (Revolut, etc.) can interleave several sub-account running_balance tracks
+    // into one file, which makes the balance meaningless for a single Pocket account. When the
+    // rows can't be reconstructed into one consistent chain, NULL the balances so Pocket falls
+    // back to the computed path (initial_balance + Σamount). This reconstruction is order-
+    // independent, so clean statements with multiple same-day transactions are NOT false-flagged.
+    const rbRowCount = newTransactions.filter((tx) => tx.running_balance != null).length;
+    if (rbRowCount >= 5 && !runningBalanceIsReliable(newTransactions)) {
+      console.log(`[process-import] Running balance unreliable across ${rbRowCount} rows (couldn't form a single balance chain — likely mixed sub-accounts). NULLing running_balance for this import.`);
+      for (const tx of newTransactions) tx.running_balance = null;
     }
 
     // Batch-upsert the import_rows audit records collected during the loop above — real

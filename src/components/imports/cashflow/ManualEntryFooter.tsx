@@ -105,7 +105,6 @@ export function ManualEntryFooter({
         date: entry.date,
         description: cleanDesc,
         description_norm: descNorm,
-        description_clean: cleanDesc,
         amount: signedAmount,
         currency,
         movement: entry.movement,
