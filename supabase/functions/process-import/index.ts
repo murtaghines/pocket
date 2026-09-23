@@ -75,8 +75,6 @@ For each transaction, extract:
 - description_clean: Clean, readable description removing reference numbers and noise.
 - amount_signed: Numeric value (positive for income, negative for expenses/transfers out).
 - running_balance: Balance after transaction if shown, otherwise null.
-- source_transaction_id: External transaction ID/reference if visible (e.g., MercadoPago ID), otherwise null.
-- counterparty_raw: Name of the other party if identifiable (beneficiary, payer, merchant), otherwise null.
 - movement: One of: INCOME, EXPENSE, TRANSFER (the fundamental type of money movement)
 - category_slug: See CATEGORY_SLUG rule below — null for INCOME/EXPENSE, required for TRANSFER.
 - currency: Currency code (EUR, USD, GBP, ARS, MXN, etc.) - detect from symbols or context
@@ -205,14 +203,15 @@ function detectInternalTransfer(
   movement: MovementType,
   descriptionRaw: string,
   descriptionClean: string,
-  counterpartyRaw: string | null,
   userAccounts: Array<{ name: string; institution: string | null; account_role: string }>,
   userName?: { firstName: string | null; lastName: string | null }
 ): { isTransfer: boolean; categorySlug: string } {
   // DO NOT blindly trust AI's TRANSFER classification.
   // Only confirm as transfer if explicit signals are found below.
-  
-  const textToCheck = `${descriptionRaw} ${descriptionClean} ${counterpartyRaw || ''}`.toLowerCase();
+  // The counterparty is read straight from the description — banks put the other party there
+  // ("Bizum payment to: X", "Payment from Y", "From Instant Access Savings").
+
+  const textToCheck = `${descriptionRaw} ${descriptionClean}`.toLowerCase();
   
   const ownTransferPatterns = [
     /traspaso entre cuentas/i,
@@ -270,19 +269,6 @@ function detectInternalTransfer(
     }
   }
   
-  if (counterpartyRaw) {
-    const normalizedCounterparty = counterpartyRaw.toLowerCase();
-    for (const account of userAccounts) {
-      if (account.name && normalizedCounterparty.includes(account.name.toLowerCase())) {
-        const categorySlug = account.account_role === 'INVESTMENT' ? 'to_investment' : 'own_transfer';
-        return { isTransfer: true, categorySlug };
-      }
-      if (account.institution && normalizedCounterparty.includes(account.institution.toLowerCase())) {
-        return { isTransfer: true, categorySlug: 'own_transfer' };
-      }
-    }
-  }
-  
   return { isTransfer: false, categorySlug: '' };
 }
 
@@ -300,7 +286,6 @@ interface ReconciliationCandidate {
   currency: string;
   movement: string;
   categorized_by: string | null;
-  counterparty_raw: string | null;
   description: string;
   description_norm: string | null;
   transfer_pair_id: string | null;
@@ -320,7 +305,7 @@ async function reconcileTransferPairs(
   // 1. Fetch newly inserted transactions for THIS import
   const { data: newTxs } = await supabase
     .from('transactions')
-    .select('id, account_id, date, amount, currency, movement, categorized_by, counterparty_raw, description, description_norm, transfer_pair_id')
+    .select('id, account_id, date, amount, currency, movement, categorized_by, description, description_norm, transfer_pair_id')
     .eq('user_id', userId)
     .eq('account_id', accountId)
     .in('fingerprint', [...insertedFingerprints].slice(0, 500))
@@ -340,7 +325,7 @@ async function reconcileTransferPairs(
   const otherAccountIds = userAccounts.filter(a => a.id !== accountId).map(a => a.id);
   const { data: candidates } = await supabase
     .from('transactions')
-    .select('id, account_id, date, amount, currency, movement, categorized_by, counterparty_raw, description, description_norm, transfer_pair_id')
+    .select('id, account_id, date, amount, currency, movement, categorized_by, description, description_norm, transfer_pair_id')
     .eq('user_id', userId)
     .in('account_id', otherAccountIds)
     .is('transfer_pair_id', null)
@@ -355,8 +340,8 @@ async function reconcileTransferPairs(
     // Hard reject: user already decided
     if (tx.categorized_by === 'user' || tx.categorized_by === 'user_rule') continue;
 
-    // Hard reject: has a third-party counterparty
-    if (isThirdPartyCounterparty(tx.counterparty_raw, userAccounts, userName)) continue;
+    // Hard reject: the description names a third party (not the user / their accounts)
+    if (looksThirdParty(tx.description_norm || tx.description, userAccounts, userName)) continue;
 
     const bestMatch = findBestMatch(tx, candidates as ReconciliationCandidate[], userAccounts, userName, usedCandidateIds);
     if (bestMatch) {
@@ -394,13 +379,17 @@ async function reconcileTransferPairs(
   return pairsMatched;
 }
 
-function isThirdPartyCounterparty(
-  counterpartyRaw: string | null,
+// Does the transaction text (its description) name a THIRD PARTY — i.e. not the user and not one
+// of their own accounts? Used to reject false transfer pairings: a payment to someone else is not
+// an internal transfer. Reads the description, where banks put the other party
+// ("Bizum payment to: X", "Payment from Y", "From Instant Access Savings").
+function looksThirdParty(
+  text: string | null,
   userAccounts: Array<{ name: string; institution: string | null }>,
   userName: { firstName: string | null; lastName: string | null } | undefined,
 ): boolean {
-  if (!counterpartyRaw || counterpartyRaw.trim().length === 0) return false;
-  const cp = counterpartyRaw.toLowerCase();
+  if (!text || text.trim().length === 0) return false;
+  const cp = text.toLowerCase();
 
   // Check if counterparty matches any of the user's account names or institutions
   for (const account of userAccounts) {
@@ -442,8 +431,8 @@ function findBestMatch(
     if (c.categorized_by === 'user' || c.categorized_by === 'user_rule') continue;
     // Hard reject: already paired
     if (c.transfer_pair_id) continue;
-    // Hard reject: third-party counterparty on candidate
-    if (isThirdPartyCounterparty(c.counterparty_raw, userAccounts, userName)) continue;
+    // Hard reject: the candidate's description names a third party
+    if (looksThirdParty(c.description_norm || c.description, userAccounts, userName)) continue;
 
     // Opposite signs
     if ((tx.amount > 0 && c.amount > 0) || (tx.amount < 0 && c.amount < 0)) continue;
@@ -468,20 +457,21 @@ function findBestMatch(
     if (tx.movement === 'TRANSFER') signals++;
     if (c.movement === 'TRANSFER') signals++;
 
-    // Signal: counterparty matches the other account's name/institution
+    // Signal: this transaction's description names the OTHER account (its name/institution),
+    // e.g. "From Instant Access Savings" on the Personal side names the Savings account.
     const txAccount = accountById.get(tx.account_id);
     const cAccount = accountById.get(c.account_id);
-    if (tx.counterparty_raw && cAccount) {
-      const cpLower = tx.counterparty_raw.toLowerCase();
-      if ((cAccount.name && cpLower.includes(cAccount.name.toLowerCase())) ||
-          (cAccount.institution && cpLower.includes(cAccount.institution.toLowerCase()))) {
+    const txDescLower = (tx.description_norm || tx.description || '').toLowerCase();
+    const cDescLower = (c.description_norm || c.description || '').toLowerCase();
+    if (cAccount) {
+      if ((cAccount.name && txDescLower.includes(cAccount.name.toLowerCase())) ||
+          (cAccount.institution && txDescLower.includes(cAccount.institution.toLowerCase()))) {
         signals++;
       }
     }
-    if (c.counterparty_raw && txAccount) {
-      const cpLower = c.counterparty_raw.toLowerCase();
-      if ((txAccount.name && cpLower.includes(txAccount.name.toLowerCase())) ||
-          (txAccount.institution && cpLower.includes(txAccount.institution.toLowerCase()))) {
+    if (txAccount) {
+      if ((txAccount.name && cDescLower.includes(txAccount.name.toLowerCase())) ||
+          (txAccount.institution && cDescLower.includes(txAccount.institution.toLowerCase()))) {
         signals++;
       }
     }
@@ -1285,8 +1275,6 @@ serve(async (req) => {
       const descriptionClean = t.description_clean || normalizeDescription(descriptionRaw);
       const amountSigned = t.amount_signed ?? t.amount;
       const runningBalance = t.running_balance ?? null;
-      const sourceTransactionId = t.source_transaction_id || null;
-      const counterpartyRaw = t.counterparty_raw || null;
       const currency = t.currency || 'EUR';
       
       if (!postedDate || amountSigned === undefined) {
@@ -1381,7 +1369,6 @@ serve(async (req) => {
         movement,
         descriptionRaw,
         descriptionClean,
-        counterpartyRaw,
         accountsForDetection,
         userContext ? { firstName: userContext.firstName, lastName: userContext.lastName } : undefined
       );
@@ -1516,7 +1503,6 @@ serve(async (req) => {
         running_balance: runningBalance,
         description: descriptionClean || 'Sin descripción',
         description_norm: normalizeDescription(descriptionRaw),
-        description_clean: descriptionClean,
         original_description: descriptionRaw || null,
         movement: movement,
         category: categorySlug,
@@ -1525,8 +1511,6 @@ serve(async (req) => {
         category_source: categorySource,
         categorized_by: categorizedBy,
         confidence: confidence,
-        source_transaction_id: sourceTransactionId,
-        counterparty_raw: counterpartyRaw,
         fingerprint: fingerprint,
         source_row_hash: rowHash,
       };

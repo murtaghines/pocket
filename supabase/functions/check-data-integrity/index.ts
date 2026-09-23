@@ -74,7 +74,7 @@ serve(async (req) => {
 
       const { data: unpaired } = await supabase
         .from('transactions')
-        .select('id, account_id, date, amount, currency, movement, categorized_by, counterparty_raw, description, description_norm, transfer_pair_id')
+        .select('id, account_id, date, amount, currency, movement, categorized_by, description, description_norm, transfer_pair_id')
         .eq('user_id', userId)
         .is('transfer_pair_id', null);
 
@@ -89,9 +89,10 @@ serve(async (req) => {
         const accountById = new Map(accounts.map(a => [a.id, a]));
         const usedIds = new Set<string>();
 
-        function isThirdParty(cp: string | null): boolean {
-          if (!cp || cp.trim().length === 0) return false;
-          const cpLow = cp.toLowerCase();
+        // Reads the description (where banks name the other party), not a counterparty column.
+        function isThirdParty(text: string | null): boolean {
+          if (!text || text.trim().length === 0) return false;
+          const cpLow = text.toLowerCase();
           for (const acct of accounts!) {
             if (acct.name && cpLow.includes(acct.name.toLowerCase())) return false;
             if (acct.institution && cpLow.includes(acct.institution.toLowerCase())) return false;
@@ -111,7 +112,7 @@ serve(async (req) => {
         for (const tx of unpaired) {
           if (usedIds.has(tx.id)) continue;
           if (tx.categorized_by === 'user' || tx.categorized_by === 'user_rule') continue;
-          if (isThirdParty(tx.counterparty_raw)) continue;
+          if (isThirdParty(tx.description_norm || tx.description)) continue;
 
           type Scored = { c: typeof unpaired[0]; score: number; catSlug: string };
           const scored: Scored[] = [];
@@ -121,7 +122,7 @@ serve(async (req) => {
             if (c.account_id === tx.account_id) continue;
             if (c.categorized_by === 'user' || c.categorized_by === 'user_rule') continue;
             if (c.transfer_pair_id) continue;
-            if (isThirdParty(c.counterparty_raw)) continue;
+            if (isThirdParty(c.description_norm || c.description)) continue;
             if ((tx.amount > 0 && c.amount > 0) || (tx.amount < 0 && c.amount < 0)) continue;
             if (tx.amount === 0 || c.amount === 0) continue;
             const txCur = (tx.currency || 'EUR').toUpperCase();
@@ -136,15 +137,15 @@ serve(async (req) => {
             if (c.movement === 'TRANSFER') signals++;
             const txAcct = accountById.get(tx.account_id);
             const cAcct = accountById.get(c.account_id);
-            if (tx.counterparty_raw && cAcct) {
-              const cpL = tx.counterparty_raw.toLowerCase();
-              if ((cAcct.name && cpL.includes(cAcct.name.toLowerCase())) ||
-                  (cAcct.institution && cpL.includes(cAcct.institution.toLowerCase()))) signals++;
+            const txDescLower = (tx.description_norm || tx.description || '').toLowerCase();
+            const cDescLower = (c.description_norm || c.description || '').toLowerCase();
+            if (cAcct) {
+              if ((cAcct.name && txDescLower.includes(cAcct.name.toLowerCase())) ||
+                  (cAcct.institution && txDescLower.includes(cAcct.institution.toLowerCase()))) signals++;
             }
-            if (c.counterparty_raw && txAcct) {
-              const cpL = c.counterparty_raw.toLowerCase();
-              if ((txAcct.name && cpL.includes(txAcct.name.toLowerCase())) ||
-                  (txAcct.institution && cpL.includes(txAcct.institution.toLowerCase()))) signals++;
+            if (txAcct) {
+              if ((txAcct.name && cDescLower.includes(txAcct.name.toLowerCase())) ||
+                  (txAcct.institution && cDescLower.includes(txAcct.institution.toLowerCase()))) signals++;
             }
             if (userName?.firstName && userName?.lastName &&
                 userName.firstName.length >= 3 && userName.lastName.length >= 3) {
