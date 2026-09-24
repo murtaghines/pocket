@@ -1,5 +1,6 @@
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+import { reconstructDocument, type PdfTextItem } from "./pdfTable";
 
 // Shared file-reading helpers for the imports pipeline. Previously each upload hook /
 // component carried its own copy of these (extractPdfText ×3, getMonthKey ×2, VALID_EXTS ×2).
@@ -46,6 +47,12 @@ const PDF_MAX_PAGES = 30;
 /**
  * Extract selectable text from a PDF (first 30 pages), accepting either a File or a raw
  * ArrayBuffer. Throws if the PDF has essentially no text (i.e. a scanned/image-only PDF).
+ *
+ * The text handed to the AI extractor is reconstructed by `reconstructDocument`
+ * ([./pdfTable](./pdfTable.ts)), which only changes the output for **two-column** statements
+ * (separate "Money out" / "Money in" columns, e.g. Revolut). Every other PDF falls back to
+ * the historical flat join, so single-column statements, other banks and investment PDFs are
+ * byte-for-byte unchanged.
  */
 export async function extractPdfText(source: File | ArrayBuffer): Promise<PdfExtractResult> {
   const arrayBuffer = source instanceof File ? await source.arrayBuffer() : source;
@@ -53,21 +60,21 @@ export async function extractPdfText(source: File | ArrayBuffer): Promise<PdfExt
   const pdf = await loadingTask.promise;
 
   const processedPages = Math.min(pdf.numPages, PDF_MAX_PAGES);
-  let content = "";
+  const pages: PdfTextItem[][] = [];
 
   for (let pageNum = 1; pageNum <= processedPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
-
-    const pageText = (textContent.items as any[])
-      .map((item) => (typeof item?.str === "string" ? item.str : ""))
-      .filter(Boolean)
-      .join(" ");
-
-    content += `\n\n--- Page ${pageNum} ---\n${pageText}`;
+    pages.push(
+      (textContent.items as any[]).map((item) => ({
+        str: typeof item?.str === "string" ? item.str : "",
+        x: item?.transform?.[4] ?? 0,
+        y: item?.transform?.[5] ?? 0,
+      })),
+    );
   }
 
-  const trimmed = content.trim();
+  const trimmed = reconstructDocument(pages);
   if (trimmed.length < 50) {
     throw new Error(
       "This PDF has no selectable text (likely scanned). Try a PDF with text or an Excel/CSV file."
