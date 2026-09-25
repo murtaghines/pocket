@@ -63,13 +63,21 @@ For each transaction, extract ONLY these essential fields:
   train/metro/toll→transport, clothing/sports store→shopping/sports). Use other_expense/other_income
   ONLY when the description genuinely gives no clue.
 
+STATE — SKIP any transaction whose state/status is REVERTED, DECLINED, CANCELLED or FAILED: it did
+not complete and does not affect the balance. Emit only completed transactions.
+FEE — if the data has a separate fee/commission column with a NON-ZERO value, set amount_signed to
+(amount − fee): the fee is charged on top of the amount and moves the balance further. When the fee
+is 0 or absent, amount_signed = amount.
+FORMAT — rows may arrive pre-parsed as "<date> | <description> | <±amount> | bal <balance>": the
+leading +/− is the sign of amount_signed, and the value after "bal" is running_balance.
+
 Example output:
 [
   {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA MERCADONA","amount_signed":-87.43,"running_balance":1234.56,"currency":"EUR","movement":"EXPENSE","category_slug":"groceries"},
   {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE","amount_signed":2850.00,"running_balance":3084.56,"currency":"EUR","movement":"INCOME","category_slug":"salary"}
 ]
 
-Extract ALL transactions visible in the data. Do not skip any.`;
+Extract ALL completed transactions visible in the data (skip reverted/declined/cancelled ones).`;
 
 // ========== FULL PROMPT (for smaller files) ==========
 // bank/payment_channel/value_date removed below: none of them survive downstream (grep-verified
@@ -81,11 +89,18 @@ const CASHFLOW_ANALYSIS_PROMPT = `You are a financial data extraction expert spe
 
 CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
 
+STATE — SKIP any transaction whose state/status is REVERTED, DECLINED, CANCELLED or FAILED: it did
+not complete and does not affect the balance. Emit only completed transactions.
+FORMAT — rows may arrive pre-parsed as "<date> | <description> | <±amount> | bal <balance>": the
+leading +/− is the sign of amount_signed, and the value after "bal" is running_balance.
+
 For each transaction, extract:
 - posted_date: ISO format (YYYY-MM-DD). This is the main transaction date shown on the statement.
 - description_raw: Original raw description from the statement.
 - description_clean: Clean, readable description removing reference numbers and noise.
-- amount_signed: Numeric value (positive for income, negative for expenses/transfers out).
+- amount_signed: Numeric value (positive for income, negative for expenses/transfers out). If the
+  data has a separate fee/commission column with a NON-ZERO value, use (amount − fee): the fee is
+  charged on top and moves the balance further. Fee 0 or absent → amount_signed = amount.
 - running_balance: Balance after transaction if shown, otherwise null.
 - movement: One of: INCOME, EXPENSE, TRANSFER (the fundamental type of money movement)
 - category_slug: Best-fit category for the transaction — see CATEGORY_SLUG rule below.
