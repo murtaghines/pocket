@@ -42,8 +42,12 @@ const SUMMARY_RE =
 // A date cell that anchors a transaction row ("Jun 1, 2026" or "01/07/2026").
 const DATE_RE =
   /^[A-Za-z]{3,}\.?\s+\d{1,2},?\s+\d{4}$|^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$/;
-const IN_COL = /(money|paid)\s*in|credit|abono|ingreso/i;
-const OUT_COL = /(money|paid)\s*out|debit|cargo|retiro|withdrawal/i;
+// Deliberately narrow: only the explicit "Money in/out" / "Paid in/out" column wording flips
+// on two-column reconstruction. Generic debit/credit/cargo/abono headers (traditional bank and
+// brokerage statements) do NOT — they keep the historical flat join, which avoids reshaping
+// statements whose non-transaction rows (e.g. investment holdings) the AI still needs to see.
+const IN_COL = /(money|paid)\s*in\b/i;
+const OUT_COL = /(money|paid)\s*out\b/i;
 const BAL_COL = /balance|saldo/i;
 const DATE_COL = /date|fecha/i;
 const DESC_COL = /descrip|concepto/i;
@@ -215,9 +219,12 @@ function reconstructTwoColumnPage(rows: Row[], cols: Col[], headerIndex: number)
  * Two-column statements (some page has both an out- and an in-column) are reconstructed;
  * every other document uses the flat join — identical to the pre-existing behavior.
  */
-export function reconstructDocument(pages: PdfTextItem[][]): string {
+export function reconstructDocument(pages: PdfTextItem[][], tabular = true): string {
   const pageRows = pages.map(groupRows);
-  const detections = pageRows.map(detectColumns);
+  // `tabular = false` (investment uploads) forces the historical flat join on every page — the
+  // investment extractor parses holdings/quantities/prices, not just signed transaction rows, so
+  // it must never be reshaped by the two-column logic.
+  const detections = tabular ? pageRows.map(detectColumns) : pageRows.map(() => null);
   const twoColumn = detections.some((d) => d !== null && hasInOut(d.columns));
 
   const parts: string[] = [];
