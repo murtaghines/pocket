@@ -90,4 +90,13 @@ describe("reconstructDocument — fallback to flat join", () => {
     const flat = page.map((i) => i.str).filter(Boolean).join(" ");
     expect(reconstructDocument([page])).toBe(`--- Page 1 ---\n${flat}`);
   });
+
+  it("forces the flat join when tabular=false (investment path), even for a two-column page", () => {
+    const page = twoColumnPage();
+    const flat = page.map((i) => i.str).filter(Boolean).join(" ");
+    const out = reconstructDocument([page], false);
+    expect(out).toBe(`--- Page 1 ---\n${flat}`);
+    expect(out).not.toContain("-€20.00"); // no reconstruction/signing happened
+    expect(out).not.toContain(" | bal ");
+  });
 });

@@ -67,7 +67,9 @@ export function useMonthlyInvestmentUpload() {
     }
     
     if (extension === "pdf") {
-      const result = await extractPdfText(file);
+      // Investment statements carry holdings/quantities/prices, not just signed transaction
+      // rows — never reshape them with the two-column table logic (bank-statement only).
+      const result = await extractPdfText(file, { reconstructTables: false });
       if (result.truncated) {
         toast({
           title: "PDF partially processed",

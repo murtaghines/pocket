@@ -49,12 +49,16 @@ const PDF_MAX_PAGES = 30;
  * ArrayBuffer. Throws if the PDF has essentially no text (i.e. a scanned/image-only PDF).
  *
  * The text handed to the AI extractor is reconstructed by `reconstructDocument`
- * ([./pdfTable](./pdfTable.ts)), which only changes the output for **two-column** statements
- * (separate "Money out" / "Money in" columns, e.g. Revolut). Every other PDF falls back to
- * the historical flat join, so single-column statements, other banks and investment PDFs are
- * byte-for-byte unchanged.
+ * ([./pdfTable](./pdfTable.ts)), which only changes the output for **two-column** bank
+ * statements (separate "Money out" / "Money in" columns, e.g. Revolut). Every other PDF falls
+ * back to the historical flat join, so single-column statements and other banks are unchanged.
+ * `reconstructTables` defaults to true; the investment upload path passes `false` so investment
+ * statements (holdings/quantities/prices, not just signed rows) are never reshaped.
  */
-export async function extractPdfText(source: File | ArrayBuffer): Promise<PdfExtractResult> {
+export async function extractPdfText(
+  source: File | ArrayBuffer,
+  opts: { reconstructTables?: boolean } = {},
+): Promise<PdfExtractResult> {
   const arrayBuffer = source instanceof File ? await source.arrayBuffer() : source;
   const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
   const pdf = await loadingTask.promise;
@@ -74,7 +78,7 @@ export async function extractPdfText(source: File | ArrayBuffer): Promise<PdfExt
     );
   }
 
-  const trimmed = reconstructDocument(pages);
+  const trimmed = reconstructDocument(pages, opts.reconstructTables ?? true);
   if (trimmed.length < 50) {
     throw new Error(
       "This PDF has no selectable text (likely scanned). Try a PDF with text or an Excel/CSV file."
