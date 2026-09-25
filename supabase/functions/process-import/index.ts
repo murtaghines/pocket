@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { categorize, normalize as normalizeForCategorizer, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
 import { runningBalanceIsReliable } from "../_shared/runningBalance.ts";
+import { merchantKey } from "../_shared/merchantKey.ts";
 import {
   type MovementType,
   mapCategorySlug,
@@ -1271,6 +1272,7 @@ serve(async (req) => {
       expenses: 0,
       categorizedByRule: 0,
       categorizedByCategorizer: 0,
+      categorizedByDictionary: 0,
       categorizedByAI: 0,
       aiInputTokens,
       aiOutputTokens,
@@ -1297,6 +1299,37 @@ serve(async (req) => {
     // contributor to WORKER_RESOURCE_LIMIT on large statements.
     const importRowRecords: Record<string, unknown>[] = [];
 
+    // ── Global learning merchant dictionary (Phase 2) ──────────────────────────
+    // Preload resolved merchant→category answers for the merchants in THIS import (one query),
+    // and collect votes to feed back after the loop. merchantKey() returns null for
+    // person-to-person payments / transfers, so no PII ever enters the dictionary.
+    const dictUserName = userContext
+      ? { firstName: userContext.firstName, lastName: userContext.lastName }
+      : undefined;
+    const merchantDict = new Map<string, { category: string; confidence: number }>();
+    const merchantVotes: Array<{ k: string; cat: string; mov: string; w: number; sample: string }> = [];
+    {
+      const keysNeeded = new Set<string>();
+      for (const tt of allTransactions) {
+        const k = merchantKey(tt.description_raw || tt.description || '', dictUserName);
+        if (k) keysNeeded.add(k);
+      }
+      if (keysNeeded.size > 0) {
+        const { data: dictRows } = await supabase
+          .from('merchant_categories')
+          .select('merchant_key, resolved_category, resolved_confidence')
+          .in('merchant_key', [...keysNeeded])
+          .not('resolved_category', 'is', null);
+        for (const r of dictRows || []) {
+          merchantDict.set(r.merchant_key, {
+            category: r.resolved_category as string,
+            confidence: (r.resolved_confidence as number) ?? 0.9,
+          });
+        }
+        console.log(`[process-import] merchant dictionary: ${merchantDict.size}/${keysNeeded.size} merchants resolved`);
+      }
+    }
+
     for (let i = 0; i < allTransactions.length; i++) {
       const t = allTransactions[i];
       
@@ -1309,6 +1342,8 @@ serve(async (req) => {
       const amountSigned = t.amount_signed ?? t.amount;
       const runningBalance = t.running_balance ?? null;
       const currency = t.currency || 'EUR';
+      // Merchant key for the global dictionary (null for person payments / transfers → skipped).
+      const mKey = merchantKey(descriptionRaw, dictUserName);
       
       if (!postedDate || amountSigned === undefined) {
         console.log(`[process-import] Skipping invalid transaction at index ${i}`);
@@ -1453,10 +1488,23 @@ serve(async (req) => {
         stats.categorizedByCategorizer++;
 
         console.log(`[process-import] Categorizer match: "${descriptionRaw.substring(0, 40)}" → ${categorizerMatch.category}→${categorySlug} (confidence: ${categorizerMatch.confidence}, rule: ${categorizerMatch.matchedRule.substring(0, 40)})`);
+      } else if (movement !== 'TRANSFER' && mKey && merchantDict.has(mKey)) {
+        // ── Priority 2.5: learned global merchant dictionary ──
+        // A known merchant → its cross-user consensus category (where user corrections propagate).
+        // Checked after the static categorizer, before falling back to the AI's per-import guess,
+        // so the same merchant is categorized consistently everywhere.
+        const hit = merchantDict.get(mKey)!;
+        movement = amountSigned >= 0 ? 'INCOME' : 'EXPENSE';
+        categorySlug = validateCategorySlug(hit.category, movement);
+        categoryId = categorySlugToId[categorySlug] || null;
+        categorySource = 'DICTIONARY';
+        categorizedBy = 'dictionary';
+        stats.categorizedByDictionary++;
+        console.log(`[process-import] Dictionary match: "${descriptionRaw.substring(0, 40)}" [${mKey}] → ${categorySlug}`);
       } else {
-        // No categorizer match — KEEP the AI's own category suggestion (it generalizes across
-        // merchants/countries/languages far better than the finite regex dictionary) instead of
-        // dumping everything into other_*. `categorySlug` already holds the AI baseline from above.
+        // No categorizer or dictionary match — KEEP the AI's own category suggestion (it generalizes
+        // across merchants/countries/languages far better than the finite regex dictionary) instead
+        // of dumping everything into other_*. `categorySlug` already holds the AI baseline from above.
         // Re-derive movement from sign as a guardrail (except transfers), then re-validate the AI
         // slug against that movement — an empty/invalid slug still resolves to other_income /
         // other_expense, so nothing regresses when the AI gives no usable category.
@@ -1515,6 +1563,18 @@ serve(async (req) => {
       if (movement === 'INCOME') stats.income++;
       else if (movement === 'EXPENSE') stats.expenses++;
       else if (movement === 'TRANSFER') stats.transfers++;
+
+      // ── Learn: record a global-dictionary vote for a genuine merchant with a real category ──
+      // mKey is null for person payments / transfers (never stored); other_* is skipped; a
+      // dictionary-sourced category is not re-voted (no self-reinforcing loop). A user_rule
+      // correction carries weight 100 so a single correction wins the consensus.
+      if (mKey && movement !== 'TRANSFER' && !categorySlug.startsWith('other_') && categorizedBy !== 'dictionary') {
+        merchantVotes.push({
+          k: mKey, cat: categorySlug, mov: movement,
+          w: categorizedBy === 'user_rule' ? 100 : 1,
+          sample: (descriptionClean || descriptionRaw).substring(0, 80),
+        });
+      }
 
       // Canonical transactions row (Fase 4 schema cleanup). Legacy columns
       // (type, tx_type, bank, posted_date, value_date, description_raw, payment_channel)
@@ -1687,6 +1747,14 @@ serve(async (req) => {
       if (statsError) {
         console.error(`[process-import] Failed to update rule stats for ${ruleId}:`, statsError);
       }
+    }
+
+    // Feed the global merchant dictionary (Phase 2): one batched RPC with this import's votes.
+    // Best-effort — a failure here must never fail the import.
+    if (merchantVotes.length > 0) {
+      const { error: voteError } = await supabase.rpc('apply_merchant_votes', { votes: merchantVotes });
+      if (voteError) console.error('[process-import] apply_merchant_votes failed:', voteError.message);
+      else console.log(`[process-import] merchant dictionary: recorded ${merchantVotes.length} votes`);
     }
 
     // Finalize import status — surface partial/total failures instead of always
