@@ -98,6 +98,42 @@ describe('categorize — name-based transfer detection (highest priority)', () =
   });
 });
 
+describe('categorize — ownNameAliases: a genuinely different full name for the same owner', () => {
+  // Distinct from `aliases` (same surname, different first name): the account's display
+  // name may be a pseudonym (e.g. a PII-free public demo profile) while raw bank statement
+  // text carries the real name. Each alias covers all the same name-order variants as the
+  // profile name itself (first+last, last+first, initial+last, ...).
+  const ctx: UserContext = {
+    firstName: 'Ana',
+    lastName: 'Demo',
+    ownNameAliases: ['Ines Murtagh'],
+  };
+
+  it('matches "first last" order → own_transfer (outflow)', () => {
+    const r = categorize('To Ines Murtagh', -115, ctx);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('own_transfer');
+  });
+
+  it('matches "last first" order → from_myself (inflow)', () => {
+    const r = categorize('Payment from MURTAGH INES', 3.57, ctx);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('from_myself');
+  });
+
+  it('matches "first last" full-caps order → from_myself (inflow)', () => {
+    const r = categorize('Payment from INES MURTAGH', 200, ctx);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('from_myself');
+  });
+
+  it('does not match an unrelated name', () => {
+    const r = categorize('Payment from PEDRO GARCIA', 50, ctx);
+    expect(r?.category).not.toBe('own_transfer');
+    expect(r?.category).not.toBe('from_myself');
+  });
+});
+
 describe('categorize — user custom categories override standard rules', () => {
   const ctx: UserContext = {
     firstName: 'Juan',
@@ -155,12 +191,6 @@ describe('categorize — neobank savings pockets are own_transfer, not investmen
     expect(r?.category).toBe('own_transfer');
   });
 
-  it('routes "From EUR Rendimientos Diarios" to own_transfer', () => {
-    const r = categorize('From EUR Rendimientos Diarios', 0.42);
-    expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('own_transfer');
-  });
-
   it('routes Revolut Savings to own_transfer', () => {
     const r = categorize('REVOLUT SAVINGS', -200);
     expect(r?.movement).toBe('TRANSFER');
@@ -187,6 +217,28 @@ describe('categorize — neobank savings pockets are own_transfer, not investmen
 
   it('keeps interest earned from savings as income (not own_transfer)', () => {
     const r = categorize('NET INTEREST PAID FROM SAVINGS', 2.50);
+    expect(r?.movement).not.toBe('TRANSFER');
+  });
+});
+
+describe('categorize — Revolut "Rendimientos Diarios" is invested money, not a savings pocket', () => {
+  // 2026-09-26, user-confirmed: unlike a plain savings pocket, this money is actively
+  // invested and earning a daily return, so it belongs with to_investment/from_investment
+  // rather than the neutral own_transfer bucket (contrast with the block above).
+  it('routes "To EUR Rendimientos Diarios" to to_investment (outflow)', () => {
+    const r = categorize('To EUR Rendimientos Diarios', -500);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('to_investment');
+  });
+
+  it('routes "From EUR Rendimientos Diarios" to from_investment (inflow)', () => {
+    const r = categorize('From EUR Rendimientos Diarios', 0.42);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('from_investment');
+  });
+
+  it('keeps "Net Interest Paid to Rendimientos Diarios" as income, unaffected', () => {
+    const r = categorize("Net Interest Paid to 'Rendimientos Diarios' for Aug 31", 0.03);
     expect(r?.movement).not.toBe('TRANSFER');
   });
 });

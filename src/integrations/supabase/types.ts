@@ -707,6 +707,7 @@ export type Database = {
           joint_account_names: string[] | null
           language: string
           onboarding_completed: boolean | null
+          own_name_aliases: string[]
           theme: string
           updated_at: string | null
           user_id: string
@@ -720,6 +721,7 @@ export type Database = {
           joint_account_names?: string[] | null
           language?: string
           onboarding_completed?: boolean | null
+          own_name_aliases?: string[]
           theme?: string
           updated_at?: string | null
           user_id: string
@@ -733,6 +735,7 @@ export type Database = {
           joint_account_names?: string[] | null
           language?: string
           onboarding_completed?: boolean | null
+          own_name_aliases?: string[]
           theme?: string
           updated_at?: string | null
           user_id?: string
