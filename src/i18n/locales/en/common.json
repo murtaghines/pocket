@@ -75,6 +75,7 @@
   },
   "imports": {
     "excluded": "Excluded",
+    "originalAmount": "Original: {{amount}}",
     "editTransaction": "edit transaction",
     "editInvestment": "Edit movement",
     "movement": "Movement",

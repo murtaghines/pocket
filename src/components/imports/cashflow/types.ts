@@ -25,6 +25,11 @@ export interface MonthTransaction {
   description_norm: string | null;
   original_description: string | null;
   amount: number;
+  /** Pre-edit amount, set once on the first manual amount edit/split. Null on every
+   *  row that has never had its amount changed by hand (the overwhelming majority).
+   *  Unrelated to joint-account split_percentage, which is never stored — only computed
+   *  at read time via splitAmt(). See supabase/migrations/20260926100000_add_amount_original.sql. */
+  amount_original: number | null;
   movement: MovementType | null;
   category: string;
   category_id: string | null;
