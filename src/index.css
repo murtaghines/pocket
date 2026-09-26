@@ -69,6 +69,7 @@
 
     /* Category colors - Transfer */
     --category-own-transfer: 220 12% 50%;    /* neutral slate */
+    --category-from-myself: 220 10% 65%;     /* lighter neutral slate */
     --category-to-investment: 216 75% 42%;   /* deep brand blue */
     --category-from-investment: 216 60% 55%; /* lighter brand blue */
     --category-to-joint-account: 200 85% 50%;/* bright sky blue */

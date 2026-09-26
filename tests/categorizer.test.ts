@@ -73,10 +73,16 @@ describe('categorize — name-based transfer detection (highest priority)', () =
     jointAccountNames: ['Maria Gomez'],
   };
 
-  it("matches the user's own name → own_transfer TRANSFER", () => {
+  it("matches the user's own name → own_transfer when amount is negative (outflow)", () => {
     const r = categorize('TRANSFERENCIA A JUAN PEREZ', -500, ctx);
     expect(r?.movement).toBe('TRANSFER');
     expect(r?.category).toBe('own_transfer');
+  });
+
+  it("matches the user's own name → from_myself when amount is positive (inflow)", () => {
+    const r = categorize('TRANSFERENCIA A JUAN PEREZ', 500, ctx);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('from_myself');
   });
 
   it('matches a joint-account name → to_joint_account when amount is negative (outflow)', () => {

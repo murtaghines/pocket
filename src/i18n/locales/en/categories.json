@@ -25,6 +25,7 @@
   },
   "transfer": {
     "own_transfer": "To Myself",
+    "from_myself": "From Myself",
     "to_investment": "To Investment",
     "from_investment": "From Investment",
     "to_joint_account": "To Joint Account",

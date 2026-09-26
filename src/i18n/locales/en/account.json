@@ -126,6 +126,8 @@
     "currency": "Base currency",
     "jointSplit": "Your share (%)",
     "jointSplitHelp": "Your percentage of shared expenses. E.g. 50 means you pay half.",
+    "jointAccountNames": "Joint account co-holders",
+    "jointAccountNamesHelp": "The name(s) of anyone you share an account with, exactly as they appear on bank statements. Transactions mentioning them are recognized as transfers, not income or expenses. Your own name is detected automatically.",
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
