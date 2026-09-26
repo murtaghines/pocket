@@ -126,6 +126,8 @@
     "currency": "Moneda base",
     "jointSplit": "Tu parte (%)",
     "jointSplitHelp": "Tu porcentaje de gastos compartidos. Ej: 50 significa que pagas la mitad.",
+    "jointAccountNames": "Co-titulares de cuenta conjunta",
+    "jointAccountNamesHelp": "El nombre de la persona con la que compartís una cuenta, tal como aparece en los extractos bancarios. Las transacciones que lo mencionen se reconocen como transferencias, no como ingresos o gastos. Tu propio nombre se detecta automáticamente.",
     "theme": "Tema",
     "themeLight": "Claro",
     "themeDark": "Oscuro",

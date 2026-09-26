@@ -63,7 +63,7 @@ export type ExpenseCategory =
   | 'insurance'
   | 'other_expense';
 
-export type TransferCategory = 'own_transfer' | 'to_investment' | 'from_investment' | 'to_joint_account' | 'from_joint_account';
+export type TransferCategory = 'own_transfer' | 'from_myself' | 'to_investment' | 'from_investment' | 'to_joint_account' | 'from_joint_account';
 export type Category = IncomeCategory | ExpenseCategory | TransferCategory;
 
 export interface CategorizationResult {
@@ -3244,9 +3244,11 @@ function buildPersonalNamePatterns(ctx: UserContext): RegExp[] {
  * ─── TRANSFER LOGIC ───────────────────────────────────────────
  *
  * Step 1 — Name match (highest priority):
- *   If the description contains the user's first + last name,
- *   it is an own_transfer regardless of other keywords.
- *   e.g. "Bizum a [user's name]" → own_transfer (confidence 0.99)
+ *   If the description contains the user's first + last name, it is own_transfer
+ *   (outflow, negative amount) or from_myself (inflow, positive amount) — a transfer
+ *   between two of the user's own accounts.
+ *   e.g. "Bizum a [user's name]" (-50) → own_transfer (confidence 0.99)
+ *   e.g. "Bizum de [user's name]" (+50) → from_myself (confidence 0.99)
  *
  * Step 2 — Investment platform name:
  *   If the description mentions a known broker/exchange,
@@ -3319,13 +3321,19 @@ export function categorize(
       }
     }
 
-    // Then check user's own name
+    // Then check user's own name. Direction-aware like the joint-account match above:
+    // negative (outflow, "sent to myself") → own_transfer/"To Myself", positive (inflow,
+    // "received from myself") → from_myself/"From Myself". Deliberately scoped to THIS
+    // name-match branch only — the generic own_transfer rule bucket below (Revolut Vault,
+    // Instant Access Savings, neobank pockets, …) stays directionless on purpose: those
+    // represent money moving into/out of a sub-pocket of the SAME account, not a transfer
+    // between two of the user's own distinct accounts, and are tested that way.
     const personalPatterns = buildPersonalNamePatterns(ctx);
     for (const pattern of personalPatterns) {
       if (pattern.test(norm)) {
         return {
           movement:    'TRANSFER',
-          category:    'own_transfer',
+          category:    amount > 0 ? 'from_myself' : 'own_transfer',
           confidence:  0.99,
           matchedRule: 'USER_NAME_MATCH',
         };
@@ -3386,10 +3394,16 @@ export function categorize(
 }
 
 /**
- * Flip directional transfer categories based on amount sign.
- * Description patterns match the platform/account name regardless of flow direction;
- * the amount sign disambiguates: negative = outflow (to_*), positive = inflow (from_*).
- * own_transfer is directionless — no flip needed.
+ * Flip directional transfer categories based on amount sign, for RULE_BUCKETS matches
+ * (investment platforms, joint-account names). Description patterns match the platform/
+ * account name regardless of flow direction; the amount sign disambiguates: negative =
+ * outflow (to_*), positive = inflow (from_*).
+ *
+ * The generic own_transfer bucket (Revolut Vault, savings pockets, neobank sub-accounts, …)
+ * is deliberately NOT flipped here — those are money moving within the same account, tested
+ * as directionless. own_transfer DOES flip to from_myself, but only for the personal-name
+ * match in Step 1b above (a transfer between two of the user's own distinct accounts), which
+ * computes it inline rather than through this shared helper.
  */
 function flipTransferDirection(result: CategorizationResult, amount: number): CategorizationResult {
   if (result.movement !== 'TRANSFER' || amount <= 0) return result;

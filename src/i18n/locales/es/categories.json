@@ -25,6 +25,7 @@
   },
   "transfer": {
     "own_transfer": "A Mí Mismo",
+    "from_myself": "Desde Mí Mismo",
     "to_investment": "A Inversión",
     "from_investment": "Desde Inversión",
     "to_joint_account": "A Cuenta Conjunta",

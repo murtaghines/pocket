@@ -10,6 +10,7 @@ import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
 import { toast } from "sonner";
 import { Languages, DollarSign, Calendar, Globe, Sun, Moon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
 
 const COUNTRIES = [
   { code: "AR", name: "Argentina" },
@@ -63,11 +64,13 @@ export function AccountPreferencesTab() {
   const [language, setLanguage] = useState(currentLanguage);
   const [dateFormat, setDateFormat] = useState(preferences.date_format ?? "AUTO");
   const [country, setCountry] = useState(preferences.country ?? "");
+  const [jointAccountNames, setJointAccountNames] = useState<string[]>(preferences.joint_account_names ?? []);
 
   useEffect(() => { setCurrency(preferences.base_currency); }, [preferences.base_currency]);
   useEffect(() => { setLanguage(currentLanguage); }, [currentLanguage]);
   useEffect(() => { setDateFormat(preferences.date_format ?? "AUTO"); }, [preferences.date_format]);
   useEffect(() => { setCountry(preferences.country ?? ""); }, [preferences.country]);
+  useEffect(() => { setJointAccountNames(preferences.joint_account_names ?? []); }, [preferences.joint_account_names]);
 
   const handleSave = () => {
     const languageChanged = language !== currentLanguage;
@@ -80,6 +83,13 @@ export function AccountPreferencesTab() {
       updates.date_format = dateFormat === "AUTO" ? null : dateFormat;
     }
     if (country !== (preferences.country ?? "")) updates.country = country || null;
+    const currentNames = preferences.joint_account_names ?? [];
+    if (
+      jointAccountNames.length !== currentNames.length ||
+      jointAccountNames.some((n, i) => n !== currentNames[i])
+    ) {
+      updates.joint_account_names = jointAccountNames;
+    }
 
     if (Object.keys(updates).length === 0) {
       toast.success(t("preferences.saved", "Preferences saved"));
@@ -179,6 +189,17 @@ export function AccountPreferencesTab() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-border">
+            <Label className="text-sm">{t("preferences.jointAccountNames", "Joint account co-holders")}</Label>
+            <p className="text-xs text-muted-foreground">
+              {t("preferences.jointAccountNamesHelp")}
+            </p>
+            <StepJointAccount
+              jointAccountNames={jointAccountNames}
+              onJointAccountNamesChange={setJointAccountNames}
+            />
           </div>
         </div>
       </div>

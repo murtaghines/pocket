@@ -35,6 +35,7 @@ export const categoryLabels: Record<string, string> = {
 
   // TRANSFER categories
   own_transfer: 'To Myself',
+  from_myself: 'From Myself',
   to_investment: 'To Investment',
   from_investment: 'From Investment',
   to_joint_account: 'To Joint Account',
@@ -71,6 +72,7 @@ export const categoryIcons: Record<string, string> = {
   freelance: 'laptop',
   rents: 'home',
   own_transfer: 'arrow-left-right',
+  from_myself: 'arrow-left-right',
   to_investment: 'trending-up',
   from_investment: 'trending-down',
   to_joint_account: 'users',
@@ -103,6 +105,7 @@ export const categoryColors: Record<string, string> = {
   pets: 'category-pets',
   // Transfer
   own_transfer: 'category-own-transfer',
+  from_myself: 'category-from-myself',
   to_investment: 'category-to-investment',
   from_investment: 'category-from-investment',
   to_joint_account: 'category-to-joint-account',
@@ -179,7 +182,7 @@ export function getMovementLabel(movement: string): string {
 // Categories by movement type (for onboarding)
 export const INCOME_CATEGORIES = ['salary', 'refunds', 'other_income', 'investment', 'freelance', 'rents'];
 export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
-export const TRANSFER_CATEGORIES = ['own_transfer', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'transfers'];
+export const TRANSFER_CATEGORIES = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'transfers'];
 
 // Default selected categories for new users
 export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'other_income'];
