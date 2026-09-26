@@ -12,7 +12,10 @@ interface UseRulePreviewArgs {
   pattern: string;
   tokens: string[];
   movement: string;
+  /** Single-account scope (legacy). Prefer `accountIds` for multi-account. */
   accountId?: string | null;
+  /** Multi-account scope: null/undefined = all accounts, otherwise this subset. */
+  accountIds?: string[] | null;
   enabled?: boolean;
 }
 
@@ -25,9 +28,13 @@ interface UseRulePreviewArgs {
  * Returns matched transactions with dates so callers can group by time range
  * for granular retroactive apply.
  */
-export function useRulePreview({ matchType, pattern, tokens, movement, accountId, enabled = true }: UseRulePreviewArgs) {
+export function useRulePreview({ matchType, pattern, tokens, movement, accountId, accountIds, enabled = true }: UseRulePreviewArgs) {
+  // Normalize scope: an explicit subset wins; else fall back to the single-account arg.
+  const scopeIds = accountIds && accountIds.length > 0
+    ? accountIds
+    : (accountId ? [accountId] : null);
   const { data: matched = [], isFetching } = useQuery({
-    queryKey: ["rule-preview", matchType, pattern, tokens.join("|"), movement, accountId ?? "all"],
+    queryKey: ["rule-preview", matchType, pattern, tokens.join("|"), movement, scopeIds ? scopeIds.join(",") : "all"],
     enabled: enabled && pattern.trim().length > 0,
     staleTime: 30_000,
     queryFn: async () => {
@@ -38,8 +45,8 @@ export function useRulePreview({ matchType, pattern, tokens, movement, accountId
         .select("id, description, description_norm, movement, categorized_by, date, account_id")
         .eq("user_id", user.id)
         .limit(1500);
-      if (accountId) {
-        query = query.eq("account_id", accountId);
+      if (scopeIds) {
+        query = query.in("account_id", scopeIds);
       }
       const { data, error } = await query;
       if (error) return [] as MatchedTransaction[];

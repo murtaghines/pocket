@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Sparkles, Search, AlignLeft, AlignRight, Type, Code2, Check } from 'lucide-react';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
@@ -12,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { buildDbRuleFields } from '@/hooks/useCategorizationRules';
 import { useRulePreview } from '@/hooks/useRulePreview';
 import { useAccounts } from '@/hooks/useAccounts';
-import { getAccountDisplayName } from '@/lib/accountColors';
+import { AccountScopeSelect } from '@/components/imports/AccountScopeSelect';
 import { RetroactiveApplyOptions } from '@/components/settings/RetroactiveApplyOptions';
 import { filterByScope, type RetroScope } from '@/hooks/useRetroactiveApply';
 import type { MatchType } from '@/lib/userRules';
@@ -74,15 +73,14 @@ function placeholderFor(movement?: string | null): string {
   return 'e.g. Netflix, Mercadona, Spotify...';
 }
 
-const ALL_ACCOUNTS = "__all__";
-
 export function AddRuleDialog({ open, category, editingRule, onClose, onSave, isSaving }: Props) {
   const { t } = useTranslation('settings');
   const { getMovementLabel } = useCategoryTranslations();
   const { accounts } = useAccounts();
   const [pattern, setPattern] = useState('');
   const [matchType, setMatchType] = useState('SMART');
-  const [accountId, setAccountId] = useState<string>(ALL_ACCOUNTS);
+  // null = all accounts; otherwise the subset of account ids in scope.
+  const [accountScope, setAccountScope] = useState<string[] | null>(null);
   const [retroScope, setRetroScope] = useState<RetroScope>("all");
   const [customSince, setCustomSince] = useState("");
 
@@ -93,7 +91,7 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
     } else if (open) {
       setPattern('');
       setMatchType('SMART');
-      setAccountId(ALL_ACCOUNTS);
+      setAccountScope(null);
       setRetroScope("all");
       setCustomSince("");
     }
@@ -107,13 +105,15 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
     category?.movement || 'EXPENSE',
     category?.slug || '',
   );
-  const selectedAccountId = accountId === ALL_ACCOUNTS ? undefined : accountId;
+  // The rule's forward scope can only store one account id; use it when the user
+  // narrowed to exactly one, otherwise the rule stays global (the retro set is still scoped).
+  const ruleAccountId = accountScope && accountScope.length === 1 ? accountScope[0] : null;
   const { matched, count: matchCount, isLoading: previewLoading } = useRulePreview({
     matchType: dbType as MatchType,
     pattern: builtPattern,
     tokens: builtTokens,
     movement: category?.movement || 'EXPENSE',
-    accountId: selectedAccountId,
+    accountIds: accountScope,
     enabled: open && !isEditing && pattern.trim().length > 0,
   });
 
@@ -123,13 +123,13 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
     if (!isEditing && matched.length > 0) {
       idsToApply = filterByScope(matched, retroScope, customSince ? customSince + "-01" : undefined);
     }
-    onSave(pattern.trim(), matchType, idsToApply, selectedAccountId || null);
+    onSave(pattern.trim(), matchType, idsToApply, ruleAccountId);
   };
 
   const handleClose = () => {
     setPattern('');
     setMatchType('SMART');
-    setAccountId(ALL_ACCOUNTS);
+    setAccountScope(null);
     onClose();
   };
 
@@ -228,23 +228,14 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
             </div>
           </div>
 
-          {/* Account scope */}
+          {/* Account scope (multi-select) */}
           {activeAccounts.length > 1 && (
             <div className="space-y-2">
-              <Label className="text-sm">{t('categories.accountScope')}</Label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger className="h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_ACCOUNTS}>{t('categories.accountScopeAll')}</SelectItem>
-                  {activeAccounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {getAccountDisplayName(a)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AccountScopeSelect
+                accounts={accounts}
+                value={accountScope}
+                onChange={setAccountScope}
+              />
               <p className="text-xs text-muted-foreground">{t('categories.accountScopeHelp')}</p>
             </div>
           )}
