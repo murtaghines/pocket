@@ -36,6 +36,15 @@ export const REVERTABLE_FIELDS = new Set<string>([
   "amount",
 ]);
 
+/** When a revert payload restores `amount` to its imported value, clear
+ *  `amount_original` back to null — the row is no longer manually edited. */
+export function withAmountOriginalReset(
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
+  if ("amount" in payload) payload.amount_original = null;
+  return payload;
+}
+
 export function filterRevertableSnapshot(
   snapshot: { values: Record<string, unknown>; fields: string[] },
 ): { values: Record<string, unknown>; fields: string[] } {

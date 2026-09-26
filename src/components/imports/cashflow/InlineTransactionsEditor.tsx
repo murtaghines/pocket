@@ -94,6 +94,7 @@ import {
   buildOriginalSnapshot,
   isBackToOriginal,
   filterRevertableSnapshot,
+  withAmountOriginalReset,
 } from "./helpers";
 import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
@@ -331,7 +332,7 @@ export function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, original_description, amount, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id, user_notes",
+          "id, date, description, description_norm, original_description, amount, amount_original, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id, user_notes",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -664,6 +665,10 @@ export function InlineTransactionsEditor({
     if (pending.amount !== undefined && pending.amount !== tx.amount) {
       payload.amount = pending.amount;
       before.amount = tx.amount;
+      // Track the pre-edit amount, set once on the first manual edit/split — never
+      // overwritten by a later edit, so it always holds the true imported value.
+      // A revert (isRevert, handled below) clears it back to null instead.
+      if (tx.amount_original == null) payload.amount_original = tx.amount;
     }
     if (pending.description !== undefined) {
       payload.description = pending.description;
@@ -686,6 +691,7 @@ export function InlineTransactionsEditor({
     }
     if (isRevert) {
       payload.__action = "revert";
+      if ("amount" in payload) payload.amount_original = null;
       if ("category" in payload) {
         payload.category_source = "DEFAULT";
         payload.user_corrected = false;
@@ -1096,6 +1102,9 @@ export function InlineTransactionsEditor({
                 );
                 const rawAmount = pending?.amount ?? tx.amount;
                 const displayAmount = splitAmt(rawAmount, tx.account_id);
+                // Joint accounts (split_percentage !== 100): show the statement's full
+                // amount alongside the user's share, so the split is never opaque.
+                const hasSplit = !!(tx.account_id && splitMap[tx.account_id] != null);
                 const availableCategories = getCategoriesForMovement(movement);
                 const hasPendingCategoryChange =
                   !!pending?.category && pending.category !== tx.category;
@@ -1131,10 +1140,10 @@ export function InlineTransactionsEditor({
                     if (originalSnapshot) {
                       const filtered = filterRevertableSnapshot(originalSnapshot);
                       if (filtered.fields.length === 0) return;
-                      const payload: Record<string, unknown> = {
+                      const payload: Record<string, unknown> = withAmountOriginalReset({
                         ...filtered.values,
                         __action: "revert",
-                      };
+                      });
                       const before: Record<string, unknown> = {};
                       for (const f of filtered.fields) {
                         before[f] = (tx as unknown as Record<string, unknown>)[f];
@@ -1368,9 +1377,16 @@ export function InlineTransactionsEditor({
                             className="h-6 text-[13px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
                           />
                         ) : (
-                          <span>
-                            {formatCurrency(displayAmount, undefined, true)}
-                          </span>
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span>{formatCurrency(displayAmount, undefined, true)}</span>
+                            {hasSplit && (
+                              <span className="text-[10px] font-normal normal-case text-muted-foreground tabular-nums">
+                                {t("imports.originalAmount", {
+                                  amount: formatCurrency(rawAmount, undefined, true),
+                                })}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </TableCell>
 
@@ -1444,7 +1460,7 @@ export function InlineTransactionsEditor({
                               {!isLocked && isEdited && originalSnapshot && !isManual && (
                                 <DropdownMenuItem
                                   onClick={() => {
-                                    const payload: Record<string, unknown> = { ...originalSnapshot.values, __action: "revert" };
+                                    const payload: Record<string, unknown> = withAmountOriginalReset({ ...originalSnapshot.values, __action: "revert" });
                                     if ("category" in originalSnapshot.values) {
                                       payload.category_source = "DEFAULT";
                                       payload.user_corrected = false;
@@ -1686,6 +1702,13 @@ export function InlineTransactionsEditor({
                               {formatCurrency(splitAmt(tx.amount, tx.account_id), undefined, true)}
                             </span>
                           </div>
+                          {tx.account_id && splitMap[tx.account_id] != null && (
+                            <span className="text-[10px] font-normal text-muted-foreground tabular-nums">
+                              {t("imports.originalAmount", {
+                                amount: formatCurrency(tx.amount, undefined, true),
+                              })}
+                            </span>
+                          )}
                           {accountLabel(tx.account_id) && (
                             <span className="text-[11px] text-muted-foreground">
                               {accountLabel(tx.account_id)}
@@ -1732,7 +1755,7 @@ export function InlineTransactionsEditor({
                 if (atxSnap) {
                   const filtered = filterRevertableSnapshot(atxSnap);
                   if (filtered.fields.length === 0) return;
-                  const payload: Record<string, unknown> = { ...filtered.values, __action: "revert" };
+                  const payload: Record<string, unknown> = withAmountOriginalReset({ ...filtered.values, __action: "revert" });
                   const before: Record<string, unknown> = {};
                   for (const f of filtered.fields) {
                     before[f] = (atx as unknown as Record<string, unknown>)[f];

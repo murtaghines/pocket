@@ -30,6 +30,7 @@ export type Database = {
           institution: string
           is_primary: boolean
           name: string
+          split_percentage: number
           user_id: string
         }
         Insert: {
@@ -47,6 +48,7 @@ export type Database = {
           institution: string
           is_primary?: boolean
           name: string
+          split_percentage?: number
           user_id: string
         }
         Update: {
@@ -64,6 +66,7 @@ export type Database = {
           institution?: string
           is_primary?: boolean
           name?: string
+          split_percentage?: number
           user_id?: string
         }
         Relationships: []
@@ -404,6 +407,45 @@ export type Database = {
           },
         ]
       }
+      merchant_categories: {
+        Row: {
+          category_votes: Json
+          first_seen: string
+          hit_count: number
+          is_locked: boolean
+          last_seen: string
+          merchant_key: string
+          movement: string | null
+          resolved_category: string | null
+          resolved_confidence: number | null
+          sample_description: string | null
+        }
+        Insert: {
+          category_votes?: Json
+          first_seen?: string
+          hit_count?: number
+          is_locked?: boolean
+          last_seen?: string
+          merchant_key: string
+          movement?: string | null
+          resolved_category?: string | null
+          resolved_confidence?: number | null
+          sample_description?: string | null
+        }
+        Update: {
+          category_votes?: Json
+          first_seen?: string
+          hit_count?: number
+          is_locked?: boolean
+          last_seen?: string
+          merchant_key?: string
+          movement?: string | null
+          resolved_category?: string | null
+          resolved_confidence?: number | null
+          sample_description?: string | null
+        }
+        Relationships: []
+      }
       periods: {
         Row: {
           closed_at: string | null
@@ -480,18 +522,17 @@ export type Database = {
         Row: {
           account_id: string | null
           amount: number
+          amount_original: number | null
           categorization_rule_id: string | null
           categorized_by: string | null
           category: string
           category_id: string | null
           category_source: string | null
           confidence: number | null
-          counterparty_raw: string | null
           created_at: string
           currency: string | null
           date: string
           description: string
-          description_clean: string | null
           description_norm: string | null
           domain: Database["public"]["Enums"]["app_domain"] | null
           fingerprint: string
@@ -504,7 +545,6 @@ export type Database = {
           period_id: string | null
           running_balance: number | null
           source_row_hash: string | null
-          source_transaction_id: string | null
           transfer_pair_id: string | null
           user_corrected: boolean | null
           user_id: string
@@ -515,18 +555,17 @@ export type Database = {
         Insert: {
           account_id?: string | null
           amount: number
+          amount_original?: number | null
           categorization_rule_id?: string | null
           categorized_by?: string | null
           category: string
           category_id?: string | null
           category_source?: string | null
           confidence?: number | null
-          counterparty_raw?: string | null
           created_at?: string
           currency?: string | null
           date: string
           description: string
-          description_clean?: string | null
           description_norm?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
           fingerprint: string
@@ -539,7 +578,6 @@ export type Database = {
           period_id?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
-          source_transaction_id?: string | null
           transfer_pair_id?: string | null
           user_corrected?: boolean | null
           user_id: string
@@ -550,18 +588,17 @@ export type Database = {
         Update: {
           account_id?: string | null
           amount?: number
+          amount_original?: number | null
           categorization_rule_id?: string | null
           categorized_by?: string | null
           category?: string
           category_id?: string | null
           category_source?: string | null
           confidence?: number | null
-          counterparty_raw?: string | null
           created_at?: string
           currency?: string | null
           date?: string
           description?: string
-          description_clean?: string | null
           description_norm?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
           fingerprint?: string
@@ -574,7 +611,6 @@ export type Database = {
           period_id?: string | null
           running_balance?: number | null
           source_row_hash?: string | null
-          source_transaction_id?: string | null
           transfer_pair_id?: string | null
           user_corrected?: boolean | null
           user_id?: string
@@ -705,6 +741,7 @@ export type Database = {
       }
       user_rules: {
         Row: {
+          account_id: string | null
           applied_count: number
           category: string
           confidence: number
@@ -722,6 +759,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           applied_count?: number
           category: string
           confidence?: number
@@ -739,6 +777,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_id?: string | null
           applied_count?: number
           category?: string
           confidence?: number
@@ -755,7 +794,15 @@ export type Database = {
           tokens?: string[] | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_rules_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -785,6 +832,7 @@ export type Database = {
       }
     }
     Functions: {
+      apply_merchant_votes: { Args: { votes: Json }; Returns: undefined }
       get_account_breakdown: {
         Args: {
           p_domain: Database["public"]["Enums"]["app_domain"]
@@ -797,6 +845,17 @@ export type Database = {
           institution: string
           total: number
           tx_count: number
+        }[]
+      }
+      get_account_opening_balances: {
+        Args: {
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_month: string
+          p_user_id: string
+        }
+        Returns: {
+          account_id: string
+          opening_balance: number
         }[]
       }
       get_account_period_summary: {
@@ -812,6 +871,14 @@ export type Database = {
           latest_balance: number
           tx_count: number
         }[]
+      }
+      get_balance_at_date: {
+        Args: {
+          p_date: string
+          p_domain: Database["public"]["Enums"]["app_domain"]
+          p_user_id: string
+        }
+        Returns: number
       }
       get_categorization_coverage: {
         Args: { p_user_id: string }
@@ -1178,6 +1245,12 @@ export const Constants = {
         "INVESTMENTS",
         "LOAN",
         "OTHER",
+        "JOINT",
+        "BROKERAGE",
+        "CRYPTO",
+        "RETIREMENT",
+        "REAL_ESTATE",
+        "OTHER_INVESTMENT",
       ],
       app_domain: ["CASHFLOW", "INVESTING"],
       import_status: ["UPLOADED", "PARSED", "NORMALIZED", "FAILED", "PARTIAL"],
