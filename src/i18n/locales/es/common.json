@@ -76,6 +76,7 @@
   "imports": {
     "excluded": "Excluida",
     "originalAmount": "Original: {{amount}}",
+    "accountShareNote": "Tu parte: {{pct}}%",
     "editTransaction": "editar transacción",
     "editInvestment": "Editar movimiento",
     "movement": "Movimiento",
