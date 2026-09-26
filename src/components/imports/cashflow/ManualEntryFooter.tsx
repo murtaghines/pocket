@@ -9,6 +9,8 @@ import { useCategories } from "@/hooks/useCategories";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
 import { buildRuleFromCorrection } from "@/lib/userRules";
+import { findExistingActiveRule } from "@/hooks/useRulePreview";
+import { useCategorizationRules } from "@/hooks/useCategorizationRules";
 import { buildManualFingerprint } from "@/lib/transactionSource";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { AddManualEntryDialog } from "../AddManualEntryDialog";
@@ -50,6 +52,7 @@ export function ManualEntryFooter({
   const queryClient = useQueryClient();
   const { accounts } = useAccounts();
   const { categories } = useCategories("CASHFLOW");
+  const { addRule } = useCategorizationRules();
   const { formatCurrency } = useLocalization();
   const { t } = useTranslation("common");
   const [internalOpen, setInternalOpen] = useState(false);
@@ -136,40 +139,40 @@ export function ManualEntryFooter({
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
       queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
 
-      if (entry.createRule && cleanDesc) {
+      if (entry.createRule && cleanDesc && category) {
         const built = buildRuleFromCorrection(cleanDesc, entry.movement, entry.categorySlug);
-        const { data: existing } = await supabase
-          .from("user_rules")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("pattern", built.pattern)
-          .eq("category", entry.categorySlug)
-          .eq("is_active", true)
-          .limit(1);
+        const existingRuleId = await findExistingActiveRule({
+          userId: user.id,
+          pattern: built.pattern,
+          category: entry.categorySlug,
+        });
 
-        if (existing && existing.length > 0) {
+        if (existingRuleId) {
           toast({ title: "Entry added", description: "Rule already exists for this pattern", duration: 3000 });
         } else {
-          const { error: ruleError } = await supabase.from("user_rules").insert({
-            user_id: user.id,
-            source: "manual",
-            match_type: built.match_type,
-            pattern: built.pattern,
-            tokens: built.tokens,
-            movement: entry.movement,
-            category: entry.categorySlug,
-            confidence: 0.99,
-            original_description: cleanDesc,
-            is_active: true,
-          });
-          if (ruleError) {
-            toast({ title: "Entry added", description: "Couldn't save rule: " + ruleError.message, variant: "destructive" });
-          } else {
-            await queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+          try {
+            // prebuilt: true — pattern/tokens are already fully resolved above; the
+            // centralized mutation just persists them (and now also sets account_id,
+            // which this flow previously omitted).
+            await addRule.mutateAsync({
+              category_id: category.id,
+              pattern: built.pattern,
+              match_type: built.match_type,
+              prebuilt: true,
+              tokens: built.tokens,
+              account_id: entry.accountId,
+              original_description: cleanDesc,
+            });
             toast({
               title: "Entry added",
               description: `Rule saved: future "${cleanDesc}" transactions will be categorized as ${getCategoryLabel(entry.categorySlug)}.`,
               duration: 3500,
+            });
+          } catch (ruleErr) {
+            toast({
+              title: "Entry added",
+              description: "Couldn't save rule: " + (ruleErr instanceof Error ? ruleErr.message : ""),
+              variant: "destructive",
             });
           }
         }

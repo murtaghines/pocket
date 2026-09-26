@@ -108,14 +108,30 @@ export function useCategorizationRules() {
       account_id?: string | null;
       /** IDs of existing transactions the rule matches, for retroactive apply. */
       matchingTransactionIds?: string[];
+      /** When true, `pattern`/`match_type`/`tokens` are already fully resolved (e.g. by
+       *  RuleEditorDialog's own live preview) — skip buildDbRuleFields's re-derivation so
+       *  the saved rule can never drift from the pattern/count the user was actually
+       *  shown. `match_type` must already be DB-style lowercase ('fuzzy', 'contains', ...)
+       *  in this case, and `tokens` should be passed explicitly. */
+      prebuilt?: boolean;
+      tokens?: string[];
+      /** 'user_correction' ranks above 'manual' at import time (process-import orders by
+       *  source). Defaults to 'manual' (the Settings "Add rule" flow's historical
+       *  behavior) — pass 'user_correction' when the rule comes from correcting a
+       *  transaction inline. */
+      source?: 'manual' | 'user_correction';
+      /** The original transaction description that prompted this rule, for reference. */
+      original_description?: string;
     }) => {
       const cat = idToCategory[rule.category_id];
       if (!cat) throw new Error(`Unknown category id: ${rule.category_id}`);
-      const { dbType, pattern, tokens } = buildDbRuleFields(rule.pattern, rule.match_type, cat.movement, cat.slug);
+      const { dbType, pattern, tokens } = rule.prebuilt
+        ? { dbType: rule.match_type, pattern: rule.pattern, tokens: rule.tokens ?? [] }
+        : buildDbRuleFields(rule.pattern, rule.match_type, cat.movement, cat.slug);
 
       const { error } = await supabase.from("user_rules").insert({
         user_id: user!.id,
-        source: 'manual',
+        source: rule.source ?? 'manual',
         match_type: dbType,
         pattern,
         tokens,
@@ -123,6 +139,7 @@ export function useCategorizationRules() {
         category: cat.slug,
         confidence: 0.99,
         account_id: rule.account_id || null,
+        original_description: rule.original_description,
       });
       if (error) throw error;
 
@@ -150,11 +167,28 @@ export function useCategorizationRules() {
   });
 
   const updateRule = useMutation({
-    mutationFn: async (params: { ruleId: string; pattern: string; match_type: string; account_id?: string | null }) => {
-      const dbType = UI_TO_DB_MATCH_TYPE[params.match_type] || params.match_type.toLowerCase();
+    mutationFn: async (params: {
+      ruleId: string;
+      pattern: string;
+      match_type: string;
+      account_id?: string | null;
+      /** Same meaning as on addRule — skip re-derivation when the caller already has the
+       *  final pattern/tokens (e.g. from RuleEditorDialog's live preview). */
+      prebuilt?: boolean;
+      tokens?: string[];
+      /** IDs of existing transactions to retroactively apply this rule's category to.
+       *  Requires category_id/category/movement to also be passed. */
+      matchingTransactionIds?: string[];
+      category_id?: string;
+      category?: string;
+      movement?: string;
+    }) => {
+      const dbType = params.prebuilt
+        ? params.match_type
+        : (UI_TO_DB_MATCH_TYPE[params.match_type] || params.match_type.toLowerCase());
       let pattern = params.pattern;
-      let tokens: string[] = [];
-      if (dbType === 'fuzzy') {
+      let tokens: string[] = params.tokens ?? [];
+      if (!params.prebuilt && dbType === 'fuzzy') {
         pattern = normalize(params.pattern);
         tokens = extractKeyTokens(params.pattern);
       }
@@ -165,8 +199,31 @@ export function useCategorizationRules() {
         .update(updatePayload)
         .eq("id", params.ruleId);
       if (error) throw error;
+
+      if (
+        params.matchingTransactionIds && params.matchingTransactionIds.length > 0 &&
+        params.category_id && params.category && params.movement
+      ) {
+        const { error: retroError } = await supabase
+          .from("transactions")
+          .update({
+            movement: params.movement,
+            category: params.category,
+            category_id: params.category_id,
+            category_source: "USER_RULE",
+            categorized_by: "user_rule",
+          })
+          .in("id", params.matchingTransactionIds);
+        if (retroError) throw retroError;
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user_rules"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_rules"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
+    },
   });
 
   const deleteRule = useMutation({
