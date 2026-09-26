@@ -716,7 +716,7 @@ export function InlineTransactionsEditor({
             if (cleanDesc) {
               const built = buildRuleFromCorrection(cleanDesc, targetMovement, ruleCategory);
 
-              // Dedup: check if an identical active rule already exists
+              // Dedup: reuse an identical active rule if one already exists.
               const { data: existing } = await supabase
                 .from("user_rules")
                 .select("id")
@@ -726,169 +726,18 @@ export function InlineTransactionsEditor({
                 .eq("is_active", true)
                 .limit(1);
 
-              if (existing && existing.length > 0) {
-                toast({ title: "Rule already exists for this pattern" });
-              } else {
-                // Auto-create rule
-                const { data: insertedRule, error: ruleError } = await supabase
-                  .from("user_rules")
-                  .insert({
-                    user_id: user.id,
-                    source: "user_correction",
-                    match_type: built.match_type,
-                    pattern: built.pattern,
-                    tokens: built.tokens,
-                    movement: targetMovement,
-                    category: ruleCategory,
-                    confidence: 0.99,
-                    original_description: cleanDesc,
-                    is_active: true,
-                  })
-                  .select("id")
-                  .single();
-
-                if (ruleError) {
-                  toast({
-                    title: "Couldn't save rule",
-                    description: ruleError.message,
-                    variant: "destructive",
-                  });
-                } else {
-                  // Find similar past transactions for retroactive apply
-                  const { data: allTx } = await supabase
-                    .from("transactions")
-                    .select("id, description, description_norm, movement, categorized_by, date")
-                    .eq("user_id", user.id)
-                    .limit(1500);
-
-                  const matchingIds: string[] = [];
-                  const matchingWithDates: { id: string; date: string }[] = [];
-                  for (const row of allTx || []) {
-                    if (row.movement && row.movement !== targetMovement) continue;
-                    if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
-                    const desc = (row.description_norm || row.description || "") as string;
-                    if (ruleMatchesDescription(built.match_type as MatchType, built.pattern, built.tokens, desc)) {
-                      matchingIds.push(row.id);
-                      matchingWithDates.push({ id: row.id, date: row.date as string });
-                    }
-                  }
-
-                  const ruleId = insertedRule.id;
-                  const patternShort = built.pattern.length > 30
-                    ? built.pattern.slice(0, 30) + "…"
-                    : built.pattern;
-                  const catLabel = getCategoryLabel(ruleCategory);
-                  const savedPendingCategory = ruleCategory;
-                  const savedPendingCategoryId = ruleCategoryId;
-
-                  toast({
-                    title: `Rule saved: "${patternShort}" → ${catLabel}`,
-                    description: (
-                      <div className="space-y-2">
-                        <p className="text-sm opacity-90">
-                          {matchingWithDates.length > 0
-                            ? `${matchingWithDates.length} similar past transaction${matchingWithDates.length === 1 ? "" : "s"} found.`
-                            : "Future matching transactions will be categorized automatically."}
-                        </p>
-                        <div className="flex gap-1.5">
-                          {matchingWithDates.length > 0 && (() => {
-                            const now = new Date();
-                            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                            const mo3 = new Date();
-                            mo3.setMonth(mo3.getMonth() - 3);
-                            const threeMonthsStart = new Date(mo3.getFullYear(), mo3.getMonth(), 1);
-                            const thisMonthCount = matchingWithDates.filter(mt => new Date(mt.date) >= thisMonthStart).length;
-                            const last3Count = matchingWithDates.filter(mt => new Date(mt.date) >= threeMonthsStart).length;
-                            const allCount = matchingWithDates.length;
-
-                            const applyRetro = async (scope: "this_month" | "last_3_months" | "all") => {
-                              const ids = filterByScope(matchingWithDates, scope);
-                              if (ids.length === 0) return;
-                              const { error: retroErr } = await supabase
-                                .from("transactions")
-                                .update({
-                                  movement: targetMovement,
-                                  category: savedPendingCategory,
-                                  category_id: savedPendingCategoryId,
-                                  category_source: "USER_RULE",
-                                  categorized_by: "user_rule",
-                                })
-                                .in("id", ids);
-                              if (!retroErr) {
-                                toast({
-                                  title: `${ids.length} transaction${ids.length === 1 ? "" : "s"} updated`,
-                                });
-                                queryClient.invalidateQueries({ queryKey: ["transactions"] });
-                                queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
-                                queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
-                                queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
-                              }
-                            };
-
-                            return (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm" className="h-7 text-xs">
-                                    Apply ({allCount})
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start">
-                                  {thisMonthCount > 0 && (
-                                    <DropdownMenuItem onClick={() => applyRetro("this_month")}>
-                                      This month ({thisMonthCount})
-                                    </DropdownMenuItem>
-                                  )}
-                                  {last3Count > thisMonthCount && (
-                                    <DropdownMenuItem onClick={() => applyRetro("last_3_months")}>
-                                      Last 3 months ({last3Count})
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuItem onClick={() => applyRetro("all")}>
-                                    All ({allCount})
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            );
-                          })()}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => {
-                              setCategoryRulePrompt({
-                                tx,
-                                newSlug: savedPendingCategory!,
-                                newCategoryId: savedPendingCategoryId ?? null,
-                                cleanDesc,
-                                targetMovement,
-                                existingRuleId: ruleId,
-                              });
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-muted-foreground"
-                            onClick={async () => {
-                              await supabase
-                                .from("user_rules")
-                                .update({ is_active: false, deleted_at: new Date().toISOString() })
-                                .eq("id", ruleId);
-                              toast({ title: "Rule undone" });
-                              queryClient.invalidateQueries({ queryKey: ["user_rules"] });
-                            }}
-                          >
-                            Undo
-                          </Button>
-                        </div>
-                      </div>
-                    ),
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["user_rules"] });
-                }
-              }
+              // Open the stable rule dialog. Pattern, match type, account scope AND the
+              // time range (this month / last 3 months / all) all live there now — no
+              // vanishing toast — and Save creates the rule + applies it retroactively to
+              // exactly the scoped set the live preview shows.
+              setCategoryRulePrompt({
+                tx,
+                newSlug: ruleCategory,
+                newCategoryId: ruleCategoryId,
+                cleanDesc,
+                targetMovement,
+                existingRuleId: existing && existing.length > 0 ? existing[0].id : undefined,
+              });
             }
           }
           if (!withRule && pending.movement && pending.movement !== tx.movement &&
@@ -2120,13 +1969,14 @@ export function InlineTransactionsEditor({
           }
 
           if (categoryRulePrompt.existingRuleId) {
-            // Post-hoc edit: UPDATE the auto-created rule
+            // An identical rule already existed: update its pattern + account scope.
             const { error } = await supabase
               .from("user_rules")
               .update({
                 match_type: payload.match_type,
                 pattern: payload.pattern,
                 tokens: payload.tokens,
+                account_id: payload.account_id,
               })
               .eq("id", categoryRulePrompt.existingRuleId);
             if (error) {
@@ -2135,8 +1985,8 @@ export function InlineTransactionsEditor({
               toast({ title: "Rule updated" });
             }
           } else {
-            // Fresh insert (fallback — shouldn't happen in the new auto-create flow,
-            // but kept for backwards compatibility)
+            // Create the rule (the primary path now — the stable dialog is where the
+            // user confirms the pattern, account scope and time range).
             const { error } = await supabase.from("user_rules").insert({
               user_id: user.id,
               source: "user_correction",
@@ -2147,6 +1997,7 @@ export function InlineTransactionsEditor({
               category: payload.category,
               confidence: 0.99,
               original_description: payload.original_description,
+              account_id: payload.account_id,
               is_active: true,
             });
             if (error) {
@@ -2181,6 +2032,9 @@ export function InlineTransactionsEditor({
           }
           queryClient.invalidateQueries({ queryKey: ["user_rules"] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+          queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
           setCategoryRulePrompt(null);
         }}
       />

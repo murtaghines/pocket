@@ -4,17 +4,17 @@ import { Wand2, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import {
   buildRuleFromCorrection,
   extractTokens,
-  normalize,
   type MatchType,
 } from "@/lib/userRules";
 import { useRulePreview } from "@/hooks/useRulePreview";
 import { useAccounts } from "@/hooks/useAccounts";
-import { getAccountDisplayName } from "@/lib/accountColors";
+import { AccountScopeSelect } from "./AccountScopeSelect";
+import { RetroactiveApplyOptions } from "@/components/settings/RetroactiveApplyOptions";
+import { filterByScope, type RetroScope } from "@/hooks/useRetroactiveApply";
 import { useTranslation } from "react-i18next";
 
 export interface RuleEditorPayload {
@@ -25,7 +25,10 @@ export interface RuleEditorPayload {
   category: string;
   original_description: string;
   matchingTransactionIds: string[];
+  /** Rule's forward scope: the single account when exactly one is selected, else null (all). */
   account_id: string | null;
+  /** The multi-account scope the user chose (null = all accounts). */
+  account_ids: string[] | null;
 }
 
 interface RuleEditorDialogProps {
@@ -75,8 +78,6 @@ const MATCH_OPTIONS: {
   },
 ];
 
-const ALL_ACCOUNTS = "__all__";
-
 export function RuleEditorDialog({
   open,
   onOpenChange,
@@ -103,7 +104,12 @@ export function RuleEditorDialog({
   const [selectedTokens, setSelectedTokens] = useState<string[]>(suggested.tokens);
   const [customPattern, setCustomPattern] = useState<string>(suggested.pattern);
   const [patternEdited, setPatternEdited] = useState(false);
-  const [accountId, setAccountId] = useState<string>(defaultAccountId || ALL_ACCOUNTS);
+  // null = all accounts; otherwise the subset of account ids in scope.
+  const [accountScope, setAccountScope] = useState<string[] | null>(
+    defaultAccountId ? [defaultAccountId] : null,
+  );
+  const [retroScope, setRetroScope] = useState<RetroScope>("all");
+  const [customSince, setCustomSince] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -111,7 +117,9 @@ export function RuleEditorDialog({
       setSelectedTokens(suggested.tokens);
       setCustomPattern(suggested.pattern);
       setPatternEdited(false);
-      setAccountId(defaultAccountId || ALL_ACCOUNTS);
+      setAccountScope(defaultAccountId ? [defaultAccountId] : null);
+      setRetroScope("all");
+      setCustomSince("");
     }
   }, [open, suggested, defaultAccountId]);
 
@@ -136,15 +144,25 @@ export function RuleEditorDialog({
     );
   };
 
-  const selectedAccountId = accountId === ALL_ACCOUNTS ? undefined : accountId;
-  const { matchingIds: matchingTransactions, count: matchCount, isLoading: countLoading } = useRulePreview({
+  const { matched, isLoading: countLoading } = useRulePreview({
     matchType,
     pattern: effectivePattern,
     tokens: effectiveTokens,
     movement,
-    accountId: selectedAccountId,
+    accountIds: accountScope,
     enabled: open,
   });
+
+  // The transactions actually in scope = account subset (applied in the query) ∩ time range.
+  const scopedIds = useMemo(
+    () => filterByScope(matched, retroScope, customSince ? customSince + "-01" : undefined),
+    [matched, retroScope, customSince],
+  );
+  const matchCount = scopedIds.length;
+
+  // The rule's forward scope can only store one account id; use it when the user
+  // narrowed to exactly one, otherwise the rule stays global (the retro set is still scoped).
+  const ruleAccountId = accountScope && accountScope.length === 1 ? accountScope[0] : null;
 
   const canSave = effectivePattern.trim().length > 0;
 
@@ -157,8 +175,9 @@ export function RuleEditorDialog({
       movement,
       category: categorySlug,
       original_description: description,
-      matchingTransactionIds: matchingTransactions,
-      account_id: selectedAccountId || null,
+      matchingTransactionIds: scopedIds,
+      account_id: ruleAccountId,
+      account_ids: accountScope,
     });
   };
 
@@ -307,31 +326,24 @@ export function RuleEditorDialog({
           )}
         </div>
 
-        {/* Account scope */}
-        {(() => {
-          const activeAccounts = accounts.filter(a => !a.archived);
-          if (activeAccounts.length <= 1) return null;
-          return (
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-foreground">
-                {t("categories.accountScope")}
-              </label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger className="h-11 rounded-full bg-muted border-0 shadow-none text-sm px-5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_ACCOUNTS}>{t("categories.accountScopeAll")}</SelectItem>
-                  {activeAccounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {getAccountDisplayName(a)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          );
-        })()}
+        {/* Account scope (multi-select) */}
+        <AccountScopeSelect
+          accounts={accounts}
+          value={accountScope}
+          onChange={setAccountScope}
+        />
+
+        {/* Time-range scope for the retroactive apply */}
+        {matched.length > 0 && (
+          <RetroactiveApplyOptions
+            transactions={matched}
+            scope={retroScope}
+            onScopeChange={setRetroScope}
+            customSince={customSince}
+            onCustomSinceChange={setCustomSince}
+            compact
+          />
+        )}
 
         {/* Live preview */}
         <div className="rounded-2xl bg-muted px-5 py-4 flex items-center justify-between gap-3">
