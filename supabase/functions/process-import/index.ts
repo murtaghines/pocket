@@ -1477,7 +1477,15 @@ serve(async (req) => {
         }
       }
 
-      if (categorizerMatch) {
+      // A categorizer match that only resolves to other_* (non-transfer) is not a real category —
+      // let the learned dictionary and the AI try before settling for "other".
+      const categorizerCategory = categorizerMatch
+        ? validateCategorySlug(mapCategorySlug(categorizerMatch.category), categorizerMatch.movement as MovementType)
+        : null;
+      const categorizerIsReal = !!categorizerMatch &&
+        (categorizerMatch.movement === 'TRANSFER' || !categorizerCategory!.startsWith('other_'));
+
+      if (categorizerMatch && categorizerIsReal) {
         const mappedCategory = mapCategorySlug(categorizerMatch.category);
         movement = categorizerMatch.movement as MovementType;
         categorySlug = mappedCategory;
