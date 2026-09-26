@@ -948,6 +948,26 @@ export function InlineTransactionsEditor({
     return groups;
   }, [filteredSorted, hasAccountBalances, accountOpeningBalances, accountClosingBalances, accounts, splitAmt, t]);
 
+  // Per-account-band totals (income / expense, both at the user's share) and the
+  // split percentage, if any — shown in the account header row instead of per-row.
+  const groupTotals = useMemo(() => {
+    const map = new Map<string, { income: number; expense: number; sharePct: number | null }>();
+    for (const g of accountGroups ?? []) {
+      let income = 0;
+      let expense = 0;
+      for (const tx of g.transactions) {
+        if (tx.is_hidden) continue;
+        const amt = splitAmt(tx.amount, tx.account_id);
+        if (tx.movement === "INCOME") income += amt;
+        else if (tx.movement === "EXPENSE") expense += amt;
+      }
+      const key = g.accountId ?? "__unassigned__";
+      const sharePct = g.accountId ? (splitMap[g.accountId] ?? null) : null;
+      map.set(key, { income: Math.round(income * 100) / 100, expense: Math.round(expense * 100) / 100, sharePct });
+    }
+    return map;
+  }, [accountGroups, splitAmt, splitMap]);
+
   const visibleAll = filteredSorted;
   const rowsToRender = visibleAll;
   const allVisibleIds = rowsToRender.map((tx) => tx.id);
@@ -1051,6 +1071,7 @@ export function InlineTransactionsEditor({
                     {showGroupHeader && (() => {
                       const groupKey = group.accountId ?? "__unassigned__";
                       const isCollapsed = collapsedAccounts.has(groupKey);
+                      const totals = groupTotals.get(groupKey);
                       return (
                         <TableRow
                           className="hover:bg-muted/20 cursor-pointer border-b border-border/40"
@@ -1070,6 +1091,25 @@ export function InlineTransactionsEditor({
                               <span className="text-[11px] text-muted-foreground">
                                 {t("imports.txCountShort", { count: groupTxs.length })}
                               </span>
+                              {totals?.sharePct != null && (
+                                <span className="text-[11px] text-muted-foreground">
+                                  {t("imports.accountShareNote", { pct: totals.sharePct })}
+                                </span>
+                              )}
+                              {totals && (totals.income !== 0 || totals.expense !== 0) && (
+                                <div className="ml-auto flex items-center gap-3 text-[11px] tabular-nums">
+                                  {totals.income !== 0 && (
+                                    <span className="text-success">
+                                      {formatCurrency(totals.income, undefined, true)}
+                                    </span>
+                                  )}
+                                  {totals.expense !== 0 && (
+                                    <span className="text-destructive">
+                                      {formatCurrency(totals.expense, undefined, true)}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1376,17 +1416,21 @@ export function InlineTransactionsEditor({
                             inputMode="decimal"
                             className="h-6 text-[13px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
                           />
-                        ) : (
-                          <div className="flex flex-col items-end gap-0.5">
-                            <span>{formatCurrency(displayAmount, undefined, true)}</span>
-                            {hasSplit && (
-                              <span className="text-[10px] font-normal normal-case text-muted-foreground tabular-nums">
-                                {t("imports.originalAmount", {
-                                  amount: formatCurrency(rawAmount, undefined, true),
-                                })}
+                        ) : hasSplit ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help underline decoration-dotted decoration-muted-foreground/50 underline-offset-4">
+                                {formatCurrency(displayAmount, undefined, true)}
                               </span>
-                            )}
-                          </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                              {t("imports.originalAmount", {
+                                amount: formatCurrency(rawAmount, undefined, true),
+                              })}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span>{formatCurrency(displayAmount, undefined, true)}</span>
                         )}
                       </TableCell>
 
@@ -1702,13 +1746,6 @@ export function InlineTransactionsEditor({
                               {formatCurrency(splitAmt(tx.amount, tx.account_id), undefined, true)}
                             </span>
                           </div>
-                          {tx.account_id && splitMap[tx.account_id] != null && (
-                            <span className="text-[10px] font-normal text-muted-foreground tabular-nums">
-                              {t("imports.originalAmount", {
-                                amount: formatCurrency(tx.amount, undefined, true),
-                              })}
-                            </span>
-                          )}
                           {accountLabel(tx.account_id) && (
                             <span className="text-[11px] text-muted-foreground">
                               {accountLabel(tx.account_id)}
