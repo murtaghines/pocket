@@ -67,6 +67,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
+import { useCategorizationRules } from "@/hooks/useCategorizationRules";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
@@ -85,6 +86,7 @@ import {
   type MatchType,
 } from "@/lib/userRules";
 import { filterByScope } from "@/hooks/useRetroactiveApply";
+import { findMatchingTransactions, findExistingActiveRule } from "@/hooks/useRulePreview";
 import { buildSplitMap, applySplitFast } from "@/lib/splitAmount";
 import {
   USER_TRACKED_FIELDS,
@@ -184,6 +186,7 @@ export function InlineTransactionsEditor({
   const queryClient = useQueryClient();
   const { categories } = useCategories("CASHFLOW");
   const { accounts } = useAccounts();
+  const { addRule, updateRule } = useCategorizationRules();
   const { formatCurrency, formatDate, formatWeekday } = useLocalization();
   const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const { t } = useTranslation("common");
@@ -564,27 +567,6 @@ export function InlineTransactionsEditor({
     });
   };
 
-  const applyCategoryChange = (
-    tx: MonthTransaction,
-    newSlug: string,
-    categoryId: string | null,
-  ) => {
-    saveMutation.mutate({
-      id: tx.id,
-      payload: {
-        category: newSlug,
-        category_id: categoryId,
-        category_source: "MANUAL",
-        categorized_by: "user",
-        user_corrected: true,
-      },
-      before: {
-        category: tx.category,
-        category_id: tx.category_id,
-      },
-    });
-  };
-
   const handleCategoryChange = (tx: MonthTransaction, newSlug: string) => {
     const cat = categories.find((c) => c.slug === newSlug);
     const categoryId = cat?.id || null;
@@ -710,7 +692,8 @@ export function InlineTransactionsEditor({
           const categoryChanged = pending.category && pending.category !== tx.category && pending.category_id;
           const movementChangedTransfer = pending.movement && pending.movement !== tx.movement &&
             (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER');
-          if ((categoryChanged || movementChangedTransfer) && withRule && user) {
+
+          if ((categoryChanged || movementChangedTransfer) && user) {
             const cleanDesc = (tx.description || tx.description_norm || "")
               .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
               .trim();
@@ -721,83 +704,70 @@ export function InlineTransactionsEditor({
 
             if (cleanDesc) {
               const built = buildRuleFromCorrection(cleanDesc, targetMovement, ruleCategory);
-
-              // Dedup: reuse an identical active rule if one already exists.
-              const { data: existing } = await supabase
-                .from("user_rules")
-                .select("id")
-                .eq("user_id", user.id)
-                .eq("pattern", built.pattern)
-                .eq("category", ruleCategory)
-                .eq("is_active", true)
-                .limit(1);
-
-              // Open the stable rule dialog. Pattern, match type, account scope AND the
-              // time range (this month / last 3 months / all) all live there now — no
-              // vanishing toast — and Save creates the rule + applies it retroactively to
-              // exactly the scoped set the live preview shows.
-              setCategoryRulePrompt({
-                tx,
-                newSlug: ruleCategory,
-                newCategoryId: ruleCategoryId,
-                cleanDesc,
-                targetMovement,
-                existingRuleId: existing && existing.length > 0 ? existing[0].id : undefined,
+              const existingRuleId = await findExistingActiveRule({
+                userId: user.id,
+                pattern: built.pattern,
+                category: ruleCategory,
               });
-            }
-          }
-          if (!withRule && pending.movement && pending.movement !== tx.movement &&
-              (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER') && user) {
-            const nudgeMovement = (pending.movement || 'EXPENSE') as MovementType;
-            const nudgeLabel = nudgeMovement === 'INCOME' ? 'Income' : nudgeMovement === 'TRANSFER' ? 'Transfer' : 'Expense';
-            const fromLabel = tx.movement === 'TRANSFER' ? 'Transfer' : tx.movement === 'INCOME' ? 'Income' : 'Expense';
-            const capturedDesc = (tx.description || tx.description_norm || "")
-              .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-              .trim();
-            const capturedCategory = (pending.category ?? tx.category) || (nudgeMovement === 'INCOME' ? 'other_income' : nudgeMovement === 'TRANSFER' ? 'own_transfer' : 'other_expense');
-            const capturedUserId = user.id;
 
-            if (capturedDesc) {
-              const capturedBuilt = buildRuleFromCorrection(capturedDesc, nudgeMovement, capturedCategory);
-              toast({
-                title: `Changed from ${fromLabel} → ${nudgeLabel}`,
-                description: (
-                  <div className="space-y-1">
-                    <p className="text-xs opacity-80">Save a rule so this pattern is always classified correctly?</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={async () => {
-                        const { data: existing } = await supabase
-                          .from("user_rules").select("id")
-                          .eq("user_id", capturedUserId).eq("pattern", capturedBuilt.pattern)
-                          .eq("category", capturedCategory).eq("is_active", true).limit(1);
-                        if (existing && existing.length > 0) {
-                          toast({ title: "Rule already exists for this pattern" });
-                          return;
-                        }
-                        const { error: ruleError } = await supabase.from("user_rules").insert({
-                          user_id: capturedUserId, source: "user_correction",
-                          match_type: capturedBuilt.match_type, pattern: capturedBuilt.pattern,
-                          tokens: capturedBuilt.tokens, movement: nudgeMovement,
-                          category: capturedCategory, confidence: 0.99,
-                          original_description: capturedDesc, is_active: true,
-                        });
-                        if (ruleError) {
-                          toast({ title: "Couldn't save rule", description: ruleError.message, variant: "destructive" });
-                        } else {
-                          const catLabel = getCategoryLabel(capturedCategory);
-                          toast({ title: `Rule saved: "${capturedBuilt.pattern.slice(0, 30)}" → ${catLabel}` });
-                          queryClient.invalidateQueries({ queryKey: ["user_rules"] });
-                        }
-                      }}
-                    >
-                      Save rule
-                    </Button>
-                  </div>
-                ),
-              });
+              if (withRule) {
+                // Explicit opt-in (right-click "Save & create rule" / mobile "Save + rule"):
+                // open the stable dialog immediately, no extra gating. Pattern, match type,
+                // account scope AND the time range (this month / last 3 months / all) all
+                // live there — Save creates/updates the rule and applies it retroactively
+                // to exactly the scoped set the live preview shows.
+                setCategoryRulePrompt({
+                  tx,
+                  newSlug: ruleCategory,
+                  newCategoryId: ruleCategoryId,
+                  cleanDesc,
+                  targetMovement,
+                  existingRuleId,
+                });
+              } else if (!existingRuleId) {
+                // Default path (just picking a new category and committing): proactively
+                // check whether this correction is worth a rule at all — silently save with
+                // no interruption when nothing else matches (a genuine one-off correction),
+                // and only nudge when there's real value in generalizing it. An identical
+                // active rule already existing (existingRuleId) means this is already
+                // covered — no nudge needed either.
+                const matches = await findMatchingTransactions({
+                  userId: user.id,
+                  matchType: built.match_type,
+                  pattern: built.pattern,
+                  tokens: built.tokens,
+                  movement: targetMovement,
+                  accountIds: null,
+                });
+                if (matches.length > 0) {
+                  const count = matches.length;
+                  toast({
+                    title: count === 1 ? t("imports.ruleNudgeTitleOne") : t("imports.ruleNudgeTitle", { count }),
+                    description: (
+                      <div className="space-y-1">
+                        <p className="text-xs opacity-80">{t("imports.ruleNudgeBody")}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5"
+                          onClick={() =>
+                            setCategoryRulePrompt({
+                              tx,
+                              newSlug: ruleCategory,
+                              newCategoryId: ruleCategoryId,
+                              cleanDesc,
+                              targetMovement,
+                            })
+                          }
+                        >
+                          <Sparkles className="h-3 w-3" />
+                          {t("imports.ruleNudgeCta")}
+                        </Button>
+                      </div>
+                    ),
+                  });
+                }
+              }
             }
           }
           clearPendingFor(tx.id);
@@ -2027,74 +1997,61 @@ export function InlineTransactionsEditor({
             setCategoryRulePrompt(null);
             return;
           }
+          if (!categoryRulePrompt.newCategoryId) {
+            toast({ title: "Couldn't save rule", description: "Unknown category", variant: "destructive" });
+            setCategoryRulePrompt(null);
+            return;
+          }
 
-          if (categoryRulePrompt.existingRuleId) {
-            // An identical rule already existed: update its pattern + account scope.
-            const { error } = await supabase
-              .from("user_rules")
-              .update({
-                match_type: payload.match_type,
+          try {
+            if (categoryRulePrompt.existingRuleId) {
+              // An identical rule already existed: update its pattern + account scope, and
+              // apply retroactively — same centralized mutation the Settings "Edit rule"
+              // flow uses, so behavior (cache invalidation, error handling) can't drift.
+              await updateRule.mutateAsync({
+                ruleId: categoryRulePrompt.existingRuleId,
                 pattern: payload.pattern,
+                match_type: payload.match_type,
+                prebuilt: true,
                 tokens: payload.tokens,
                 account_id: payload.account_id,
-              })
-              .eq("id", categoryRulePrompt.existingRuleId);
-            if (error) {
-              toast({ title: "Couldn't update rule", description: error.message, variant: "destructive" });
-            } else {
-              toast({ title: "Rule updated" });
-            }
-          } else {
-            // Create the rule (the primary path now — the stable dialog is where the
-            // user confirms the pattern, account scope and time range).
-            const { error } = await supabase.from("user_rules").insert({
-              user_id: user.id,
-              source: "user_correction",
-              match_type: payload.match_type,
-              pattern: payload.pattern,
-              tokens: payload.tokens,
-              movement: payload.movement,
-              category: payload.category,
-              confidence: 0.99,
-              original_description: payload.original_description,
-              account_id: payload.account_id,
-              is_active: true,
-            });
-            if (error) {
-              toast({ title: "Couldn't save rule", description: error.message, variant: "destructive" });
-              setCategoryRulePrompt(null);
-              return;
-            }
-          }
-
-          // Retroactive apply from the dialog's live preview
-          let retroCount = 0;
-          if (payload.matchingTransactionIds.length > 0) {
-            const { error: retroError } = await supabase
-              .from("transactions")
-              .update({
-                movement: payload.movement,
-                category: payload.category,
+                matchingTransactionIds: payload.matchingTransactionIds,
                 category_id: categoryRulePrompt.newCategoryId,
-                category_source: "USER_RULE",
-                categorized_by: "user_rule",
-              })
-              .in("id", payload.matchingTransactionIds);
-            if (!retroError) {
-              retroCount = payload.matchingTransactionIds.length;
+                category: payload.category,
+                movement: payload.movement,
+              });
+              toast({ title: "Rule updated" });
+            } else {
+              // Create the rule (the primary path now — the stable dialog is where the
+              // user confirms the pattern, account scope and time range). `prebuilt: true`
+              // because the pattern/tokens shown in the dialog's live preview must be
+              // exactly what gets saved — never re-derived.
+              await addRule.mutateAsync({
+                category_id: categoryRulePrompt.newCategoryId,
+                pattern: payload.pattern,
+                match_type: payload.match_type,
+                prebuilt: true,
+                tokens: payload.tokens,
+                account_id: payload.account_id,
+                matchingTransactionIds: payload.matchingTransactionIds,
+                source: "user_correction",
+                original_description: payload.original_description,
+              });
             }
-          }
 
-          if (retroCount > 0) {
+            if (payload.matchingTransactionIds.length > 0) {
+              const retroCount = payload.matchingTransactionIds.length;
+              toast({
+                title: `${retroCount} transaction${retroCount === 1 ? "" : "s"} updated`,
+              });
+            }
+          } catch (err) {
             toast({
-              title: `${retroCount} transaction${retroCount === 1 ? "" : "s"} updated`,
+              title: "Couldn't save rule",
+              description: err instanceof Error ? err.message : undefined,
+              variant: "destructive",
             });
           }
-          queryClient.invalidateQueries({ queryKey: ["user_rules"] });
-          queryClient.invalidateQueries({ queryKey: ["transactions"] });
-          queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
-          queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
-          queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
           setCategoryRulePrompt(null);
         }}
       />
