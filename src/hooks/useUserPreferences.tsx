@@ -12,6 +12,7 @@ export interface UserPreferences {
   date_format?: string | null;
   onboarding_completed?: boolean;
   joint_account_names?: string[];
+  own_name_aliases?: string[];
   theme?: string;
   created_at: string;
   updated_at: string;

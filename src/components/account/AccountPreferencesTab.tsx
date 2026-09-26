@@ -8,9 +8,70 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useTheme } from "@/hooks/useTheme";
 import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
 import { toast } from "sonner";
-import { Languages, DollarSign, Calendar, Globe, Sun, Moon, Loader2 } from "lucide-react";
+import { Languages, DollarSign, Calendar, Globe, Sun, Moon, Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
+import { Input } from "@/components/ui/input";
+
+/** Small chip-list input: add/remove free-text names. Used for own-name aliases — no
+ *  enable/disable toggle needed (an empty list is simply "no aliases set"). */
+function NameChipsInput({
+  names,
+  onChange,
+  placeholder,
+}: {
+  names: string[];
+  onChange: (names: string[]) => void;
+  placeholder: string;
+}) {
+  const [value, setValue] = useState("");
+
+  const add = () => {
+    const trimmed = value.trim();
+    if (trimmed && !names.includes(trimmed)) {
+      onChange([...names, trimmed]);
+      setValue("");
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Input
+          type="text"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
+          className="flex-1 h-10 text-sm"
+        />
+        <button
+          type="button"
+          onClick={add}
+          disabled={!value.trim()}
+          className="h-10 w-10 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-muted disabled:opacity-30"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+      {names.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {names.map((name) => (
+            <span
+              key={name}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm bg-muted text-foreground"
+            >
+              {name}
+              <button type="button" onClick={() => onChange(names.filter((n) => n !== name))}>
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const COUNTRIES = [
   { code: "AR", name: "Argentina" },
@@ -65,12 +126,14 @@ export function AccountPreferencesTab() {
   const [dateFormat, setDateFormat] = useState(preferences.date_format ?? "AUTO");
   const [country, setCountry] = useState(preferences.country ?? "");
   const [jointAccountNames, setJointAccountNames] = useState<string[]>(preferences.joint_account_names ?? []);
+  const [ownNameAliases, setOwnNameAliases] = useState<string[]>(preferences.own_name_aliases ?? []);
 
   useEffect(() => { setCurrency(preferences.base_currency); }, [preferences.base_currency]);
   useEffect(() => { setLanguage(currentLanguage); }, [currentLanguage]);
   useEffect(() => { setDateFormat(preferences.date_format ?? "AUTO"); }, [preferences.date_format]);
   useEffect(() => { setCountry(preferences.country ?? ""); }, [preferences.country]);
   useEffect(() => { setJointAccountNames(preferences.joint_account_names ?? []); }, [preferences.joint_account_names]);
+  useEffect(() => { setOwnNameAliases(preferences.own_name_aliases ?? []); }, [preferences.own_name_aliases]);
 
   const handleSave = () => {
     const languageChanged = language !== currentLanguage;
@@ -89,6 +152,13 @@ export function AccountPreferencesTab() {
       jointAccountNames.some((n, i) => n !== currentNames[i])
     ) {
       updates.joint_account_names = jointAccountNames;
+    }
+    const currentAliases = preferences.own_name_aliases ?? [];
+    if (
+      ownNameAliases.length !== currentAliases.length ||
+      ownNameAliases.some((n, i) => n !== currentAliases[i])
+    ) {
+      updates.own_name_aliases = ownNameAliases;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -199,6 +269,18 @@ export function AccountPreferencesTab() {
             <StepJointAccount
               jointAccountNames={jointAccountNames}
               onJointAccountNamesChange={setJointAccountNames}
+            />
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-border">
+            <Label className="text-sm">{t("preferences.ownNameAliases", "Also known as")}</Label>
+            <p className="text-xs text-muted-foreground">
+              {t("preferences.ownNameAliasesHelp")}
+            </p>
+            <NameChipsInput
+              names={ownNameAliases}
+              onChange={setOwnNameAliases}
+              placeholder={t("preferences.ownNameAliasesPlaceholder", "Full name...")}
             />
           </div>
         </div>

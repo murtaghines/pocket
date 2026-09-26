@@ -17,7 +17,10 @@
  *
  * OVERLAP DECISIONS DOCUMENTED:
  *   AMAZON       → subscriptions if PRIME/MUSIC/VIDEO, else shopping
- *   REVOLUT      → own_transfer always (savings pockets are not investments)
+ *   REVOLUT      → own_transfer for generic savings pockets, EXCEPT "Rendimientos
+ *                  Diarios" (their yield/interest product) → to_investment /
+ *                  from_investment, since that money is actively invested and
+ *                  earning a return, not just parked (2026-09-26, user-confirmed)
  *   BOOKING      → rental_income if PAYOUT/DEPOSIT, else travel
  *   GAS          → housing if GAS NATURAL/NATURGAS, else transport
  *   PENSION      → to_investment if PLAN/APORTACION, else other_income
@@ -503,6 +506,10 @@ const RULE_BUCKETS: RuleBucket[] = [
       'PENSION\\s*FUND\\s*TRANSFER',
       'STOCKS\\s*AND\\s*SHARES\\s*ISA',
       'ISA\\s*TRANSFER',
+      // ── Revolut "Rendimientos Diarios" (their yield/interest product) ────
+      // Unlike a plain savings pocket (own_transfer, below), this money is
+      // actively invested and earning a daily return — treated as investment.
+      'RENDIMIENTOS\\s*DIARIOS',
     ], 0.99),
   },
 
@@ -580,7 +587,6 @@ const RULE_BUCKETS: RuleBucket[] = [
         'SAVINGS\\s*VAULT',
         'SAVINGS\\s*POT',
         'N26\\s*SPACES',
-        'RENDIMIENTOS\\s*DIARIOS',
         'CUENTA\\s*REMUNERADA',
         'CUENTA\\s*AHORRO\\s*PLUS',
         'TO\\s*SAVINGS\\s*ACCOUNT',
@@ -3118,6 +3124,17 @@ export interface UserContext {
   aliases?: string[];
 
   /**
+   * Genuinely different full names (first AND last) that also refer to the account owner —
+   * not to be confused with `aliases` above, which only swaps the first name and keeps the
+   * same lastName. For when the account's display name is a pseudonym (e.g. kept PII-free
+   * for a public demo) but raw bank statement text carries the real name.
+   *
+   * Populated from user_preferences.own_name_aliases.
+   * @example ownNameAliases: ["Ines Murtagh"]
+   */
+  ownNameAliases?: string[];
+
+  /**
    * Joint / shared accounts where the user is a co-holder.
    * Any transaction mentioning one of these name strings is treated
    * as an own_transfer — even if the primary holder is someone else.
@@ -3207,22 +3224,41 @@ export interface CustomCategory {
  *   Joint account: matches the full joint account name as a literal string,
  *   OR the partner's full name (first + last) when provided in jointAccountNames.
  */
-function buildPersonalNamePatterns(ctx: UserContext): RegExp[] {
-  const first = normalize(ctx.firstName);
-  const last  = normalize(ctx.lastName);
-
-  const patterns: RegExp[] = [
+function namePatternsFor(first: string, last: string): RegExp[] {
+  return [
     new RegExp(`${first}\\s+${last}`, 'i'),
     new RegExp(`${last}\\s+${first}`, 'i'),
     new RegExp(`${first.charAt(0)}[\\s.]+${last}`, 'i'),
     new RegExp(`${last}[\\s,]+${first.charAt(0)}\\b`, 'i'),
   ];
+}
+
+function buildPersonalNamePatterns(ctx: UserContext): RegExp[] {
+  const first = normalize(ctx.firstName);
+  const last  = normalize(ctx.lastName);
+
+  const patterns: RegExp[] = namePatternsFor(first, last);
 
   if (ctx.aliases) {
     for (const alias of ctx.aliases) {
       const a = normalize(alias);
       patterns.push(new RegExp(`${a}\\s+${last}`, 'i'));
       patterns.push(new RegExp(`${last}\\s+${a}`, 'i'));
+    }
+  }
+
+  // Full-name aliases: a genuinely different name (different first AND last), for when the
+  // account's display name is a pseudonym but raw bank text still carries the real name —
+  // e.g. a PII-free demo profile ("Ana Demo") whose statements say "Ines Murtagh". Unlike
+  // `aliases` above (same surname, different first name), each of these gets its own full
+  // set of name-order patterns.
+  if (ctx.ownNameAliases) {
+    for (const full of ctx.ownNameAliases) {
+      const parts = normalize(full).trim().split(/\s+/).filter(Boolean);
+      if (parts.length < 2) continue;
+      const aliasFirst = parts[0];
+      const aliasLast = parts.slice(1).join('\\s+'); // supports multi-word surnames
+      patterns.push(...namePatternsFor(aliasFirst, aliasLast));
     }
   }
 

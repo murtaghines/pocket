@@ -937,7 +937,7 @@ serve(async (req) => {
 
     const { data: userPrefs } = await supabase
       .from('user_preferences')
-      .select('country, joint_account_names')
+      .select('country, joint_account_names, own_name_aliases')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -956,21 +956,23 @@ serve(async (req) => {
 
     const hasCustomCats = customCategories.length > 0;
     const hasJointNames = !!userPrefs?.joint_account_names?.length;
+    const hasOwnNameAliases = !!userPrefs?.own_name_aliases?.length;
     const hasName = !!(userProfile?.first_name && userProfile?.last_name);
 
     const userContext: UserContext | undefined =
-      (hasName || hasCustomCats || hasJointNames || userPrefs?.country)
+      (hasName || hasCustomCats || hasJointNames || hasOwnNameAliases || userPrefs?.country)
         ? {
             firstName: userProfile?.first_name || '',
             lastName: userProfile?.last_name || '',
             country: (userPrefs?.country as UserContext['country']) || undefined,
             jointAccountNames: userPrefs?.joint_account_names || undefined,
+            ownNameAliases: userPrefs?.own_name_aliases || undefined,
             customCategories: hasCustomCats ? customCategories : undefined,
           }
         : undefined;
 
     if (userContext) {
-      console.log(`[process-import] UserContext built: name=${hasName ? `${userContext.firstName} ${userContext.lastName}` : '(none)'}, country=${userContext.country || 'none'}, customCats=${hasCustomCats}, jointNames=${hasJointNames}`);
+      console.log(`[process-import] UserContext built: name=${hasName ? `${userContext.firstName} ${userContext.lastName}` : '(none)'}, country=${userContext.country || 'none'}, customCats=${hasCustomCats}, jointNames=${hasJointNames}, ownNameAliases=${hasOwnNameAliases}`);
     } else {
       console.log(`[process-import] No UserContext (no profile data)`);
     }
