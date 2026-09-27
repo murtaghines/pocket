@@ -14,6 +14,7 @@ import { CategoryTrendChart } from "./CategoryTrendChart";
 import { SeasonalityCard } from "./SeasonalityCard";
 import { WeekdaySpendingCard } from "./WeekdaySpendingCard";
 import { formatPeriodLabel, type Granularity } from "@/lib/analytics";
+import { formatCompactAxisNumber } from "@/lib/chartFormat";
 import type { HistoricalInsights } from "@/hooks/useHistoricalInsights";
 
 interface MonthlyData {
@@ -313,7 +314,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={formatMonthLabel} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={45} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={formatCompactAxisNumber} width={45} />
                 <Tooltip content={<ChartTooltip />} />
                 <Area type="monotone" dataKey="cumulative" name={t('views.accumulated', 'Accumulated')} stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#cumulativeGrad)" dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 3 }} activeDot={{ r: 5, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }} />
               </AreaChart>
@@ -341,7 +342,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
               <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={formatMonthLabel} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={45} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} tickFormatter={formatCompactAxisNumber} width={45} />
                 <Tooltip content={<ChartTooltip />} />
                 <Bar dataKey="income" name={t('stats.income')} fill="hsl(var(--success))" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="expenses" name={t('stats.expenses')} fill="hsl(var(--destructive))" radius={[6, 6, 0, 0]} />

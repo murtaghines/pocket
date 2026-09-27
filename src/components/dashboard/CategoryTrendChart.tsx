@@ -15,6 +15,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
 import { formatPeriodLabel, type Granularity } from "@/lib/analytics";
 import type { CategoryTrend } from "@/lib/analytics";
+import { formatCompactAxisNumber } from "@/lib/chartFormat";
 
 interface CategoryTrendChartProps {
   trend: CategoryTrend;
@@ -100,7 +101,7 @@ export function CategoryTrendChart({ trend, granularity = "month" }: CategoryTre
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={formatCompactAxisNumber}
                   width={45}
                 />
                 <Tooltip content={<CustomTooltip />} />

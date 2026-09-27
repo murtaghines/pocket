@@ -61,8 +61,17 @@ export default function MyData() {
     }
   }, [highlightSection, highlightMonth, setSearchParams]);
 
+  // Only the transactions workspace renders its own edge-to-edge canvas with an internal
+  // (flex-1/min-h-0) scroll container on both desktop and mobile. Investments' desktop table
+  // scrolls via its own max-h and its mobile list has no scroll wrapper of its own, and
+  // categories/accounts are normal padded pages — all three need the document itself to
+  // scroll, so they must NOT be fullBleed (fullBleed locks document scroll via
+  // DashboardLayout, which would trap their content below the first viewport on mobile with
+  // no way to reach it).
+  const isFullBleedTab = tab === "transactions";
+
   return (
-    <DashboardLayout fullBleed={tab !== "accounts"}>
+    <DashboardLayout fullBleed={isFullBleedTab}>
       {tab === "transactions" && <BankStatementsTabsView activeMonth={activeMonth} onMonthChange={setMonth} />}
       {tab === "investments" && <InvestmentTabsView activeMonth={activeMonth} onMonthChange={setMonth} />}
       {tab === "categories" && <CategoriesTab />}

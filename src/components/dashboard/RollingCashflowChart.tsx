@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
 import { ROLLING_WINDOWS, type RollingWindow } from "@/hooks/useHistoricalInsights";
 import type { RollingPoint } from "@/lib/analytics";
+import { formatCompactAxisNumber } from "@/lib/chartFormat";
 
 interface RollingCashflowChartProps {
   rolling: Record<RollingWindow, RollingPoint[]>;
@@ -103,7 +104,7 @@ export function RollingCashflowChart({ rolling }: RollingCashflowChartProps) {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={formatCompactAxisNumber}
                   width={45}
                 />
                 <Tooltip content={<CustomTooltip />} />

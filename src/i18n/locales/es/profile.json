@@ -1,5 +1,27 @@
 {
   "title": "Perfil",
+  "deleteAccount": {
+    "button": "Eliminar cuenta",
+    "title": "Eliminar cuenta permanentemente",
+    "warning": "Esto eliminará tu cuenta de forma permanente y borrará todos tus datos, incluyendo:",
+    "items": {
+      "transactions": "Todas las transacciones y registros financieros",
+      "files": "Todos los archivos y documentos subidos",
+      "investments": "Registros de inversiones y cuentas",
+      "preferences": "Preferencias y configuraciones",
+      "profile": "Tu información de perfil"
+    },
+    "confirmWord": "ELIMINAR",
+    "typeToConfirm": "Escribí {{word}} para confirmar",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar cuenta",
+    "deleting": "Eliminando...",
+    "deleted": "Cuenta eliminada",
+    "deletedDescription": "Tu cuenta y todos tus datos fueron eliminados permanentemente.",
+    "error": "Algo salió mal al eliminar tu cuenta.",
+    "errorTitle": "No se pudo eliminar la cuenta",
+    "errorDescription": "Intentá de nuevo o contactá a soporte."
+  },
   "tabs": {
     "settings": "Configuración",
     "data": "Mis Datos"

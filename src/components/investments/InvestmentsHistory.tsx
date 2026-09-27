@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import { useLocalization } from "@/hooks/useLocalization";
+import { formatCompactAxisNumber } from "@/lib/chartFormat";
 
 interface MonthlyData {
   month: string;
@@ -56,7 +57,7 @@ export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
               className="text-muted-foreground"
             />
             <YAxis 
-              tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`}
+              tickFormatter={(v) => formatCompactAxisNumber(v, { prefix: "€" })}
               tick={{ fontSize: 12 }}
               className="text-muted-foreground"
             />

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useLocalization } from "@/hooks/useLocalization";
 import { EmptyState } from "@/components/ui/empty-state";
+import { formatCompactAxisNumber } from "@/lib/chartFormat";
 
 export interface BreakdownPoint {
   label: string;
@@ -71,7 +72,7 @@ export function PeriodBreakdownChart({ points, subtitle }: PeriodBreakdownChartP
       ) : (
         <div className="min-h-[180px] flex-1">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={points} margin={{ top: 4, right: 4, left: -14, bottom: 0 }} barGap={3} barCategoryGap="28%">
+            <BarChart data={points} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={3} barCategoryGap="28%">
               <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.35} vertical={false} />
               <XAxis
                 dataKey="label"
@@ -84,8 +85,8 @@ export function PeriodBreakdownChart({ points, subtitle }: PeriodBreakdownChartP
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)}
-                width={38}
+                tickFormatter={formatCompactAxisNumber}
+                width={40}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", fillOpacity: 0.3 }} />
               <Bar

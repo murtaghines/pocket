@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useLocalization } from "@/hooks/useLocalization";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatPeriodLabel, type Granularity } from "@/lib/analytics";
+import { formatCompactAxisNumber } from "@/lib/chartFormat";
 
 interface MonthlyData {
   month: string;
@@ -95,7 +96,7 @@ export function MonthlyChart({ data, granularity = "month" }: MonthlyChartProps)
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
+                tickFormatter={formatCompactAxisNumber}
                 width={38}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.3 }} />

@@ -37,7 +37,9 @@ export function DashboardLayout({ children, fullBleed = false }: DashboardLayout
     <div
       className={cn(
         "bg-background dashboard-theme relative",
-        fullBleed ? "h-dvh flex overflow-hidden" : "min-h-screen md:flex md:h-dvh md:overflow-hidden",
+        fullBleed
+          ? "h-dvh flex flex-col md:flex-row overflow-hidden"
+          : "min-h-screen md:flex md:h-dvh md:overflow-hidden",
       )}
     >
       {/* Mobile: top nav header + hamburger */}
