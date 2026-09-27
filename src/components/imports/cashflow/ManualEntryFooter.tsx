@@ -70,6 +70,7 @@ export function ManualEntryFooter({
     categorySlug: string;
     amount: number;
     createRule: boolean;
+    matchingTransactionIds?: string[];
   }) => {
     if (!user) return;
     try {
@@ -153,7 +154,10 @@ export function ManualEntryFooter({
           try {
             // prebuilt: true — pattern/tokens are already fully resolved above; the
             // centralized mutation just persists them (and now also sets account_id,
-            // which this flow previously omitted).
+            // which this flow previously omitted). matchingTransactionIds comes from the
+            // dialog's own live preview, so the count in the toast can never drift from
+            // what actually gets retroactively recategorized.
+            const matchIds = entry.matchingTransactionIds ?? [];
             await addRule.mutateAsync({
               category_id: category.id,
               pattern: built.pattern,
@@ -162,10 +166,14 @@ export function ManualEntryFooter({
               tokens: built.tokens,
               account_id: entry.accountId,
               original_description: cleanDesc,
+              matchingTransactionIds: matchIds,
             });
+            const base = `Rule saved: future "${cleanDesc}" transactions will be categorized as ${getCategoryLabel(entry.categorySlug)}.`;
             toast({
               title: "Entry added",
-              description: `Rule saved: future "${cleanDesc}" transactions will be categorized as ${getCategoryLabel(entry.categorySlug)}.`,
+              description: matchIds.length > 0
+                ? `${base} ${matchIds.length} existing transaction${matchIds.length === 1 ? "" : "s"} updated too.`
+                : base,
               duration: 3500,
             });
           } catch (ruleErr) {
