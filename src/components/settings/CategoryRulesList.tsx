@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Pencil, ChevronRight, Palette, Sparkles, Smile } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
+import { useLocalization } from '@/hooks/useLocalization';
 import { CategoryIcon } from '@/components/ui/category-icon';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { Database } from '@/integrations/supabase/types';
@@ -204,10 +205,13 @@ interface RuleRowProps {
   onDelete?: () => void;
   placeholder?: boolean;
   appliedCount?: number;
+  lastAppliedAt?: string | null;
   accountName?: string | null;
 }
 
-function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder, appliedCount, accountName }: RuleRowProps) {
+function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder, appliedCount, lastAppliedAt, accountName }: RuleRowProps) {
+  const { t } = useTranslation('settings');
+  const { formatDateShort } = useLocalization();
   return (
     <div
       className={cn(
@@ -243,7 +247,8 @@ function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder, ap
               appliedCount ? 'text-muted-foreground' : 'text-muted-foreground/50',
             )}
           >
-            {appliedCount ? `· applied ${appliedCount}×` : '· never applied'}
+            · {appliedCount ? t('categories.ruleAppliedCount', { count: appliedCount }) : t('categories.ruleNeverApplied')}
+            {!!appliedCount && lastAppliedAt && ` · ${t('categories.ruleLastApplied', { date: formatDateShort(lastAppliedAt) })}`}
           </span>
         )}
         {!placeholder && accountName && (
@@ -395,6 +400,7 @@ export function CategoryRulesList({
                   onEdit={() => onEditRule(rule, cat)}
                   onDelete={() => onDeleteRule(rule.id)}
                   appliedCount={rule.applied_count}
+                  lastAppliedAt={rule.last_applied_at}
                   accountName={rule.account_id ? accountNameById.get(rule.account_id) : null}
                 />
               ))

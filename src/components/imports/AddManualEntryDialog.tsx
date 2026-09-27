@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
@@ -20,6 +20,8 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
+import { buildRuleFromCorrection } from "@/lib/userRules";
+import { useRulePreview } from "@/hooks/useRulePreview";
 import { MinimalSelectContent, MinimalSelectItem } from "./MinimalSelect";
 import {
   SheetPanel,
@@ -64,6 +66,8 @@ interface AddManualEntryDialogProps {
     categorySlug: string;
     amount: number;
     createRule: boolean;
+    /** Existing transactions the new rule would also match, for retroactive apply. */
+    matchingTransactionIds?: string[];
   }) => Promise<void> | void;
 }
 
@@ -91,11 +95,13 @@ export function AddManualEntryDialog({
   const [categorySlug, setCategorySlug] = useState<string>(EXPENSE_CATEGORIES[0]);
   const [amountStr, setAmountStr] = useState<string>("");
   const [submitting, setSubmitting] = useState<"save" | "rule" | null>(null);
+  const [debouncedDescription, setDebouncedDescription] = useState<string>("");
 
   useEffect(() => {
     if (open) {
       setDate(getSmartDefaultDate(monthKey));
       setDescription("");
+      setDebouncedDescription("");
       setAccountId(accounts[0]?.id || "");
       const m = defaultMovement || "EXPENSE";
       setMovement(m);
@@ -107,6 +113,12 @@ export function AddManualEntryDialog({
       setAmountStr("");
     }
   }, [open]);
+
+  // Debounced so the "would also match" preview doesn't re-query on every keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedDescription(description.trim()), 350);
+    return () => clearTimeout(id);
+  }, [description]);
 
   useEffect(() => {
     const list =
@@ -140,6 +152,21 @@ export function AddManualEntryDialog({
     dateValid &&
     !submitting;
 
+  // Same builder used by the rule-creation path itself (ManualEntryFooter → addRule) — the
+  // preview shown here can never drift from what "Add + create rule" would actually match.
+  const builtRule = useMemo(
+    () => (debouncedDescription ? buildRuleFromCorrection(debouncedDescription, movement, categorySlug) : null),
+    [debouncedDescription, movement, categorySlug],
+  );
+  const { matchingIds, count: matchCount, isLoading: matchLoading } = useRulePreview({
+    matchType: builtRule?.match_type ?? "contains",
+    pattern: builtRule?.pattern ?? "",
+    tokens: builtRule?.tokens ?? [],
+    movement,
+    accountId: accountId || null,
+    enabled: !!builtRule && builtRule.pattern.trim().length > 0,
+  });
+
   const handleSubmit = async (createRule: boolean) => {
     if (!canSubmit) return;
     setSubmitting(createRule ? "rule" : "save");
@@ -152,6 +179,7 @@ export function AddManualEntryDialog({
         categorySlug,
         amount: parsedAmount,
         createRule,
+        matchingTransactionIds: createRule ? matchingIds : undefined,
       });
     } finally {
       setSubmitting(null);
@@ -202,6 +230,13 @@ export function AddManualEntryDialog({
         )}
         {t("imports.addEntryRule", "Add + create rule")}
       </Button>
+      {description.trim().length > 0 && !matchLoading && matchCount > 0 && (
+        <p className="text-xs text-muted-foreground text-center -mt-1">
+          {matchCount === 1
+            ? t("imports.manualEntryRuleMatchOne")
+            : t("imports.manualEntryRuleMatch", { count: matchCount })}
+        </p>
+      )}
     </>
   );
 

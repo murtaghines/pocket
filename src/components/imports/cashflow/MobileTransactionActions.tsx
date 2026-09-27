@@ -9,6 +9,7 @@ import {
   Trash2,
   Split as SplitIcon,
   RotateCcw,
+  CheckSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MonthTransaction } from "./types";
@@ -35,6 +36,7 @@ interface MobileTransactionActionsProps {
   onRevert: () => void;
   onCopyDescription: () => void;
   onCopyAmount: () => void;
+  onSelect: () => void;
 }
 
 export function MobileTransactionActions({
@@ -53,6 +55,7 @@ export function MobileTransactionActions({
   onRevert,
   onCopyDescription,
   onCopyAmount,
+  onSelect,
 }: MobileTransactionActionsProps) {
   const { t } = useTranslation("common");
   const open = tx !== null && anchorRect !== null;
@@ -97,6 +100,9 @@ export function MobileTransactionActions({
   }
   if (!isLocked && isEdited && !isManual) {
     primaryActions.push({ icon: <RotateCcw className="w-[17px] h-[17px]" />, label: t("imports.revertToOriginal"), onClick: () => act(onRevert) });
+  }
+  if (!isLocked) {
+    primaryActions.push({ icon: <CheckSquare className="w-[17px] h-[17px]" />, label: t("imports.selectRow"), onClick: () => act(onSelect) });
   }
   primaryActions.push({ icon: <Copy className="w-[17px] h-[17px]" />, label: t("imports.copyDescription"), onClick: () => act(onCopyDescription) });
   primaryActions.push({ icon: <Copy className="w-[17px] h-[17px]" />, label: t("imports.copyAmount"), onClick: () => act(onCopyAmount) });

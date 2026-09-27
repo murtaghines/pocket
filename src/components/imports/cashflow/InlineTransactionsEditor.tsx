@@ -109,6 +109,7 @@ import { ProcessingPanel } from "./ProcessingPanel";
 import { SwipeableRow } from "./SwipeableRow";
 import { MobileTransactionActions } from "./MobileTransactionActions";
 import { TransactionEditDrawer } from "./TransactionEditDrawer";
+import { BulkActionsToolbar } from "./BulkActionsToolbar";
 import type {
   MonthTransaction,
   AuditEntry,
@@ -117,6 +118,9 @@ import type {
   MovementType,
 } from "./types";
 import type { SortColumn, SortDirection, DataFilters } from "./DataToolbar";
+import type { Database } from "@/integrations/supabase/types";
+
+type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 function getISOWeek(dateStr: string): number {
   const d = new Date(dateStr);
@@ -466,6 +470,98 @@ export function InlineTransactionsEditor({
       });
     },
   });
+
+  const handleBulkHide = useCallback(() => {
+    selectedIds.forEach((id) => {
+      const t = transactions.find((x) => x.id === id);
+      if (t && !t.is_hidden) saveMutation.mutate({ id, payload: { is_hidden: true }, before: { is_hidden: false } });
+    });
+    setSelectedIds(new Set());
+  }, [selectedIds, transactions]);
+
+  const handleBulkShow = useCallback(() => {
+    selectedIds.forEach((id) => {
+      const t = transactions.find((x) => x.id === id);
+      if (t && t.is_hidden) saveMutation.mutate({ id, payload: { is_hidden: false }, before: { is_hidden: true } });
+    });
+    setSelectedIds(new Set());
+  }, [selectedIds, transactions]);
+
+  // Bulk category assignment (toolbar action) — a single update for all selected rows,
+  // then one audit_log entry per row so each keeps its own before/after diff.
+  const bulkAssignCategoryMutation = useMutation({
+    mutationFn: async ({
+      ids,
+      movement,
+      category,
+      categoryId,
+    }: {
+      ids: string[];
+      movement: MovementType;
+      category: string;
+      categoryId: string;
+    }) => {
+      const { error } = await supabase
+        .from("transactions")
+        .update({
+          movement,
+          category,
+          category_id: categoryId,
+          category_source: "MANUAL",
+          categorized_by: "user",
+          user_corrected: true,
+        })
+        .in("id", ids);
+      if (error) throw error;
+
+      if (user?.id) {
+        for (const id of ids) {
+          const tx = transactions.find((t) => t.id === id);
+          if (!tx || (tx.category === category && tx.movement === movement)) continue;
+          await supabase.rpc("log_audit_event", {
+            _entity_type: "transaction",
+            _entity_id: id,
+            _action: "edit",
+            _diff: {
+              fields: ["category", "movement"],
+              before: { category: tx.category, category_id: tx.category_id, movement: tx.movement },
+              after: { category, category_id: categoryId, movement },
+            } as never,
+          });
+        }
+      }
+      return ids;
+    },
+    onSuccess: async () => {
+      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
+      queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Couldn't update categories",
+        description: err?.message ?? "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBulkAssignCategory = useCallback((cat: Category) => {
+    const ids = Array.from(selectedIds);
+    bulkAssignCategoryMutation.mutate({
+      ids,
+      movement: (cat.movement_type || "EXPENSE") as MovementType,
+      category: cat.slug || "",
+      categoryId: cat.id,
+    });
+    setSelectedIds(new Set());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIds]);
 
   // Hard-delete with undo — only ever offered for manual entries (no import_id).
   const deleteWithUndo = async (tx: MonthTransaction) => {
@@ -974,6 +1070,20 @@ export function InlineTransactionsEditor({
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
+      {selectedIds.size > 0 && (
+        <BulkActionsToolbar
+          count={selectedIds.size}
+          categories={categories}
+          getCategoryIcon={getCategoryIcon}
+          getCategoryColor={getCategoryColor}
+          getCategoryLabel={getCategoryLabel}
+          onClear={() => setSelectedIds(new Set())}
+          onHide={handleBulkHide}
+          onShow={handleBulkShow}
+          onAssignCategory={handleBulkAssignCategory}
+        />
+      )}
+
       {/* Mismatch warning */}
       {mismatchedIds.size > 0 && (
         <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-300 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
@@ -1162,20 +1272,8 @@ export function InlineTransactionsEditor({
                     }
                   },
                   onSaveWithRule: () => commitRow(tx, true),
-                  onBulkHide: selectedIds.size > 1 ? () => {
-                    selectedIds.forEach((id) => {
-                      const t = transactions.find((x) => x.id === id);
-                      if (t && !t.is_hidden) saveMutation.mutate({ id, payload: { is_hidden: true }, before: { is_hidden: false } });
-                    });
-                    setSelectedIds(new Set());
-                  } : undefined,
-                  onBulkShow: selectedIds.size > 1 ? () => {
-                    selectedIds.forEach((id) => {
-                      const t = transactions.find((x) => x.id === id);
-                      if (t && t.is_hidden) saveMutation.mutate({ id, payload: { is_hidden: false }, before: { is_hidden: true } });
-                    });
-                    setSelectedIds(new Set());
-                  } : undefined,
+                  onBulkHide: selectedIds.size > 1 ? handleBulkHide : undefined,
+                  onBulkShow: selectedIds.size > 1 ? handleBulkShow : undefined,
                 };
 
                 return (
@@ -1613,19 +1711,21 @@ export function InlineTransactionsEditor({
                         : movement === "TRANSFER"
                           ? "text-muted-foreground"
                           : "text-destructive";
-  
+                  const isSelected = selectedIds.has(tx.id);
+                  const selecting = selectedIds.size > 0;
+
                   return (
                     <SwipeableRow
                       key={tx.id}
                       onSwipeLeft={
-                        !isLocked
+                        !isLocked && !selecting
                           ? isManual
                             ? () => deleteWithUndo(tx)
                             : () => handleToggleHidden(tx)
                           : undefined
                       }
                       leftAction={isManual ? "delete" : "hide"}
-                      onSwipeRight={!isLocked ? () => setEditingTx(tx) : undefined}
+                      onSwipeRight={!isLocked && !selecting ? () => setEditingTx(tx) : undefined}
                       disabled={isLocked}
                     >
                       <div
@@ -1635,10 +1735,11 @@ export function InlineTransactionsEditor({
                           isHidden && "opacity-60 bg-muted/20",
                           isSaved && !isMismatch && "bg-success/5",
                           actionMenu?.tx.id === tx.id && "z-20 bg-accent ring-2 ring-primary",
+                          isSelected && "bg-primary/[0.08]",
                         )}
                         onContextMenu={(e) => e.preventDefault()}
                         onTouchStart={(e) => {
-                          if (isLocked) return;
+                          if (isLocked || selecting) return;
                           const target = e.currentTarget;
                           const touch = e.touches[0];
                           longPressStartRef.current = { x: touch.clientX, y: touch.clientY };
@@ -1670,6 +1771,10 @@ export function InlineTransactionsEditor({
                             longPressFiredRef.current = false;
                             return;
                           }
+                          if (selecting) {
+                            toggleSelected(tx.id);
+                            return;
+                          }
                           if (!isLocked) setEditingTx(tx);
                         }}
                       >
@@ -1678,12 +1783,16 @@ export function InlineTransactionsEditor({
                           style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}) / 0.15)` }}
                           title={getCategoryLabel(category)}
                         >
-                          <CategoryIcon
-                            iconName={getCategoryIcon(category)}
-                            colorVar={getCategoryColor(category)}
-                            size="sm"
-                            showBackground={false}
-                          />
+                          {selecting ? (
+                            <Checkbox checked={isSelected} className="pointer-events-none" aria-label="Select row" />
+                          ) : (
+                            <CategoryIcon
+                              iconName={getCategoryIcon(category)}
+                              colorVar={getCategoryColor(category)}
+                              size="sm"
+                              showBackground={false}
+                            />
+                          )}
                         </div>
 
                         <div className="min-w-0 flex-1">
@@ -1737,7 +1846,7 @@ export function InlineTransactionsEditor({
         {/* Mobile long-press action menu */}
         {(() => {
           const atx = actionMenu?.tx ?? null;
-          if (!atx) return <MobileTransactionActions tx={null} anchorRect={null} isLocked={isLocked} isManual={false} isHidden={false} isEdited={false} onClose={() => setActionMenu(null)} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onEditDescription={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} />;
+          if (!atx) return <MobileTransactionActions tx={null} anchorRect={null} isLocked={isLocked} isManual={false} isHidden={false} isEdited={false} onClose={() => { setActionMenu(null); longPressFiredRef.current = false; }} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onEditDescription={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} onSelect={() => {}} />;
           const atxManual = isManualTransaction(atx);
           const atxHist = auditByTx[atx.id] || [];
           const atxEdits = atxHist.filter((h) => h.action !== "revert");
@@ -1752,7 +1861,7 @@ export function InlineTransactionsEditor({
               isManual={atxManual}
               isHidden={atx.is_hidden}
               isEdited={atxIsEdited}
-              onClose={() => setActionMenu(null)}
+              onClose={() => { setActionMenu(null); longPressFiredRef.current = false; }}
               onEdit={() => { setActionMenu(null); setEditingTx(atx); }}
               onToggleHidden={() => handleToggleHidden(atx)}
               onDelete={() => deleteWithUndo(atx)}
@@ -1772,6 +1881,7 @@ export function InlineTransactionsEditor({
               }}
               onCopyDescription={() => { navigator.clipboard.writeText(atxCleanDesc); sonnerToast("Description copied"); }}
               onCopyAmount={() => { navigator.clipboard.writeText(formatCurrency(splitAmt(atx.amount, atx.account_id), undefined, true)); sonnerToast("Amount copied"); }}
+              onSelect={() => { setActionMenu(null); toggleSelected(atx.id); }}
             />
           );
         })()}
