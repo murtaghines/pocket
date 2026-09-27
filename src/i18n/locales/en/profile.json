@@ -1,5 +1,27 @@
 {
   "title": "Profile",
+  "deleteAccount": {
+    "button": "Delete Account",
+    "title": "Delete Account Permanently",
+    "warning": "This will permanently delete your account and remove all your data, including:",
+    "items": {
+      "transactions": "All transactions and financial records",
+      "files": "All uploaded files and documents",
+      "investments": "Investment records and accounts",
+      "preferences": "Preferences and settings",
+      "profile": "Your profile information"
+    },
+    "confirmWord": "DELETE",
+    "typeToConfirm": "Type {{word}} to confirm",
+    "cancel": "Cancel",
+    "confirm": "Delete Account",
+    "deleting": "Deleting...",
+    "deleted": "Account deleted",
+    "deletedDescription": "Your account and all data have been permanently deleted.",
+    "error": "Something went wrong deleting your account.",
+    "errorTitle": "Couldn't delete account",
+    "errorDescription": "Please try again or contact support."
+  },
   "tabs": {
     "settings": "Settings",
     "data": "My Data"

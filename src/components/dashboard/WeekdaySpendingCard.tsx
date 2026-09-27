@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
+import { formatCompactAxisNumber } from "@/lib/chartFormat";
 import type { WeekdaySpend } from "@/lib/analytics";
 
 interface WeekdaySpendingCardProps {
@@ -79,7 +80,7 @@ export function WeekdaySpendingCard({ weekday }: WeekdaySpendingCardProps) {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={formatCompactAxisNumber}
                   width={45}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.4)" }} />

@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, Plus, Minus, ArrowRightLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, ArrowRightLeft, CalendarDays } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useMonthSelection } from "@/hooks/usePeriodSelection";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useLocalization } from "@/hooks/useLocalization";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import type { Transaction } from "@/lib/mockData";
 
@@ -63,6 +64,41 @@ function TransactionEvent({ tx, formatCurrency }: { tx: Transaction; formatCurre
   );
 }
 
+function AgendaRow({ tx, formatCurrency }: { tx: Transaction; formatCurrency: (n: number, currency?: string, signed?: boolean) => string }) {
+  const isIncome = tx.movement === "INCOME";
+  const isTransfer = tx.movement === "TRANSFER";
+
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-2.5 bg-card">
+      <div
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+          isIncome ? "bg-success/10" : isTransfer ? "bg-muted" : "bg-destructive/10",
+        )}
+      >
+        {isIncome ? (
+          <Plus className="w-3.5 h-3.5 text-success" strokeWidth={2.5} />
+        ) : isTransfer ? (
+          <ArrowRightLeft className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} />
+        ) : (
+          <Minus className="w-3.5 h-3.5 text-destructive" strokeWidth={2.5} />
+        )}
+      </div>
+      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
+        {tx.description}
+      </p>
+      <span
+        className={cn(
+          "shrink-0 text-[13px] tabular-nums",
+          isIncome ? "text-success" : isTransfer ? "text-muted-foreground" : "text-destructive",
+        )}
+      >
+        {formatCurrency(tx.amount, undefined, true)}
+      </span>
+    </div>
+  );
+}
+
 function DaySummary({ income, expense }: { income: number; expense: number }) {
   if (income === 0 && expense === 0) return null;
   return (
@@ -115,6 +151,18 @@ export default function Calendar() {
     });
   }, [i18n.language]);
 
+  // Mobile: the 7-column grid doesn't fit a phone width — an agenda list of the days that
+  // actually have activity reads far better than 30 cramped, truncated cells.
+  const agendaDays = useMemo(
+    () =>
+      calendarDays.filter((d) => d.inMonth && (txByDate[d.key]?.length ?? 0) > 0),
+    [calendarDays, txByDate],
+  );
+  const weekdayFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, { weekday: "short" }),
+    [i18n.language],
+  );
+
   return (
     <DashboardLayout>
       <div className="px-3 md:px-[34px]">
@@ -135,7 +183,41 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl shadow-section overflow-hidden">
+      {/* Mobile: agenda list of days with activity — the grid below is desktop-only */}
+      <div className="md:hidden bg-card rounded-xl shadow-section overflow-hidden">
+        {agendaDays.length === 0 ? (
+          <EmptyState icon={CalendarDays} message={tc("noDataYet")} height="h-[200px]" />
+        ) : (
+          agendaDays.map((day) => {
+            const dayTx = txByDate[day.key] ?? [];
+            const isToday = day.key === today;
+            return (
+              <div key={day.key} className="border-b border-border/40 last:border-b-0">
+                <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">
+                  <span
+                    className={cn(
+                      "text-[13px] font-semibold tabular-nums",
+                      isToday ? "text-primary" : "text-foreground",
+                    )}
+                  >
+                    {day.date.getDate()}
+                  </span>
+                  <span className="text-[11px] font-medium text-muted-foreground capitalize">
+                    {weekdayFormatter.format(day.date)}
+                  </span>
+                </div>
+                <div className="divide-y divide-border/40">
+                  {dayTx.map((tx) => (
+                    <AgendaRow key={tx.id} tx={tx} formatCurrency={formatCurrency} />
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="hidden md:block bg-card rounded-xl shadow-section overflow-hidden">
         {/* Weekday headers */}
         <div className="grid grid-cols-7 border-b border-border">
           {weekdays.map((day) => (

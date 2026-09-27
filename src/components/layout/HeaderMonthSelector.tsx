@@ -17,7 +17,9 @@ export function HeaderMonthSelector({ variant = "default" }: HeaderMonthSelector
 
   const section = getActiveSection(location.pathname);
   const activeTab = getActiveTabKey(section, searchParams);
-  if (section?.key !== "dashboard" || activeTab !== "month") return null;
+  const isDashboardMonth = section?.key === "dashboard" && activeTab === "month";
+  const isCalendar = section?.key === "calendar";
+  if (!isDashboardMonth && !isCalendar) return null;
   if (availableMonths.length === 0) return null;
 
   const currentIdx = selectedMonth ? availableMonths.indexOf(selectedMonth) : -1;

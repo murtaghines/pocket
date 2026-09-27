@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useTranslation } from "react-i18next";
 import { useLocalization } from "@/hooks/useLocalization";
+import { formatCompactAxisNumber } from "@/lib/chartFormat";
 
 interface AssetData {
   deposits: number;
@@ -73,7 +74,7 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
       <CardContent>
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={chartData} layout="vertical">
-            <XAxis type="number" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
+            <XAxis type="number" tickFormatter={(v) => formatCompactAxisNumber(v, { prefix: "€" })} />
             <YAxis type="category" dataKey="name" width={70} />
             <Tooltip
               formatter={(value: number) => [formatCurrency(value), t('byAssetType.invested')]}
