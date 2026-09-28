@@ -135,7 +135,7 @@ export function TransactionEditDrawer({
   const lastDayNum = new Date(year, monthNum, 0).getDate();
   const lastDay = `${year}-${String(monthNum).padStart(2, "0")}-${String(lastDayNum).padStart(2, "0")}`;
 
-  const availableCategories = getCategoriesForMovement(movement);
+  const availableCategories = getCategoriesForMovement(movement, amount);
   const selectedAccount = accounts.find((a) => a.id === accountId);
   const displayDate = date || tx.date;
 
@@ -150,7 +150,8 @@ export function TransactionEditDrawer({
       setCategory(saved.slug);
       setCategoryId(saved.id);
     } else {
-      const defaultCat = getCategoriesForMovement(newMovement)[0];
+      const newAmount = (newMovement === "EXPENSE" ? -1 : 1) * Math.abs(amount);
+      const defaultCat = getCategoriesForMovement(newMovement, newAmount)[0];
       setCategory(defaultCat);
       const cat = categories.find((c) => c.slug === defaultCat);
       setCategoryId(cat?.id || null);
@@ -168,8 +169,18 @@ export function TransactionEditDrawer({
     const parsed = evalArithmetic(sanitized);
     if (parsed === null) return;
     const sign = movement === "EXPENSE" ? -1 : 1;
-    setAmount(sign * Math.abs(parsed));
+    const newAmount = sign * Math.abs(parsed);
+    setAmount(newAmount);
     setAmountStr(String(parseFloat(Math.abs(parsed).toFixed(2))).replace(".", ","));
+    if (movement === "TRANSFER" && newAmount !== 0) {
+      const validCats = getCategoriesForMovement("TRANSFER", newAmount);
+      if (!validCats.includes(category)) {
+        const defaultCat = validCats[0];
+        setCategory(defaultCat);
+        const cat = categories.find((c) => c.slug === defaultCat);
+        setCategoryId(cat?.id || null);
+      }
+    }
   };
 
   const handleUndoChanges = () => {

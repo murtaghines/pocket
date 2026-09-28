@@ -115,12 +115,17 @@ describe('FIXED — to_joint_account no longer collapses to own_transfer', () =>
 
 describe('FIXED — from_myself/from_investment/from_joint_account are valid TRANSFER slugs', () => {
   it('own_transfer has a from_myself counterpart, distinct from itself', () => {
-    // Same bug class as to_joint_account above: the categorizer's flipTransferDirection
-    // already emitted from_investment/from_joint_account for positive-amount transfers, and
-    // own_transfer's own name-match step now flips to from_myself, but none of the three had a
-    // `categories` row until migration 20260926120000_add_transfer_from_categories.sql — so a
-    // categorizer match with the right slug still got a null category_id downstream.
     for (const slug of ['from_myself', 'from_investment', 'from_joint_account']) {
+      expect(mapCategorySlug(slug)).toBe(slug);
+      expect(TRANSFER_SLUGS).toContain(slug);
+      expect(validateCategorySlug(slug, 'TRANSFER')).toBe(slug);
+    }
+  });
+});
+
+describe('to_savings/from_savings are valid TRANSFER slugs', () => {
+  it('both directions are recognized and pass through unchanged', () => {
+    for (const slug of ['to_savings', 'from_savings']) {
       expect(mapCategorySlug(slug)).toBe(slug);
       expect(TRANSFER_SLUGS).toContain(slug);
       expect(validateCategorySlug(slug, 'TRANSFER')).toBe(slug);

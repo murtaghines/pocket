@@ -32,12 +32,10 @@ import {
 } from "./SheetPanel";
 import type { Database } from "@/integrations/supabase/types";
 import {
-  INCOME_CATEGORIES,
-  EXPENSE_CATEGORIES,
-  TRANSFER_CATEGORIES,
   getCategoryLabel,
   getMovementLabel,
 } from "@/lib/categoryTranslations";
+import { getCategoriesForMovement } from "./cashflow/helpers";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
@@ -92,7 +90,7 @@ export function AddManualEntryDialog({
   const [description, setDescription] = useState<string>("");
   const [accountId, setAccountId] = useState<string>("");
   const [movement, setMovement] = useState<MovementType>(defaultMovement || "EXPENSE");
-  const [categorySlug, setCategorySlug] = useState<string>(EXPENSE_CATEGORIES[0]);
+  const [categorySlug, setCategorySlug] = useState<string>(getCategoriesForMovement("EXPENSE")[0]);
   const [amountStr, setAmountStr] = useState<string>("");
   const [submitting, setSubmitting] = useState<"save" | "rule" | null>(null);
   const [debouncedDescription, setDebouncedDescription] = useState<string>("");
@@ -105,11 +103,7 @@ export function AddManualEntryDialog({
       setAccountId(accounts[0]?.id || "");
       const m = defaultMovement || "EXPENSE";
       setMovement(m);
-      const list =
-        m === "INCOME" ? INCOME_CATEGORIES :
-        m === "TRANSFER" ? TRANSFER_CATEGORIES :
-        EXPENSE_CATEGORIES;
-      setCategorySlug(list[0]);
+      setCategorySlug(getCategoriesForMovement(m)[0]);
       setAmountStr("");
     }
   }, [open]);
@@ -121,17 +115,8 @@ export function AddManualEntryDialog({
   }, [description]);
 
   useEffect(() => {
-    const list =
-      movement === "INCOME" ? INCOME_CATEGORIES :
-      movement === "TRANSFER" ? TRANSFER_CATEGORIES :
-      EXPENSE_CATEGORIES;
-    setCategorySlug(list[0]);
+    setCategorySlug(getCategoriesForMovement(movement)[0]);
   }, [movement]);
-
-  const availableCategories =
-    movement === "INCOME" ? INCOME_CATEGORIES :
-    movement === "TRANSFER" ? TRANSFER_CATEGORIES :
-    EXPENSE_CATEGORIES;
 
   const parseNum = (s: string) => {
     const sanitized = s.replace(/\s/g, "").replace(",", ".");
@@ -142,6 +127,12 @@ export function AddManualEntryDialog({
   };
 
   const parsedAmount = Math.abs(parseNum(amountStr));
+  const signedAmount = movement === "EXPENSE" ? -parsedAmount : parsedAmount;
+
+  const availableCategories = getCategoriesForMovement(
+    movement,
+    movement === "TRANSFER" && !isNaN(parsedAmount) && parsedAmount > 0 ? signedAmount : undefined,
+  );
 
   const dateValid = date >= firstDay && date <= lastDay;
   const canSubmit =

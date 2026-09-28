@@ -29,7 +29,9 @@
     "to_investment": "A Inversión",
     "from_investment": "Desde Inversión",
     "to_joint_account": "A Cuenta Conjunta",
-    "from_joint_account": "Desde Cuenta Conjunta"
+    "from_joint_account": "Desde Cuenta Conjunta",
+    "to_savings": "A Ahorro",
+    "from_savings": "Desde Ahorro"
   },
   "movement": {
     "INCOME": "Ingreso",
