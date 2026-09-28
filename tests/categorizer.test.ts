@@ -165,48 +165,48 @@ describe('categorize — more canonical merchants', () => {
     expect(categorize('SPOTIFY P0A1B2', -9.99)?.category).toBe('subscriptions');
   });
 
-  it('routes REVOLUT vault/savings to own_transfer (not investment)', () => {
+  it('routes REVOLUT vault to own_transfer (not investment)', () => {
     const r = categorize('REVOLUT VAULT', -200);
     expect(r?.movement).toBe('TRANSFER');
     expect(r?.category).toBe('own_transfer');
   });
 });
 
-describe('categorize — neobank savings pockets are own_transfer, not investment', () => {
-  it('routes "To Instant Access Savings" to own_transfer', () => {
+describe('categorize — neobank savings pockets route to to_savings/from_savings', () => {
+  it('routes "To Instant Access Savings" to to_savings (outflow)', () => {
     const r = categorize('To Instant Access Savings', -500);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('own_transfer');
+    expect(r?.category).toBe('to_savings');
   });
 
-  it('routes "From Instant Access Savings" to own_transfer', () => {
+  it('routes "From Instant Access Savings" to from_savings (inflow)', () => {
     const r = categorize('From Instant Access Savings', 500);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('own_transfer');
+    expect(r?.category).toBe('from_savings');
   });
 
-  it('routes "To EUR Savings Challenge" to own_transfer', () => {
+  it('routes "To EUR Savings Challenge" to to_savings', () => {
     const r = categorize('To EUR Savings Challenge', -100);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('own_transfer');
+    expect(r?.category).toBe('to_savings');
   });
 
-  it('routes Revolut Savings to own_transfer', () => {
+  it('routes Revolut Savings to to_savings (outflow)', () => {
     const r = categorize('REVOLUT SAVINGS', -200);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('own_transfer');
+    expect(r?.category).toBe('to_savings');
   });
 
-  it('routes Monzo Pot to own_transfer', () => {
+  it('routes Monzo Pot to to_savings (outflow)', () => {
     const r = categorize('MONZO POT HOLIDAY FUND', -50);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('own_transfer');
+    expect(r?.category).toBe('to_savings');
   });
 
-  it('routes Cuenta Remunerada to own_transfer', () => {
+  it('routes Cuenta Remunerada to to_savings (outflow)', () => {
     const r = categorize('TRASPASO CUENTA REMUNERADA', -1000);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('own_transfer');
+    expect(r?.category).toBe('to_savings');
   });
 
   it('keeps actual investment platforms as to_investment', () => {
@@ -215,7 +215,7 @@ describe('categorize — neobank savings pockets are own_transfer, not investmen
     expect(categorize('COCOS CAPITAL TRANSFERENCIA', -5000)?.category).toBe('to_investment');
   });
 
-  it('keeps interest earned from savings as income (not own_transfer)', () => {
+  it('keeps interest earned from savings as income (not to_savings)', () => {
     const r = categorize('NET INTEREST PAID FROM SAVINGS', 2.50);
     expect(r?.movement).not.toBe('TRANSFER');
   });

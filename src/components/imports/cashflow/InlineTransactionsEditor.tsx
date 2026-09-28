@@ -619,7 +619,7 @@ export function InlineTransactionsEditor({
   // and persists everything together.
 
   const applyMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
-    const defaultCat = getCategoriesForMovement(newMovement)[0];
+    const defaultCat = getCategoriesForMovement(newMovement, tx.amount)[0];
     const cat = categories.find((c) => c.slug === defaultCat);
     saveMutation.mutate({
       id: tx.id,
@@ -654,7 +654,8 @@ export function InlineTransactionsEditor({
     }
     // When movement changes, reset the category to the default of the new
     // movement so the user always sees a coherent pair while pending.
-    const defaultCat = getCategoriesForMovement(newMovement)[0];
+    const amount = pendingByTx[tx.id]?.amount ?? tx.amount;
+    const defaultCat = getCategoriesForMovement(newMovement, amount)[0];
     const cat = categories.find((c) => c.slug === defaultCat);
     setPendingFor(tx.id, {
       movement: newMovement,
@@ -680,7 +681,18 @@ export function InlineTransactionsEditor({
     const sign = movement === "EXPENSE" ? -1 : 1;
     const newAmount = sign * Math.abs(parsed);
     if (newAmount === tx.amount) return;
-    setPendingFor(tx.id, { amount: newAmount });
+    const updates: Record<string, unknown> = { amount: newAmount };
+    if (movement === "TRANSFER" && newAmount !== 0) {
+      const currentCat = pending.category ?? tx.category ?? "own_transfer";
+      const validCats = getCategoriesForMovement("TRANSFER", newAmount);
+      if (!validCats.includes(currentCat)) {
+        const defaultCat = validCats[0];
+        const cat = categories.find((c) => c.slug === defaultCat);
+        updates.category = defaultCat;
+        updates.category_id = cat?.id || null;
+      }
+    }
+    setPendingFor(tx.id, updates);
   };
 
   const handleSplit = (tx: MonthTransaction, n: number) => {
@@ -1225,7 +1237,7 @@ export function InlineTransactionsEditor({
                 // Joint accounts (split_percentage !== 100): show the statement's full
                 // amount alongside the user's share, so the split is never opaque.
                 const hasSplit = !!(tx.account_id && splitMap[tx.account_id] != null);
-                const availableCategories = getCategoriesForMovement(movement);
+                const availableCategories = getCategoriesForMovement(movement, rawAmount);
                 const hasPendingCategoryChange =
                   !!pending?.category && pending.category !== tx.category;
                 const hasPendingMovementTransfer =

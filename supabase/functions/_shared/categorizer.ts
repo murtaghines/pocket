@@ -534,6 +534,33 @@ const RULE_BUCKETS: RuleBucket[] = [
     ], 0.95),
   },
 
+  // ── TRANSFER → to_savings ──────────────────────────────────
+  // Money moved to/from savings pockets, vaults, and sub-accounts within
+  // neobanks. Interest-earning but not broker-invested — distinct from
+  // own_transfer (generic inter-account) and to_investment (broker).
+  // flipTransferDirection flips to from_savings for positive amounts.
+  {
+    movement: 'TRANSFER',
+    category: 'to_savings',
+    rules: r([
+      'INSTANT\\s*ACCESS\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
+      'SAVINGS\\s*CHALLENGE',
+      'SAVINGS\\s*VAULT',
+      'SAVINGS\\s*POT',
+      'N26\\s*SPACES',
+      'CUENTA\\s*REMUNERADA',
+      'CUENTA\\s*AHORRO\\s*PLUS',
+      'TO\\s*SAVINGS\\s*ACCOUNT',
+      'TO\\s*SAVINGS\\s*POT',
+      'FROM\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
+      'REVOLUT\\s*SAVINGS',
+      'MONZO\\s*SAVINGS',
+      'MONZO\\s*POT',
+      'STARLING\\s*SAVINGS',
+      'TRANSFER\\s*TO\\s*MY\\s*SAVINGS',
+    ], 0.99),
+  },
+
   // ── TRANSFER → own_transfer ───────────────────────────────
   //
   // WHAT COUNTS as own_transfer:
@@ -573,25 +600,8 @@ const RULE_BUCKETS: RuleBucket[] = [
         'INTER\\s*ACCOUNT\\s*TRANSFER',
         'BETWEEN\\s*MY\\s*ACCOUNTS',
         'BETWEEN\\s*ACCOUNTS',
-        'TRANSFER\\s*TO\\s*MY\\s*SAVINGS',
         'TRANSFER\\s*TO\\s*MY\\s*CURRENT',
         'TRANSFER\\s*TO\\s*MY\\s*CHECKING',
-      ], 0.99),
-
-      // ── Neobank savings pockets / sub-accounts ────────────
-      // Moving money to/from savings vaults, pots, and sub-accounts
-      // within neobanks is an own-account transfer, NOT an investment.
-      ...r([
-        'INSTANT\\s*ACCESS\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
-        'SAVINGS\\s*CHALLENGE',
-        'SAVINGS\\s*VAULT',
-        'SAVINGS\\s*POT',
-        'N26\\s*SPACES',
-        'CUENTA\\s*REMUNERADA',
-        'CUENTA\\s*AHORRO\\s*PLUS',
-        'TO\\s*SAVINGS\\s*ACCOUNT',
-        'TO\\s*SAVINGS\\s*POT',
-        'FROM\\s*SAVINGS(?!.*INTEREST)(?!.*PAID)',
       ], 0.99),
 
       // ── Named neobanks / cross-border fintechs ────────────
@@ -3449,6 +3459,9 @@ function flipTransferDirection(result: CategorizationResult, amount: number): Ca
   }
   if (result.category === 'to_joint_account') {
     return { ...result, category: 'from_joint_account', matchedRule: result.matchedRule + ':FROM' };
+  }
+  if (result.category === 'to_savings') {
+    return { ...result, category: 'from_savings', matchedRule: result.matchedRule + ':FROM' };
   }
   return result;
 }

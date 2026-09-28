@@ -4,6 +4,8 @@ import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
   TRANSFER_CATEGORIES,
+  TRANSFER_OUTGOING,
+  TRANSFER_INCOMING,
   getMovementLabel,
 } from "@/lib/categoryTranslations";
 import type { AuditEntry, MovementType } from "./types";
@@ -154,12 +156,13 @@ export const getMovementTone = (m: MovementType): PillTone => {
       return "neutral";
   }
 };
-export const getCategoriesForMovement = (m: MovementType) => {
+export const getCategoriesForMovement = (m: MovementType, amount?: number): string[] => {
   switch (m) {
     case "INCOME":
       return INCOME_CATEGORIES;
     case "TRANSFER":
-      return TRANSFER_CATEGORIES;
+      if (amount === undefined || amount === 0) return TRANSFER_CATEGORIES;
+      return amount < 0 ? TRANSFER_OUTGOING : TRANSFER_INCOMING;
     default:
       return EXPENSE_CATEGORIES;
   }
