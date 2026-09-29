@@ -327,7 +327,7 @@ async function reconcileTransferPairs(
   userId: string,
   accountId: string,
   insertedFingerprints: Set<string>,
-  userAccounts: Array<{ id: string; name: string; institution: string | null; account_role: string }>,
+  userAccounts: Array<{ id: string; name: string; institution: string | null; account_role: string; account_type: string | null }>,
   userName: { firstName: string | null; lastName: string | null } | undefined,
   categorySlugToId: Record<string, string>,
 ): Promise<number> {
@@ -919,10 +919,13 @@ serve(async (req) => {
     // Get user's accounts for internal transfer detection
     const { data: userAccounts } = await supabase
       .from('accounts')
-      .select('id, name, institution, account_role')
+      .select('id, name, institution, account_role, account_type')
       .eq('user_id', userId);
-    
+
     const accountsForDetection = userAccounts || [];
+    const isSavingsAccount = accountId
+      ? accountsForDetection.some(a => a.id === accountId && a.account_type === 'SAVINGS')
+      : false;
 
     // ========== BUILD USER CONTEXT FOR ADVANCED CATEGORIZER ==========
     // NOTE: joint_account_names lives in user_preferences, not profiles (schema drift from
@@ -1545,6 +1548,18 @@ serve(async (req) => {
         stats.categorizedByRule++;
         ruleHitCounts.set(userRuleHit.ruleId, (ruleHitCounts.get(userRuleHit.ruleId) || 0) + 1);
         console.log(`[process-import] user_rule match: "${descriptionRaw.substring(0, 40)}" → ${userRuleHit.movement}/${categorySlug} (rule=${userRuleHit.ruleId})`);
+      }
+
+      // ── Savings-account override: on SAVINGS accounts every transfer is just
+      //    money moving to/from the user's own checking — not a directional
+      //    savings/investment action. Override unless the user set a rule.
+      if (isSavingsAccount && movement === 'TRANSFER' && categorizedBy !== 'user_rule') {
+        const priorCat = categorySlug;
+        categorySlug = amountSigned >= 0 ? 'from_myself' : 'own_transfer';
+        categoryId = categorySlugToId[categorySlug] || null;
+        categorizedBy = 'savings_override';
+        categorySource = 'SAVINGS_OVERRIDE';
+        console.log(`[process-import] Savings-account override: "${descriptionRaw.substring(0, 40)}" ${priorCat}→${categorySlug}`);
       }
 
       // ── Sign sanity check: amount sign must agree with movement (except TRANSFER
