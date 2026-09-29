@@ -31,7 +31,11 @@ export function BalanceBand() {
   const tab = (searchParams.get("tab") ?? "month") as PeriodKey | "history";
 
   const cashAccounts = getCashAccounts();
-  const accountCount = cashAccounts.length;
+  const savingsAccountIds = useMemo(
+    () => new Set(cashAccounts.filter(a => a.account_type === "SAVINGS").map(a => a.id)),
+    [cashAccounts],
+  );
+  const accountCount = cashAccounts.length - savingsAccountIds.size;
 
   const userCurrency = preferences?.base_currency || "EUR";
 
@@ -72,7 +76,10 @@ export function BalanceBand() {
       });
       if (error) throw error;
       const sum = (data ?? []).reduce(
-        (acc: number, r: { latest_balance: number }) => acc + convertAmount(Number(r.latest_balance), "EUR", userCurrency),
+        (acc: number, r: { account_id: string; latest_balance: number }) => {
+          if (savingsAccountIds.has(r.account_id)) return acc;
+          return acc + convertAmount(Number(r.latest_balance), "EUR", userCurrency);
+        },
         0,
       );
       return sum;
