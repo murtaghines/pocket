@@ -35,6 +35,7 @@ export function BalanceBand() {
     () => new Set(cashAccounts.filter(a => a.account_type === "SAVINGS").map(a => a.id)),
     [cashAccounts],
   );
+  const savingsIdKey = useMemo(() => [...savingsAccountIds].sort().join(","), [savingsAccountIds]);
   const accountCount = cashAccounts.length - savingsAccountIds.size;
 
   const userCurrency = preferences?.base_currency || "EUR";
@@ -66,7 +67,7 @@ export function BalanceBand() {
   }, [tab, selectedMonth, selectedPeriod.week, selectedPeriod.year]);
 
   const { data: totalBalance } = useQuery({
-    queryKey: ["band-total-balance", user?.id, periodRange?.start, periodRange?.end],
+    queryKey: ["band-total-balance", user?.id, periodRange?.start, periodRange?.end, savingsIdKey],
     queryFn: async () => {
       if (!user?.id || !periodRange) return null;
       const { data, error } = await supabase.rpc("get_account_period_summary", {
