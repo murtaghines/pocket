@@ -56,7 +56,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
   const avgBalance = monthlyData.length > 0 ? Math.round(totalBalance / monthlyData.length) : 0;
   const avgIncome = monthlyData.length > 0 ? Math.round(totalIncome / monthlyData.length) : 0;
   const avgExpenses = monthlyData.length > 0 ? Math.round(totalExpenses / monthlyData.length) : 0;
-  const savingsRate = totalIncome > 0 ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100) : 0;
+  const savingsRate = totalIncome >= 1 ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100) : 0;
 
   // Cumulative balance
   let cumulative = 0;
@@ -68,7 +68,7 @@ export function TotalView({ monthlyData, insights, granularity }: TotalViewProps
   // Savings rate evolution per month
   const savingsRateData = monthlyData.map(d => ({
     month: d.month,
-    rate: d.income > 0 ? Math.round(((d.income - d.expenses) / d.income) * 100) : 0,
+    rate: d.income >= 1 ? Math.round(((d.income - d.expenses) / d.income) * 100) : 0,
   }));
 
   const formatMonthLabel = (val: string) => formatPeriodLabel(val, granularity, i18n.language);
