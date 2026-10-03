@@ -103,7 +103,11 @@ export function useAccountOpeningBalances(monthKey: string | null, domain: Datab
   return { accountOpeningBalances: balances, isLoading };
 }
 
-export function useAccountPeriodSummary(monthKey: string | null, domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW") {
+export function useAccountPeriodSummary(
+  monthKey: string | null,
+  domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW",
+  excludeAccountIds?: Set<string>,
+) {
   const { user } = useAuth();
 
   const range = useMemo(() => {
@@ -115,8 +119,10 @@ export function useAccountPeriodSummary(monthKey: string | null, domain: Databas
     return { start, end };
   }, [monthKey]);
 
+  const excludeKey = excludeAccountIds ? [...excludeAccountIds].sort().join(",") : "";
+
   const { data = { total: null as number | null, byAccount: {} as Record<string, number> }, isLoading } = useQuery({
-    queryKey: ["account-period-summary", user?.id, domain, monthKey],
+    queryKey: ["account-period-summary", user?.id, domain, monthKey, excludeKey],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_account_period_summary", {
         p_user_id: user!.id,
@@ -130,7 +136,7 @@ export function useAccountPeriodSummary(monthKey: string | null, domain: Databas
       (data ?? []).forEach((row: { account_id: string; latest_balance: number }) => {
         const bal = Number(row.latest_balance);
         byAccount[row.account_id] = bal;
-        total += bal;
+        if (!excludeAccountIds?.has(row.account_id)) total += bal;
       });
       return { total: Math.round(total * 100) / 100, byAccount };
     },

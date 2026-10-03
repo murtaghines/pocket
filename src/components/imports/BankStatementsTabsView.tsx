@@ -42,6 +42,10 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
 
   const { openingBalanceByMonth } = useDashboardData();
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
+  const savingsAccountIds = useMemo(
+    () => new Set(cashAccounts.filter(a => a.account_type === "SAVINGS").map(a => a.id)),
+    [cashAccounts],
+  );
   const [monthsToShow, setMonthsToShow] = useState(() => {
     if (!activeMonth) return DEFAULT_MONTHS;
     const now = new Date();
@@ -105,7 +109,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const setActiveKey = onMonthChange;
 
   const { accountOpeningBalances } = useAccountOpeningBalances(activeKey || null);
-  const { closingBalance, accountClosingBalances } = useAccountPeriodSummary(activeKey || null);
+  const { closingBalance, accountClosingBalances } = useAccountPeriodSummary(activeKey || null, "CASHFLOW", savingsAccountIds);
 
   const activeSlot = monthSlots.find((s) => s.key === activeKey) ?? monthSlots[0];
   const activeIdx = monthSlots.findIndex((s) => s.key === activeKey);
@@ -133,21 +137,27 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const activeImports = importsByMonth[activeKey] || [];
   const isLocked = activeImports.some((i) => i.locked);
 
+  const savingsIdList = useMemo(() => [...savingsAccountIds], [savingsAccountIds]);
+
   const { data: activeTxCount } = useQuery({
-    queryKey: ["tx-count", activeKey, user?.id],
+    queryKey: ["tx-count", activeKey, user?.id, savingsIdList],
     queryFn: async () => {
       if (!user || !activeKey) return 0;
       const [year, month] = activeKey.split("-").map(Number);
       const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
       const lastDay = new Date(year, month, 0).getDate();
       const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-      const { count, error } = await supabase
+      let query = supabase
         .from("transactions")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
         .gte("date", startDate)
         .lte("date", endDate);
+      if (savingsIdList.length > 0) {
+        query = query.not("account_id", "in", `(${savingsIdList.join(",")})`);
+      }
+      const { count, error } = await query;
       if (error) throw error;
       return count ?? 0;
     },

@@ -65,8 +65,10 @@ export function BalanceBand() {
     return null;
   }, [tab, selectedMonth, selectedPeriod.week, selectedPeriod.year]);
 
+  const savingsKey = useMemo(() => [...savingsAccountIds].sort().join(","), [savingsAccountIds]);
+
   const { data: totalBalance } = useQuery({
-    queryKey: ["band-total-balance", user?.id, periodRange?.start, periodRange?.end],
+    queryKey: ["band-total-balance", user?.id, periodRange?.start, periodRange?.end, savingsKey],
     queryFn: async () => {
       if (!user?.id || !periodRange) return null;
       const { data, error } = await supabase.rpc("get_account_period_summary", {

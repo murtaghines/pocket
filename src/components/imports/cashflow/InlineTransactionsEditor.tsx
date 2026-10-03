@@ -201,6 +201,11 @@ export function InlineTransactionsEditor({
     [splitMap],
   );
 
+  const savingsAccountIds = useMemo(
+    () => new Set(cashAccounts.filter(a => a.account_type === "SAVINGS").map(a => a.id)),
+    [cashAccounts],
+  );
+
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
@@ -348,7 +353,9 @@ export function InlineTransactionsEditor({
         .order("date", { ascending: false })
         .order("id", { ascending: true });
       if (error) throw error;
-      return (data || []) as MonthTransaction[];
+      return ((data || []) as MonthTransaction[]).filter(
+        tx => !savingsAccountIds.has(tx.account_id ?? ""),
+      );
     },
     enabled: !!user,
   });
