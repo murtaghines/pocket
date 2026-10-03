@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { getAccountColorStyle, getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { type AccountType, getAccountTypeIcon } from "@/lib/accountTypes";
 import { applySplit } from "@/lib/splitAmount";
@@ -64,8 +64,13 @@ export function AccountsStackCard({
   const { user } = useAuth();
   const { accounts, getCashAccounts } = useAccounts();
   const [detailAccountId, setDetailAccountId] = useState<string | null>(null);
+  const [view, setView] = useState<"accounts" | "savings">("accounts");
 
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
+  const hasSavingsAccounts = useMemo(
+    () => cashAccounts.some(a => a.account_type === "SAVINGS"),
+    [cashAccounts],
+  );
 
   const { data: summaryRows = [] } = useQuery({
     queryKey: ["account-period-summary", user?.id, startDate, endDate],
@@ -118,10 +123,14 @@ export function AccountsStackCard({
   }, [cashAccounts, summaryMap, startDate, endDate, convert]);
 
   const orderedAccounts = useMemo(() => {
-    const primary = accountsData.find((a) => a.isPrimary);
-    const rest = accountsData.filter((a) => !a.isPrimary);
+    const isSavingsView = view === "savings";
+    const filtered = accountsData.filter(a =>
+      isSavingsView ? a.accountType === "SAVINGS" : a.accountType !== "SAVINGS",
+    );
+    const primary = filtered.find((a) => a.isPrimary);
+    const rest = filtered.filter((a) => !a.isPrimary);
     return primary ? [primary, ...rest] : rest;
-  }, [accountsData]);
+  }, [accountsData, view]);
 
   const detailAccount = useMemo(
     () => accountsData.find((a) => a.id === detailAccountId) ?? null,
@@ -156,21 +165,36 @@ export function AccountsStackCard({
         <div className="flex items-center justify-between mb-3 shrink-0">
           <div>
             <p className="text-[14px] font-heading font-bold text-foreground">
-              {t('charts.accounts', 'Accounts')}
+              {view === "savings"
+                ? t('charts.savings', 'Savings')
+                : t('charts.accounts', 'Accounts')}
             </p>
             <p className="text-[12.5px] text-muted-foreground mt-0.5">
-              {subtitleOverride ?? t('charts.accountsSubtitle', 'Month-end balance')}
+              {subtitleOverride ?? (view === "savings"
+                ? t('charts.savingsSubtitle', 'Savings balance')
+                : t('charts.accountsSubtitle', 'Month-end balance'))}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate("/account?tab=accounts")}
-            aria-label={t("charts.manageAccounts", "Manage accounts")}
-            title={t("charts.manageAccounts", "Manage accounts")}
-            className="w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-muted-foreground hover:bg-muted/60 transition-colors"
-          >
-            <Settings2 className="w-[16px] h-[16px]" strokeWidth={2} />
-          </button>
+          {hasSavingsAccounts && (
+            <div className="flex bg-muted/60 rounded-[8px] p-[3px] gap-[2px]">
+              {(["accounts", "savings"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setView(v)}
+                  className={`px-[10px] h-[24px] rounded-[6px] text-[11.5px] font-medium transition-colors ${
+                    view === v
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {v === "savings"
+                    ? t('charts.savings', 'Savings')
+                    : t('charts.accounts', 'Accounts')}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {orderedAccounts.length === 0 ? (
