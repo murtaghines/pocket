@@ -20,15 +20,18 @@ export function SavingsRateRingCard({
 }: SavingsRateRingCardProps) {
   const { t, i18n } = useTranslation("dashboard");
 
-  const rate = income > 0 ? Math.round(((income - expenses) / income) * 100) : 0;
-  const previousRate =
-    previousIncome !== undefined && previousExpenses !== undefined && previousIncome > 0
-      ? Math.round(((previousIncome - previousExpenses) / previousIncome) * 100)
-      : undefined;
+  const MIN_INCOME_THRESHOLD = 1;
+  const hasMeaningfulIncome = income >= MIN_INCOME_THRESHOLD;
+  const rate = hasMeaningfulIncome ? Math.round(((income - expenses) / income) * 100) : null;
+  const previousHasMeaningful =
+    previousIncome !== undefined && previousExpenses !== undefined && previousIncome >= MIN_INCOME_THRESHOLD;
+  const previousRate = previousHasMeaningful
+    ? Math.round(((previousIncome! - previousExpenses!) / previousIncome!) * 100)
+    : undefined;
 
-  const change = previousRate !== undefined ? rate - previousRate : undefined;
+  const change = rate !== null && previousRate !== undefined ? rate - previousRate : undefined;
 
-  const filled = Math.max(0, Math.min(100, Math.abs(rate)));
+  const filled = rate !== null ? Math.max(0, Math.min(100, Math.abs(rate))) : 0;
 
   const size = 58;
   const stroke = 7;
@@ -52,7 +55,7 @@ export function SavingsRateRingCard({
           {t("stats.savingsRate")}
         </div>
         <div className="text-[18px] md:text-[22px] font-medium tracking-[-0.025em] tabular-nums leading-none text-primary">
-          {rate}%
+          {rate !== null ? `${rate}%` : "—"}
         </div>
         <div className="text-[12.5px] text-muted-foreground mt-[5px] truncate">
           {change !== undefined ? (

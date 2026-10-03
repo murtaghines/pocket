@@ -487,7 +487,7 @@ export function historySummary(monthlyData: MonthlyData[]): HistorySummary {
     avgIncome: n ? round2(totalIncome / n) : 0,
     avgExpenses: n ? round2(totalExpenses / n) : 0,
     avgBalance: n ? round2(totalBalance / n) : 0,
-    savingsRate: totalIncome > 0 ? Math.round((totalBalance / totalIncome) * 100) : 0,
+    savingsRate: totalIncome >= 1 ? Math.round((totalBalance / totalIncome) * 100) : 0,
     bestMonth,
     worstMonth,
     positiveStreak,
