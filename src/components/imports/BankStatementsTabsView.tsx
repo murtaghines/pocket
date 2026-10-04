@@ -137,27 +137,21 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const activeImports = importsByMonth[activeKey] || [];
   const isLocked = activeImports.some((i) => i.locked);
 
-  const savingsIdList = useMemo(() => [...savingsAccountIds], [savingsAccountIds]);
-
   const { data: activeTxCount } = useQuery({
-    queryKey: ["tx-count", activeKey, user?.id, savingsIdList],
+    queryKey: ["tx-count", activeKey, user?.id],
     queryFn: async () => {
       if (!user || !activeKey) return 0;
       const [year, month] = activeKey.split("-").map(Number);
       const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
       const lastDay = new Date(year, month, 0).getDate();
       const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-      let query = supabase
+      const { count, error } = await supabase
         .from("transactions")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
         .gte("date", startDate)
         .lte("date", endDate);
-      if (savingsIdList.length > 0) {
-        query = query.not("account_id", "in", `(${savingsIdList.join(",")})`);
-      }
-      const { count, error } = await query;
       if (error) throw error;
       return count ?? 0;
     },

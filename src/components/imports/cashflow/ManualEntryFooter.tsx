@@ -25,6 +25,7 @@ export interface ManualEntryFooterProps {
     income: number;
     expenses: number;
     transfers: number;
+    transfersNet?: number;
     hidden?: number;
   };
   openingBalance?: number | null;
@@ -252,7 +253,9 @@ export function ManualEntryFooter({
         <div className="inline-flex items-center gap-[6px]">
           <span className="w-[6px] h-[6px] rounded-full bg-[#B4BAC3] shrink-0" />
           <span className="text-[13px] text-[#6B7280] tabular-nums">
-            {summary.transfers}
+            {summary.transfersNet != null && summary.transfersNet !== 0
+              ? formatCurrency(summary.transfersNet)
+              : summary.transfers}
           </span>
         </div>
 
