@@ -159,14 +159,12 @@ export function AccountsStackCard({
   return (
     <>
       <div
-        className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] h-full shadow-section flex flex-col overflow-hidden"
+        className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] h-full shadow-section flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-3 shrink-0">
           <p className="text-[14px] font-heading font-bold text-foreground">
-            {view === "savings"
-              ? t('charts.savingsSubtitle', 'Savings balance')
-              : (subtitleOverride ?? t('charts.accountsSubtitle', 'Month-end balance'))}
+            {subtitleOverride ?? t('charts.accountsSubtitle', 'Month-end balance')}
           </p>
           {hasSavingsAccounts && (
             <div className="flex bg-muted/60 rounded-[8px] p-[3px] gap-[2px]">
@@ -193,7 +191,7 @@ export function AccountsStackCard({
         {orderedAccounts.length === 0 ? (
           <EmptyState height="h-[160px]" />
         ) : (
-          <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
+          <div className={`flex flex-col ${orderedAccounts.length > 3 ? "flex-1 min-h-0 overflow-y-auto" : ""}`}>
             {orderedAccounts.map((acc, idx) => {
               const TypeIcon = getAccountTypeIcon(acc.accountType);
               return (
