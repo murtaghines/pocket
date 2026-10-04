@@ -163,18 +163,11 @@ export function AccountsStackCard({
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-3 shrink-0">
-          <div>
-            <p className="text-[14px] font-heading font-bold text-foreground">
-              {view === "savings"
-                ? t('charts.savings', 'Savings')
-                : t('charts.accounts', 'Accounts')}
-            </p>
-            <p className="text-[12.5px] text-muted-foreground mt-0.5">
-              {subtitleOverride ?? (view === "savings"
-                ? t('charts.savingsSubtitle', 'Savings balance')
-                : t('charts.accountsSubtitle', 'Month-end balance'))}
-            </p>
-          </div>
+          <p className="text-[14px] font-heading font-bold text-foreground">
+            {view === "savings"
+              ? t('charts.savingsSubtitle', 'Savings balance')
+              : (subtitleOverride ?? t('charts.accountsSubtitle', 'Month-end balance'))}
+          </p>
           {hasSavingsAccounts && (
             <div className="flex bg-muted/60 rounded-[8px] p-[3px] gap-[2px]">
               {(["accounts", "savings"] as const).map((v) => (
