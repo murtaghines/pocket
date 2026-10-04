@@ -91,6 +91,7 @@
     "treemapToggleLabel": "Display mode",
     "treemapNew": "new",
     "treemapNoExpenses": "No expenses in {{month}}",
+    "accountsWeekSubtitle": "Week-end balance",
     "accountsYearSubtitle": "Year-end balance",
     "evolutionByMonth": "Evolution by month",
     "monthlyFlowTitle": "Monthly balance",

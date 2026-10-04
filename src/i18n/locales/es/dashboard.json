@@ -90,6 +90,7 @@
     "treemapToggleLabel": "Modo de visualización",
     "treemapNew": "nuevo",
     "treemapNoExpenses": "Sin gastos en {{month}}",
+    "accountsWeekSubtitle": "Saldo a fin de semana",
     "accountsYearSubtitle": "Saldo a fin de año",
     "evolutionByMonth": "Evolución por mes",
     "monthlyFlowTitle": "Balance mensual",

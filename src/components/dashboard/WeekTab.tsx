@@ -191,6 +191,7 @@ export function WeekTab() {
               endDate={range?.end}
               convert={convertToUserCurrency}
               formatCurrency={formatCurrency}
+              subtitleOverride={t("charts.accountsWeekSubtitle", "Week-end balance")}
             />
           </div>
 

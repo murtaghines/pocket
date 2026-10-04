@@ -914,19 +914,22 @@ export function InlineTransactionsEditor({
     return ids;
   }, [transactions]);
 
-  // Summary
+  // Summary — excludes savings accounts to stay consistent with opening/closing balance
   const summary = useMemo(() => {
     const visible = transactions.filter((t) => !t.is_hidden);
-    const income = visible
+    const nonSavings = visible.filter((t) => !savingsAccountIds.has(t.account_id ?? ""));
+    const income = nonSavings
       .filter((t) => t.movement === "INCOME")
       .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
-    const expenses = visible
+    const expenses = nonSavings
       .filter((t) => t.movement === "EXPENSE")
       .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
-    const transfers = visible.filter((t) => t.movement === "TRANSFER").length;
+    const transferTxs = nonSavings.filter((t) => t.movement === "TRANSFER");
+    const transfers = transferTxs.length;
+    const transfersNet = transferTxs.reduce((s, t) => s + splitAmt(t.amount, t.account_id), 0);
     const hidden = transactions.filter((t) => t.is_hidden).length;
-    return { income, expenses, transfers, hidden, total: transactions.length };
-  }, [transactions, splitAmt]);
+    return { income, expenses, transfers, transfersNet, hidden, total: transactions.length };
+  }, [transactions, splitAmt, savingsAccountIds]);
 
   const hasAccountBalances = accountOpeningBalances && Object.keys(accountOpeningBalances).length > 0;
 
