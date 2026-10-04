@@ -353,9 +353,7 @@ export function InlineTransactionsEditor({
         .order("date", { ascending: false })
         .order("id", { ascending: true });
       if (error) throw error;
-      return ((data || []) as MonthTransaction[]).filter(
-        tx => !savingsAccountIds.has(tx.account_id ?? ""),
-      );
+      return (data || []) as MonthTransaction[];
     },
     enabled: !!user,
   });
