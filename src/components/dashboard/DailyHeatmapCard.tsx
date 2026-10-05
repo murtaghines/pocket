@@ -63,8 +63,9 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
 
   const getIntensity = (value: number) => {
     if (maxValue <= 0 || value <= 0) return 0;
-    const ratio = Math.sqrt(value / maxValue);
-    return Math.min(1, Math.max(0.1, ratio));
+    if (maxValue === minNonZero) return 0.55;
+    const normalized = (value - minNonZero) / (maxValue - minNonZero);
+    return 0.12 + normalized * 0.88;
   };
 
   const getTextColor = (intensity: number, hasValue: boolean) => {
@@ -107,6 +108,7 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
   const totalCells = leadingBlanks + daysInMonth;
   const trailing = (7 - (totalCells % 7)) % 7;
   const gridSize = totalCells + trailing;
+  const weekRows = gridSize / 7;
 
   return (
     <div className="bg-card rounded-xl px-[14px] py-3 md:p-[16px_22px_20px] h-full shadow-section flex flex-col overflow-hidden">
@@ -145,8 +147,14 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
         <EmptyState height="h-[160px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
         <div className="flex-1 flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] gap-4 sm:gap-[20px]">
-          <div className="flex w-full max-w-[280px] flex-col gap-2">
-            <div className="grid grid-cols-7 gap-[6px]">
+          <div
+            className="flex w-full flex-col gap-1.5"
+            style={{ maxWidth: weekRows > 5 ? 240 : 280 }}
+          >
+            <div
+              className="grid grid-cols-7"
+              style={{ gap: weekRows > 5 ? 4 : 6 }}
+            >
               {WEEKDAY_KEYS.map((k) => (
                 <div key={k} className="text-center text-[10.5px] font-medium text-muted-foreground/60">
                   {t(`heatmap.weekdays.${k}`, k.charAt(0).toUpperCase())}
@@ -154,7 +162,10 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-[6px]">
+            <div
+              className="grid grid-cols-7"
+              style={{ gap: weekRows > 5 ? 4 : 6 }}
+            >
               {Array.from({ length: gridSize }).map((_, i) => {
                 const dayIndex = i - leadingBlanks;
                 if (dayIndex < 0 || dayIndex >= daysInMonth) {
@@ -172,7 +183,8 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
                     onMouseLeave={() => setHoveredDay((d) => (d === cell.day ? null : d))}
                     onClick={() => setHoveredDay((d) => (d === cell.day ? null : cell.day))}
                     className={cn(
-                      "relative flex aspect-square items-center justify-center rounded-[8px] text-[11px] transition-transform hover:scale-105",
+                      "relative flex aspect-square items-center justify-center transition-transform hover:scale-105",
+                      weekRows > 5 ? "text-[10px] rounded-[6px]" : "text-[11px] rounded-[8px]",
                       hasValue ? "font-medium" : "font-normal bg-muted/60",
                       hoveredDay === cell.day && "ring-2 ring-primary/60 ring-offset-1 ring-offset-card",
                     )}
