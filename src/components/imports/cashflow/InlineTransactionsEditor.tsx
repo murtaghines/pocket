@@ -799,86 +799,80 @@ export function InlineTransactionsEditor({
       { id: tx.id, payload, before },
       {
         onSuccess: async () => {
-          const categoryChanged = pending.category && pending.category !== tx.category && pending.category_id;
-          const movementChangedTransfer = pending.movement && pending.movement !== tx.movement &&
-            (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER');
+          try {
+            const categoryChanged = pending.category && pending.category !== tx.category && pending.category_id;
+            const movementChangedTransfer = pending.movement && pending.movement !== tx.movement &&
+              (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER');
 
-          if ((categoryChanged || movementChangedTransfer) && user) {
-            const cleanDesc = (tx.description || tx.description_norm || "")
-              .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-              .trim();
-            const targetMovement =
-              ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
-            const ruleCategory = (pending.category ?? tx.category) || (targetMovement === 'INCOME' ? 'other_income' : targetMovement === 'TRANSFER' ? 'own_transfer' : 'other_expense');
-            const ruleCategoryId = pending.category_id ?? tx.category_id ?? null;
+            if ((categoryChanged || movementChangedTransfer) && user) {
+              const cleanDesc = (tx.description || tx.description_norm || "")
+                .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+                .trim();
+              const targetMovement =
+                ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
+              const ruleCategory = (pending.category ?? tx.category) || (targetMovement === 'INCOME' ? 'other_income' : targetMovement === 'TRANSFER' ? 'own_transfer' : 'other_expense');
+              const ruleCategoryId = pending.category_id ?? tx.category_id ?? null;
 
-            if (cleanDesc) {
-              const built = buildRuleFromCorrection(cleanDesc, targetMovement, ruleCategory);
-              const existingRuleId = await findExistingActiveRule({
-                userId: user.id,
-                pattern: built.pattern,
-                category: ruleCategory,
-              });
-
-              if (withRule) {
-                // Explicit opt-in (right-click "Save & create rule" / mobile "Save + rule"):
-                // open the stable dialog immediately, no extra gating. Pattern, match type,
-                // account scope AND the time range (this month / last 3 months / all) all
-                // live there — Save creates/updates the rule and applies it retroactively
-                // to exactly the scoped set the live preview shows.
-                setCategoryRulePrompt({
-                  tx,
-                  newSlug: ruleCategory,
-                  newCategoryId: ruleCategoryId,
-                  cleanDesc,
-                  targetMovement,
-                  existingRuleId,
-                });
-              } else if (!existingRuleId) {
-                // Default path (just picking a new category and committing): proactively
-                // check whether this correction is worth a rule at all — silently save with
-                // no interruption when nothing else matches (a genuine one-off correction),
-                // and only nudge when there's real value in generalizing it. An identical
-                // active rule already existing (existingRuleId) means this is already
-                // covered — no nudge needed either.
-                const matches = await findMatchingTransactions({
+              if (cleanDesc) {
+                const built = buildRuleFromCorrection(cleanDesc, targetMovement, ruleCategory);
+                const existingRuleId = await findExistingActiveRule({
                   userId: user.id,
-                  matchType: built.match_type,
                   pattern: built.pattern,
-                  tokens: built.tokens,
-                  movement: targetMovement,
-                  accountIds: null,
+                  category: ruleCategory,
                 });
-                if (matches.length > 0) {
-                  const count = matches.length;
-                  toast({
-                    title: count === 1 ? t("imports.ruleNudgeTitleOne") : t("imports.ruleNudgeTitle", { count }),
-                    description: (
-                      <div className="space-y-1">
-                        <p className="text-xs opacity-80">{t("imports.ruleNudgeBody")}</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs gap-1.5"
-                          onClick={() =>
-                            setCategoryRulePrompt({
-                              tx,
-                              newSlug: ruleCategory,
-                              newCategoryId: ruleCategoryId,
-                              cleanDesc,
-                              targetMovement,
-                            })
-                          }
-                        >
-                          <Sparkles className="h-3 w-3" />
-                          {t("imports.ruleNudgeCta")}
-                        </Button>
-                      </div>
-                    ),
+
+                if (withRule) {
+                  setCategoryRulePrompt({
+                    tx,
+                    newSlug: ruleCategory,
+                    newCategoryId: ruleCategoryId,
+                    cleanDesc,
+                    targetMovement,
+                    existingRuleId,
                   });
+                } else if (!existingRuleId) {
+                  const matches = await findMatchingTransactions({
+                    userId: user.id,
+                    matchType: built.match_type,
+                    pattern: built.pattern,
+                    tokens: built.tokens,
+                    movement: targetMovement,
+                    accountIds: null,
+                    skipMovementFilter: !!movementChangedTransfer,
+                  });
+                  if (matches.length > 0) {
+                    const count = matches.length;
+                    toast({
+                      title: count === 1 ? t("imports.ruleNudgeTitleOne") : t("imports.ruleNudgeTitle", { count }),
+                      description: (
+                        <div className="space-y-1">
+                          <p className="text-xs opacity-80">{t("imports.ruleNudgeBody")}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1.5"
+                            onClick={() =>
+                              setCategoryRulePrompt({
+                                tx,
+                                newSlug: ruleCategory,
+                                newCategoryId: ruleCategoryId,
+                                cleanDesc,
+                                targetMovement,
+                              })
+                            }
+                          >
+                            <Sparkles className="h-3 w-3" />
+                            {t("imports.ruleNudgeCta")}
+                          </Button>
+                        </div>
+                      ),
+                    });
+                  }
                 }
               }
             }
+          } catch {
+            // Rule nudge is best-effort — don't block the save flow
           }
           clearPendingFor(tx.id);
         },
