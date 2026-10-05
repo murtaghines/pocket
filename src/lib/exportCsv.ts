@@ -1,6 +1,8 @@
 import type { MonthTransaction } from "@/components/imports/cashflow/types";
 import { getMovementLabel, getCategoryLabel } from "@/lib/categoryTranslations";
 import { getAccountDisplayName } from "@/lib/accountColors";
+import { applySplit } from "@/lib/splitAmount";
+import type { Account } from "@/hooks/useAccounts";
 
 function escapeCsvField(value: string): string {
   if (value.includes(",") || value.includes('"') || value.includes("\n")) {
@@ -12,23 +14,22 @@ function escapeCsvField(value: string): string {
 export function exportTransactionsCsv(
   transactions: MonthTransaction[],
   formatCurrency: (n: number) => string,
-  accounts: { id: string; name: string; nickname?: string | null }[],
-  monthLabel: string,
+  accounts: Account[],
+  filename: string,
 ) {
   const headers = ["Date", "Account", "Description", "Movement", "Category", "Amount"];
   const rows = transactions.map((tx) => {
     const acct = accounts.find((a) => a.id === tx.account_id);
-    const acctName = acct ? getAccountDisplayName(acct as any) : "";
-    const desc = (tx.description_norm || tx.description)
-      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-      .trim();
+    const acctName = acct ? getAccountDisplayName(acct) : "";
+    const desc = (tx.original_description || tx.description || "").trim();
+    const splitAmount = applySplit(tx.amount, tx.account_id, accounts);
     return [
       tx.date,
       escapeCsvField(acctName),
       escapeCsvField(desc),
-      getMovementLabel((tx.movement || "EXPENSE") as any),
+      getMovementLabel((tx.movement || "EXPENSE") as "INCOME" | "EXPENSE" | "TRANSFER"),
       getCategoryLabel(tx.category || "other_expense"),
-      formatCurrency(tx.amount),
+      formatCurrency(splitAmount),
     ].join(",");
   });
 
@@ -37,7 +38,7 @@ export function exportTransactionsCsv(
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `pocket-transactions-${monthLabel.replace(/\s+/g, "-").toLowerCase()}.csv`;
+  a.download = `pocket-${filename}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

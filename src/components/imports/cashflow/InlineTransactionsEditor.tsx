@@ -103,7 +103,6 @@ import { RevertToOriginalButton } from "./RevertToOriginalButton";
 import { TransactionContextMenu } from "./TransactionContextMenu";
 import { toast as sonnerToast } from "sonner";
 import { isManualTransaction } from "@/lib/transactionSource";
-import { exportTransactionsCsv } from "@/lib/exportCsv";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { ProcessingPanel } from "./ProcessingPanel";
 import { SwipeableRow } from "./SwipeableRow";
@@ -151,7 +150,6 @@ export interface InlineTransactionsEditorProps {
   sortColumn?: SortColumn;
   sortDirection?: SortDirection;
   filters?: DataFilters;
-  exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
   openingBalance?: number | null;
   accountOpeningBalances?: Record<string, number>;
   closingBalance?: number | null;
@@ -179,7 +177,6 @@ export function InlineTransactionsEditor({
   sortColumn: sortColumnProp = "date",
   sortDirection: sortDirectionProp = "desc",
   filters: filtersProp,
-  exportTransactionsRef,
   openingBalance,
   accountOpeningBalances,
   closingBalance: closingBalanceProp,
@@ -1057,15 +1054,6 @@ export function InlineTransactionsEditor({
   const visibleAll = filteredSorted;
   const rowsToRender = visibleAll;
   const allVisibleIds = rowsToRender.map((tx) => tx.id);
-
-  useEffect(() => {
-    if (exportTransactionsRef) {
-      exportTransactionsRef.current = () => {
-        exportTransactionsCsv(visibleAll, formatCurrency, cashAccounts, monthLabel);
-      };
-    }
-    return () => { if (exportTransactionsRef) exportTransactionsRef.current = null; };
-  }, [exportTransactionsRef, visibleAll, formatCurrency, cashAccounts, monthLabel]);
 
   if (isLoading) {
     return (

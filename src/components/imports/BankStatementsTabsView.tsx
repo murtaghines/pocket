@@ -16,6 +16,7 @@ import { MonthTabStrip } from "./cashflow/MonthTabStrip";
 import { MonthWorkspace } from "./cashflow/MonthWorkspace";
 import { DataToolbar, type SortColumn, type SortDirection, type DataFilters } from "./cashflow/DataToolbar";
 import { MobileUploadFAB } from "./MobileUploadFAB";
+import { ExportDialog } from "./cashflow/ExportDialog";
 import { DEFAULT_MONTHS, MIN_MONTHS, MONTHS_INCREMENT } from "./cashflow/helpers";
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from "@/lib/categoryTranslations";
 import type { MovementType } from "./cashflow/types";
@@ -55,6 +56,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   });
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [defaultMovement, setDefaultMovement] = useState<MovementType>("EXPENSE");
+  const [exportOpen, setExportOpen] = useState(false);
 
   const [sortColumn, setSortColumn] = useState<SortColumn>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -163,7 +165,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingDate, setPendingDate] = useState<Date | null>(new Date());
   const globalFileInputRef = useRef<HTMLInputElement>(null);
-  const exportTransactionsRef = useRef<(() => void) | null>(null);
 
   // Keep only uploadable files; tell the user why any were skipped (bad type / too large).
   const filterUploadable = (files: FileList): File[] => {
@@ -254,7 +255,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         onAddIncome={() => { setDefaultMovement("INCOME"); setManualEntryOpen(true); }}
         onAddTransfer={() => { setDefaultMovement("TRANSFER"); setManualEntryOpen(true); }}
         onUploadFile={() => globalFileInputRef.current?.click()}
-        onExport={() => exportTransactionsRef.current?.()}
+        onExport={() => setExportOpen(true)}
         isLocked={isLocked}
         monthsWithData={monthsWithData}
         firstMonthWithData={firstMonthWithData}
@@ -301,7 +302,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
           sortColumn={sortColumn}
           sortDirection={sortDirection}
           filters={filters}
-          exportTransactionsRef={exportTransactionsRef}
           openingBalance={activeKey ? openingBalanceByMonth[activeKey] ?? null : null}
           accountOpeningBalances={accountOpeningBalances}
           closingBalance={closingBalance}
@@ -340,6 +340,13 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         onOpenChange={setAccountDialogOpen}
         onConfirm={handleAccountConfirm}
         fileName={pendingFiles[0]?.name}
+      />
+
+      <ExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        currentMonthKey={activeKey}
+        currentMonthLabel={activeSlot?.label ?? ""}
       />
     </div>
   );

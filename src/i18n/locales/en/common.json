@@ -173,7 +173,14 @@
     "openingBalanceLabel": "Opening",
     "closingBalanceLabel": "Closing",
     "txCountShort": "{{count}} transactions",
-    "unassignedAccount": "Unassigned"
+    "unassignedAccount": "Unassigned",
+    "exportDesc": "Choose the accounts and period to export.",
+    "exportPeriod": "Period",
+    "exportAll": "All",
+    "deselectAll": "Deselect all",
+    "selectAll": "Select all",
+    "exportCount": "{{count}} transactions",
+    "exporting": "Exporting..."
   },
   "status": {
     "active": "Active",
@@ -190,7 +197,8 @@
     "thisMonth": "This month",
     "thisYear": "This year",
     "lastMonth": "Last month",
-    "lastYear": "Last year"
+    "lastYear": "Last year",
+    "allTime": "All time"
   },
   "network": {
     "offline": "No internet connection. Uploads won't work.",
