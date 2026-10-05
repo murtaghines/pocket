@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
-import { Wand2, Sparkles, X } from "lucide-react";
+import { Wand2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/ui/category-icon";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   buildRuleFromCorrection,
   extractTokens,
@@ -25,9 +31,7 @@ export interface RuleEditorPayload {
   category: string;
   original_description: string;
   matchingTransactionIds: string[];
-  /** Rule's forward scope: the single account when exactly one is selected, else null (all). */
   account_id: string | null;
-  /** The multi-account scope the user chose (null = all accounts). */
   account_ids: string[] | null;
 }
 
@@ -46,35 +50,51 @@ interface RuleEditorDialogProps {
   skipLabel?: string;
 }
 
+const LABEL = "text-[12px] font-medium text-primary/70 mb-1.5";
+const PILL_INPUT =
+  "h-11 rounded-xl bg-muted/50 border-0 shadow-none px-4 text-[14px] focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
+
 const MATCH_OPTIONS: {
   value: MatchType;
-  label: string;
-  hint: string;
+  labelKey: string;
+  fallback: string;
+  hintKey: string;
+  hintFallback: string;
 }[] = [
   {
     value: "fuzzy",
-    label: "Smart",
-    hint: "Matches when all selected words appear, in any order. Best default.",
+    labelKey: "categories.smartMatch",
+    fallback: "Smart",
+    hintKey: "categories.matchHelp_SMART",
+    hintFallback: "Matches when all selected words appear, in any order.",
   },
   {
     value: "contains",
-    label: "Contains",
-    hint: "Matches when the pattern appears anywhere in the description.",
+    labelKey: "categories.contains",
+    fallback: "Contains",
+    hintKey: "categories.matchHelp_CONTAINS",
+    hintFallback: "Matches when the pattern appears anywhere in the description.",
   },
   {
     value: "starts_with",
-    label: "Starts with",
-    hint: "Matches when the description begins with the pattern.",
+    labelKey: "categories.startsWith",
+    fallback: "Starts with",
+    hintKey: "categories.matchHelp_STARTS_WITH",
+    hintFallback: "Matches when the description begins with the pattern.",
   },
   {
     value: "ends_with",
-    label: "Ends with",
-    hint: "Matches when the description ends with the pattern.",
+    labelKey: "categories.endsWith",
+    fallback: "Ends with",
+    hintKey: "categories.matchHelp_ENDS_WITH",
+    hintFallback: "Matches when the description ends with the pattern.",
   },
   {
     value: "exact",
-    label: "Exact",
-    hint: "Matches only when the description is identical to the pattern.",
+    labelKey: "categories.exact",
+    fallback: "Exact",
+    hintKey: "categories.matchHelp_EXACT",
+    hintFallback: "Matches only when the description is identical to the pattern.",
   },
 ];
 
@@ -90,9 +110,10 @@ export function RuleEditorDialog({
   defaultAccountId,
   onConfirm,
   onSkip,
-  skipLabel = "Just this one",
+  skipLabel,
 }: RuleEditorDialogProps) {
   const { t } = useTranslation("settings");
+  const { t: tc } = useTranslation("common");
   const { accounts } = useAccounts();
   const allTokens = useMemo(() => extractTokens(description), [description]);
   const suggested = useMemo(
@@ -104,7 +125,6 @@ export function RuleEditorDialog({
   const [selectedTokens, setSelectedTokens] = useState<string[]>(suggested.tokens);
   const [customPattern, setCustomPattern] = useState<string>(suggested.pattern);
   const [patternEdited, setPatternEdited] = useState(false);
-  // null = all accounts; otherwise the subset of account ids in scope.
   const [accountScope, setAccountScope] = useState<string[] | null>(
     defaultAccountId ? [defaultAccountId] : null,
   );
@@ -137,10 +157,10 @@ export function RuleEditorDialog({
     return [];
   }, [matchType, patternEdited, customPattern, selectedTokens]);
 
-  const toggleToken = (t: string) => {
+  const toggleToken = (tok: string) => {
     setPatternEdited(false);
     setSelectedTokens((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
+      prev.includes(tok) ? prev.filter((x) => x !== tok) : [...prev, tok],
     );
   };
 
@@ -153,15 +173,12 @@ export function RuleEditorDialog({
     enabled: open,
   });
 
-  // The transactions actually in scope = account subset (applied in the query) ∩ time range.
   const scopedIds = useMemo(
     () => filterByScope(matched, retroScope, customSince ? customSince + "-01" : undefined),
     [matched, retroScope, customSince],
   );
   const matchCount = scopedIds.length;
 
-  // The rule's forward scope can only store one account id; use it when the user
-  // narrowed to exactly one, otherwise the rule stays global (the retro set is still scoped).
   const ruleAccountId = accountScope && accountScope.length === 1 ? accountScope[0] : null;
 
   const canSave = effectivePattern.trim().length > 0;
@@ -183,42 +200,30 @@ export function RuleEditorDialog({
 
   const currentMeta = MATCH_OPTIONS.find((o) => o.value === matchType);
 
-  if (!open) return null;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[540px] bg-card rounded-2xl p-0 gap-0 overflow-hidden border-0 shadow-lg">
+        <DialogHeader className="px-7 pt-6 pb-0">
+          <DialogTitle className="text-[17px] font-semibold text-foreground">
+            {tc("imports.ruleNudgeCta", "Create rule")}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {tc("imports.ruleNudgeCta", "Create rule")}
+          </DialogDescription>
+        </DialogHeader>
 
-  const panel = (
-    <div
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex flex-col bg-background transition-transform duration-300 ease-out",
-        "top-[100px] md:top-0",
-        open ? "translate-y-0" : "translate-y-full",
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <span className="text-base font-semibold text-foreground">
-          Create rule
-        </span>
-        <div className="w-9" />
-      </div>
-
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5">
-        {/* Original description + category tag */}
-        <div className="rounded-2xl bg-muted p-4 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[13px] font-semibold text-foreground">
-              Description
-            </span>
-            <div className="inline-flex items-center gap-1.5">
+        <div className="flex flex-col gap-5 px-7 pt-5 pb-6 max-h-[75vh] overflow-y-auto">
+          {/* Description (read-only) + category tag */}
+          <div>
+            <label className={LABEL}>
+              {tc("imports.description", "Description")}
+            </label>
+            <div className="flex items-center gap-2 rounded-xl bg-muted/50 px-4 py-3">
+              <p className="flex-1 min-w-0 text-[14px] font-mono text-foreground break-all leading-snug truncate">
+                {description}
+              </p>
               <span
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0"
                 style={
                   categoryColorVar
                     ? {
@@ -240,170 +245,171 @@ export function RuleEditorDialog({
               </span>
             </div>
           </div>
-          <p className="text-sm font-mono text-foreground break-all leading-snug">
-            {description}
-          </p>
-        </div>
 
-        {/* Pattern */}
-        <div className="space-y-2">
-          <label className="text-[13px] font-semibold text-foreground">
-            Pattern
-          </label>
-          <Input
-            value={
-              matchType === "fuzzy" && !patternEdited
-                ? selectedTokens.join(" ")
-                : customPattern
-            }
-            onChange={(e) => {
-              setPatternEdited(true);
-              setCustomPattern(e.target.value);
-            }}
-            placeholder={
-              matchType === "exact"
-                ? "Exact text to match"
-                : "Text the description must include"
-            }
-            className="h-11 rounded-full bg-muted border-0 shadow-none font-mono text-sm px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
-            maxLength={200}
-          />
-        </div>
-
-        {/* Token chips (fuzzy mode) */}
-        {matchType === "fuzzy" && allTokens.length > 1 && (
-          <div className="flex flex-wrap gap-1.5">
-            {allTokens.map((tok) => {
-              const active = selectedTokens.includes(tok);
-              return (
-                <button
-                  key={tok}
-                  type="button"
-                  onClick={() => toggleToken(tok)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-primary/10 text-primary"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {tok}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Match type — pill segmented control */}
-        <div className="space-y-2">
-          <label className="text-[13px] font-semibold text-foreground">
-            Match type
-          </label>
-          <div className="flex rounded-full bg-muted p-1">
-            {MATCH_OPTIONS.map((opt) => {
-              const active = matchType === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setMatchType(opt.value)}
-                  className={cn(
-                    "flex flex-1 items-center justify-center rounded-full py-2 text-[11px] font-semibold transition-all",
-                    active
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-          {currentMeta && (
-            <p className="text-xs text-muted-foreground leading-relaxed px-1">
-              {currentMeta.hint}
-            </p>
-          )}
-        </div>
-
-        {/* Account scope (multi-select) */}
-        <AccountScopeSelect
-          accounts={accounts}
-          value={accountScope}
-          onChange={setAccountScope}
-        />
-
-        {/* Time-range scope for the retroactive apply */}
-        {matched.length > 0 && (
-          <RetroactiveApplyOptions
-            transactions={matched}
-            scope={retroScope}
-            onScopeChange={setRetroScope}
-            customSince={customSince}
-            onCustomSinceChange={setCustomSince}
-            compact
-          />
-        )}
-
-        {/* Live preview */}
-        <div className="rounded-2xl bg-muted px-5 py-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Sparkles
-              className={cn(
-                "w-4 h-4 shrink-0",
-                canSave ? "text-primary" : "text-muted-foreground/60",
-              )}
+          {/* Pattern */}
+          <div>
+            <label className={LABEL}>
+              {t("categories.pattern", "Pattern")}
+            </label>
+            <Input
+              value={
+                matchType === "fuzzy" && !patternEdited
+                  ? selectedTokens.join(" ")
+                  : customPattern
+              }
+              onChange={(e) => {
+                setPatternEdited(true);
+                setCustomPattern(e.target.value);
+              }}
+              placeholder={t("categories.patternPlaceholder", "e.g. WOSAP, Netflix...")}
+              className={cn(PILL_INPUT, "font-mono")}
+              maxLength={200}
             />
-            <div className="min-w-0">
-              <div className="text-[13px] font-semibold text-foreground">
-                Live preview
+          </div>
+
+          {/* Token chips (fuzzy mode) */}
+          {matchType === "fuzzy" && allTokens.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 -mt-2">
+              {allTokens.map((tok) => {
+                const active = selectedTokens.includes(tok);
+                return (
+                  <button
+                    key={tok}
+                    type="button"
+                    onClick={() => toggleToken(tok)}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                      active
+                        ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80",
+                    )}
+                  >
+                    {tok}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Match type — pill segmented control */}
+          <div>
+            <label className={LABEL}>
+              {t("categories.matchType", "Match type")}
+            </label>
+            <div className="flex rounded-xl bg-muted/50 p-1">
+              {MATCH_OPTIONS.map((opt) => {
+                const active = matchType === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setMatchType(opt.value)}
+                    className={cn(
+                      "flex flex-1 items-center justify-center rounded-lg py-2.5 text-[11px] font-medium transition-all",
+                      active
+                        ? "bg-card text-foreground shadow-sm font-semibold"
+                        : "text-muted-foreground hover:text-foreground/70",
+                    )}
+                  >
+                    {t(opt.labelKey, opt.fallback)}
+                  </button>
+                );
+              })}
+            </div>
+            {currentMeta && (
+              <p className="text-[11px] text-muted-foreground leading-relaxed mt-1.5 px-1">
+                {t(currentMeta.hintKey, currentMeta.hintFallback)}
+              </p>
+            )}
+          </div>
+
+          {/* Account scope */}
+          <AccountScopeSelect
+            accounts={accounts}
+            value={accountScope}
+            onChange={setAccountScope}
+          />
+
+          {/* Time-range scope */}
+          {matched.length > 0 && (
+            <RetroactiveApplyOptions
+              transactions={matched}
+              scope={retroScope}
+              onScopeChange={setRetroScope}
+              customSince={customSince}
+              onCustomSinceChange={setCustomSince}
+              compact
+            />
+          )}
+
+          {/* Live preview */}
+          <div className="rounded-xl bg-warning/10 px-5 py-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Sparkles
+                className={cn(
+                  "w-4 h-4 shrink-0",
+                  canSave ? "text-primary" : "text-muted-foreground/60",
+                )}
+              />
+              <div className="min-w-0">
+                <div className="text-[13px] font-semibold text-foreground">
+                  {tc("imports.rulePreviewTitle", "Live preview")}
+                </div>
+                <div className="text-[11px] text-muted-foreground truncate">
+                  {tc("imports.rulePreviewDesc", "Matches existing transactions in your history")}
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground truncate">
-                Will retroactively match transactions in your history.
+            </div>
+            <div className="text-right shrink-0">
+              <div
+                className={cn(
+                  "text-lg font-bold tabular-nums leading-none",
+                  canSave ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                {countLoading ? "…" : matchCount}
+              </div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">
+                {matchCount === 1
+                  ? tc("imports.ruleMatchSingular", "match")
+                  : tc("imports.ruleMatchPlural", "matches")}
               </div>
             </div>
           </div>
-          <div className="text-right shrink-0">
-            <div
-              className={cn(
-                "text-lg font-bold tabular-nums leading-none",
-                canSave ? "text-primary" : "text-muted-foreground",
-              )}
+
+          {/* Action buttons */}
+          <div className="flex gap-3 pt-1">
+            {onSkip ? (
+              <Button
+                variant="outline"
+                className="flex-1 h-12 rounded-xl font-semibold text-[14px] border-border"
+                onClick={() => {
+                  onSkip();
+                  onOpenChange(false);
+                }}
+              >
+                {skipLabel || tc("imports.cancel", "Cancel")}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="flex-1 h-12 rounded-xl font-semibold text-[14px] border-border"
+                onClick={() => onOpenChange(false)}
+              >
+                {tc("imports.cancel", "Cancel")}
+              </Button>
+            )}
+            <Button
+              className="flex-1 h-12 rounded-xl font-semibold text-[14px] gap-1.5"
+              disabled={!canSave}
+              onClick={handleSave}
             >
-              {countLoading ? "…" : matchCount}
-            </div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">
-              match{matchCount === 1 ? "" : "es"}
-            </div>
+              <Wand2 className="w-4 h-4" />
+              {tc("imports.ruleSaveRule", "Save rule")}
+            </Button>
           </div>
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 pb-6 pt-3 bg-background space-y-2">
-        <Button
-          className="w-full h-11 rounded-full font-semibold gap-1.5"
-          disabled={!canSave}
-          onClick={handleSave}
-        >
-          <Wand2 className="w-4 h-4" />
-          Save rule
-        </Button>
-        {onSkip && (
-          <Button
-            variant="outline"
-            className="w-full h-11 rounded-full font-semibold"
-            onClick={() => {
-              onSkip();
-              onOpenChange(false);
-            }}
-          >
-            {skipLabel}
-          </Button>
-        )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
-
-  return createPortal(panel, document.body);
 }
