@@ -86,7 +86,7 @@ import {
   type MatchType,
 } from "@/lib/userRules";
 import { filterByScope } from "@/hooks/useRetroactiveApply";
-import { findMatchingTransactions, findExistingActiveRule } from "@/hooks/useRulePreview";
+import { findExistingActiveRule } from "@/hooks/useRulePreview";
 import { buildSplitMap, applySplitFast } from "@/lib/splitAmount";
 import {
   USER_TRACKED_FIELDS,
@@ -800,11 +800,10 @@ export function InlineTransactionsEditor({
       {
         onSuccess: async () => {
           try {
-            const categoryChanged = pending.category && pending.category !== tx.category && pending.category_id;
-            const movementChangedTransfer = pending.movement && pending.movement !== tx.movement &&
-              (tx.movement === 'TRANSFER' || pending.movement === 'TRANSFER');
+            const categoryChanged = pending.category && pending.category !== tx.category;
+            const movementChanged = pending.movement && pending.movement !== tx.movement;
 
-            if ((categoryChanged || movementChangedTransfer) && user) {
+            if ((categoryChanged || movementChanged) && user) {
               const cleanDesc = (tx.description || tx.description_norm || "")
                 .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                 .trim();
@@ -814,14 +813,13 @@ export function InlineTransactionsEditor({
               const ruleCategoryId = pending.category_id ?? tx.category_id ?? null;
 
               if (cleanDesc) {
-                const built = buildRuleFromCorrection(cleanDesc, targetMovement, ruleCategory);
-                const existingRuleId = await findExistingActiveRule({
-                  userId: user.id,
-                  pattern: built.pattern,
-                  category: ruleCategory,
-                });
-
                 if (withRule) {
+                  const built = buildRuleFromCorrection(cleanDesc, targetMovement, ruleCategory);
+                  const existingRuleId = await findExistingActiveRule({
+                    userId: user.id,
+                    pattern: built.pattern,
+                    category: ruleCategory,
+                  });
                   setCategoryRulePrompt({
                     tx,
                     newSlug: ruleCategory,
@@ -830,44 +828,31 @@ export function InlineTransactionsEditor({
                     targetMovement,
                     existingRuleId,
                   });
-                } else if (!existingRuleId) {
-                  const matches = await findMatchingTransactions({
-                    userId: user.id,
-                    matchType: built.match_type,
-                    pattern: built.pattern,
-                    tokens: built.tokens,
-                    movement: targetMovement,
-                    accountIds: null,
-                    skipMovementFilter: !!movementChangedTransfer,
+                } else {
+                  toast({
+                    title: t("imports.ruleNudgeBody"),
+                    description: (
+                      <div className="space-y-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5"
+                          onClick={() =>
+                            setCategoryRulePrompt({
+                              tx,
+                              newSlug: ruleCategory,
+                              newCategoryId: ruleCategoryId,
+                              cleanDesc,
+                              targetMovement,
+                            })
+                          }
+                        >
+                          <Sparkles className="h-3 w-3" />
+                          {t("imports.ruleNudgeCta")}
+                        </Button>
+                      </div>
+                    ),
                   });
-                  if (matches.length > 0) {
-                    const count = matches.length;
-                    toast({
-                      title: count === 1 ? t("imports.ruleNudgeTitleOne") : t("imports.ruleNudgeTitle", { count }),
-                      description: (
-                        <div className="space-y-1">
-                          <p className="text-xs opacity-80">{t("imports.ruleNudgeBody")}</p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs gap-1.5"
-                            onClick={() =>
-                              setCategoryRulePrompt({
-                                tx,
-                                newSlug: ruleCategory,
-                                newCategoryId: ruleCategoryId,
-                                cleanDesc,
-                                targetMovement,
-                              })
-                            }
-                          >
-                            <Sparkles className="h-3 w-3" />
-                            {t("imports.ruleNudgeCta")}
-                          </Button>
-                        </div>
-                      ),
-                    });
-                  }
                 }
               }
             }
