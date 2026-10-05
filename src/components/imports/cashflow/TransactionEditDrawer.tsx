@@ -11,6 +11,7 @@ import {
   EyeOff,
   Eye,
   RotateCcw,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -22,12 +23,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { MinimalSelectContent, MinimalSelectItem } from "../MinimalSelect";
 import {
-  SheetPanel,
-  SHEET_LABEL,
-  SHEET_PILL,
-  SHEET_BUTTON,
-  SHEET_INPUT,
-} from "../SheetPanel";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { filterRevertableSnapshot } from "./helpers";
 import {
   AlertDialog,
@@ -50,6 +51,11 @@ import {
 } from "@/lib/categoryTranslations";
 import type { MonthTransaction, PendingEditShape, MovementType } from "./types";
 
+const LABEL = "text-[12px] font-medium uppercase tracking-[0.07em] text-muted-foreground";
+const PILL_INPUT =
+  "h-11 rounded-xl bg-muted border-0 shadow-none px-4 text-[13px] focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
+const PILL_SELECT =
+  "h-11 rounded-xl bg-muted border-0 shadow-none px-4 text-[13px]";
 
 interface TransactionEditDrawerProps {
   tx: MonthTransaction | null;
@@ -63,9 +69,7 @@ interface TransactionEditDrawerProps {
   accounts: Account[];
   onSave: (tx: MonthTransaction, edits: PendingEditShape, withRule: boolean, isRevert?: boolean) => void;
   onDelete?: (tx: MonthTransaction) => void;
-  /** Whether this imported transaction has been edited (blue highlight). */
   isEdited?: boolean;
-  /** Original values before any user edits — used for the undo flow. */
   originalSnapshot?: { values: Record<string, unknown>; fields: string[] } | null;
 }
 
@@ -236,7 +240,7 @@ export function TransactionEditDrawer({
     return edits;
   };
 
-  const amountSign = movement === "EXPENSE" ? "−" : movement === "INCOME" ? "+" : null;
+  const currencySymbol = selectedAccount?.currency_base === "USD" ? "$" : "€";
 
   const movementOptions: { value: MovementType; icon: typeof Plus; label: string }[] = [
     { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE") },
@@ -244,269 +248,283 @@ export function TransactionEditDrawer({
     { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER") },
   ];
 
-  const footer = (
-    <>
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className={cn(SHEET_BUTTON, "flex-1")}
-          onClick={() => onOpenChange(false)}
-        >
-          {t("imports.cancel", "Cancel")}
-        </Button>
-        <Button
-          className={cn(SHEET_BUTTON, "flex-1")}
-          disabled={!hasChanges || invalid}
-          onClick={() => {
-            handleAmountBlur();
-            onSave(tx, buildEdits(), false, isReverting);
-            onOpenChange(false);
-          }}
-        >
-          {t("imports.save", "Save")}
-        </Button>
-      </div>
-      {ruleWorthy && hasChanges && (
-        <Button
-          variant="outline"
-          className={cn(SHEET_BUTTON, "w-full gap-1.5")}
-          onClick={() => {
-            handleAmountBlur();
-            onSave(tx, buildEdits(), true, isReverting);
-            onOpenChange(false);
-          }}
-        >
-          <Sparkles className="h-4 w-4" />
-          {t("imports.saveRule", "Save + rule")}
-        </Button>
-      )}
-    </>
-  );
-
-  const belowFooter = (
-    <div className="flex items-center justify-center gap-4">
-      {isManual && onDelete && (
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-destructive py-2"
-          onClick={() => setDeleteConfirmOpen(true)}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          {t("imports.delete", "delete")}
-        </button>
-      )}
-      {!isManual && (
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground py-2"
-          onClick={() => setPendingHidden(!pendingHidden)}
-        >
-          {pendingHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-          {pendingHidden
-            ? t("imports.showEntry", "show")
-            : t("imports.hideEntry", "hide")}
-        </button>
-      )}
-      {!isManual && isEdited && originalSnapshot && (
-        <>
-          <span className="text-muted-foreground/30">·</span>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary py-2"
-            onClick={handleUndoChanges}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            {t("imports.revertChanges", "undo changes")}
-          </button>
-        </>
-      )}
-    </div>
-  );
+  const jointAccount = selectedAccount?.account_type === "JOINT" ? selectedAccount : null;
 
   return (
     <>
-      <SheetPanel
-        open={open}
-        onOpenChange={onOpenChange}
-        title={t("imports.editTransaction", "edit transaction")}
-        footer={footer}
-        belowFooter={belowFooter}
-      >
-        {/* Movement toggle — pill segmented control */}
-        <div className="flex rounded-full bg-muted p-1">
-          {movementOptions.map((opt) => {
-            const Icon = opt.icon;
-            const active = movement === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => handleMovementChange(opt.value)}
-                className={cn(
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[13px] font-medium transition-all",
-                  active ? "bg-card text-foreground shadow-sm font-semibold" : "text-muted-foreground",
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[480px] bg-card p-6 gap-0">
+          <DialogHeader className="mb-5">
+            <DialogTitle className="text-[16px] font-semibold">
+              {t("imports.editTransaction", "edit transaction")}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t("imports.editTransaction", "edit transaction")}
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Description */}
-        <div className="space-y-1.5">
-          <label className={SHEET_LABEL}>
-            {t("imports.description", "Description")}
-          </label>
-          <Input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className={SHEET_INPUT}
-          />
-        </div>
+          <div className="flex flex-col gap-5">
+            {/* Movement toggle */}
+            <div className="flex rounded-xl bg-muted p-1">
+              {movementOptions.map((opt) => {
+                const Icon = opt.icon;
+                const active = movement === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleMovementChange(opt.value)}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-[13px] font-medium transition-colors",
+                      active ? "bg-card text-foreground shadow-sm font-semibold" : "text-muted-foreground",
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Account + Date row */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5 min-w-0">
-            <label className={SHEET_LABEL}>
-              {t("imports.account", "Account")}
-            </label>
-            <Select value={accountId} onValueChange={setAccountId}>
-              <SelectTrigger
-                className={cn(SHEET_PILL, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
-              >
-                <SelectValue placeholder={t("imports.selectAccount", "Select")}>
-                  <span className="truncate font-medium">
-                    {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <MinimalSelectContent>
-                {accounts.map((a) => (
-                  <MinimalSelectItem key={a.id} value={a.id}>
-                    <span className="truncate">{getAccountDisplayName(a)}</span>
-                  </MinimalSelectItem>
-                ))}
-              </MinimalSelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5 min-w-0">
-            <label className={SHEET_LABEL}>
-              {t("imports.date", "Date")}
-            </label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    SHEET_PILL,
-                    "flex w-full items-center gap-2 text-foreground hover:bg-accent transition-colors",
-                  )}
-                >
-                  <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="truncate">
-                    {format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")}
-                  </span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={new Date(displayDate + "T00:00:00")}
-                  onSelect={(d) => {
-                    if (d) {
-                      const y = d.getFullYear();
-                      const m = String(d.getMonth() + 1).padStart(2, "0");
-                      const dd = String(d.getDate()).padStart(2, "0");
-                      setDate(`${y}-${m}-${dd}`);
-                    }
-                  }}
-                  defaultMonth={new Date(firstDay + "T00:00:00")}
-                  disabled={(d) => {
-                    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                    return iso < firstDay || iso > lastDay;
-                  }}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        {/* Amount + Category row */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5 min-w-0">
-            <label className={SHEET_LABEL}>{t("imports.amount", "Amount")}</label>
-            <div className="relative">
-              {amountSign && (
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                  {amountSign}
-                </span>
-              )}
+            {/* Description */}
+            <div className="space-y-1.5">
+              <label className={LABEL}>
+                {t("imports.description", "Description")}
+              </label>
               <Input
-                type="text"
-                inputMode="decimal"
-                value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value)}
-                onBlur={handleAmountBlur}
-                placeholder="0,00"
-                className={cn(SHEET_INPUT, "tabular-nums", amountSign && "pl-10 pr-5")}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className={PILL_INPUT}
               />
             </div>
-          </div>
-          <div className="space-y-1.5 min-w-0">
-            <label className={SHEET_LABEL}>{t("imports.category", "Category")}</label>
-            <Select value={category} onValueChange={handleCategoryChange}>
-              <SelectTrigger
-                className={cn(
-                  SHEET_PILL,
-                  "px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-60",
-                )}
-                style={{
-                  backgroundColor: `hsl(var(--${getColor(category)}) / 0.15)`,
-                  color: `hsl(var(--${getColor(category)}))`,
+
+            {/* Amount + Date row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5 min-w-0">
+                <label className={LABEL}>{t("imports.amount", "Amount")}</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground pointer-events-none">
+                    {currencySymbol}
+                  </span>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={amountStr}
+                    onChange={(e) => setAmountStr(e.target.value)}
+                    onBlur={handleAmountBlur}
+                    placeholder="0,00"
+                    className={cn(PILL_INPUT, "tabular-nums pl-9")}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5 min-w-0">
+                <label className={LABEL}>
+                  {t("imports.date", "Date")}
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        PILL_SELECT,
+                        "flex w-full items-center gap-2 text-foreground hover:bg-muted/70 transition-colors",
+                      )}
+                    >
+                      <span className="truncate text-[13px]">
+                        {format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")}
+                      </span>
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={new Date(displayDate + "T00:00:00")}
+                      onSelect={(d) => {
+                        if (d) {
+                          const y = d.getFullYear();
+                          const m = String(d.getMonth() + 1).padStart(2, "0");
+                          const dd = String(d.getDate()).padStart(2, "0");
+                          setDate(`${y}-${m}-${dd}`);
+                        }
+                      }}
+                      defaultMonth={new Date(firstDay + "T00:00:00")}
+                      disabled={(d) => {
+                        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                        return iso < firstDay || iso > lastDay;
+                      }}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Account + Category row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5 min-w-0">
+                <label className={LABEL}>
+                  {t("imports.account", "Account")}
+                </label>
+                <Select value={accountId} onValueChange={setAccountId}>
+                  <SelectTrigger
+                    className={cn(PILL_SELECT, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
+                  >
+                    <SelectValue placeholder={t("imports.selectAccount", "Select")}>
+                      <span className="truncate font-medium">
+                        {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                      </span>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <MinimalSelectContent>
+                    {accounts.map((a) => (
+                      <MinimalSelectItem key={a.id} value={a.id}>
+                        <span className="truncate">{getAccountDisplayName(a)}</span>
+                      </MinimalSelectItem>
+                    ))}
+                  </MinimalSelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5 min-w-0">
+                <label className={LABEL}>{t("imports.category", "Category")}</label>
+                <Select value={category} onValueChange={handleCategoryChange}>
+                  <SelectTrigger
+                    className={cn(
+                      PILL_SELECT,
+                      "focus:ring-1 focus:ring-primary [&>svg]:opacity-60",
+                    )}
+                    style={{
+                      backgroundColor: `hsl(var(--${getColor(category)}) / 0.15)`,
+                      color: `hsl(var(--${getColor(category)}))`,
+                    }}
+                  >
+                    <SelectValue>
+                      <span className="flex items-center gap-1.5 font-semibold">
+                        <CategoryIcon
+                          iconName={getIcon(category)}
+                          colorVar={getColor(category)}
+                          size="sm"
+                          showBackground={false}
+                        />
+                        <span className="truncate">{getCategoryLabel(category)}</span>
+                      </span>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <MinimalSelectContent>
+                    {availableCategories.map((slug) => (
+                      <MinimalSelectItem key={slug} value={slug}>
+                        <CategoryIcon
+                          iconName={getIcon(slug)}
+                          colorVar={getColor(slug)}
+                          size="sm"
+                          showBackground
+                        />
+                        <span className="truncate">{getCategoryLabel(slug)}</span>
+                      </MinimalSelectItem>
+                    ))}
+                  </MinimalSelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Joint account split info */}
+            {jointAccount && jointAccount.split_percentage != null && jointAccount.split_percentage < 100 && (
+              <div className="flex items-center gap-3 rounded-xl bg-muted/60 px-4 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-foreground">
+                    {t("imports.accountShareNote", "Your share: {{pct}}%", { pct: jointAccount.split_percentage })}
+                  </p>
+                  <p className="text-[12px] text-muted-foreground">
+                    {formatCurrency(Math.abs(amount) * (jointAccount.split_percentage / 100))}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Rule info hint */}
+            {ruleWorthy && hasChanges && (
+              <div className="flex items-start gap-2 text-[12px] text-muted-foreground">
+                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>
+                  {t("imports.ruleHint", "When you save, Pocket will ask if you want to create a rule for similar transactions.")}
+                </span>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-1">
+              <Button
+                variant="outline"
+                className="flex-1 h-11 rounded-xl font-semibold text-sm"
+                onClick={() => onOpenChange(false)}
+              >
+                {t("imports.cancel", "Cancel")}
+              </Button>
+              <Button
+                className="flex-1 h-11 rounded-xl font-semibold text-sm"
+                disabled={!hasChanges || invalid}
+                onClick={() => {
+                  handleAmountBlur();
+                  onSave(tx, buildEdits(), false, isReverting);
+                  onOpenChange(false);
                 }}
               >
-                <SelectValue>
-                  <span className="flex items-center gap-1.5 font-semibold">
-                    <CategoryIcon
-                      iconName={getIcon(category)}
-                      colorVar={getColor(category)}
-                      size="sm"
-                      showBackground={false}
-                    />
-                    <span className="truncate">{getCategoryLabel(category)}</span>
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <MinimalSelectContent>
-                {availableCategories.map((slug) => (
-                  <MinimalSelectItem key={slug} value={slug}>
-                    <CategoryIcon
-                      iconName={getIcon(slug)}
-                      colorVar={getColor(slug)}
-                      size="sm"
-                      showBackground
-                    />
-                    <span className="truncate">{getCategoryLabel(slug)}</span>
-                  </MinimalSelectItem>
-                ))}
-              </MinimalSelectContent>
-            </Select>
+                {t("imports.save", "Save")}
+              </Button>
+            </div>
+
+            {/* Secondary actions */}
+            <div className="flex items-center justify-center gap-4 -mt-1">
+              {isManual && onDelete && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-[13px] font-medium text-destructive py-1"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {t("imports.delete", "delete")}
+                </button>
+              )}
+              {!isManual && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground py-1"
+                  onClick={() => setPendingHidden(!pendingHidden)}
+                >
+                  {pendingHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                  {pendingHidden
+                    ? t("imports.showEntry", "show")
+                    : t("imports.hideEntry", "hide")}
+                </button>
+              )}
+              {!isManual && isEdited && originalSnapshot && (
+                <>
+                  <span className="text-muted-foreground/30">·</span>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary py-1"
+                    onClick={handleUndoChanges}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {t("imports.revertChanges", "undo changes")}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        </DialogContent>
+      </Dialog>
 
-      </SheetPanel>
-
-      {/* iOS-minimal delete confirmation */}
+      {/* Delete confirmation */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent className="max-w-[240px] rounded-2xl p-5">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-[15px]">
               {t("imports.deleteEntryTitle", "Delete entry?")}
             </AlertDialogTitle>
+            <AlertDialogDescription className="sr-only">
+              {t("imports.deleteEntryDesc")}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row gap-2 sm:justify-center">
             <AlertDialogCancel className="mt-0 flex-1 rounded-full border-0 bg-muted shadow-none">

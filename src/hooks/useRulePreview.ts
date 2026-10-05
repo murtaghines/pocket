@@ -27,6 +27,8 @@ interface FindMatchingArgs {
   movement: string;
   /** null/undefined = all accounts, otherwise this subset. */
   accountIds?: string[] | null;
+  /** Skip the movement filter — find matches regardless of their current movement type. */
+  skipMovementFilter?: boolean;
 }
 
 /**
@@ -44,6 +46,7 @@ export async function findMatchingTransactions({
   tokens,
   movement,
   accountIds,
+  skipMovementFilter,
 }: FindMatchingArgs): Promise<MatchedTransaction[]> {
   if (!pattern.trim()) return [];
   let query = supabase
@@ -58,7 +61,7 @@ export async function findMatchingTransactions({
   if (error) return [];
   const results: MatchedTransaction[] = [];
   for (const row of data || []) {
-    if (row.movement && row.movement !== movement) continue;
+    if (!skipMovementFilter && row.movement && row.movement !== movement) continue;
     if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
     const desc = (row.description_norm || row.description || "") as string;
     if (ruleMatchesDescription(matchType, pattern, tokens, desc)) {

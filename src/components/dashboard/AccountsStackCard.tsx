@@ -212,10 +212,10 @@ export function AccountsStackCard({
                     <TypeIcon className="w-[19px] h-[19px]" strokeWidth={2} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13.5px] font-medium text-foreground truncate">
+                    <p className="text-[13.5px] leading-tight font-medium text-foreground truncate">
                       {acc.displayName}
                     </p>
-                    <p className="text-[12px] text-muted-foreground truncate">
+                    <p className="text-[12px] leading-tight text-muted-foreground truncate">
                       {acc.transactionCount} {t('charts.txCount', 'tx')}
                     </p>
                   </div>

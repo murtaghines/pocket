@@ -180,7 +180,8 @@
     "deselectAll": "Deseleccionar todo",
     "selectAll": "Seleccionar todo",
     "exportCount": "{{count}} transacciones",
-    "exporting": "Exportando..."
+    "exporting": "Exportando...",
+    "ruleHint": "Al guardar, Pocket te preguntará si querés crear una regla para transacciones similares."
   },
   "status": {
     "active": "Activo",

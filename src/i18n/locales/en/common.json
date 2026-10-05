@@ -180,7 +180,8 @@
     "deselectAll": "Deselect all",
     "selectAll": "Select all",
     "exportCount": "{{count}} transactions",
-    "exporting": "Exporting..."
+    "exporting": "Exporting...",
+    "ruleHint": "When you save, Pocket will ask if you want to create a rule for similar transactions."
   },
   "status": {
     "active": "Active",
