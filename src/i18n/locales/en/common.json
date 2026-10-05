@@ -181,6 +181,9 @@
     "selectAll": "Select all",
     "exportCount": "{{count}} transactions",
     "exporting": "Exporting...",
+    "ruleNudgeTitle2": "Create rule for «{{category}}»?",
+    "ruleNudgeBody2": "Future transactions like «{{desc}}» will be categorized automatically.",
+    "each": "each",
     "ruleHint": "When you save, Pocket will ask if you want to create a rule for similar transactions."
   },
   "status": {

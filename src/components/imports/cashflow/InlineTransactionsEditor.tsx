@@ -829,23 +829,28 @@ export function InlineTransactionsEditor({
                     existingRuleId,
                   });
                 } else {
-                  toast({
-                    title: t("imports.ruleNudgeBody"),
+                  const categoryName = getCategoryLabel(ruleCategory);
+                  const { dismiss } = toast({
+                    title: t("imports.ruleNudgeTitle2", "Create rule for «{{category}}»?", { category: categoryName }),
                     description: (
                       <div className="space-y-1">
+                        <p className="text-xs opacity-80">
+                          {t("imports.ruleNudgeBody2", "Future transactions like «{{desc}}» will be categorized automatically.", { desc: cleanDesc.length > 40 ? cleanDesc.slice(0, 37) + "…" : cleanDesc })}
+                        </p>
                         <Button
                           variant="outline"
                           size="sm"
                           className="h-7 text-xs gap-1.5"
-                          onClick={() =>
+                          onClick={() => {
+                            dismiss();
                             setCategoryRulePrompt({
                               tx,
                               newSlug: ruleCategory,
                               newCategoryId: ruleCategoryId,
                               cleanDesc,
                               targetMovement,
-                            })
-                          }
+                            });
+                          }}
                         >
                           <Sparkles className="h-3 w-3" />
                           {t("imports.ruleNudgeCta")}
@@ -1529,15 +1534,11 @@ export function InlineTransactionsEditor({
                             <DropdownMenuContent align="end" className="w-48">
                               {!isLocked && (
                                 <DropdownMenuItem
-                                  onClick={() => {
-                                    setEditingDescId(tx.id);
-                                    setEditingDescValue(cleanDescription);
-                                    setTimeout(() => descInputRef.current?.focus(), 50);
-                                  }}
+                                  onClick={() => setEditingTx(tx)}
                                   className="gap-2 text-[13px]"
                                 >
                                   <Pencil className="w-4 h-4" />
-                                  {t("imports.editDescription")}
+                                  {t("imports.editTransaction")}
                                 </DropdownMenuItem>
                               )}
                               {!isLocked && !isHidden && (

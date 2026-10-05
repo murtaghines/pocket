@@ -5,7 +5,6 @@ import {
   Plus,
   Minus,
   ArrowRightLeft,
-  Sparkles,
   CalendarIcon,
   Trash2,
   EyeOff,
@@ -51,11 +50,11 @@ import {
 } from "@/lib/categoryTranslations";
 import type { MonthTransaction, PendingEditShape, MovementType } from "./types";
 
-const LABEL = "text-[12px] font-medium uppercase tracking-[0.07em] text-muted-foreground";
+const LABEL = "text-[12px] font-medium text-primary/70 mb-1.5";
 const PILL_INPUT =
-  "h-11 rounded-xl bg-muted border-0 shadow-none px-4 text-[13px] focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
+  "h-11 rounded-xl bg-muted/50 border-0 shadow-none px-4 text-[14px] focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
 const PILL_SELECT =
-  "h-11 rounded-xl bg-muted border-0 shadow-none px-4 text-[13px]";
+  "h-11 rounded-xl bg-muted/50 border-0 shadow-none px-4 text-[14px]";
 
 interface TransactionEditDrawerProps {
   tx: MonthTransaction | null;
@@ -242,20 +241,23 @@ export function TransactionEditDrawer({
 
   const currencySymbol = selectedAccount?.currency_base === "USD" ? "$" : "€";
 
-  const movementOptions: { value: MovementType; icon: typeof Plus; label: string }[] = [
-    { value: "EXPENSE", icon: Minus, label: getMovementLabel("EXPENSE") },
-    { value: "INCOME", icon: Plus, label: getMovementLabel("INCOME") },
-    { value: "TRANSFER", icon: ArrowRightLeft, label: getMovementLabel("TRANSFER") },
+  const movementOptions: { value: MovementType; label: string }[] = [
+    { value: "EXPENSE", label: getMovementLabel("EXPENSE") },
+    { value: "INCOME", label: getMovementLabel("INCOME") },
+    { value: "TRANSFER", label: getMovementLabel("TRANSFER") },
   ];
 
   const jointAccount = selectedAccount?.account_type === "JOINT" ? selectedAccount : null;
+  const splitPct = jointAccount?.split_percentage;
+  const hasSplit = jointAccount && splitPct != null && splitPct < 100;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[480px] bg-card p-6 gap-0">
-          <DialogHeader className="mb-5">
-            <DialogTitle className="text-[16px] font-semibold">
+        <DialogContent className="sm:max-w-[480px] bg-card rounded-2xl p-0 gap-0 overflow-hidden border-0 shadow-lg">
+          {/* Header */}
+          <DialogHeader className="px-7 pt-6 pb-0">
+            <DialogTitle className="text-[17px] font-semibold text-foreground">
               {t("imports.editTransaction", "edit transaction")}
             </DialogTitle>
             <DialogDescription className="sr-only">
@@ -263,11 +265,10 @@ export function TransactionEditDrawer({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-5 px-7 pt-5 pb-6">
             {/* Movement toggle */}
-            <div className="flex rounded-xl bg-muted p-1">
+            <div className="flex rounded-xl bg-muted/50 p-1">
               {movementOptions.map((opt) => {
-                const Icon = opt.icon;
                 const active = movement === opt.value;
                 return (
                   <button
@@ -275,8 +276,10 @@ export function TransactionEditDrawer({
                     type="button"
                     onClick={() => handleMovementChange(opt.value)}
                     className={cn(
-                      "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-[13px] font-medium transition-colors",
-                      active ? "bg-card text-foreground shadow-sm font-semibold" : "text-muted-foreground",
+                      "flex flex-1 items-center justify-center rounded-lg py-2.5 text-[13.5px] font-medium transition-all",
+                      active
+                        ? "bg-card text-foreground shadow-sm font-semibold"
+                        : "text-muted-foreground hover:text-foreground/70",
                     )}
                   >
                     {opt.label}
@@ -286,7 +289,7 @@ export function TransactionEditDrawer({
             </div>
 
             {/* Description */}
-            <div className="space-y-1.5">
+            <div>
               <label className={LABEL}>
                 {t("imports.description", "Description")}
               </label>
@@ -299,10 +302,10 @@ export function TransactionEditDrawer({
 
             {/* Amount + Date row */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5 min-w-0">
+              <div className="min-w-0">
                 <label className={LABEL}>{t("imports.amount", "Amount")}</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground pointer-events-none">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[14px] text-muted-foreground pointer-events-none">
                     {currencySymbol}
                   </span>
                   <Input
@@ -316,7 +319,7 @@ export function TransactionEditDrawer({
                   />
                 </div>
               </div>
-              <div className="space-y-1.5 min-w-0">
+              <div className="min-w-0">
                 <label className={LABEL}>
                   {t("imports.date", "Date")}
                 </label>
@@ -326,10 +329,10 @@ export function TransactionEditDrawer({
                       type="button"
                       className={cn(
                         PILL_SELECT,
-                        "flex w-full items-center gap-2 text-foreground hover:bg-muted/70 transition-colors",
+                        "flex w-full items-center gap-2 text-foreground hover:bg-muted/40 transition-colors",
                       )}
                     >
-                      <span className="truncate text-[13px]">
+                      <span className="truncate text-[14px]">
                         {format(new Date(displayDate + "T00:00:00"), "d MMM yyyy")}
                       </span>
                       <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
@@ -362,7 +365,7 @@ export function TransactionEditDrawer({
 
             {/* Account + Category row */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5 min-w-0">
+              <div className="min-w-0">
                 <label className={LABEL}>
                   {t("imports.account", "Account")}
                 </label>
@@ -371,8 +374,16 @@ export function TransactionEditDrawer({
                     className={cn(PILL_SELECT, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
                   >
                     <SelectValue placeholder={t("imports.selectAccount", "Select")}>
-                      <span className="truncate font-medium">
-                        {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                      <span className="flex items-center gap-2 truncate">
+                        {selectedAccount && (
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: selectedAccount.color || "hsl(var(--primary))" }}
+                          />
+                        )}
+                        <span className="truncate font-medium">
+                          {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
+                        </span>
                       </span>
                     </SelectValue>
                   </SelectTrigger>
@@ -385,28 +396,21 @@ export function TransactionEditDrawer({
                   </MinimalSelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5 min-w-0">
+              <div className="min-w-0">
                 <label className={LABEL}>{t("imports.category", "Category")}</label>
                 <Select value={category} onValueChange={handleCategoryChange}>
                   <SelectTrigger
-                    className={cn(
-                      PILL_SELECT,
-                      "focus:ring-1 focus:ring-primary [&>svg]:opacity-60",
-                    )}
-                    style={{
-                      backgroundColor: `hsl(var(--${getColor(category)}) / 0.15)`,
-                      color: `hsl(var(--${getColor(category)}))`,
-                    }}
+                    className={cn(PILL_SELECT, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
                   >
                     <SelectValue>
-                      <span className="flex items-center gap-1.5 font-semibold">
+                      <span className="flex items-center gap-1.5">
                         <CategoryIcon
                           iconName={getIcon(category)}
                           colorVar={getColor(category)}
                           size="sm"
                           showBackground={false}
                         />
-                        <span className="truncate">{getCategoryLabel(category)}</span>
+                        <span className="truncate font-medium">{getCategoryLabel(category)}</span>
                       </span>
                     </SelectValue>
                   </SelectTrigger>
@@ -427,16 +431,19 @@ export function TransactionEditDrawer({
               </div>
             </div>
 
-            {/* Joint account split info */}
-            {jointAccount && jointAccount.split_percentage != null && jointAccount.split_percentage < 100 && (
-              <div className="flex items-center gap-3 rounded-xl bg-muted/60 px-4 py-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-foreground">
-                    {t("imports.accountShareNote", "Your share: {{pct}}%", { pct: jointAccount.split_percentage })}
+            {/* Joint account split info — toggle-style card */}
+            {hasSplit && (
+              <div className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-[13.5px] font-medium text-foreground">
+                    {t("imports.accountShareNote", "Your share: {{pct}}%", { pct: splitPct })}
                   </p>
                   <p className="text-[12px] text-muted-foreground">
-                    {formatCurrency(Math.abs(amount) * (jointAccount.split_percentage / 100))}
+                    {splitPct}% · {formatCurrency(Math.abs(amount) * (splitPct! / 100))} {t("imports.each", "each")}
                   </p>
+                </div>
+                <div className="w-11 h-6 rounded-full bg-primary flex items-center px-0.5 shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-white shadow-sm ml-auto" />
                 </div>
               </div>
             )}
@@ -444,7 +451,7 @@ export function TransactionEditDrawer({
             {/* Rule info hint */}
             {ruleWorthy && hasChanges && (
               <div className="flex items-start gap-2 text-[12px] text-muted-foreground">
-                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground/60" />
                 <span>
                   {t("imports.ruleHint", "When you save, Pocket will ask if you want to create a rule for similar transactions.")}
                 </span>
@@ -455,13 +462,13 @@ export function TransactionEditDrawer({
             <div className="flex gap-3 pt-1">
               <Button
                 variant="outline"
-                className="flex-1 h-11 rounded-xl font-semibold text-sm"
+                className="flex-1 h-12 rounded-xl font-semibold text-[14px] border-border"
                 onClick={() => onOpenChange(false)}
               >
                 {t("imports.cancel", "Cancel")}
               </Button>
               <Button
-                className="flex-1 h-11 rounded-xl font-semibold text-sm"
+                className="flex-1 h-12 rounded-xl font-semibold text-[14px]"
                 disabled={!hasChanges || invalid}
                 onClick={() => {
                   handleAmountBlur();
@@ -474,43 +481,45 @@ export function TransactionEditDrawer({
             </div>
 
             {/* Secondary actions */}
-            <div className="flex items-center justify-center gap-4 -mt-1">
-              {isManual && onDelete && (
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 text-[13px] font-medium text-destructive py-1"
-                  onClick={() => setDeleteConfirmOpen(true)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  {t("imports.delete", "delete")}
-                </button>
-              )}
-              {!isManual && (
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground py-1"
-                  onClick={() => setPendingHidden(!pendingHidden)}
-                >
-                  {pendingHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                  {pendingHidden
-                    ? t("imports.showEntry", "show")
-                    : t("imports.hideEntry", "hide")}
-                </button>
-              )}
-              {!isManual && isEdited && originalSnapshot && (
-                <>
-                  <span className="text-muted-foreground/30">·</span>
+            {(isManual || !isManual) && (
+              <div className="flex items-center justify-center gap-4 -mt-2">
+                {isManual && onDelete && (
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary py-1"
-                    onClick={handleUndoChanges}
+                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-destructive py-1"
+                    onClick={() => setDeleteConfirmOpen(true)}
                   >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    {t("imports.revertChanges", "undo changes")}
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t("imports.delete", "delete")}
                   </button>
-                </>
-              )}
-            </div>
+                )}
+                {!isManual && (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground py-1"
+                    onClick={() => setPendingHidden(!pendingHidden)}
+                  >
+                    {pendingHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                    {pendingHidden
+                      ? t("imports.showEntry", "show")
+                      : t("imports.hideEntry", "hide")}
+                  </button>
+                )}
+                {!isManual && isEdited && originalSnapshot && (
+                  <>
+                    <span className="text-muted-foreground/30">·</span>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 text-[13px] font-medium text-primary py-1"
+                      onClick={handleUndoChanges}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {t("imports.revertChanges", "undo changes")}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
