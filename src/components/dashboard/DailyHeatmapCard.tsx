@@ -147,14 +147,8 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
         <EmptyState height="h-[160px]" icon={CalendarDays} message={t("transactions.noTransactions")} />
       ) : (
         <div className="flex-1 flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_auto] gap-4 sm:gap-[20px]">
-          <div
-            className="flex w-full flex-col gap-1.5"
-            style={{ maxWidth: weekRows > 5 ? 240 : 280 }}
-          >
-            <div
-              className="grid grid-cols-7"
-              style={{ gap: weekRows > 5 ? 4 : 6 }}
-            >
+          <div className="flex w-full max-w-[280px] flex-col gap-2">
+            <div className="grid grid-cols-7 gap-[6px]">
               {WEEKDAY_KEYS.map((k) => (
                 <div key={k} className="text-center text-[10.5px] font-medium text-muted-foreground/60">
                   {t(`heatmap.weekdays.${k}`, k.charAt(0).toUpperCase())}
@@ -162,14 +156,11 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
               ))}
             </div>
 
-            <div
-              className="grid grid-cols-7"
-              style={{ gap: weekRows > 5 ? 4 : 6 }}
-            >
+            <div className="grid grid-cols-7" style={{ gap: weekRows > 5 ? 4 : 6 }}>
               {Array.from({ length: gridSize }).map((_, i) => {
                 const dayIndex = i - leadingBlanks;
                 if (dayIndex < 0 || dayIndex >= daysInMonth) {
-                  return <div key={i} className="aspect-square" />;
+                  return <div key={i} style={weekRows > 5 ? { paddingBottom: "80%" } : undefined} className={weekRows > 5 ? "" : "aspect-square"} />;
                 }
                 const cell = cells[dayIndex];
                 const intensity = getIntensity(cell.value);
@@ -183,18 +174,21 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
                     onMouseLeave={() => setHoveredDay((d) => (d === cell.day ? null : d))}
                     onClick={() => setHoveredDay((d) => (d === cell.day ? null : cell.day))}
                     className={cn(
-                      "relative flex aspect-square items-center justify-center transition-transform hover:scale-105",
-                      weekRows > 5 ? "text-[10px] rounded-[6px]" : "text-[11px] rounded-[8px]",
+                      "relative flex items-center justify-center text-[11px] rounded-[8px] transition-transform hover:scale-105",
                       hasValue ? "font-medium" : "font-normal bg-muted/60",
                       hoveredDay === cell.day && "ring-2 ring-primary/60 ring-offset-1 ring-offset-card",
+                      weekRows <= 5 && "aspect-square",
                     )}
                     style={{
+                      ...(weekRows > 5 ? { paddingBottom: "80%" } : {}),
                       backgroundColor: hasValue ? `rgba(27,118,255,${intensity})` : undefined,
                       color: textColor,
                     }}
                     title={hasValue ? `${cell.day}: ${formatStat(cell.value)}` : undefined}
                   >
-                    {cell.day}
+                    <span className={weekRows > 5 ? "absolute inset-0 flex items-center justify-center" : ""}>
+                      {cell.day}
+                    </span>
                     {hoveredDay === cell.day && hasValue && (
                       <span className="pointer-events-none absolute -top-[30px] left-1/2 -translate-x-1/2 z-50 rounded-md bg-foreground text-card px-2 py-1 text-[10.5px] font-medium tabular-nums whitespace-nowrap shadow-lg">
                         {formatStat(cell.value)}
