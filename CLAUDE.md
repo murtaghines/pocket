@@ -40,6 +40,18 @@ Commands:
   and **update both `en` and `es` in the same change**, never leave one out of date
 - Design tokens, never hex — see the design-system rule for the full visual spec
 
+## Token efficiency — UI/visual changes
+- **Don't iterate in the browser.** Apply the design-system rules (especially the container
+  principle) correctly in code the first time. Reason about CSS/layout constraints instead
+  of trial-and-error with screenshots.
+- **One verification, at the end.** A single quick check after all edits is fine. Multiple
+  navigate → screenshot → fix → re-check cycles waste tokens and signal that the rules
+  weren't applied confidently.
+- **Simple layout tasks don't need a dev server.** If the change is purely CSS/structural
+  (adding `overflow-hidden`, changing a gap, adjusting padding), the design-system rules are
+  sufficient to know it's correct. Save the browser for things that actually need runtime
+  verification (data-dependent rendering, interactive behavior, API integration).
+
 ## Context system (how the docs here work)
 This repo splits work into per-module conversations. Context is layered so you don't
 re-explain things each session:

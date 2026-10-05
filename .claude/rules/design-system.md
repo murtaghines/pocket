@@ -292,6 +292,34 @@ translation string itself; the i18n value stays Title Case (`"Dashboard"`, not `
 
 ---
 
+## Container principle — content adapts, containers don't
+
+Card containers (`bg-card rounded-xl`) are **static at each breakpoint**. Once a card's
+width and height are set by its parent grid (e.g. `lg:h-[300px]`, `lg:grid-cols-[1.55fr_1fr]`),
+the container never grows, shrinks, or changes to accommodate its content.
+
+**Everything inside adapts to the container:**
+- Titles, selectors, subtitles → fixed header, `shrink-0`
+- Lists that might overflow → `flex-1 min-h-0 overflow-y-auto` (scroll only when needed)
+- Charts/calendars with variable rows → reduce cell height, gap, or font — never the container
+- The outer card always has `overflow-hidden` so nothing bleeds out
+
+**Never do:**
+- Remove or increase a parent grid row's fixed height to fit more content
+- Change `max-width` / `max-height` of the card based on data (e.g. number of rows)
+- Remove `overflow-hidden` from a card to make overflowing content visible
+- Add conditional sizing logic that makes the card dimensions data-dependent
+
+**Always do:**
+- Keep the card `h-full overflow-hidden flex flex-col`
+- Put scrollable content in a `flex-1 min-h-0 overflow-y-auto` div
+- When content varies (6-week vs 5-week calendar, 2 vs 8 accounts), adapt the inner
+  elements (cell padding, font size, gap) so they fit inside the fixed container
+
+This applies to every card on every page at every breakpoint. No exceptions.
+
+---
+
 ## Component Rules
 
 ### Buttons
@@ -337,3 +365,4 @@ Pattern opacity: 10–40% max. Single fill color per tile. Always brand palette.
 10. Popups, dialogs, drawers, and modals → always `bg-card` (white), never `bg-background` (gray)
 11. Floating panels (Select dropdowns, Popovers, DropdownMenus) → `shadow-popup` (Notion-style), `rounded-lg`, `bg-card`, no `border`, fade-only animation — no zoom/slide
 12. Number inputs (amounts, splits, quantities) → always `inputMode="decimal"` so mobile shows a numeric keypad
+13. Containers are static — never change a card's dimensions to fit content; content adapts inside (see "Container principle")
