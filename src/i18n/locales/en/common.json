@@ -184,7 +184,12 @@
     "ruleNudgeTitle2": "Create rule for «{{category}}»?",
     "ruleNudgeBody2": "Future transactions like «{{desc}}» will be categorized automatically.",
     "each": "each",
-    "ruleHint": "When you save, Pocket will ask if you want to create a rule for similar transactions."
+    "ruleHint": "When you save, Pocket will ask if you want to create a rule for similar transactions.",
+    "rulePreviewTitle": "Live preview",
+    "rulePreviewDesc": "Matches existing transactions in your history",
+    "ruleMatchSingular": "match",
+    "ruleMatchPlural": "matches",
+    "ruleSaveRule": "Save rule"
   },
   "status": {
     "active": "Active",
