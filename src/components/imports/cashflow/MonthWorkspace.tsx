@@ -29,7 +29,6 @@ export interface MonthWorkspaceProps {
   sortColumn?: SortColumn;
   sortDirection?: SortDirection;
   filters?: DataFilters;
-  exportTransactionsRef?: React.MutableRefObject<(() => void) | null>;
   openingBalance?: number | null;
   accountOpeningBalances?: Record<string, number>;
   closingBalance?: number | null;
@@ -58,7 +57,6 @@ export function MonthWorkspace({
   sortColumn,
   sortDirection,
   filters,
-  exportTransactionsRef,
   openingBalance,
   accountOpeningBalances,
   closingBalance,
@@ -138,7 +136,6 @@ export function MonthWorkspace({
         sortColumn={sortColumn}
         sortDirection={sortDirection}
         filters={filters}
-        exportTransactionsRef={exportTransactionsRef}
         openingBalance={openingBalance}
         accountOpeningBalances={accountOpeningBalances}
         closingBalance={closingBalance}

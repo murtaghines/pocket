@@ -173,7 +173,14 @@
     "openingBalanceLabel": "Apertura",
     "closingBalanceLabel": "Cierre",
     "txCountShort": "{{count}} transacciones",
-    "unassignedAccount": "Sin asignar"
+    "unassignedAccount": "Sin asignar",
+    "exportDesc": "Elegí las cuentas y el período a exportar.",
+    "exportPeriod": "Período",
+    "exportAll": "Todo",
+    "deselectAll": "Deseleccionar todo",
+    "selectAll": "Seleccionar todo",
+    "exportCount": "{{count}} transacciones",
+    "exporting": "Exportando..."
   },
   "status": {
     "active": "Activo",
@@ -190,7 +197,8 @@
     "thisMonth": "Este mes",
     "thisYear": "Este año",
     "lastMonth": "Mes pasado",
-    "lastYear": "Año pasado"
+    "lastYear": "Año pasado",
+    "allTime": "Todo el período"
   },
   "network": {
     "offline": "Sin conexión a internet. Las subidas no funcionarán.",
