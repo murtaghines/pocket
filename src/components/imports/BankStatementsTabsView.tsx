@@ -32,7 +32,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const { user } = useAuth();
   const { t } = useTranslation("common");
   const { formatMonth, formatDate, formatCurrency } = useLocalization();
-  const { imports, isLoading, deleteImport, isDeleting, toggleLockImport } = useImports("CASHFLOW");
+  const { imports, isLoading, deleteImport, isDeleting } = useImports("CASHFLOW");
   const { accounts } = useAccounts();
   const {
     addFilesForMonth,
@@ -137,8 +137,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   };
 
   const activeImports = importsByMonth[activeKey] || [];
-  const isLocked = activeImports.some((i) => i.locked);
-
   const { data: activeTxCount } = useQuery({
     queryKey: ["tx-count", activeKey, user?.id],
     queryFn: async () => {
@@ -256,7 +254,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         onAddTransfer={() => { setDefaultMovement("TRANSFER"); setManualEntryOpen(true); }}
         onUploadFile={() => globalFileInputRef.current?.click()}
         onExport={() => setExportOpen(true)}
-        isLocked={isLocked}
         monthsWithData={monthsWithData}
         firstMonthWithData={firstMonthWithData}
       />
@@ -286,7 +283,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
           onPickFiles={handleFilesPicked}
           deleteImport={deleteImport}
           isDeleting={isDeleting}
-          toggleLockImport={toggleLockImport}
           isProcessing={isProcessingMonth(activeSlot.key)}
           pendingFiles={[
             ...(pendingFilesByMonth[activeSlot.key] || []),

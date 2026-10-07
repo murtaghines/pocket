@@ -56,6 +56,7 @@ interface AddManualEntryDialogProps {
   monthKey: string;
   monthLabel: string;
   defaultMovement?: MovementType;
+  defaultAccountId?: string | null;
   onSubmit: (entry: {
     date: string;
     description: string;
@@ -75,6 +76,7 @@ export function AddManualEntryDialog({
   monthKey,
   monthLabel,
   defaultMovement,
+  defaultAccountId,
   onSubmit,
 }: AddManualEntryDialogProps) {
   const { t } = useTranslation("common");
@@ -100,7 +102,7 @@ export function AddManualEntryDialog({
       setDate(getSmartDefaultDate(monthKey));
       setDescription("");
       setDebouncedDescription("");
-      setAccountId(accounts[0]?.id || "");
+      setAccountId(defaultAccountId ?? accounts[0]?.id ?? "");
       const m = defaultMovement || "EXPENSE";
       setMovement(m);
       setCategorySlug(getCategoriesForMovement(m)[0]);

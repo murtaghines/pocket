@@ -23,7 +23,6 @@ const MARGIN = 12;
 interface MobileTransactionActionsProps {
   tx: MonthTransaction | null;
   anchorRect: DOMRect | null;
-  isLocked: boolean;
   isManual: boolean;
   isHidden: boolean;
   isEdited: boolean;
@@ -42,7 +41,6 @@ interface MobileTransactionActionsProps {
 export function MobileTransactionActions({
   tx,
   anchorRect,
-  isLocked,
   isManual,
   isHidden,
   isEdited,
@@ -88,26 +86,22 @@ export function MobileTransactionActions({
   };
 
   const primaryActions: { icon: React.ReactNode; label: string; onClick: () => void }[] = [];
-  if (!isLocked) primaryActions.push({ icon: <Pencil className="w-[17px] h-[17px]" />, label: t("imports.editTransaction"), onClick: () => act(onEdit) });
-  if (!isLocked) primaryActions.push({ icon: <Pencil className="w-[17px] h-[17px]" />, label: t("imports.editDescription"), onClick: () => act(onEditDescription) });
-  if (!isLocked) primaryActions.push({ icon: <SplitIcon className="w-[17px] h-[17px]" />, label: t("imports.splitAmount"), onClick: () => act(onSplit) });
-  if (!isLocked) {
-    primaryActions.push({
-      icon: isHidden ? <Eye className="w-[17px] h-[17px]" /> : <EyeOff className="w-[17px] h-[17px]" />,
-      label: isHidden ? t("imports.showEntry") : t("imports.hideEntry"),
-      onClick: () => act(onToggleHidden),
-    });
-  }
-  if (!isLocked && isEdited && !isManual) {
+  primaryActions.push({ icon: <Pencil className="w-[17px] h-[17px]" />, label: t("imports.editTransaction"), onClick: () => act(onEdit) });
+  primaryActions.push({ icon: <Pencil className="w-[17px] h-[17px]" />, label: t("imports.editDescription"), onClick: () => act(onEditDescription) });
+  primaryActions.push({ icon: <SplitIcon className="w-[17px] h-[17px]" />, label: t("imports.splitAmount"), onClick: () => act(onSplit) });
+  primaryActions.push({
+    icon: isHidden ? <Eye className="w-[17px] h-[17px]" /> : <EyeOff className="w-[17px] h-[17px]" />,
+    label: isHidden ? t("imports.showEntry") : t("imports.hideEntry"),
+    onClick: () => act(onToggleHidden),
+  });
+  if (isEdited && !isManual) {
     primaryActions.push({ icon: <RotateCcw className="w-[17px] h-[17px]" />, label: t("imports.revertToOriginal"), onClick: () => act(onRevert) });
   }
-  if (!isLocked) {
-    primaryActions.push({ icon: <CheckSquare className="w-[17px] h-[17px]" />, label: t("imports.selectRow"), onClick: () => act(onSelect) });
-  }
+  primaryActions.push({ icon: <CheckSquare className="w-[17px] h-[17px]" />, label: t("imports.selectRow"), onClick: () => act(onSelect) });
   primaryActions.push({ icon: <Copy className="w-[17px] h-[17px]" />, label: t("imports.copyDescription"), onClick: () => act(onCopyDescription) });
   primaryActions.push({ icon: <Copy className="w-[17px] h-[17px]" />, label: t("imports.copyAmount"), onClick: () => act(onCopyAmount) });
 
-  const showDelete = !isLocked && isManual;
+  const showDelete = isManual;
 
   const estHeight =
     primaryActions.length * ROW_H + (showDelete ? GAP + ROW_H : 0) + 4;

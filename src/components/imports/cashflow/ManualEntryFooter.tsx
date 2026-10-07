@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, ArrowRightLeft, EyeOff, Lock, Unlock } from "lucide-react";
+import { Plus, Minus, ArrowRightLeft, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +19,6 @@ import type { MovementType } from "./types";
 export interface ManualEntryFooterProps {
   monthKey: string;
   monthLabel: string;
-  isLocked: boolean;
   summary: {
     total: number;
     income: number;
@@ -30,23 +29,22 @@ export interface ManualEntryFooterProps {
   };
   openingBalance?: number | null;
   closingBalance?: number | null;
-  rightSlot?: React.ReactNode;
   externalOpen?: boolean;
   onExternalOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
+  defaultAccountId?: string | null;
 }
 
 export function ManualEntryFooter({
   monthKey,
   monthLabel,
-  isLocked,
   summary,
   openingBalance,
   closingBalance,
-  rightSlot,
   externalOpen,
   onExternalOpenChange,
   defaultMovement,
+  defaultAccountId,
 }: ManualEntryFooterProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -277,8 +275,6 @@ export function ManualEntryFooter({
               </span>
             </span>
           )}
-
-          {rightSlot}
         </div>
       </div>
 
@@ -288,6 +284,7 @@ export function ManualEntryFooter({
         monthKey={monthKey}
         monthLabel={monthLabel}
         defaultMovement={defaultMovement}
+        defaultAccountId={defaultAccountId}
         onSubmit={handleSubmit}
       />
     </>
