@@ -130,7 +130,7 @@ export function DataToolbar({
 
 
   return (
-    <div className="hidden md:flex items-center justify-between gap-4 bg-card px-6 py-[20px] pb-[16px]">
+    <div className="hidden md:flex items-center justify-between gap-4 bg-[#F5F7F9] px-6 py-[20px] pb-[16px] border-b border-border/60">
       {/* Left: Month title + opening balance + nav buttons */}
       <div className="flex items-center gap-[14px]">
         <h2 className="font-heading font-semibold text-[16px] text-[#0C0D0E] tracking-[-0.01em] capitalize">
@@ -138,7 +138,7 @@ export function DataToolbar({
         </h2>
 
         {/* Month navigation — ‹ › calendar in #F5F7F9 container */}
-        <div className="flex items-center gap-[2px] bg-[#F5F7F9] rounded-[9px] p-[3px] ml-[6px]">
+        <div className="flex items-center gap-[2px] bg-white rounded-[9px] p-[3px] ml-[6px] shadow-[0_1px_2px_rgba(16,24,40,0.06)]">
           <button
             type="button"
             onClick={onPrev}
@@ -271,7 +271,7 @@ export function DataToolbar({
         <button
           type="button"
           onClick={() => onSortChange("date", sortDirection === "asc" ? "desc" : "asc")}
-          className="inline-flex items-center gap-[6px] bg-[#F5F7F9] rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] hover:bg-[#EBEEF2] transition-colors"
+          className="inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] shadow-[0_1px_2px_rgba(16,24,40,0.06)] hover:bg-[#EBEEF2] transition-colors"
         >
           <ArrowUpDown className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
           {sortDirection === "desc" ? t("imports.newestFirst", { defaultValue: "Newest first" }) : t("imports.oldestFirst", { defaultValue: "Oldest first" })}
@@ -283,7 +283,7 @@ export function DataToolbar({
             <button
               type="button"
               className={cn(
-                "inline-flex items-center gap-[6px] bg-[#F5F7F9] rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] hover:bg-[#EBEEF2] transition-colors",
+                "inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] shadow-[0_1px_2px_rgba(16,24,40,0.06)] hover:bg-[#EBEEF2] transition-colors",
                 hasActiveFilters && "ring-1 ring-primary/30",
               )}
             >
@@ -385,7 +385,7 @@ export function DataToolbar({
         <button
           type="button"
           onClick={onExport}
-          className="inline-flex items-center gap-[6px] bg-[#F5F7F9] rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] hover:bg-[#EBEEF2] transition-colors"
+          className="inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] shadow-[0_1px_2px_rgba(16,24,40,0.06)] hover:bg-[#EBEEF2] transition-colors"
         >
           <Download className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
           {t("export")}
