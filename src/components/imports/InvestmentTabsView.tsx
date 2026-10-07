@@ -182,13 +182,13 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
       />
 
       {/* ============= Toolbar (desktop only): actions ============= */}
-      <div className="hidden md:flex items-center justify-end gap-2 px-10 py-4 border-b border-border/60 bg-[#F5F7F9]">
+      <div className="hidden md:flex items-center justify-end gap-2 px-6 py-[14px] border-b border-border/60 bg-[#F5F7F9]">
         <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             onClick={() => globalFileInputRef.current?.click()}
             disabled={isProcessingAny}
-            className="flex gap-2 h-9 px-5 font-medium"
+            className="flex gap-2 h-8 px-4 text-[12.5px] font-semibold shadow-[0_1px_3px_rgba(27,118,255,0.3)]"
           >
             {isProcessingAny ? (
               <Loader2 className="w-4 h-4 animate-spin" />

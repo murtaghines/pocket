@@ -203,9 +203,8 @@ export function InlineTransactionsEditor({
   // Checkbox selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Account sheet tab state (Excel-style: null = "All")
+  // Account sheet tab state — defaults to first account (no "All" view)
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
-  useEffect(() => { setActiveAccountId(null); }, [monthKey]);
 
   // Inline editing state
   const [editingDescId, setEditingDescId] = useState<string | null>(null);
@@ -1014,6 +1013,13 @@ export function InlineTransactionsEditor({
   }, [accountGroups]);
   const showAccountTabs = accountTabsData.length > 1;
 
+  // Auto-select first account when tabs load or month changes (no "All" view)
+  useEffect(() => {
+    if (accountTabsData.length > 0 && (activeAccountId === null || !accountTabsData.some((a) => a.id === activeAccountId))) {
+      setActiveAccountId(accountTabsData[0].id);
+    }
+  }, [accountTabsData, monthKey]);
+
   const rowsToRender = useMemo(() => {
     if (activeAccountId === null) return filteredSorted;
     return filteredSorted.filter((tx) => tx.account_id === activeAccountId);
@@ -1116,12 +1122,7 @@ export function InlineTransactionsEditor({
                 <TableHead className="w-[5%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.source")}
                 </TableHead>
-                {activeAccountId === null && (
-                  <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
-                    {t("imports.account")}
-                  </TableHead>
-                )}
-                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]", activeAccountId !== null ? "w-[28%]" : "w-[20%]")}>
+                <TableHead className="w-[28%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.description")}
                 </TableHead>
                 <TableHead className="w-[11%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
@@ -1268,12 +1269,6 @@ export function InlineTransactionsEditor({
                         </span>
                       </TableCell>
 
-                      {/* Account — hidden when viewing a specific account tab */}
-                      {activeAccountId === null && (
-                        <TableCell className="text-[13px] text-muted-foreground truncate">
-                          {accountName(tx.account_id) || "—"}
-                        </TableCell>
-                      )}
 
                       {/* Description — double-click to edit */}
                       <TableCell
