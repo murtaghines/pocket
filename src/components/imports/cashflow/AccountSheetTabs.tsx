@@ -80,6 +80,9 @@ export function AccountSheetTabs({
                 style={{ backgroundColor: acct.color }}
               />
               <span className="truncate">{acct.name}</span>
+              {acct.txCount > 0 && (
+                <span className="text-[10px] text-muted-foreground/60 tabular-nums">{acct.txCount}</span>
+              )}
             </button>
           ))}
         </div>
@@ -126,6 +129,9 @@ export function AccountSheetTabs({
                 style={{ backgroundColor: acct.color }}
               />
               <span className="truncate">{acct.name}</span>
+              {acct.txCount > 0 && (
+                <span className="text-[10px] text-muted-foreground/60 tabular-nums">{acct.txCount}</span>
+              )}
             </button>
           ))}
         </div>

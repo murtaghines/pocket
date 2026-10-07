@@ -1003,26 +1003,6 @@ export function InlineTransactionsEditor({
     return groups;
   }, [filteredSorted, hasAccountBalances, accountOpeningBalances, accountClosingBalances, accounts, splitAmt, t]);
 
-  // Per-account-band totals (income / expense, both at the user's share) and the
-  // split percentage, if any — shown in the account header row instead of per-row.
-  const groupTotals = useMemo(() => {
-    const map = new Map<string, { income: number; expense: number; sharePct: number | null }>();
-    for (const g of accountGroups ?? []) {
-      let income = 0;
-      let expense = 0;
-      for (const tx of g.transactions) {
-        if (tx.is_hidden) continue;
-        const amt = splitAmt(tx.amount, tx.account_id);
-        if (tx.movement === "INCOME") income += amt;
-        else if (tx.movement === "EXPENSE") expense += amt;
-      }
-      const key = g.accountId ?? "__unassigned__";
-      const sharePct = g.accountId ? (splitMap[g.accountId] ?? null) : null;
-      map.set(key, { income: Math.round(income * 100) / 100, expense: Math.round(expense * 100) / 100, sharePct });
-    }
-    return map;
-  }, [accountGroups, splitAmt, splitMap]);
-
   const accountTabsData: AccountTab[] = useMemo(() => {
     if (!accountGroups) return [];
     return accountGroups.map((g) => ({
@@ -1862,6 +1842,7 @@ export function InlineTransactionsEditor({
           externalOpen={externalManualEntryOpen}
           onExternalOpenChange={onManualEntryOpenChange}
           defaultMovement={defaultMovement}
+          defaultAccountId={activeAccountId}
         />
       </div>
 

@@ -32,6 +32,7 @@ export interface ManualEntryFooterProps {
   externalOpen?: boolean;
   onExternalOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
+  defaultAccountId?: string | null;
 }
 
 export function ManualEntryFooter({
@@ -43,6 +44,7 @@ export function ManualEntryFooter({
   externalOpen,
   onExternalOpenChange,
   defaultMovement,
+  defaultAccountId,
 }: ManualEntryFooterProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -282,6 +284,7 @@ export function ManualEntryFooter({
         monthKey={monthKey}
         monthLabel={monthLabel}
         defaultMovement={defaultMovement}
+        defaultAccountId={defaultAccountId}
         onSubmit={handleSubmit}
       />
     </>
