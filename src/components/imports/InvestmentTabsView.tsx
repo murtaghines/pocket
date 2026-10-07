@@ -182,7 +182,7 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
       />
 
       {/* ============= Toolbar (desktop only): actions ============= */}
-      <div className="hidden md:flex items-center justify-end gap-2 px-10 py-4 border-b border-border bg-card">
+      <div className="hidden md:flex items-center justify-end gap-2 px-10 py-4 border-b border-border/60 bg-[#F5F7F9]">
         <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
