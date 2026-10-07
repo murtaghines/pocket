@@ -52,7 +52,6 @@ export interface UploadedFilesDropdownProps {
   cashAccounts: ReturnType<typeof useAccounts>["accounts"];
   deleteImport: (id: string) => void;
   isDeleting: boolean;
-  toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   pendingImportIds: Set<string>;
   retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
   retryingImportIds?: Set<string>;
@@ -63,7 +62,6 @@ export function UploadedFilesDropdown({
   cashAccounts,
   deleteImport,
   isDeleting,
-  toggleLockImport,
   pendingImportIds,
   retryImport,
   retryingImportIds,
@@ -110,7 +108,6 @@ export function UploadedFilesDropdown({
           cashAccounts={cashAccounts}
           deleteImport={deleteImport}
           isDeleting={isDeleting}
-          toggleLockImport={toggleLockImport}
           pendingImportIds={pendingImportIds}
           retryImport={retryImport}
           retryingImportIds={retryingImportIds}
@@ -127,7 +124,6 @@ export interface UploadedFilesHistoryListProps {
   cashAccounts: ReturnType<typeof useAccounts>["accounts"];
   deleteImport: (id: string) => void;
   isDeleting: boolean;
-  toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   pendingImportIds: Set<string>;
   retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
   retryingImportIds?: Set<string>;
@@ -138,7 +134,6 @@ export function UploadedFilesHistoryList({
   cashAccounts,
   deleteImport,
   isDeleting,
-  toggleLockImport,
   pendingImportIds,
   retryImport,
   retryingImportIds,

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback, Fragment } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,8 +9,6 @@ import {
   EyeOff,
   Sparkles,
   AlertTriangle,
-  Lock,
-  Unlock,
   ArrowRightLeft,
   Plus,
   Minus,
@@ -21,7 +19,6 @@ import {
   MoreHorizontal,
   Pencil,
   Copy,
-  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
@@ -109,6 +106,7 @@ import { SwipeableRow } from "./SwipeableRow";
 import { MobileTransactionActions } from "./MobileTransactionActions";
 import { TransactionEditDrawer } from "./TransactionEditDrawer";
 import { BulkActionsToolbar } from "./BulkActionsToolbar";
+import { AccountSheetTabs, type AccountTab } from "./AccountSheetTabs";
 import type {
   MonthTransaction,
   AuditEntry,
@@ -132,12 +130,10 @@ function getISOWeek(dateStr: string): number {
 export interface InlineTransactionsEditorProps {
   monthKey: string;
   monthLabel: string;
-  isLocked: boolean;
   imports: Import[];
   cashAccounts: ReturnType<typeof useAccounts>["accounts"];
   deleteImport: (id: string) => void;
   isDeleting: boolean;
-  toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
@@ -159,12 +155,10 @@ export interface InlineTransactionsEditorProps {
 export function InlineTransactionsEditor({
   monthKey,
   monthLabel,
-  isLocked,
   imports,
   cashAccounts,
   deleteImport,
   isDeleting,
-  toggleLockImport,
   onAddMore,
   isProcessing,
   pendingFiles,
@@ -209,15 +203,9 @@ export function InlineTransactionsEditor({
   // Checkbox selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Account group collapse state
-  const [collapsedAccounts, setCollapsedAccounts] = useState<Set<string>>(new Set());
-  const toggleAccountCollapsed = (accountId: string) =>
-    setCollapsedAccounts((prev) => {
-      const next = new Set(prev);
-      if (next.has(accountId)) next.delete(accountId);
-      else next.add(accountId);
-      return next;
-    });
+  // Account sheet tab state (Excel-style: null = "All")
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+  useEffect(() => { setActiveAccountId(null); }, [monthKey]);
 
   // Inline editing state
   const [editingDescId, setEditingDescId] = useState<string | null>(null);
@@ -1035,9 +1023,46 @@ export function InlineTransactionsEditor({
     return map;
   }, [accountGroups, splitAmt, splitMap]);
 
-  const visibleAll = filteredSorted;
-  const rowsToRender = visibleAll;
+  const accountTabsData: AccountTab[] = useMemo(() => {
+    if (!accountGroups) return [];
+    return accountGroups.map((g) => ({
+      id: g.accountId ?? "__unassigned__",
+      name: g.accountName,
+      color: g.accountColor ?? "#9AA1AC",
+      txCount: g.transactions.length,
+    }));
+  }, [accountGroups]);
+  const showAccountTabs = accountTabsData.length > 1;
+
+  const rowsToRender = useMemo(() => {
+    if (activeAccountId === null) return filteredSorted;
+    return filteredSorted.filter((tx) => tx.account_id === activeAccountId);
+  }, [filteredSorted, activeAccountId]);
   const allVisibleIds = rowsToRender.map((tx) => tx.id);
+
+  const tabSummary = useMemo(() => {
+    if (activeAccountId === null) return summary;
+    const visible = rowsToRender.filter((t) => !t.is_hidden);
+    const nonSavings = visible.filter((t) => !savingsAccountIds.has(t.account_id ?? ""));
+    const income = nonSavings
+      .filter((t) => t.movement === "INCOME")
+      .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
+    const expenses = nonSavings
+      .filter((t) => t.movement === "EXPENSE")
+      .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
+    const transferTxs = nonSavings.filter((t) => t.movement === "TRANSFER");
+    const transfers = transferTxs.length;
+    const transfersNet = transferTxs.reduce((s, t) => s + splitAmt(t.amount, t.account_id), 0);
+    const hidden = rowsToRender.filter((t) => t.is_hidden).length;
+    return { income, expenses, transfers, transfersNet, hidden, total: rowsToRender.length };
+  }, [activeAccountId, summary, rowsToRender, savingsAccountIds, splitAmt]);
+
+  const tabOpeningBalance = activeAccountId !== null && accountOpeningBalances
+    ? (accountOpeningBalances[activeAccountId] ?? null)
+    : openingBalance;
+  const tabClosingBalance = activeAccountId !== null && accountClosingBalances
+    ? (accountClosingBalances[activeAccountId] ?? null)
+    : closingBalanceProp;
 
   if (isLoading) {
     return (
@@ -1111,12 +1136,12 @@ export function InlineTransactionsEditor({
                 <TableHead className="w-[5%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.source")}
                 </TableHead>
-                {!accountGroups && (
+                {activeAccountId === null && (
                   <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                     {t("imports.account")}
                   </TableHead>
                 )}
-                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]", accountGroups ? "w-[28%]" : "w-[20%]")}>
+                <TableHead className={cn("text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]", activeAccountId !== null ? "w-[28%]" : "w-[20%]")}>
                   {t("imports.description")}
                 </TableHead>
                 <TableHead className="w-[11%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
@@ -1135,59 +1160,7 @@ export function InlineTransactionsEditor({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(accountGroups ?? [{ accountId: null, accountName: "", accountColor: null, openingBalance: 0, closingBalance: 0, transactions: rowsToRender }] as AccountGroup[]).map((group, groupIdx) => {
-                const showGroupHeader = !!accountGroups;
-                const groupTxs = group.transactions;
-                return (
-                  <Fragment key={group.accountId ?? `__flat_${groupIdx}__`}>
-                    {showGroupHeader && (() => {
-                      const groupKey = group.accountId ?? "__unassigned__";
-                      const isCollapsed = collapsedAccounts.has(groupKey);
-                      const totals = groupTotals.get(groupKey);
-                      return (
-                        <TableRow
-                          className="hover:bg-muted/20 cursor-pointer border-b border-border/40"
-                          onClick={() => toggleAccountCollapsed(groupKey)}
-                        >
-                          <TableCell colSpan={accountGroups ? 10 : 11} className="px-0 py-0">
-                            <div className="flex items-center gap-3 px-3 py-1.5">
-                              <ChevronRight
-                                className={cn(
-                                  "w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
-                                  !isCollapsed && "rotate-90",
-                                )}
-                              />
-                              <span className="text-[12px] font-medium text-foreground">
-                                {group.accountName}
-                              </span>
-                              <span className="text-[11px] text-muted-foreground">
-                                {t("imports.txCountShort", { count: groupTxs.length })}
-                              </span>
-                              {totals?.sharePct != null && (
-                                <span className="text-[11px] text-muted-foreground">
-                                  {t("imports.accountShareNote", { pct: totals.sharePct })}
-                                </span>
-                              )}
-                              {totals && (totals.income !== 0 || totals.expense !== 0) && (
-                                <div className="ml-auto flex items-center gap-3 text-[11px] tabular-nums">
-                                  {totals.income !== 0 && (
-                                    <span className="text-success">
-                                      {formatCurrency(totals.income, undefined, true)}
-                                    </span>
-                                  )}
-                                  {totals.expense !== 0 && (
-                                    <span className="text-destructive">
-                                      {formatCurrency(totals.expense, undefined, true)}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })()}
-                    {(!showGroupHeader || !collapsedAccounts.has(group.accountId ?? "__unassigned__")) && groupTxs.map((tx) => {
+              {rowsToRender.map((tx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
                 const isSaving = savingIds.has(tx.id);
                 const isSaved = savedIds.has(tx.id);
@@ -1273,7 +1246,6 @@ export function InlineTransactionsEditor({
                     key={tx.id}
                     isHidden={isHidden}
                     isManual={isManual}
-                    isLocked={isLocked}
                     isEdited={isEdited}
                     isPending={isPending}
                     hasCategoryChange={hasPendingCategoryChange || hasPendingMovementTransfer}
@@ -1316,8 +1288,8 @@ export function InlineTransactionsEditor({
                         </span>
                       </TableCell>
 
-                      {/* Account — hidden when grouped by account */}
-                      {!accountGroups && (
+                      {/* Account — hidden when viewing a specific account tab */}
+                      {activeAccountId === null && (
                         <TableCell className="text-[13px] text-muted-foreground truncate">
                           {accountName(tx.account_id) || "—"}
                         </TableCell>
@@ -1327,7 +1299,7 @@ export function InlineTransactionsEditor({
                       <TableCell
                         className="text-[13px]"
                         onDoubleClick={() => {
-                          if (isLocked || isHidden) return;
+                          if (isHidden) return;
                           setEditingDescId(tx.id);
                           setEditingDescValue(cleanDescription);
                           setTimeout(() => descInputRef.current?.focus(), 50);
@@ -1373,11 +1345,6 @@ export function InlineTransactionsEditor({
 
                       {/* Movement */}
                       <TableCell className="text-[13px]">
-                        {isLocked ? (
-                          <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
-                            {getMovementLabel(movement)}
-                          </PillBadge>
-                        ) : (
                           <Select
                             value={movement}
                             onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
@@ -1408,19 +1375,10 @@ export function InlineTransactionsEditor({
                               </SelectItem>
                             </SelectContent>
                           </Select>
-                        )}
                       </TableCell>
 
                       {/* Category */}
                       <TableCell className="text-[13px]">
-                        {isLocked ? (
-                          <PillBadge colorVar={getCategoryColor(category)} className="text-[12.5px]">
-                            <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} className="w-[13px] h-[13px]" />
-                            <span className="truncate max-w-[120px]" title={getCategoryLabel(category)}>
-                              {getCategoryLabel(category)}
-                            </span>
-                          </PillBadge>
-                        ) : (
                           <Select
                             value={category}
                             onValueChange={(v) => handleCategoryChange(tx, v)}
@@ -1447,14 +1405,13 @@ export function InlineTransactionsEditor({
                               ))}
                             </SelectContent>
                           </Select>
-                        )}
                       </TableCell>
 
                       {/* Amount — double-click to edit */}
                       <TableCell
                         className={cn("text-right text-[13px] tabular-nums", amountColor)}
                         onDoubleClick={() => {
-                          if (isLocked || isHidden) return;
+                          if (isHidden) return;
                           setEditingAmountId(tx.id);
                           setEditingAmountValue(String(Math.abs(rawAmount)).replace(".", ","));
                           setTimeout(() => amountInputRef.current?.focus(), 50);
@@ -1501,7 +1458,7 @@ export function InlineTransactionsEditor({
 
                       {/* Actions: three-dot menu / pending save+discard */}
                       <TableCell className="w-[36px] px-0 text-center">
-                        {!isLocked && isPending ? (
+                        {isPending ? (
                           <div className="flex items-center gap-0.5 justify-center">
                             <button
                               type="button"
@@ -1532,7 +1489,6 @@ export function InlineTransactionsEditor({
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              {!isLocked && (
                                 <DropdownMenuItem
                                   onClick={() => setEditingTx(tx)}
                                   className="gap-2 text-[13px]"
@@ -1540,8 +1496,7 @@ export function InlineTransactionsEditor({
                                   <Pencil className="w-4 h-4" />
                                   {t("imports.editTransaction")}
                                 </DropdownMenuItem>
-                              )}
-                              {!isLocked && !isHidden && (
+                              {!isHidden && (
                                 <DropdownMenuItem
                                   onClick={() => handleSplit(tx, 2)}
                                   className="gap-2 text-[13px]"
@@ -1551,13 +1506,11 @@ export function InlineTransactionsEditor({
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuSeparator />
-                              {!isLocked && (
                                 <DropdownMenuItem onClick={() => handleToggleHidden(tx)} className="gap-2 text-[13px]">
                                   {isHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                                   {isHidden ? t("imports.showEntry") : t("imports.hideEntry")}
                                 </DropdownMenuItem>
-                              )}
-                              {!isLocked && isEdited && originalSnapshot && !isManual && (
+                              {isEdited && originalSnapshot && !isManual && (
                                 <DropdownMenuItem
                                   onClick={() => {
                                     const payload: Record<string, unknown> = withAmountOriginalReset({ ...originalSnapshot.values, __action: "revert" });
@@ -1598,7 +1551,7 @@ export function InlineTransactionsEditor({
                                 <Copy className="w-4 h-4" />
                                 {t("imports.copyAmount")}
                               </DropdownMenuItem>
-                              {!isLocked && isManual && (
+                              {isManual && (
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
@@ -1618,48 +1571,20 @@ export function InlineTransactionsEditor({
                   </TransactionContextMenu>
                 );
               })}
-                  </Fragment>
-                );
-              })}
             </TableBody>
           </Table>
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
         <div className="md:hidden flex-1 overflow-y-auto min-h-0 overscroll-contain touch-pan-y" style={{ WebkitOverflowScrolling: "touch" }}>
-          {(accountGroups ?? [{ accountId: null, accountName: "", accountColor: null, openingBalance: 0, closingBalance: 0, transactions: rowsToRender } as AccountGroup]).map((acctGroup, acctIdx) => {
+          {(() => {
             const mobileDayGroups: { dateKey: string; rows: MonthTransaction[] }[] = [];
-            for (const tx of acctGroup.transactions) {
+            for (const tx of rowsToRender) {
               const last = mobileDayGroups[mobileDayGroups.length - 1];
               if (last && last.dateKey === tx.date) last.rows.push(tx);
               else mobileDayGroups.push({ dateKey: tx.date, rows: [tx] });
             }
-            return (
-              <Fragment key={acctGroup.accountId ?? `__mflat_${acctIdx}__`}>
-                {!!accountGroups && (() => {
-                  const mGroupKey = acctGroup.accountId ?? "__unassigned__";
-                  const mIsCollapsed = collapsedAccounts.has(mGroupKey);
-                  return (
-                    <div
-                      className="flex items-center gap-3 px-3 py-1.5 bg-muted/20 border-b border-border/40 cursor-pointer active:bg-muted/40"
-                      onClick={() => toggleAccountCollapsed(mGroupKey)}
-                    >
-                      <ChevronRight
-                        className={cn(
-                          "w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
-                          !mIsCollapsed && "rotate-90",
-                        )}
-                      />
-                      <span className="text-[12px] font-medium text-foreground">
-                        {acctGroup.accountName}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {t("imports.txCountShort", { count: acctGroup.transactions.length })}
-                      </span>
-                    </div>
-                  );
-                })()}
-                {(!accountGroups || !collapsedAccounts.has(acctGroup.accountId ?? "__unassigned__")) && mobileDayGroups.map((group) => (
+            return mobileDayGroups.map((group) => (
             <div key={group.dateKey}>
               <div className="flex items-baseline gap-1.5 bg-muted/40 px-3 py-1.5">
                 <span className="text-[13px] font-semibold tabular-nums text-foreground">
@@ -1706,15 +1631,14 @@ export function InlineTransactionsEditor({
                     <SwipeableRow
                       key={tx.id}
                       onSwipeLeft={
-                        !isLocked && !selecting
+                        !selecting
                           ? isManual
                             ? () => deleteWithUndo(tx)
                             : () => handleToggleHidden(tx)
                           : undefined
                       }
                       leftAction={isManual ? "delete" : "hide"}
-                      onSwipeRight={!isLocked && !selecting ? () => setEditingTx(tx) : undefined}
-                      disabled={isLocked}
+                      onSwipeRight={!selecting ? () => setEditingTx(tx) : undefined}
                     >
                       <div
                         className={cn(
@@ -1727,7 +1651,7 @@ export function InlineTransactionsEditor({
                         )}
                         onContextMenu={(e) => e.preventDefault()}
                         onTouchStart={(e) => {
-                          if (isLocked || selecting) return;
+                          if (selecting) return;
                           const target = e.currentTarget;
                           const touch = e.touches[0];
                           longPressStartRef.current = { x: touch.clientX, y: touch.clientY };
@@ -1763,7 +1687,7 @@ export function InlineTransactionsEditor({
                             toggleSelected(tx.id);
                             return;
                           }
-                          if (!isLocked) setEditingTx(tx);
+                          setEditingTx(tx);
                         }}
                       >
                         <div
@@ -1825,16 +1749,14 @@ export function InlineTransactionsEditor({
                 })}
               </div>
             </div>
-                ))}
-              </Fragment>
-            );
-          })}
+                ));
+          })()}
         </div>
 
         {/* Mobile long-press action menu */}
         {(() => {
           const atx = actionMenu?.tx ?? null;
-          if (!atx) return <MobileTransactionActions tx={null} anchorRect={null} isLocked={isLocked} isManual={false} isHidden={false} isEdited={false} onClose={() => { setActionMenu(null); longPressFiredRef.current = false; }} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onEditDescription={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} onSelect={() => {}} />;
+          if (!atx) return <MobileTransactionActions tx={null} anchorRect={null} isManual={false} isHidden={false} isEdited={false} onClose={() => { setActionMenu(null); longPressFiredRef.current = false; }} onEdit={() => {}} onToggleHidden={() => {}} onDelete={() => {}} onEditDescription={() => {}} onSplit={() => {}} onRevert={() => {}} onCopyDescription={() => {}} onCopyAmount={() => {}} onSelect={() => {}} />;
           const atxManual = isManualTransaction(atx);
           const atxHist = auditByTx[atx.id] || [];
           const atxEdits = atxHist.filter((h) => h.action !== "revert");
@@ -1845,7 +1767,6 @@ export function InlineTransactionsEditor({
             <MobileTransactionActions
               tx={atx}
               anchorRect={actionMenu?.rect ?? null}
-              isLocked={isLocked}
               isManual={atxManual}
               isHidden={atx.is_hidden}
               isEdited={atxIsEdited}
@@ -1922,54 +1843,25 @@ export function InlineTransactionsEditor({
           </div>
         )}
 
+        {/* Account sheet tabs (Excel-style, only when multiple accounts) */}
+        {showAccountTabs && (
+          <AccountSheetTabs
+            accounts={accountTabsData}
+            activeAccountId={activeAccountId}
+            onSelect={setActiveAccountId}
+          />
+        )}
+
         {/* Spreadsheet footer: totals (Excel status-bar style) — sticks to the bottom */}
         <ManualEntryFooter
           monthKey={monthKey}
           monthLabel={monthLabel}
-          isLocked={isLocked}
-          summary={summary}
-          openingBalance={openingBalance}
-          closingBalance={closingBalanceProp ?? (openingBalance != null ? openingBalance + visibleTransactions.reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0) : null)}
+          summary={tabSummary}
+          openingBalance={tabOpeningBalance}
+          closingBalance={tabClosingBalance ?? (tabOpeningBalance != null ? tabOpeningBalance + rowsToRender.filter(tx => !tx.is_hidden).reduce((sum, tx) => sum + splitAmt(tx.amount, tx.account_id), 0) : null)}
           externalOpen={externalManualEntryOpen}
           onExternalOpenChange={onManualEntryOpenChange}
           defaultMovement={defaultMovement}
-          rightSlot={
-            <button
-              type="button"
-              onClick={() => {
-                const nextLocked = !isLocked;
-                imports.forEach((imp) => {
-                  if (!!imp.locked !== nextLocked) {
-                    toggleLockImport({ importId: imp.id, locked: nextLocked });
-                  }
-                });
-                toast({
-                  title: nextLocked ? "Month locked" : "Month unlocked",
-                  description: nextLocked
-                    ? "Editing is disabled until you unlock it."
-                    : "You can edit transactions again.",
-                });
-              }}
-              disabled={imports.length === 0}
-              className={cn(
-                "inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[12px] py-[7px] text-[13px] font-medium text-[#414750] shadow-[0_1px_2px_rgba(16,24,40,0.06)] hover:bg-[#F5F7F9] transition-colors",
-                imports.length === 0 && "opacity-50 cursor-not-allowed",
-              )}
-              title={isLocked ? t("imports.openMonth") : t("imports.closeMonth")}
-            >
-              {isLocked ? (
-                <>
-                  <Unlock className="w-[14px] h-[14px] text-[#8A919C]" />
-                  {t("imports.openMonth")}
-                </>
-              ) : (
-                <>
-                  <Lock className="w-[14px] h-[14px] text-[#8A919C]" />
-                  {t("imports.closeMonth")}
-                </>
-              )}
-            </button>
-          }
         />
       </div>
 

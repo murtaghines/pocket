@@ -86,11 +86,9 @@
     "expenses": "Expenses",
     "balance": "Balance",
     "byCategory": "By Category",
-    "closeMonth": "Close Month",
     "transactionsInMonth": "{{count}} transactions in this month",
     "noTransactions": "No transactions for this month",
     "uploadFirst": "Upload and process files first",
-    "monthLocked": "This month is closed. You cannot edit categories.",
     "monthReviewed": "Month reviewed",
     "transactionsConfirmed": "{{count}} transactions confirmed for {{month}}"
   },
@@ -99,11 +97,7 @@
     "deleteDescription": "All transactions associated with \"{{fileName}}\" will be deleted. This action cannot be undone.",
     "processingError": "Processing error",
     "tip": "Tip",
-    "tipText": "If it's a scanned PDF, try converting it to CSV or Excel before uploading.",
-    "closeMonth": "Close month?",
-    "closeDescription": "Transactions for {{month}} will be locked and you won't be able to edit categories. You can reopen the month if needed.",
-    "reopenMonth": "Reopen month?",
-    "reopenDescription": "You will be able to edit transactions for {{month}} again."
+    "tipText": "If it's a scanned PDF, try converting it to CSV or Excel before uploading."
   },
   "accounts": {
     "title": "Banking Accounts",

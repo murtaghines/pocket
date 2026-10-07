@@ -21,7 +21,6 @@ interface TransactionContextMenuProps {
   children: React.ReactNode;
   isHidden: boolean;
   isManual: boolean;
-  isLocked: boolean;
   isEdited: boolean;
   isPending: boolean;
   hasCategoryChange: boolean;
@@ -42,7 +41,6 @@ export function TransactionContextMenu({
   children,
   isHidden,
   isManual,
-  isLocked,
   isEdited,
   isPending,
   hasCategoryChange,
@@ -81,46 +79,40 @@ export function TransactionContextMenu({
           </>
         ) : (
           <>
-            {!isLocked && (
-              <ContextMenuItem onClick={onEditDescription} className="gap-2">
-                <Pencil className="w-4 h-4" />
-                {t("imports.editDescription")}
-              </ContextMenuItem>
-            )}
+            <ContextMenuItem onClick={onEditDescription} className="gap-2">
+              <Pencil className="w-4 h-4" />
+              {t("imports.editDescription")}
+            </ContextMenuItem>
 
-            {!isLocked && (
-              <ContextMenuItem onClick={onSplit} className="gap-2">
-                <SplitIcon className="w-4 h-4" />
-                {t("imports.splitAmount")}
-              </ContextMenuItem>
-            )}
+            <ContextMenuItem onClick={onSplit} className="gap-2">
+              <SplitIcon className="w-4 h-4" />
+              {t("imports.splitAmount")}
+            </ContextMenuItem>
 
             <ContextMenuSeparator />
 
-            {!isLocked && (
-              <ContextMenuItem onClick={onToggleHidden} className="gap-2">
-                {isHidden ? (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    {t("imports.showEntry")}
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="w-4 h-4" />
-                    {t("imports.hideEntry")}
-                  </>
-                )}
-              </ContextMenuItem>
-            )}
+            <ContextMenuItem onClick={onToggleHidden} className="gap-2">
+              {isHidden ? (
+                <>
+                  <Eye className="w-4 h-4" />
+                  {t("imports.showEntry")}
+                </>
+              ) : (
+                <>
+                  <EyeOff className="w-4 h-4" />
+                  {t("imports.hideEntry")}
+                </>
+              )}
+            </ContextMenuItem>
 
-            {!isLocked && isEdited && (
+            {isEdited && (
               <ContextMenuItem onClick={onRevert} className="gap-2">
                 <RotateCcw className="w-4 h-4" />
                 {t("imports.revertToOriginal")}
               </ContextMenuItem>
             )}
 
-            {!isLocked && isPending && hasCategoryChange && (
+            {isPending && hasCategoryChange && (
               <ContextMenuItem onClick={onSaveWithRule} className="gap-2">
                 <Sparkles className="w-4 h-4" />
                 {t("imports.saveAndCreateRule")}
@@ -138,7 +130,7 @@ export function TransactionContextMenu({
               {t("imports.copyAmount")}
             </ContextMenuItem>
 
-            {!isLocked && isManual && (
+            {isManual && (
               <>
                 <ContextMenuSeparator />
                 <ContextMenuItem

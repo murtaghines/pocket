@@ -16,7 +16,6 @@ export interface MonthWorkspaceProps {
   onPickFiles: (files: FileList | null, monthDate: Date) => void;
   deleteImport: (id: string) => void;
   isDeleting: boolean;
-  toggleLockImport: (args: { importId: string; locked: boolean }) => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
   pendingByTx: Record<string, PendingEditShape>;
@@ -44,7 +43,6 @@ export function MonthWorkspace({
   onPickFiles,
   deleteImport,
   isDeleting,
-  toggleLockImport,
   isProcessing,
   pendingFiles,
   pendingByTx,
@@ -63,8 +61,6 @@ export function MonthWorkspace({
   accountClosingBalances,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const isLocked = imports.some((i) => i.locked);
 
   const activePending = (pendingFiles || []).filter(
     (f) => f.status === "processing" || f.status === "pending",
@@ -93,7 +89,6 @@ export function MonthWorkspace({
         <ManualEntryFooter
           monthKey={monthKey}
           monthLabel={monthLabel}
-          isLocked={false}
           summary={{ total: 0, income: 0, expenses: 0, transfers: 0 }}
           externalOpen={manualEntryOpen}
           onExternalOpenChange={setManualEntryOpen}
@@ -118,12 +113,10 @@ export function MonthWorkspace({
       <InlineTransactionsEditor
         monthKey={monthKey}
         monthLabel={monthLabel}
-        isLocked={isLocked}
         imports={imports}
         cashAccounts={cashAccounts}
         deleteImport={deleteImport}
         isDeleting={isDeleting}
-        toggleLockImport={toggleLockImport}
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
         pendingFiles={activePending}

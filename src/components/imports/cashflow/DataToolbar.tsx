@@ -59,7 +59,6 @@ interface DataToolbarProps {
   onAddTransfer: () => void;
   onUploadFile: () => void;
   onExport: () => void;
-  isLocked?: boolean;
   monthsWithData?: Set<string>;
   firstMonthWithData?: string | null;
 }
@@ -86,7 +85,6 @@ export function DataToolbar({
   onAddTransfer,
   onUploadFile,
   onExport,
-  isLocked,
   monthsWithData,
   firstMonthWithData,
 }: DataToolbarProps) {
@@ -398,8 +396,7 @@ export function DataToolbar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              disabled={isLocked}
-              className="inline-flex items-center gap-[6px] bg-primary rounded-[9px] px-[14px] py-[8px] text-[13px] font-medium text-white shadow-[0_1px_2px_rgba(27,118,255,0.3)] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="inline-flex items-center gap-[6px] bg-primary rounded-[9px] px-[14px] py-[8px] text-[13px] font-medium text-white shadow-[0_1px_2px_rgba(27,118,255,0.3)] hover:bg-primary/90 transition-colors"
             >
               <Plus className="w-[14px] h-[14px]" />
               {t("imports.new")}

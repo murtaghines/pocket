@@ -249,22 +249,6 @@ export function useImports(domain?: AppDomain) {
     }
   });
 
-  const toggleLockImport = useMutation({
-    mutationFn: async ({ importId, locked }: { importId: string; locked: boolean }) => {
-      const { error } = await supabase
-        .from('imports')
-        .update({ locked } as any)
-        .eq('id', importId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['imports'] });
-    },
-    onError: () => {
-      toast.error('Could not update file lock');
-    }
-  });
-
   // Auto-delete failed imports
   const autoDeleteFailedImport = async (importId: string) => {
     try {
@@ -322,8 +306,6 @@ export function useImports(domain?: AppDomain) {
     autoDeleteFailedImport,
     isProcessing: processImport.isPending,
     isDeleting: deleteImport.isPending,
-    toggleLockImport: toggleLockImport.mutate,
-    isTogglingLock: toggleLockImport.isPending,
     getImportsByMonth
   };
 }
