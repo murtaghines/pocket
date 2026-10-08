@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Upload, Plus, Minus, ArrowRightLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -14,7 +14,8 @@ import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
 import { MonthTabStrip } from "./cashflow/MonthTabStrip";
 import { MonthWorkspace } from "./cashflow/MonthWorkspace";
-import { DataToolbar, type SortColumn, type SortDirection, type DataFilters } from "./cashflow/DataToolbar";
+import { DataToolbar, type SortColumn, type SortDirection, type DataFilters, type TabSummary } from "./cashflow/DataToolbar";
+import type { AccountTab } from "./cashflow/AccountSheetTabs";
 import { MobileUploadFAB } from "./MobileUploadFAB";
 import { ExportDialog } from "./cashflow/ExportDialog";
 import { DEFAULT_MONTHS, MIN_MONTHS, MONTHS_INCREMENT } from "./cashflow/helpers";
@@ -61,6 +62,15 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const [sortColumn, setSortColumn] = useState<SortColumn>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [filters, setFilters] = useState<DataFilters>({ accounts: [], movements: [], categories: [] });
+
+  // Account tab state — lifted from InlineTransactionsEditor so DataToolbar can render tabs
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+  const [accountTabsData, setAccountTabsData] = useState<AccountTab[]>([]);
+  const [tabSummary, setTabSummary] = useState<TabSummary | undefined>(undefined);
+  const handleTabsDataChange = useCallback((data: { tabs: AccountTab[]; summary: TabSummary }) => {
+    setAccountTabsData(data.tabs);
+    setTabSummary(data.summary);
+  }, []);
 
   const allCategories = useMemo(
     () => [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES, ...TRANSFER_CATEGORIES],
@@ -256,6 +266,10 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         onExport={() => setExportOpen(true)}
         monthsWithData={monthsWithData}
         firstMonthWithData={firstMonthWithData}
+        accountTabs={accountTabsData}
+        activeAccountId={activeAccountId}
+        onAccountSelect={setActiveAccountId}
+        tabSummary={tabSummary}
       />
 
       {/* ============= Month Tab Strip (mobile only) ============= */}
@@ -302,6 +316,9 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
           accountOpeningBalances={accountOpeningBalances}
           closingBalance={closingBalance}
           accountClosingBalances={accountClosingBalances}
+          activeAccountId={activeAccountId}
+          onAccountChange={setActiveAccountId}
+          onTabsDataChange={handleTabsDataChange}
         />
       )}
 

@@ -4,8 +4,9 @@ import type { useAccounts } from "@/hooks/useAccounts";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { InlineTransactionsEditor } from "./InlineTransactionsEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
+import type { AccountTab } from "./AccountSheetTabs";
 import type { PendingEditShape, PendingFileInfo, MovementType } from "./types";
-import type { SortColumn, SortDirection, DataFilters } from "./DataToolbar";
+import type { SortColumn, SortDirection, DataFilters, TabSummary } from "./DataToolbar";
 
 export interface MonthWorkspaceProps {
   monthKey: string;
@@ -32,6 +33,9 @@ export interface MonthWorkspaceProps {
   accountOpeningBalances?: Record<string, number>;
   closingBalance?: number | null;
   accountClosingBalances?: Record<string, number>;
+  activeAccountId?: string | null;
+  onAccountChange?: (id: string | null) => void;
+  onTabsDataChange?: (data: { tabs: AccountTab[]; summary: TabSummary }) => void;
 }
 
 export function MonthWorkspace({
@@ -59,6 +63,9 @@ export function MonthWorkspace({
   accountOpeningBalances,
   closingBalance,
   accountClosingBalances,
+  activeAccountId,
+  onAccountChange,
+  onTabsDataChange,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -133,6 +140,9 @@ export function MonthWorkspace({
         accountOpeningBalances={accountOpeningBalances}
         closingBalance={closingBalance}
         accountClosingBalances={accountClosingBalances}
+        activeAccountId={activeAccountId}
+        onAccountChange={onAccountChange}
+        onTabsDataChange={onTabsDataChange}
       />
     </div>
   );
