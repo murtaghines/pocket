@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Minus, ArrowRightLeft, EyeOff } from "lucide-react";
+import { Plus, Minus, ArrowRightLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -225,55 +225,50 @@ export function ManualEntryFooter({
         </div>
       </div>
 
-      {/* Desktop: redesigned footer — row count, 3 summaries with dots, closing balance, lock button */}
-      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex items-center gap-[20px] border-t border-[#F1F2F4] bg-[#FAFBFC] px-[20px] py-[9px]">
-        <span className="text-[13px] text-[#6B7280]">
-          {summary.total} {summary.total === 1 ? t("imports.row") : t("imports.rows")}
-        </span>
-
-        {/* Income summary */}
-        <div className="inline-flex items-center gap-[6px]">
-          <span className="w-[6px] h-[6px] rounded-full bg-[#2E9E6B] shrink-0" />
-          <span className="text-[13px] text-[#6B7280] tabular-nums">
-            {formatCurrency(summary.income)}
-          </span>
-        </div>
-
-        {/* Expense summary */}
-        <div className="inline-flex items-center gap-[6px]">
-          <span className="w-[6px] h-[6px] rounded-full bg-[#E0704A] shrink-0" />
-          <span className="text-[13px] text-[#6B7280] tabular-nums">
-            {formatCurrency(summary.expenses)}
-          </span>
-        </div>
-
-        {/* Transfer summary */}
-        <div className="inline-flex items-center gap-[6px]">
-          <span className="w-[6px] h-[6px] rounded-full bg-[#B4BAC3] shrink-0" />
-          <span className="text-[13px] text-[#6B7280] tabular-nums">
-            {summary.transfersNet != null && summary.transfersNet !== 0
-              ? formatCurrency(summary.transfersNet)
-              : summary.transfers}
-          </span>
-        </div>
-
-        {/* Opening + closing balance + lock button — pushed right */}
-        <div className="ml-auto inline-flex items-center gap-[16px]">
-          {openingBalance != null && (
-            <span className="text-[13px] text-[#6B7280] tabular-nums">
+      {/* Desktop footer: opening | income · expenses · transfers | closing */}
+      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex items-center justify-between border-t border-[#E8EAED] bg-[#FAFBFC] px-[20px] py-[8px]">
+        {/* Left: opening balance */}
+        <div className="shrink-0">
+          {openingBalance != null ? (
+            <span className="text-[12.5px] text-[#6B7280] tabular-nums">
               {t("imports.openingBalance")}{" "}
-              <span className="text-[#414750]">
+              <span className="text-[#414750] font-medium">
                 {formatCurrency(openingBalance)}
               </span>
             </span>
+          ) : (
+            <span />
           )}
-          {closingBalance != null && (
-            <span className="text-[13px] text-[#6B7280] tabular-nums">
+        </div>
+
+        {/* Center: income · expenses · transfers (net) */}
+        <div className="inline-flex items-center gap-[16px]">
+          <span className="text-[12.5px] text-success tabular-nums font-medium">
+            +{formatCurrency(summary.income)}
+          </span>
+          <span className="text-[12.5px] text-destructive tabular-nums font-medium">
+            −{formatCurrency(summary.expenses)}
+          </span>
+          {(summary.transfersNet != null ? summary.transfersNet !== 0 : summary.transfers > 0) && (
+            <span className="text-[12.5px] text-muted-foreground tabular-nums font-medium">
+              {summary.transfersNet != null
+                ? (summary.transfersNet >= 0 ? "+" : "−") + formatCurrency(Math.abs(summary.transfersNet))
+                : formatCurrency(summary.transfers)}
+            </span>
+          )}
+        </div>
+
+        {/* Right: closing balance */}
+        <div className="shrink-0">
+          {closingBalance != null ? (
+            <span className="text-[12.5px] text-[#6B7280] tabular-nums">
               {t("imports.closingBalance")}{" "}
-              <span className="text-[#414750]">
+              <span className="text-[#414750] font-medium">
                 {formatCurrency(closingBalance)}
               </span>
             </span>
+          ) : (
+            <span />
           )}
         </div>
       </div>
