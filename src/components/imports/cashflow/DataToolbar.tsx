@@ -10,6 +10,7 @@ import {
   ArrowRightLeft,
   Upload,
   CalendarDays,
+  X,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -298,8 +299,44 @@ export function DataToolbar({
         </div>
       </div>
 
-      {/* ─── Row 2: Action buttons (white) — Filter, Export, + New ─── */}
-      <div className="flex items-center justify-end bg-card border-b border-border/60 px-5 py-[5px]">
+      {/* ─── Row 2: Action buttons (white) — active chips + Filter, Export, + New ─── */}
+      <div className="flex items-center bg-card border-b border-border/60 px-5 py-[5px] gap-1">
+        {/* Active filter chips */}
+        {hasActiveFilters && (
+          <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto scrollbar-none mr-2">
+            {filters.movements.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => toggleMovementFilter(m)}
+                className="inline-flex items-center gap-1 px-2 py-[3px] text-[11px] font-medium rounded bg-primary/[0.08] text-primary hover:bg-primary/[0.14] transition-colors shrink-0"
+              >
+                {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
+                <X className="w-3 h-3" />
+              </button>
+            ))}
+            {filters.categories.map((slug) => (
+              <button
+                key={slug}
+                type="button"
+                onClick={() => toggleCategoryFilter(slug)}
+                className="inline-flex items-center gap-1 px-2 py-[3px] text-[11px] font-medium rounded bg-primary/[0.08] text-primary hover:bg-primary/[0.14] transition-colors shrink-0"
+              >
+                <span className="truncate max-w-[100px]">{getCategoryLabel(slug)}</span>
+                <X className="w-3 h-3" />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => onFiltersChange({ ...filters, accounts: [], movements: [], categories: [] })}
+              className="text-[11px] text-muted-foreground hover:text-foreground shrink-0 px-1"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+        {!hasActiveFilters && <div className="flex-1" />}
+
         {/* Filter */}
         <Popover>
           <PopoverTrigger asChild>

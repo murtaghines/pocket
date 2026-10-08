@@ -1129,7 +1129,7 @@ export function InlineTransactionsEditor({
                     className="h-3.5 w-3.5"
                   />
                 </TableHead>
-                <TableHead className="w-[9%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
+                <TableHead className="w-[8%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.date")}
                 </TableHead>
                 <TableHead className="w-[4%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
@@ -1138,17 +1138,17 @@ export function InlineTransactionsEditor({
                 <TableHead className="w-[5%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.source")}
                 </TableHead>
-                <TableHead className="w-[28%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.description")}
-                </TableHead>
-                <TableHead className="w-[11%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
+                <TableHead className="w-[10%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.movement")}
-                </TableHead>
-                <TableHead className="w-[13%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.category")}
                 </TableHead>
                 <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.amount")}
+                </TableHead>
+                <TableHead className="w-[27%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
+                  {t("imports.description")}
+                </TableHead>
+                <TableHead className="w-[13%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
+                  {t("imports.category")}
                 </TableHead>
                 <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.balance")}
@@ -1275,17 +1275,94 @@ export function InlineTransactionsEditor({
                       </TableCell>
 
                       {/* Week */}
-                      <TableCell className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap text-center">
+                      <TableCell className="text-[12px] text-muted-foreground tabular-nums whitespace-nowrap text-center">
                         W{getISOWeek(tx.date)}
                       </TableCell>
 
                       {/* Source — mini gray pill */}
-                      <TableCell className="text-[11px]">
-                        <span className="inline-block px-1.5 py-0.5 rounded bg-[#F1F2F4] text-[#6B7280] text-[10px] font-medium lowercase">
+                      <TableCell className="text-[12px]">
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-[#F1F2F4] text-[#6B7280] text-[12px] font-medium lowercase">
                           {getSourceLabel(tx)}
                         </span>
                       </TableCell>
 
+                      {/* Movement */}
+                      <TableCell className="text-[12px]">
+                          <Select
+                            value={movement}
+                            onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
+                            disabled={isHidden}
+                          >
+                            <SelectTrigger className="h-6 w-full text-[12px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
+                              <SelectValue>
+                                <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
+                                  {getMovementLabel(movement)}
+                                </PillBadge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="INCOME">
+                                <PillBadge tone="green" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#2E9E6B]" />}>
+                                  {getMovementLabel("INCOME")}
+                                </PillBadge>
+                              </SelectItem>
+                              <SelectItem value="EXPENSE">
+                                <PillBadge tone="red" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#E0704A]" />}>
+                                  {getMovementLabel("EXPENSE")}
+                                </PillBadge>
+                              </SelectItem>
+                              <SelectItem value="TRANSFER">
+                                <PillBadge tone="neutral" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#8A919C]" />}>
+                                  {getMovementLabel("TRANSFER")}
+                                </PillBadge>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                      </TableCell>
+
+                      {/* Amount — double-click to edit */}
+                      <TableCell
+                        className={cn("text-right text-[12px] tabular-nums", amountColor)}
+                        onDoubleClick={() => {
+                          if (isHidden) return;
+                          setEditingAmountId(tx.id);
+                          setEditingAmountValue(String(Math.abs(rawAmount)).replace(".", ","));
+                          setTimeout(() => amountInputRef.current?.focus(), 50);
+                        }}
+                      >
+                        {editingAmountId === tx.id ? (
+                          <Input
+                            ref={amountInputRef}
+                            value={editingAmountValue}
+                            onChange={(e) => setEditingAmountValue(e.target.value)}
+                            onBlur={() => {
+                              handleAmountChange(tx, editingAmountValue);
+                              setEditingAmountId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              if (e.key === "Escape") setEditingAmountId(null);
+                            }}
+                            inputMode="decimal"
+                            className="h-6 text-[12px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
+                          />
+                        ) : hasSplit ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help underline decoration-dotted decoration-muted-foreground/50 underline-offset-4">
+                                {formatCurrency(displayAmount, undefined, true)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                              {t("imports.originalAmount", {
+                                amount: formatCurrency(rawAmount, undefined, true),
+                              })}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span>{formatCurrency(displayAmount, undefined, true)}</span>
+                        )}
+                      </TableCell>
 
                       {/* Description — double-click to edit */}
                       <TableCell
@@ -1335,40 +1412,6 @@ export function InlineTransactionsEditor({
                         )}
                       </TableCell>
 
-                      {/* Movement */}
-                      <TableCell className="text-[12px]">
-                          <Select
-                            value={movement}
-                            onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
-                            disabled={isHidden}
-                          >
-                            <SelectTrigger className="h-6 w-full text-[12px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
-                              <SelectValue>
-                                <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
-                                  {getMovementLabel(movement)}
-                                </PillBadge>
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="INCOME">
-                                <PillBadge tone="green" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#2E9E6B]" />}>
-                                  {getMovementLabel("INCOME")}
-                                </PillBadge>
-                              </SelectItem>
-                              <SelectItem value="EXPENSE">
-                                <PillBadge tone="red" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#E0704A]" />}>
-                                  {getMovementLabel("EXPENSE")}
-                                </PillBadge>
-                              </SelectItem>
-                              <SelectItem value="TRANSFER">
-                                <PillBadge tone="neutral" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#8A919C]" />}>
-                                  {getMovementLabel("TRANSFER")}
-                                </PillBadge>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                      </TableCell>
-
                       {/* Category */}
                       <TableCell className="text-[12px]">
                           <Select
@@ -1378,7 +1421,7 @@ export function InlineTransactionsEditor({
                           >
                             <SelectTrigger className="h-6 w-full text-[12px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
-                                <PillBadge colorVar={getCategoryColor(category)} className="text-[12.5px]">
+                                <PillBadge colorVar={getCategoryColor(category)}>
                                   <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} className="w-[13px] h-[13px]" />
                                   <span className="truncate max-w-[120px]" title={getCategoryLabel(category)}>
                                     {getCategoryLabel(category)}
@@ -1397,50 +1440,6 @@ export function InlineTransactionsEditor({
                               ))}
                             </SelectContent>
                           </Select>
-                      </TableCell>
-
-                      {/* Amount — double-click to edit */}
-                      <TableCell
-                        className={cn("text-right text-[12px] tabular-nums", amountColor)}
-                        onDoubleClick={() => {
-                          if (isHidden) return;
-                          setEditingAmountId(tx.id);
-                          setEditingAmountValue(String(Math.abs(rawAmount)).replace(".", ","));
-                          setTimeout(() => amountInputRef.current?.focus(), 50);
-                        }}
-                      >
-                        {editingAmountId === tx.id ? (
-                          <Input
-                            ref={amountInputRef}
-                            value={editingAmountValue}
-                            onChange={(e) => setEditingAmountValue(e.target.value)}
-                            onBlur={() => {
-                              handleAmountChange(tx, editingAmountValue);
-                              setEditingAmountId(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                              if (e.key === "Escape") setEditingAmountId(null);
-                            }}
-                            inputMode="decimal"
-                            className="h-6 text-[12px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
-                          />
-                        ) : hasSplit ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="cursor-help underline decoration-dotted decoration-muted-foreground/50 underline-offset-4">
-                                {formatCurrency(displayAmount, undefined, true)}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="left">
-                              {t("imports.originalAmount", {
-                                amount: formatCurrency(rawAmount, undefined, true),
-                              })}
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <span>{formatCurrency(displayAmount, undefined, true)}</span>
-                        )}
                       </TableCell>
 
                       {/* Balance */}
