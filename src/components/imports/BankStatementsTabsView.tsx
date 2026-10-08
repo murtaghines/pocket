@@ -252,9 +252,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         onNext={goNextMonth}
         canGoNext={activeIdx > 0}
         onMonthJump={handleMonthJump}
-        sortColumn={sortColumn}
-        sortDirection={sortDirection}
-        onSortChange={(col, dir) => { setSortColumn(col); setSortDirection(dir); }}
         filters={filters}
         onFiltersChange={setFilters}
         accounts={cashAccounts}

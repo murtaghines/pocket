@@ -1120,7 +1120,7 @@ export function InlineTransactionsEditor({
         <div className="hidden md:block overflow-auto flex-1 min-h-0 [&>div]:!overflow-visible">
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10">
-              <TableRow className="hover:bg-transparent bg-[#FAFBFC] border-y border-[#F1F2F4] [&>th]:h-[34px]">
+              <TableRow className="hover:bg-transparent bg-[#FAFBFC] border-y border-[#E8EAED] [&>th]:h-[30px]">
                 <TableHead className="w-[44px] px-0 text-center bg-[#FAFBFC]">
                   <Checkbox
                     checked={selectedIds.size > 0 ? (selectedIds.size === allVisibleIds.length ? true : "indeterminate") : false}
@@ -1128,28 +1128,28 @@ export function InlineTransactionsEditor({
                     aria-label="Select all"
                   />
                 </TableHead>
-                <TableHead className="w-[9%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.date")}
                 </TableHead>
-                <TableHead className="w-[4%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[4%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.week")}
                 </TableHead>
-                <TableHead className="w-[5%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[5%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.source")}
                 </TableHead>
-                <TableHead className="w-[28%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[28%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.description")}
                 </TableHead>
-                <TableHead className="w-[11%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[11%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.movement")}
                 </TableHead>
-                <TableHead className="w-[13%] text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[13%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.category")}
                 </TableHead>
-                <TableHead className="w-[9%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.amount")}
                 </TableHead>
-                <TableHead className="w-[9%] text-right text-[11px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
                   {t("imports.balance")}
                 </TableHead>
                 <TableHead className="w-[36px] bg-[#FAFBFC]" />
@@ -1250,7 +1250,7 @@ export function InlineTransactionsEditor({
                   >
                     <TableRow
                       className={cn(
-                        "transition-colors h-[40px] [&>td]:py-0 cursor-default border-b border-[#F4F5F7] hover:bg-[#FAFBFC]",
+                        "transition-colors h-[34px] [&>td]:py-0 cursor-default border-b border-[#E8EAED] hover:bg-[#FAFBFC]",
                         isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                         isPending && "bg-warning/10 border-l-2 border-l-warning",
                         isHidden && "opacity-50 bg-muted/20",
@@ -1268,12 +1268,12 @@ export function InlineTransactionsEditor({
                       </TableCell>
 
                       {/* Date */}
-                      <TableCell className="text-[13px] text-foreground tabular-nums whitespace-nowrap">
+                      <TableCell className="text-[12px] text-foreground tabular-nums whitespace-nowrap">
                         {formatDate(new Date(tx.date))}
                       </TableCell>
 
                       {/* Week */}
-                      <TableCell className="text-[12px] text-muted-foreground tabular-nums whitespace-nowrap text-center">
+                      <TableCell className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap text-center">
                         W{getISOWeek(tx.date)}
                       </TableCell>
 
@@ -1287,7 +1287,7 @@ export function InlineTransactionsEditor({
 
                       {/* Description — double-click to edit */}
                       <TableCell
-                        className="text-[13px]"
+                        className="text-[12px]"
                         onDoubleClick={() => {
                           if (isHidden) return;
                           setEditingDescId(tx.id);
@@ -1334,13 +1334,13 @@ export function InlineTransactionsEditor({
                       </TableCell>
 
                       {/* Movement */}
-                      <TableCell className="text-[13px]">
+                      <TableCell className="text-[12px]">
                           <Select
                             value={movement}
                             onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
                             disabled={isHidden}
                           >
-                            <SelectTrigger className="h-7 w-full text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
+                            <SelectTrigger className="h-6 w-full text-[12px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
                                 <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
                                   {getMovementLabel(movement)}
@@ -1368,13 +1368,13 @@ export function InlineTransactionsEditor({
                       </TableCell>
 
                       {/* Category */}
-                      <TableCell className="text-[13px]">
+                      <TableCell className="text-[12px]">
                           <Select
                             value={category}
                             onValueChange={(v) => handleCategoryChange(tx, v)}
                             disabled={isHidden}
                           >
-                            <SelectTrigger className="h-7 w-full text-[13px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
+                            <SelectTrigger className="h-6 w-full text-[12px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
                               <SelectValue>
                                 <PillBadge colorVar={getCategoryColor(category)} className="text-[12.5px]">
                                   <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} className="w-[13px] h-[13px]" />
@@ -1399,7 +1399,7 @@ export function InlineTransactionsEditor({
 
                       {/* Amount — double-click to edit */}
                       <TableCell
-                        className={cn("text-right text-[13px] tabular-nums", amountColor)}
+                        className={cn("text-right text-[12px] tabular-nums", amountColor)}
                         onDoubleClick={() => {
                           if (isHidden) return;
                           setEditingAmountId(tx.id);
@@ -1421,7 +1421,7 @@ export function InlineTransactionsEditor({
                               if (e.key === "Escape") setEditingAmountId(null);
                             }}
                             inputMode="decimal"
-                            className="h-6 text-[13px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
+                            className="h-6 text-[12px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
                           />
                         ) : hasSplit ? (
                           <Tooltip>
@@ -1442,7 +1442,7 @@ export function InlineTransactionsEditor({
                       </TableCell>
 
                       {/* Balance */}
-                      <TableCell className="text-right text-[13px] text-[#8A919C] tabular-nums">
+                      <TableCell className="text-right text-[12px] text-[#8A919C] tabular-nums">
                         {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!, undefined, true) : "—"}
                       </TableCell>
 
