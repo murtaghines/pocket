@@ -226,7 +226,7 @@ export function ManualEntryFooter({
       </div>
 
       {/* Desktop footer: opening | income · expenses · transfers | closing */}
-      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex items-center justify-between border-t border-[#E8EAED] bg-[#FAFBFC] px-[20px] py-[8px]">
+      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex items-center justify-between border-t border-[#E8EAED] bg-card px-[20px] py-[8px]">
         {/* Left: opening balance */}
         <div className="shrink-0">
           {openingBalance != null ? (

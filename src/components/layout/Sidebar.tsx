@@ -1,6 +1,6 @@
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ArrowLeftRight, TrendingUp, Tag, Landmark } from "lucide-react";
+import { ChevronDown, ArrowLeftRight, TrendingUp, Tag, Landmark, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_SECTIONS, getActiveSection, getActiveTabKey } from "@/config/navigation";
 import { Logo } from "@/components/brand/Logo";
@@ -22,7 +22,11 @@ const DATA_ICONS: Record<string, React.ComponentType<{ className?: string; strok
   accounts: Landmark,
 };
 
-const mainSections = NAV_SECTIONS.filter((s) => s.key !== "data");
+const analysisKeys = new Set(["dashboard", "calendar"]);
+const dataKeys = new Set(["investments", "planning", "budgets"]);
+
+const analysisSections = NAV_SECTIONS.filter((s) => analysisKeys.has(s.key));
+const dataSections = NAV_SECTIONS.filter((s) => dataKeys.has(s.key));
 const dataSection = NAV_SECTIONS.find((s) => s.key === "data")!;
 
 export function Sidebar() {
@@ -33,6 +37,7 @@ export function Sidebar() {
   const { profile } = useProfile();
   const activeSection = getActiveSection(location.pathname);
   const activeTab = getActiveTabKey(dataSection, searchParams);
+  const isAccountActive = location.pathname.startsWith("/account");
 
   const displayName = (() => {
     const first = profile?.first_name?.trim() ?? "";
@@ -55,40 +60,42 @@ export function Sidebar() {
     return `${dataSection.path}${qs ? `?${qs}` : ""}`;
   };
 
+  const navItemClass = (active: boolean) =>
+    cn(
+      "flex items-center gap-[11px] h-[38px] px-[14px] transition-colors duration-[120ms] no-underline",
+      active
+        ? "bg-[#EFF4FF] border-l-[3px] border-l-primary pl-[11px]"
+        : "hover:bg-[#F6F7F9]",
+    );
+
   return (
-    <aside className="hidden md:flex flex-col w-[214px] flex-none h-dvh bg-card border-r border-[#EDEFF4] py-[22px] px-[16px] gap-[26px] overflow-y-auto">
+    <aside className="hidden md:flex flex-col w-[214px] flex-none h-dvh bg-card border-r border-[#EDEFF4] py-[22px] overflow-y-auto">
       {/* Logo */}
-      <Link to="/dashboard" className="flex items-center gap-[9px] px-[8px] text-primary no-underline">
+      <Link to="/dashboard" className="flex items-center gap-[9px] px-[22px] mb-[22px] text-primary no-underline">
         <Logo variant="mark" size={21} />
         <span className="font-heading font-bold text-[18px] tracking-[-0.01em] lowercase text-primary">
           pocket
         </span>
       </Link>
 
-      {/* Main nav */}
-      <nav className="flex flex-col gap-[4px]">
-        {mainSections.map((section) => {
+      {/* ─── Analysis group ─── */}
+      <nav className="flex flex-col">
+        <span className="px-[22px] pb-[6px] font-sans text-[10px] font-semibold tracking-[0.09em] uppercase text-[#9AA1AC]">
+          {t("navigation.analysis", "Analysis")}
+        </span>
+        {analysisSections.map((section) => {
           const active = activeSection?.key === section.key;
           const Icon = section.icon;
           return (
-            <Link
-              key={section.key}
-              to={section.path}
-              className={cn(
-                "flex items-center gap-[11px] h-[40px] px-[13px] rounded-[13px] transition-colors duration-[120ms] no-underline",
-                active
-                  ? "bg-[#EFF4FF]"
-                  : "hover:bg-[#F4F6FC]",
-              )}
-            >
+            <Link key={section.key} to={section.path} className={navItemClass(active)}>
               <Icon
-                className={cn("w-[17px] h-[17px]", active ? "text-primary" : "text-[#B4BAC3]")}
+                className={cn("w-[17px] h-[17px]", active ? "text-primary" : "text-[#6B7280]")}
                 strokeWidth={1.9}
               />
               <span
                 className={cn(
-                  "font-heading text-[14px] lowercase",
-                  active ? "font-semibold text-primary" : "font-medium text-[#5A6069]",
+                  "font-heading text-[13.5px] lowercase",
+                  active ? "font-bold text-primary" : "font-medium text-[#5A6069]",
                 )}
               >
                 {t(section.i18nKey)}
@@ -98,38 +105,49 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Data section */}
-      <div className="border-t border-[#EDEFF4] pt-[14px] flex flex-col gap-[2px]">
-        <div className="flex items-center gap-[8px] px-[13px] pb-[6px]">
-          <dataSection.icon className="w-[14px] h-[14px] text-[#B4BAC3]" strokeWidth={2} />
-          <span className="font-sans text-[10.5px] font-semibold tracking-[0.09em] uppercase text-[#B4BAC3]">
-            {t(dataSection.i18nKey)}
-          </span>
-        </div>
+      {/* Separator */}
+      <div className="border-t border-[#EDEFF4] mx-[16px] my-[10px]" />
+
+      {/* ─── Data group ─── */}
+      <nav className="flex flex-col">
+        <span className="px-[22px] pb-[6px] font-sans text-[10px] font-semibold tracking-[0.09em] uppercase text-[#9AA1AC]">
+          {t(dataSection.i18nKey)}
+        </span>
+        {dataSections.map((section) => {
+          const active = activeSection?.key === section.key;
+          const Icon = section.icon;
+          return (
+            <Link key={section.key} to={section.path} className={navItemClass(active)}>
+              <Icon
+                className={cn("w-[17px] h-[17px]", active ? "text-primary" : "text-[#6B7280]")}
+                strokeWidth={1.9}
+              />
+              <span
+                className={cn(
+                  "font-heading text-[13.5px] lowercase",
+                  active ? "font-bold text-primary" : "font-medium text-[#5A6069]",
+                )}
+              >
+                {t(section.i18nKey)}
+              </span>
+            </Link>
+          );
+        })}
         {dataSection.subTabs?.map((sub) => {
           const isDataActive = activeSection?.key === "data" && activeTab === sub.key;
           const SubIcon = DATA_ICONS[sub.key];
           return (
-            <Link
-              key={sub.key}
-              to={linkFor(sub.key)}
-              className={cn(
-                "flex items-center gap-[11px] h-[36px] px-[13px] rounded-[12px] transition-colors duration-[120ms] no-underline",
-                isDataActive
-                  ? "bg-[#EFF4FF]"
-                  : "hover:bg-[#F4F6FC]",
-              )}
-            >
+            <Link key={sub.key} to={linkFor(sub.key)} className={navItemClass(isDataActive)}>
               {SubIcon && (
                 <SubIcon
-                  className={cn("w-[16px] h-[16px]", isDataActive ? "text-primary" : "text-[#B4BAC3]")}
+                  className={cn("w-[16px] h-[16px]", isDataActive ? "text-primary" : "text-[#6B7280]")}
                   strokeWidth={1.9}
                 />
               )}
               <span
                 className={cn(
                   "font-heading text-[13.5px] lowercase",
-                  isDataActive ? "font-semibold text-primary" : "font-medium text-[#5A6069]",
+                  isDataActive ? "font-bold text-primary" : "font-medium text-[#5A6069]",
                 )}
               >
                 {t(sub.i18nKey, { ns: sub.ns ?? "common" })}
@@ -137,15 +155,39 @@ export function Sidebar() {
             </Link>
           );
         })}
-      </div>
+      </nav>
+
+      {/* Separator */}
+      <div className="border-t border-[#EDEFF4] mx-[16px] my-[10px]" />
+
+      {/* ─── Account group ─── */}
+      <nav className="flex flex-col">
+        <span className="px-[22px] pb-[6px] font-sans text-[10px] font-semibold tracking-[0.09em] uppercase text-[#9AA1AC]">
+          {t("navigation.account", "Account")}
+        </span>
+        <Link to="/account" className={navItemClass(isAccountActive)}>
+          <Settings
+            className={cn("w-[17px] h-[17px]", isAccountActive ? "text-primary" : "text-[#6B7280]")}
+            strokeWidth={1.9}
+          />
+          <span
+            className={cn(
+              "font-heading text-[13.5px] lowercase",
+              isAccountActive ? "font-bold text-primary" : "font-medium text-[#5A6069]",
+            )}
+          >
+            {t("navigation.settings", "settings")}
+          </span>
+        </Link>
+      </nav>
 
       {/* User footer */}
-      <div className="mt-auto">
+      <div className="mt-auto px-[10px]">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-[9px] py-[2px] px-[4px] w-full text-left cursor-pointer rounded-[12px] hover:bg-[#F4F6FC] transition-colors"
+              className="flex items-center gap-[9px] py-[6px] px-[8px] w-full text-left cursor-pointer hover:bg-[#F6F7F9] transition-colors"
             >
               <span className="w-[30px] h-[30px] rounded-full bg-primary text-white flex items-center justify-center font-sans text-[11.5px] font-bold shrink-0">
                 {initials || <User className="w-3.5 h-3.5" />}
@@ -158,7 +200,7 @@ export function Sidebar() {
                   {planLabel}
                 </span>
               </span>
-              <ChevronDown className="w-[14px] h-[14px] text-[#B4BAC3] shrink-0" strokeWidth={2.2} />
+              <ChevronDown className="w-[14px] h-[14px] text-[#9AA1AC] shrink-0" strokeWidth={2.2} />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" side="top" className="w-48">

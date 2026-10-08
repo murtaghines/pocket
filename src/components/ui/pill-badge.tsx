@@ -105,7 +105,7 @@ export function PillBadge({
     <span
       className={cn(
         "inline-flex items-center rounded-full font-medium leading-none whitespace-nowrap",
-        size === "sm" ? "px-[10px] py-[3px] text-xs gap-[6px]" : "px-2.5 py-1.5 text-sm gap-1.5",
+        size === "sm" ? "px-[8px] py-[2px] text-xs gap-[5px]" : "px-2.5 py-1.5 text-sm gap-1.5",
         !useCustom && (variant === "solid" ? TONE_CLASSES_SOLID[tone] : TONE_CLASSES[tone]),
         className,
       )}
