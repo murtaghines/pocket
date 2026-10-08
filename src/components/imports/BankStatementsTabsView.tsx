@@ -67,9 +67,11 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
   const [accountTabsData, setAccountTabsData] = useState<AccountTab[]>([]);
   const [tabSummary, setTabSummary] = useState<TabSummary | undefined>(undefined);
-  const handleTabsDataChange = useCallback((data: { tabs: AccountTab[]; summary: TabSummary }) => {
+  const [globalSummary, setGlobalSummary] = useState<TabSummary | undefined>(undefined);
+  const handleTabsDataChange = useCallback((data: { tabs: AccountTab[]; summary: TabSummary; globalSummary: TabSummary }) => {
     setAccountTabsData(data.tabs);
     setTabSummary(data.summary);
+    setGlobalSummary(data.globalSummary);
   }, []);
 
   const allCategories = useMemo(
@@ -267,6 +269,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         activeAccountId={activeAccountId}
         onAccountSelect={setActiveAccountId}
         tabSummary={tabSummary}
+        globalSummary={globalSummary}
       />
 
       {/* ============= Month Tab Strip (mobile only) ============= */}

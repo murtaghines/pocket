@@ -35,7 +35,7 @@ export interface MonthWorkspaceProps {
   accountClosingBalances?: Record<string, number>;
   activeAccountId?: string | null;
   onAccountChange?: (id: string | null) => void;
-  onTabsDataChange?: (data: { tabs: AccountTab[]; summary: TabSummary }) => void;
+  onTabsDataChange?: (data: { tabs: AccountTab[]; summary: TabSummary; globalSummary: TabSummary }) => void;
 }
 
 export function MonthWorkspace({

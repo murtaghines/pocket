@@ -25,7 +25,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { getAccountDisplayName } from "@/lib/accountColors";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import type { AccountTab } from "./AccountSheetTabs";
 import type { MovementType } from "./types";
@@ -71,6 +70,7 @@ interface DataToolbarProps {
   activeAccountId?: string | null;
   onAccountSelect?: (id: string) => void;
   tabSummary?: TabSummary;
+  globalSummary?: TabSummary;
 }
 
 
@@ -85,7 +85,6 @@ export function DataToolbar({
   onMonthJump,
   filters,
   onFiltersChange,
-  accounts,
   availableCategories,
   onAddExpense,
   onAddIncome,
@@ -97,7 +96,7 @@ export function DataToolbar({
   accountTabs,
   activeAccountId,
   onAccountSelect,
-  tabSummary,
+  globalSummary,
 }: DataToolbarProps) {
   const { t, i18n } = useTranslation("common");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -114,16 +113,8 @@ export function DataToolbar({
   const selectedMonth = monthDate.getMonth();
 
   const hasActiveFilters =
-    filters.accounts.length > 0 ||
     filters.movements.length > 0 ||
     filters.categories.length > 0;
-
-  const toggleAccountFilter = (id: string) => {
-    const next = filters.accounts.includes(id)
-      ? filters.accounts.filter((a) => a !== id)
-      : [...filters.accounts, id];
-    onFiltersChange({ ...filters, accounts: next });
-  };
 
   const toggleMovementFilter = (m: MovementType) => {
     const next = filters.movements.includes(m)
@@ -140,32 +131,40 @@ export function DataToolbar({
   };
 
   const showAccountTabs = (accountTabs?.length ?? 0) > 1;
-  const displayCount = tabSummary ? tabSummary.total - tabSummary.hidden : txCount;
+  const displayCount = globalSummary ? globalSummary.total - globalSummary.hidden : txCount;
 
   return (
     <div className="hidden md:flex flex-col">
       {/* ─── Row 1: Gray title strip ─── */}
-      <div className="flex items-start justify-between px-6 pt-2.5 pb-2 bg-[#F5F7F9] border-b border-border/60">
+      <div className="flex items-start justify-between px-6 pt-4 pb-3 bg-[#F5F7F9] border-b border-border/60">
         <div className="min-w-0">
           <h2 className="text-[15px] font-semibold text-foreground capitalize leading-tight select-none">
             {monthLabel}
           </h2>
-          <div className="flex items-center gap-[6px] mt-[2px] text-[11.5px] text-muted-foreground tabular-nums">
+          <div className="flex items-center gap-[6px] mt-[4px] text-[11.5px] text-muted-foreground tabular-nums">
             {displayCount > 0 && (
               <span>
                 {displayCount} {displayCount === 1 ? t("imports.txSingular", "tx") : t("imports.txPlural", "txs")}
               </span>
             )}
-            {tabSummary && tabSummary.income > 0 && (
+            {globalSummary && globalSummary.income > 0 && (
               <>
                 <span className="text-border">·</span>
-                <span className="text-success font-medium">+{formatCurrency(tabSummary.income)}</span>
+                <span className="text-success font-medium">+{formatCurrency(globalSummary.income)}</span>
               </>
             )}
-            {tabSummary && tabSummary.expenses > 0 && (
+            {globalSummary && globalSummary.expenses > 0 && (
               <>
                 <span className="text-border">·</span>
-                <span className="text-destructive font-medium">−{formatCurrency(tabSummary.expenses)}</span>
+                <span className="text-destructive font-medium">−{formatCurrency(globalSummary.expenses)}</span>
+              </>
+            )}
+            {globalSummary && globalSummary.transfersNet != null && globalSummary.transfersNet !== 0 && (
+              <>
+                <span className="text-border">·</span>
+                <span className="text-muted-foreground font-medium">
+                  {globalSummary.transfersNet >= 0 ? "+" : "−"}{formatCurrency(Math.abs(globalSummary.transfersNet))}
+                </span>
               </>
             )}
           </div>
@@ -299,194 +298,165 @@ export function DataToolbar({
         </div>
       </div>
 
-      {/* ─── Row 2: Account tabs + action buttons (white, shared strip) ─── */}
-      <div className="flex items-center justify-between bg-card border-b border-border/60 pl-5 pr-5">
-        {/* Left: account tabs */}
-        {showAccountTabs ? (
-          <div className="relative flex items-center gap-0 overflow-x-auto scrollbar-none">
-            {accountTabs!.map((tab) => {
-              const isActive = activeAccountId === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => onAccountSelect?.(tab.id)}
-                  className={cn(
-                    "relative shrink-0 inline-flex items-center gap-1 px-3 py-[9px] text-[12.5px] transition-colors",
-                    isActive
-                      ? "text-primary font-semibold bg-primary/[0.06]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40 font-medium",
-                  )}
-                >
-                  <span className="truncate max-w-[150px]">{tab.name}</span>
-                  {tab.txCount > 0 && (
-                    <span className="text-[10px] text-muted-foreground/60 tabular-nums">{tab.txCount}</span>
-                  )}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-primary rounded-t-sm" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div />
-        )}
+      {/* ─── Row 2: Action buttons (white) — Filter, Export, + New ─── */}
+      <div className="flex items-center justify-end bg-card border-b border-border/60 px-5 py-[5px]">
+        {/* Filter */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-[6px] text-[12.5px] font-medium rounded transition-colors",
+                hasActiveFilters
+                  ? "text-primary bg-primary/[0.06]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+              )}
+            >
+              <Filter className="w-[13px] h-[13px]" strokeWidth={1.8} />
+              {t("filter")}
+              {hasActiveFilters && (
+                <span className="ml-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  {filters.movements.length + filters.categories.length}
+                </span>
+              )}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3" align="end">
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                  {t("imports.movement")}
+                </p>
+                <div className="space-y-1">
+                  {(["INCOME", "EXPENSE", "TRANSFER"] as MovementType[]).map((m) => (
+                    <label
+                      key={m}
+                      className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={filters.movements.includes(m)}
+                        onCheckedChange={() => toggleMovementFilter(m)}
+                      />
+                      <span className="text-sm text-foreground">
+                        {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-        {/* Right: action buttons — ghost style */}
-        <div className="flex items-center gap-[2px] shrink-0 py-[5px]">
-          {/* Filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-2.5 py-[6px] text-[12.5px] font-medium rounded transition-colors",
-                  hasActiveFilters
-                    ? "text-primary bg-primary/[0.06]"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                )}
-              >
-                <Filter className="w-[13px] h-[13px]" strokeWidth={1.8} />
-                {t("filter")}
-                {hasActiveFilters && (
-                  <span className="ml-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                    {filters.accounts.length + filters.movements.length + filters.categories.length}
-                  </span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-3" align="end">
-              <div className="space-y-4">
-                {accounts.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-                      {t("imports.account")}
-                    </p>
-                    <div className="space-y-1">
-                      {accounts.map((acct) => (
-                        <label
-                          key={acct.id}
-                          className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={filters.accounts.includes(acct.id)}
-                            onCheckedChange={() => toggleAccountFilter(acct.id)}
-                          />
-                          <span className="text-sm text-foreground truncate">
-                            {getAccountDisplayName(acct as any)}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
+              {availableCategories.length > 0 && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-                    {t("imports.movement")}
+                    {t("imports.category")}
                   </p>
-                  <div className="space-y-1">
-                    {(["INCOME", "EXPENSE", "TRANSFER"] as MovementType[]).map((m) => (
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    {availableCategories.map((slug) => (
                       <label
-                        key={m}
+                        key={slug}
                         className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer"
                       >
                         <Checkbox
-                          checked={filters.movements.includes(m)}
-                          onCheckedChange={() => toggleMovementFilter(m)}
+                          checked={filters.categories.includes(slug)}
+                          onCheckedChange={() => toggleCategoryFilter(slug)}
                         />
-                        <span className="text-sm text-foreground">
-                          {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
+                        <span className="text-sm text-foreground truncate">
+                          {getCategoryLabel(slug)}
                         </span>
                       </label>
                     ))}
                   </div>
                 </div>
+              )}
 
-                {availableCategories.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-                      {t("imports.category")}
-                    </p>
-                    <div className="max-h-40 overflow-y-auto space-y-1">
-                      {availableCategories.map((slug) => (
-                        <label
-                          key={slug}
-                          className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={filters.categories.includes(slug)}
-                            onCheckedChange={() => toggleCategoryFilter(slug)}
-                          />
-                          <span className="text-sm text-foreground truncate">
-                            {getCategoryLabel(slug)}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground py-1"
+                  onClick={() => onFiltersChange({ ...filters, accounts: [], movements: [], categories: [] })}
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
 
-                {hasActiveFilters && (
-                  <button
-                    type="button"
-                    className="w-full text-center text-xs text-muted-foreground hover:text-foreground py-1"
-                    onClick={() => onFiltersChange({ accounts: [], movements: [], categories: [] })}
-                  >
-                    Clear all filters
-                  </button>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
+        {/* Export */}
+        <button
+          type="button"
+          onClick={onExport}
+          className="inline-flex items-center gap-1.5 px-2.5 py-[6px] text-[12.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+        >
+          <Download className="w-[13px] h-[13px]" strokeWidth={1.8} />
+          {t("export")}
+        </button>
 
-          {/* Export */}
-          <button
-            type="button"
-            onClick={onExport}
-            className="inline-flex items-center gap-1.5 px-2.5 py-[6px] text-[12.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
-          >
-            <Download className="w-[13px] h-[13px]" strokeWidth={1.8} />
-            {t("export")}
-          </button>
+        {/* Divider */}
+        <div className="w-px h-[18px] bg-border/60 mx-1" />
 
-          {/* Divider */}
-          <div className="w-px h-[18px] bg-border/60 mx-1" />
-
-          {/* New — primary */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-[5px] bg-primary rounded-[4px] px-[10px] py-[5px] text-[12px] font-semibold text-white shadow-sm hover:bg-primary/90 transition-colors"
-              >
-                <Plus className="w-[13px] h-[13px]" />
-                {t("imports.new")}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onAddExpense} className="gap-2">
-                <Minus className="w-4 h-4 text-destructive" />
-                {t("imports.addExpense")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onAddIncome} className="gap-2">
-                <Plus className="w-4 h-4 text-success" />
-                {t("imports.addIncome")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onAddTransfer} className="gap-2">
-                <ArrowRightLeft className="w-4 h-4 text-warning" />
-                {t("imports.addTransfer")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onUploadFile} className="gap-2">
-                <Upload className="w-4 h-4 text-muted-foreground" />
-                {t("imports.uploadFile")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {/* New transaction — primary */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex items-center gap-[5px] bg-primary rounded-[4px] px-[10px] py-[5px] text-[12px] font-semibold text-white shadow-sm hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="w-[13px] h-[13px]" />
+              {t("imports.newTransaction", { defaultValue: "New transaction" })}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={onAddExpense} className="gap-2">
+              <Minus className="w-4 h-4 text-destructive" />
+              {t("imports.addExpense")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddIncome} className="gap-2">
+              <Plus className="w-4 h-4 text-success" />
+              {t("imports.addIncome")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddTransfer} className="gap-2">
+              <ArrowRightLeft className="w-4 h-4 text-warning" />
+              {t("imports.addTransfer")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onUploadFile} className="gap-2">
+              <Upload className="w-4 h-4 text-muted-foreground" />
+              {t("imports.uploadFile")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      {/* ─── Row 3: Account tabs (white) ─── */}
+      {showAccountTabs && (
+        <div className="relative flex items-center gap-0 bg-card border-b border-border/60 pl-5 pr-5 overflow-x-auto scrollbar-none">
+          {accountTabs!.map((tab) => {
+            const isActive = activeAccountId === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => onAccountSelect?.(tab.id)}
+                className={cn(
+                  "relative shrink-0 inline-flex items-center gap-1 px-3 py-[9px] text-[12.5px] transition-colors",
+                  isActive
+                    ? "text-primary font-semibold bg-primary/[0.06]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40 font-medium",
+                )}
+              >
+                <span className="truncate max-w-[150px]">{tab.name}</span>
+                {tab.txCount > 0 && (
+                  <span className="text-[10px] text-muted-foreground/60 tabular-nums">{tab.txCount}</span>
+                )}
+                {isActive && (
+                  <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-primary rounded-t-sm" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

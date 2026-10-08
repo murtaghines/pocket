@@ -152,7 +152,7 @@ export interface InlineTransactionsEditorProps {
   accountClosingBalances?: Record<string, number>;
   activeAccountId?: string | null;
   onAccountChange?: (id: string | null) => void;
-  onTabsDataChange?: (data: { tabs: AccountTab[]; summary: TabSummary }) => void;
+  onTabsDataChange?: (data: { tabs: AccountTab[]; summary: TabSummary; globalSummary: TabSummary }) => void;
 }
 
 export function InlineTransactionsEditor({
@@ -1055,8 +1055,8 @@ export function InlineTransactionsEditor({
   const tabsCallbackRef = useRef(onTabsDataChange);
   tabsCallbackRef.current = onTabsDataChange;
   useEffect(() => {
-    tabsCallbackRef.current?.({ tabs: accountTabsData, summary: tabSummary });
-  }, [accountTabsData, tabSummary]);
+    tabsCallbackRef.current?.({ tabs: accountTabsData, summary: tabSummary, globalSummary: summary });
+  }, [accountTabsData, tabSummary, summary]);
 
   const tabOpeningBalance = activeAccountId !== null && accountOpeningBalances
     ? (accountOpeningBalances[activeAccountId] ?? null)
@@ -1120,39 +1120,40 @@ export function InlineTransactionsEditor({
         <div className="hidden md:block overflow-auto flex-1 min-h-0 [&>div]:!overflow-visible">
           <Table className="w-full table-fixed">
             <TableHeader className="sticky top-0 z-10">
-              <TableRow className="hover:bg-transparent bg-[#FAFBFC] border-y border-[#E8EAED] [&>th]:h-[30px]">
-                <TableHead className="w-[44px] px-0 text-center bg-[#FAFBFC]">
+              <TableRow className="hover:bg-transparent bg-card border-y border-[#E8EAED] [&>th]:h-[30px]">
+                <TableHead className="w-[44px] px-0 text-center bg-card">
                   <Checkbox
                     checked={selectedIds.size > 0 ? (selectedIds.size === allVisibleIds.length ? true : "indeterminate") : false}
                     onCheckedChange={() => toggleSelectAll(allVisibleIds)}
                     aria-label="Select all"
+                    className="h-3.5 w-3.5"
                   />
                 </TableHead>
-                <TableHead className="w-[9%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.date")}
                 </TableHead>
-                <TableHead className="w-[4%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[4%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.week")}
                 </TableHead>
-                <TableHead className="w-[5%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[5%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.source")}
                 </TableHead>
-                <TableHead className="w-[28%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[28%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.description")}
                 </TableHead>
-                <TableHead className="w-[11%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[11%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.movement")}
                 </TableHead>
-                <TableHead className="w-[13%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[13%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.category")}
                 </TableHead>
-                <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.amount")}
                 </TableHead>
-                <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-[#FAFBFC]">
+                <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
                   {t("imports.balance")}
                 </TableHead>
-                <TableHead className="w-[36px] bg-[#FAFBFC]" />
+                <TableHead className="w-[36px] bg-card" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1264,6 +1265,7 @@ export function InlineTransactionsEditor({
                           checked={isSelected}
                           onCheckedChange={() => toggleSelected(tx.id)}
                           aria-label="Select row"
+                          className="h-3.5 w-3.5"
                         />
                       </TableCell>
 
