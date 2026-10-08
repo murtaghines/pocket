@@ -114,7 +114,7 @@ import type {
   PendingFileInfo,
   MovementType,
 } from "./types";
-import type { SortColumn, SortDirection, DataFilters } from "./DataToolbar";
+import type { SortColumn, SortDirection, DataFilters, TabSummary } from "./DataToolbar";
 import type { Database } from "@/integrations/supabase/types";
 
 type Category = Database["public"]["Tables"]["categories"]["Row"];
@@ -150,6 +150,9 @@ export interface InlineTransactionsEditorProps {
   accountOpeningBalances?: Record<string, number>;
   closingBalance?: number | null;
   accountClosingBalances?: Record<string, number>;
+  activeAccountId?: string | null;
+  onAccountChange?: (id: string | null) => void;
+  onTabsDataChange?: (data: { tabs: AccountTab[]; summary: TabSummary }) => void;
 }
 
 export function InlineTransactionsEditor({
@@ -175,6 +178,9 @@ export function InlineTransactionsEditor({
   accountOpeningBalances,
   closingBalance: closingBalanceProp,
   accountClosingBalances,
+  activeAccountId: activeAccountIdProp,
+  onAccountChange,
+  onTabsDataChange,
 }: InlineTransactionsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -203,8 +209,10 @@ export function InlineTransactionsEditor({
   // Checkbox selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Account sheet tab state — defaults to first account (no "All" view)
-  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+  // Account sheet tab state — lifted to parent when props are provided
+  const [internalAccountId, setInternalAccountId] = useState<string | null>(null);
+  const activeAccountId = activeAccountIdProp ?? internalAccountId;
+  const setActiveAccountId = onAccountChange ?? setInternalAccountId;
 
   // Inline editing state
   const [editingDescId, setEditingDescId] = useState<string | null>(null);
@@ -1042,6 +1050,13 @@ export function InlineTransactionsEditor({
     const hidden = rowsToRender.filter((t) => t.is_hidden).length;
     return { income, expenses, transfers, transfersNet, hidden, total: rowsToRender.length };
   }, [activeAccountId, summary, rowsToRender, savingsAccountIds, splitAmt]);
+
+  // Report account tabs + summary to parent for the toolbar
+  const tabsCallbackRef = useRef(onTabsDataChange);
+  tabsCallbackRef.current = onTabsDataChange;
+  useEffect(() => {
+    tabsCallbackRef.current?.({ tabs: accountTabsData, summary: tabSummary });
+  }, [accountTabsData, tabSummary]);
 
   const tabOpeningBalance = activeAccountId !== null && accountOpeningBalances
     ? (accountOpeningBalances[activeAccountId] ?? null)

@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
+import type { AccountTab } from "./AccountSheetTabs";
 import type { MovementType } from "./types";
 
 export type SortColumn = "date";
@@ -36,6 +37,15 @@ export interface DataFilters {
   accounts: string[];
   movements: MovementType[];
   categories: string[];
+}
+
+export interface TabSummary {
+  income: number;
+  expenses: number;
+  transfers: number;
+  transfersNet: number;
+  hidden: number;
+  total: number;
 }
 
 interface DataToolbarProps {
@@ -61,6 +71,10 @@ interface DataToolbarProps {
   onExport: () => void;
   monthsWithData?: Set<string>;
   firstMonthWithData?: string | null;
+  accountTabs?: AccountTab[];
+  activeAccountId?: string | null;
+  onAccountSelect?: (id: string) => void;
+  tabSummary?: TabSummary;
 }
 
 
@@ -87,6 +101,10 @@ export function DataToolbar({
   onExport,
   monthsWithData,
   firstMonthWithData,
+  accountTabs,
+  activeAccountId,
+  onAccountSelect,
+  tabSummary,
 }: DataToolbarProps) {
   const { t, i18n } = useTranslation("common");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -128,49 +146,71 @@ export function DataToolbar({
     onFiltersChange({ ...filters, categories: next });
   };
 
+  const showAccountTabs = (accountTabs?.length ?? 0) > 1;
+  const displayCount = tabSummary ? tabSummary.total - tabSummary.hidden : txCount;
 
   return (
-    <div className="hidden md:flex items-center justify-between gap-4 bg-[#F5F7F9] px-6 py-[14px] border-b border-border/60">
-      {/* Left: Month title + nav buttons */}
-      <div className="flex items-center gap-[10px]">
-        <div className="flex items-center gap-[10px] bg-primary/[0.07] rounded-[10px] pl-[14px] pr-[4px] py-[4px]">
-          <h2 className="font-heading font-bold text-[15px] text-primary tracking-[-0.01em] capitalize select-none">
+    <div className="hidden md:flex flex-col bg-[#F5F7F9]">
+      {/* ─── Row 1: Title + Subtitle  |  Month navigation ─── */}
+      <div className="flex items-start justify-between px-6 pt-3 pb-2">
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-semibold text-foreground capitalize leading-tight select-none">
             {monthLabel}
           </h2>
+          <div className="flex items-center gap-[6px] mt-[3px] text-[11.5px] text-muted-foreground tabular-nums">
+            {displayCount > 0 && (
+              <span>
+                {displayCount} {displayCount === 1 ? t("imports.txSingular", "tx") : t("imports.txPlural", "txs")}
+              </span>
+            )}
+            {tabSummary && tabSummary.income > 0 && (
+              <>
+                <span className="text-border">·</span>
+                <span className="text-success font-medium">+{formatCurrency(tabSummary.income)}</span>
+              </>
+            )}
+            {tabSummary && tabSummary.expenses > 0 && (
+              <>
+                <span className="text-border">·</span>
+                <span className="text-destructive font-medium">−{formatCurrency(tabSummary.expenses)}</span>
+              </>
+            )}
+          </div>
+        </div>
 
-          {/* Month navigation — ‹ › calendar */}
-          <div className="flex items-center gap-[1px]">
-            <button
-              type="button"
-              onClick={onPrev}
-              className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-primary/70 hover:bg-primary/10 transition-colors"
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="w-[15px] h-[15px]" />
-            </button>
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={!canGoNext}
-              className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-primary/70 hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-              aria-label="Next month"
-            >
-              <ChevronRight className="w-[15px] h-[15px]" />
-            </button>
+        {/* Month navigation — ‹ › 📅 */}
+        <div className="flex items-center gap-[2px] shrink-0">
+          <button
+            type="button"
+            onClick={onPrev}
+            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-muted-foreground hover:bg-black/[0.06] transition-colors"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="w-[15px] h-[15px]" />
+          </button>
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={!canGoNext}
+            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-muted-foreground hover:bg-black/[0.06] transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            aria-label="Next month"
+          >
+            <ChevronRight className="w-[15px] h-[15px]" />
+          </button>
 
-            <Popover open={calendarOpen} onOpenChange={(open) => { setCalendarOpen(open); if (open) setViewYear(selectedYear); }}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-primary/70 hover:bg-primary/10 transition-colors"
-                  aria-label="Jump to month"
-                >
-                  <CalendarDays className="w-[15px] h-[15px]" />
-                </button>
-              </PopoverTrigger>
+          <Popover open={calendarOpen} onOpenChange={(open) => { setCalendarOpen(open); if (open) setViewYear(selectedYear); }}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-muted-foreground hover:bg-black/[0.06] transition-colors"
+                aria-label="Jump to month"
+              >
+                <CalendarDays className="w-[15px] h-[15px]" />
+              </button>
+            </PopoverTrigger>
             <PopoverContent
-              className="w-[252px] p-[12px] rounded-[12px]"
-              align="start"
+              className="w-[252px] p-[12px] rounded-[8px]"
+              align="end"
             >
               {/* Year navigator */}
               <div className="flex items-center justify-between mb-[8px]">
@@ -178,7 +218,7 @@ export function DataToolbar({
                   type="button"
                   onClick={() => setViewYear((y) => y - 1)}
                   disabled={firstMonthWithData ? viewYear <= parseInt(firstMonthWithData.slice(0, 4)) : false}
-                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[7px] hover:bg-[#F5F7F9] transition-colors disabled:text-[#C2C7CE] disabled:pointer-events-none"
+                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[4px] hover:bg-[#F5F7F9] transition-colors disabled:text-[#C2C7CE] disabled:pointer-events-none"
                 >
                   <ChevronLeft className="w-[14px] h-[14px]" />
                 </button>
@@ -189,7 +229,7 @@ export function DataToolbar({
                   type="button"
                   onClick={() => setViewYear((y) => y + 1)}
                   disabled={viewYear >= currentYear}
-                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[7px] hover:bg-[#F5F7F9] transition-colors disabled:text-[#C2C7CE] disabled:pointer-events-none"
+                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[4px] hover:bg-[#F5F7F9] transition-colors disabled:text-[#C2C7CE] disabled:pointer-events-none"
                 >
                   <ChevronRight className="w-[14px] h-[14px]" />
                 </button>
@@ -214,7 +254,7 @@ export function DataToolbar({
                         setCalendarOpen(false);
                       }}
                       className={cn(
-                        "h-[32px] rounded-[9px] text-[13px] transition-colors",
+                        "h-[32px] rounded-[4px] text-[13px] transition-colors",
                         isSelected
                           ? "bg-primary text-white font-semibold"
                           : isClickable
@@ -238,7 +278,7 @@ export function DataToolbar({
                   onMonthJump(new Date(currentYear, currentMonth, 1));
                   setCalendarOpen(false);
                 }}
-                className="flex items-center justify-between w-full h-[32px] rounded-[8px] px-[8px] text-[13.5px] text-[#0C0D0E] hover:bg-[#F5F7F9] transition-colors"
+                className="flex items-center justify-between w-full h-[32px] rounded-[4px] px-[8px] text-[13.5px] text-[#0C0D0E] hover:bg-[#F5F7F9] transition-colors"
               >
                 <span>{t("imports.goToToday")}</span>
                 <span className="text-[12px] text-[#B4BAC3]">
@@ -253,7 +293,7 @@ export function DataToolbar({
                     onMonthJump(new Date(y, m - 1, 1));
                     setCalendarOpen(false);
                   }}
-                  className="flex items-center justify-between w-full h-[32px] rounded-[8px] px-[8px] text-[13.5px] text-[#0C0D0E] hover:bg-[#F5F7F9] transition-colors"
+                  className="flex items-center justify-between w-full h-[32px] rounded-[4px] px-[8px] text-[13.5px] text-[#0C0D0E] hover:bg-[#F5F7F9] transition-colors"
                 >
                   <span>{t("imports.firstMonth")}</span>
                   <span className="text-[12px] text-[#B4BAC3]">
@@ -263,24 +303,51 @@ export function DataToolbar({
               )}
             </PopoverContent>
           </Popover>
-          </div>
         </div>
-
-        {/* Tx count badge */}
-        {txCount > 0 && (
-          <span className="text-[12px] font-medium text-muted-foreground tabular-nums">
-            {txCount} {txCount === 1 ? t("imports.txSingular", "tx") : t("imports.txPlural", "txs")}
-          </span>
-        )}
       </div>
 
-      {/* Right: Sort · Filter · Export · New */}
-      <div className="flex items-center gap-[6px] ml-auto">
+      {/* ─── Row 2: Account tabs (flat text + blue underline) ─── */}
+      {showAccountTabs && (
+        <div className="relative flex items-end gap-0 px-5 overflow-x-auto scrollbar-none">
+          {accountTabs!.map((tab) => {
+            const isActive = activeAccountId === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => onAccountSelect?.(tab.id)}
+                className={cn(
+                  "relative shrink-0 inline-flex items-center gap-1.5 px-3 pb-[9px] pt-[7px] text-[13px] transition-colors",
+                  isActive
+                    ? "text-primary font-semibold"
+                    : "text-muted-foreground hover:text-foreground font-medium",
+                )}
+              >
+                <span
+                  className="w-[6px] h-[6px] rounded-full shrink-0"
+                  style={{ backgroundColor: tab.color }}
+                />
+                <span className="truncate max-w-[150px]">{tab.name}</span>
+                {tab.txCount > 0 && (
+                  <span className="text-[10px] text-muted-foreground/60 tabular-nums">{tab.txCount}</span>
+                )}
+                {isActive && (
+                  <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-primary rounded-t-sm" />
+                )}
+              </button>
+            );
+          })}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-border/60" />
+        </div>
+      )}
+
+      {/* ─── Row 3: Action buttons (right-aligned, squared) ─── */}
+      <div className="flex items-center justify-end gap-[5px] px-6 py-[7px] border-b border-border/60">
         {/* Sort — date direction toggle */}
         <button
           type="button"
           onClick={() => onSortChange("date", sortDirection === "asc" ? "desc" : "asc")}
-          className="inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[6px] text-[12.5px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors"
+          className="inline-flex items-center gap-[5px] bg-white rounded-[4px] px-[10px] py-[5px] text-[12px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors"
         >
           <ArrowUpDown className="w-[13px] h-[13px] text-primary/50" strokeWidth={1.9} />
           {sortDirection === "desc" ? t("imports.newestFirst", { defaultValue: "Newest first" }) : t("imports.oldestFirst", { defaultValue: "Oldest first" })}
@@ -292,7 +359,7 @@ export function DataToolbar({
             <button
               type="button"
               className={cn(
-                "inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[6px] text-[12.5px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors",
+                "inline-flex items-center gap-[5px] bg-white rounded-[4px] px-[10px] py-[5px] text-[12px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors",
                 hasActiveFilters && "border-primary/40 bg-primary/[0.06] text-primary",
               )}
             >
@@ -394,7 +461,7 @@ export function DataToolbar({
         <button
           type="button"
           onClick={onExport}
-          className="inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[6px] text-[12.5px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors"
+          className="inline-flex items-center gap-[5px] bg-white rounded-[4px] px-[10px] py-[5px] text-[12px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors"
         >
           <Download className="w-[13px] h-[13px] text-primary/50" strokeWidth={1.9} />
           {t("export")}
@@ -405,9 +472,9 @@ export function DataToolbar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-[6px] bg-primary rounded-[9px] px-[14px] py-[6px] text-[12.5px] font-semibold text-white shadow-[0_1px_3px_rgba(27,118,255,0.3)] hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-[5px] bg-primary rounded-[4px] px-[12px] py-[5px] text-[12px] font-semibold text-white shadow-sm hover:bg-primary/90 transition-colors"
             >
-              <Plus className="w-[14px] h-[14px]" />
+              <Plus className="w-[13px] h-[13px]" />
               {t("imports.new")}
             </button>
           </DropdownMenuTrigger>
