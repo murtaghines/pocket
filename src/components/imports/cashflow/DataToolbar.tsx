@@ -130,43 +130,44 @@ export function DataToolbar({
 
 
   return (
-    <div className="hidden md:flex items-center justify-between gap-4 bg-[#F5F7F9] px-6 py-[20px] pb-[16px] border-b border-border/60">
-      {/* Left: Month title + opening balance + nav buttons */}
-      <div className="flex items-center gap-[14px]">
-        <h2 className="font-heading font-semibold text-[16px] text-[#0C0D0E] tracking-[-0.01em] capitalize">
-          {monthLabel}
-        </h2>
+    <div className="hidden md:flex items-center justify-between gap-4 bg-[#F5F7F9] px-6 py-[14px] border-b border-border/60">
+      {/* Left: Month title + nav buttons */}
+      <div className="flex items-center gap-[10px]">
+        <div className="flex items-center gap-[10px] bg-primary/[0.07] rounded-[10px] pl-[14px] pr-[4px] py-[4px]">
+          <h2 className="font-heading font-bold text-[15px] text-primary tracking-[-0.01em] capitalize select-none">
+            {monthLabel}
+          </h2>
 
-        {/* Month navigation — ‹ › calendar in #F5F7F9 container */}
-        <div className="flex items-center gap-[2px] bg-white rounded-[9px] p-[3px] ml-[6px] shadow-[0_1px_2px_rgba(16,24,40,0.06)]">
-          <button
-            type="button"
-            onClick={onPrev}
-            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-[#414750] hover:bg-white/60 transition-colors"
-            aria-label="Previous month"
-          >
-            <ChevronLeft className="w-[15px] h-[15px]" />
-          </button>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={!canGoNext}
-            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-[#414750] hover:bg-white/60 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-            aria-label="Next month"
-          >
-            <ChevronRight className="w-[15px] h-[15px]" />
-          </button>
+          {/* Month navigation — ‹ › calendar */}
+          <div className="flex items-center gap-[1px]">
+            <button
+              type="button"
+              onClick={onPrev}
+              className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-primary/70 hover:bg-primary/10 transition-colors"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="w-[15px] h-[15px]" />
+            </button>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={!canGoNext}
+              className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-primary/70 hover:bg-primary/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+              aria-label="Next month"
+            >
+              <ChevronRight className="w-[15px] h-[15px]" />
+            </button>
 
-          <Popover open={calendarOpen} onOpenChange={(open) => { setCalendarOpen(open); if (open) setViewYear(selectedYear); }}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.07)] text-[#414750] hover:bg-white/90 transition-colors"
-                aria-label="Jump to month"
-              >
-                <CalendarDays className="w-[15px] h-[15px]" />
-              </button>
-            </PopoverTrigger>
+            <Popover open={calendarOpen} onOpenChange={(open) => { setCalendarOpen(open); if (open) setViewYear(selectedYear); }}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[7px] text-primary/70 hover:bg-primary/10 transition-colors"
+                  aria-label="Jump to month"
+                >
+                  <CalendarDays className="w-[15px] h-[15px]" />
+                </button>
+              </PopoverTrigger>
             <PopoverContent
               className="w-[252px] p-[12px] rounded-[12px]"
               align="start"
@@ -262,7 +263,15 @@ export function DataToolbar({
               )}
             </PopoverContent>
           </Popover>
+          </div>
         </div>
+
+        {/* Tx count badge */}
+        {txCount > 0 && (
+          <span className="text-[12px] font-medium text-muted-foreground tabular-nums">
+            {txCount} {txCount === 1 ? t("imports.txSingular", "tx") : t("imports.txPlural", "txs")}
+          </span>
+        )}
       </div>
 
       {/* Right: Sort · Filter · Export · New */}
@@ -271,9 +280,9 @@ export function DataToolbar({
         <button
           type="button"
           onClick={() => onSortChange("date", sortDirection === "asc" ? "desc" : "asc")}
-          className="inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] shadow-[0_1px_2px_rgba(16,24,40,0.06)] hover:bg-[#EBEEF2] transition-colors"
+          className="inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[6px] text-[12.5px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors"
         >
-          <ArrowUpDown className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
+          <ArrowUpDown className="w-[13px] h-[13px] text-primary/50" strokeWidth={1.9} />
           {sortDirection === "desc" ? t("imports.newestFirst", { defaultValue: "Newest first" }) : t("imports.oldestFirst", { defaultValue: "Oldest first" })}
         </button>
 
@@ -283,11 +292,11 @@ export function DataToolbar({
             <button
               type="button"
               className={cn(
-                "inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] shadow-[0_1px_2px_rgba(16,24,40,0.06)] hover:bg-[#EBEEF2] transition-colors",
-                hasActiveFilters && "ring-1 ring-primary/30",
+                "inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[6px] text-[12.5px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors",
+                hasActiveFilters && "border-primary/40 bg-primary/[0.06] text-primary",
               )}
             >
-              <Filter className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
+              <Filter className={cn("w-[13px] h-[13px]", hasActiveFilters ? "text-primary" : "text-primary/50")} strokeWidth={1.9} />
               {t("filter")}
               {hasActiveFilters && (
                 <span className="ml-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
@@ -385,9 +394,9 @@ export function DataToolbar({
         <button
           type="button"
           onClick={onExport}
-          className="inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[7px] text-[13px] font-medium text-[#414750] shadow-[0_1px_2px_rgba(16,24,40,0.06)] hover:bg-[#EBEEF2] transition-colors"
+          className="inline-flex items-center gap-[6px] bg-white rounded-[9px] px-[11px] py-[6px] text-[12.5px] font-medium text-[#414750] border border-border/50 hover:border-primary/30 hover:bg-primary/[0.04] transition-colors"
         >
-          <Download className="w-[14px] h-[14px] text-[#8A919C]" strokeWidth={1.9} />
+          <Download className="w-[13px] h-[13px] text-primary/50" strokeWidth={1.9} />
           {t("export")}
         </button>
 
@@ -396,7 +405,7 @@ export function DataToolbar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-[6px] bg-primary rounded-[9px] px-[14px] py-[8px] text-[13px] font-medium text-white shadow-[0_1px_2px_rgba(27,118,255,0.3)] hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-[6px] bg-primary rounded-[9px] px-[14px] py-[6px] text-[12.5px] font-semibold text-white shadow-[0_1px_3px_rgba(27,118,255,0.3)] hover:bg-primary/90 transition-colors"
             >
               <Plus className="w-[14px] h-[14px]" />
               {t("imports.new")}
