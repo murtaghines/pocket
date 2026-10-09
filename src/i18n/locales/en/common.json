@@ -41,6 +41,8 @@
     "analysis": "Analysis",
     "account": "Account",
     "settings": "Settings",
+    "preferences": "Preferences",
+    "security": "Security",
     "logout": "Log out",
     "logoutSuccess": "Logged out successfully",
     "tabs": {
