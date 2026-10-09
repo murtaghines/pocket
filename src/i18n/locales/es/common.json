@@ -45,6 +45,8 @@
     "security": "Seguridad",
     "logout": "Cerrar sesión",
     "logoutSuccess": "Sesión cerrada correctamente",
+    "logoutConfirmTitle": "¿Cerrar sesión?",
+    "logoutConfirmDesc": "Tu sesión se cerrará. Podrás volver a iniciar sesión en cualquier momento.",
     "tabs": {
       "dashboard": {
         "history": "Histórico"
