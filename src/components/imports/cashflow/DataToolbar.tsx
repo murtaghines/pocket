@@ -136,13 +136,13 @@ export function DataToolbar({
 
   return (
     <div className="hidden md:flex flex-col">
-      {/* ─── Row 1: Gray title strip ─── */}
-      <div className="flex items-start justify-between px-6 pt-4 pb-3 bg-[#F5F7F9] border-b border-border/60">
+      {/* ─── Row 1: Blue title strip ─── */}
+      <div className="flex items-start justify-between px-6 pt-4 pb-3 bg-primary">
         <div className="min-w-0">
-          <h2 className="text-[15px] font-semibold text-foreground capitalize leading-tight select-none">
+          <h2 className="text-[15px] font-semibold text-white capitalize leading-tight select-none">
             {monthLabel}
           </h2>
-          <div className="flex items-center gap-[6px] mt-[4px] text-[11.5px] text-muted-foreground tabular-nums">
+          <div className="flex items-center gap-[6px] mt-[4px] text-[11.5px] text-white/70 tabular-nums">
             {displayCount > 0 && (
               <span>
                 {displayCount} {displayCount === 1 ? t("imports.txSingular", "tx") : t("imports.txPlural", "txs")}
@@ -150,20 +150,20 @@ export function DataToolbar({
             )}
             {globalSummary && globalSummary.income > 0 && (
               <>
-                <span className="text-border">·</span>
-                <span className="text-success font-medium">+{formatCurrency(globalSummary.income)}</span>
+                <span className="text-white/30">·</span>
+                <span className="text-white font-medium">+{formatCurrency(globalSummary.income)}</span>
               </>
             )}
             {globalSummary && globalSummary.expenses > 0 && (
               <>
-                <span className="text-border">·</span>
-                <span className="text-destructive font-medium">−{formatCurrency(globalSummary.expenses)}</span>
+                <span className="text-white/30">·</span>
+                <span className="text-white font-medium">−{formatCurrency(globalSummary.expenses)}</span>
               </>
             )}
             {globalSummary && globalSummary.transfersNet != null && globalSummary.transfersNet !== 0 && (
               <>
-                <span className="text-border">·</span>
-                <span className="text-muted-foreground font-medium">
+                <span className="text-white/30">·</span>
+                <span className="text-white/70 font-medium">
                   {globalSummary.transfersNet >= 0 ? "+" : "−"}{formatCurrency(Math.abs(globalSummary.transfersNet))}
                 </span>
               </>
@@ -176,7 +176,7 @@ export function DataToolbar({
           <button
             type="button"
             onClick={onPrev}
-            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-muted-foreground hover:bg-black/[0.06] transition-colors"
+            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-white/80 hover:bg-white/[0.12] transition-colors"
             aria-label="Previous month"
           >
             <ChevronLeft className="w-[15px] h-[15px]" />
@@ -185,7 +185,7 @@ export function DataToolbar({
             type="button"
             onClick={onNext}
             disabled={!canGoNext}
-            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-muted-foreground hover:bg-black/[0.06] transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-white/80 hover:bg-white/[0.12] transition-colors disabled:opacity-30 disabled:pointer-events-none"
             aria-label="Next month"
           >
             <ChevronRight className="w-[15px] h-[15px]" />
@@ -195,7 +195,7 @@ export function DataToolbar({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-muted-foreground hover:bg-black/[0.06] transition-colors"
+                className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-white/80 hover:bg-white/[0.12] transition-colors"
                 aria-label="Jump to month"
               >
                 <CalendarDays className="w-[15px] h-[15px]" />
