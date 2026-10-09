@@ -41,6 +41,8 @@
     "analysis": "Análisis",
     "account": "Cuenta",
     "settings": "Configuración",
+    "preferences": "Preferencias",
+    "security": "Seguridad",
     "logout": "Cerrar sesión",
     "logoutSuccess": "Sesión cerrada correctamente",
     "tabs": {
