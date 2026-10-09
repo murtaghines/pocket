@@ -45,6 +45,8 @@
     "security": "Security",
     "logout": "Log out",
     "logoutSuccess": "Logged out successfully",
+    "logoutConfirmTitle": "Log out?",
+    "logoutConfirmDesc": "Your session will end. You can log back in at any time.",
     "tabs": {
       "dashboard": {
         "history": "History"
