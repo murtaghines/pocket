@@ -225,50 +225,56 @@ export function ManualEntryFooter({
         </div>
       </div>
 
-      {/* Desktop footer: opening | income · expenses · transfers | closing */}
-      <div className="hidden md:sticky md:bottom-0 md:z-20 md:flex items-center justify-between border-t border-[#E8EAED] bg-card px-[20px] py-[8px]">
+      {/* Desktop footer: 3-column CSS grid — opening | totals | closing */}
+      <div
+        className="hidden md:grid md:sticky md:bottom-0 md:z-20 bg-card tabular-nums"
+        style={{
+          gridTemplateColumns: "1fr auto 1fr",
+          alignItems: "center",
+          gap: 20,
+          padding: "12px 34px",
+          borderTop: "1px solid #EDEFF4",
+        }}
+      >
         {/* Left: opening balance */}
-        <div className="shrink-0">
-          {openingBalance != null ? (
-            <span className="text-[12.5px] text-[#6B7280] tabular-nums">
-              {t("imports.openingBalance")}{" "}
-              <span className="text-[#414750] font-medium">
+        <div className="flex items-baseline" style={{ gap: 7 }}>
+          {openingBalance != null && (
+            <>
+              <span style={{ font: "500 11.5px Inter, sans-serif", color: "#9AA1AC", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                {t("imports.openingBalanceLabel")}
+              </span>
+              <span style={{ font: "500 13px Inter, sans-serif", color: "#0C0D0E" }}>
                 {formatCurrency(openingBalance)}
               </span>
-            </span>
-          ) : (
-            <span />
+            </>
           )}
         </div>
 
-        {/* Center: income · expenses · transfers (net) */}
-        <div className="inline-flex items-center gap-[16px]">
-          <span className="text-[12.5px] text-success tabular-nums font-medium">
-            +{formatCurrency(summary.income)}
+        {/* Center: transfers · expenses · income */}
+        <div className="flex items-center justify-center" style={{ gap: 16 }}>
+          <span className="tabular-nums" style={{ font: "600 12.5px Inter, sans-serif", color: "#9AA1AC" }}>
+            {(summary.transfersNet != null ? summary.transfersNet >= 0 : true) ? "+" : "−"}
+            {formatCurrency(Math.abs(summary.transfersNet ?? 0))}
           </span>
-          <span className="text-[12.5px] text-destructive tabular-nums font-medium">
+          <span className="tabular-nums" style={{ font: "600 12.5px Inter, sans-serif", color: "#C9502A" }}>
             −{formatCurrency(summary.expenses)}
           </span>
-          {(summary.transfersNet != null ? summary.transfersNet !== 0 : summary.transfers > 0) && (
-            <span className="text-[12.5px] text-muted-foreground tabular-nums font-medium">
-              {summary.transfersNet != null
-                ? (summary.transfersNet >= 0 ? "+" : "−") + formatCurrency(Math.abs(summary.transfersNet))
-                : formatCurrency(summary.transfers)}
-            </span>
-          )}
+          <span className="tabular-nums" style={{ font: "600 12.5px Inter, sans-serif", color: "#1F7A45" }}>
+            +{formatCurrency(summary.income)}
+          </span>
         </div>
 
         {/* Right: closing balance */}
-        <div className="shrink-0">
-          {closingBalance != null ? (
-            <span className="text-[12.5px] text-[#6B7280] tabular-nums">
-              {t("imports.closingBalance")}{" "}
-              <span className="text-[#414750] font-medium">
+        <div className="flex items-baseline justify-end" style={{ gap: 7 }}>
+          {closingBalance != null && (
+            <>
+              <span style={{ font: "500 11.5px Inter, sans-serif", color: "#9AA1AC", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                {t("imports.closingBalanceLabel")}
+              </span>
+              <span style={{ font: "500 13px Inter, sans-serif", color: "#0C0D0E" }}>
                 {formatCurrency(closingBalance)}
               </span>
-            </span>
-          ) : (
-            <span />
+            </>
           )}
         </div>
       </div>

@@ -3,14 +3,11 @@ import { useTranslation } from "react-i18next";
 import {
   ChevronLeft,
   ChevronRight,
-  Filter,
-  Download,
+  X,
   Plus,
   Minus,
   ArrowRightLeft,
   Upload,
-  CalendarDays,
-  X,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -91,7 +88,6 @@ export function DataToolbar({
   onAddIncome,
   onAddTransfer,
   onUploadFile,
-  onExport,
   monthsWithData,
   firstMonthWithData,
   accountTabs,
@@ -136,69 +132,112 @@ export function DataToolbar({
 
   return (
     <div className="hidden md:flex flex-col">
-      {/* ─── Row 1: Blue title strip ─── */}
-      <div className="flex items-start justify-between px-6 pt-4 pb-3 bg-primary">
-        <div className="min-w-0">
-          <h2 className="text-[15px] font-semibold text-white capitalize leading-tight select-none">
+      {/* ─── Banner azul ─── */}
+      <header
+        className="flex items-center bg-primary"
+        style={{ padding: "22px 34px", gap: 28 }}
+      >
+        {/* Left side */}
+        <div className="flex-1 min-w-0">
+          <h1
+            className="font-heading text-white leading-none select-none"
+            style={{ fontWeight: 600, fontSize: 22, letterSpacing: "-0.01em", margin: 0 }}
+          >
             {monthLabel}
-          </h2>
-          <div className="flex items-center gap-[6px] mt-[4px] text-[11.5px] text-white/70 tabular-nums">
+          </h1>
+          <div className="flex items-center flex-wrap" style={{ marginTop: 8, gap: 14 }}>
             {displayCount > 0 && (
-              <span>
-                {displayCount} {displayCount === 1 ? t("imports.txSingular", "tx") : t("imports.txPlural", "txs")}
+              <span
+                className="tabular-nums"
+                style={{ font: "500 12.5px Inter, sans-serif", color: "rgba(255,255,255,0.78)" }}
+              >
+                {displayCount} {t("imports.transactions")}
               </span>
             )}
             {globalSummary && globalSummary.income > 0 && (
               <>
-                <span className="text-white/30">·</span>
-                <span className="text-white font-medium">+{formatCurrency(globalSummary.income)}</span>
+                <span className="rounded-full" style={{ width: 3, height: 3, background: "rgba(255,255,255,0.5)" }} />
+                <span
+                  className="tabular-nums"
+                  style={{ font: "600 12.5px Inter, sans-serif", color: "#FFFFFF" }}
+                >
+                  +{formatCurrency(globalSummary.income)}
+                </span>
               </>
             )}
             {globalSummary && globalSummary.expenses > 0 && (
               <>
-                <span className="text-white/30">·</span>
-                <span className="text-white font-medium">−{formatCurrency(globalSummary.expenses)}</span>
+                <span className="rounded-full" style={{ width: 3, height: 3, background: "rgba(255,255,255,0.5)" }} />
+                <span
+                  className="tabular-nums"
+                  style={{ font: "600 12.5px Inter, sans-serif", color: "#FFFFFF" }}
+                >
+                  −{formatCurrency(globalSummary.expenses)}
+                </span>
               </>
             )}
-            {globalSummary && globalSummary.transfersNet != null && globalSummary.transfersNet !== 0 && (
+            {globalSummary && (globalSummary.income > 0 || globalSummary.expenses > 0) && (
               <>
-                <span className="text-white/30">·</span>
-                <span className="text-white/70 font-medium">
-                  {globalSummary.transfersNet >= 0 ? "+" : "−"}{formatCurrency(Math.abs(globalSummary.transfersNet))}
+                <span className="rounded-full" style={{ width: 3, height: 3, background: "rgba(255,255,255,0.5)" }} />
+                <span
+                  className="tabular-nums"
+                  style={{ font: "600 12.5px Inter, sans-serif", color: "#FFFFFF" }}
+                >
+                  {(globalSummary.income - globalSummary.expenses) >= 0 ? "+" : "−"}
+                  {formatCurrency(Math.abs(globalSummary.income - globalSummary.expenses))}
                 </span>
               </>
             )}
           </div>
         </div>
 
-        {/* Month navigation — ‹ › 📅 */}
-        <div className="flex items-center gap-[2px] shrink-0">
+        {/* Right side: ‹ › 📅 */}
+        <div className="flex items-center shrink-0" style={{ gap: 4 }}>
           <button
             type="button"
             onClick={onPrev}
-            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-white/80 hover:bg-white/[0.12] transition-colors"
+            className="inline-flex items-center justify-center cursor-pointer"
+            style={{
+              width: 34, height: 34, borderRadius: 10,
+              background: "rgba(255,255,255,0.14)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
             aria-label="Previous month"
           >
-            <ChevronLeft className="w-[15px] h-[15px]" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="m15 18-6-6 6-6" /></svg>
           </button>
           <button
             type="button"
             onClick={onNext}
             disabled={!canGoNext}
-            className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-white/80 hover:bg-white/[0.12] transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            className="inline-flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+            style={{
+              width: 34, height: 34, borderRadius: 10,
+              background: "rgba(255,255,255,0.14)",
+            }}
+            onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
             aria-label="Next month"
           >
-            <ChevronRight className="w-[15px] h-[15px]" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>
           </button>
 
           <Popover open={calendarOpen} onOpenChange={(open) => { setCalendarOpen(open); if (open) setViewYear(selectedYear); }}>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] text-white/80 hover:bg-white/[0.12] transition-colors"
+                className="inline-flex items-center justify-center cursor-pointer"
+                style={{
+                  width: 34, height: 34, borderRadius: 10,
+                  background: "rgba(255,255,255,0.14)",
+                  marginLeft: 4,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
                 aria-label="Jump to month"
               >
-                <CalendarDays className="w-[15px] h-[15px]" />
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M19 3h-2V1h-2v2H9V1H7v2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m0 18H5V10h14zm0-13H5V5h14z" /></svg>
               </button>
             </PopoverTrigger>
             <PopoverContent
@@ -297,203 +336,234 @@ export function DataToolbar({
             </PopoverContent>
           </Popover>
         </div>
-      </div>
+      </header>
 
-      {/* ─── Row 2: Action buttons (white) — active chips + Filter, Export, + New ─── */}
-      <div className="flex items-center bg-card border-b border-border/60 px-5 py-[5px] gap-1">
-        {/* Active filter chips */}
-        {hasActiveFilters && (
-          <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto scrollbar-none mr-2">
-            {filters.movements.map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => toggleMovementFilter(m)}
-                className="inline-flex items-center gap-1 px-2 py-[3px] text-[11px] font-medium rounded bg-primary/[0.08] text-primary hover:bg-primary/[0.14] transition-colors shrink-0"
-              >
-                {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
-                <X className="w-3 h-3" />
-              </button>
-            ))}
-            {filters.categories.map((slug) => (
-              <button
-                key={slug}
-                type="button"
-                onClick={() => toggleCategoryFilter(slug)}
-                className="inline-flex items-center gap-1 px-2 py-[3px] text-[11px] font-medium rounded bg-primary/[0.08] text-primary hover:bg-primary/[0.14] transition-colors shrink-0"
-              >
-                <span className="truncate max-w-[100px]">{getCategoryLabel(slug)}</span>
-                <X className="w-3 h-3" />
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => onFiltersChange({ ...filters, accounts: [], movements: [], categories: [] })}
-              className="text-[11px] text-muted-foreground hover:text-foreground shrink-0 px-1"
-            >
-              Clear
-            </button>
+      {/* ─── Tabs bar + actions ─── */}
+      <div
+        className="flex items-center bg-card"
+        style={{ borderBottom: "1px solid #EDEFF4", padding: "0 34px", gap: 18, minHeight: 52 }}
+      >
+        {/* Account tabs (scrollable) */}
+        {showAccountTabs && (
+          <div className="flex items-stretch flex-1 min-w-0 overflow-x-auto scrollbar-none" style={{ height: 52, gap: 0 }}>
+            {accountTabs!.map((tab) => {
+              const isActive = activeAccountId === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => onAccountSelect?.(tab.id)}
+                  className="flex items-center shrink-0 cursor-pointer whitespace-nowrap"
+                  style={{
+                    gap: 8,
+                    padding: "0 14px",
+                    marginRight: 4,
+                    borderBottom: isActive ? "2px solid #1B76FF" : "2px solid transparent",
+                    background: "transparent",
+                    border: "none",
+                    borderBottomWidth: 2,
+                    borderBottomStyle: "solid",
+                    borderBottomColor: isActive ? "#1B76FF" : "transparent",
+                  }}
+                >
+                  <span
+                    style={{
+                      font: `${isActive ? 700 : 500} 13px Inter, sans-serif`,
+                      color: isActive ? "#1B76FF" : "#4A5160",
+                    }}
+                  >
+                    {tab.name}
+                  </span>
+                  <span
+                    className="tabular-nums"
+                    style={{
+                      borderRadius: 999,
+                      padding: "1px 7px",
+                      font: "600 10.5px Inter, sans-serif",
+                      background: isActive ? "rgba(27,118,255,0.12)" : "#F1F3F8",
+                      color: isActive ? "#1B76FF" : "#9AA1AC",
+                    }}
+                  >
+                    {tab.txCount}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
-        {!hasActiveFilters && <div className="flex-1" />}
+        {!showAccountTabs && <div className="flex-1" />}
 
-        {/* Filter */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-[6px] text-[12.5px] font-medium rounded transition-colors",
-                hasActiveFilters
-                  ? "text-primary bg-primary/[0.06]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-              )}
-            >
-              <Filter className="w-[13px] h-[13px]" strokeWidth={1.8} />
-              {t("filter")}
-              {hasActiveFilters && (
-                <span className="ml-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                  {filters.movements.length + filters.categories.length}
-                </span>
-              )}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72 p-3" align="end">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-                  {t("imports.movement")}
-                </p>
-                <div className="space-y-1">
-                  {(["INCOME", "EXPENSE", "TRANSFER"] as MovementType[]).map((m) => (
-                    <label
-                      key={m}
-                      className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={filters.movements.includes(m)}
-                        onCheckedChange={() => toggleMovementFilter(m)}
-                      />
-                      <span className="text-sm text-foreground">
-                        {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+        {/* Actions */}
+        <div className="flex items-center shrink-0" style={{ gap: 8 }}>
+          {/* Active filter chips */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none mr-2">
+              {filters.movements.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => toggleMovementFilter(m)}
+                  className="inline-flex items-center gap-1 px-2 py-[3px] text-[11px] font-medium rounded bg-primary/[0.08] text-primary hover:bg-primary/[0.14] transition-colors shrink-0"
+                >
+                  {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
+                  <X className="w-3 h-3" />
+                </button>
+              ))}
+              {filters.categories.map((slug) => (
+                <button
+                  key={slug}
+                  type="button"
+                  onClick={() => toggleCategoryFilter(slug)}
+                  className="inline-flex items-center gap-1 px-2 py-[3px] text-[11px] font-medium rounded bg-primary/[0.08] text-primary hover:bg-primary/[0.14] transition-colors shrink-0"
+                >
+                  <span className="truncate max-w-[100px]">{getCategoryLabel(slug)}</span>
+                  <X className="w-3 h-3" />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => onFiltersChange({ ...filters, accounts: [], movements: [], categories: [] })}
+                className="text-[11px] text-muted-foreground hover:text-foreground shrink-0 px-1"
+              >
+                Clear
+              </button>
+            </div>
+          )}
 
-              {availableCategories.length > 0 && (
+          {/* Filter button (ghost) */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center cursor-pointer"
+                style={{
+                  gap: 6, height: 32, padding: "0 11px", borderRadius: 9,
+                  font: "600 12.5px Inter, sans-serif",
+                  color: hasActiveFilters ? "#1B76FF" : "#4A5160",
+                  background: hasActiveFilters ? "rgba(27,118,255,0.06)" : "transparent",
+                  border: "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (!hasActiveFilters) e.currentTarget.style.background = "#F4F6FB";
+                }}
+                onMouseLeave={(e) => {
+                  if (!hasActiveFilters) e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill={hasActiveFilters ? "#1B76FF" : "#4A5160"}>
+                  <path d="M4.25 5.61C6.57 8.59 10 13 10 13v5c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-5s3.43-4.41 5.75-7.39A1 1 0 0 0 18.95 4H5.04a1 1 0 0 0-.79 1.61" />
+                </svg>
+                {t("filter")}
+                {hasActiveFilters && (
+                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                    {filters.movements.length + filters.categories.length}
+                  </span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-3" align="end">
+              <div className="space-y-4">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-                    {t("imports.category")}
+                    {t("imports.movement")}
                   </p>
-                  <div className="max-h-40 overflow-y-auto space-y-1">
-                    {availableCategories.map((slug) => (
+                  <div className="space-y-1">
+                    {(["INCOME", "EXPENSE", "TRANSFER"] as MovementType[]).map((m) => (
                       <label
-                        key={slug}
+                        key={m}
                         className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer"
                       >
                         <Checkbox
-                          checked={filters.categories.includes(slug)}
-                          onCheckedChange={() => toggleCategoryFilter(slug)}
+                          checked={filters.movements.includes(m)}
+                          onCheckedChange={() => toggleMovementFilter(m)}
                         />
-                        <span className="text-sm text-foreground truncate">
-                          {getCategoryLabel(slug)}
+                        <span className="text-sm text-foreground">
+                          {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
                         </span>
                       </label>
                     ))}
                   </div>
                 </div>
-              )}
 
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground py-1"
-                  onClick={() => onFiltersChange({ ...filters, accounts: [], movements: [], categories: [] })}
-                >
-                  Clear all filters
-                </button>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+                {availableCategories.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                      {t("imports.category")}
+                    </p>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {availableCategories.map((slug) => (
+                        <label
+                          key={slug}
+                          className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={filters.categories.includes(slug)}
+                            onCheckedChange={() => toggleCategoryFilter(slug)}
+                          />
+                          <span className="text-sm text-foreground truncate">
+                            {getCategoryLabel(slug)}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-        {/* Export */}
-        <button
-          type="button"
-          onClick={onExport}
-          className="inline-flex items-center gap-1.5 px-2.5 py-[6px] text-[12.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
-        >
-          <Download className="w-[13px] h-[13px]" strokeWidth={1.8} />
-          {t("export")}
-        </button>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    className="w-full text-center text-xs text-muted-foreground hover:text-foreground py-1"
+                    onClick={() => onFiltersChange({ ...filters, accounts: [], movements: [], categories: [] })}
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
 
-        {/* Divider */}
-        <div className="w-px h-[18px] bg-border/60 mx-1" />
-
-        {/* New transaction — primary */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center gap-[5px] bg-primary rounded-[4px] px-[10px] py-[5px] text-[12px] font-semibold text-white shadow-sm hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="w-[13px] h-[13px]" />
-              {t("imports.newTransaction", { defaultValue: "New transaction" })}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={onAddExpense} className="gap-2">
-              <Minus className="w-4 h-4 text-destructive" />
-              {t("imports.addExpense")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onAddIncome} className="gap-2">
-              <Plus className="w-4 h-4 text-success" />
-              {t("imports.addIncome")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onAddTransfer} className="gap-2">
-              <ArrowRightLeft className="w-4 h-4 text-warning" />
-              {t("imports.addTransfer")}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onUploadFile} className="gap-2">
-              <Upload className="w-4 h-4 text-muted-foreground" />
-              {t("imports.uploadFile")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* ─── Row 3: Account tabs (white) ─── */}
-      {showAccountTabs && (
-        <div className="relative flex items-center gap-0 bg-card border-b border-border/60 pl-5 pr-5 overflow-x-auto scrollbar-none">
-          {accountTabs!.map((tab) => {
-            const isActive = activeAccountId === tab.id;
-            return (
+          {/* New transaction (primary) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
-                key={tab.id}
                 type="button"
-                onClick={() => onAccountSelect?.(tab.id)}
-                className={cn(
-                  "relative shrink-0 inline-flex items-center gap-1 px-3 py-[9px] text-[12.5px] transition-colors",
-                  isActive
-                    ? "text-primary font-semibold bg-primary/[0.06]"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40 font-medium",
-                )}
+                className="flex items-center cursor-pointer"
+                style={{
+                  gap: 6, height: 32, padding: "0 13px", borderRadius: 9,
+                  background: "#1B76FF",
+                  font: "600 12.5px Inter, sans-serif",
+                  color: "#fff",
+                  border: "none",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#1668E0"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#1B76FF"; }}
               >
-                <span className="truncate max-w-[150px]">{tab.name}</span>
-                {tab.txCount > 0 && (
-                  <span className="text-[10px] text-muted-foreground/60 tabular-nums">{tab.txCount}</span>
-                )}
-                {isActive && (
-                  <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-primary rounded-t-sm" />
-                )}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" /></svg>
+                {t("imports.new")}
               </button>
-            );
-          })}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={onAddExpense} className="gap-2">
+                <Minus className="w-4 h-4 text-destructive" />
+                {t("imports.addExpense")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onAddIncome} className="gap-2">
+                <Plus className="w-4 h-4 text-success" />
+                {t("imports.addIncome")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onAddTransfer} className="gap-2">
+                <ArrowRightLeft className="w-4 h-4 text-warning" />
+                {t("imports.addTransfer")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onUploadFile} className="gap-2">
+                <Upload className="w-4 h-4 text-muted-foreground" />
+                {t("imports.uploadFile")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      )}
+      </div>
     </div>
   );
 }
