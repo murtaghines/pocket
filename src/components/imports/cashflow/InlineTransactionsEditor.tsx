@@ -16,7 +16,6 @@ import {
   RotateCcw,
   FileSpreadsheet,
   Trash2,
-  MoreHorizontal,
   Pencil,
   Copy,
 } from "lucide-react";
@@ -26,14 +25,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -48,7 +39,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PillBadge } from "@/components/ui/pill-badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import {
@@ -125,6 +115,53 @@ function getISOWeek(dateStr: string): number {
   d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
   const week1 = new Date(d.getFullYear(), 0, 4);
   return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+}
+
+const CATEGORY_PILL_COLORS: Record<string, { color: string; bg: string }> = {
+  salary: { color: "#B98708", bg: "#FDF3E3" },
+  refunds: { color: "#2E6FB8", bg: "#EAF2FC" },
+  own_transfer: { color: "#5A6069", bg: "#EFF1F6" },
+  shopping: { color: "#4F4FB5", bg: "rgba(110,110,219,.12)" },
+  groceries: { color: "#217A49", bg: "rgba(48,166,100,.12)" },
+  subscriptions: { color: "#5344A6", bg: "rgba(110,91,203,.12)" },
+  to_joint_account: { color: "#2E6FB8", bg: "#EAF2FC" },
+  transport: { color: "#2E6FB8", bg: "rgba(59,138,224,.12)" },
+  other_expense: { color: "#656C75", bg: "rgba(127,134,143,.12)" },
+  other_income: { color: "#656C75", bg: "rgba(127,134,143,.12)" },
+  to_investment: { color: "#1F7A45", bg: "rgba(48,166,100,.12)" },
+  housing: { color: "#C04F38", bg: "rgba(208,94,72,.12)" },
+  restaurants: { color: "#B86B1C", bg: "rgba(204,127,42,.12)" },
+  health: { color: "#B5445A", bg: "rgba(200,82,110,.12)" },
+  entertainment: { color: "#8B4FAD", bg: "rgba(162,96,196,.12)" },
+  education: { color: "#1F7A9E", bg: "rgba(48,150,186,.12)" },
+  travel: { color: "#1F7A5E", bg: "rgba(48,150,114,.12)" },
+  sports: { color: "#4A7A30", bg: "rgba(86,148,52,.12)" },
+  pets: { color: "#A67A22", bg: "rgba(186,144,48,.12)" },
+  freelance: { color: "#6B4FAD", bg: "rgba(130,96,196,.12)" },
+  investment: { color: "#1F5A8E", bg: "rgba(48,110,168,.12)" },
+  rents: { color: "#B86B1C", bg: "rgba(204,127,42,.12)" },
+};
+
+function CategoryPill({ category }: { category: string }) {
+  const known = CATEGORY_PILL_COLORS[category];
+  const color = known?.color ?? "#656C75";
+  const bg = known?.bg ?? "rgba(127,134,143,.12)";
+  return (
+    <span
+      className="inline-flex items-center max-w-full overflow-hidden"
+      style={{
+        gap: 6,
+        background: bg,
+        color,
+        borderRadius: 999,
+        padding: "3px 10px 3px 8px",
+        font: "600 11.5px Inter, sans-serif",
+      }}
+    >
+      <span className="rounded-full shrink-0" style={{ width: 5, height: 5, background: "currentColor" }} />
+      <span className="truncate">{getCategoryLabel(category)}</span>
+    </span>
+  );
 }
 
 export interface InlineTransactionsEditorProps {
@@ -1116,47 +1153,56 @@ export function InlineTransactionsEditor({
 
       {/* The spreadsheet — flush, no padding, no inner card */}
       <div className="bg-card flex-1 flex flex-col min-h-0">
-        {/* Desktop / tablet: compact Excel-like spreadsheet */}
-        <div className="hidden md:block overflow-auto flex-1 min-h-0 [&>div]:!overflow-visible">
-          <Table className="w-full table-fixed">
-            <TableHeader className="sticky top-0 z-10">
-              <TableRow className="hover:bg-transparent bg-card border-y border-[#E8EAED] [&>th]:h-[30px]">
-                <TableHead className="w-[44px] px-0 text-center bg-card">
-                  <Checkbox
-                    checked={selectedIds.size > 0 ? (selectedIds.size === allVisibleIds.length ? true : "indeterminate") : false}
-                    onCheckedChange={() => toggleSelectAll(allVisibleIds)}
-                    aria-label="Select all"
-                    className="h-3.5 w-3.5"
-                  />
-                </TableHead>
-                <TableHead className="w-[8%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.date")}
-                </TableHead>
-                <TableHead className="w-[4%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.week")}
-                </TableHead>
-                <TableHead className="w-[5%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.source")}
-                </TableHead>
-                <TableHead className="w-[10%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.movement")}
-                </TableHead>
-                <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.amount")}
-                </TableHead>
-                <TableHead className="w-[27%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.description")}
-                </TableHead>
-                <TableHead className="w-[13%] text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.category")}
-                </TableHead>
-                <TableHead className="w-[9%] text-right text-[10.5px] uppercase tracking-[0.06em] text-[#9AA1AC] font-medium bg-card">
-                  {t("imports.balance")}
-                </TableHead>
-                <TableHead className="w-[36px] bg-card" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        {/* Desktop / tablet: CSS grid spreadsheet */}
+        <div className="hidden md:block overflow-auto flex-1 min-h-0">
+          {/* Sticky header */}
+          <div
+            className="sticky top-0 z-10 grid items-center"
+            style={{
+              gridTemplateColumns: "34px 94px 54px 66px 128px 102px minmax(0,1fr) 168px 108px 36px",
+              gap: 14,
+              padding: "11px 34px",
+              background: "#FAFBFD",
+              borderBottom: "1px solid #EDEFF4",
+            }}
+          >
+            <span className="flex items-center justify-center">
+              <Checkbox
+                checked={selectedIds.size > 0 ? (selectedIds.size === allVisibleIds.length ? true : "indeterminate") : false}
+                onCheckedChange={() => toggleSelectAll(allVisibleIds)}
+                aria-label="Select all"
+                style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 1.6, borderColor: "#C7CCD4" }}
+              />
+            </span>
+            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+              {t("imports.date")}
+            </span>
+            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+              {t("imports.week")}
+            </span>
+            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+              {t("imports.source")}
+            </span>
+            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+              {t("imports.movement")}
+            </span>
+            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC", textAlign: "right" }}>
+              {t("imports.amount")}
+            </span>
+            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+              {t("imports.description")}
+            </span>
+            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+              {t("imports.category")}
+            </span>
+            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC", textAlign: "right" }}>
+              {t("imports.balance")}
+            </span>
+            <span />
+          </div>
+
+          {/* Rows */}
+          <div>
               {rowsToRender.map((tx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
                 const isSaving = savingIds.has(tx.id);
@@ -1249,80 +1295,123 @@ export function InlineTransactionsEditor({
                     selectedCount={selectedIds.size}
                     {...rowContextActions}
                   >
-                    <TableRow
+                    <div
                       className={cn(
-                        "transition-colors h-[34px] [&>td]:py-0 cursor-default border-b border-[#E8EAED] hover:bg-[#FAFBFC]",
-                        isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
+                        "grid items-center cursor-pointer transition-[background] duration-100",
+                        isMismatch && "bg-amber-50/60 border-l-2 border-l-amber-400",
                         isPending && "bg-warning/10 border-l-2 border-l-warning",
                         isHidden && "opacity-50 bg-muted/20",
                         isSaved && !isMismatch && "bg-success/5",
                         isSelected && "bg-primary/[0.08]",
                       )}
+                      style={{
+                        gridTemplateColumns: "34px 94px 54px 66px 128px 102px minmax(0,1fr) 168px 108px 36px",
+                        gap: 14,
+                        padding: "12px 34px",
+                        borderBottom: "1px solid #F3F5F9",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isMismatch && !isPending && !isHidden && !isSaved && !isSelected)
+                          e.currentTarget.style.background = "#FAFBFE";
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isMismatch && !isPending && !isHidden && !isSaved && !isSelected)
+                          e.currentTarget.style.background = "";
+                      }}
                     >
                       {/* Checkbox */}
-                      <TableCell className="w-[44px] px-0 text-center">
+                      <span className="flex items-center justify-center">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelected(tx.id)}
                           aria-label="Select row"
-                          className="h-3.5 w-3.5"
+                          style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 1.6, borderColor: "#C7CCD4", background: "#fff" }}
                         />
-                      </TableCell>
+                      </span>
 
                       {/* Date */}
-                      <TableCell className="text-[12px] text-foreground tabular-nums whitespace-nowrap">
+                      <span className="tabular-nums whitespace-nowrap" style={{ font: "500 12.5px Inter, sans-serif", color: "#2A303A" }}>
                         {formatDate(new Date(tx.date))}
-                      </TableCell>
+                      </span>
 
                       {/* Week */}
-                      <TableCell className="text-[12px] text-muted-foreground tabular-nums whitespace-nowrap text-center">
+                      <span className="whitespace-nowrap" style={{ font: "500 11.5px Inter, sans-serif", color: "#9AA1AC", letterSpacing: "0.02em" }}>
                         W{getISOWeek(tx.date)}
-                      </TableCell>
+                      </span>
 
-                      {/* Source — mini gray pill */}
-                      <TableCell className="text-[12px]">
-                        <span className="inline-block px-1.5 py-0.5 rounded bg-[#F1F2F4] text-[#6B7280] text-[12px] font-medium lowercase">
+                      {/* Source — pill */}
+                      <span>
+                        <span
+                          style={{
+                            display: "inline-block", width: "fit-content",
+                            background: "#F1F3F8", color: "#5A6069",
+                            borderRadius: 6, padding: "3px 8px",
+                            font: "600 10.5px Inter, sans-serif",
+                            letterSpacing: "0.02em", textTransform: "lowercase",
+                          }}
+                        >
                           {getSourceLabel(tx)}
                         </span>
-                      </TableCell>
+                      </span>
 
-                      {/* Movement */}
-                      <TableCell className="text-[12px]">
-                          <Select
-                            value={movement}
-                            onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
-                            disabled={isHidden}
-                          >
-                            <SelectTrigger className="h-6 w-full text-[12px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
-                              <SelectValue>
-                                <PillBadge tone={getMovementTone(movement)} icon={<span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: movement === "INCOME" ? "#2E9E6B" : movement === "TRANSFER" ? "#8A919C" : "#E0704A" }} />}>
+                      {/* Movement — dot + text + chevron */}
+                      <span>
+                        <Select
+                          value={movement}
+                          onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
+                          disabled={isHidden}
+                        >
+                          <SelectTrigger className="h-auto w-full border-0 bg-transparent hover:bg-transparent focus:ring-0 p-0 [&_[data-radix-select-icon]]:hidden">
+                            <SelectValue>
+                              <span className="flex items-center cursor-pointer whitespace-nowrap" style={{ gap: 6 }}>
+                                <span
+                                  className="rounded-full shrink-0"
+                                  style={{
+                                    width: 7, height: 7,
+                                    background: movement === "INCOME" ? "#2E9E6B" : movement === "EXPENSE" ? "#E8542B" : "#A8AEB8",
+                                  }}
+                                />
+                                <span style={{
+                                  font: "500 12.5px Inter, sans-serif",
+                                  color: movement === "INCOME" ? "#1F7A45" : movement === "EXPENSE" ? "#C9502A" : "#5A6069",
+                                }}>
                                   {getMovementLabel(movement)}
-                                </PillBadge>
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="INCOME">
-                                <PillBadge tone="green" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#2E9E6B]" />}>
-                                  {getMovementLabel("INCOME")}
-                                </PillBadge>
-                              </SelectItem>
-                              <SelectItem value="EXPENSE">
-                                <PillBadge tone="red" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#E0704A]" />}>
-                                  {getMovementLabel("EXPENSE")}
-                                </PillBadge>
-                              </SelectItem>
-                              <SelectItem value="TRANSFER">
-                                <PillBadge tone="neutral" icon={<span className="w-[6px] h-[6px] rounded-full shrink-0 bg-[#8A919C]" />}>
-                                  {getMovementLabel("TRANSFER")}
-                                </PillBadge>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                      </TableCell>
+                                </span>
+                                <svg className="shrink-0 ml-auto" width="11" height="11" viewBox="0 0 24 24" fill="#C7CCD4"><path d="M7 10l5 5 5-5z" /></svg>
+                              </span>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="INCOME">
+                              <span className="flex items-center gap-1.5">
+                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-[#2E9E6B]" />
+                                <span style={{ color: "#1F7A45" }}>{getMovementLabel("INCOME")}</span>
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="EXPENSE">
+                              <span className="flex items-center gap-1.5">
+                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-[#E8542B]" />
+                                <span style={{ color: "#C9502A" }}>{getMovementLabel("EXPENSE")}</span>
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="TRANSFER">
+                              <span className="flex items-center gap-1.5">
+                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-[#A8AEB8]" />
+                                <span style={{ color: "#5A6069" }}>{getMovementLabel("TRANSFER")}</span>
+                              </span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </span>
 
                       {/* Amount — double-click to edit */}
-                      <TableCell
-                        className={cn("text-right text-[12px] tabular-nums", amountColor)}
+                      <span
+                        className="tabular-nums whitespace-nowrap"
+                        style={{
+                          textAlign: "right",
+                          font: "500 12.5px Inter, sans-serif",
+                          color: movement === "TRANSFER" ? "#5A6069" : "#0C0D0E",
+                        }}
                         onDoubleClick={() => {
                           if (isHidden) return;
                           setEditingAmountId(tx.id);
@@ -1344,7 +1433,7 @@ export function InlineTransactionsEditor({
                               if (e.key === "Escape") setEditingAmountId(null);
                             }}
                             inputMode="decimal"
-                            className="h-6 text-[12px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
+                            className="h-6 text-[12.5px] px-1 py-0 text-right tabular-nums border-primary/40 w-24 ml-auto"
                           />
                         ) : hasSplit ? (
                           <Tooltip>
@@ -1362,11 +1451,11 @@ export function InlineTransactionsEditor({
                         ) : (
                           <span>{formatCurrency(displayAmount, undefined, true)}</span>
                         )}
-                      </TableCell>
+                      </span>
 
                       {/* Description — double-click to edit */}
-                      <TableCell
-                        className="text-[12px]"
+                      <span
+                        className="min-w-0"
                         onDoubleClick={() => {
                           if (isHidden) return;
                           setEditingDescId(tx.id);
@@ -1390,65 +1479,62 @@ export function InlineTransactionsEditor({
                               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                               if (e.key === "Escape") { setEditingDescId(null); }
                             }}
-                            className="h-6 text-[13px] px-1 py-0 border-primary/40"
+                            className="h-6 text-[13.5px] px-1 py-0 border-primary/40"
                             placeholder={t("imports.editDescription")}
                           />
                         ) : (
-                          <div className="flex items-start gap-1.5 min-w-0">
-                            <div className="min-w-0 flex-1">
-                              <span
-                                className={cn(
-                                  "block truncate text-foreground",
-                                  isHidden && "line-through",
-                                )}
-                                title={cleanDescription}
-                              >
-                                {cleanDescription}
-                              </span>
-                            </div>
-                            {isSaving && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0 mt-0.5" />}
-                            {isSaved && !isSaving && <Check className="w-3 h-3 text-success shrink-0 mt-0.5" />}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                              className={cn(
+                                "truncate",
+                                isHidden && "line-through",
+                              )}
+                              title={cleanDescription}
+                              style={{ font: "500 13.5px Inter, sans-serif", color: "#0C0D0E" }}
+                            >
+                              {cleanDescription}
+                            </span>
+                            {isSaving && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0" />}
+                            {isSaved && !isSaving && <Check className="w-3 h-3 text-success shrink-0" />}
                           </div>
                         )}
-                      </TableCell>
+                      </span>
 
-                      {/* Category */}
-                      <TableCell className="text-[12px]">
-                          <Select
-                            value={category}
-                            onValueChange={(v) => handleCategoryChange(tx, v)}
-                            disabled={isHidden}
-                          >
-                            <SelectTrigger className="h-6 w-full text-[12px] border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-ring/40 px-1 [&_[data-radix-select-icon]]:hidden">
-                              <SelectValue>
-                                <PillBadge colorVar={getCategoryColor(category)}>
-                                  <CategoryIcon iconName={getCategoryIcon(category)} colorVar={getCategoryColor(category)} size="sm" showBackground={false} className="w-[13px] h-[13px]" />
-                                  <span className="truncate max-w-[120px]" title={getCategoryLabel(category)}>
-                                    {getCategoryLabel(category)}
-                                  </span>
-                                </PillBadge>
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableCategories.map((slug) => (
-                                <SelectItem key={slug} value={slug}>
-                                  <div className="flex items-center gap-2">
-                                    <CategoryIcon iconName={getCategoryIcon(slug)} colorVar={getCategoryColor(slug)} size="sm" showBackground />
-                                    {getCategoryLabel(slug)}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                      </TableCell>
+                      {/* Category — pill with dot + label + chevron */}
+                      <span className="min-w-0">
+                        <Select
+                          value={category}
+                          onValueChange={(v) => handleCategoryChange(tx, v)}
+                          disabled={isHidden}
+                        >
+                          <SelectTrigger className="h-auto w-full border-0 bg-transparent hover:bg-transparent focus:ring-0 p-0 [&_[data-radix-select-icon]]:hidden">
+                            <SelectValue>
+                              <span className="flex items-center cursor-pointer min-w-0" style={{ gap: 6 }}>
+                                <CategoryPill category={category} />
+                                <svg className="shrink-0" width="11" height="11" viewBox="0 0 24 24" fill="#C7CCD4"><path d="M7 10l5 5 5-5z" /></svg>
+                              </span>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableCategories.map((slug) => (
+                              <SelectItem key={slug} value={slug}>
+                                <div className="flex items-center gap-2">
+                                  <CategoryIcon iconName={getCategoryIcon(slug)} colorVar={getCategoryColor(slug)} size="sm" showBackground />
+                                  {getCategoryLabel(slug)}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </span>
 
                       {/* Balance */}
-                      <TableCell className="text-right text-[12px] text-[#8A919C] tabular-nums">
+                      <span className="tabular-nums whitespace-nowrap" style={{ textAlign: "right", font: "500 12.5px Inter, sans-serif", color: "#5A6069" }}>
                         {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!, undefined, true) : "—"}
-                      </TableCell>
+                      </span>
 
-                      {/* Actions: three-dot menu / pending save+discard */}
-                      <TableCell className="w-[36px] px-0 text-center">
+                      {/* Actions: kebab / pending save+discard */}
+                      <span className="flex items-center justify-center">
                         {isPending ? (
                           <div className="flex items-center gap-0.5 justify-center">
                             <button
@@ -1474,9 +1560,10 @@ export function InlineTransactionsEditor({
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"
-                                className="h-6 w-6 mx-auto inline-flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-colors"
+                                className="inline-flex items-center justify-center cursor-pointer"
+                                style={{ color: "#C7CCD4" }}
                               >
-                                <MoreHorizontal className="w-4 h-4" />
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" /></svg>
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
@@ -1557,13 +1644,12 @@ export function InlineTransactionsEditor({
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
-                      </TableCell>
-                    </TableRow>
+                      </span>
+                    </div>
                   </TransactionContextMenu>
                 );
               })}
-            </TableBody>
-          </Table>
+          </div>
         </div>
 
         {/* Phones: read-only cards with pencil → edit drawer */}
