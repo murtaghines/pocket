@@ -81,7 +81,6 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "transactions", i18nKey: "navigation.tabs.data.transactions" },
       { key: "investments", i18nKey: "navigation.tabs.data.investments" },
       { key: "categories", i18nKey: "navigation.tabs.data.categories" },
-      { key: "accounts", i18nKey: "navigation.tabs.data.accounts" },
     ],
   },
 ];
