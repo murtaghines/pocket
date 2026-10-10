@@ -51,7 +51,6 @@ const DATA_ICON_KEY: Record<string, string> = {
   transactions: "transactions",
   investments: "files",
   categories: "categories",
-  accounts: "accounts",
 };
 
 function NavIcon({ icon, size, fill }: { icon: string; size: number; fill: string }) {
@@ -69,9 +68,9 @@ function ShadowSeparator() {
     <div
       className="h-0 mx-0 border-t border-[#D4D9E2]"
       style={{
-        margin: "18px 0 10px",
+        margin: "22px 0 14px",
         boxShadow:
-          "0 6px 8px -4px rgba(16,24,40,0.14), 0 2px 3px -1px rgba(16,24,40,0.08)",
+          "0 6px 10px -4px rgba(16,24,40,0.16), 0 2px 4px -1px rgba(16,24,40,0.10)",
       }}
     />
   );
@@ -95,6 +94,7 @@ const GROUP_1: SidebarItem[] = [
 const dataSection = NAV_SECTIONS.find((s) => s.key === "data")!;
 
 const GROUP_3: SidebarItem[] = [
+  { key: "accounts", to: "/account?tab=accounts", iconKey: "accounts", i18nKey: "navigation.tabs.data.accounts" },
   { key: "settings", to: "/account", iconKey: "settings", i18nKey: "navigation.settings" },
   { key: "preferences", to: "/account?tab=preferences", iconKey: "preferences", i18nKey: "navigation.preferences" },
   { key: "security", to: "/account?tab=security", iconKey: "security", i18nKey: "navigation.security" },
@@ -138,7 +138,8 @@ export function Sidebar() {
 
   const isGroup3Active = (key: string) => {
     if (!isAccountPath) return false;
-    if (key === "settings") return !accountTab || accountTab === "overview" || accountTab === "accounts";
+    if (key === "accounts") return accountTab === "accounts";
+    if (key === "settings") return !accountTab || accountTab === "overview";
     if (key === "preferences") return accountTab === "preferences";
     if (key === "security") return accountTab === "security";
     return false;

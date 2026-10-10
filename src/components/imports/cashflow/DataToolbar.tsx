@@ -141,7 +141,7 @@ export function DataToolbar({
         <div className="flex-1 min-w-0">
           <h1
             className="font-heading text-white leading-none select-none"
-            style={{ fontWeight: 600, fontSize: 22, letterSpacing: "-0.01em", margin: 0 }}
+            style={{ fontWeight: 600, fontSize: 19, letterSpacing: "-0.01em", margin: 0 }}
           >
             {monthLabel}
           </h1>
@@ -176,15 +176,16 @@ export function DataToolbar({
                 </span>
               </>
             )}
-            {globalSummary && (globalSummary.income > 0 || globalSummary.expenses > 0) && (
+            {globalSummary && globalSummary.transfersNet !== 0 && (
               <>
                 <span className="rounded-full" style={{ width: 3, height: 3, background: "rgba(255,255,255,0.5)" }} />
                 <span
-                  className="tabular-nums"
-                  style={{ font: "600 12.5px Inter, sans-serif", color: "#FFFFFF" }}
+                  className="tabular-nums inline-flex items-center"
+                  style={{ font: "600 12.5px Inter, sans-serif", color: "rgba(255,255,255,0.78)", gap: 4 }}
                 >
-                  {(globalSummary.income - globalSummary.expenses) >= 0 ? "+" : "−"}
-                  {formatCurrency(Math.abs(globalSummary.income - globalSummary.expenses))}
+                  <ArrowRightLeft className="w-[13px] h-[13px]" style={{ opacity: 0.85 }} />
+                  {globalSummary.transfersNet >= 0 ? "+" : "−"}
+                  {formatCurrency(Math.abs(globalSummary.transfersNet))}
                 </span>
               </>
             )}
