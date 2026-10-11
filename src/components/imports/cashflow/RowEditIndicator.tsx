@@ -11,6 +11,7 @@ export interface RowEditIndicatorProps {
   onRevert: (entry: AuditEntry) => void;
   formatCurrency: (n: number) => string;
   getCategoryLabel: (slug: string) => string;
+  getMovementLabel: (m: string) => string;
 }
 export function RowEditIndicator({
   index,
@@ -20,6 +21,7 @@ export function RowEditIndicator({
   onRevert,
   formatCurrency,
   getCategoryLabel,
+  getMovementLabel,
 }: RowEditIndicatorProps) {
   // Filter out reverts from the visible list to keep things tidy, but use the
   // full history to know if the row has any changes worth showing.
@@ -95,11 +97,11 @@ export function RowEditIndicator({
                         {FIELD_LABELS[f] || f}:
                       </span>
                       <span className="line-through text-muted-foreground/70">
-                        {formatAuditValue(f, before[f], formatCurrency, getCategoryLabel)}
+                        {formatAuditValue(f, before[f], formatCurrency, getCategoryLabel, getMovementLabel)}
                       </span>
                       <span className="text-muted-foreground">→</span>
                       <span className="font-medium text-foreground">
-                        {formatAuditValue(f, after[f], formatCurrency, getCategoryLabel)}
+                        {formatAuditValue(f, after[f], formatCurrency, getCategoryLabel, getMovementLabel)}
                       </span>
                     </div>
                   ))}

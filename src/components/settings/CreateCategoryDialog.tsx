@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +15,7 @@ function generateSlug(name: string): string {
   return name
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9\s]/g, '')
     .trim()
     .replace(/\s+/g, '_');
@@ -35,16 +35,29 @@ interface Props {
   onClose: () => void;
   onSave: (data: Omit<CustomCategoryRule, 'type'>) => Promise<void>;
   isSaving: boolean;
+  editingCategory?: CustomCategoryRule | null;
 }
 
-export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props) {
+export function CreateCategoryDialog({ open, onClose, onSave, isSaving, editingCategory }: Props) {
   const { t } = useTranslation('settings');
   const [name, setName] = useState('');
-  const [movement, setMovement] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
+  const [movement, setMovement] = useState<'INCOME' | 'EXPENSE' | 'TRANSFER'>('EXPENSE');
   const [keywords, setKeywords] = useState<string[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [selectedColor, setSelectedColor] = useState(CURATED_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState<string>('tag');
+
+  const isEditing = !!editingCategory;
+
+  useEffect(() => {
+    if (editingCategory) {
+      setName(editingCategory.name);
+      setMovement(editingCategory.movement);
+      setKeywords([...editingCategory.keywords]);
+      setSelectedColor(editingCategory.color || CURATED_COLORS[0]);
+      setSelectedIcon(editingCategory.icon || 'tag');
+    }
+  }, [editingCategory]);
 
   const addKeyword = () => {
     const trimmed = keywordInput.trim();
@@ -57,7 +70,7 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
   const handleSave = async () => {
     if (!name.trim() || keywords.length === 0) return;
     await onSave({
-      slug: generateSlug(name),
+      slug: isEditing ? editingCategory!.slug : generateSlug(name),
       name: name.trim(),
       movement,
       keywords,
@@ -91,7 +104,11 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="text-base">{t('categories.createNewCategory', 'Create new category')}</DialogTitle>
+          <DialogTitle className="text-base">
+            {isEditing
+              ? t('categories.editCategory', 'Edit Category')
+              : t('categories.createNewCategory', 'Create new category')}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 py-2">
           {/* Name & Type row */}
@@ -107,11 +124,12 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving }: Props)
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">{t('categories.customCategoryType')}</Label>
-              <Select value={movement} onValueChange={(v) => setMovement(v as 'INCOME' | 'EXPENSE')}>
+              <Select value={movement} onValueChange={(v) => setMovement(v as 'INCOME' | 'EXPENSE' | 'TRANSFER')}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="EXPENSE">{t('categories.expenses')}</SelectItem>
                   <SelectItem value="INCOME">{t('categories.income')}</SelectItem>
+                  <SelectItem value="TRANSFER">{t('categories.transfers')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

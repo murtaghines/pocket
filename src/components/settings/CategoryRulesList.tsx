@@ -25,6 +25,7 @@ interface Props {
   onDeleteRule: (ruleId: string) => void;
   customCategories?: CustomCategoryRule[];
   onDeleteCustomCategory?: (cat: CustomCategoryRule) => void;
+  onEditCustomCategory?: (cat: CustomCategoryRule) => void;
   getVisualOverride?: (slug: string) => VisualOverride | undefined;
   onSetVisualOverride?: (slug: string, color?: string, icon?: string) => Promise<void>;
 }
@@ -74,6 +75,7 @@ interface GroupShellProps {
   onToggle: () => void;
   onEditCategory?: () => React.ReactNode; // color popover content
   onEditIcon?: () => React.ReactNode; // icon popover content
+  onEdit?: () => void;
   onDelete?: () => void;
   children: React.ReactNode;
 }
@@ -88,6 +90,7 @@ function GroupShell({
   onToggle,
   onEditCategory,
   onEditIcon,
+  onEdit,
   onDelete,
   children,
 }: GroupShellProps) {
@@ -163,6 +166,16 @@ function GroupShell({
                 {onEditCategory()}
               </PopoverContent>
             </Popover>
+          )}
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background/80 transition-colors"
+              aria-label="Edit category"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
           )}
           {onDelete && (
             <button
@@ -304,6 +317,7 @@ export function CategoryRulesList({
   onDeleteRule,
   customCategories = [],
   onDeleteCustomCategory,
+  onEditCustomCategory,
   getVisualOverride,
   onSetVisualOverride,
 }: Props) {
@@ -427,6 +441,7 @@ export function CategoryRulesList({
             ruleCount={cat.keywords.length}
             expanded={expanded}
             onToggle={() => toggle(customId)}
+            onEdit={onEditCustomCategory ? () => onEditCustomCategory(cat) : undefined}
             onDelete={onDeleteCustomCategory ? () => onDeleteCustomCategory(cat) : undefined}
           >
             {cat.keywords.length === 0 ? (

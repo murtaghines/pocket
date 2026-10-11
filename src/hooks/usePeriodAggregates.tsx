@@ -4,7 +4,8 @@ import { useAuth } from "./useAuth";
 import type { Database } from "@/integrations/supabase/types";
 import type { EssentialSplit, WeeklyPoint, DailyOfWeekPoint, MonthOfYearPoint, Granularity } from "@/lib/analytics";
 import { coefficientOfVariation } from "@/lib/analytics";
-import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import { categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import type { Category } from "@/lib/mockData";
 
 type AppDomain = Database["public"]["Enums"]["app_domain"];
@@ -178,6 +179,7 @@ function buildEssentialSplit(
 function buildCategoryBreakdown(
   rows: Array<{ category: string; total: number }>,
   convert: (n: number) => number,
+  getCategoryLabel: (slug: string) => string,
 ): CategoryBreakdownPoint[] {
   return rows.map((r) => ({
     name: getCategoryLabel(r.category),
@@ -200,6 +202,7 @@ export function usePeriodAggregates({
   periodYear,
 }: UsePeriodAggregatesArgs): PeriodAggregates {
   const { user } = useAuth();
+  const { getCategoryLabel } = useCategoryTranslations();
 
   const enabled = !!user && !!startDate && !!endDate;
 
@@ -238,11 +241,11 @@ export function usePeriodAggregates({
     prevByCat[r.category] = Number(r.total);
   }
 
-  const expenseCategoryData = buildCategoryBreakdown(agg?.expense_categories ?? [], cvt).map((d) => ({
+  const expenseCategoryData = buildCategoryBreakdown(agg?.expense_categories ?? [], cvt, getCategoryLabel).map((d) => ({
     ...d,
     previousValue: round2(cvt(prevByCat[d.category] ?? 0)),
   }));
-  const incomeCategoryData = buildCategoryBreakdown(agg?.income_categories ?? [], cvt);
+  const incomeCategoryData = buildCategoryBreakdown(agg?.income_categories ?? [], cvt, getCategoryLabel);
   const essentialSplit = buildEssentialSplit(agg?.essential_split ?? [], cvt);
   const subBreakdown = startDate
     ? buildSubBreakdown(dailyTotals, granularity, startDate, cvt)

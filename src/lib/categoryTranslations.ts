@@ -32,6 +32,9 @@ export const categoryLabels: Record<string, string> = {
   sports: 'Sports',
   other_expense: 'Other',
   pets: 'Pets',
+  taxes: 'Taxes',
+  insurance: 'Insurance',
+  donations: 'Donations',
 
   // TRANSFER categories
   own_transfer: 'To Myself',
@@ -70,6 +73,9 @@ export const categoryIcons: Record<string, string> = {
   sports: 'dumbbell',
   other_expense: 'more-horizontal',
   pets: 'paw-print',
+  taxes: 'landmark',
+  insurance: 'shield-check',
+  donations: 'heart-handshake',
   investment: 'trending-up',
   freelance: 'laptop',
   rents: 'home',
@@ -107,6 +113,9 @@ export const categoryColors: Record<string, string> = {
   sports: 'category-sports',
   other_expense: 'category-other-expense',
   pets: 'category-pets',
+  taxes: 'category-taxes',
+  insurance: 'category-insurance',
+  donations: 'category-donations',
   // Transfer
   own_transfer: 'category-own-transfer',
   from_myself: 'category-from-myself',
@@ -126,11 +135,8 @@ const legacySlugMap: Record<string, string> = {
   'gifts_received': 'other_income',
   'sales': 'other_income',
   'gifts_given': 'other_expense',
-  'insurance': 'other_expense',
   'family': 'other_expense',
-  'donations': 'other_expense',
   'personal_services': 'other_expense',
-  'taxes': 'other_expense',
   'income': 'other_income',
   'other': 'other_expense',
   'food': 'groceries',
@@ -187,7 +193,7 @@ export function getMovementLabel(movement: string): string {
 
 // Categories by movement type (for onboarding)
 export const INCOME_CATEGORIES = ['salary', 'refunds', 'other_income', 'investment', 'freelance', 'rents'];
-export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
+export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets', 'taxes', 'insurance', 'donations'];
 export const TRANSFER_CATEGORIES = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'to_savings', 'from_savings'];
 export const TRANSFER_OUTGOING = ['own_transfer', 'to_investment', 'to_joint_account', 'to_savings'];
 export const TRANSFER_INCOMING = ['from_myself', 'from_investment', 'from_joint_account', 'from_savings'];

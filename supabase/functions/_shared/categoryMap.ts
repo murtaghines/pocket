@@ -8,7 +8,7 @@ export type MovementType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 
 // ========== CATEGORY SLUGS BY MOVEMENT (app-level) ==========
 export const INCOME_SLUGS = ['salary', 'refunds', 'other_income', 'investment', 'freelance', 'rents'];
-export const EXPENSE_SLUGS = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets'];
+export const EXPENSE_SLUGS = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets', 'taxes', 'insurance', 'donations'];
 export const TRANSFER_SLUGS = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'to_savings', 'from_savings', 'transfers'];
 
 // ========== EXTENDED → APP CATEGORY MAPPING ==========
@@ -23,11 +23,8 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'sales': 'other_income',
   // Expense extended → app
   'gifts_given': 'other_expense',
-  'insurance': 'other_expense',
   'family': 'other_expense',
-  'donations': 'other_expense',
   'personal_services': 'other_expense',
-  'taxes': 'other_expense',
 };
 
 /** Map an extended category slug to an app-level slug. */

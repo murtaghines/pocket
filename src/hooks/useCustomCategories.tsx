@@ -6,7 +6,7 @@ export interface CustomCategoryRule {
   type: "custom_category";
   slug: string;
   name: string;
-  movement: "INCOME" | "EXPENSE";
+  movement: "INCOME" | "EXPENSE" | "TRANSFER";
   keywords: string[];
   color?: string;
   icon?: string;
@@ -63,6 +63,15 @@ export function useCustomCategories() {
     return saveRules.mutateAsync(newRules);
   };
 
+  const updateCustomCategory = (slug: string, updated: Omit<CustomCategoryRule, 'type'>) => {
+    const newRules = rules.map((r) =>
+      r.type === 'custom_category' && (r as CustomCategoryRule).slug === slug
+        ? { type: 'custom_category' as const, ...updated }
+        : r
+    );
+    return saveRules.mutateAsync(newRules);
+  };
+
   const removeRule = (index: number) => {
     const newRules = rules.filter((_, i) => i !== index);
     return saveRules.mutateAsync(newRules);
@@ -92,6 +101,7 @@ export function useCustomCategories() {
     isLoading,
     isSaving: saveRules.isPending,
     addCustomCategory,
+    updateCustomCategory,
     removeRule,
     getVisualOverride,
     setVisualOverride,

@@ -6,7 +6,6 @@ import {
   TRANSFER_CATEGORIES,
   TRANSFER_OUTGOING,
   TRANSFER_INCOMING,
-  getMovementLabel,
 } from "@/lib/categoryTranslations";
 import type { AuditEntry, MovementType } from "./types";
 
@@ -120,18 +119,6 @@ export function isBackToOriginal(
   return true;
 }
 
-interface AuditEntry {
-  id: string;
-  entity_id: string;
-  action: string;
-  created_at: string;
-  diff_json: {
-    fields?: string[];
-    before?: Record<string, unknown>;
-    after?: Record<string, unknown>;
-  } | null;
-}
-
 export const getMovementIcon = (m: MovementType) => {
   switch (m) {
     case "INCOME":
@@ -173,13 +160,14 @@ export function formatAuditValue(
   value: unknown,
   formatCurrency: (n: number) => string,
   getCategoryLabel: (slug: string) => string,
+  getMovementLabel?: (m: string) => string,
 ): string {
   if (value === null || value === undefined) return "—";
   if (field === "amount" && typeof value === "number") return formatCurrency(value);
   if ((field === "category" || field === "category_id") && typeof value === "string") {
     return getCategoryLabel(value) || value;
   }
-  if (field === "movement" && typeof value === "string") return getMovementLabel(value as MovementType);
+  if (field === "movement" && typeof value === "string") return getMovementLabel?.(value) ?? value;
   if (field === "is_hidden") return value ? "Hidden" : "Visible";
   return String(value);
 }

@@ -31,10 +31,6 @@ import {
   SHEET_INPUT,
 } from "./SheetPanel";
 import type { Database } from "@/integrations/supabase/types";
-import {
-  getCategoryLabel,
-  getMovementLabel,
-} from "@/lib/categoryTranslations";
 import { getCategoriesForMovement } from "./cashflow/helpers";
 
 type MovementType = Database["public"]["Enums"]["movement_type"];
@@ -81,7 +77,7 @@ export function AddManualEntryDialog({
 }: AddManualEntryDialogProps) {
   const { t } = useTranslation("common");
   const { accounts } = useAccounts();
-  const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+  const { getCategoryLabel, getMovementLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
 
   const [year, monthNum] = monthKey.split("-").map(Number);
   const firstDay = `${year}-${String(monthNum).padStart(2, "0")}-01`;

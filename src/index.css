@@ -62,10 +62,13 @@
     --category-shopping: 240 65% 62%;        /* indigo-blue */
     --category-education: 190 80% 42%;       /* cyan-teal */
     --category-subscriptions: 250 55% 55%;   /* deep indigo */
-    --category-travel: 47 100% 57%;          /* brand yellow */
-    --category-sports: 175 70% 38%;          /* deep teal */
+    --category-travel: 170 70% 38%;          /* teal-green */
+    --category-sports: 95 55% 38%;           /* grass green */
     --category-other-expense: 220 10% 55%;   /* neutral slate */
     --category-pets: 30 85% 55%;             /* warm amber-orange */
+    --category-taxes: 52 60% 44%;            /* olive-gold */
+    --category-insurance: 305 50% 52%;       /* soft magenta */
+    --category-donations: 340 58% 52%;       /* rose */
 
     /* Category colors - Transfer */
     --category-own-transfer: 220 12% 50%;    /* neutral slate */
@@ -265,6 +268,42 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 216 100% 55%;
+
+    /* Category colors — dark mode: bump lightness for contrast on dark bg */
+    /* Income */
+    --category-salary: 47 100% 62%;
+    --category-refunds: 200 80% 62%;
+    --category-transfers: 216 100% 62%;
+    --category-other-income: 220 10% 62%;
+    --category-investment: 216 75% 55%;
+    --category-freelance: 260 60% 68%;
+    --category-rents: 35 85% 65%;
+    /* Expense */
+    --category-housing: 14 80% 62%;
+    --category-groceries: 145 55% 52%;
+    --category-restaurants: 22 90% 62%;
+    --category-transport: 210 80% 62%;
+    --category-health: 355 70% 62%;
+    --category-entertainment: 280 65% 68%;
+    --category-shopping: 240 65% 68%;
+    --category-education: 190 75% 55%;
+    --category-subscriptions: 250 55% 62%;
+    --category-travel: 170 65% 50%;
+    --category-sports: 95 55% 50%;
+    --category-other-expense: 220 10% 62%;
+    --category-pets: 30 85% 62%;
+    --category-taxes: 52 60% 55%;
+    --category-insurance: 305 50% 62%;
+    --category-donations: 340 58% 62%;
+    /* Transfer */
+    --category-own-transfer: 220 12% 62%;
+    --category-from-myself: 220 10% 72%;
+    --category-to-investment: 216 75% 55%;
+    --category-from-investment: 216 60% 62%;
+    --category-to-joint-account: 200 80% 58%;
+    --category-from-joint-account: 200 70% 65%;
+    --category-to-savings: 160 55% 50%;
+    --category-from-savings: 160 45% 60%;
   }
 }
 
