@@ -149,18 +149,18 @@ export function DataToolbar({
           <div className="flex items-center flex-wrap" style={{ marginTop: 8, gap: 14 }}>
             {displayCount > 0 && (
               <span
-                className="tabular-nums"
-                style={{ font: "500 12.5px Inter, sans-serif", color: "rgba(255,255,255,0.78)" }}
+                className="tabular-nums text-white/80"
+                style={{ font: "500 12.5px Inter, sans-serif" }}
               >
                 {displayCount} {t("imports.transactions")}
               </span>
             )}
             {globalSummary && globalSummary.income > 0 && (
               <>
-                <span className="rounded-full" style={{ width: 3, height: 3, background: "rgba(255,255,255,0.5)" }} />
+                <span className="rounded-full bg-white/50" style={{ width: 3, height: 3 }} />
                 <span
-                  className="tabular-nums"
-                  style={{ font: "600 12.5px Inter, sans-serif", color: "#FFFFFF" }}
+                  className="tabular-nums text-white"
+                  style={{ font: "600 12.5px Inter, sans-serif" }}
                 >
                   +{formatCurrency(globalSummary.income)}
                 </span>
@@ -168,10 +168,10 @@ export function DataToolbar({
             )}
             {globalSummary && globalSummary.expenses > 0 && (
               <>
-                <span className="rounded-full" style={{ width: 3, height: 3, background: "rgba(255,255,255,0.5)" }} />
+                <span className="rounded-full bg-white/50" style={{ width: 3, height: 3 }} />
                 <span
-                  className="tabular-nums"
-                  style={{ font: "600 12.5px Inter, sans-serif", color: "#FFFFFF" }}
+                  className="tabular-nums text-white"
+                  style={{ font: "600 12.5px Inter, sans-serif" }}
                 >
                   −{formatCurrency(globalSummary.expenses)}
                 </span>
@@ -179,10 +179,10 @@ export function DataToolbar({
             )}
             {globalSummary && globalSummary.transfersNet !== 0 && (
               <>
-                <span className="rounded-full" style={{ width: 3, height: 3, background: "rgba(255,255,255,0.5)" }} />
+                <span className="rounded-full bg-white/50" style={{ width: 3, height: 3 }} />
                 <span
-                  className="tabular-nums inline-flex items-center"
-                  style={{ font: "600 12.5px Inter, sans-serif", color: "rgba(255,255,255,0.78)", gap: 4 }}
+                  className="tabular-nums inline-flex items-center text-white/80"
+                  style={{ font: "600 12.5px Inter, sans-serif", gap: 4 }}
                 >
                   <ArrowRightLeft className="w-[13px] h-[13px]" style={{ opacity: 0.85 }} />
                   {globalSummary.transfersNet >= 0 ? "+" : "−"}
@@ -252,18 +252,18 @@ export function DataToolbar({
                   type="button"
                   onClick={() => setViewYear((y) => y - 1)}
                   disabled={firstMonthWithData ? viewYear <= parseInt(firstMonthWithData.slice(0, 4)) : false}
-                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[4px] hover:bg-[#F5F7F9] transition-colors disabled:text-[#C2C7CE] disabled:pointer-events-none"
+                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[4px] hover:bg-muted transition-colors disabled:text-muted-foreground/50 disabled:pointer-events-none"
                 >
                   <ChevronLeft className="w-[14px] h-[14px]" />
                 </button>
-                <span className="text-[14px] font-semibold text-[#0C0D0E] tabular-nums select-none">
+                <span className="text-[14px] font-semibold text-foreground tabular-nums select-none">
                   {viewYear}
                 </span>
                 <button
                   type="button"
                   onClick={() => setViewYear((y) => y + 1)}
                   disabled={viewYear >= currentYear}
-                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[4px] hover:bg-[#F5F7F9] transition-colors disabled:text-[#C2C7CE] disabled:pointer-events-none"
+                  className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-[4px] hover:bg-muted transition-colors disabled:text-muted-foreground/50 disabled:pointer-events-none"
                 >
                   <ChevronRight className="w-[14px] h-[14px]" />
                 </button>
@@ -290,10 +290,10 @@ export function DataToolbar({
                       className={cn(
                         "h-[32px] rounded-[4px] text-[13px] transition-colors",
                         isSelected
-                          ? "bg-primary text-white font-semibold"
+                          ? "bg-primary text-primary-foreground font-semibold"
                           : isClickable
-                            ? "text-[#0C0D0E] hover:bg-[#F5F7F9]"
-                            : "text-[#C2C7CE] cursor-default",
+                            ? "text-foreground hover:bg-muted"
+                            : "text-muted-foreground/50 cursor-default",
                       )}
                     >
                       {label}
@@ -303,7 +303,7 @@ export function DataToolbar({
               </div>
 
               {/* Divider */}
-              <div className="border-t border-[#F1F2F4] mx-[2px] mt-[10px] mb-[6px]" />
+              <div className="border-t border-border mx-[2px] mt-[10px] mb-[6px]" />
 
               {/* Shortcuts */}
               <button
@@ -312,10 +312,10 @@ export function DataToolbar({
                   onMonthJump(new Date(currentYear, currentMonth, 1));
                   setCalendarOpen(false);
                 }}
-                className="flex items-center justify-between w-full h-[32px] rounded-[4px] px-[8px] text-[13.5px] text-[#0C0D0E] hover:bg-[#F5F7F9] transition-colors"
+                className="flex items-center justify-between w-full h-[32px] rounded-[4px] px-[8px] text-[13.5px] text-foreground hover:bg-muted transition-colors"
               >
                 <span>{t("imports.goToToday")}</span>
-                <span className="text-[12px] text-[#B4BAC3]">
+                <span className="text-[12px] text-muted-foreground/60">
                   {shortMonthLabels[currentMonth]} {currentYear}
                 </span>
               </button>
@@ -327,10 +327,10 @@ export function DataToolbar({
                     onMonthJump(new Date(y, m - 1, 1));
                     setCalendarOpen(false);
                   }}
-                  className="flex items-center justify-between w-full h-[32px] rounded-[4px] px-[8px] text-[13.5px] text-[#0C0D0E] hover:bg-[#F5F7F9] transition-colors"
+                  className="flex items-center justify-between w-full h-[32px] rounded-[4px] px-[8px] text-[13.5px] text-foreground hover:bg-muted transition-colors"
                 >
                   <span>{t("imports.firstMonth")}</span>
-                  <span className="text-[12px] text-[#B4BAC3]">
+                  <span className="text-[12px] text-muted-foreground/60">
                     {shortMonthLabels[parseInt(firstMonthWithData.slice(5, 7)) - 1]} {firstMonthWithData.slice(0, 4)}
                   </span>
                 </button>
@@ -342,8 +342,8 @@ export function DataToolbar({
 
       {/* ─── Tabs bar + actions ─── */}
       <div
-        className="flex items-center bg-card"
-        style={{ borderBottom: "1px solid #EDEFF4", padding: "0 34px", gap: 18, minHeight: 52 }}
+        className="flex items-center bg-card border-b border-border"
+        style={{ padding: "0 34px", gap: 18, minHeight: 52 }}
       >
         {/* Account tabs (scrollable) */}
         {showAccountTabs && (
@@ -360,30 +360,29 @@ export function DataToolbar({
                     gap: 8,
                     padding: "0 14px",
                     marginRight: 4,
-                    borderBottom: isActive ? "2px solid #1B76FF" : "2px solid transparent",
                     background: "transparent",
                     border: "none",
                     borderBottomWidth: 2,
                     borderBottomStyle: "solid",
-                    borderBottomColor: isActive ? "#1B76FF" : "transparent",
+                    borderBottomColor: isActive ? "hsl(var(--primary))" : "transparent",
                   }}
                 >
                   <span
+                    className={isActive ? "text-primary" : "text-muted-foreground"}
                     style={{
                       font: `${isActive ? 700 : 500} 13px Inter, sans-serif`,
-                      color: isActive ? "#1B76FF" : "#4A5160",
                     }}
                   >
                     {tab.name}
                   </span>
                   <span
-                    className="tabular-nums"
+                    className={cn(
+                      "tabular-nums rounded-full",
+                      isActive ? "bg-primary/[0.12] text-primary" : "bg-muted text-muted-foreground",
+                    )}
                     style={{
-                      borderRadius: 999,
                       padding: "1px 7px",
                       font: "600 10.5px Inter, sans-serif",
-                      background: isActive ? "rgba(27,118,255,0.12)" : "#F1F3F8",
-                      color: isActive ? "#1B76FF" : "#9AA1AC",
                     }}
                   >
                     {tab.txCount}
@@ -437,22 +436,16 @@ export function DataToolbar({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex items-center cursor-pointer"
+                className={cn(
+                  "flex items-center cursor-pointer border-none",
+                  hasActiveFilters ? "text-primary bg-primary/[0.06]" : "text-muted-foreground hover:bg-muted",
+                )}
                 style={{
                   gap: 6, height: 32, padding: "0 11px", borderRadius: 9,
                   font: "600 12.5px Inter, sans-serif",
-                  color: hasActiveFilters ? "#1B76FF" : "#4A5160",
-                  background: hasActiveFilters ? "rgba(27,118,255,0.06)" : "transparent",
-                  border: "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (!hasActiveFilters) e.currentTarget.style.background = "#F4F6FB";
-                }}
-                onMouseLeave={(e) => {
-                  if (!hasActiveFilters) e.currentTarget.style.background = "transparent";
                 }}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill={hasActiveFilters ? "#1B76FF" : "#4A5160"}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M4.25 5.61C6.57 8.59 10 13 10 13v5c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-5s3.43-4.41 5.75-7.39A1 1 0 0 0 18.95 4H5.04a1 1 0 0 0-.79 1.61" />
                 </svg>
                 {t("filter")}
@@ -529,18 +522,13 @@ export function DataToolbar({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center cursor-pointer"
+                className="flex items-center cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 border-none"
                 style={{
                   gap: 6, height: 32, padding: "0 13px", borderRadius: 9,
-                  background: "#1B76FF",
                   font: "600 12.5px Inter, sans-serif",
-                  color: "#fff",
-                  border: "none",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#1668E0"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#1B76FF"; }}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" /></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" /></svg>
                 {t("imports.new")}
               </button>
             </DropdownMenuTrigger>

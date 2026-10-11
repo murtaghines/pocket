@@ -3,39 +3,40 @@ import type { Database } from "@/integrations/supabase/types";
 type MovementType = Database["public"]["Enums"]["movement_type"];
 
 export type Category =
-  | 'food'
-  | 'transport'
-  | 'housing'
-  | 'subscriptions'
-  | 'leisure'
-  | 'health'
-  | 'education'
-  | 'travel'
-  | 'other'
-  | 'income'
-  | 'transfer'
-  | 'investment'
   // Income categories
   | 'salary'
   | 'refunds'
-  | 'transfers'
   | 'other_income'
+  | 'investment'
   | 'freelance'
   | 'rents'
+  | 'transfers'
   // Expense categories
+  | 'housing'
   | 'groceries'
   | 'restaurants'
+  | 'transport'
+  | 'health'
   | 'entertainment'
   | 'shopping'
+  | 'education'
+  | 'subscriptions'
+  | 'travel'
   | 'sports'
   | 'other_expense'
   | 'pets'
+  | 'taxes'
+  | 'insurance'
+  | 'donations'
   // Transfer categories
   | 'own_transfer'
+  | 'from_myself'
   | 'to_investment'
   | 'from_investment'
   | 'to_joint_account'
-  | 'from_joint_account';
+  | 'from_joint_account'
+  | 'to_savings'
+  | 'from_savings';
 
 export type TransactionType = 'income' | 'expense' | 'transfer';
 

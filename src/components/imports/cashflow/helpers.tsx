@@ -119,18 +119,6 @@ export function isBackToOriginal(
   return true;
 }
 
-interface AuditEntry {
-  id: string;
-  entity_id: string;
-  action: string;
-  created_at: string;
-  diff_json: {
-    fields?: string[];
-    before?: Record<string, unknown>;
-    after?: Record<string, unknown>;
-  } | null;
-}
-
 export const getMovementIcon = (m: MovementType) => {
   switch (m) {
     case "INCOME":

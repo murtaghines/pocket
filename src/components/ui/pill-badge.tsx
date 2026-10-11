@@ -21,14 +21,14 @@ export type PillTone =
   | "orange";
 
 const TONE_CLASSES: Record<PillTone, string> = {
-  neutral: "bg-[rgba(138,145,156,.14)] text-[#5A6270]",
-  blue: "bg-[hsl(216_100%_94%)] text-[hsl(216_85%_38%)]",
-  green: "bg-[rgba(46,158,107,.14)] text-[#217A49]",
-  amber: "bg-[hsl(38_95%_92%)] text-[hsl(28_85%_38%)]",
-  red: "bg-[rgba(224,112,74,.14)] text-[#C24A22]",
+  neutral: "bg-muted-foreground/[0.14] text-muted-foreground",
+  blue: "bg-primary/[0.12] text-primary",
+  green: "bg-success/[0.14] text-success",
+  amber: "bg-warning/[0.14] text-warning",
+  red: "bg-destructive/[0.14] text-destructive",
   purple: "bg-[hsl(265_70%_94%)] text-[hsl(265_55%_42%)]",
   teal: "bg-[hsl(180_60%_92%)] text-[hsl(180_55%_28%)]",
-  yellow: "bg-[hsl(48_100%_90%)] text-[hsl(35_85%_32%)]",
+  yellow: "bg-warning/[0.14] text-[hsl(35_85%_32%)]",
   orange: "bg-[hsl(20_95%_92%)] text-[hsl(20_85%_38%)]",
 };
 
@@ -36,13 +36,13 @@ const TONE_CLASSES: Record<PillTone, string> = {
 // For yellow/amber the text stays dark brown to remain readable.
 const TONE_CLASSES_SOLID: Record<PillTone, string> = {
   neutral: "bg-foreground/80 text-background",
-  blue: "bg-[hsl(216_85%_52%)] text-white",
-  green: "bg-[hsl(150_65%_38%)] text-white",
-  amber: "bg-[hsl(45_100%_62%)] text-[hsl(35_90%_18%)]",
-  red: "bg-[hsl(0_72%_52%)] text-white",
+  blue: "bg-primary text-primary-foreground",
+  green: "bg-success text-success-foreground",
+  amber: "bg-warning text-warning-foreground",
+  red: "bg-destructive text-destructive-foreground",
   purple: "bg-[hsl(265_60%_55%)] text-white",
   teal: "bg-[hsl(180_55%_38%)] text-white",
-  yellow: "bg-[hsl(48_95%_55%)] text-[hsl(35_75%_18%)]",
+  yellow: "bg-warning text-warning-foreground",
   orange: "bg-[hsl(20_85%_52%)] text-white",
 };
 
