@@ -12,7 +12,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
-import { getCategoryLabel, categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import { categoryColors as categoryColorVars } from "@/lib/categoryTranslations";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { formatPeriodLabel, type Granularity } from "@/lib/analytics";
 import type { CategoryTrend } from "@/lib/analytics";
 import { formatCompactAxisNumber } from "@/lib/chartFormat";
@@ -41,6 +42,7 @@ function categoryHsl(slug: string): string {
 export function CategoryTrendChart({ trend, granularity = "month" }: CategoryTrendChartProps) {
   const { t, i18n } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
+  const { getCategoryLabel } = useCategoryTranslations();
   const periodLabel = (key: string) => formatPeriodLabel(key, granularity, i18n.language);
 
   const hasData = trend.months.length > 0 && trend.series.length > 0;

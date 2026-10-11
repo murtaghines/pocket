@@ -12,7 +12,7 @@ import { buildRuleFromCorrection } from "@/lib/userRules";
 import { findExistingActiveRule } from "@/hooks/useRulePreview";
 import { useCategorizationRules } from "@/hooks/useCategorizationRules";
 import { buildManualFingerprint } from "@/lib/transactionSource";
-import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { AddManualEntryDialog } from "../AddManualEntryDialog";
 import type { MovementType } from "./types";
 
@@ -54,6 +54,7 @@ export function ManualEntryFooter({
   const { addRule } = useCategorizationRules();
   const { formatCurrency } = useLocalization();
   const { t } = useTranslation("common");
+  const { getCategoryLabel } = useCategoryTranslations();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen ?? internalOpen;
   const setOpen = (v: boolean) => {

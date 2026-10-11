@@ -21,7 +21,10 @@
     "travel": "Travel",
     "sports": "Sports",
     "other_expense": "Other",
-    "pets": "Pets"
+    "pets": "Pets",
+    "taxes": "Taxes",
+    "insurance": "Insurance",
+    "donations": "Donations"
   },
   "transfer": {
     "own_transfer": "To Myself",

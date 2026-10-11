@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import type { AccountTab } from "./AccountSheetTabs";
 import type { MovementType } from "./types";
 
@@ -96,6 +96,7 @@ export function DataToolbar({
   globalSummary,
 }: DataToolbarProps) {
   const { t, i18n } = useTranslation("common");
+  const { getCategoryLabel } = useCategoryTranslations();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [viewYear, setViewYear] = useState(() => monthDate.getFullYear());
 

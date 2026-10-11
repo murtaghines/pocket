@@ -5,6 +5,7 @@ import {
   PlusCircle,
   TrendingUp,
   TrendingDown,
+  Landmark,
   Laptop,
   Home,
   ShoppingCart,
@@ -22,6 +23,8 @@ import {
   ArrowLeftRight,
   Users,
   PiggyBank,
+  ShieldCheck,
+  HeartHandshake,
   Circle,
   LucideIcon
 } from 'lucide-react';
@@ -52,6 +55,9 @@ const iconMap: Record<string, LucideIcon> = {
   'trending-down': TrendingDown,
   'users': Users,
   'piggy-bank': PiggyBank,
+  'landmark': Landmark,
+  'shield-check': ShieldCheck,
+  'heart-handshake': HeartHandshake,
   'circle': Circle,
 };
 

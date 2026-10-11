@@ -21,7 +21,10 @@
     "travel": "Viajes",
     "sports": "Deportes",
     "other_expense": "Otros",
-    "pets": "Mascotas"
+    "pets": "Mascotas",
+    "taxes": "Impuestos",
+    "insurance": "Seguros",
+    "donations": "Donaciones"
   },
   "transfer": {
     "own_transfer": "A Mí Mismo",

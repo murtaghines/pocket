@@ -3,7 +3,8 @@ import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocalization } from "@/hooks/useLocalization";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getCategoryLabel, categoryColors } from "@/lib/categoryTranslations";
+import { categoryColors } from "@/lib/categoryTranslations";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import type { CategoryAmount, EssentialSplit } from "@/lib/analytics";
 
 interface FixedVsDiscretionaryCardProps {
@@ -26,6 +27,7 @@ type Bucket = "essential" | "discretionary";
 export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
+  const { getCategoryLabel } = useCategoryTranslations();
   const [open, setOpen] = useState<Bucket | null>(null);
 
   const hasData = split.total > 0;
@@ -95,7 +97,7 @@ export function FixedVsDiscretionaryCard({ split }: FixedVsDiscretionaryCardProp
           {open && (
             <ul className="mt-3 space-y-1.5 border-t border-border/60 pt-3">
               {openCategories.map((c) => (
-                <CategoryRow key={c.slug} category={c} formatCurrency={formatCurrency} />
+                <CategoryRow key={c.slug} category={c} formatCurrency={formatCurrency} getCategoryLabel={getCategoryLabel} />
               ))}
             </ul>
           )}
@@ -170,9 +172,11 @@ function BucketToggle({ label, amount, pct, dotClass, open, onClick, formatCurre
 function CategoryRow({
   category,
   formatCurrency,
+  getCategoryLabel,
 }: {
   category: CategoryAmount;
   formatCurrency: (n: number) => string;
+  getCategoryLabel: (slug: string) => string;
 }) {
   return (
     <li className="flex items-center gap-2 text-[13px]">

@@ -63,8 +63,6 @@ import { getAccountDisplayName } from "@/lib/accountColors";
 import { RuleEditorDialog } from "../RuleEditorDialog";
 import type { RuleEditorPayload } from "../RuleEditorDialog";
 import {
-  getCategoryLabel,
-  getMovementLabel,
   normalizeCategory,
 } from "@/lib/categoryTranslations";
 import {
@@ -117,49 +115,22 @@ function getISOWeek(dateStr: string): number {
   return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
 }
 
-const CATEGORY_PILL_COLORS: Record<string, { color: string; bg: string }> = {
-  salary: { color: "#B98708", bg: "#FDF3E3" },
-  refunds: { color: "#2E6FB8", bg: "#EAF2FC" },
-  own_transfer: { color: "#5A6069", bg: "#EFF1F6" },
-  shopping: { color: "#4F4FB5", bg: "rgba(110,110,219,.12)" },
-  groceries: { color: "#217A49", bg: "rgba(48,166,100,.12)" },
-  subscriptions: { color: "#5344A6", bg: "rgba(110,91,203,.12)" },
-  to_joint_account: { color: "#2E6FB8", bg: "#EAF2FC" },
-  transport: { color: "#2E6FB8", bg: "rgba(59,138,224,.12)" },
-  other_expense: { color: "#656C75", bg: "rgba(127,134,143,.12)" },
-  other_income: { color: "#656C75", bg: "rgba(127,134,143,.12)" },
-  to_investment: { color: "#1F7A45", bg: "rgba(48,166,100,.12)" },
-  housing: { color: "#C04F38", bg: "rgba(208,94,72,.12)" },
-  restaurants: { color: "#B86B1C", bg: "rgba(204,127,42,.12)" },
-  health: { color: "#B5445A", bg: "rgba(200,82,110,.12)" },
-  entertainment: { color: "#8B4FAD", bg: "rgba(162,96,196,.12)" },
-  education: { color: "#1F7A9E", bg: "rgba(48,150,186,.12)" },
-  travel: { color: "#1F7A5E", bg: "rgba(48,150,114,.12)" },
-  sports: { color: "#4A7A30", bg: "rgba(86,148,52,.12)" },
-  pets: { color: "#A67A22", bg: "rgba(186,144,48,.12)" },
-  freelance: { color: "#6B4FAD", bg: "rgba(130,96,196,.12)" },
-  investment: { color: "#1F5A8E", bg: "rgba(48,110,168,.12)" },
-  rents: { color: "#B86B1C", bg: "rgba(204,127,42,.12)" },
-};
-
-function CategoryPill({ category }: { category: string }) {
-  const known = CATEGORY_PILL_COLORS[category];
-  const color = known?.color ?? "#656C75";
-  const bg = known?.bg ?? "rgba(127,134,143,.12)";
+function CategoryPill({ category, label, colorVar }: { category: string; label: string; colorVar: string }) {
+  const cssVar = `var(--${colorVar})`;
   return (
     <span
       className="inline-flex items-center max-w-full overflow-hidden"
       style={{
         gap: 6,
-        background: bg,
-        color,
+        background: `hsl(${cssVar} / 0.15)`,
+        color: `hsl(${cssVar})`,
         borderRadius: 999,
         padding: "3px 10px 3px 8px",
         font: "600 11.5px Inter, sans-serif",
       }}
     >
       <span className="rounded-full shrink-0" style={{ width: 5, height: 5, background: "currentColor" }} />
-      <span className="truncate">{getCategoryLabel(category)}</span>
+      <span className="truncate">{label}</span>
     </span>
   );
 }
@@ -226,7 +197,7 @@ export function InlineTransactionsEditor({
   const { accounts } = useAccounts();
   const { addRule, updateRule } = useCategorizationRules();
   const { formatCurrency, formatDate, formatWeekday } = useLocalization();
-  const { getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+  const { getCategoryLabel, getMovementLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
   const { t } = useTranslation("common");
 
   const splitMap = useMemo(() => buildSplitMap(accounts), [accounts]);
@@ -1052,7 +1023,7 @@ export function InlineTransactionsEditor({
     return accountGroups.map((g) => ({
       id: g.accountId ?? "__unassigned__",
       name: g.accountName,
-      color: g.accountColor ?? "#9AA1AC",
+      color: g.accountColor ?? "hsl(var(--muted-foreground))",
       txCount: g.transactions.length,
     }));
   }, [accountGroups]);
@@ -1157,13 +1128,11 @@ export function InlineTransactionsEditor({
         <div className="hidden md:block overflow-auto flex-1 min-h-0">
           {/* Sticky header */}
           <div
-            className="sticky top-0 z-10 grid items-center"
+            className="sticky top-0 z-10 grid items-center bg-muted/50 border-b border-border"
             style={{
               gridTemplateColumns: "34px 94px 54px 66px 128px 102px minmax(0,1fr) 168px 108px 36px",
               gap: 14,
               padding: "11px 34px",
-              background: "#FAFBFD",
-              borderBottom: "1px solid #EDEFF4",
             }}
           >
             <span className="flex items-center justify-center">
@@ -1171,31 +1140,31 @@ export function InlineTransactionsEditor({
                 checked={selectedIds.size > 0 ? (selectedIds.size === allVisibleIds.length ? true : "indeterminate") : false}
                 onCheckedChange={() => toggleSelectAll(allVisibleIds)}
                 aria-label="Select all"
-                style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 1.6, borderColor: "#C7CCD4" }}
+                className="w-4 h-4 rounded border-muted-foreground/40"
               />
             </span>
-            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
               {t("imports.date")}
             </span>
-            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
               {t("imports.week")}
             </span>
-            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
               {t("imports.source")}
             </span>
-            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
               {t("imports.movement")}
             </span>
-            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC", textAlign: "right" }}>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground text-right">
               {t("imports.amount")}
             </span>
-            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
               {t("imports.description")}
             </span>
-            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC" }}>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
               {t("imports.category")}
             </span>
-            <span style={{ font: "600 10.5px Inter, sans-serif", letterSpacing: "0.09em", textTransform: "uppercase", color: "#9AA1AC", textAlign: "right" }}>
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground text-right">
               {t("imports.balance")}
             </span>
             <span />
@@ -1244,8 +1213,8 @@ export function InlineTransactionsEditor({
                   displayAmount === 0
                     ? "text-muted-foreground"
                     : movement === "TRANSFER"
-                      ? "text-[#8A919C]"
-                      : "text-[#0C0D0E]";
+                      ? "text-muted-foreground"
+                      : "text-foreground";
 
                 const rowContextActions = {
                   onToggleHidden: () => handleToggleHidden(tx),
@@ -1308,11 +1277,11 @@ export function InlineTransactionsEditor({
                         gridTemplateColumns: "34px 94px 54px 66px 128px 102px minmax(0,1fr) 168px 108px 36px",
                         gap: 14,
                         padding: "12px 34px",
-                        borderBottom: "1px solid #F3F5F9",
+                        borderBottom: "1px solid hsl(var(--border) / 0.5)",
                       }}
                       onMouseEnter={(e) => {
                         if (!isMismatch && !isPending && !isHidden && !isSaved && !isSelected)
-                          e.currentTarget.style.background = "#FAFBFE";
+                          e.currentTarget.style.background = "hsl(var(--muted) / 0.4)";
                       }}
                       onMouseLeave={(e) => {
                         if (!isMismatch && !isPending && !isHidden && !isSaved && !isSelected)
@@ -1325,31 +1294,23 @@ export function InlineTransactionsEditor({
                           checked={isSelected}
                           onCheckedChange={() => toggleSelected(tx.id)}
                           aria-label="Select row"
-                          style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 1.6, borderColor: "#C7CCD4", background: "#fff" }}
+                          className="w-4 h-4 rounded border-muted-foreground/40 bg-card"
                         />
                       </span>
 
                       {/* Date */}
-                      <span className="tabular-nums whitespace-nowrap" style={{ font: "500 12.5px Inter, sans-serif", color: "#2A303A" }}>
+                      <span className="tabular-nums whitespace-nowrap text-xs font-medium text-foreground">
                         {formatDate(new Date(tx.date))}
                       </span>
 
                       {/* Week */}
-                      <span className="whitespace-nowrap" style={{ font: "500 11.5px Inter, sans-serif", color: "#9AA1AC", letterSpacing: "0.02em" }}>
+                      <span className="whitespace-nowrap text-[11.5px] font-medium text-muted-foreground tracking-wide">
                         W{getISOWeek(tx.date)}
                       </span>
 
                       {/* Source — pill */}
                       <span>
-                        <span
-                          style={{
-                            display: "inline-block", width: "fit-content",
-                            background: "#F1F3F8", color: "#5A6069",
-                            borderRadius: 6, padding: "3px 8px",
-                            font: "600 10.5px Inter, sans-serif",
-                            letterSpacing: "0.02em", textTransform: "lowercase",
-                          }}
-                        >
+                        <span className="inline-block w-fit bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-[10.5px] font-semibold tracking-wide lowercase">
                           {getSourceLabel(tx)}
                         </span>
                       </span>
@@ -1365,39 +1326,38 @@ export function InlineTransactionsEditor({
                             <SelectValue>
                               <span className="flex items-center cursor-pointer whitespace-nowrap" style={{ gap: 6 }}>
                                 <span
-                                  className="rounded-full shrink-0"
-                                  style={{
-                                    width: 7, height: 7,
-                                    background: movement === "INCOME" ? "#2E9E6B" : movement === "EXPENSE" ? "#E8542B" : "#A8AEB8",
-                                  }}
+                                  className={cn(
+                                    "w-[7px] h-[7px] rounded-full shrink-0",
+                                    movement === "INCOME" ? "bg-success" : movement === "EXPENSE" ? "bg-destructive" : "bg-muted-foreground",
+                                  )}
                                 />
-                                <span style={{
-                                  font: "500 12.5px Inter, sans-serif",
-                                  color: movement === "INCOME" ? "#1F7A45" : movement === "EXPENSE" ? "#C9502A" : "#5A6069",
-                                }}>
+                                <span className={cn(
+                                  "text-xs font-medium",
+                                  movement === "INCOME" ? "text-success" : movement === "EXPENSE" ? "text-destructive" : "text-muted-foreground",
+                                )}>
                                   {getMovementLabel(movement)}
                                 </span>
-                                <svg className="shrink-0 ml-auto" width="11" height="11" viewBox="0 0 24 24" fill="#C7CCD4"><path d="M7 10l5 5 5-5z" /></svg>
+                                <svg className="shrink-0 ml-auto text-muted-foreground/50" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z" /></svg>
                               </span>
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="INCOME">
                               <span className="flex items-center gap-1.5">
-                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-[#2E9E6B]" />
-                                <span style={{ color: "#1F7A45" }}>{getMovementLabel("INCOME")}</span>
+                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-success" />
+                                <span className="text-success">{getMovementLabel("INCOME")}</span>
                               </span>
                             </SelectItem>
                             <SelectItem value="EXPENSE">
                               <span className="flex items-center gap-1.5">
-                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-[#E8542B]" />
-                                <span style={{ color: "#C9502A" }}>{getMovementLabel("EXPENSE")}</span>
+                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-destructive" />
+                                <span className="text-destructive">{getMovementLabel("EXPENSE")}</span>
                               </span>
                             </SelectItem>
                             <SelectItem value="TRANSFER">
                               <span className="flex items-center gap-1.5">
-                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-[#A8AEB8]" />
-                                <span style={{ color: "#5A6069" }}>{getMovementLabel("TRANSFER")}</span>
+                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-muted-foreground" />
+                                <span className="text-muted-foreground">{getMovementLabel("TRANSFER")}</span>
                               </span>
                             </SelectItem>
                           </SelectContent>
@@ -1406,12 +1366,10 @@ export function InlineTransactionsEditor({
 
                       {/* Amount — double-click to edit */}
                       <span
-                        className="tabular-nums whitespace-nowrap"
-                        style={{
-                          textAlign: "right",
-                          font: "500 12.5px Inter, sans-serif",
-                          color: movement === "TRANSFER" ? "#5A6069" : "#0C0D0E",
-                        }}
+                        className={cn(
+                          "tabular-nums whitespace-nowrap text-right text-xs font-medium",
+                          movement === "TRANSFER" ? "text-muted-foreground" : "text-foreground",
+                        )}
                         onDoubleClick={() => {
                           if (isHidden) return;
                           setEditingAmountId(tx.id);
@@ -1490,7 +1448,7 @@ export function InlineTransactionsEditor({
                                 isHidden && "line-through",
                               )}
                               title={cleanDescription}
-                              style={{ font: "500 13.5px Inter, sans-serif", color: "#0C0D0E" }}
+                              style={{ font: "500 13.5px Inter, sans-serif", color: "hsl(var(--foreground))" }}
                             >
                               {cleanDescription}
                             </span>
@@ -1510,8 +1468,8 @@ export function InlineTransactionsEditor({
                           <SelectTrigger className="h-auto w-full border-0 bg-transparent hover:bg-transparent focus:ring-0 p-0 [&_[data-radix-select-icon]]:hidden">
                             <SelectValue>
                               <span className="flex items-center cursor-pointer min-w-0" style={{ gap: 6 }}>
-                                <CategoryPill category={category} />
-                                <svg className="shrink-0" width="11" height="11" viewBox="0 0 24 24" fill="#C7CCD4"><path d="M7 10l5 5 5-5z" /></svg>
+                                <CategoryPill category={category} label={getCategoryLabel(category)} colorVar={getCategoryColor(category)} />
+                                <svg className="shrink-0 text-muted-foreground/50" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z" /></svg>
                               </span>
                             </SelectValue>
                           </SelectTrigger>
@@ -1529,7 +1487,7 @@ export function InlineTransactionsEditor({
                       </span>
 
                       {/* Balance */}
-                      <span className="tabular-nums whitespace-nowrap" style={{ textAlign: "right", font: "500 12.5px Inter, sans-serif", color: "#5A6069" }}>
+                      <span className="tabular-nums whitespace-nowrap text-right text-xs font-medium text-muted-foreground">
                         {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!, undefined, true) : "—"}
                       </span>
 
@@ -1561,7 +1519,7 @@ export function InlineTransactionsEditor({
                               <button
                                 type="button"
                                 className="inline-flex items-center justify-center cursor-pointer"
-                                style={{ color: "#C7CCD4" }}
+                                className="text-muted-foreground/50"
                               >
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" /></svg>
                               </button>

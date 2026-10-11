@@ -32,7 +32,7 @@ describe('mapCategorySlug', () => {
     expect(mapCategorySlug('investments_income')).toBe('investment');
     expect(mapCategorySlug('rental_income')).toBe('rents');
     expect(mapCategorySlug('transfers_in')).toBe('own_transfer');
-    expect(mapCategorySlug('taxes')).toBe('other_expense');
+    expect(mapCategorySlug('taxes')).toBe('taxes');
   });
 
   it('passes through unknown / already-app slugs unchanged', () => {

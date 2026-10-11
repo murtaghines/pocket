@@ -43,11 +43,8 @@ import { getAccountDisplayName } from "@/lib/accountColors";
 import { isManualTransaction } from "@/lib/transactionSource";
 import type { Account } from "@/hooks/useAccounts";
 import { getCategoriesForMovement } from "./helpers";
-import {
-  getCategoryLabel,
-  getMovementLabel,
-  normalizeCategory,
-} from "@/lib/categoryTranslations";
+import { normalizeCategory } from "@/lib/categoryTranslations";
+import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import type { MonthTransaction, PendingEditShape, MovementType } from "./types";
 
 const LABEL = "text-[12px] font-medium text-primary/70 mb-1.5";
@@ -88,6 +85,7 @@ export function TransactionEditDrawer({
   originalSnapshot,
 }: TransactionEditDrawerProps) {
   const { t } = useTranslation("common");
+  const { getCategoryLabel, getMovementLabel } = useCategoryTranslations();
 
   const [movement, setMovement] = useState<MovementType>("EXPENSE");
   const [category, setCategory] = useState("");

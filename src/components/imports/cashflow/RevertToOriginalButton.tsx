@@ -19,6 +19,7 @@ export interface RevertToOriginalButtonProps {
   current: Record<string, unknown>;
   formatCurrency: (n: number) => string;
   getCategoryLabel: (slug: string) => string;
+  getMovementLabel: (m: string) => string;
   onConfirm: () => void;
 }
 
@@ -28,6 +29,7 @@ export function RevertToOriginalButton({
   current,
   formatCurrency,
   getCategoryLabel,
+  getMovementLabel,
   onConfirm,
 }: RevertToOriginalButtonProps) {
   // Hide overlapping field labels (category + category_id collapse to "Category")
@@ -73,11 +75,11 @@ export function RevertToOriginalButton({
                       {FIELD_LABELS[f] || f}:
                     </span>
                     <span className="line-through text-muted-foreground/70">
-                      {formatAuditValue(f, current[f], formatCurrency, getCategoryLabel)}
+                      {formatAuditValue(f, current[f], formatCurrency, getCategoryLabel, getMovementLabel)}
                     </span>
                     <span className="text-muted-foreground">→</span>
                     <span className="font-medium text-primary">
-                      {formatAuditValue(f, original[f], formatCurrency, getCategoryLabel)}
+                      {formatAuditValue(f, original[f], formatCurrency, getCategoryLabel, getMovementLabel)}
                     </span>
                   </div>
                 ))}
