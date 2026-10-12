@@ -94,6 +94,7 @@ function GroupShell({
   onDelete,
   children,
 }: GroupShellProps) {
+  const { t } = useTranslation('settings');
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
       {/* Group header band — Airtable style */}
@@ -124,11 +125,11 @@ function GroupShell({
         </span>
         {isCustom && (
           <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-background/80 text-foreground/70 font-semibold shrink-0">
-            Custom
+            {t('categories.custom')}
           </span>
         )}
         <span className="text-[11px] text-muted-foreground tabular-nums ml-1">
-          {ruleCount} {ruleCount === 1 ? 'rule' : 'rules'}
+          {t('categories.rulesCount', { count: ruleCount })}
         </span>
 
         <div className="ml-auto flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
@@ -196,10 +197,10 @@ function GroupShell({
           {/* Column headers — Match type + Pattern only (row actions appear on hover) */}
           <div className="grid grid-cols-[140px_1fr_72px] items-center gap-3 px-3 py-1.5 border-b border-border/60 bg-muted/20">
             <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-              Match type
+              {t('categories.matchTypeHeader')}
             </span>
             <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-              Pattern
+              {t('categories.patternHeader')}
             </span>
             <span />
           </div>
@@ -297,6 +298,7 @@ function RuleRow({ matchType, pattern, accent, onEdit, onDelete, placeholder, ap
 }
 
 function AddRuleRow({ accent, onAdd }: { accent: string; onAdd: () => void }) {
+  const { t } = useTranslation('settings');
   return (
     <button
       type="button"
@@ -304,7 +306,7 @@ function AddRuleRow({ accent, onAdd }: { accent: string; onAdd: () => void }) {
       className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors"
     >
       <Plus className="w-3.5 h-3.5" style={{ color: accent }} />
-      <span>Add rule</span>
+      <span>{t('categories.addRuleAction')}</span>
     </button>
   );
 }
@@ -467,7 +469,7 @@ export function CategoryRulesList({
 
       {categories.length === 0 && customCategories.length === 0 && (
         <div className="lg:col-span-2 rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
-          No categories yet.
+          {t('categories.noCategoriesYet')}
         </div>
       )}
 
