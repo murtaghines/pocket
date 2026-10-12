@@ -9,8 +9,7 @@ import { useCustomCategories, type CustomCategoryRule } from '@/hooks/useCustomC
 import { CategoryRulesList } from './CategoryRulesList';
 import { AddRuleDialog } from './AddRuleDialog';
 import { CreateCategoryDialog } from './CreateCategoryDialog';
-import { SuggestedRulesSection } from './SuggestedRulesSection';
-import { ReviewQueueSection } from './ReviewQueueSection';
+import { SuggestionsSection } from './SuggestionsSection';
 import { useCategorizationCoverage } from '@/hooks/useCategorizationCoverage';
 import { useToast } from '@/hooks/use-toast';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
@@ -213,9 +212,12 @@ export function CategoriesEditor() {
             })}
           </div>
 
-          {/* Right cluster — search + total rules */}
+          {/* Right cluster — coverage + total rules */}
           <div className="hidden md:flex items-center gap-3 px-3 border-l border-border/40">
             <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {coverage && coverage.total > 0 && (
+                <>{t('categories.coverageInline', { percent: coverage.percent })} · </>
+              )}
               {t('categories.rulesTotal', { count: totalRules })}
             </span>
           </div>
@@ -225,37 +227,8 @@ export function CategoriesEditor() {
       {/* ============= Workspace ============= */}
       <div className="flex-1 px-6 md:px-10 py-6 md:py-8 space-y-4">
 
-        {!isLoading && coverage && coverage.total > 0 && (
-          <div className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-foreground">{t('categories.categorizationCoverage')}</span>
-                <span className="text-sm font-semibold text-foreground">{coverage.percent}%</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-500",
-                    coverage.percent >= 90 ? "bg-success" : coverage.percent >= 70 ? "bg-warning" : "bg-destructive",
-                  )}
-                  style={{ width: `${coverage.percent}%` }}
-                />
-              </div>
-              <span className="text-xs text-muted-foreground mt-1 block">
-                {t('categories.coverageDetail', { highConfidence: coverage.highConfidence, total: coverage.total })}
-              </span>
-            </div>
-          </div>
-        )}
         {!isLoading && (
-          <ReviewQueueSection
-            incomeCategories={incomeCategories}
-            expenseCategories={expenseCategories}
-            transferCategories={transferCategories}
-          />
-        )}
-        {!isLoading && (
-          <SuggestedRulesSection
+          <SuggestionsSection
             incomeCategories={incomeCategories}
             expenseCategories={expenseCategories}
             transferCategories={transferCategories}

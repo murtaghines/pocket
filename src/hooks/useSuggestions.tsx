@@ -3,37 +3,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { normalize } from "@/lib/userRules";
 
-export interface ReviewGroup {
+export interface Suggestion {
   key: string;
   pattern: string;
   movement: string;
-  category: string;
-  confidence: number;
   count: number;
   totalAmount: number;
   transactionIds: string[];
+  matchedTransactions: { id: string; date: string }[];
 }
 
-const MAX_GROUPS = 15;
+const MIN_OCCURRENCES = 3;
+const MAX_SUGGESTIONS = 15;
 
-export function useReviewQueue() {
+export function useSuggestions() {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["review-queue", user?.id],
+    queryKey: ["suggestions", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
-        .select("id, description, description_norm, movement, category, amount, confidence")
+        .select("id, description, description_norm, movement, date, amount")
         .eq("user_id", user!.id)
-        .lte("confidence", 0.5)
-        .eq("is_hidden", false)
+        .in("categorized_by", ["ai", "sign_fallback"])
         .order("date", { ascending: false })
         .limit(1000);
       if (error) throw error;
 
-      const groups = new Map<string, ReviewGroup>();
+      const groups = new Map<string, Suggestion>();
       for (const tx of data || []) {
         const raw = (tx.description_norm || tx.description || "").trim();
         if (!raw || !tx.movement) continue;
@@ -43,23 +42,24 @@ export function useReviewQueue() {
           existing.count++;
           existing.totalAmount += Math.abs(tx.amount);
           existing.transactionIds.push(tx.id);
+          existing.matchedTransactions.push({ id: tx.id, date: tx.date as string });
         } else {
           groups.set(key, {
             key,
             pattern: tx.description || tx.description_norm || raw,
             movement: tx.movement,
-            category: tx.category,
-            confidence: tx.confidence ?? 0,
             count: 1,
             totalAmount: Math.abs(tx.amount),
             transactionIds: [tx.id],
+            matchedTransactions: [{ id: tx.id, date: tx.date as string }],
           });
         }
       }
 
       return [...groups.values()]
-        .sort((a, b) => b.totalAmount - a.totalAmount)
-        .slice(0, MAX_GROUPS);
+        .filter((g) => g.count >= MIN_OCCURRENCES)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, MAX_SUGGESTIONS);
     },
     staleTime: 60_000,
   });
