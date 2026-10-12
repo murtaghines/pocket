@@ -1591,7 +1591,7 @@ serve(async (req) => {
       // were dropped — `movement` and `account_id` are the single sources of truth.
       const confidenceMap: Record<string, number> = {
         user: 1.0, user_rule: 0.99, reconciler: 0.95,
-        categorizer: 0.85, ai: 0.50, sign_fallback: 0.20,
+        dictionary: 0.90, categorizer: 0.85, ai: 0.50, sign_fallback: 0.20,
       };
       const confidence = confidenceMap[categorizedBy] ?? 0.50;
 
