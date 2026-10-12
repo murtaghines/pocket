@@ -68,7 +68,7 @@ export default function MyData() {
   // scroll, so they must NOT be fullBleed (fullBleed locks document scroll via
   // DashboardLayout, which would trap their content below the first viewport on mobile with
   // no way to reach it).
-  const isFullBleedTab = tab === "transactions";
+  const isFullBleedTab = tab === "transactions" || tab === "categories";
 
   return (
     <DashboardLayout fullBleed={isFullBleedTab}>
