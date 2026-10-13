@@ -147,6 +147,8 @@
     "defaultLocked": "Default",
     "colorLabel": "COLOR",
     "iconLabel": "ICON",
+    "nameLabel": "NAME",
+    "builtInExamples": "Auto-detected patterns",
     "bannerSubtitle": "{{ruleCount}} rules · {{catCount}} categories",
     "matchInfoTitle": "Match types",
     "createRulePopupDesc_one": "\"{{pattern}}\" matches {{count}} existing transaction.",

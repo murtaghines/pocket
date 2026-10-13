@@ -21,25 +21,29 @@ interface CategoryEditorPopoverProps {
   isCustom: boolean;
   currentColor: string;
   currentIcon: string;
-  onSave: (color: string, icon: string) => void;
+  currentName?: string;
+  onSave: (color: string, icon: string, name?: string) => void;
   onClose: () => void;
 }
 
 export function CategoryEditorPopover({
   currentColor,
   currentIcon,
+  currentName,
   onSave,
   onClose,
 }: CategoryEditorPopoverProps) {
   const { t } = useTranslation('settings');
   const [color, setColor] = useState(currentColor);
   const [icon, setIcon] = useState(currentIcon);
+  const [name, setName] = useState(currentName ?? '');
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setColor(currentColor);
     setIcon(currentIcon);
-  }, [currentColor, currentIcon]);
+    setName(currentName ?? '');
+  }, [currentColor, currentIcon, currentName]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -69,6 +73,34 @@ export function CategoryEditorPopover({
         }}
       >
         <div style={{ padding: '14px 16px 16px' }}>
+          {/* Name section */}
+          <div className="mb-3.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.07em]" style={{ color: '#9AA1AC' }}>
+              {t('categories.nameLabel', 'NAME')}
+            </span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => {
+                const trimmed = name.trim();
+                if (trimmed && trimmed !== currentName) {
+                  onSave(color, icon, trimmed);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const trimmed = name.trim();
+                  if (trimmed && trimmed !== currentName) {
+                    onSave(color, icon, trimmed);
+                  }
+                }
+              }}
+              className="w-full mt-1.5 text-[13px] font-medium px-2.5 py-[6px] rounded-lg border outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30"
+              style={{ borderColor: '#E5E7EB', color: '#0C0D0E' }}
+            />
+          </div>
+
           {/* Color section */}
           <div className="mb-3.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.07em]" style={{ color: '#9AA1AC' }}>
@@ -90,7 +122,7 @@ export function CategoryEditorPopover({
                     }}
                     onClick={() => {
                       setColor(c);
-                      onSave(c, icon);
+                      onSave(c, icon, name.trim() || undefined);
                     }}
                   />
                 );
@@ -119,7 +151,7 @@ export function CategoryEditorPopover({
                     }}
                     onClick={() => {
                       setIcon(ic);
-                      onSave(color, ic);
+                      onSave(color, ic, name.trim() || undefined);
                     }}
                   >
                     {renderIcon(ic, 16)}

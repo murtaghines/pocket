@@ -147,6 +147,8 @@
     "defaultLocked": "Por defecto",
     "colorLabel": "COLOR",
     "iconLabel": "ICONO",
+    "nameLabel": "NOMBRE",
+    "builtInExamples": "Patrones detectados automáticamente",
     "bannerSubtitle": "{{ruleCount}} reglas · {{catCount}} categorías",
     "matchInfoTitle": "Tipos de coincidencia",
     "createRulePopupDesc_one": "\"{{pattern}}\" coincide con {{count}} transacción existente.",

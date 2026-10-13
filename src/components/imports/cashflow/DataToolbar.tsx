@@ -141,8 +141,7 @@ export function DataToolbar({
         {/* Left side */}
         <div className="flex-1 min-w-0">
           <h1
-            className="text-white leading-none select-none"
-            style={{ fontWeight: 600, fontSize: 19, letterSpacing: "-0.01em", margin: 0 }}
+            className="text-[21px] font-semibold text-white leading-none tracking-[-0.01em] select-none"
           >
             {monthLabel}
           </h1>

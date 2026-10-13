@@ -22,6 +22,7 @@ import { AccountScopeSelect } from '@/components/imports/AccountScopeSelect';
 import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
 import { getAccountDisplayName } from '@/lib/accountColors';
+import { categoryExamples } from '@/lib/categoryExamples';
 import type { Database } from '@/integrations/supabase/types';
 import type { MatchType } from '@/lib/userRules';
 
@@ -113,10 +114,12 @@ export function CategoriesEditor() {
   const categoryList = useMemo(() => {
     const items: SelectedCategory[] = [];
     for (const cat of activeData.cats) {
+      const slug = cat.slug || cat.name;
+      const override = getVisualOverride(slug);
       items.push({
         id: cat.id,
-        name: getCategoryLabel(cat.slug || cat.name),
-        slug: cat.slug || cat.name,
+        name: override?.name || getCategoryLabel(slug),
+        slug,
         movement: (cat.movement_type as string) || activeData.movement,
         isCustom: false,
       });
@@ -410,10 +413,10 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '18px 34px 62px' }}>
+      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 62px' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[19px] font-semibold text-white leading-none" style={{ letterSpacing: '-0.01em' }}>
+            <h1 className="text-[21px] font-semibold text-white leading-none tracking-[-0.01em]">
               {t('categories.title')}
             </h1>
             <p
@@ -425,9 +428,8 @@ export function CategoriesEditor() {
           </div>
           {/* Segmented tab control */}
           <div
-            className="flex items-center gap-0.5"
+            className="flex bg-white/[0.16] rounded-[12px] p-[4px] gap-[2px]"
             role="tablist"
-            style={{ background: 'rgba(255,255,255,.16)', borderRadius: 12, padding: 4 }}
           >
             {(['expense', 'income', 'transfer'] as TabKey[]).map((tab) => {
               const active = tab === activeTab;
@@ -440,10 +442,10 @@ export function CategoriesEditor() {
                   aria-selected={active}
                   onClick={() => handleSelectTab(tab)}
                   className={cn(
-                    'flex items-center gap-1.5 px-4 py-1.5 text-[13px] rounded-[9px] transition-all',
+                    'flex items-center gap-1.5 px-[13px] h-[28px] rounded-[9px] text-[13px] transition-colors',
                     active
-                      ? 'bg-white text-primary font-semibold shadow-sm'
-                      : 'text-white/90 font-medium hover:bg-white/10',
+                      ? 'bg-white text-primary font-semibold'
+                      : 'text-white/85 font-medium hover:bg-white/10',
                   )}
                 >
                   <span>{label}</span>
@@ -469,7 +471,7 @@ export function CategoriesEditor() {
       >
         <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
-          <div className="flex flex-col gap-4 h-full">
+          <div className="flex flex-col gap-4 h-full overflow-hidden">
             {/* New Category card */}
             <button
               type="button"
@@ -650,7 +652,7 @@ export function CategoriesEditor() {
 
                     {/* Name + meta */}
                     <div className="flex-1 min-w-0">
-                      <h2 className="font-title text-[20px] font-bold text-foreground truncate">
+                      <h2 className="text-[20px] font-bold text-foreground truncate">
                         {selected.name}
                       </h2>
                       <div className="flex items-center gap-2.5 mt-1 flex-wrap">
@@ -687,8 +689,9 @@ export function CategoriesEditor() {
                         return override?.color || '203 60% 51%';
                       })()}
                       currentIcon={selectedIcon}
-                      onSave={async (color, icon) => {
-                        await setVisualOverride(selected.slug, color, icon);
+                      currentName={selected.name}
+                      onSave={async (color, icon, name) => {
+                        await setVisualOverride(selected.slug, color, icon, name);
                         setShowEditorPopover(false);
                       }}
                       onClose={() => setShowEditorPopover(false)}
@@ -702,7 +705,7 @@ export function CategoriesEditor() {
                   <div style={{ padding: '16px 22px 14px' }}>
                     {/* Rules header */}
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-title text-[15px] font-bold" style={{ color: '#0C0D0E' }}>
+                      <h3 className="text-[15px] font-bold" style={{ color: '#0C0D0E' }}>
                         {t('categories.categorizationRules')}
                       </h3>
                       <div className="flex-1" />
@@ -853,6 +856,26 @@ export function CategoriesEditor() {
                       ))}
                     </div>
 
+                    {/* Built-in pattern examples for default categories */}
+                    {!selected.isCustom && categoryExamples[selected.slug] && (
+                      <div className="mt-3 mb-1">
+                        <span className="text-[10.5px] font-semibold uppercase tracking-[.07em]" style={{ color: '#B4BAC3' }}>
+                          {t('categories.builtInExamples', 'Auto-detected patterns')}
+                        </span>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {categoryExamples[selected.slug].map((ex) => (
+                            <span
+                              key={ex}
+                              className="text-[11.5px] font-medium px-2.5 py-1 rounded-[7px]"
+                              style={{ background: '#F1F3F8', color: '#9AA1AC' }}
+                            >
+                              {ex}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Add rule inline */}
                     {!selected.isCustom && (
                       <div className="mt-2">
@@ -984,7 +1007,7 @@ export function CategoriesEditor() {
                   <div style={{ padding: '4px 22px 16px' }}>
                     <div className="flex items-center gap-2 mb-2">
                       <Calendar size={14} style={{ color: '#5A6069' }} />
-                      <span className="font-title text-[14px] font-bold" style={{ color: '#0C0D0E' }}>
+                      <span className="text-[14px] font-bold" style={{ color: '#0C0D0E' }}>
                         {t('categories.recentTransactions')}
                       </span>
                     </div>
