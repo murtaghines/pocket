@@ -56,7 +56,7 @@
     "exact": "Exact Match",
     "regex": "Regex (Advanced)",
     "advancedOptions": "Advanced options",
-    "matchHelp_SMART": "Works even if the bank description varies slightly. Recommended.",
+    "matchHelp_SMART": "Works even if the bank description varies slightly. Auto-created from suggestions.",
     "matchHelp_CONTAINS": "Description must include this text exactly as written.",
     "matchHelp_STARTS_WITH": "Description must begin with this text.",
     "matchHelp_ENDS_WITH": "Description must end with this text.",
@@ -146,7 +146,11 @@
     "deleteCustomCategory": "Delete category",
     "defaultLocked": "Default",
     "colorLabel": "COLOR",
-    "iconLabel": "ICON"
+    "iconLabel": "ICON",
+    "bannerSubtitle": "{{ruleCount}} rules · {{catCount}} categories",
+    "matchInfoTitle": "Match types",
+    "createRulePopupDesc_one": "\"{{pattern}}\" matches {{count}} existing transaction.",
+    "createRulePopupDesc_other": "\"{{pattern}}\" matches {{count}} existing transactions."
   },
   "notifications": {
     "title": "Notifications",

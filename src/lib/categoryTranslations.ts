@@ -127,6 +127,42 @@ export const categoryColors: Record<string, string> = {
   from_savings: 'category-from-savings',
 };
 
+// Raw HSL values mirroring the CSS variables in index.css (.dashboard-theme).
+// Used by JS code that needs to compute alpha channels on category colors.
+export const categoryHslValues: Record<string, string> = {
+  'category-salary': '47 100% 57%',
+  'category-refunds': '200 85% 55%',
+  'category-transfers': '216 100% 55%',
+  'category-other-income': '220 10% 55%',
+  'category-investment': '216 75% 42%',
+  'category-freelance': '260 60% 62%',
+  'category-rents': '35 90% 60%',
+  'category-housing': '14 80% 58%',
+  'category-groceries': '145 55% 42%',
+  'category-restaurants': '22 95% 58%',
+  'category-transport': '210 80% 55%',
+  'category-health': '355 70% 55%',
+  'category-entertainment': '280 65% 60%',
+  'category-shopping': '240 65% 62%',
+  'category-education': '190 80% 42%',
+  'category-subscriptions': '250 55% 55%',
+  'category-travel': '170 70% 38%',
+  'category-sports': '95 55% 38%',
+  'category-other-expense': '220 10% 55%',
+  'category-pets': '30 85% 55%',
+  'category-taxes': '52 60% 44%',
+  'category-insurance': '305 50% 52%',
+  'category-donations': '340 58% 52%',
+  'category-own-transfer': '220 12% 50%',
+  'category-from-myself': '220 10% 65%',
+  'category-to-investment': '216 75% 42%',
+  'category-from-investment': '216 60% 55%',
+  'category-to-joint-account': '200 85% 50%',
+  'category-from-joint-account': '200 70% 58%',
+  'category-to-savings': '160 55% 40%',
+  'category-from-savings': '160 45% 52%',
+};
+
 // Legacy slug mapping - maps old/incorrect slugs to correct ones
 const legacySlugMap: Record<string, string> = {
   'investments_income': 'investment',

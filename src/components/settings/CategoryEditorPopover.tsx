@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CURATED_COLORS } from '@/lib/categoryPalette';
 import { getLucideIcon } from '@/lib/lucideIcon';
 
-const POPOVER_COLORS = CURATED_COLORS.slice(0, 10);
+const POPOVER_COLORS = CURATED_COLORS;
 
 const POPOVER_ICONS = [
   'briefcase', 'house', 'shopping-cart', 'utensils', 'car', 'heart-pulse',
@@ -60,7 +60,7 @@ export function CategoryEditorPopover({
     <div
       ref={ref}
       className="absolute z-30"
-      style={{ left: 0, top: 68, width: 296 }}
+      style={{ left: 0, top: 68, width: 320 }}
     >
       <div
         className="bg-card rounded-xl overflow-hidden"
@@ -74,7 +74,7 @@ export function CategoryEditorPopover({
             <span className="text-[10px] font-semibold uppercase tracking-[0.07em]" style={{ color: '#9AA1AC' }}>
               {t('categories.colorLabel')}
             </span>
-            <div className="flex items-center gap-[7px] mt-2">
+            <div className="grid grid-cols-12 gap-[6px] mt-2">
               {POPOVER_COLORS.map((c) => {
                 const isActive = color === c;
                 return (

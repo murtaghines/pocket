@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Plus, Lock, Trash2, Info, Sparkles, Calendar, Code2, ChevronDown, Pencil, ArrowRight } from 'lucide-react';
+import { Plus, Lock, Trash2, Info, Sparkles, Calendar, Code2, ChevronDown, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { useCategories } from '@/hooks/useCategories';
@@ -17,6 +17,8 @@ import { AddRuleDialog } from './AddRuleDialog';
 import { RetroactiveApplyOptions } from './RetroactiveApplyOptions';
 import { filterByScope, type RetroScope } from '@/hooks/useRetroactiveApply';
 import { CategoryEditorPopover } from './CategoryEditorPopover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AccountScopeSelect } from '@/components/imports/AccountScopeSelect';
 import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
 import { getAccountDisplayName } from '@/lib/accountColors';
@@ -46,6 +48,14 @@ const MATCH_TYPE_LABEL: Record<string, string> = {
   REGEX: 'REGEX',
 };
 
+const MATCH_TYPE_INFO = [
+  { key: 'SMART', label: 'SMART', helpKey: 'matchHelp_SMART' },
+  { key: 'CONTAINS', label: 'CONTAINS', helpKey: 'matchHelp_CONTAINS' },
+  { key: 'STARTS_WITH', label: 'STARTS WITH', helpKey: 'matchHelp_STARTS_WITH' },
+  { key: 'EXACT', label: 'EXACT', helpKey: 'matchHelp_EXACT' },
+  { key: 'REGEX', label: 'REGEX', helpKey: 'matchHelp_REGEX' },
+] as const;
+
 function RenderIcon({ name, size = 18 }: { name: string; size?: number }) {
   const I = getLucideIcon(name);
   return I ? <I size={size} strokeWidth={2} /> : null;
@@ -55,7 +65,7 @@ export function CategoriesEditor() {
   const { t } = useTranslation('settings');
   const { toast } = useToast();
   const { formatCurrency, formatDateShort } = useLocalization();
-  const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+  const { getCategoryLabel, getCategoryIcon, getCategoryColor, getCategoryHsl } = useCategoryTranslations();
   const { incomeCategories, expenseCategories, transferCategories, isLoading: catsLoading } = useCategories('CASHFLOW');
   const { rules, isLoading: rulesLoading, addRule, updateRule, deleteRule, getRulesForCategory } = useCategorizationRules();
   const { customCategories, isSaving, addCustomCategory, updateCustomCategory, removeRule: removeCustomRule, rules: allCustomRules, getVisualOverride, setVisualOverride } = useCustomCategories();
@@ -72,9 +82,11 @@ export function CategoriesEditor() {
   const [newPattern, setNewPattern] = useState('');
   const [newMatchType, setNewMatchType] = useState<string>('CONTAINS');
   const [showMatchTypeDropdown, setShowMatchTypeDropdown] = useState(false);
-  const [showRetroOptions, setShowRetroOptions] = useState(false);
+  const [showCreateRulePopup, setShowCreateRulePopup] = useState(false);
   const [retroScope, setRetroScope] = useState<RetroScope>('all');
   const [customSince, setCustomSince] = useState('');
+  const [newRuleAccountScope, setNewRuleAccountScope] = useState<string[] | null>(null);
+  const [showInfoPopover, setShowInfoPopover] = useState(false);
 
   // Edit rule via dialog
   const [editDialogState, setEditDialogState] = useState<{
@@ -85,6 +97,7 @@ export function CategoriesEditor() {
   const isLoading = catsLoading || rulesLoading;
 
   const accountNameById = useMemo(() => new Map(accounts.map(a => [a.id, getAccountDisplayName(a)])), [accounts]);
+  const activeAccounts = useMemo(() => accounts.filter(a => !a.archived), [accounts]);
 
   const incomeCustom = useMemo(() => customCategories.filter(c => c.movement === 'INCOME'), [customCategories]);
   const expenseCustom = useMemo(() => customCategories.filter(c => c.movement === 'EXPENSE'), [customCategories]);
@@ -130,17 +143,19 @@ export function CategoriesEditor() {
 
   const selected = useMemo(() => categoryList.find(c => c.id === effectiveSelected) || null, [categoryList, effectiveSelected]);
 
-  // Resolve visual properties for the selected category
-  const selectedColor = useMemo(() => {
-    if (!selected) return '#1B76FF';
+  // Raw HSL values for the selected category (e.g. "210 80% 55%")
+  const selectedHsl = useMemo(() => {
+    if (!selected) return '216 100% 55%';
     if (selected.isCustom) {
       const custom = activeData.custom.find(c => c.slug === selected.slug);
-      return custom?.color ? `hsl(${custom.color})` : '#1B76FF';
+      return custom?.color || '216 100% 55%';
     }
     const override = getVisualOverride(selected.slug);
-    if (override?.color) return `hsl(${override.color})`;
-    return `hsl(var(--${getCategoryColor(selected.slug)}))`;
-  }, [selected, activeData.custom, getVisualOverride, getCategoryColor]);
+    if (override?.color) return override.color;
+    return getCategoryHsl(selected.slug);
+  }, [selected, activeData.custom, getVisualOverride, getCategoryHsl]);
+
+  const selectedColor = `hsl(${selectedHsl})`;
 
   const selectedIcon = useMemo(() => {
     if (!selected) return 'circle';
@@ -197,25 +212,43 @@ export function CategoriesEditor() {
     tokens: previewTokens,
     movement: selected?.movement || 'EXPENSE',
     accountIds: null,
-    enabled: !!selected && newPattern.trim().length > 0 && !showRetroOptions,
+    enabled: !!selected && newPattern.trim().length > 0 && !showCreateRulePopup,
   });
 
   const handleSelectTab = useCallback((tab: TabKey) => {
     setActiveTab(tab);
     setSelectedId(null);
     setNewPattern('');
-    setShowRetroOptions(false);
+    setShowCreateRulePopup(false);
   }, []);
 
   const handleAddRuleInline = useCallback(() => {
     if (!selected || !newPattern.trim()) return;
-    if (previewMatched.length > 0 && !showRetroOptions) {
-      setShowRetroOptions(true);
+    if (previewMatched.length > 0 || activeAccounts.length > 1) {
+      setShowCreateRulePopup(true);
       return;
     }
-    const filteredIds = showRetroOptions
+    addRule.mutate(
+      {
+        category_id: selected.id,
+        pattern: newPattern.trim().toLowerCase(),
+        match_type: newMatchType,
+      },
+      {
+        onSuccess: () => {
+          toast({ title: t('categories.ruleSaved') });
+          setNewPattern('');
+        },
+      },
+    );
+  }, [selected, newPattern, newMatchType, previewMatched, activeAccounts, addRule, toast, t]);
+
+  const handleCreateRuleFromPopup = useCallback(() => {
+    if (!selected || !newPattern.trim()) return;
+    const filteredIds = previewMatched.length > 0
       ? filterByScope(previewMatched, retroScope, customSince ? customSince + '-01' : undefined)
       : undefined;
+    const ruleAccountId = newRuleAccountScope && newRuleAccountScope.length === 1 ? newRuleAccountScope[0] : null;
 
     addRule.mutate(
       {
@@ -223,6 +256,7 @@ export function CategoriesEditor() {
         pattern: newPattern.trim().toLowerCase(),
         match_type: newMatchType,
         matchingTransactionIds: filteredIds,
+        account_id: ruleAccountId,
       },
       {
         onSuccess: () => {
@@ -232,13 +266,14 @@ export function CategoriesEditor() {
             toast({ title: t('categories.ruleSaved') });
           }
           setNewPattern('');
-          setShowRetroOptions(false);
+          setShowCreateRulePopup(false);
           setRetroScope('all');
           setCustomSince('');
+          setNewRuleAccountScope(null);
         },
       },
     );
-  }, [selected, newPattern, newMatchType, previewMatched, showRetroOptions, retroScope, customSince, addRule, toast, t]);
+  }, [selected, newPattern, newMatchType, previewMatched, retroScope, customSince, newRuleAccountScope, addRule, toast, t]);
 
   const handleDeleteRule = useCallback((ruleId: string) => {
     deleteRule.mutate(ruleId, {
@@ -314,16 +349,20 @@ export function CategoriesEditor() {
     );
   }, [selected, addRule, toast, t]);
 
-  // Resolve color hex for sidebar items
-  const getItemColor = useCallback((item: SelectedCategory) => {
+  // Raw HSL for sidebar items (for alpha computation)
+  const getItemHsl = useCallback((item: SelectedCategory): string => {
     if (item.isCustom) {
       const custom = activeData.custom.find(c => c.slug === item.slug);
-      return custom?.color ? `hsl(${custom.color})` : '#656C75';
+      return custom?.color || '220 10% 55%';
     }
     const override = getVisualOverride(item.slug);
-    if (override?.color) return `hsl(${override.color})`;
-    return `hsl(var(--${getCategoryColor(item.slug)}))`;
-  }, [activeData.custom, getVisualOverride, getCategoryColor]);
+    if (override?.color) return override.color;
+    return getCategoryHsl(item.slug);
+  }, [activeData.custom, getVisualOverride, getCategoryHsl]);
+
+  const getItemColor = useCallback((item: SelectedCategory) => {
+    return `hsl(${getItemHsl(item)})`;
+  }, [getItemHsl]);
 
   const getItemIcon = useCallback((item: SelectedCategory) => {
     if (item.isCustom) {
@@ -371,11 +410,19 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '24px 34px 78px' }}>
+      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '18px 34px 62px' }}>
         <div className="flex items-center justify-between">
-          <h1 className="font-title text-[22px] font-semibold text-white leading-none" style={{ letterSpacing: '-0.01em' }}>
-            {t('categories.title')}
-          </h1>
+          <div>
+            <h1 className="text-[19px] font-semibold text-white leading-none" style={{ letterSpacing: '-0.01em' }}>
+              {t('categories.title')}
+            </h1>
+            <p
+              className="tabular-nums"
+              style={{ font: '500 12.5px Inter, sans-serif', color: 'rgba(255,255,255,0.8)', marginTop: 6 }}
+            >
+              {t('categories.bannerSubtitle', { ruleCount: rules.length, catCount: tabCounts.expense + tabCounts.income + tabCounts.transfer })}
+            </p>
+          </div>
           {/* Segmented tab control */}
           <div
             className="flex items-center gap-0.5"
@@ -418,7 +465,7 @@ export function CategoriesEditor() {
       {/* ====== Content wrapper (overlaps banner by 58px) ====== */}
       <div
         className="flex-1 min-h-0 overflow-hidden"
-        style={{ padding: '0 34px 32px', marginTop: -58 }}
+        style={{ padding: '0 34px 32px', marginTop: -46 }}
       >
         <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
@@ -429,18 +476,18 @@ export function CategoriesEditor() {
               onClick={() => setShowCreateCategory(true)}
               className="shrink-0 flex items-center gap-3 bg-white rounded-[14px] transition-colors hover:bg-[#F7F8FC]"
               style={{
-                padding: '18px 20px',
+                padding: '12px 16px',
                 boxShadow: '0 10px 26px -14px rgba(16,24,40,.30), 0 2px 4px rgba(16,24,40,.05)',
               }}
             >
               <div
                 className="flex items-center justify-center shrink-0"
                 style={{
-                  width: 40, height: 40, borderRadius: 12,
+                  width: 34, height: 34, borderRadius: 10,
                   background: '#EFF4FF', color: '#1B76FF',
                 }}
               >
-                <Plus size={20} strokeWidth={2} />
+                <Plus size={18} strokeWidth={2} />
               </div>
               <div className="text-left">
                 <div className="text-[14px] font-semibold" style={{ color: '#1B76FF' }}>
@@ -503,7 +550,7 @@ export function CategoriesEditor() {
                         className="shrink-0 flex items-center justify-center rounded-[10px]"
                         style={{
                           width: 30, height: 30,
-                          background: `${color}26`,
+                          background: `hsl(${getItemHsl(item)} / 0.15)`,
                           color,
                         }}
                       >
@@ -525,7 +572,7 @@ export function CategoriesEditor() {
                         <span
                           className="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full tabular-nums"
                           style={{
-                            background: `${color}1F`,
+                            background: `hsl(${getItemHsl(item)} / 0.12)`,
                             color,
                           }}
                         >
@@ -567,7 +614,7 @@ export function CategoriesEditor() {
                   className="shrink-0 relative"
                   style={{
                     padding: '16px 22px 14px',
-                    background: `linear-gradient(180deg, ${selectedColor}0E 0%, #fff 70%)`,
+                    background: `linear-gradient(180deg, hsl(${selectedHsl} / 0.055) 0%, #fff 70%)`,
                     borderBottom: '1px solid #F3F5F9',
                   }}
                 >
@@ -581,7 +628,7 @@ export function CategoriesEditor() {
                         className="flex items-center justify-center rounded-[16px] cursor-pointer transition-transform"
                         style={{
                           width: 52, height: 52,
-                          background: `${selectedColor}26`,
+                          background: `hsl(${selectedHsl} / 0.15)`,
                           color: selectedColor,
                         }}
                       >
@@ -611,7 +658,7 @@ export function CategoriesEditor() {
                         <span
                           className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
                           style={{
-                            background: `${selectedColor}1F`,
+                            background: `hsl(${selectedHsl} / 0.12)`,
                             color: selectedColor,
                           }}
                         >
@@ -659,12 +706,46 @@ export function CategoriesEditor() {
                         {t('categories.categorizationRules')}
                       </h3>
                       <div className="flex-1" />
-                      <div
-                        className="flex items-center justify-center cursor-help rounded-full transition-colors hover:bg-[#EFF4FF]"
-                        style={{ width: 22, height: 22, background: '#F1F3F8', color: '#9AA1AC' }}
-                        title={t('categories.rulesInfoTooltip')}
-                      >
-                        <Info size={12} />
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowInfoPopover(!showInfoPopover)}
+                          className="flex items-center justify-center rounded-full transition-colors hover:bg-[#EFF4FF]"
+                          style={{ width: 22, height: 22, background: showInfoPopover ? '#EFF4FF' : '#F1F3F8', color: showInfoPopover ? '#1B76FF' : '#9AA1AC' }}
+                        >
+                          <Info size={12} />
+                        </button>
+                        {showInfoPopover && (
+                          <>
+                            <div className="fixed inset-0 z-20" onClick={() => setShowInfoPopover(false)} />
+                            <div
+                              className="absolute right-0 top-full mt-2 z-30 bg-card rounded-lg"
+                              style={{
+                                boxShadow: '0 0 0 1px rgba(15,15,15,0.05), 0 3px 6px rgba(15,15,15,0.1), 0 9px 24px rgba(15,15,15,0.2)',
+                                width: 280, padding: '14px 16px',
+                              }}
+                            >
+                              <span className="text-[10px] font-semibold uppercase tracking-[.07em]" style={{ color: '#9AA1AC' }}>
+                                {t('categories.matchInfoTitle')}
+                              </span>
+                              <div className="mt-2.5 space-y-3">
+                                {MATCH_TYPE_INFO.map((mt) => (
+                                  <div key={mt.key}>
+                                    <span
+                                      className="text-[10.5px] font-bold tracking-[.04em] px-2 py-0.5 rounded-[5px]"
+                                      style={{ background: mt.key === 'SMART' ? 'rgba(27,118,255,.1)' : '#F1F3F8', color: mt.key === 'SMART' ? '#1B76FF' : '#0C0D0E' }}
+                                    >
+                                      {mt.label}
+                                    </span>
+                                    <p className="text-[12px] leading-snug mt-1" style={{ color: '#5A6069' }}>
+                                      {t(`categories.${mt.helpKey}`)}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                     <p
@@ -680,7 +761,7 @@ export function CategoriesEditor() {
                     />
 
                     {/* Rule rows */}
-                    {selectedRules.length === 0 && !showRetroOptions && (
+                    {selectedRules.length === 0 && (
                       <div
                         className="flex items-start gap-3 mb-3"
                         style={{
@@ -704,10 +785,14 @@ export function CategoriesEditor() {
                       {selectedRules.map((rule) => (
                         <div
                           key={rule.id}
-                          className="flex items-center gap-2.5"
+                          className={cn('flex items-center gap-2.5', !rule.isKeyword && 'cursor-pointer hover:border-primary/30')}
                           style={{
                             background: '#FAFBFD', border: '1px solid #EDEFF4',
                             borderRadius: 11, padding: '10px 12px',
+                            transition: 'border-color 150ms',
+                          }}
+                          onClick={() => {
+                            if (!rule.isKeyword) handleEditRule(rule as Rule);
                           }}
                         >
                           {/* Match type pill */}
@@ -739,18 +824,30 @@ export function CategoriesEditor() {
                             </span>
                           )}
 
-                          {/* Delete button */}
+                          {/* Edit + Delete buttons */}
                           {!rule.isKeyword && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteRule(rule.id)}
-                              className="shrink-0 flex items-center justify-center rounded-lg transition-colors"
-                              style={{ width: 28, height: 28, color: '#9AA1AC' }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = '#FDEEE9'; e.currentTarget.style.color = '#C9502A'; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#9AA1AC'; }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="shrink-0 flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleEditRule(rule as Rule); }}
+                                className="flex items-center justify-center rounded-lg transition-colors"
+                                style={{ width: 28, height: 28, color: '#9AA1AC' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#EFF4FF'; e.currentTarget.style.color = '#1B76FF'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#9AA1AC'; }}
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteRule(rule.id); }}
+                                className="flex items-center justify-center rounded-lg transition-colors"
+                                style={{ width: 28, height: 28, color: '#9AA1AC' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#FDEEE9'; e.currentTarget.style.color = '#C9502A'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#9AA1AC'; }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -828,37 +925,11 @@ export function CategoriesEditor() {
                           </button>
                         </div>
 
-                        {/* Retroactive options (shown after first click if matches exist) */}
-                        {showRetroOptions && previewMatched.length > 0 && (
-                          <div className="mt-2 p-3 rounded-xl border border-border bg-muted/20">
-                            <RetroactiveApplyOptions
-                              transactions={previewMatched}
-                              scope={retroScope}
-                              onScopeChange={setRetroScope}
-                              customSince={customSince}
-                              onCustomSinceChange={setCustomSince}
-                              compact
-                            />
-                            <div className="flex justify-end mt-2 gap-2">
-                              <button
-                                type="button"
-                                onClick={() => { setShowRetroOptions(false); setRetroScope('all'); }}
-                                className="text-[12px] font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-muted"
-                                style={{ color: '#5A6069' }}
-                              >
-                                {t('categories.cancel')}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleAddRuleInline}
-                                disabled={addRule.isPending}
-                                className="text-[12px] font-semibold px-3.5 py-1.5 rounded-lg text-white transition-colors disabled:opacity-40"
-                                style={{ background: '#1B76FF' }}
-                              >
-                                {t('categories.createRule')}
-                              </button>
-                            </div>
-                          </div>
+                        {/* Preview match count */}
+                        {newPattern.trim() && previewMatched.length > 0 && (
+                          <p className="mt-1.5 text-[11.5px]" style={{ color: '#9AA1AC', paddingLeft: 2 }}>
+                            {t('categories.createRulePopupDesc', { pattern: newPattern.trim().toLowerCase(), count: previewMatched.length })}
+                          </p>
                         )}
                       </div>
                     )}
@@ -916,17 +987,6 @@ export function CategoriesEditor() {
                       <span className="font-title text-[14px] font-bold" style={{ color: '#0C0D0E' }}>
                         {t('categories.recentTransactions')}
                       </span>
-                      <div className="flex-1" />
-                      {recentTx.length > 0 && (
-                        <a
-                          href={`/my-data?tab=transactions&category=${selected.slug}`}
-                          className="text-[12px] font-medium flex items-center gap-1"
-                          style={{ color: '#1B76FF' }}
-                        >
-                          {t('categories.viewAll')}
-                          <ArrowRight size={12} />
-                        </a>
-                      )}
                     </div>
 
                     {recentTx.length === 0 ? (
@@ -1033,6 +1093,112 @@ export function CategoriesEditor() {
         onSave={handleEditDialogSave}
         isSaving={updateRule.isPending}
       />
+
+      {/* Create rule popup — replaces inline retroactive options */}
+      <Dialog
+        open={showCreateRulePopup}
+        onOpenChange={(o) => {
+          if (!o) {
+            setShowCreateRulePopup(false);
+            setRetroScope('all');
+            setCustomSince('');
+            setNewRuleAccountScope(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-3">
+              <span
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0"
+                style={{ backgroundColor: `hsl(${selectedHsl} / 0.15)`, color: selectedColor }}
+              >
+                <RenderIcon name={selectedIcon} size={18} />
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                  {t('categories.createRule')}
+                </span>
+                <span className="text-base font-semibold text-foreground">{selected?.name}</span>
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            {/* Pattern display */}
+            <div
+              className="flex items-center gap-2.5"
+              style={{ background: '#FAFBFD', border: '1px solid #EDEFF4', borderRadius: 11, padding: '10px 14px' }}
+            >
+              <span
+                className="shrink-0 text-[10.5px] font-bold tracking-[.04em] px-2.5 py-1 rounded-[7px]"
+                style={{ background: 'rgba(27,118,255,.1)', color: '#1B76FF' }}
+              >
+                {MATCH_TYPE_LABEL[newMatchType] || newMatchType}
+              </span>
+              <code
+                className="flex-1 text-[13px] font-mono truncate"
+                style={{ fontFamily: "'JetBrains Mono', Menlo, monospace", fontWeight: 500 }}
+              >
+                {newPattern.trim().toLowerCase()}
+              </code>
+            </div>
+
+            {/* Match count info */}
+            {previewMatched.length > 0 && (
+              <p className="text-[13px]" style={{ color: '#5A6069' }}>
+                {t('categories.createRulePopupDesc', { pattern: newPattern.trim().toLowerCase(), count: previewMatched.length })}
+              </p>
+            )}
+
+            {/* Account scope */}
+            {activeAccounts.length > 1 && (
+              <AccountScopeSelect
+                accounts={accounts}
+                value={newRuleAccountScope}
+                onChange={setNewRuleAccountScope}
+              />
+            )}
+
+            {/* Retroactive scope */}
+            {previewMatched.length > 0 && (
+              <RetroactiveApplyOptions
+                transactions={previewMatched}
+                scope={retroScope}
+                onScopeChange={setRetroScope}
+                customSince={customSince}
+                onCustomSinceChange={setCustomSince}
+              />
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateRulePopup(false);
+                setRetroScope('all');
+                setCustomSince('');
+                setNewRuleAccountScope(null);
+              }}
+              className="text-[13px] font-medium px-4 py-2 rounded-lg transition-colors hover:bg-muted"
+              style={{ color: '#5A6069' }}
+            >
+              {t('categories.cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateRuleFromPopup}
+              disabled={addRule.isPending}
+              className="text-[13px] font-semibold px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-40"
+              style={{ background: '#1B76FF' }}
+            >
+              {t('categories.createRule')}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

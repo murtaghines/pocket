@@ -56,7 +56,7 @@
     "exact": "Coincidencia Exacta",
     "regex": "Regex (Avanzado)",
     "advancedOptions": "Opciones avanzadas",
-    "matchHelp_SMART": "Funciona aunque la descripción del banco varíe un poco. Recomendado.",
+    "matchHelp_SMART": "Funciona aunque la descripción del banco varíe un poco. Creada automáticamente desde sugerencias.",
     "matchHelp_CONTAINS": "La descripción debe incluir este texto exactamente como está escrito.",
     "matchHelp_STARTS_WITH": "La descripción debe empezar con este texto.",
     "matchHelp_ENDS_WITH": "La descripción debe terminar con este texto.",
@@ -146,7 +146,11 @@
     "deleteCustomCategory": "Eliminar categoría",
     "defaultLocked": "Por defecto",
     "colorLabel": "COLOR",
-    "iconLabel": "ICONO"
+    "iconLabel": "ICONO",
+    "bannerSubtitle": "{{ruleCount}} reglas · {{catCount}} categorías",
+    "matchInfoTitle": "Tipos de coincidencia",
+    "createRulePopupDesc_one": "\"{{pattern}}\" coincide con {{count}} transacción existente.",
+    "createRulePopupDesc_other": "\"{{pattern}}\" coincide con {{count}} transacciones existentes."
   },
   "notifications": {
     "title": "Notificaciones",

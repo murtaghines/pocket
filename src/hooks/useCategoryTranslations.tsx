@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { normalizeCategory, categoryColors, categoryIcons, INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from '@/lib/categoryTranslations';
+import { normalizeCategory, categoryColors, categoryIcons, categoryHslValues, INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from '@/lib/categoryTranslations';
 
 export function useCategoryTranslations() {
   const { t } = useTranslation('categories');
@@ -53,10 +53,18 @@ export function useCategoryTranslations() {
     return categoryIcons[normalized] || 'circle';
   };
 
+  // Get raw HSL values for a category (for inline styles needing alpha)
+  const getCategoryHsl = (slug: string): string => {
+    const normalized = normalizeCategory(slug);
+    const varName = categoryColors[normalized] || 'category-other-expense';
+    return categoryHslValues[varName] || '220 10% 55%';
+  };
+
   return {
     getCategoryLabel,
     getMovementLabel,
     getCategoryColor,
+    getCategoryHsl,
     getCategoryIcon,
     normalizeCategory,
   };
