@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Plus, Lock, Trash2, Info, Sparkles, Calendar, Code2, ChevronDown, Pencil, ArrowRight } from 'lucide-react';
+import { Plus, Lock, Trash2, Info, Sparkles, Calendar, Code2, ChevronDown, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { useCategories } from '@/hooks/useCategories';
@@ -55,7 +55,7 @@ export function CategoriesEditor() {
   const { t } = useTranslation('settings');
   const { toast } = useToast();
   const { formatCurrency, formatDateShort } = useLocalization();
-  const { getCategoryLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+  const { getCategoryLabel, getCategoryIcon, getCategoryColor, getCategoryHsl } = useCategoryTranslations();
   const { incomeCategories, expenseCategories, transferCategories, isLoading: catsLoading } = useCategories('CASHFLOW');
   const { rules, isLoading: rulesLoading, addRule, updateRule, deleteRule, getRulesForCategory } = useCategorizationRules();
   const { customCategories, isSaving, addCustomCategory, updateCustomCategory, removeRule: removeCustomRule, rules: allCustomRules, getVisualOverride, setVisualOverride } = useCustomCategories();
@@ -130,17 +130,19 @@ export function CategoriesEditor() {
 
   const selected = useMemo(() => categoryList.find(c => c.id === effectiveSelected) || null, [categoryList, effectiveSelected]);
 
-  // Resolve visual properties for the selected category
-  const selectedColor = useMemo(() => {
-    if (!selected) return '#1B76FF';
+  // Raw HSL values for the selected category (e.g. "210 80% 55%")
+  const selectedHsl = useMemo(() => {
+    if (!selected) return '216 100% 55%';
     if (selected.isCustom) {
       const custom = activeData.custom.find(c => c.slug === selected.slug);
-      return custom?.color ? `hsl(${custom.color})` : '#1B76FF';
+      return custom?.color || '216 100% 55%';
     }
     const override = getVisualOverride(selected.slug);
-    if (override?.color) return `hsl(${override.color})`;
-    return `hsl(var(--${getCategoryColor(selected.slug)}))`;
-  }, [selected, activeData.custom, getVisualOverride, getCategoryColor]);
+    if (override?.color) return override.color;
+    return getCategoryHsl(selected.slug);
+  }, [selected, activeData.custom, getVisualOverride, getCategoryHsl]);
+
+  const selectedColor = `hsl(${selectedHsl})`;
 
   const selectedIcon = useMemo(() => {
     if (!selected) return 'circle';
@@ -314,16 +316,20 @@ export function CategoriesEditor() {
     );
   }, [selected, addRule, toast, t]);
 
-  // Resolve color hex for sidebar items
-  const getItemColor = useCallback((item: SelectedCategory) => {
+  // Raw HSL for sidebar items (for alpha computation)
+  const getItemHsl = useCallback((item: SelectedCategory): string => {
     if (item.isCustom) {
       const custom = activeData.custom.find(c => c.slug === item.slug);
-      return custom?.color ? `hsl(${custom.color})` : '#656C75';
+      return custom?.color || '220 10% 55%';
     }
     const override = getVisualOverride(item.slug);
-    if (override?.color) return `hsl(${override.color})`;
-    return `hsl(var(--${getCategoryColor(item.slug)}))`;
-  }, [activeData.custom, getVisualOverride, getCategoryColor]);
+    if (override?.color) return override.color;
+    return getCategoryHsl(item.slug);
+  }, [activeData.custom, getVisualOverride, getCategoryHsl]);
+
+  const getItemColor = useCallback((item: SelectedCategory) => {
+    return `hsl(${getItemHsl(item)})`;
+  }, [getItemHsl]);
 
   const getItemIcon = useCallback((item: SelectedCategory) => {
     if (item.isCustom) {
@@ -371,7 +377,7 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '24px 34px 78px' }}>
+      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '18px 34px 62px' }}>
         <div className="flex items-center justify-between">
           <h1 className="font-title text-[22px] font-semibold text-white leading-none" style={{ letterSpacing: '-0.01em' }}>
             {t('categories.title')}
@@ -418,7 +424,7 @@ export function CategoriesEditor() {
       {/* ====== Content wrapper (overlaps banner by 58px) ====== */}
       <div
         className="flex-1 min-h-0 overflow-hidden"
-        style={{ padding: '0 34px 32px', marginTop: -58 }}
+        style={{ padding: '0 34px 32px', marginTop: -46 }}
       >
         <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
@@ -429,18 +435,18 @@ export function CategoriesEditor() {
               onClick={() => setShowCreateCategory(true)}
               className="shrink-0 flex items-center gap-3 bg-white rounded-[14px] transition-colors hover:bg-[#F7F8FC]"
               style={{
-                padding: '18px 20px',
+                padding: '12px 16px',
                 boxShadow: '0 10px 26px -14px rgba(16,24,40,.30), 0 2px 4px rgba(16,24,40,.05)',
               }}
             >
               <div
                 className="flex items-center justify-center shrink-0"
                 style={{
-                  width: 40, height: 40, borderRadius: 12,
+                  width: 34, height: 34, borderRadius: 10,
                   background: '#EFF4FF', color: '#1B76FF',
                 }}
               >
-                <Plus size={20} strokeWidth={2} />
+                <Plus size={18} strokeWidth={2} />
               </div>
               <div className="text-left">
                 <div className="text-[14px] font-semibold" style={{ color: '#1B76FF' }}>
@@ -503,7 +509,7 @@ export function CategoriesEditor() {
                         className="shrink-0 flex items-center justify-center rounded-[10px]"
                         style={{
                           width: 30, height: 30,
-                          background: `${color}26`,
+                          background: `hsl(${getItemHsl(item)} / 0.15)`,
                           color,
                         }}
                       >
@@ -525,7 +531,7 @@ export function CategoriesEditor() {
                         <span
                           className="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full tabular-nums"
                           style={{
-                            background: `${color}1F`,
+                            background: `hsl(${getItemHsl(item)} / 0.12)`,
                             color,
                           }}
                         >
@@ -567,7 +573,7 @@ export function CategoriesEditor() {
                   className="shrink-0 relative"
                   style={{
                     padding: '16px 22px 14px',
-                    background: `linear-gradient(180deg, ${selectedColor}0E 0%, #fff 70%)`,
+                    background: `linear-gradient(180deg, hsl(${selectedHsl} / 0.055) 0%, #fff 70%)`,
                     borderBottom: '1px solid #F3F5F9',
                   }}
                 >
@@ -581,7 +587,7 @@ export function CategoriesEditor() {
                         className="flex items-center justify-center rounded-[16px] cursor-pointer transition-transform"
                         style={{
                           width: 52, height: 52,
-                          background: `${selectedColor}26`,
+                          background: `hsl(${selectedHsl} / 0.15)`,
                           color: selectedColor,
                         }}
                       >
@@ -611,7 +617,7 @@ export function CategoriesEditor() {
                         <span
                           className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
                           style={{
-                            background: `${selectedColor}1F`,
+                            background: `hsl(${selectedHsl} / 0.12)`,
                             color: selectedColor,
                           }}
                         >
@@ -704,10 +710,14 @@ export function CategoriesEditor() {
                       {selectedRules.map((rule) => (
                         <div
                           key={rule.id}
-                          className="flex items-center gap-2.5"
+                          className={cn('flex items-center gap-2.5', !rule.isKeyword && 'cursor-pointer hover:border-primary/30')}
                           style={{
                             background: '#FAFBFD', border: '1px solid #EDEFF4',
                             borderRadius: 11, padding: '10px 12px',
+                            transition: 'border-color 150ms',
+                          }}
+                          onClick={() => {
+                            if (!rule.isKeyword) handleEditRule(rule as Rule);
                           }}
                         >
                           {/* Match type pill */}
@@ -739,18 +749,30 @@ export function CategoriesEditor() {
                             </span>
                           )}
 
-                          {/* Delete button */}
+                          {/* Edit + Delete buttons */}
                           {!rule.isKeyword && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteRule(rule.id)}
-                              className="shrink-0 flex items-center justify-center rounded-lg transition-colors"
-                              style={{ width: 28, height: 28, color: '#9AA1AC' }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = '#FDEEE9'; e.currentTarget.style.color = '#C9502A'; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#9AA1AC'; }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="shrink-0 flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleEditRule(rule as Rule); }}
+                                className="flex items-center justify-center rounded-lg transition-colors"
+                                style={{ width: 28, height: 28, color: '#9AA1AC' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#EFF4FF'; e.currentTarget.style.color = '#1B76FF'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#9AA1AC'; }}
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteRule(rule.id); }}
+                                className="flex items-center justify-center rounded-lg transition-colors"
+                                style={{ width: 28, height: 28, color: '#9AA1AC' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#FDEEE9'; e.currentTarget.style.color = '#C9502A'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#9AA1AC'; }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -916,17 +938,6 @@ export function CategoriesEditor() {
                       <span className="font-title text-[14px] font-bold" style={{ color: '#0C0D0E' }}>
                         {t('categories.recentTransactions')}
                       </span>
-                      <div className="flex-1" />
-                      {recentTx.length > 0 && (
-                        <a
-                          href={`/my-data?tab=transactions&category=${selected.slug}`}
-                          className="text-[12px] font-medium flex items-center gap-1"
-                          style={{ color: '#1B76FF' }}
-                        >
-                          {t('categories.viewAll')}
-                          <ArrowRight size={12} />
-                        </a>
-                      )}
                     </div>
 
                     {recentTx.length === 0 ? (
