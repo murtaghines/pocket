@@ -17,6 +17,7 @@ export interface VisualOverride {
   categorySlug: string;
   color?: string;
   icon?: string;
+  name?: string;
 }
 
 // The `rule_override` shape existed but the UI never wrote it and the two consumers
@@ -83,9 +84,15 @@ export function useCustomCategories() {
   const getVisualOverride = (slug: string): VisualOverride | undefined =>
     visualOverrides.find(v => v.categorySlug === slug);
 
-  const setVisualOverride = (slug: string, color?: string, icon?: string) => {
+  const setVisualOverride = (slug: string, color?: string, icon?: string, name?: string) => {
     const existing = rules.findIndex(r => r.type === "visual_override" && (r as VisualOverride).categorySlug === slug);
-    const override: VisualOverride = { type: "visual_override", categorySlug: slug, color, icon };
+    const prev = existing >= 0 ? (rules[existing] as VisualOverride) : undefined;
+    const override: VisualOverride = {
+      type: "visual_override", categorySlug: slug,
+      color: color ?? prev?.color,
+      icon: icon ?? prev?.icon,
+      name: name ?? prev?.name,
+    };
     if (existing >= 0) {
       const newRules = [...rules];
       newRules[existing] = override;
