@@ -53,9 +53,9 @@ export default function Account() {
           isLoggingOut ? "opacity-0" : "opacity-100"
         }`}
       >
-        <main className="max-w-[1400px] mx-auto space-y-6 px-3 md:px-[34px]">
+        <main className="space-y-6 px-3 md:px-[34px]">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <div className="sticky top-12 z-20 -mx-3 -mt-2 bg-background/90 px-3 pt-2 backdrop-blur-[10px] md:top-[84px] md:mx-0 md:mt-0 md:px-0 md:pt-0 md:bg-background/85">
+            <div className="sticky top-12 z-20 -mx-3 -mt-2 bg-background/90 px-3 pt-2 backdrop-blur-[10px] md:top-0 md:mx-0 md:mt-0 md:px-0 md:pt-0 md:bg-background/85">
               <AccountHeader />
               <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto mt-4 overflow-x-auto scrollbar-none">
                 <TabsTrigger value="overview" className={UNDERLINE_TAB}>

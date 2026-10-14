@@ -416,7 +416,7 @@ export function CategoriesEditor() {
       <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 62px' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[21px] font-semibold text-white leading-none tracking-[-0.01em]">
+            <h1 className="text-[19px] font-semibold text-white leading-none tracking-[-0.01em]">
               {t('categories.title')}
             </h1>
             <p

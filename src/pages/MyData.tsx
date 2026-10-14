@@ -76,7 +76,7 @@ export default function MyData() {
       {tab === "investments" && <InvestmentTabsView activeMonth={activeMonth} onMonthChange={setMonth} />}
       {tab === "categories" && <CategoriesTab />}
       {tab === "accounts" && (
-        <div className="px-4 md:px-8 lg:px-10 py-6">
+        <div className="px-3 md:px-[34px] py-6">
           <AccountBankAccountsTab />
         </div>
       )}
