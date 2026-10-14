@@ -141,11 +141,11 @@ export function DataToolbar({
         {/* Left side */}
         <div className="flex-1 min-w-0">
           <h1
-            className="text-[21px] font-semibold text-white leading-none tracking-[-0.01em] select-none"
+            className="text-[19px] font-semibold text-white leading-none tracking-[-0.01em] select-none"
           >
             {monthLabel}
           </h1>
-          <div className="flex items-center flex-wrap" style={{ marginTop: 8, gap: 14 }}>
+          <div className="flex items-center flex-wrap" style={{ marginTop: 6, gap: 14 }}>
             {displayCount > 0 && (
               <span
                 className="tabular-nums text-white/80"

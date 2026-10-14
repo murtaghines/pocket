@@ -28,7 +28,7 @@ export function AccountHeader() {
         {initials}
       </div>
       <div className="min-w-0">
-        <h1 className="text-[22px] font-bold tracking-[-0.01em] text-foreground leading-tight truncate">
+        <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-foreground leading-tight truncate">
           {displayName}
         </h1>
         <div className="flex items-center gap-3 mt-0.5">

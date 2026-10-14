@@ -167,7 +167,7 @@ export default function Calendar() {
     <DashboardLayout>
       <div className="px-3 md:px-[34px]">
       <div className="hidden md:flex items-center justify-between py-[18px] sticky top-0 z-30 bg-background">
-        <h1 className="text-[21px] font-semibold text-foreground tracking-[-0.01em] capitalize">
+        <h1 className="text-[19px] font-semibold text-foreground tracking-[-0.01em] capitalize">
           {monthLabel}
         </h1>
         <div className="flex items-center gap-2">

@@ -5,7 +5,9 @@ import { PlannedTab } from "@/components/planning/PlannedTab";
 export default function Planning() {
   return (
     <DashboardLayout>
-      <PlannedTab />
+      <div className="px-3 md:px-[34px]">
+        <PlannedTab />
+      </div>
       <DashboardFooter />
     </DashboardLayout>
   );
