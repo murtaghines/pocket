@@ -102,7 +102,7 @@ export function InvestmentEditDrawer({
     >
       <>
         {/* Type toggle — pill segmented control */}
-        <div className="flex rounded-full bg-muted p-1">
+        <div className="flex rounded-[9px] bg-muted p-1">
           {INVESTMENT_TYPES.map((it) => {
             const Icon = it.icon;
             const active = type === it.value;
@@ -112,7 +112,7 @@ export function InvestmentEditDrawer({
                 type="button"
                 onClick={() => setType(it.value)}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-xs font-semibold transition-all",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-[7px] py-2.5 text-xs font-semibold transition-all",
                   active
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground",
@@ -127,19 +127,19 @@ export function InvestmentEditDrawer({
 
         {/* Description */}
         <div className="space-y-2">
-          <label className="text-[13px] font-semibold text-foreground">
+          <label className="text-[13px] font-medium text-muted-foreground">
             {t("imports.description", "Description")}
           </label>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50"
           />
         </div>
 
         {/* Amount */}
         <div className="space-y-2">
-          <label className="text-[13px] font-semibold text-foreground">
+          <label className="text-[13px] font-medium text-muted-foreground">
             {t("imports.amount", "Amount")}
           </label>
           <Input
@@ -148,25 +148,25 @@ export function InvestmentEditDrawer({
             value={amountStr}
             onChange={(e) => setAmountStr(e.target.value)}
             placeholder="0,00"
-            className="h-11 rounded-full bg-muted border-0 shadow-none tabular-nums font-semibold text-sm px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+            className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none tabular-nums font-medium text-sm px-3.5 focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50"
           />
         </div>
 
         {/* Date + Platform row */}
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-2 min-w-0">
-            <label className="text-[13px] font-semibold text-foreground">
+            <label className="text-[13px] font-medium text-muted-foreground">
               {t("imports.date", "Date")}
             </label>
             <Input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="h-11 rounded-full bg-muted border-0 shadow-none tabular-nums px-5 focus-visible:ring-1 focus-visible:ring-primary"
+              className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none tabular-nums px-3.5 focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none"
             />
           </div>
           <div className="space-y-2 min-w-0">
-            <label className="text-[13px] font-semibold text-foreground">
+            <label className="text-[13px] font-medium text-muted-foreground">
               {t("imports.platform", "Platform")}
             </label>
             <Input
@@ -174,7 +174,7 @@ export function InvestmentEditDrawer({
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
               placeholder="—"
-              className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50"
+              className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50"
             />
             <datalist id="drawer-platforms">
               {knownPlatforms.map((p) => (
@@ -186,14 +186,14 @@ export function InvestmentEditDrawer({
 
         {/* Asset type */}
         <div className="space-y-2">
-          <label className="text-[13px] font-semibold text-foreground">
+          <label className="text-[13px] font-medium text-muted-foreground">
             {t("imports.asset", "Asset")}
           </label>
           <Select
             value={assetType || "__none__"}
             onValueChange={(v) => setAssetType(v === "__none__" ? null : v)}
           >
-            <SelectTrigger className="h-11 rounded-full bg-muted border-0 shadow-none px-5 focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+            <SelectTrigger className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus:bg-card focus:border-primary focus:ring-[3px] focus:ring-primary/[0.14] [&>svg]:opacity-40">
               <SelectValue placeholder="—">
                 <span className="text-sm font-medium">{assetType || "—"}</span>
               </SelectValue>

@@ -17,7 +17,8 @@ import { AddRuleDialog } from './AddRuleDialog';
 import { RetroactiveApplyOptions } from './RetroactiveApplyOptions';
 import { filterByScope, type RetroScope } from '@/hooks/useRetroactiveApply';
 import { CategoryEditorPopover } from './CategoryEditorPopover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { AccountScopeSelect } from '@/components/imports/AccountScopeSelect';
 import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
@@ -1129,7 +1130,7 @@ export function CategoriesEditor() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent size="sm">
           <DialogHeader>
             <DialogTitle className="text-base flex items-center gap-3">
               <span
@@ -1147,15 +1148,13 @@ export function CategoriesEditor() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5 py-2">
+          <DialogBody>
             {/* Pattern display */}
             <div
-              className="flex items-center gap-2.5"
-              style={{ background: '#FAFBFD', border: '1px solid #EDEFF4', borderRadius: 11, padding: '10px 14px' }}
+              className="flex items-center gap-2.5 bg-muted/50 border border-border rounded-[11px] px-3.5 py-2.5"
             >
               <span
-                className="shrink-0 text-[10.5px] font-bold tracking-[.04em] px-2.5 py-1 rounded-[7px]"
-                style={{ background: 'rgba(27,118,255,.1)', color: '#1B76FF' }}
+                className="shrink-0 text-[10.5px] font-bold tracking-[.04em] px-2.5 py-1 rounded-[7px] bg-primary/10 text-primary"
               >
                 {MATCH_TYPE_LABEL[newMatchType] || newMatchType}
               </span>
@@ -1169,7 +1168,7 @@ export function CategoriesEditor() {
 
             {/* Match count info */}
             {previewMatched.length > 0 && (
-              <p className="text-[13px]" style={{ color: '#5A6069' }}>
+              <p className="text-[13px] text-muted-foreground">
                 {t('categories.createRulePopupDesc', { pattern: newPattern.trim().toLowerCase(), count: previewMatched.length })}
               </p>
             )}
@@ -1193,11 +1192,11 @@ export function CategoriesEditor() {
                 onCustomSinceChange={setCustomSince}
               />
             )}
-          </div>
+          </DialogBody>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
+          <DialogFooter>
+            <Button
+              variant="outline"
               type="button"
               onClick={() => {
                 setShowCreateRulePopup(false);
@@ -1205,21 +1204,19 @@ export function CategoriesEditor() {
                 setCustomSince('');
                 setNewRuleAccountScope(null);
               }}
-              className="text-[13px] font-medium px-4 py-2 rounded-lg transition-colors hover:bg-muted"
-              style={{ color: '#5A6069' }}
+              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]"
             >
               {t('categories.cancel')}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={handleCreateRuleFromPopup}
               disabled={addRule.isPending}
-              className="text-[13px] font-semibold px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-40"
-              style={{ background: '#1B76FF' }}
+              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[160px]"
             >
               {t('categories.createRule')}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

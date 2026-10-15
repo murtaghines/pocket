@@ -6,14 +6,18 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogBody,
+  DialogFooter,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts, type Account } from "@/hooks/useAccounts";
 import { useLocalization } from "@/hooks/useLocalization";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { exportTransactionsCsv } from "@/lib/exportCsv";
 import type { MonthTransaction } from "./types";
@@ -138,9 +142,9 @@ export function ExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px] bg-card">
+      <DialogContent size="sm">
         <DialogHeader>
-          <DialogTitle className="text-[16px] font-semibold">
+          <DialogTitle>
             {t("export")}
           </DialogTitle>
           <DialogDescription className="text-[13px] text-muted-foreground">
@@ -148,13 +152,13 @@ export function ExportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-5 mt-2">
+        <DialogBody>
           {/* Period selection */}
           <div>
-            <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            <p className="text-[13px] font-medium text-muted-foreground mb-2">
               {t("imports.exportPeriod", "Period")}
             </p>
-            <div className="flex gap-2">
+            <div className="flex rounded-xl bg-muted p-1 h-11">
               {([
                 { key: "current" as const, label: currentMonthLabel },
                 { key: "ytd" as const, label: currentMonthKey.split("-")[0] },
@@ -164,11 +168,12 @@ export function ExportDialog({
                   key={opt.key}
                   type="button"
                   onClick={() => setPeriod(opt.key)}
-                  className={`px-3 py-[6px] rounded-lg text-[13px] font-medium transition-colors ${
+                  className={cn(
+                    "flex flex-1 items-center justify-center rounded-[9px] text-sm font-medium transition-all",
                     period === opt.key
-                      ? "bg-primary text-white"
-                      : "bg-muted text-foreground hover:bg-muted/70"
-                  }`}
+                      ? "bg-card text-foreground shadow-sm font-semibold"
+                      : "text-muted-foreground hover:text-foreground/70"
+                  )}
                 >
                   {opt.label}
                 </button>
@@ -179,13 +184,13 @@ export function ExportDialog({
           {/* Account selection */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+              <p className="text-[13px] font-medium text-muted-foreground">
                 {t("imports.account", "Account")}
               </p>
               <button
                 type="button"
                 onClick={toggleAll}
-                className="text-[12px] text-primary font-medium hover:underline"
+                className="text-[13px] text-primary font-medium hover:underline"
               >
                 {allSelected
                   ? t("imports.deselectAll", "Deselect all")
@@ -209,27 +214,25 @@ export function ExportDialog({
               ))}
             </div>
           </div>
+        </DialogBody>
 
-          {/* Footer with count + export button */}
-          <div className="flex items-center justify-between pt-2 border-t border-border">
-            <span className="text-[13px] text-muted-foreground tabular-nums">
-              {isFetching
-                ? "..."
-                : t("imports.exportCount", "{{count}} transactions", { count: previewCount ?? 0 })}
-            </span>
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={isExporting || selectedAccountIds.size === 0 || previewCount === 0}
-              className="inline-flex items-center gap-2 bg-primary text-white rounded-lg px-4 py-[8px] text-[13px] font-medium shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-            >
-              <Download className="w-4 h-4" />
-              {isExporting
-                ? t("imports.exporting", "Exporting...")
-                : t("export")}
-            </button>
-          </div>
-        </div>
+        <DialogFooter className="justify-between">
+          <span className="text-[13px] text-muted-foreground tabular-nums">
+            {isFetching
+              ? "..."
+              : t("imports.exportCount", "{{count}} transactions", { count: previewCount ?? 0 })}
+          </span>
+          <Button
+            onClick={handleExport}
+            disabled={isExporting || selectedAccountIds.size === 0 || previewCount === 0}
+            className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]"
+          >
+            <Download className="w-4 h-4" />
+            {isExporting
+              ? t("imports.exporting", "Exporting...")
+              : t("export")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

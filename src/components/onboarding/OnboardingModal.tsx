@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
@@ -88,7 +88,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
                   key={id}
                   type="button"
                   onClick={() => setPrimaryGoal(id)}
-                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors ${
+                  className={`flex items-center gap-3 rounded-xl border-[1.5px] p-4 text-left transition-colors ${
                     active
                       ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-foreground/30'
@@ -124,7 +124,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         {hasSavingsGoal && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground/70 mb-1.5">
+              <label className="block text-[13px] font-medium text-muted-foreground">
                 How much? ({currency})
               </label>
               <Input
@@ -134,18 +134,18 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
                 placeholder="5000"
                 value={savingsAmount}
                 onChange={(e) => setSavingsAmount(e.target.value)}
-                className="h-11 text-base border border-border rounded-xl"
+                className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground/70 mb-1.5">
+              <label className="block text-[13px] font-medium text-muted-foreground">
                 By when? <span className="text-muted-foreground font-normal">(optional)</span>
               </label>
               <Input
                 type="date"
                 value={savingsDate}
                 onChange={(e) => setSavingsDate(e.target.value)}
-                className="h-11 text-base border border-border rounded-xl"
+                className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none"
               />
             </div>
           </div>
@@ -156,23 +156,25 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold">
+          <DialogTitle>
             {step === 1 ? 'What brings you to pocket?' : 'Set a savings goal'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-2">
-          <Progress value={(step / TOTAL_STEPS) * 100} className="h-2" />
-          <p className="text-sm text-muted-foreground mt-2">{step} / {TOTAL_STEPS}</p>
-        </div>
+        <DialogBody className="min-h-[260px]">
+          <div>
+            <Progress value={(step / TOTAL_STEPS) * 100} className="h-2" />
+            <p className="text-sm text-muted-foreground mt-2">{step} / {TOTAL_STEPS}</p>
+          </div>
 
-        <div className="py-6 min-h-[260px]">{renderStep()}</div>
+          {renderStep()}
+        </DialogBody>
 
-        <div className="flex items-center justify-between pt-4 border-t">
+        <DialogFooter className="justify-between">
           {step > 1 ? (
-            <Button variant="outline" onClick={() => setStep(step - 1)} disabled={saving}>
+            <Button variant="outline" onClick={() => setStep(step - 1)} disabled={saving} className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]">
               <ChevronLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
@@ -188,17 +190,17 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
           )}
 
           {step < TOTAL_STEPS ? (
-            <Button onClick={() => setStep(step + 1)} disabled={!canProceed}>
+            <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]">
               Next
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button onClick={() => finish(false)} disabled={saving}>
+            <Button onClick={() => finish(false)} disabled={saving} className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]">
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
               Finish
             </Button>
           )}
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

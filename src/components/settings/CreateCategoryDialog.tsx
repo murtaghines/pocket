@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Plus, X, Loader2, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { CustomCategoryRule } from '@/hooks/useCustomCategories';
@@ -102,30 +102,30 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving, editingC
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-base">
+          <DialogTitle>
             {isEditing
               ? t('categories.editCategory', 'Edit Category')
               : t('categories.createNewCategory', 'Create new category')}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-5 py-2">
+        <DialogBody>
           {/* Name & Type row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">{t('categories.customCategoryName')}</Label>
+              <Label className="text-[13px] font-medium text-muted-foreground">{t('categories.customCategoryName')}</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('categories.customCategoryNamePlaceholder')}
-                className="h-9"
+                className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14]"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">{t('categories.customCategoryType')}</Label>
+              <Label className="text-[13px] font-medium text-muted-foreground">{t('categories.customCategoryType')}</Label>
               <Select value={movement} onValueChange={(v) => setMovement(v as 'INCOME' | 'EXPENSE' | 'TRANSFER')}>
-                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="EXPENSE">{t('categories.expenses')}</SelectItem>
                   <SelectItem value="INCOME">{t('categories.income')}</SelectItem>
@@ -137,7 +137,7 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving, editingC
 
           {/* Color Picker */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium">{t('categories.color', 'Color')}</Label>
+            <Label className="text-[13px] font-medium text-muted-foreground">{t('categories.color', 'Color')}</Label>
             <div className="grid grid-cols-12 gap-2">
               {CURATED_COLORS.map((color) => (
                 <button
@@ -158,7 +158,7 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving, editingC
 
           {/* Icon Picker */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium">{t('categories.icon', 'Icon')}</Label>
+            <Label className="text-[13px] font-medium text-muted-foreground">{t('categories.icon', 'Icon')}</Label>
             <div className="flex flex-wrap gap-1.5">
               {CURATED_ICONS.map((iconName) => (
                 <button
@@ -181,13 +181,13 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving, editingC
 
           {/* Keywords */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium">{t('categories.keywords', 'Keywords')}</Label>
+            <Label className="text-[13px] font-medium text-muted-foreground">{t('categories.keywords', 'Keywords')}</Label>
             <div className="flex gap-2">
               <Input
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
                 placeholder={t('categories.keywordPlaceholder', 'e.g. WOSAP')}
-                className="h-9"
+                className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14]"
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addKeyword(); } }}
               />
               <Button size="sm" variant="outline" className="h-9 px-3" onClick={addKeyword}>
@@ -206,10 +206,10 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving, editingC
               {t('categories.customCategoryHelp', 'This category will appear in your dashboard alongside the standard ones.')}
             </p>
           </div>
-        </div>
+        </DialogBody>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={handleClose}>{t('categories.cancel')}</Button>
-          <Button size="sm" onClick={handleSave} disabled={!name.trim() || keywords.length === 0 || isSaving}>
+          <Button variant="outline" onClick={handleClose} className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]">{t('categories.cancel')}</Button>
+          <Button onClick={handleSave} disabled={!name.trim() || keywords.length === 0 || isSaving} className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[160px]">
             {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
             {t('categories.save')}
           </Button>

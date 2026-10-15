@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogBody,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -145,13 +146,13 @@ export function AccountFormDialog({
   const isInvestmentType = deriveDomainDefault(accountType) === "INVESTING";
 
   const inputClass =
-    "h-11 rounded-full bg-muted border-0 shadow-none px-5 focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
+    "h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] gap-0 p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle className="text-lg font-semibold text-foreground">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
             {mode === "create"
               ? tp("accounts.addAccount", "Add account")
               : tp("accounts.editAccount", "Edit account")}
@@ -163,14 +164,14 @@ export function AccountFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 pb-6 space-y-5 max-h-[70vh] overflow-y-auto">
+        <DialogBody>
           {/* Account type */}
           <div className="space-y-2">
             <label className="text-[13px] font-medium text-muted-foreground">
               {t("accounts.accountType", "Account type")}
             </label>
             {isTypeLocked ? (
-              <div className="flex items-center gap-2.5 h-11 rounded-full bg-muted px-5">
+              <div className="flex items-center gap-2.5 h-11 rounded-xl bg-muted px-3.5">
                 <TypeIcon className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
                 <span className="text-[13px] text-foreground">
                   {t(getAccountTypeI18nKey(accountType))}
@@ -333,7 +334,7 @@ export function AccountFormDialog({
             <label className="text-[13px] font-medium text-muted-foreground">
               {tp("accounts.color", "Color")}
             </label>
-            <div className="rounded-2xl bg-muted p-4 space-y-2.5">
+            <div className="rounded-xl bg-muted p-4 space-y-2.5">
               <div className="flex flex-wrap gap-2">
                 {ACCOUNT_COLOR_PALETTE.blues.map((c) => (
                   <button
@@ -371,18 +372,18 @@ export function AccountFormDialog({
             </div>
           </div>
 
-        </div>
+        </DialogBody>
 
-        <DialogFooter className="px-6 pb-6 pt-2 flex-row gap-3 sm:gap-3">
+        <DialogFooter>
           <Button
             variant="outline"
-            className="flex-1 h-11 rounded-full"
+            className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]"
             onClick={() => onOpenChange(false)}
           >
             {t("accounts.cancel", "Cancel")}
           </Button>
           <Button
-            className="flex-1 h-11 rounded-full font-semibold"
+            className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]"
             onClick={handleSubmit}
             disabled={!canSubmit}
           >

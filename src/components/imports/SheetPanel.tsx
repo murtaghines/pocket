@@ -23,12 +23,12 @@ const TRANSITION_MS = 320;
  *  smallest comfortable touch target — with type one step down from the
  *  page defaults. */
 export const SHEET_LABEL =
-  "text-[11px] font-medium uppercase tracking-[0.07em] text-muted-foreground";
+  "text-[13px] font-medium text-muted-foreground";
 export const SHEET_PILL =
-  "h-11 rounded-full bg-muted border-0 shadow-none px-5 text-[13px]";
-export const SHEET_BUTTON = "h-11 rounded-full font-semibold text-sm";
+  "h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium";
+export const SHEET_BUTTON = "h-12 rounded-[14px] font-semibold text-[15px]";
 export const SHEET_INPUT =
-  "h-11 rounded-full bg-muted border-0 shadow-none px-5 text-[13px] focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
+  "h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50";
 
 export interface SheetPanelProps {
   open: boolean;

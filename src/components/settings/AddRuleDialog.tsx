@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Sparkles, Search, AlignLeft, AlignRight, Type, Code2, Check } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
-import { getLucideIcon } from '@/lib/lucideIcon';
-import { cn } from '@/lib/utils';
 import { buildDbRuleFields } from '@/hooks/useCategorizationRules';
 import { useRulePreview } from '@/hooks/useRulePreview';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -40,13 +39,16 @@ interface Props {
   isSaving: boolean;
 }
 
-const MATCH_TYPES: Array<{ value: string; icon: typeof Sparkles; recommended?: boolean }> = [
-  { value: 'SMART', icon: Sparkles, recommended: true },
-  { value: 'CONTAINS', icon: Search },
-  { value: 'STARTS_WITH', icon: AlignLeft },
-  { value: 'ENDS_WITH', icon: AlignRight },
-  { value: 'EXACT', icon: Type },
-  { value: 'REGEX', icon: Code2 },
+const MODAL_INPUT = "h-11 rounded-xl bg-muted border-[1.5px] border-transparent px-3.5 text-sm font-medium shadow-none focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
+const MODAL_LABEL = "text-[13px] font-medium text-muted-foreground";
+
+const MATCH_TYPES: Array<{ value: string; recommended?: boolean }> = [
+  { value: 'SMART', recommended: true },
+  { value: 'CONTAINS' },
+  { value: 'STARTS_WITH' },
+  { value: 'ENDS_WITH' },
+  { value: 'EXACT' },
+  { value: 'REGEX' },
 ];
 
 const LABEL_KEY: Record<string, string> = {
@@ -133,36 +135,22 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
     onClose();
   };
 
-  const accent = category?.color ? `hsl(${category.color})` : 'hsl(var(--primary))';
-  const CategoryIconCmp = category?.icon ? getLucideIcon(category.icon) : null;
-
   const activeAccounts = accounts.filter(a => !a.archived);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-base flex items-center gap-3">
-            <span
-              className="inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0"
-              style={{ backgroundColor: `${accent}22`, color: accent }}
-            >
-              {CategoryIconCmp ? <CategoryIconCmp className="w-4.5 h-4.5" /> : <Sparkles className="w-4 h-4" />}
-            </span>
-            <span className="flex flex-col leading-tight">
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                {isEditing ? t('categories.editRule') : t('categories.addRule')}
-                {category?.movement && ` · ${getMovementLabel(category.movement)}`}
-              </span>
-              <span className="text-base font-semibold text-foreground">{category?.name}</span>
-            </span>
+          <DialogTitle>
+            {isEditing ? t('categories.editRule') : t('categories.addRule')} · {category?.name}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
+        <DialogBody>
           <div className="space-y-2">
-            <Label className="text-sm">{t('categories.pattern')}</Label>
+            <Label className={MODAL_LABEL}>{t('categories.pattern')}</Label>
             <Input
+              className={MODAL_INPUT}
               value={pattern}
               onChange={(e) => setPattern(e.target.value)}
               placeholder={placeholderFor(category?.movement)}
@@ -180,52 +168,27 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">{t('categories.matchType')}</Label>
-            <div className="grid gap-2">
-              {MATCH_TYPES.map(({ value, icon: Icon, recommended }) => {
-                const selected = matchType === value;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setMatchType(value)}
-                    className={cn(
-                      'group relative flex items-start gap-3 rounded-lg border p-3 text-left transition-all',
-                      selected
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-                        : 'border-border bg-card hover:border-primary/40 hover:bg-muted/30'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'inline-flex items-center justify-center w-8 h-8 rounded-md shrink-0 transition-colors',
-                        selected ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
-                      )}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-sm font-medium text-foreground">
-                          {t(`categories.${LABEL_KEY[value]}`)}
+            <Label className={MODAL_LABEL}>{t('categories.matchType')}</Label>
+            <Select value={matchType} onValueChange={setMatchType}>
+              <SelectTrigger className={MODAL_INPUT}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MATCH_TYPES.map(({ value, recommended }) => (
+                  <SelectItem key={value} value={value}>
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium">{t(`categories.${LABEL_KEY[value]}`)}</span>
+                      {recommended && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/[0.12] text-primary">
+                          {t('categories.recommended', 'Recommended')}
                         </span>
-                        {recommended && (
-                          <span className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/15 text-primary">
-                            {t('categories.recommended', 'Recommended')}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-snug">
-                        {t(`categories.${HELP_KEY[value]}`)}
-                      </p>
-                    </div>
-                    {selected && (
-                      <Check className="w-4 h-4 text-primary shrink-0 mt-1" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      )}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{t(`categories.${HELP_KEY[matchType]}`)}</p>
           </div>
 
           {/* Account scope (multi-select) */}
@@ -250,13 +213,13 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
               onCustomSinceChange={setCustomSince}
             />
           )}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]">
             {t('categories.cancel')}
           </Button>
-          <Button onClick={handleSave} disabled={!pattern.trim() || isSaving}>
+          <Button onClick={handleSave} disabled={!pattern.trim() || isSaving} className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[160px]">
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
             {t('categories.save')}
           </Button>
