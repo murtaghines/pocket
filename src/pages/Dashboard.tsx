@@ -31,9 +31,6 @@ export default function Dashboard() {
         <DashboardGreeting />
       </div>
 
-      {/* Static blue background strip — decorative, stays at the top of the scroll viewport */}
-      <div className="hidden md:block sticky top-0 h-[180px] bg-primary -mb-[180px] z-0 pointer-events-none" />
-
       {/* Single wrapper so BalanceBand's sticky has room to travel over all content */}
       <div className="relative z-20">
         <BalanceBand />

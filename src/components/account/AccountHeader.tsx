@@ -23,18 +23,18 @@ export function AccountHeader() {
   return (
     <div className="flex items-center gap-4 pb-2">
       <div
-        className="w-14 h-14 rounded-full flex items-center justify-center bg-primary text-primary-foreground text-[18px] font-bold shrink-0"
+        className="w-14 h-14 rounded-full flex items-center justify-center bg-primary text-primary-foreground md:bg-white/20 md:text-white text-[18px] font-bold shrink-0"
       >
         {initials}
       </div>
       <div className="min-w-0">
-        <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-foreground leading-tight truncate">
+        <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-foreground md:text-white leading-tight truncate">
           {displayName}
         </h1>
         <div className="flex items-center gap-3 mt-0.5">
-          <span className="text-sm text-muted-foreground truncate">{user?.email}</span>
+          <span className="text-sm text-muted-foreground md:text-white/70 truncate">{user?.email}</span>
           {user?.created_at && (
-            <span className="hidden sm:inline text-xs text-muted-foreground/60 whitespace-nowrap">
+            <span className="hidden sm:inline text-xs text-muted-foreground/60 md:text-white/50 whitespace-nowrap">
               · {t("security.memberSince", "Member since")} {formatDate(user.created_at)}
             </span>
           )}

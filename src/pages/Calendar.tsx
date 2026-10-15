@@ -166,18 +166,18 @@ export default function Calendar() {
   return (
     <DashboardLayout>
       <div className="px-3 md:px-[34px]">
-      <div className="hidden md:flex items-center justify-between py-[18px] sticky top-0 z-30 bg-background">
-        <h1 className="text-[19px] font-semibold text-foreground tracking-[-0.01em] capitalize">
+      <div className="hidden md:flex items-center justify-between py-[18px] sticky top-0 z-30 bg-primary">
+        <h1 className="text-[19px] font-semibold text-white tracking-[-0.01em] capitalize">
           {monthLabel}
         </h1>
         <div className="flex items-center gap-2">
-          <span className="flex items-center bg-card rounded-[10px] p-[5px] shadow-[0_1px_2px_rgba(16,24,40,.05)]">
-            <button type="button" onClick={() => hasOlder && setSelectedMonth(availableMonths[idx + 1])} disabled={!hasOlder} aria-label="Previous month" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
-              <ChevronLeft className="w-[14px] h-[14px] text-foreground/80" strokeWidth={2.2} />
+          <span className="flex items-center bg-white/15 rounded-[10px] p-[5px]">
+            <button type="button" onClick={() => hasOlder && setSelectedMonth(availableMonths[idx + 1])} disabled={!hasOlder} aria-label="Previous month" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-white/10 transition-colors">
+              <ChevronLeft className="w-[14px] h-[14px] text-white/80" strokeWidth={2.2} />
             </button>
-            <span className="capitalize min-w-[88px] text-center text-[13px] font-medium text-foreground/80">{monthLabel}</span>
-            <button type="button" onClick={() => hasNewer && setSelectedMonth(availableMonths[idx - 1])} disabled={!hasNewer} aria-label="Next month" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-muted/60 transition-colors">
-              <ChevronRight className="w-[14px] h-[14px] text-foreground/80" strokeWidth={2.2} />
+            <span className="capitalize min-w-[88px] text-center text-[13px] font-medium text-white/80">{monthLabel}</span>
+            <button type="button" onClick={() => hasNewer && setSelectedMonth(availableMonths[idx - 1])} disabled={!hasNewer} aria-label="Next month" className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] disabled:opacity-30 hover:bg-white/10 transition-colors">
+              <ChevronRight className="w-[14px] h-[14px] text-white/80" strokeWidth={2.2} />
             </button>
           </span>
         </div>
