@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 type TabKey = "overview" | "accounts" | "preferences" | "security";
 
-const UNDERLINE_TAB = "rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm whitespace-nowrap shrink-0";
+const UNDERLINE_TAB = "rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm whitespace-nowrap shrink-0 text-white/70 data-[state=active]:text-white";
 const TAB_KEYS: TabKey[] = ["overview", "accounts", "preferences", "security"];
 
 export default function Account() {
@@ -55,9 +55,9 @@ export default function Account() {
       >
         <main className="space-y-6 px-3 md:px-[34px]">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <div className="sticky top-12 z-20 -mx-3 -mt-2 bg-background/90 px-3 pt-2 backdrop-blur-[10px] md:top-0 md:mx-0 md:mt-0 md:px-0 md:pt-0 md:bg-background/85">
+            <div className="sticky top-12 z-20 -mx-3 -mt-2 bg-background/90 px-3 pt-2 backdrop-blur-[10px] md:top-0 md:mx-0 md:mt-0 md:px-0 md:pt-0 md:bg-primary md:backdrop-blur-none">
               <AccountHeader />
-              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto mt-4 overflow-x-auto scrollbar-none">
+              <TabsList className="w-full justify-start bg-transparent border-b border-white/20 rounded-none p-0 h-auto mt-4 overflow-x-auto scrollbar-none md:border-white/20">
                 <TabsTrigger value="overview" className={UNDERLINE_TAB}>
                   {t("tabs.overview", "Overview")}
                 </TabsTrigger>

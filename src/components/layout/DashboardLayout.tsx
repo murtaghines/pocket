@@ -57,7 +57,12 @@ export function DashboardLayout({ children, fullBleed = false }: DashboardLayout
             : "md:h-dvh md:overflow-y-auto pt-2 md:pt-0 pb-6 md:pb-0",
         )}
       >
-        {children}
+        {!fullBleed && (
+          <div className="hidden md:block sticky top-0 h-[180px] bg-primary -mb-[180px] z-0 pointer-events-none" />
+        )}
+        {fullBleed ? children : (
+          <div className="relative z-10">{children}</div>
+        )}
       </main>
     </div>
   );

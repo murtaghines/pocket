@@ -16,11 +16,11 @@ export default function ComingSoon({ title, subtitle }: ComingSoonProps) {
     <DashboardLayout>
       <div className="px-3 md:px-[34px]">
       <div className="mb-6">
-        <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-foreground leading-tight">
+        <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-foreground md:text-white leading-tight">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+          <p className="text-sm text-muted-foreground md:text-white/70 mt-1">{subtitle}</p>
         )}
       </div>
 
