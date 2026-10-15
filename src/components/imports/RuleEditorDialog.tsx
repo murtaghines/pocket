@@ -10,6 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogBody,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   buildRuleFromCorrection,
@@ -50,9 +52,9 @@ interface RuleEditorDialogProps {
   skipLabel?: string;
 }
 
-const LABEL = "text-[12px] font-medium text-primary/70 mb-1.5";
+const LABEL = "text-[13px] font-medium text-muted-foreground";
 const PILL_INPUT =
-  "h-11 rounded-xl bg-muted/50 border-0 shadow-none px-4 text-[14px] focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
+  "h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50";
 
 const MATCH_OPTIONS: {
   value: MatchType;
@@ -202,9 +204,9 @@ export function RuleEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[540px] bg-card rounded-2xl p-0 gap-0 overflow-hidden border-0 shadow-lg">
-        <DialogHeader className="px-7 pt-6 pb-0">
-          <DialogTitle className="text-[17px] font-semibold text-foreground">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
             {tc("imports.ruleNudgeCta", "Create rule")}
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -212,13 +214,13 @@ export function RuleEditorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-5 px-7 pt-5 pb-6 max-h-[75vh] overflow-y-auto">
+        <DialogBody>
           {/* Description (read-only) + category tag */}
           <div>
             <label className={LABEL}>
               {tc("imports.description", "Description")}
             </label>
-            <div className="flex items-center gap-2 rounded-xl bg-muted/50 px-4 py-3">
+            <div className="flex items-center gap-2 rounded-xl bg-muted px-4 py-3">
               <p className="flex-1 min-w-0 text-[14px] font-mono text-foreground break-all leading-snug truncate">
                 {description}
               </p>
@@ -296,7 +298,7 @@ export function RuleEditorDialog({
             <label className={LABEL}>
               {t("categories.matchType", "Match type")}
             </label>
-            <div className="flex rounded-xl bg-muted/50 p-1">
+            <div className="flex rounded-xl bg-muted p-1">
               {MATCH_OPTIONS.map((opt) => {
                 const active = matchType === opt.value;
                 return (
@@ -305,7 +307,7 @@ export function RuleEditorDialog({
                     type="button"
                     onClick={() => setMatchType(opt.value)}
                     className={cn(
-                      "flex flex-1 items-center justify-center rounded-lg py-2.5 text-[11px] font-medium transition-all",
+                      "flex flex-1 items-center justify-center rounded-[9px] py-2.5 text-[11px] font-medium transition-all",
                       active
                         ? "bg-card text-foreground shadow-sm font-semibold"
                         : "text-muted-foreground hover:text-foreground/70",
@@ -377,38 +379,38 @@ export function RuleEditorDialog({
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex gap-3 pt-1">
-            {onSkip ? (
-              <Button
-                variant="outline"
-                className="flex-1 h-12 rounded-xl font-semibold text-[14px] border-border"
-                onClick={() => {
-                  onSkip();
-                  onOpenChange(false);
-                }}
-              >
-                {skipLabel || tc("imports.cancel", "Cancel")}
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                className="flex-1 h-12 rounded-xl font-semibold text-[14px] border-border"
-                onClick={() => onOpenChange(false)}
-              >
-                {tc("imports.cancel", "Cancel")}
-              </Button>
-            )}
+        </DialogBody>
+
+        <DialogFooter>
+          {onSkip ? (
             <Button
-              className="flex-1 h-12 rounded-xl font-semibold text-[14px] gap-1.5"
-              disabled={!canSave}
-              onClick={handleSave}
+              variant="outline"
+              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]"
+              onClick={() => {
+                onSkip();
+                onOpenChange(false);
+              }}
             >
-              <Wand2 className="w-4 h-4" />
-              {tc("imports.ruleSaveRule", "Save rule")}
+              {skipLabel || tc("imports.cancel", "Cancel")}
             </Button>
-          </div>
-        </div>
+          ) : (
+            <Button
+              variant="outline"
+              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]"
+              onClick={() => onOpenChange(false)}
+            >
+              {tc("imports.cancel", "Cancel")}
+            </Button>
+          )}
+          <Button
+            className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px] gap-1.5"
+            disabled={!canSave}
+            onClick={handleSave}
+          >
+            <Wand2 className="w-4 h-4" />
+            {tc("imports.ruleSaveRule", "Save rule")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

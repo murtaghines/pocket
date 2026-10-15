@@ -25,6 +25,8 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogBody,
+  DialogFooter,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -47,11 +49,11 @@ import { normalizeCategory } from "@/lib/categoryTranslations";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import type { MonthTransaction, PendingEditShape, MovementType } from "./types";
 
-const LABEL = "text-[12px] font-medium text-primary/70 mb-1.5";
+const LABEL = "text-[13px] font-medium text-muted-foreground";
 const PILL_INPUT =
-  "h-11 rounded-xl bg-muted/50 border-0 shadow-none px-4 text-[14px] focus-visible:ring-1 focus-visible:ring-primary placeholder:text-muted-foreground/50";
+  "h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50";
 const PILL_SELECT =
-  "h-11 rounded-xl bg-muted/50 border-0 shadow-none px-4 text-[14px]";
+  "h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium";
 
 interface TransactionEditDrawerProps {
   tx: MonthTransaction | null;
@@ -252,20 +254,20 @@ export function TransactionEditDrawer({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[480px] bg-card rounded-2xl p-0 gap-0 overflow-hidden border-0 shadow-lg">
+        <DialogContent size="sm">
           {/* Header */}
-          <DialogHeader className="px-7 pt-6 pb-0">
-            <DialogTitle className="text-[17px] font-semibold text-foreground">
-              {t("imports.editTransaction", "edit transaction")}
+          <DialogHeader>
+            <DialogTitle>
+              {t("imports.editTransaction", "Edit Transaction")}
             </DialogTitle>
             <DialogDescription className="sr-only">
               {t("imports.editTransaction", "edit transaction")}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-5 px-7 pt-5 pb-6">
+          <DialogBody>
             {/* Movement toggle */}
-            <div className="flex rounded-xl bg-muted/50 p-1">
+            <div className="flex rounded-xl bg-muted p-1">
               {movementOptions.map((opt) => {
                 const active = movement === opt.value;
                 return (
@@ -456,31 +458,9 @@ export function TransactionEditDrawer({
               </div>
             )}
 
-            {/* Action buttons */}
-            <div className="flex gap-3 pt-1">
-              <Button
-                variant="outline"
-                className="flex-1 h-12 rounded-xl font-semibold text-[14px] border-border"
-                onClick={() => onOpenChange(false)}
-              >
-                {t("imports.cancel", "Cancel")}
-              </Button>
-              <Button
-                className="flex-1 h-12 rounded-xl font-semibold text-[14px]"
-                disabled={!hasChanges || invalid}
-                onClick={() => {
-                  handleAmountBlur();
-                  onSave(tx, buildEdits(), false, isReverting);
-                  onOpenChange(false);
-                }}
-              >
-                {t("imports.save", "Save")}
-              </Button>
-            </div>
-
             {/* Secondary actions */}
             {(isManual || !isManual) && (
-              <div className="flex items-center justify-center gap-4 -mt-2">
+              <div className="flex items-center justify-center gap-4">
                 {isManual && onDelete && (
                   <button
                     type="button"
@@ -518,13 +498,35 @@ export function TransactionEditDrawer({
                 )}
               </div>
             )}
-          </div>
+          </DialogBody>
+
+          {/* Action buttons */}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]"
+              onClick={() => onOpenChange(false)}
+            >
+              {t("imports.cancel", "Cancel")}
+            </Button>
+            <Button
+              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]"
+              disabled={!hasChanges || invalid}
+              onClick={() => {
+                handleAmountBlur();
+                onSave(tx, buildEdits(), false, isReverting);
+                onOpenChange(false);
+              }}
+            >
+              {t("imports.save", "Save")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent className="max-w-[240px] rounded-2xl p-5">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-[15px]">
               {t("imports.deleteEntryTitle", "Delete entry?")}
@@ -534,11 +536,11 @@ export function TransactionEditDrawer({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row gap-2 sm:justify-center">
-            <AlertDialogCancel className="mt-0 flex-1 rounded-full border-0 bg-muted shadow-none">
+            <AlertDialogCancel className="mt-0 flex-1">
               {t("imports.no", "no")}
             </AlertDialogCancel>
             <AlertDialogAction
-              className="flex-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 if (tx && onDelete) onDelete(tx);
                 onOpenChange(false);

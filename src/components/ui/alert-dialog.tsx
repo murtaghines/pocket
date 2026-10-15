@@ -16,7 +16,7 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-foreground/40 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-[rgba(16,24,40,0.45)] backdrop-blur-[2px] flex items-center justify-center p-8 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -30,15 +30,16 @@ const AlertDialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => (
   <AlertDialogPortal>
-    <AlertDialogOverlay />
-    <AlertDialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] gap-0 overflow-hidden rounded-2xl border border-border/80 bg-card p-0 shadow-[0_24px_60px_-12px_rgb(8_8_8_/_0.18),0_0_0_1px_rgb(8_8_8_/_0.04)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        className,
-      )}
-      {...props}
-    />
+    <AlertDialogOverlay>
+      <AlertDialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "relative z-50 w-full max-w-[400px] overflow-hidden rounded-[20px] bg-card p-0 shadow-[0_24px_48px_-16px_rgba(16,24,40,0.28),0_4px_10px_rgba(16,24,40,0.08)] max-h-[calc(100vh-64px)] flex flex-col duration-200 data-[state=open]:animate-modal-in data-[state=closed]:animate-modal-out",
+          className,
+        )}
+        {...props}
+      />
+    </AlertDialogOverlay>
   </AlertDialogPortal>
 ));
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
@@ -46,7 +47,7 @@ AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col gap-2 px-6 pt-6 pb-2 text-left",
+      "flex flex-col gap-2 px-8 pt-6 pb-2 text-left",
       className,
     )}
     {...props}
@@ -57,7 +58,7 @@ AlertDialogHeader.displayName = "AlertDialogHeader";
 const AlertDialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse gap-2 border-t border-border/70 bg-muted/30 px-6 py-4 sm:flex-row sm:justify-end sm:gap-2",
+      "flex flex-row items-center justify-end gap-2.5 border-t border-[#F3F5F9] px-8 py-5",
       className,
     )}
     {...props}
@@ -71,7 +72,7 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn("text-[17px] font-semibold leading-tight tracking-[-0.01em] text-foreground", className)}
+    className={cn("text-xl font-bold leading-[1.2] tracking-[-0.01em] font-title text-foreground", className)}
     {...props}
   />
 ));
@@ -83,7 +84,7 @@ const AlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className={cn("px-6 pb-5 pt-1 text-sm leading-relaxed text-muted-foreground", className)}
+    className={cn("px-8 pb-5 pt-1 text-sm leading-relaxed text-muted-foreground", className)}
     {...props}
   />
 ));
@@ -95,7 +96,7 @@ const AlertDialogAction = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Action
     ref={ref}
-    className={cn(buttonVariants({ size: "sm" }), "h-9 px-4 font-medium", className)}
+    className={cn(buttonVariants(), "h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]", className)}
     {...props}
   />
 ));
@@ -108,8 +109,8 @@ const AlertDialogCancel = React.forwardRef<
   <AlertDialogPrimitive.Cancel
     ref={ref}
     className={cn(
-      buttonVariants({ variant: "outline", size: "sm" }),
-      "h-9 px-4 font-medium border-border bg-card hover:bg-muted",
+      buttonVariants({ variant: "outline" }),
+      "h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]",
       className,
     )}
     {...props}

@@ -167,6 +167,14 @@ export default {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        "modal-in": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "modal-out": {
+          from: { opacity: "1", transform: "translateY(0)" },
+          to: { opacity: "0", transform: "translateY(8px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -180,6 +188,8 @@ export default {
         "float-medium": "float-medium 4s ease-in-out infinite",
         "float-fast": "float-fast 3s ease-in-out infinite",
         marquee: "marquee 30s linear infinite",
+        "modal-in": "modal-in 220ms cubic-bezier(0.2,0.8,0.2,1)",
+        "modal-out": "modal-out 160ms ease-in",
       },
     },
   },

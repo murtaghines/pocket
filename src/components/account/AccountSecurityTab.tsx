@@ -302,8 +302,8 @@ function DeleteAccountSection() {
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-4">
-            <Label htmlFor="confirm-delete" className="text-sm font-medium">
+          <div className="px-8 pb-5">
+            <Label htmlFor="confirm-delete" className="text-[13px] font-medium text-muted-foreground">
               {t("deleteAccount.typeToConfirm", { word: confirmWord })}
             </Label>
             <Input
@@ -311,7 +311,7 @@ function DeleteAccountSection() {
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder={confirmWord}
-              className="mt-2"
+              className="mt-2 h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none"
               disabled={isDeleting}
             />
           </div>
@@ -321,6 +321,7 @@ function DeleteAccountSection() {
               variant="destructive"
               onClick={handleDelete}
               disabled={confirmText !== confirmWord || isDeleting}
+              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]"
             >
               {isDeleting ? (
                 <>

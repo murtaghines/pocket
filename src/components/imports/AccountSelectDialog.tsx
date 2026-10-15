@@ -10,6 +10,8 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogBody,
+  DialogFooter,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -82,19 +84,19 @@ export function AccountSelectDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[480px] gap-0 p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4">
+        <DialogContent>
+          <DialogHeader>
             <DialogTitle>{t('accounts.selectAccount', 'Select account')}</DialogTitle>
             <DialogDescription className="sr-only">
               {t('accounts.whichAccount', 'Which account are these files from?')}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="px-6 pb-6 space-y-4">
+          <DialogBody>
             {/* File info */}
             {fileName && (
               <div className="rounded-xl bg-muted px-4 py-3">
-                <span className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-[13px] font-medium text-muted-foreground">
                   File
                 </span>
                 <p className="text-sm text-foreground mt-0.5 truncate">
@@ -105,12 +107,12 @@ export function AccountSelectDialog({
 
             {/* Account selector */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-[13px] font-medium text-muted-foreground">
                 {t('accounts.selectAccount', 'Select account')}
               </label>
               {hasAccounts ? (
                 <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-                  <SelectTrigger className="h-10 rounded-lg bg-muted/50 border border-border px-3 focus:ring-1 focus:ring-primary [&>svg]:opacity-40">
+                  <SelectTrigger className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] [&>svg]:opacity-40">
                     <SelectValue placeholder={t('accounts.selectPlaceholder', 'Select an account...')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -146,24 +148,25 @@ export function AccountSelectDialog({
 
             {/* Add new account */}
             <Button
-              variant="outline"
-              className="w-full h-10 rounded-lg gap-2 font-medium"
+              variant="ghost"
+              className="w-full h-12 rounded-[14px] gap-2 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]"
               onClick={() => setShowNewForm(true)}
             >
               <Plus className="w-4 h-4" />
               {t('accounts.addNewAccount', 'Add new account')}
             </Button>
+          </DialogBody>
 
-            {/* Upload button */}
+          <DialogFooter>
             <Button
-              className="w-full h-10 rounded-lg gap-1.5 font-semibold"
+              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]"
               onClick={handleConfirm}
               disabled={!selectedAccountId}
             >
               <Upload className="w-4 h-4" />
               {t('accounts.upload', 'Upload')}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

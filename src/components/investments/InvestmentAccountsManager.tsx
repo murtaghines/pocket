@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useInvestments } from "@/hooks/useInvestments";
 import { Plus, Trash2, Building2 } from "lucide-react";
 import { toast } from "sonner";
@@ -82,39 +82,47 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
             <DialogHeader>
               <DialogTitle>{t('accounts.addOrUpdate')}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="platform">{t('accounts.platform')}</Label>
-                <Input
-                  id="platform"
-                  placeholder={t('accounts.platformPlaceholder')}
-                  value={platform}
-                  onChange={(e) => setPlatform(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="accountName">{t('accounts.accountName')}</Label>
-                <Input
-                  id="accountName"
-                  placeholder={t('accounts.accountNamePlaceholder')}
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="currentValue">{t('accounts.currentValue')}</Label>
-                <Input
-                  id="currentValue"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={currentValue}
-                  onChange={(e) => setCurrentValue(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={upsertAccount.isPending}>
-                {upsertAccount.isPending ? t('accounts.saving') : t('accounts.save')}
-              </Button>
+            <form onSubmit={handleSubmit}>
+              <DialogBody>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="platform" className="text-[13px] font-medium text-muted-foreground">{t('accounts.platform')}</Label>
+                  <Input
+                    id="platform"
+                    placeholder={t('accounts.platformPlaceholder')}
+                    value={platform}
+                    onChange={(e) => setPlatform(e.target.value)}
+                    className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="accountName" className="text-[13px] font-medium text-muted-foreground">{t('accounts.accountName')}</Label>
+                  <Input
+                    id="accountName"
+                    placeholder={t('accounts.accountNamePlaceholder')}
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="currentValue" className="text-[13px] font-medium text-muted-foreground">{t('accounts.currentValue')}</Label>
+                  <Input
+                    id="currentValue"
+                    type="number"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    value={currentValue}
+                    onChange={(e) => setCurrentValue(e.target.value)}
+                    className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium tabular-nums focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none"
+                  />
+                </div>
+              </DialogBody>
+              <DialogFooter>
+                <Button type="submit" className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[140px]" disabled={upsertAccount.isPending}>
+                  {upsertAccount.isPending ? t('accounts.saving') : t('accounts.save')}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
