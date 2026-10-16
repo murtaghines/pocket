@@ -701,16 +701,21 @@ export function CategoriesEditor() {
 
                     {/* Auto-detected patterns — top right */}
                     {!selected.isCustom && categoryExamples[selected.slug] && (
-                      <div className="flex flex-wrap gap-1 justify-end ml-auto max-w-[45%]">
-                        {categoryExamples[selected.slug].map((ex) => (
-                          <span
-                            key={ex}
-                            className="text-[10.5px] font-medium px-2 py-0.5 rounded-[7px]"
-                            style={{ background: '#F1F3F8', color: '#9AA1AC' }}
-                          >
-                            {ex}
-                          </span>
-                        ))}
+                      <div className="flex flex-col items-end gap-1 ml-auto max-w-[45%]">
+                        <span className="text-[10px] font-medium uppercase tracking-[.07em]" style={{ color: '#B0B7C3' }}>
+                          {t('categories.builtInExamples')}
+                        </span>
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          {categoryExamples[selected.slug].map((ex) => (
+                            <span
+                              key={ex}
+                              className="text-[10.5px] font-medium px-2 py-0.5 rounded-[7px]"
+                              style={{ background: '#F1F3F8', color: '#9AA1AC' }}
+                            >
+                              {ex}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
