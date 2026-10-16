@@ -17,18 +17,14 @@ export function useCategoryTransactions(categoryId: string | null) {
     queryKey: ["category-transactions", user?.id, categoryId],
     enabled: !!user?.id && !!categoryId,
     queryFn: async () => {
-      const now = new Date();
-      const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-
       const { data, error } = await supabase
         .from("transactions")
         .select("id, date, description, amount, accounts(name, institution)")
         .eq("user_id", user!.id)
         .eq("category_id", categoryId!)
-        .gte("date", monthStart)
         .eq("is_hidden", false)
         .order("date", { ascending: false })
-        .limit(3);
+        .limit(5);
 
       if (error) throw error;
 

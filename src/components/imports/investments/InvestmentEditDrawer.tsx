@@ -3,13 +3,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { SheetPanel, SHEET_BUTTON } from "../SheetPanel";
 import { INVESTMENT_TYPES, ASSET_TYPES } from "./types";
 import type { Investment, PendingInvEdit } from "./types";
@@ -189,24 +183,18 @@ export function InvestmentEditDrawer({
           <label className="text-[13px] font-medium text-muted-foreground">
             {t("imports.asset", "Asset")}
           </label>
-          <Select
-            value={assetType || "__none__"}
-            onValueChange={(v) => setAssetType(v === "__none__" ? null : v)}
-          >
-            <SelectTrigger className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus:bg-card focus:border-primary focus:ring-[3px] focus:ring-primary/[0.14] [&>svg]:opacity-40">
-              <SelectValue placeholder="—">
-                <span className="text-sm font-medium">{assetType || "—"}</span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">—</SelectItem>
+          <div className="pk-select-wrap">
+            <select
+              value={assetType || "__none__"}
+              onChange={(e) => setAssetType(e.target.value === "__none__" ? null : e.target.value)}
+              className="h-11 w-full rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus:bg-card focus:border-primary focus:ring-[3px] focus:ring-primary/[0.14]"
+            >
+              <option value="__none__">—</option>
               {ASSET_TYPES.map((a) => (
-                <SelectItem key={a} value={a}>
-                  {a}
-                </SelectItem>
+                <option key={a} value={a}>{a}</option>
               ))}
-            </SelectContent>
-          </Select>
+            </select>
+          </div>
         </div>
       </>
     </SheetPanel>

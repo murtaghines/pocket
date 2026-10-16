@@ -23,13 +23,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { PillBadge } from "@/components/ui/pill-badge";
 import {
   AlertDialog,
@@ -471,30 +465,23 @@ export function UploadedFilesHistoryList({
                     )}
                   <div className="ml-auto shrink-0 pl-2">
                     {cashAccounts.length > 0 ? (
-                      <Select
-                        value={imp.account_id || ""}
-                        onValueChange={(v) => changeAcct(imp.id, v)}
-                        disabled={!!imp.locked}
-                      >
-                        <SelectTrigger
+                      <div className="pk-select-wrap">
+                        <select
+                          value={imp.account_id || ""}
+                          onChange={(e) => changeAcct(imp.id, e.target.value)}
+                          disabled={!!imp.locked}
                           className={cn(
-                            "h-7 w-auto min-w-[120px] max-w-[180px] border border-input bg-background px-2.5 text-[12px] font-medium text-foreground gap-1.5 hover:bg-accent hover:border-primary/40 transition-colors",
+                            "h-7 min-w-[120px] max-w-[180px] border border-input bg-background px-2.5 text-[12px] font-medium text-foreground hover:bg-accent hover:border-primary/40 transition-colors rounded-md",
                             imp.locked && "opacity-60 cursor-not-allowed",
                           )}
                           title={imp.locked ? "Unlock the file to change account" : "Click to change account"}
                         >
-                          <SelectValue placeholder="Pick account">
-                            {acctName(imp.account_id)}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
+                          <option value="" disabled>Pick account</option>
                           {cashAccounts.map((a) => (
-                            <SelectItem key={a.id} value={a.id} className="text-sm">
-                              {a.name}
-                            </SelectItem>
+                            <option key={a.id} value={a.id}>{a.name}</option>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </select>
+                      </div>
                     ) : (
                       <span className="truncate text-[12px] font-medium text-foreground">
                         {acctName(imp.account_id)}

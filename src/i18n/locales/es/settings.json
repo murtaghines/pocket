@@ -171,8 +171,8 @@
     "matchType_contains": "CONTIENE",
     "matchType_starts_with": "EMPIEZA",
     "matchType_ends_with": "TERMINA",
-    "matchTypeDesc_fuzzy": "Palabras en cualquier orden",
-    "matchTypeDesc_contains": "Aparece en cualquier parte",
+    "matchTypeDesc_fuzzy": "Encuentra las palabras clave en cualquier orden, ignorando prefijos bancarios como PAGO o TRANSFERENCIA",
+    "matchTypeDesc_contains": "El texto exacto debe aparecer tal cual, en orden",
     "matchTypeDesc_starts_with": "Empieza por el patrón",
     "matchTypeDesc_ends_with": "Termina en el patrón"
   },

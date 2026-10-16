@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { Plus, X, Loader2, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -124,14 +123,17 @@ export function CreateCategoryDialog({ open, onClose, onSave, isSaving, editingC
             </div>
             <div className="space-y-1.5">
               <Label className="text-[13px] font-medium text-muted-foreground">{t('categories.customCategoryType')}</Label>
-              <Select value={movement} onValueChange={(v) => setMovement(v as 'INCOME' | 'EXPENSE' | 'TRANSFER')}>
-                <SelectTrigger className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EXPENSE">{t('categories.expenses')}</SelectItem>
-                  <SelectItem value="INCOME">{t('categories.income')}</SelectItem>
-                  <SelectItem value="TRANSFER">{t('categories.transfers')}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="pk-select-wrap">
+                <select
+                  value={movement}
+                  onChange={(e) => setMovement(e.target.value as 'INCOME' | 'EXPENSE' | 'TRANSFER')}
+                  className="h-11 w-full rounded-xl bg-muted border-[1.5px] border-transparent shadow-none text-sm font-medium px-3.5"
+                >
+                  <option value="EXPENSE">{t('categories.expenses')}</option>
+                  <option value="INCOME">{t('categories.income')}</option>
+                  <option value="TRANSFER">{t('categories.transfers')}</option>
+                </select>
+              </div>
             </div>
           </div>
 

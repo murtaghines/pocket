@@ -1,13 +1,7 @@
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { SUPPORTED_CURRENCIES, getCurrencyByCode } from '@/lib/currencies';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -46,32 +40,29 @@ export function CurrencySelector({ variant = 'light' }: CurrencySelectorProps) {
         </span>
       )}
       
-      <Select value={currentCurrency} onValueChange={handleCurrencyChange}>
-        <SelectTrigger className={cn(
-          "w-[80px] h-9 gap-1",
-          isDark 
-            ? "bg-white/10 border-white/20 text-white hover:bg-white/20" 
-            : "bg-muted text-foreground border-border hover:bg-muted/80"
-        )}>
-          {isUpdating ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <SelectValue>
-              <span className="font-mono text-sm">{currencyInfo?.symbol || currentCurrency}</span>
-            </SelectValue>
+      <div className="pk-select-wrap relative flex items-center">
+        <select
+          value={currentCurrency}
+          onChange={(e) => handleCurrencyChange(e.target.value)}
+          disabled={isUpdating}
+          className={cn(
+            "h-9 pl-3 pr-8 rounded-md text-sm font-mono",
+            isDark
+              ? "bg-white/10 border-white/20 text-white hover:bg-white/20"
+              : "bg-muted text-foreground border-border hover:bg-muted/80",
+            isUpdating && "opacity-60 cursor-not-allowed"
           )}
-        </SelectTrigger>
-        <SelectContent className="bg-popover z-50">
+        >
           {SUPPORTED_CURRENCIES.map((currency) => (
-            <SelectItem key={currency.code} value={currency.code}>
-              <span className="flex items-center gap-2">
-                <span className="font-mono w-6">{currency.symbol}</span>
-                <span>{currency.code}</span>
-              </span>
-            </SelectItem>
+            <option key={currency.code} value={currency.code}>
+              {currency.symbol} {currency.code}
+            </option>
           ))}
-        </SelectContent>
-      </Select>
+        </select>
+        {isUpdating && (
+          <Loader2 className="w-3 h-3 animate-spin absolute right-2 pointer-events-none" />
+        )}
+      </div>
     </div>
   );
 }

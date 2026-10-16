@@ -11,13 +11,6 @@ import {
   DialogFooter,
   DialogBody,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ACCOUNT_COLOR_PALETTE, getDefaultAccountColor } from "@/lib/accountColors";
@@ -178,24 +171,19 @@ export function AccountFormDialog({
                 </span>
               </div>
             ) : (
-              <Select value={accountType} onValueChange={(v) => setAccountType(v as AccountType)}>
-                <SelectTrigger className={cn(inputClass, "[&>svg]:opacity-40")}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTypes.map((type) => {
-                    const Icon = getAccountTypeIcon(type);
-                    return (
-                      <SelectItem key={type} value={type}>
-                        <span className="inline-flex items-center gap-2">
-                          <Icon className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
-                          {t(getAccountTypeI18nKey(type))}
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              <div className="pk-select-wrap">
+                <select
+                  value={accountType}
+                  onChange={(e) => setAccountType(e.target.value as AccountType)}
+                  className={inputClass}
+                >
+                  {availableTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {t(getAccountTypeI18nKey(type))}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
 
@@ -251,19 +239,19 @@ export function AccountFormDialog({
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("accounts.currency", "Currency")}
               </label>
-              <Select value={currencyBase} onValueChange={setCurrencyBase}>
-                <SelectTrigger className={cn(inputClass, "[&>svg]:opacity-40")}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
+              <div className="pk-select-wrap">
+                <select
+                  value={currencyBase}
+                  onChange={(e) => setCurrencyBase(e.target.value)}
+                  className={inputClass}
+                >
                   {SUPPORTED_CURRENCIES.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>
-                      <span className="tabular-nums">{c.code}</span>
-                      <span className="text-muted-foreground ml-2">{c.symbol} — {c.name}</span>
-                    </SelectItem>
+                    <option key={c.code} value={c.code}>
+                      {c.code} {c.symbol} — {c.name}
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-[13px] font-medium text-muted-foreground">

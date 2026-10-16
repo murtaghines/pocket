@@ -171,8 +171,8 @@
     "matchType_contains": "CONTAINS",
     "matchType_starts_with": "STARTS WITH",
     "matchType_ends_with": "ENDS WITH",
-    "matchTypeDesc_fuzzy": "Words in any order",
-    "matchTypeDesc_contains": "Appears anywhere",
+    "matchTypeDesc_fuzzy": "Matches key words in any order, ignoring banking prefixes like PAYMENT or TRANSFER",
+    "matchTypeDesc_contains": "The exact text must appear as-is, in order",
     "matchTypeDesc_starts_with": "Starts with the pattern",
     "matchTypeDesc_ends_with": "Ends with the pattern"
   },

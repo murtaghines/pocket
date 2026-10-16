@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useTheme } from "@/hooks/useTheme";
@@ -187,34 +186,29 @@ export function AccountPreferencesTab() {
               <Languages className="h-3.5 w-3.5" />
               {t("preferences.language", "Language")}
             </Label>
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+            <div className="pk-select-wrap">
+              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
                 {supportedLanguages.map((lang) => (
-                  <SelectItem key={lang.code} value={lang.code}>
+                  <option key={lang.code} value={lang.code}>
                     {lang.nativeName} ({lang.name})
-                  </SelectItem>
+                  </option>
                 ))}
-              </SelectContent>
-            </Select>
+              </select>
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label className="text-sm">{t("preferences.country", "Country")}</Label>
-            <Select value={country} onValueChange={setCountry}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("preferences.countryPlaceholder", "Select your country")} />
-              </SelectTrigger>
-              <SelectContent>
+            <div className="pk-select-wrap">
+              <select value={country} onChange={(e) => setCountry(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                <option value="">{t("preferences.countryPlaceholder", "Select your country")}</option>
                 {COUNTRIES.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
+                  <option key={c.code} value={c.code}>
                     {c.name}
-                  </SelectItem>
+                  </option>
                 ))}
-              </SelectContent>
-            </Select>
+              </select>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -222,17 +216,14 @@ export function AccountPreferencesTab() {
               <Calendar className="h-3.5 w-3.5" />
               {t("preferences.dateFormat", "Date format")}
             </Label>
-            <Select value={dateFormat} onValueChange={setDateFormat}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="AUTO">{t("preferences.dateFormatAuto", "Auto (based on country)")}</SelectItem>
-                <SelectItem value="DMY">DD/MM/YYYY · 28/02/2026</SelectItem>
-                <SelectItem value="MDY">MM/DD/YYYY · 02/28/2026</SelectItem>
-                <SelectItem value="YMD">YYYY-MM-DD · 2026-02-28</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="pk-select-wrap">
+              <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                <option value="AUTO">{t("preferences.dateFormatAuto", "Auto (based on country)")}</option>
+                <option value="DMY">DD/MM/YYYY · 28/02/2026</option>
+                <option value="MDY">MM/DD/YYYY · 02/28/2026</option>
+                <option value="YMD">YYYY-MM-DD · 2026-02-28</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -247,18 +238,15 @@ export function AccountPreferencesTab() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label className="text-sm">{t("preferences.currency", "Base currency")}</Label>
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+            <div className="pk-select-wrap">
+              <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
                 {SUPPORTED_CURRENCIES.map((curr) => (
-                  <SelectItem key={curr.code} value={curr.code}>
+                  <option key={curr.code} value={curr.code}>
                     {curr.symbol} {curr.code} – {curr.name}
-                  </SelectItem>
+                  </option>
                 ))}
-              </SelectContent>
-            </Select>
+              </select>
+            </div>
           </div>
 
           <div className="space-y-2 pt-2 border-t border-border">
