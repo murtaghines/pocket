@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Plus, Lock, Trash2, Info, Sparkles, Calendar, Code2, ChevronDown, Pencil } from 'lucide-react';
+import { Plus, Lock, Trash2, Info, Sparkles, Calendar, Code2, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { useCategories } from '@/hooks/useCategories';
@@ -124,7 +124,6 @@ export function CategoriesEditor() {
   // Inline add rule state
   const [newPattern, setNewPattern] = useState('');
   const [newMatchType, setNewMatchType] = useState<string>('SMART');
-  const [showMatchTypeDropdown, setShowMatchTypeDropdown] = useState(false);
   const [showCreateRuleModal, setShowCreateRuleModal] = useState(false);
   const [showInfoPopover, setShowInfoPopover] = useState(false);
 
@@ -237,12 +236,12 @@ export function CategoriesEditor() {
   // Suggestions for the selected category's movement type
   const categorySuggestions = useMemo(() => {
     if (!selected) return [];
-    return suggestions.filter(s => s.movement === selected.movement);
+    return suggestions.filter(s => s.movement === selected.movement && s.categoryIds.includes(selected.id));
   }, [selected, suggestions]);
 
   // Recent transactions
   const { data: recentTx = [] } = useCategoryTransactions(
-    selected && !selected.isCustom ? selected.id : null
+    selected ? selected.id : null
   );
 
   // Rule preview for inline add
@@ -713,9 +712,22 @@ export function CategoriesEditor() {
                           </span>
                         )}
                       </div>
+                      {/* Auto-detected patterns inline in header */}
+                      {!selected.isCustom && categoryExamples[selected.slug] && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {categoryExamples[selected.slug].map((ex) => (
+                            <span
+                              key={ex}
+                              className="text-[10.5px] font-medium px-2 py-0.5 rounded-[7px]"
+                              style={{ background: '#F1F3F8', color: '#9AA1AC' }}
+                            >
+                              {ex}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-
                 </div>
 
                 {/* Scrollable content */}
@@ -875,26 +887,6 @@ export function CategoriesEditor() {
                       ))}
                     </div>
 
-                    {/* Built-in pattern examples for default categories */}
-                    {!selected.isCustom && categoryExamples[selected.slug] && (
-                      <div className="mt-3 mb-1">
-                        <span className="text-[10.5px] font-semibold uppercase tracking-[.07em]" style={{ color: '#B4BAC3' }}>
-                          {t('categories.builtInExamples', 'Auto-detected patterns')}
-                        </span>
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {categoryExamples[selected.slug].map((ex) => (
-                            <span
-                              key={ex}
-                              className="text-[11.5px] font-medium px-2.5 py-1 rounded-[7px]"
-                              style={{ background: '#F1F3F8', color: '#9AA1AC' }}
-                            >
-                              {ex}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {/* Add rule inline */}
                     {!selected.isCustom && (
                       <div className="mt-2">
@@ -906,42 +898,19 @@ export function CategoriesEditor() {
                           }}
                         >
                           {/* Match type selector */}
-                          <div className="relative shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => setShowMatchTypeDropdown(!showMatchTypeDropdown)}
-                              className="flex items-center gap-1 text-[10.5px] font-bold tracking-[.04em] px-2.5 py-1 rounded-[7px] transition-colors"
-                              style={{ background: '#F1F3F8', color: '#5A6069' }}
+                          <div className="pk-select-wrap shrink-0">
+                            <select
+                              value={newMatchType}
+                              onChange={(e) => setNewMatchType(e.target.value)}
+                              className="h-7 px-2 bg-[#F1F3F8] rounded-[7px] text-[10.5px] font-bold tracking-[.04em] cursor-pointer border-0"
+                              style={{ color: '#5A6069' }}
                             >
-                              {MATCH_TYPE_LABEL[newMatchType] || newMatchType}
-                              <ChevronDown size={10} />
-                            </button>
-                            {showMatchTypeDropdown && (
-                              <>
-                                <div className="fixed inset-0 z-20" onClick={() => setShowMatchTypeDropdown(false)} />
-                                <div
-                                  className="absolute top-full left-0 mt-1 z-30 bg-white rounded-lg overflow-hidden"
-                                  style={{
-                                    boxShadow: '0 20px 40px -14px rgba(16,24,40,.28), 0 2px 6px rgba(16,24,40,.08)',
-                                    minWidth: 120,
-                                  }}
-                                >
-                                  {MATCH_TYPE_OPTIONS.map((mt) => (
-                                    <button
-                                      key={mt}
-                                      type="button"
-                                      onClick={() => { setNewMatchType(mt); setShowMatchTypeDropdown(false); }}
-                                      className={cn(
-                                        'w-full text-left px-3 py-2 text-[12px] font-medium transition-colors hover:bg-[#F7F8FC]',
-                                        newMatchType === mt ? 'text-primary font-semibold bg-primary/5' : 'text-foreground',
-                                      )}
-                                    >
-                                      {MATCH_TYPE_LABEL[mt]}
-                                    </button>
-                                  ))}
-                                </div>
-                              </>
-                            )}
+                              {MATCH_TYPE_OPTIONS.map((mt) => (
+                                <option key={mt} value={mt}>
+                                  {MATCH_TYPE_LABEL[mt]}
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
                           {/* Pattern input */}

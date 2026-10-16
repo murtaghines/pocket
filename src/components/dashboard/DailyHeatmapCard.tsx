@@ -1,15 +1,9 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useLocalization } from "@/hooks/useLocalization";
 import { cn } from "@/lib/utils";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import type { DailyTotal } from "@/hooks/usePeriodAggregates";
 
 type Metric = "expense" | "income" | "count";
@@ -120,27 +114,17 @@ export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatma
               ? t("heatmap.titleIncome", "Income by day")
               : t("heatmap.titleCount", "Transactions by day")}
         </p>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="inline-flex items-center gap-1 h-[26px] px-2 rounded-[7px] text-[11px] font-medium bg-muted text-foreground/80 hover:bg-muted/60 transition-colors"
-            >
-              <span>{activeMetricLabel}</span>
-              <ChevronDown className="w-3 h-3 text-muted-foreground" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[130px]">
+        <div className="pk-select-wrap">
+          <select
+            value={metric}
+            onChange={(e) => setMetric(e.target.value as Metric)}
+            className="h-[26px] px-2 rounded-[7px] text-[11px] font-medium bg-muted text-foreground/80 cursor-pointer border-0"
+          >
             {metricOptions.map((opt) => (
-              <DropdownMenuItem
-                key={opt.key}
-                onSelect={() => setMetric(opt.key)}
-                className={cn("text-xs", metric === opt.key && "font-semibold")}
-              >
-                {opt.label}
-              </DropdownMenuItem>
+              <option key={opt.key} value={opt.key}>{opt.label}</option>
             ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </select>
+        </div>
       </div>
 
       {!monthKey || daysInMonth === 0 ? (

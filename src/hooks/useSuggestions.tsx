@@ -11,6 +11,7 @@ export interface Suggestion {
   totalAmount: number;
   transactionIds: string[];
   matchedTransactions: { id: string; date: string }[];
+  categoryIds: string[];
 }
 
 const MIN_OCCURRENCES = 2;
@@ -25,14 +26,14 @@ export function useSuggestions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
-        .select("id, description, description_norm, movement, date, amount")
+        .select("id, description, description_norm, movement, category_id, date, amount")
         .eq("user_id", user!.id)
         .in("categorized_by", ["ai", "sign_fallback"])
         .order("date", { ascending: false })
         .limit(1000);
       if (error) throw error;
 
-      const groups = new Map<string, Suggestion>();
+      const groups = new Map<string, Suggestion & { _catSet: Set<string> }>();
       for (const tx of data || []) {
         const raw = (tx.description_norm || tx.description || "").trim();
         if (!raw || !tx.movement) continue;
@@ -43,7 +44,10 @@ export function useSuggestions() {
           existing.totalAmount += Math.abs(tx.amount);
           existing.transactionIds.push(tx.id);
           existing.matchedTransactions.push({ id: tx.id, date: tx.date as string });
+          if (tx.category_id) existing._catSet.add(tx.category_id as string);
         } else {
+          const catSet = new Set<string>();
+          if (tx.category_id) catSet.add(tx.category_id as string);
           groups.set(key, {
             key,
             pattern: tx.description || tx.description_norm || raw,
@@ -52,11 +56,14 @@ export function useSuggestions() {
             totalAmount: Math.abs(tx.amount),
             transactionIds: [tx.id],
             matchedTransactions: [{ id: tx.id, date: tx.date as string }],
+            categoryIds: [],
+            _catSet: catSet,
           });
         }
       }
 
       return [...groups.values()]
+        .map(({ _catSet, ...rest }) => ({ ...rest, categoryIds: [..._catSet] }))
         .filter((g) => g.count >= MIN_OCCURRENCES)
         .sort((a, b) => b.count - a.count)
         .slice(0, MAX_SUGGESTIONS);
