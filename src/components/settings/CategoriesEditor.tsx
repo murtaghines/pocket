@@ -13,13 +13,9 @@ import { useRulePreview } from '@/hooks/useRulePreview';
 import { useToast } from '@/hooks/use-toast';
 import { useAccounts } from '@/hooks/useAccounts';
 import { CreateCategoryDialog } from './CreateCategoryDialog';
-import { AddRuleDialog } from './AddRuleDialog';
-import { RetroactiveApplyOptions } from './RetroactiveApplyOptions';
-import { filterByScope, type RetroScope } from '@/hooks/useRetroactiveApply';
-import { CategoryEditorPopover } from './CategoryEditorPopover';
-import { Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { AccountScopeSelect } from '@/components/imports/AccountScopeSelect';
+import { RuleModal } from './RuleModal';
+import { EditCategoryModal } from './EditCategoryModal';
+import type { MatchType as ModalMatchType } from '@/lib/matchExamples';
 import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
 import { getAccountDisplayName } from '@/lib/accountColors';
@@ -60,6 +56,54 @@ function RenderIcon({ name, size = 18 }: { name: string; size?: number }) {
   return I ? <I size={size} strokeWidth={2} /> : null;
 }
 
+const toModalMatchType = (dbType: string): ModalMatchType => {
+  const map: Record<string, ModalMatchType> = { SMART: 'fuzzy', CONTAINS: 'contains', STARTS_WITH: 'starts_with', ENDS_WITH: 'ends_with' };
+  return map[dbType] || 'fuzzy';
+};
+
+const fromModalMatchType = (mt: ModalMatchType): string => {
+  const map: Record<ModalMatchType, string> = { fuzzy: 'SMART', contains: 'CONTAINS', starts_with: 'STARTS_WITH', ends_with: 'ENDS_WITH' };
+  return map[mt];
+};
+
+function hexToHsl(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return `0 0% ${Math.round(l * 100)}%`;
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = 0;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+  else if (max === g) h = ((b - r) / d + 2) / 6;
+  else h = ((r - g) / d + 4) / 6;
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+function hslToHex(hslStr: string): string {
+  const parts = hslStr.replace(/%/g, '').split(/\s+/).map(Number);
+  const [h, s, l] = [parts[0] / 360, parts[1] / 100, parts[2] / 100];
+  if (s === 0) {
+    const v = Math.round(l * 255);
+    return `#${v.toString(16).padStart(2, '0').repeat(3)}`;
+  }
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const rv = Math.round(hue2rgb(p, q, h + 1 / 3) * 255);
+  const gv = Math.round(hue2rgb(p, q, h) * 255);
+  const bv = Math.round(hue2rgb(p, q, h - 1 / 3) * 255);
+  return `#${rv.toString(16).padStart(2, '0')}${gv.toString(16).padStart(2, '0')}${bv.toString(16).padStart(2, '0')}`;
+}
+
 export function CategoriesEditor() {
   const { t } = useTranslation('settings');
   const { toast } = useToast();
@@ -75,22 +119,21 @@ export function CategoriesEditor() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [editingCustomCategory, setEditingCustomCategory] = useState<CustomCategoryRule | null>(null);
-  const [showEditorPopover, setShowEditorPopover] = useState(false);
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
 
   // Inline add rule state
   const [newPattern, setNewPattern] = useState('');
   const [newMatchType, setNewMatchType] = useState<string>('SMART');
   const [showMatchTypeDropdown, setShowMatchTypeDropdown] = useState(false);
-  const [showCreateRulePopup, setShowCreateRulePopup] = useState(false);
-  const [retroScope, setRetroScope] = useState<RetroScope>('all');
-  const [customSince, setCustomSince] = useState('');
-  const [newRuleAccountScope, setNewRuleAccountScope] = useState<string[] | null>(null);
+  const [showCreateRuleModal, setShowCreateRuleModal] = useState(false);
   const [showInfoPopover, setShowInfoPopover] = useState(false);
 
-  // Edit rule via dialog
-  const [editDialogState, setEditDialogState] = useState<{
-    category: { id: string; name: string; movement?: string | null; slug?: string | null; icon?: string | null; color?: string | null };
-    editingRule: { id: string; pattern: string; matchType: string };
+  // Edit rule via modal
+  const [editRuleState, setEditRuleState] = useState<{
+    ruleId: string;
+    pattern: string;
+    matchType: ModalMatchType;
+    accountId: string | null;
   } | null>(null);
 
   const isLoading = catsLoading || rulesLoading;
@@ -213,68 +256,50 @@ export function CategoriesEditor() {
     tokens: previewTokens,
     movement: selected?.movement || 'EXPENSE',
     accountIds: null,
-    enabled: !!selected && newPattern.trim().length > 0 && !showCreateRulePopup,
+    enabled: !!selected && newPattern.trim().length > 0 && !showCreateRuleModal,
   });
 
   const handleSelectTab = useCallback((tab: TabKey) => {
     setActiveTab(tab);
     setSelectedId(null);
     setNewPattern('');
-    setShowCreateRulePopup(false);
+    setShowCreateRuleModal(false);
   }, []);
 
   const handleAddRuleInline = useCallback(() => {
     if (!selected || !newPattern.trim()) return;
-    if (previewMatched.length > 0 || activeAccounts.length > 1) {
-      setShowCreateRulePopup(true);
-      return;
-    }
+    setShowCreateRuleModal(true);
+  }, [selected, newPattern]);
+
+  const handleCreateRuleConfirm = useCallback((payload: {
+    pattern: string;
+    matchType: ModalMatchType;
+    accountId: string | null;
+    applyToExisting: boolean;
+  }) => {
+    if (!selected) return;
+    const matchedIds = payload.applyToExisting ? previewMatched.map(t => t.id) : undefined;
     addRule.mutate(
       {
         category_id: selected.id,
-        pattern: newPattern.trim().toLowerCase(),
-        match_type: newMatchType,
+        pattern: payload.pattern.toLowerCase(),
+        match_type: fromModalMatchType(payload.matchType),
+        matchingTransactionIds: matchedIds,
+        account_id: payload.accountId,
       },
       {
         onSuccess: () => {
-          toast({ title: t('categories.ruleSaved') });
-          setNewPattern('');
-        },
-      },
-    );
-  }, [selected, newPattern, newMatchType, previewMatched, activeAccounts, addRule, toast, t]);
-
-  const handleCreateRuleFromPopup = useCallback(() => {
-    if (!selected || !newPattern.trim()) return;
-    const filteredIds = previewMatched.length > 0
-      ? filterByScope(previewMatched, retroScope, customSince ? customSince + '-01' : undefined)
-      : undefined;
-    const ruleAccountId = newRuleAccountScope && newRuleAccountScope.length === 1 ? newRuleAccountScope[0] : null;
-
-    addRule.mutate(
-      {
-        category_id: selected.id,
-        pattern: newPattern.trim().toLowerCase(),
-        match_type: newMatchType,
-        matchingTransactionIds: filteredIds,
-        account_id: ruleAccountId,
-      },
-      {
-        onSuccess: () => {
-          if (filteredIds && filteredIds.length > 0) {
-            toast({ title: t('categories.pastTransactionsUpdated', { count: filteredIds.length }) });
+          if (matchedIds && matchedIds.length > 0) {
+            toast({ title: t('categories.pastTransactionsUpdated', { count: matchedIds.length }) });
           } else {
             toast({ title: t('categories.ruleSaved') });
           }
           setNewPattern('');
-          setShowCreateRulePopup(false);
-          setRetroScope('all');
-          setCustomSince('');
-          setNewRuleAccountScope(null);
+          setShowCreateRuleModal(false);
         },
       },
     );
-  }, [selected, newPattern, newMatchType, previewMatched, retroScope, customSince, newRuleAccountScope, addRule, toast, t]);
+  }, [selected, previewMatched, addRule, toast, t]);
 
   const handleDeleteRule = useCallback((ruleId: string) => {
     deleteRule.mutate(ruleId, {
@@ -284,27 +309,46 @@ export function CategoriesEditor() {
 
   const handleEditRule = useCallback((rule: Rule) => {
     if (!selected) return;
-    const custom = selected.isCustom ? activeData.custom.find(c => c.slug === selected.slug) : null;
-    setEditDialogState({
-      category: {
-        id: selected.id,
-        name: selected.name,
-        movement: selected.movement,
-        slug: selected.slug,
-        icon: selectedIcon,
-        color: selectedColor,
-      },
-      editingRule: { id: rule.id, pattern: rule.pattern, matchType: rule.match_type },
+    setEditRuleState({
+      ruleId: rule.id,
+      pattern: rule.pattern,
+      matchType: toModalMatchType(rule.match_type),
+      accountId: rule.account_id || null,
     });
-  }, [selected, selectedIcon, selectedColor, activeData.custom]);
+  }, [selected]);
 
-  const handleEditDialogSave = useCallback((pattern: string, matchType: string, matchingTransactionIds?: string[], accountId?: string | null) => {
-    if (!editDialogState) return;
+  const handleEditRuleConfirm = useCallback((payload: {
+    pattern: string;
+    matchType: ModalMatchType;
+    accountId: string | null;
+    applyToExisting: boolean;
+  }) => {
+    if (!editRuleState) return;
     updateRule.mutate(
-      { ruleId: editDialogState.editingRule.id, pattern, match_type: matchType, account_id: accountId },
-      { onSuccess: () => { setEditDialogState(null); toast({ title: t('categories.ruleSaved') }); } },
+      {
+        ruleId: editRuleState.ruleId,
+        pattern: payload.pattern.toLowerCase(),
+        match_type: fromModalMatchType(payload.matchType),
+        account_id: payload.accountId,
+      },
+      {
+        onSuccess: () => {
+          setEditRuleState(null);
+          toast({ title: t('categories.ruleSaved') });
+        },
+      },
     );
-  }, [editDialogState, updateRule, toast, t]);
+  }, [editRuleState, updateRule, toast, t]);
+
+  const handleEditRuleDelete = useCallback(() => {
+    if (!editRuleState) return;
+    deleteRule.mutate(editRuleState.ruleId, {
+      onSuccess: () => {
+        setEditRuleState(null);
+        toast({ title: t('categories.ruleDeleted') });
+      },
+    });
+  }, [editRuleState, deleteRule, toast, t]);
 
   const handleDeleteCustomCategory = useCallback(async () => {
     if (!selected?.isCustom || selected.customIndex == null) return;
@@ -623,8 +667,7 @@ export function CategoriesEditor() {
                     <div className="relative group/icon">
                       <button
                         type="button"
-                        onClick={() => setShowEditorPopover(!showEditorPopover)}
-                        aria-expanded={showEditorPopover}
+                        onClick={() => setShowEditCategoryModal(true)}
                         className="flex items-center justify-center rounded-[16px] cursor-pointer transition-transform"
                         style={{
                           width: 52, height: 52,
@@ -673,28 +716,6 @@ export function CategoriesEditor() {
                     </div>
                   </div>
 
-                  {/* Editor popover */}
-                  {showEditorPopover && (
-                    <CategoryEditorPopover
-                      slug={selected.slug}
-                      isCustom={selected.isCustom}
-                      currentColor={(() => {
-                        if (selected.isCustom) {
-                          const custom = activeData.custom.find(c => c.slug === selected.slug);
-                          return custom?.color || '210 15% 50%';
-                        }
-                        const override = getVisualOverride(selected.slug);
-                        return override?.color || '203 60% 51%';
-                      })()}
-                      currentIcon={selectedIcon}
-                      currentName={selected.name}
-                      onSave={async (color, icon, name) => {
-                        await setVisualOverride(selected.slug, color, icon, name);
-                        setShowEditorPopover(false);
-                      }}
-                      onClose={() => setShowEditorPopover(false)}
-                    />
-                  )}
                 </div>
 
                 {/* Scrollable content */}
@@ -1106,116 +1127,62 @@ export function CategoriesEditor() {
         editingCategory={editingCustomCategory}
       />
 
-      <AddRuleDialog
-        open={!!editDialogState}
-        category={editDialogState?.category ?? null}
-        editingRule={editDialogState?.editingRule}
-        onClose={() => setEditDialogState(null)}
-        onSave={handleEditDialogSave}
-        isSaving={updateRule.isPending}
-      />
+      {/* Rule modal — create */}
+      {selected && (
+        <RuleModal
+          open={showCreateRuleModal}
+          onOpenChange={(o) => { if (!o) { setShowCreateRuleModal(false); setNewPattern(''); } }}
+          mode="create"
+          category={{ slug: selected.slug, label: selected.name, color: hslToHex(selectedHsl), icon: selectedIcon }}
+          accounts={activeAccounts.map(a => ({ id: a.id, label: getAccountDisplayName(a) }))}
+          initialPattern={newPattern}
+          initialMatchType={toModalMatchType(newMatchType)}
+          onConfirm={handleCreateRuleConfirm}
+          isSaving={addRule.isPending}
+        />
+      )}
 
-      {/* Create rule popup — replaces inline retroactive options */}
-      <Dialog
-        open={showCreateRulePopup}
-        onOpenChange={(o) => {
-          if (!o) {
-            setShowCreateRulePopup(false);
-            setRetroScope('all');
-            setCustomSince('');
-            setNewRuleAccountScope(null);
-          }
-        }}
-      >
-        <DialogContent size="sm">
-          <DialogHeader>
-            <DialogTitle className="text-base flex items-center gap-3">
-              <span
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0"
-                style={{ backgroundColor: `hsl(${selectedHsl} / 0.15)`, color: selectedColor }}
-              >
-                <RenderIcon name={selectedIcon} size={18} />
-              </span>
-              <span className="flex flex-col leading-tight">
-                <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                  {t('categories.createRule')}
-                </span>
-                <span className="text-base font-semibold text-foreground">{selected?.name}</span>
-              </span>
-            </DialogTitle>
-          </DialogHeader>
+      {/* Rule modal — edit */}
+      {selected && editRuleState && (
+        <RuleModal
+          open={!!editRuleState}
+          onOpenChange={(o) => { if (!o) setEditRuleState(null); }}
+          mode="edit"
+          category={{ slug: selected.slug, label: selected.name, color: hslToHex(selectedHsl), icon: selectedIcon }}
+          accounts={activeAccounts.map(a => ({ id: a.id, label: getAccountDisplayName(a) }))}
+          ruleId={editRuleState.ruleId}
+          initialPattern={editRuleState.pattern}
+          initialMatchType={editRuleState.matchType}
+          defaultAccountId={editRuleState.accountId}
+          onConfirm={handleEditRuleConfirm}
+          onDelete={handleEditRuleDelete}
+          isSaving={updateRule.isPending}
+        />
+      )}
 
-          <DialogBody>
-            {/* Pattern display */}
-            <div
-              className="flex items-center gap-2.5 bg-muted/50 border border-border rounded-[11px] px-3.5 py-2.5"
-            >
-              <span
-                className="shrink-0 text-[10.5px] font-bold tracking-[.04em] px-2.5 py-1 rounded-[7px] bg-primary/10 text-primary"
-              >
-                {MATCH_TYPE_LABEL[newMatchType] || newMatchType}
-              </span>
-              <code
-                className="flex-1 text-[13px] font-mono truncate"
-                style={{ fontFamily: "'JetBrains Mono', Menlo, monospace", fontWeight: 500 }}
-              >
-                {newPattern.trim().toLowerCase()}
-              </code>
-            </div>
-
-            {/* Match count info */}
-            {previewMatched.length > 0 && (
-              <p className="text-[13px] text-muted-foreground">
-                {t('categories.createRulePopupDesc', { pattern: newPattern.trim().toLowerCase(), count: previewMatched.length })}
-              </p>
-            )}
-
-            {/* Account scope */}
-            {activeAccounts.length > 1 && (
-              <AccountScopeSelect
-                accounts={accounts}
-                value={newRuleAccountScope}
-                onChange={setNewRuleAccountScope}
-              />
-            )}
-
-            {/* Retroactive scope */}
-            {previewMatched.length > 0 && (
-              <RetroactiveApplyOptions
-                transactions={previewMatched}
-                scope={retroScope}
-                onScopeChange={setRetroScope}
-                customSince={customSince}
-                onCustomSinceChange={setCustomSince}
-              />
-            )}
-          </DialogBody>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => {
-                setShowCreateRulePopup(false);
-                setRetroScope('all');
-                setCustomSince('');
-                setNewRuleAccountScope(null);
-              }}
-              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold border-0 bg-muted text-foreground hover:bg-[hsl(220,13%,91%)]"
-            >
-              {t('categories.cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={handleCreateRuleFromPopup}
-              disabled={addRule.isPending}
-              className="h-12 rounded-[14px] px-6 text-[15px] font-semibold min-w-[160px]"
-            >
-              {t('categories.createRule')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Edit category modal */}
+      {selected && (
+        <EditCategoryModal
+          open={showEditCategoryModal}
+          onOpenChange={setShowEditCategoryModal}
+          category={{
+            slug: selected.slug,
+            label: selected.name,
+            color: hslToHex(selectedHsl),
+            icon: selectedIcon,
+            deletable: selected.isCustom,
+          }}
+          onSave={async ({ label, color, icon }) => {
+            await setVisualOverride(selected.slug, hexToHsl(color), icon, label);
+            setShowEditCategoryModal(false);
+          }}
+          onDelete={selected.isCustom ? async () => {
+            setShowEditCategoryModal(false);
+            await handleDeleteCustomCategory();
+          } : undefined}
+          isSaving={isSaving}
+        />
+      )}
     </div>
   );
 }

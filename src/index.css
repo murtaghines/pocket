@@ -391,3 +391,91 @@
     box-shadow: 0 0 40px hsl(216 100% 55% / 0.4);
   }
 }
+
+/* Rule / category modal utilities */
+.pk-ex-wrap {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 9px;
+}
+.pk-ex-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #FAFBFD;
+  border-radius: 6px;
+  font: 500 11px 'JetBrains Mono', monospace;
+  color: #9AA1AC;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.pk-ex-row b {
+  color: #1B76FF;
+  background: rgba(27, 118, 255, 0.12);
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.pk-select-wrap {
+  position: relative;
+}
+.pk-select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid #5A6069;
+  border-bottom: 2px solid #5A6069;
+  transform: translateY(-75%) rotate(45deg);
+  pointer-events: none;
+}
+.pk-select-wrap select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 38px;
+  cursor: pointer;
+}
+
+.pk-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 120ms;
+  position: relative;
+}
+.pk-swatch:hover {
+  transform: scale(1.1);
+}
+.pk-swatch.on {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+}
+
+.pk-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5A6069;
+  cursor: pointer;
+  background: #fff;
+  border: 1.5px solid transparent;
+  transition: all 120ms;
+}
+.pk-icon-btn:hover {
+  background: #F2F4F9;
+}
+.pk-icon-btn.on {
+  background: rgba(27, 118, 255, 0.1);
+  border-color: rgba(27, 118, 255, 0.35);
+  color: #1B76FF;
+}
