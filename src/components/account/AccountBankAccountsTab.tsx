@@ -12,7 +12,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
@@ -535,21 +534,18 @@ export function AccountBankAccountsTab() {
 
           {!checkingLinks && hasLinkedData && deleteMode === "reassign" && (
             <div className="space-y-3 py-2">
-              <Select value={reassignToId} onValueChange={setReassignToId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("accounts.reassignPlaceholder", "Move data to...")} />
-                </SelectTrigger>
-                <SelectContent>
+              <div className="pk-select-wrap">
+                <select
+                  value={reassignToId}
+                  onChange={(e) => setReassignToId(e.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="" disabled>{t("accounts.reassignPlaceholder", "Move data to...")}</option>
                   {otherAccounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                        {getAccountDisplayName(a)}
-                      </div>
-                    </SelectItem>
+                    <option key={a.id} value={a.id}>{getAccountDisplayName(a)}</option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </div>
             </div>
           )}
 

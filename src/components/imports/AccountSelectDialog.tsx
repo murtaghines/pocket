@@ -1,12 +1,5 @@
 import { useState } from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -19,8 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useTranslation } from "react-i18next";
-import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColors";
-import { getAccountTypeIcon } from "@/lib/accountTypes";
+import { getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 import { type AccountType } from "@/lib/accountTypes";
 
@@ -111,29 +103,20 @@ export function AccountSelectDialog({
                 {t('accounts.selectAccount', 'Select account')}
               </label>
               {hasAccounts ? (
-                <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-                  <SelectTrigger className="h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] [&>svg]:opacity-40">
-                    <SelectValue placeholder={t('accounts.selectPlaceholder', 'Select an account...')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredAccounts.map((account, index) => {
-                      const Icon = getAccountTypeIcon(account.account_type);
-                      const color = account.color || getDefaultAccountColor(index);
-                      return (
-                        <SelectItem key={account.id} value={account.id}>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="w-2 h-2 rounded-full shrink-0"
-                              style={{ backgroundColor: color }}
-                            />
-                            <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            <span>{getAccountDisplayName(account)}</span>
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <div className="pk-select-wrap">
+                  <select
+                    value={selectedAccountId}
+                    onChange={(e) => setSelectedAccountId(e.target.value)}
+                    className="h-11 w-full rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14]"
+                  >
+                    <option value="" disabled>{t('accounts.selectPlaceholder', 'Select an account...')}</option>
+                    {filteredAccounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {getAccountDisplayName(account)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               ) : (
                 <div className="rounded-xl bg-muted px-4 py-4 text-center">
                   <p className="text-sm text-muted-foreground">

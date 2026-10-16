@@ -2,9 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
-import { CategoryIcon } from "@/components/ui/category-icon";
 import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowRightLeft,
   Plus,
@@ -22,7 +20,6 @@ import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
 import { buildRuleFromCorrection } from "@/lib/userRules";
 import { useRulePreview } from "@/hooks/useRulePreview";
-import { MinimalSelectContent, MinimalSelectItem } from "./MinimalSelect";
 import {
   SheetPanel,
   SHEET_LABEL,
@@ -77,7 +74,7 @@ export function AddManualEntryDialog({
 }: AddManualEntryDialogProps) {
   const { t } = useTranslation("common");
   const { accounts } = useAccounts();
-  const { getCategoryLabel, getMovementLabel, getCategoryIcon, getCategoryColor } = useCategoryTranslations();
+  const { getCategoryLabel, getMovementLabel } = useCategoryTranslations();
 
   const [year, monthNum] = monthKey.split("-").map(Number);
   const firstDay = `${year}-${String(monthNum).padStart(2, "0")}-01`;
@@ -336,61 +333,32 @@ export function AddManualEntryDialog({
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5 min-w-0">
           <label className={SHEET_LABEL}>{t("imports.account", "Account")}</label>
-          <Select value={accountId} onValueChange={setAccountId}>
-            <SelectTrigger
-              className={cn(SHEET_PILL, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
+          <div className="pk-select-wrap">
+            <select
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className={cn(SHEET_PILL, "w-full")}
             >
-              <SelectValue placeholder={t("imports.selectAccount", "Select")}>
-                <span className="truncate font-medium">
-                  {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
-                </span>
-              </SelectValue>
-            </SelectTrigger>
-            <MinimalSelectContent>
+              <option value="" disabled>{t("imports.selectAccount", "Select")}</option>
               {accounts.map((a) => (
-                <MinimalSelectItem key={a.id} value={a.id}>
-                  <span className="truncate">{getAccountDisplayName(a)}</span>
-                </MinimalSelectItem>
+                <option key={a.id} value={a.id}>{getAccountDisplayName(a)}</option>
               ))}
-            </MinimalSelectContent>
-          </Select>
+            </select>
+          </div>
         </div>
         <div className="space-y-1.5 min-w-0">
           <label className={SHEET_LABEL}>{t("imports.category", "Category")}</label>
-          <Select value={categorySlug} onValueChange={setCategorySlug}>
-            <SelectTrigger
-              className={cn(SHEET_PILL, "px-4 focus:ring-1 focus:ring-primary [&>svg]:opacity-60")}
-              style={{
-                backgroundColor: `hsl(var(--${getCategoryColor(categorySlug)}) / 0.15)`,
-                color: `hsl(var(--${getCategoryColor(categorySlug)}))`,
-              }}
+          <div className="pk-select-wrap">
+            <select
+              value={categorySlug}
+              onChange={(e) => setCategorySlug(e.target.value)}
+              className={cn(SHEET_PILL, "w-full")}
             >
-              <SelectValue>
-                <span className="flex items-center gap-1.5 font-semibold">
-                  <CategoryIcon
-                    iconName={getCategoryIcon(categorySlug)}
-                    colorVar={getCategoryColor(categorySlug)}
-                    size="sm"
-                    showBackground={false}
-                  />
-                  <span className="truncate">{getCategoryLabel(categorySlug)}</span>
-                </span>
-              </SelectValue>
-            </SelectTrigger>
-            <MinimalSelectContent>
               {availableCategories.map((slug) => (
-                <MinimalSelectItem key={slug} value={slug}>
-                  <CategoryIcon
-                    iconName={getCategoryIcon(slug)}
-                    colorVar={getCategoryColor(slug)}
-                    size="sm"
-                    showBackground
-                  />
-                  <span className="truncate">{getCategoryLabel(slug)}</span>
-                </MinimalSelectItem>
+                <option key={slug} value={slug}>{getCategoryLabel(slug)}</option>
               ))}
-            </MinimalSelectContent>
-          </Select>
+            </select>
+          </div>
         </div>
       </div>
     </SheetPanel>

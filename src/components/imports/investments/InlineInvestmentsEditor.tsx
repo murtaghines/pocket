@@ -25,14 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PillBadge } from "@/components/ui/pill-badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
@@ -468,65 +460,54 @@ export function InlineInvestmentsEditor({
                       </datalist>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={type}
-                        disabled={isHidden}
-                        onValueChange={(v) => {
-                          if (v === inv.type) {
-                            const next = { ...(pendingByInv[inv.id] || {}) };
-                            delete next.type;
-                            if (Object.keys(next).length === 0) clearPendingFor(inv.id);
-                            else setPendingByInv((p) => ({ ...p, [inv.id]: next }));
-                          } else {
-                            setPendingFor(inv.id, { type: v });
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-7 px-1.5 border-0 bg-transparent hover:border focus:border focus-visible:ring-0 gap-1.5">
-                          <span className="inline-flex items-center gap-1.5">
-                            <TypeIcon className="w-3 h-3" />
-                            <PillBadge tone={meta.tone}>{meta.label}</PillBadge>
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent>
+                      <div className="pk-select-wrap pk-select-wrap--sm">
+                        <select
+                          value={type}
+                          disabled={isHidden}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === inv.type) {
+                              const next = { ...(pendingByInv[inv.id] || {}) };
+                              delete next.type;
+                              if (Object.keys(next).length === 0) clearPendingFor(inv.id);
+                              else setPendingByInv((p) => ({ ...p, [inv.id]: next }));
+                            } else {
+                              setPendingFor(inv.id, { type: v });
+                            }
+                          }}
+                          className="h-7 px-1.5 text-sm bg-transparent border-0 cursor-pointer"
+                        >
                           {INVESTMENT_TYPES.map((t) => (
-                            <SelectItem key={t.value} value={t.value}>
-                              {t.label}
-                            </SelectItem>
+                            <option key={t.value} value={t.value}>{t.label}</option>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </select>
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={asset || "__none__"}
-                        disabled={isHidden}
-                        onValueChange={(v) => {
-                          const next = v === "__none__" ? null : v;
-                          if (next === (inv.asset_type || null)) {
-                            const cur = { ...(pendingByInv[inv.id] || {}) };
-                            delete cur.asset_type;
-                            if (Object.keys(cur).length === 0) clearPendingFor(inv.id);
-                            else setPendingByInv((p) => ({ ...p, [inv.id]: cur }));
-                          } else {
-                            setPendingFor(inv.id, { asset_type: next });
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-7 px-1.5 text-xs border-0 bg-transparent hover:border focus:border focus-visible:ring-0">
-                          <SelectValue placeholder="—">
-                            {asset || <span className="text-muted-foreground">—</span>}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">—</SelectItem>
+                      <div className="pk-select-wrap pk-select-wrap--sm">
+                        <select
+                          value={asset || "__none__"}
+                          disabled={isHidden}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            const next = v === "__none__" ? null : v;
+                            if (next === (inv.asset_type || null)) {
+                              const cur = { ...(pendingByInv[inv.id] || {}) };
+                              delete cur.asset_type;
+                              if (Object.keys(cur).length === 0) clearPendingFor(inv.id);
+                              else setPendingByInv((p) => ({ ...p, [inv.id]: cur }));
+                            } else {
+                              setPendingFor(inv.id, { asset_type: next });
+                            }
+                          }}
+                          className="h-7 px-1.5 text-xs bg-transparent border-0 cursor-pointer"
+                        >
+                          <option value="__none__">—</option>
                           {ASSET_TYPES.map((a) => (
-                            <SelectItem key={a} value={a}>
-                              {a}
-                            </SelectItem>
+                            <option key={a} value={a}>{a}</option>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </select>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right text-sm font-medium tabular-nums">
                       <Input

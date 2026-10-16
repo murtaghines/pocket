@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Plus, Lock, Trash2, Info, Sparkles, Calendar, Code2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Info, Sparkles, Calendar, Code2, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { useCategories } from '@/hooks/useCategories';
@@ -631,15 +631,6 @@ export function CategoriesEditor() {
                 })}
               </div>
 
-              {/* Footer disclaimer */}
-              <div className="shrink-0 pt-2 mt-2 border-t" style={{ borderColor: '#F3F5F9' }}>
-                <div className="flex items-start gap-2 px-2">
-                  <Info size={13} className="shrink-0 mt-0.5" style={{ color: '#9AA1AC' }} />
-                  <span className="text-[11px] leading-snug" style={{ color: '#9AA1AC' }}>
-                    {t('categories.defaultDisclaimer')}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -663,32 +654,26 @@ export function CategoriesEditor() {
                 >
                   <div className="flex items-center gap-3.5">
                     {/* Large icon badge */}
-                    <div className="relative group/icon">
-                      <button
-                        type="button"
-                        onClick={() => setShowEditCategoryModal(true)}
-                        className="flex items-center justify-center rounded-[16px] cursor-pointer transition-transform"
-                        style={{
-                          width: 52, height: 52,
-                          background: `hsl(${selectedHsl} / 0.15)`,
-                          color: selectedColor,
-                        }}
-                      >
+                    <button
+                      type="button"
+                      onClick={() => setShowEditCategoryModal(true)}
+                      className="relative group/icon flex items-center justify-center rounded-[16px] cursor-pointer"
+                      style={{
+                        width: 52, height: 52,
+                        background: `hsl(${selectedHsl} / 0.15)`,
+                        color: selectedColor,
+                      }}
+                    >
+                      <span className="transition-opacity duration-150 group-hover/icon:opacity-30">
                         <RenderIcon name={selectedIcon} size={26} />
-                      </button>
-                      {/* Pencil pin on hover */}
-                      <div
-                        className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full bg-white flex items-center justify-center opacity-0 group-hover/icon:opacity-100 translate-y-0.5 group-hover/icon:translate-y-0 transition-all"
-                        style={{
-                          border: '2px solid #F7F8FC',
-                          color: '#5A6069',
-                          boxShadow: '0 2px 4px rgba(16,24,40,.14)',
-                          transitionDuration: '160ms',
-                        }}
+                      </span>
+                      <span
+                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/icon:opacity-100 transition-opacity duration-150"
+                        style={{ color: '#5A6069' }}
                       >
-                        <Pencil size={11} />
-                      </div>
-                    </div>
+                        <Pencil size={20} />
+                      </span>
+                    </button>
 
                     {/* Name + meta */}
                     <div className="flex-1 min-w-0">
@@ -712,21 +697,22 @@ export function CategoriesEditor() {
                           </span>
                         )}
                       </div>
-                      {/* Auto-detected patterns inline in header */}
-                      {!selected.isCustom && categoryExamples[selected.slug] && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {categoryExamples[selected.slug].map((ex) => (
-                            <span
-                              key={ex}
-                              className="text-[10.5px] font-medium px-2 py-0.5 rounded-[7px]"
-                              style={{ background: '#F1F3F8', color: '#9AA1AC' }}
-                            >
-                              {ex}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
+
+                    {/* Auto-detected patterns — top right */}
+                    {!selected.isCustom && categoryExamples[selected.slug] && (
+                      <div className="flex flex-wrap gap-1 justify-end ml-auto max-w-[45%]">
+                        {categoryExamples[selected.slug].map((ex) => (
+                          <span
+                            key={ex}
+                            className="text-[10.5px] font-medium px-2 py-0.5 rounded-[7px]"
+                            style={{ background: '#F1F3F8', color: '#9AA1AC' }}
+                          >
+                            {ex}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -745,9 +731,9 @@ export function CategoriesEditor() {
                           type="button"
                           onClick={() => setShowInfoPopover(!showInfoPopover)}
                           className="flex items-center justify-center rounded-full transition-colors hover:bg-[#EFF4FF]"
-                          style={{ width: 22, height: 22, background: showInfoPopover ? '#EFF4FF' : '#F1F3F8', color: showInfoPopover ? '#1B76FF' : '#9AA1AC' }}
+                          style={{ width: 26, height: 26, background: showInfoPopover ? '#EFF4FF' : '#F1F3F8', color: showInfoPopover ? '#1B76FF' : '#9AA1AC' }}
                         >
-                          <Info size={12} />
+                          <Info size={14} />
                         </button>
                         {showInfoPopover && (
                           <>
@@ -795,26 +781,6 @@ export function CategoriesEditor() {
                     />
 
                     {/* Rule rows */}
-                    {selectedRules.length === 0 && (
-                      <div
-                        className="flex items-start gap-3 mb-3"
-                        style={{
-                          background: '#F7F8FC', borderRadius: 11,
-                          padding: '16px 18px',
-                        }}
-                      >
-                        <div
-                          className="shrink-0 flex items-center justify-center rounded-full"
-                          style={{ width: 28, height: 28, background: '#1B76FF', color: '#fff' }}
-                        >
-                          <Info size={14} />
-                        </div>
-                        <p className="text-[12.5px] leading-relaxed" style={{ color: '#5A6069' }}>
-                          {t('categories.emptyRulesCallout')}
-                        </p>
-                      </div>
-                    )}
-
                     <div className="space-y-2">
                       {selectedRules.map((rule) => (
                         <div
@@ -898,7 +864,7 @@ export function CategoriesEditor() {
                           }}
                         >
                           {/* Match type selector */}
-                          <div className="pk-select-wrap shrink-0">
+                          <div className="pk-select-wrap pk-select-wrap--sm shrink-0">
                             <select
                               value={newMatchType}
                               onChange={(e) => setNewMatchType(e.target.value)}
@@ -991,8 +957,8 @@ export function CategoriesEditor() {
                     </div>
                   )}
 
-                  {/* Recent transactions */}
-                  <div style={{ padding: '4px 22px 16px' }}>
+                  {/* Recent transactions — pushed to bottom */}
+                  <div className="mt-auto" style={{ padding: '4px 22px 16px' }}>
                     <div className="flex items-center gap-2 mb-2">
                       <Calendar size={14} style={{ color: '#5A6069' }} />
                       <span className="text-[14px] font-bold" style={{ color: '#0C0D0E' }}>
@@ -1041,20 +1007,16 @@ export function CategoriesEditor() {
                   </div>
                 </div>
 
-                {/* Footer */}
-                <div
-                  className="shrink-0 flex items-center gap-2"
-                  style={{
-                    padding: '12px 22px',
-                    background: '#FAFBFD',
-                    borderTop: '1px solid #F3F5F9',
-                  }}
-                >
-                  <Info size={13} className="shrink-0" style={{ color: '#9AA1AC' }} />
-                  <span className="flex-1 text-[11.5px]" style={{ color: '#9AA1AC' }}>
-                    {t('categories.footerDisclaimer')}
-                  </span>
-                  {selected.isCustom ? (
+                {/* Footer — delete button for custom categories only */}
+                {selected.isCustom && (
+                  <div
+                    className="shrink-0 flex items-center justify-end"
+                    style={{
+                      padding: '12px 22px',
+                      background: '#FAFBFD',
+                      borderTop: '1px solid #F3F5F9',
+                    }}
+                  >
                     <button
                       type="button"
                       onClick={handleDeleteCustomCategory}
@@ -1067,16 +1029,8 @@ export function CategoriesEditor() {
                     >
                       {t('categories.deleteCustomCategory')}
                     </button>
-                  ) : (
-                    <span
-                      className="shrink-0 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full"
-                      style={{ background: '#F1F3F8', color: '#9AA1AC' }}
-                    >
-                      <Lock size={11} />
-                      {t('categories.defaultLocked')}
-                    </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
