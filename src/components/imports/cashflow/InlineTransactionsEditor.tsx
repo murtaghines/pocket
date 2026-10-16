@@ -26,13 +26,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -113,26 +106,6 @@ function getISOWeek(dateStr: string): number {
   d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
   const week1 = new Date(d.getFullYear(), 0, 4);
   return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
-}
-
-function CategoryPill({ category, label, colorVar }: { category: string; label: string; colorVar: string }) {
-  const cssVar = `var(--${colorVar})`;
-  return (
-    <span
-      className="inline-flex items-center max-w-full overflow-hidden"
-      style={{
-        gap: 6,
-        background: `hsl(${cssVar} / 0.15)`,
-        color: `hsl(${cssVar})`,
-        borderRadius: 999,
-        padding: "3px 10px 3px 8px",
-        font: "600 11.5px Inter, sans-serif",
-      }}
-    >
-      <span className="rounded-full shrink-0" style={{ width: 5, height: 5, background: "currentColor" }} />
-      <span className="truncate">{label}</span>
-    </span>
-  );
 }
 
 export interface InlineTransactionsEditorProps {
@@ -1315,53 +1288,20 @@ export function InlineTransactionsEditor({
                         </span>
                       </span>
 
-                      {/* Movement — dot + text + chevron */}
+                      {/* Movement — native select */}
                       <span>
-                        <Select
-                          value={movement}
-                          onValueChange={(v) => handleMovementChange(tx, v as MovementType)}
-                          disabled={isHidden}
-                        >
-                          <SelectTrigger className="h-auto w-full border-0 bg-transparent hover:bg-transparent focus:ring-0 p-0 [&_[data-radix-select-icon]]:hidden">
-                            <SelectValue>
-                              <span className="flex items-center cursor-pointer whitespace-nowrap" style={{ gap: 6 }}>
-                                <span
-                                  className={cn(
-                                    "w-[7px] h-[7px] rounded-full shrink-0",
-                                    movement === "INCOME" ? "bg-success" : movement === "EXPENSE" ? "bg-destructive" : "bg-muted-foreground",
-                                  )}
-                                />
-                                <span className={cn(
-                                  "text-xs font-medium",
-                                  movement === "INCOME" ? "text-success" : movement === "EXPENSE" ? "text-destructive" : "text-muted-foreground",
-                                )}>
-                                  {getMovementLabel(movement)}
-                                </span>
-                                <svg className="shrink-0 ml-auto text-muted-foreground/50" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z" /></svg>
-                              </span>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="INCOME">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-success" />
-                                <span className="text-success">{getMovementLabel("INCOME")}</span>
-                              </span>
-                            </SelectItem>
-                            <SelectItem value="EXPENSE">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-destructive" />
-                                <span className="text-destructive">{getMovementLabel("EXPENSE")}</span>
-                              </span>
-                            </SelectItem>
-                            <SelectItem value="TRANSFER">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-muted-foreground" />
-                                <span className="text-muted-foreground">{getMovementLabel("TRANSFER")}</span>
-                              </span>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="pk-select-wrap pk-select-wrap--sm">
+                          <select
+                            value={movement}
+                            onChange={(e) => handleMovementChange(tx, e.target.value as MovementType)}
+                            disabled={isHidden}
+                            className="h-auto w-full border-0 bg-transparent text-xs font-medium cursor-pointer"
+                          >
+                            <option value="INCOME">{getMovementLabel("INCOME")}</option>
+                            <option value="EXPENSE">{getMovementLabel("EXPENSE")}</option>
+                            <option value="TRANSFER">{getMovementLabel("TRANSFER")}</option>
+                          </select>
+                        </div>
                       </span>
 
                       {/* Amount — double-click to edit */}
@@ -1458,32 +1398,20 @@ export function InlineTransactionsEditor({
                         )}
                       </span>
 
-                      {/* Category — pill with dot + label + chevron */}
+                      {/* Category — native select */}
                       <span className="min-w-0">
-                        <Select
-                          value={category}
-                          onValueChange={(v) => handleCategoryChange(tx, v)}
-                          disabled={isHidden}
-                        >
-                          <SelectTrigger className="h-auto w-full border-0 bg-transparent hover:bg-transparent focus:ring-0 p-0 [&_[data-radix-select-icon]]:hidden">
-                            <SelectValue>
-                              <span className="flex items-center cursor-pointer min-w-0" style={{ gap: 6 }}>
-                                <CategoryPill category={category} label={getCategoryLabel(category)} colorVar={getCategoryColor(category)} />
-                                <svg className="shrink-0 text-muted-foreground/50" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z" /></svg>
-                              </span>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
+                        <div className="pk-select-wrap pk-select-wrap--sm">
+                          <select
+                            value={category}
+                            onChange={(e) => handleCategoryChange(tx, e.target.value)}
+                            disabled={isHidden}
+                            className="h-auto w-full border-0 bg-transparent text-xs font-medium cursor-pointer truncate"
+                          >
                             {availableCategories.map((slug) => (
-                              <SelectItem key={slug} value={slug}>
-                                <div className="flex items-center gap-2">
-                                  <CategoryIcon iconName={getCategoryIcon(slug)} colorVar={getCategoryColor(slug)} size="sm" showBackground />
-                                  {getCategoryLabel(slug)}
-                                </div>
-                              </SelectItem>
+                              <option key={slug} value={slug}>{getCategoryLabel(slug)}</option>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </select>
+                        </div>
                       </span>
 
                       {/* Balance */}

@@ -16,11 +16,8 @@ import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CategoryIcon } from "@/components/ui/category-icon";
-import { MinimalSelectContent, MinimalSelectItem } from "../MinimalSelect";
 import {
   Dialog,
   DialogContent,
@@ -76,8 +73,6 @@ export function TransactionEditDrawer({
   open,
   onOpenChange,
   monthKey,
-  getCategoryIcon: getIcon,
-  getCategoryColor: getColor,
   formatCurrency,
   categories,
   accounts,
@@ -369,65 +364,32 @@ export function TransactionEditDrawer({
                 <label className={LABEL}>
                   {t("imports.account", "Account")}
                 </label>
-                <Select value={accountId} onValueChange={setAccountId}>
-                  <SelectTrigger
-                    className={cn(PILL_SELECT, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
+                <div className="pk-select-wrap">
+                  <select
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value)}
+                    className={cn(PILL_SELECT, "w-full")}
                   >
-                    <SelectValue placeholder={t("imports.selectAccount", "Select")}>
-                      <span className="flex items-center gap-2 truncate">
-                        {selectedAccount && (
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: selectedAccount.color || "hsl(var(--primary))" }}
-                          />
-                        )}
-                        <span className="truncate font-medium">
-                          {selectedAccount ? getAccountDisplayName(selectedAccount) : "—"}
-                        </span>
-                      </span>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <MinimalSelectContent>
+                    <option value="" disabled>{t("imports.selectAccount", "Select")}</option>
                     {accounts.map((a) => (
-                      <MinimalSelectItem key={a.id} value={a.id}>
-                        <span className="truncate">{getAccountDisplayName(a)}</span>
-                      </MinimalSelectItem>
+                      <option key={a.id} value={a.id}>{getAccountDisplayName(a)}</option>
                     ))}
-                  </MinimalSelectContent>
-                </Select>
+                  </select>
+                </div>
               </div>
               <div className="min-w-0">
                 <label className={LABEL}>{t("imports.category", "Category")}</label>
-                <Select value={category} onValueChange={handleCategoryChange}>
-                  <SelectTrigger
-                    className={cn(PILL_SELECT, "focus:ring-1 focus:ring-primary [&>svg]:opacity-40")}
+                <div className="pk-select-wrap">
+                  <select
+                    value={category}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className={cn(PILL_SELECT, "w-full")}
                   >
-                    <SelectValue>
-                      <span className="flex items-center gap-1.5">
-                        <CategoryIcon
-                          iconName={getIcon(category)}
-                          colorVar={getColor(category)}
-                          size="sm"
-                          showBackground={false}
-                        />
-                        <span className="truncate font-medium">{getCategoryLabel(category)}</span>
-                      </span>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <MinimalSelectContent>
                     {availableCategories.map((slug) => (
-                      <MinimalSelectItem key={slug} value={slug}>
-                        <CategoryIcon
-                          iconName={getIcon(slug)}
-                          colorVar={getColor(slug)}
-                          size="sm"
-                          showBackground
-                        />
-                        <span className="truncate">{getCategoryLabel(slug)}</span>
-                      </MinimalSelectItem>
+                      <option key={slug} value={slug}>{getCategoryLabel(slug)}</option>
                     ))}
-                  </MinimalSelectContent>
-                </Select>
+                  </select>
+                </div>
               </div>
             </div>
 

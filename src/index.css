@@ -442,6 +442,15 @@
   padding-right: 38px;
   cursor: pointer;
 }
+.pk-select-wrap--sm::after {
+  width: 7px;
+  height: 7px;
+  border-width: 1.5px;
+  right: 10px;
+}
+.pk-select-wrap--sm select {
+  padding-right: 28px;
+}
 
 .pk-swatch {
   width: 28px;

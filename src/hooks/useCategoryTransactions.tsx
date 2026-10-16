@@ -24,7 +24,7 @@ export function useCategoryTransactions(categoryId: string | null) {
         .eq("category_id", categoryId!)
         .eq("is_hidden", false)
         .order("date", { ascending: false })
-        .limit(5);
+        .limit(3);
 
       if (error) throw error;
 

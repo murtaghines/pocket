@@ -142,7 +142,7 @@
     "suggestionsForCategory": "Suggestions for this category",
     "recentTransactions": "Recent transactions",
     "viewAll": "View all",
-    "noRecentTransactions": "No transactions in this category this month yet.",
+    "noRecentTransactions": "No transactions in this category yet.",
     "footerDisclaimer": "Existing transactions keep their category if you delete a rule.",
     "deleteCustomCategory": "Delete category",
     "defaultLocked": "Default",
