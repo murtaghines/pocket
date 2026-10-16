@@ -53,7 +53,7 @@ export async function findMatchingTransactions({
     .from("transactions")
     .select("id, description, description_norm, movement, categorized_by, date, account_id")
     .eq("user_id", userId)
-    .limit(1500);
+    .limit(5000);
   if (accountIds && accountIds.length > 0) {
     query = query.in("account_id", accountIds);
   }

@@ -13,7 +13,7 @@ export interface Suggestion {
   matchedTransactions: { id: string; date: string }[];
 }
 
-const MIN_OCCURRENCES = 3;
+const MIN_OCCURRENCES = 2;
 const MAX_SUGGESTIONS = 15;
 
 export function useSuggestions() {

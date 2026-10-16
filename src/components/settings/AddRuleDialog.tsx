@@ -13,6 +13,7 @@ import { useAccounts } from '@/hooks/useAccounts';
 import { AccountScopeSelect } from '@/components/imports/AccountScopeSelect';
 import { RetroactiveApplyOptions } from '@/components/settings/RetroactiveApplyOptions';
 import { filterByScope, type RetroScope } from '@/hooks/useRetroactiveApply';
+import { MATCH_TYPES } from '@/lib/matchTypes';
 import type { MatchType } from '@/lib/userRules';
 
 interface EditingRule {
@@ -42,22 +43,13 @@ interface Props {
 const MODAL_INPUT = "h-11 rounded-xl bg-muted border-[1.5px] border-transparent px-3.5 text-sm font-medium shadow-none focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
 const MODAL_LABEL = "text-[13px] font-medium text-muted-foreground";
 
-const MATCH_TYPES: Array<{ value: string; recommended?: boolean }> = [
-  { value: 'SMART', recommended: true },
-  { value: 'CONTAINS' },
-  { value: 'STARTS_WITH' },
-  { value: 'ENDS_WITH' },
-  { value: 'EXACT' },
-  { value: 'REGEX' },
-];
+const MATCH_TYPE_OPTIONS = MATCH_TYPES.map(({ value, recommended }) => ({ value, recommended }));
 
 const LABEL_KEY: Record<string, string> = {
   SMART: 'smartMatch',
   CONTAINS: 'contains',
   STARTS_WITH: 'startsWith',
   ENDS_WITH: 'endsWith',
-  EXACT: 'exact',
-  REGEX: 'regex',
 };
 
 const HELP_KEY: Record<string, string> = {
@@ -65,8 +57,6 @@ const HELP_KEY: Record<string, string> = {
   CONTAINS: 'matchHelp_CONTAINS',
   STARTS_WITH: 'matchHelp_STARTS_WITH',
   ENDS_WITH: 'matchHelp_ENDS_WITH',
-  EXACT: 'matchHelp_EXACT',
-  REGEX: 'matchHelp_REGEX',
 };
 
 function placeholderFor(movement?: string | null): string {
@@ -174,7 +164,7 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {MATCH_TYPES.map(({ value, recommended }) => (
+                {MATCH_TYPE_OPTIONS.map(({ value, recommended }) => (
                   <SelectItem key={value} value={value}>
                     <span className="flex items-center gap-2">
                       <span className="font-medium">{t(`categories.${LABEL_KEY[value]}`)}</span>
@@ -203,15 +193,21 @@ export function AddRuleDialog({ open, category, editingRule, onClose, onSave, is
             </div>
           )}
 
-          {/* Retroactive scope */}
-          {!isEditing && matched.length > 0 && (
-            <RetroactiveApplyOptions
-              transactions={matched}
-              scope={retroScope}
-              onScopeChange={setRetroScope}
-              customSince={customSince}
-              onCustomSinceChange={setCustomSince}
-            />
+          {/* Retroactive scope — always visible when creating (not editing) and pattern entered */}
+          {!isEditing && pattern.trim().length > 0 && (
+            matched.length > 0 ? (
+              <RetroactiveApplyOptions
+                transactions={matched}
+                scope={retroScope}
+                onScopeChange={setRetroScope}
+                customSince={customSince}
+                onCustomSinceChange={setCustomSince}
+              />
+            ) : !previewLoading ? (
+              <p className="text-xs text-muted-foreground px-1">
+                {t('categories.noMatchesYet', 'No existing transactions match this pattern yet. The rule will apply to future imports.')}
+              </p>
+            ) : null
           )}
         </DialogBody>
 

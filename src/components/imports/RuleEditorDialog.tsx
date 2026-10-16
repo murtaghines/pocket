@@ -91,13 +91,6 @@ const MATCH_OPTIONS: {
     hintKey: "categories.matchHelp_ENDS_WITH",
     hintFallback: "Matches when the description ends with the pattern.",
   },
-  {
-    value: "exact",
-    labelKey: "categories.exact",
-    fallback: "Exact",
-    hintKey: "categories.matchHelp_EXACT",
-    hintFallback: "Matches only when the description is identical to the pattern.",
-  },
 ];
 
 export function RuleEditorDialog({

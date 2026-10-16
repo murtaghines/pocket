@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { getAccountDisplayName } from '@/lib/accountColors';
 import { categoryExamples } from '@/lib/categoryExamples';
 import type { Database } from '@/integrations/supabase/types';
+import { MATCH_TYPES } from '@/lib/matchTypes';
 import type { MatchType } from '@/lib/userRules';
 
 type Category = Database['public']['Tables']['categories']['Row'];
@@ -39,24 +40,20 @@ interface SelectedCategory {
   customIndex?: number;
 }
 
-const MATCH_TYPE_OPTIONS = ['CONTAINS', 'STARTS_WITH', 'EXACT', 'REGEX'] as const;
+const MATCH_TYPE_OPTIONS = MATCH_TYPES.map(mt => mt.value);
 
 const MATCH_TYPE_LABEL: Record<string, string> = {
   SMART: 'SMART',
   CONTAINS: 'CONTAINS',
   STARTS_WITH: 'STARTS WITH',
   ENDS_WITH: 'ENDS WITH',
-  EXACT: 'EXACT',
-  REGEX: 'REGEX',
 };
 
-const MATCH_TYPE_INFO = [
-  { key: 'SMART', label: 'SMART', helpKey: 'matchHelp_SMART' },
-  { key: 'CONTAINS', label: 'CONTAINS', helpKey: 'matchHelp_CONTAINS' },
-  { key: 'STARTS_WITH', label: 'STARTS WITH', helpKey: 'matchHelp_STARTS_WITH' },
-  { key: 'EXACT', label: 'EXACT', helpKey: 'matchHelp_EXACT' },
-  { key: 'REGEX', label: 'REGEX', helpKey: 'matchHelp_REGEX' },
-] as const;
+const MATCH_TYPE_INFO = MATCH_TYPES.map(mt => ({
+  key: mt.value,
+  label: MATCH_TYPE_LABEL[mt.value] || mt.value,
+  helpKey: `matchHelp_${mt.value}`,
+}));
 
 function RenderIcon({ name, size = 18 }: { name: string; size?: number }) {
   const I = getLucideIcon(name);
@@ -82,7 +79,7 @@ export function CategoriesEditor() {
 
   // Inline add rule state
   const [newPattern, setNewPattern] = useState('');
-  const [newMatchType, setNewMatchType] = useState<string>('CONTAINS');
+  const [newMatchType, setNewMatchType] = useState<string>('SMART');
   const [showMatchTypeDropdown, setShowMatchTypeDropdown] = useState(false);
   const [showCreateRulePopup, setShowCreateRulePopup] = useState(false);
   const [retroScope, setRetroScope] = useState<RetroScope>('all');

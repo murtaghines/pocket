@@ -169,3 +169,49 @@ inserted (`pattern: "WOSAP KLINDT"`, tokens correctly stripped "PAGO" as a stopw
 suggestion disappeared from the list on refetch with no manual dismiss. Test data removed after
 verification. 76/76 tests green, tsc/lint clean, build clean. Frontend-only change — no edge
 function redeploy needed.
+
+## Categorization system overhaul (2026-10-16)
+
+Comprehensive improvement pass covering match type simplification, icon rendering, retroactive
+apply UX, and auto-learning thresholds.
+
+**Match types simplified from 6 to 4.** Removed EXACT and REGEX from all three rule-creation
+UIs (AddRuleDialog, CategoriesEditor inline, RuleEditorDialog). Kept SMART (fuzzy, default),
+CONTAINS, STARTS_WITH, ENDS_WITH. Existing `exact`/`regex` rules in the DB still work — the
+`MatchType` union and `ruleMatchesDescription()` are unchanged, only the UI options are removed.
+Created shared `src/lib/matchTypes.ts` so all three dialogs import the same constant.
+
+**Match type consistency unified across all entry points.** Previously each dialog had a different
+subset: AddRuleDialog had 6, CategoriesEditor inline had 4 (CONTAINS, STARTS_WITH, EXACT, REGEX),
+RuleEditorDialog had 5 (no REGEX). Now all three show the same 4 types with the same default
+(SMART). CategoriesEditor inline's default changed from CONTAINS to SMART.
+
+**CategoryIcon fixed to use dynamic icon resolution.** Replaced the hardcoded 27-icon map in
+`src/components/ui/category-icon.tsx` with `getLucideIcon()` from `src/lib/lucideIcon.ts`. Now
+ANY Lucide icon chosen via the pickers (24–72 options) renders correctly on the dashboard,
+transaction table, and imports views. Previously custom categories and visual overrides fell back
+to a generic Circle icon.
+
+**Retroactive apply made always visible.** AddRuleDialog now shows the retroactive apply section
+whenever a pattern is entered (not only when matches > 0). When no matches exist, shows "No
+existing transactions match this pattern yet. The rule will apply to future imports." so users
+know the feature exists.
+
+**Transaction preview limit raised from 1,500 to 5,000** in `useRulePreview.ts` — users with
+large transaction histories now get accurate match counts and retroactive apply coverage.
+
+**Suggested rules threshold lowered from 3 to 2.** Two identical AI-fallback descriptions is
+already a strong signal — surfacing them earlier helps users build rules sooner.
+
+**Smart Match help text improved** in both EN and ES to clearly explain what it does: ignores
+common bank prefixes (PAGO, TRANSFERENCIA) and matches key words in any order.
+
+139/139 tests green, tsc/lint clean (0 errors, 106 pre-existing warnings), build clean.
+Frontend-only changes — no edge function redeploy needed.
+
+## Next step
+- Live-verify in browser: create rule with each of the 4 match types, verify preview and
+  retroactive apply. Create custom category with non-standard icon (e.g. `coffee`), verify it
+  renders on dashboard.
+- Consider post-import rule suggestion nudge (Phase 4b of plan) — show inline callout when
+  uncategorized patterns are detected after import.

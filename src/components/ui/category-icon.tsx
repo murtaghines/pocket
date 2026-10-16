@@ -1,65 +1,6 @@
-import {
-  Briefcase,
-  RotateCcw,
-  ArrowDownLeft,
-  PlusCircle,
-  TrendingUp,
-  TrendingDown,
-  Landmark,
-  Laptop,
-  Home,
-  ShoppingCart,
-  Utensils,
-  Car,
-  HeartPulse,
-  Gamepad2,
-  ShoppingBag,
-  GraduationCap,
-  Repeat,
-  Plane,
-  Dumbbell,
-  MoreHorizontal,
-  PawPrint,
-  ArrowLeftRight,
-  Users,
-  PiggyBank,
-  ShieldCheck,
-  HeartHandshake,
-  Circle,
-  LucideIcon
-} from 'lucide-react';
+import { Circle, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Map icon names to Lucide components
-const iconMap: Record<string, LucideIcon> = {
-  'briefcase': Briefcase,
-  'rotate-ccw': RotateCcw,
-  'arrow-down-left': ArrowDownLeft,
-  'plus-circle': PlusCircle,
-  'trending-up': TrendingUp,
-  'laptop': Laptop,
-  'home': Home,
-  'shopping-cart': ShoppingCart,
-  'utensils': Utensils,
-  'car': Car,
-  'heart-pulse': HeartPulse,
-  'gamepad-2': Gamepad2,
-  'shopping-bag': ShoppingBag,
-  'graduation-cap': GraduationCap,
-  'repeat': Repeat,
-  'plane': Plane,
-  'dumbbell': Dumbbell,
-  'more-horizontal': MoreHorizontal,
-  'paw-print': PawPrint,
-  'arrow-left-right': ArrowLeftRight,
-  'trending-down': TrendingDown,
-  'users': Users,
-  'piggy-bank': PiggyBank,
-  'landmark': Landmark,
-  'shield-check': ShieldCheck,
-  'heart-handshake': HeartHandshake,
-  'circle': Circle,
-};
+import { getLucideIcon } from '@/lib/lucideIcon';
 
 interface CategoryIconProps {
   iconName: string;
@@ -76,7 +17,7 @@ export function CategoryIcon({
   className,
   showBackground = true 
 }: CategoryIconProps) {
-  const IconComponent = iconMap[iconName] || Circle;
+  const IconComponent = (getLucideIcon(iconName) || Circle) as LucideIcon;
   
   const sizeClasses = {
     sm: 'w-6 h-6',
