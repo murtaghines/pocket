@@ -582,6 +582,10 @@ function applyUserRulesMatch(
   transactionAccountId: string,
 ): { movement: string; category: string; ruleId: string } | null {
   for (const rule of rules) {
+    const isSignConflict =
+      (rule.movement === 'INCOME' && transactionMovement === 'EXPENSE') ||
+      (rule.movement === 'EXPENSE' && transactionMovement === 'INCOME');
+    if (isSignConflict) continue;
     if (rule.account_id && rule.account_id !== transactionAccountId) continue;
     const mt = (rule.match_type || '').toLowerCase() as MatchType;
     const matched = ruleMatchesDescription(mt, rule.pattern || '', rule.tokens || [], description);
