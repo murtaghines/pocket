@@ -61,7 +61,12 @@ export async function findMatchingTransactions({
   if (error) return [];
   const results: MatchedTransaction[] = [];
   for (const row of data || []) {
-    if (!skipMovementFilter && row.movement && row.movement !== movement) continue;
+    if (!skipMovementFilter && row.movement && row.movement !== movement) {
+      const isSignConflict =
+        (movement === 'INCOME' && row.movement === 'EXPENSE') ||
+        (movement === 'EXPENSE' && row.movement === 'INCOME');
+      if (isSignConflict) continue;
+    }
     if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
     const desc = (row.description_norm || row.description || "") as string;
     if (ruleMatchesDescription(matchType, pattern, tokens, desc)) {

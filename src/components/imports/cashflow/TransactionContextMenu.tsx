@@ -14,6 +14,7 @@ import {
   EyeOff,
   Pencil,
   Copy,
+  CopyPlus,
   Trash2,
   SplitIcon,
   RotateCcw,
@@ -41,6 +42,7 @@ interface TransactionContextMenuProps {
   onSplit: () => void;
   onRevert: () => void;
   onSaveWithRule: () => void;
+  onDuplicate?: () => void;
   onBulkHide?: () => void;
   onBulkShow?: () => void;
   onBulkAssignCategory?: (cat: Category) => void;
@@ -68,6 +70,7 @@ export function TransactionContextMenu({
   onSplit,
   onRevert,
   onSaveWithRule,
+  onDuplicate,
   onBulkHide,
   onBulkShow,
   onBulkAssignCategory,
@@ -140,6 +143,13 @@ export function TransactionContextMenu({
               {t("imports.editDescription")}
             </ContextMenuItem>
 
+            {onDuplicate && (
+              <ContextMenuItem onClick={onDuplicate} className="gap-2">
+                <CopyPlus className="w-4 h-4" />
+                {t("imports.duplicateRow", "Duplicate row")}
+              </ContextMenuItem>
+            )}
+
             <ContextMenuItem onClick={onSplit} className="gap-2">
               <SplitIcon className="w-4 h-4" />
               {t("imports.splitAmount")}
@@ -168,10 +178,10 @@ export function TransactionContextMenu({
               </ContextMenuItem>
             )}
 
-            {isPending && hasCategoryChange && (
+            {hasCategoryChange && (
               <ContextMenuItem onClick={onSaveWithRule} className="gap-2">
                 <Sparkles className="w-4 h-4" />
-                {t("imports.saveAndCreateRule")}
+                {t("imports.createRule", "Create rule")}
               </ContextMenuItem>
             )}
 

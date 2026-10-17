@@ -5,7 +5,7 @@ import { ManualEntryFooter } from "./ManualEntryFooter";
 import { InlineTransactionsEditor } from "./InlineTransactionsEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
 import type { AccountTab } from "./AccountSheetTabs";
-import type { PendingEditShape, PendingFileInfo, MovementType } from "./types";
+import type { PendingFileInfo, MovementType } from "./types";
 import type { SortColumn, SortDirection, DataFilters, TabSummary } from "./DataToolbar";
 
 export interface MonthWorkspaceProps {
@@ -19,9 +19,6 @@ export interface MonthWorkspaceProps {
   isDeleting: boolean;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
-  pendingByTx: Record<string, PendingEditShape>;
-  setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
-  pendingTxIds: Set<string>;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
@@ -49,9 +46,6 @@ export function MonthWorkspace({
   isDeleting,
   isProcessing,
   pendingFiles,
-  pendingByTx,
-  setPendingByTx,
-  pendingTxIds,
   manualEntryOpen: externalManualEntryOpen,
   onManualEntryOpenChange,
   defaultMovement,
@@ -127,9 +121,6 @@ export function MonthWorkspace({
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
         pendingFiles={activePending}
-        pendingByTx={pendingByTx}
-        setPendingByTx={setPendingByTx}
-        pendingTxIds={pendingTxIds}
         manualEntryOpen={manualEntryOpen}
         onManualEntryOpenChange={setManualEntryOpen}
         defaultMovement={defaultMovement}

@@ -3,8 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
-  Check,
-  X,
   Eye,
   EyeOff,
   Sparkles,
@@ -19,6 +17,8 @@ import {
   Pencil,
   Copy,
 } from "lucide-react";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { cn } from "@/lib/utils";
 import { evalArithmetic } from "@/lib/safeMath";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,13 +58,6 @@ import type { RuleEditorPayload } from "../RuleEditorDialog";
 import {
   normalizeCategory,
 } from "@/lib/categoryTranslations";
-import {
-  buildRuleFromCorrection,
-  ruleMatchesDescription,
-  type MatchType,
-} from "@/lib/userRules";
-import { filterByScope } from "@/hooks/useRetroactiveApply";
-import { findExistingActiveRule } from "@/hooks/useRulePreview";
 import { buildSplitMap, applySplitFast } from "@/lib/splitAmount";
 import {
   USER_TRACKED_FIELDS,
@@ -118,9 +111,6 @@ export interface InlineTransactionsEditorProps {
   onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
-  pendingByTx: Record<string, PendingEditShape>;
-  setPendingByTx: React.Dispatch<React.SetStateAction<Record<string, PendingEditShape>>>;
-  pendingTxIds: Set<string>;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
@@ -146,9 +136,6 @@ export function InlineTransactionsEditor({
   onAddMore,
   isProcessing,
   pendingFiles,
-  pendingByTx,
-  setPendingByTx,
-  pendingTxIds: _pendingTxIds,
   manualEntryOpen: externalManualEntryOpen,
   onManualEntryOpenChange,
   defaultMovement,
@@ -184,8 +171,9 @@ export function InlineTransactionsEditor({
     [cashAccounts],
   );
 
-  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const copiedRowsRef = useRef<MonthTransaction[]>([]);
+  const recentlyNudgedRef = useRef<Map<string, number>>(new Map());
 
   // Checkbox selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -245,37 +233,6 @@ export function InlineTransactionsEditor({
   const longPressFiredRef = useRef(false);
   const longPressStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // Pending (unsaved) edits live in the parent (`BankStatementsTabsView`)
-  // so navigating to another month tab does NOT discard them. The row
-  // stays yellow until the user confirms or clears it explicitly.
-  type PendingEdit = PendingEditShape;
-
-  const setPendingFor = (txId: string, patch: PendingEdit) => {
-    setPendingByTx((prev) => {
-      const next = { ...prev, [txId]: { ...(prev[txId] || {}), ...patch } };
-      return next;
-    });
-  };
-  const clearPendingFor = (txId: string) => {
-    setPendingByTx((prev) => {
-      if (!(txId in prev)) return prev;
-      const next = { ...prev };
-      delete next[txId];
-      return next;
-    });
-  };
-  const hasAnyPending = Object.keys(pendingByTx).length > 0;
-
-  // Block month / tab navigation while there are unconfirmed edits.
-  useEffect(() => {
-    if (!hasAnyPending) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
-  }, [hasAnyPending]);
 
   const accountName = (id: string | null) =>
     accounts.find((a) => a.id === id)?.name || null;
@@ -408,24 +365,7 @@ export function InlineTransactionsEditor({
       }
       return id;
     },
-    onMutate: ({ id }) => {
-      setSavingIds((prev) => new Set(prev).add(id));
-    },
-    onSuccess: async (id) => {
-      setSavingIds((prev) => {
-        const n = new Set(prev);
-        n.delete(id);
-        return n;
-      });
-      setSavedIds((prev) => new Set(prev).add(id));
-      // Clear "saved" badge after 1.2s
-      setTimeout(() => {
-        setSavedIds((prev) => {
-          const n = new Set(prev);
-          n.delete(id);
-          return n;
-        });
-      }, 1200);
+    onSuccess: async () => {
       try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -435,12 +375,7 @@ export function InlineTransactionsEditor({
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
       queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     },
-    onError: (err: any, vars) => {
-      setSavingIds((prev) => {
-        const n = new Set(prev);
-        n.delete(vars.id);
-        return n;
-      });
+    onError: (err: any) => {
       toast({
         title: "Couldn't save change",
         description: err?.message ?? "Please try again.",
@@ -448,6 +383,78 @@ export function InlineTransactionsEditor({
       });
     },
   });
+
+  const saveFnAsync = useCallback(
+    (args: { id: string; payload: Record<string, unknown>; before: Record<string, unknown> }) =>
+      saveMutation.mutateAsync(args).then(() => {}),
+    [],
+  );
+  const undoRedo = useUndoRedo(saveFnAsync);
+
+  const handleDuplicateRow = useCallback(async (tx: MonthTransaction) => {
+    if (!user) return;
+    const { buildManualFingerprint } = await import("@/lib/transactionSource");
+    const fingerprint = await buildManualFingerprint(
+      tx.date,
+      tx.amount,
+      tx.currency || "EUR",
+      (tx.description || tx.description_norm || "") + "_copy_" + Date.now(),
+    );
+    const { error } = await supabase.from("transactions").insert({
+      user_id: user.id,
+      domain: "CASHFLOW" as const,
+      date: tx.date,
+      description: tx.description,
+      description_norm: tx.description_norm,
+      amount: tx.amount,
+      movement: tx.movement,
+      category: tx.category,
+      category_id: tx.category_id,
+      account_id: tx.account_id,
+      currency: tx.currency,
+      fingerprint,
+      category_source: "MANUAL",
+      categorized_by: "user",
+      is_hidden: false,
+    });
+    if (error) {
+      toast({ title: "Couldn't duplicate row", description: error.message, variant: "destructive" });
+      return;
+    }
+    try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
+    queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
+    sonnerToast(t("imports.rowDuplicated", "Row duplicated"));
+  }, [user, monthKey, queryClient, toast, t]);
+
+  const handleCopyRows = useCallback(() => {
+    const rows = Array.from(selectedIds)
+      .map((id) => transactions.find((tx) => tx.id === id))
+      .filter(Boolean) as MonthTransaction[];
+    if (rows.length === 0) return;
+    copiedRowsRef.current = rows;
+    sonnerToast(rows.length === 1 ? "Row copied" : `${rows.length} rows copied`);
+  }, [selectedIds, transactions]);
+
+  const handlePasteRows = useCallback(async () => {
+    const rows = copiedRowsRef.current;
+    if (rows.length === 0) return;
+    for (const tx of rows) {
+      await handleDuplicateRow(tx);
+    }
+    if (rows.length > 1) {
+      sonnerToast(t("imports.rowsDuplicated", "{{count}} rows duplicated", { count: rows.length }));
+    }
+  }, [handleDuplicateRow, t]);
+
+  const handleBulkDelete = useCallback(() => {
+    const manual = Array.from(selectedIds)
+      .map((id) => transactions.find((tx) => tx.id === id))
+      .filter((tx): tx is MonthTransaction => !!tx && isManualTransaction(tx));
+    for (const tx of manual) deleteWithUndo(tx);
+    setSelectedIds(new Set());
+  }, [selectedIds, transactions]);
 
   const handleBulkHide = useCallback(() => {
     selectedIds.forEach((id) => {
@@ -590,99 +597,177 @@ export function InlineTransactionsEditor({
     });
   };
 
-  // ─── Buffered edit handlers ──────────────────────────────────────────
-  // Movement / category / amount edits do NOT save automatically.
-  // They populate `pendingByTx[id]`. The row turns yellow until the user
-  // clicks the green tick in the "Undo" column, which runs validations
-  // and persists everything together.
+  // ─── Auto-save edit handlers ──────────────────────────────────────────
+  // Every edit saves immediately to the database and pushes to the undo
+  // stack. No pending buffer, no confirmation step.
 
   const applyMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
     const defaultCat = getCategoriesForMovement(newMovement, tx.amount)[0];
     const cat = categories.find((c) => c.slug === defaultCat);
-    saveMutation.mutate({
-      id: tx.id,
-      payload: {
-        movement: newMovement,
-        category: defaultCat,
-        category_id: cat?.id || null,
-        category_source: "MANUAL",
-        categorized_by: "user",
-        user_corrected: true,
-      },
-      before: {
-        movement: tx.movement,
-        category: tx.category,
-        category_id: tx.category_id,
-      },
+    const payload = {
+      movement: newMovement,
+      category: defaultCat,
+      category_id: cat?.id || null,
+      category_source: "MANUAL",
+      categorized_by: "user",
+      user_corrected: true,
+    };
+    const before = {
+      movement: tx.movement,
+      category: tx.category,
+      category_id: tx.category_id,
+    };
+    saveMutation.mutate({ id: tx.id, payload, before });
+    undoRedo.push({
+      txId: tx.id,
+      field: "movement+category",
+      oldValue: { movement: tx.movement, category: tx.category },
+      newValue: { movement: newMovement, category: defaultCat },
+      meta: { category_id: cat?.id || null, category_source: "MANUAL", categorized_by: "user", user_corrected: true },
+      metaOld: { category_id: tx.category_id },
     });
   };
 
   const handleMovementChange = (tx: MonthTransaction, newMovement: MovementType) => {
-    if (newMovement === tx.movement) {
-      // Reverting back to the saved value clears the pending entry for this field.
-      setPendingByTx((prev) => {
-        if (!prev[tx.id]) return prev;
-        const { movement: _m, category: _c, category_id: _cid, ...rest } = prev[tx.id];
-        const next = { ...prev };
-        if (Object.keys(rest).length > 0) next[tx.id] = rest;
-        else delete next[tx.id];
-        return next;
-      });
+    if (newMovement === tx.movement) return;
+    const looksWrong =
+      (tx.amount > 0 && newMovement === "EXPENSE") ||
+      (tx.amount < 0 && newMovement === "INCOME");
+    if (looksWrong) {
+      setMovementConfirm({ tx, newMovement });
       return;
     }
-    // When movement changes, reset the category to the default of the new
-    // movement so the user always sees a coherent pair while pending.
-    const amount = pendingByTx[tx.id]?.amount ?? tx.amount;
-    const defaultCat = getCategoriesForMovement(newMovement, amount)[0];
-    const cat = categories.find((c) => c.slug === defaultCat);
-    setPendingFor(tx.id, {
-      movement: newMovement,
-      category: defaultCat,
-      category_id: cat?.id || null,
+    applyMovementChange(tx, newMovement);
+  };
+
+  const maybeNudgeRule = (tx: MonthTransaction, newSlug: string, newCategoryId: string | null, targetMovement: MovementType) => {
+    if (!user) return;
+    const now = Date.now();
+    const lastNudge = recentlyNudgedRef.current.get(tx.id);
+    if (lastNudge && now - lastNudge < 10_000) return;
+    recentlyNudgedRef.current.set(tx.id, now);
+
+    const cleanDesc = (tx.description || tx.description_norm || "")
+      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+      .trim();
+    if (!cleanDesc) return;
+
+    const categoryName = getCategoryLabel(newSlug);
+    toast({
+      title: t("imports.ruleNudgeTitle2", "Create rule for «{{category}}»?", { category: categoryName }),
+      description: (
+        <div className="space-y-1">
+          <p className="text-xs opacity-80">
+            {t("imports.ruleNudgeBody2", "Future transactions like «{{desc}}» will be categorized automatically.", { desc: cleanDesc.length > 40 ? cleanDesc.slice(0, 37) + "…" : cleanDesc })}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => {
+              setCategoryRulePrompt({
+                tx,
+                newSlug,
+                newCategoryId,
+                cleanDesc,
+                targetMovement,
+              });
+            }}
+          >
+            <Sparkles className="h-3 w-3" />
+            {t("imports.ruleNudgeCta")}
+          </Button>
+        </div>
+      ),
     });
   };
 
   const handleCategoryChange = (tx: MonthTransaction, newSlug: string) => {
+    if (newSlug === tx.category) return;
     const cat = categories.find((c) => c.slug === newSlug);
     const categoryId = cat?.id || null;
-    setPendingFor(tx.id, { category: newSlug, category_id: categoryId });
+    const movement = (tx.movement || "EXPENSE") as MovementType;
+    saveMutation.mutate(
+      {
+        id: tx.id,
+        payload: { category: newSlug, category_id: categoryId, category_source: "MANUAL", categorized_by: "user", user_corrected: true },
+        before: { category: tx.category, category_id: tx.category_id },
+      },
+      { onSuccess: () => maybeNudgeRule(tx, newSlug, categoryId, movement) },
+    );
+    undoRedo.push({
+      txId: tx.id,
+      field: "category",
+      oldValue: tx.category,
+      newValue: newSlug,
+      meta: { category_id: categoryId, category_source: "MANUAL", categorized_by: "user", user_corrected: true },
+      metaOld: { category_id: tx.category_id },
+    });
   };
 
   const handleAmountChange = (tx: MonthTransaction, raw: string) => {
     const sanitized = raw.replace(/\s/g, "").replace(",", ".");
-    // Accepts a plain number or a simple arithmetic expression (e.g. "50*2"), evaluated by a
-    // safe parser — no eval/Function. Returns null on anything malformed.
     const parsed = evalArithmetic(sanitized);
     if (parsed === null) return;
-    const pending = pendingByTx[tx.id] || {};
-    const movement = (pending.movement || tx.movement || "EXPENSE") as MovementType;
+    const movement = (tx.movement || "EXPENSE") as MovementType;
     const sign = movement === "EXPENSE" ? -1 : 1;
     const newAmount = sign * Math.abs(parsed);
     if (newAmount === tx.amount) return;
-    const updates: Record<string, unknown> = { amount: newAmount };
+    const payload: Record<string, unknown> = { amount: newAmount };
+    const before: Record<string, unknown> = { amount: tx.amount };
+    if (tx.amount_original == null) payload.amount_original = tx.amount;
     if (movement === "TRANSFER" && newAmount !== 0) {
-      const currentCat = pending.category ?? tx.category ?? "own_transfer";
+      const currentCat = tx.category ?? "own_transfer";
       const validCats = getCategoriesForMovement("TRANSFER", newAmount);
       if (!validCats.includes(currentCat)) {
         const defaultCat = validCats[0];
-        const cat = categories.find((c) => c.slug === defaultCat);
-        updates.category = defaultCat;
-        updates.category_id = cat?.id || null;
+        const catObj = categories.find((c) => c.slug === defaultCat);
+        payload.category = defaultCat;
+        payload.category_id = catObj?.id || null;
+        before.category = tx.category;
+        before.category_id = tx.category_id;
       }
     }
-    setPendingFor(tx.id, updates);
+    saveMutation.mutate({ id: tx.id, payload, before });
+    undoRedo.push({
+      txId: tx.id,
+      field: "amount",
+      oldValue: tx.amount,
+      newValue: newAmount,
+      meta: tx.amount_original == null ? { amount_original: tx.amount } : undefined,
+      metaOld: tx.amount_original == null ? { amount_original: null } : undefined,
+    });
+  };
+
+  const handleDescriptionSave = (tx: MonthTransaction, newDesc: string) => {
+    if (newDesc === (tx.description || tx.description_norm || "").replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "").trim()) return;
+    saveMutation.mutate({
+      id: tx.id,
+      payload: { description: newDesc, description_norm: newDesc },
+      before: { description: tx.description, description_norm: tx.description_norm },
+    });
+    undoRedo.push({ txId: tx.id, field: "description", oldValue: tx.description, newValue: newDesc });
   };
 
   const handleSplit = (tx: MonthTransaction, n: number) => {
     if (n < 1) return;
-    const baseAmount = pendingByTx[tx.id]?.amount ?? tx.amount;
+    const baseAmount = tx.amount;
     const newAmount = Math.sign(baseAmount || 1) * (Math.abs(baseAmount) / n);
     if (newAmount === baseAmount) return;
-    setPendingFor(tx.id, { amount: newAmount });
+    const payload: Record<string, unknown> = { amount: newAmount };
+    if (tx.amount_original == null) payload.amount_original = tx.amount;
+    saveMutation.mutate({ id: tx.id, payload, before: { amount: tx.amount } });
+    undoRedo.push({
+      txId: tx.id,
+      field: "amount",
+      oldValue: tx.amount,
+      newValue: newAmount,
+      meta: tx.amount_original == null ? { amount_original: tx.amount } : undefined,
+      metaOld: tx.amount_original == null ? { amount_original: null } : undefined,
+    });
   };
 
   const handleToggleHidden = (tx: MonthTransaction) => {
-    // Hide/Show stays immediate — it's not part of the pending-edit flow.
     saveMutation.mutate({
       id: tx.id,
       payload: { is_hidden: !tx.is_hidden },
@@ -690,71 +775,45 @@ export function InlineTransactionsEditor({
     });
   };
 
-  // Commit a row's pending edits: run validations, then persist via saveMutation.
-  // When `withRule` is true and the category changed, open RuleEditorDialog so the
-  // user can fine-tune the pattern and confirm — that's what the second "Sparkles
-  // tick" does.
-  const commitRow = (tx: MonthTransaction, withRule = false, overrideEdits?: PendingEditShape, isRevert = false) => {
-    const pending = overrideEdits || pendingByTx[tx.id];
-    if (!pending) return;
-
-    if (overrideEdits) {
-      setPendingFor(tx.id, overrideEdits);
-    }
-
-    // 1) Sign vs movement mismatch — confirm with the user before saving.
-    const finalMovement = (pending.movement ?? tx.movement) as MovementType | null;
-    const finalAmount = pending.amount ?? tx.amount;
-    const looksWrong =
-      finalMovement &&
-      ((finalAmount > 0 && finalMovement === "EXPENSE") ||
-        (finalAmount < 0 && finalMovement === "INCOME"));
-    if (looksWrong && pending.movement && pending.movement !== tx.movement) {
-      setMovementConfirm({ tx, newMovement: pending.movement });
-      return;
-    }
-
-    // 2) Build the persistence payload from pending fields.
+  // handleDrawerSave — converts the drawer's local edits into direct saves
+  const handleDrawerSave = (tx: MonthTransaction, edits: PendingEditShape, withRule = false, isRevert = false) => {
     const payload: Record<string, unknown> = {};
     const before: Record<string, unknown> = {};
-    if (pending.movement && pending.movement !== tx.movement) {
-      payload.movement = pending.movement;
+    if (edits.movement && edits.movement !== tx.movement) {
+      payload.movement = edits.movement;
       before.movement = tx.movement;
     }
-    if (pending.category && pending.category !== tx.category) {
-      payload.category = pending.category;
-      payload.category_id = pending.category_id ?? null;
+    if (edits.category && edits.category !== tx.category) {
+      payload.category = edits.category;
+      payload.category_id = edits.category_id ?? null;
       payload.category_source = "MANUAL";
       payload.categorized_by = "user";
       payload.user_corrected = true;
       before.category = tx.category;
       before.category_id = tx.category_id;
     }
-    if (pending.amount !== undefined && pending.amount !== tx.amount) {
-      payload.amount = pending.amount;
+    if (edits.amount !== undefined && edits.amount !== tx.amount) {
+      payload.amount = edits.amount;
       before.amount = tx.amount;
-      // Track the pre-edit amount, set once on the first manual edit/split — never
-      // overwritten by a later edit, so it always holds the true imported value.
-      // A revert (isRevert, handled below) clears it back to null instead.
       if (tx.amount_original == null) payload.amount_original = tx.amount;
     }
-    if (pending.description !== undefined) {
-      payload.description = pending.description;
-      payload.description_norm = pending.description;
+    if (edits.description !== undefined) {
+      payload.description = edits.description;
+      payload.description_norm = edits.description;
       before.description = tx.description;
       before.description_norm = tx.description_norm;
     }
-    if (pending.date !== undefined && pending.date !== tx.date) {
-      payload.date = pending.date;
+    if (edits.date !== undefined && edits.date !== tx.date) {
+      payload.date = edits.date;
       before.date = tx.date;
     }
-    if (pending.account_id !== undefined && pending.account_id !== tx.account_id) {
-      payload.account_id = pending.account_id;
+    if (edits.account_id !== undefined && edits.account_id !== tx.account_id) {
+      payload.account_id = edits.account_id;
       before.account_id = tx.account_id;
-      if (pending.currency) payload.currency = pending.currency;
+      if (edits.currency) payload.currency = edits.currency;
     }
-    if (pending.is_hidden !== undefined && pending.is_hidden !== tx.is_hidden) {
-      payload.is_hidden = pending.is_hidden;
+    if (edits.is_hidden !== undefined && edits.is_hidden !== tx.is_hidden) {
+      payload.is_hidden = edits.is_hidden;
       before.is_hidden = tx.is_hidden;
     }
     if (isRevert) {
@@ -765,99 +824,27 @@ export function InlineTransactionsEditor({
         payload.user_corrected = false;
       }
     }
+    if (Object.keys(payload).length === 0) return;
 
-    if (Object.keys(payload).length === 0) {
-      clearPendingFor(tx.id);
-      return;
-    }
-
+    const movementForRule = ((edits.movement ?? tx.movement) || "EXPENSE") as MovementType;
     saveMutation.mutate(
       { id: tx.id, payload, before },
       {
-        onSuccess: async () => {
-          try {
-            const categoryChanged = pending.category && pending.category !== tx.category;
-            const movementChanged = pending.movement && pending.movement !== tx.movement;
-
-            if ((categoryChanged || movementChanged) && user) {
-              const cleanDesc = (tx.description || tx.description_norm || "")
-                .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
-                .trim();
-              const targetMovement =
-                ((pending.movement ?? tx.movement) || "EXPENSE") as MovementType;
-              const ruleCategory = (pending.category ?? tx.category) || (targetMovement === 'INCOME' ? 'other_income' : targetMovement === 'TRANSFER' ? 'own_transfer' : 'other_expense');
-              const ruleCategoryId = pending.category_id ?? tx.category_id ?? null;
-
-              if (cleanDesc) {
-                if (withRule) {
-                  const built = buildRuleFromCorrection(cleanDesc, targetMovement, ruleCategory);
-                  const existingRuleId = await findExistingActiveRule({
-                    userId: user.id,
-                    pattern: built.pattern,
-                    category: ruleCategory,
-                  });
-                  setCategoryRulePrompt({
-                    tx,
-                    newSlug: ruleCategory,
-                    newCategoryId: ruleCategoryId,
-                    cleanDesc,
-                    targetMovement,
-                    existingRuleId,
-                  });
-                } else {
-                  const categoryName = getCategoryLabel(ruleCategory);
-                  const { dismiss } = toast({
-                    title: t("imports.ruleNudgeTitle2", "Create rule for «{{category}}»?", { category: categoryName }),
-                    description: (
-                      <div className="space-y-1">
-                        <p className="text-xs opacity-80">
-                          {t("imports.ruleNudgeBody2", "Future transactions like «{{desc}}» will be categorized automatically.", { desc: cleanDesc.length > 40 ? cleanDesc.slice(0, 37) + "…" : cleanDesc })}
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs gap-1.5"
-                          onClick={() => {
-                            dismiss();
-                            setCategoryRulePrompt({
-                              tx,
-                              newSlug: ruleCategory,
-                              newCategoryId: ruleCategoryId,
-                              cleanDesc,
-                              targetMovement,
-                            });
-                          }}
-                        >
-                          <Sparkles className="h-3 w-3" />
-                          {t("imports.ruleNudgeCta")}
-                        </Button>
-                      </div>
-                    ),
-                  });
-                }
-              }
+        onSuccess: () => {
+          if (withRule && edits.category && edits.category !== tx.category && user) {
+            const cleanDesc = (tx.description || tx.description_norm || "")
+              .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+              .trim();
+            if (cleanDesc) {
+              const ruleCategory = edits.category;
+              const ruleCategoryId = edits.category_id ?? null;
+              setCategoryRulePrompt({ tx, newSlug: ruleCategory, newCategoryId: ruleCategoryId, cleanDesc, targetMovement: movementForRule });
             }
-          } catch {
-            // Rule nudge is best-effort — don't block the save flow
           }
-          clearPendingFor(tx.id);
         },
       },
     );
   };
-
-  // Commit ALL pending rows in this month at once (used by the
-  // "Save & switch" action in the unsaved-changes toast).
-  const commitAllPending = () => {
-    const ids = Object.keys(pendingByTx);
-    for (const id of ids) {
-      const tx = transactions.find((t) => t.id === id);
-      if (tx) commitRow(tx, false);
-    }
-  };
-
-  // (commitAllPending is no longer exposed externally — pending edits now
-  // persist across tab switches and are confirmed/discarded per row.)
 
   // Mismatch detection (sign vs movement)
   const mismatchedIds = useMemo(() => {
@@ -1015,6 +1002,37 @@ export function InlineTransactionsEditor({
   }, [filteredSorted, activeAccountId]);
   const allVisibleIds = rowsToRender.map((tx) => tx.id);
 
+  const { focusedCell, setFocusedCell } = useKeyboardShortcuts({
+    containerRef,
+    visibleTxIds: allVisibleIds,
+    onUndo: undoRedo.undo,
+    onRedo: undoRedo.redo,
+    onCopy: handleCopyRows,
+    onPaste: handlePasteRows,
+    onDelete: handleBulkDelete,
+    onEditCell: (cell) => {
+      if (cell.column === "description") {
+        const tx = rowsToRender.find((t) => t.id === cell.txId);
+        if (!tx) return;
+        setEditingDescId(tx.id);
+        setEditingDescValue((tx.description || tx.description_norm || "").replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "").trim());
+        setTimeout(() => descInputRef.current?.focus(), 50);
+      } else if (cell.column === "amount") {
+        const tx = rowsToRender.find((t) => t.id === cell.txId);
+        if (!tx) return;
+        setEditingAmountId(tx.id);
+        setEditingAmountValue(String(Math.abs(tx.amount)).replace(".", ","));
+        setTimeout(() => amountInputRef.current?.focus(), 50);
+      }
+    },
+    onCancelEdit: () => {
+      setEditingDescId(null);
+      setEditingAmountId(null);
+    },
+    isEditing: editingDescId !== null || editingAmountId !== null,
+    hasSelection: selectedIds.size > 0,
+  });
+
   const tabSummary = useMemo(() => {
     if (activeAccountId === null) return summary;
     const visible = rowsToRender.filter((t) => !t.is_hidden);
@@ -1068,7 +1086,7 @@ export function InlineTransactionsEditor({
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div ref={containerRef} tabIndex={0} className="flex flex-col flex-1 min-h-0 outline-none">
       {selectedIds.size > 0 && (() => {
         const hasVisible = Array.from(selectedIds).some(id => { const r = transactions.find(x => x.id === id); return r && !r.is_hidden; });
         const hasHidden = Array.from(selectedIds).some(id => transactions.find(x => x.id === id)?.is_hidden);
@@ -1151,8 +1169,6 @@ export function InlineTransactionsEditor({
           <div>
               {rowsToRender.map((tx) => {
                 const isMismatch = mismatchedIds.has(tx.id);
-                const isSaving = savingIds.has(tx.id);
-                const isSaved = savedIds.has(tx.id);
                 const isHidden = tx.is_hidden;
                 const isManual = isManualTransaction(tx);
                 const isSelected = selectedIds.has(tx.id);
@@ -1168,23 +1184,12 @@ export function InlineTransactionsEditor({
                 const cleanDescription = (tx.description || tx.description_norm || "")
                   .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
                   .trim();
-                const pending = pendingByTx[tx.id];
-                const isPending = !!pending;
-                const movement = (pending?.movement ?? tx.movement ?? "EXPENSE") as MovementType;
-                const category = normalizeCategory(
-                  pending?.category ?? tx.category ?? "other_expense",
-                );
-                const rawAmount = pending?.amount ?? tx.amount;
+                const movement = (tx.movement ?? "EXPENSE") as MovementType;
+                const category = normalizeCategory(tx.category ?? "other_expense");
+                const rawAmount = tx.amount;
                 const displayAmount = splitAmt(rawAmount, tx.account_id);
-                // Joint accounts (split_percentage !== 100): show the statement's full
-                // amount alongside the user's share, so the split is never opaque.
                 const hasSplit = !!(tx.account_id && splitMap[tx.account_id] != null);
                 const availableCategories = getCategoriesForMovement(movement, rawAmount);
-                const hasPendingCategoryChange =
-                  !!pending?.category && pending.category !== tx.category;
-                const hasPendingMovementTransfer =
-                  !!pending?.movement && pending.movement !== tx.movement &&
-                  (tx.movement === "TRANSFER" || pending.movement === "TRANSFER");
 
                 const amountColor =
                   displayAmount === 0
@@ -1210,6 +1215,7 @@ export function InlineTransactionsEditor({
                     sonnerToast("Description copied");
                   },
                   onSplit: () => handleSplit(tx, 2),
+                  onDuplicate: () => handleDuplicateRow(tx),
                   onRevert: () => {
                     if (originalSnapshot) {
                       const filtered = filterRevertableSnapshot(originalSnapshot);
@@ -1225,7 +1231,20 @@ export function InlineTransactionsEditor({
                       saveMutation.mutate({ id: tx.id, payload, before });
                     }
                   },
-                  onSaveWithRule: () => commitRow(tx, true),
+                  onSaveWithRule: () => {
+                    if (!user || !tx.user_corrected) return;
+                    const cleanDesc = (tx.description || tx.description_norm || "")
+                      .replace(/^value\s+date:\s*\d{1,2}\s+\w{3,4}\s+\d{4}\s*/i, "")
+                      .trim();
+                    if (!cleanDesc) return;
+                    setCategoryRulePrompt({
+                      tx,
+                      newSlug: tx.category ?? "other_expense",
+                      newCategoryId: tx.category_id ?? null,
+                      cleanDesc,
+                      targetMovement: movement,
+                    });
+                  },
                   onBulkHide: selectedIds.size > 1 && Array.from(selectedIds).some(id => { const r = transactions.find(x => x.id === id); return r && !r.is_hidden; }) ? handleBulkHide : undefined,
                   onBulkShow: selectedIds.size > 1 && Array.from(selectedIds).some(id => { const r = transactions.find(x => x.id === id); return r?.is_hidden; }) ? handleBulkShow : undefined,
                   onBulkAssignCategory: selectedIds.size > 1 ? handleBulkAssignCategory : undefined,
@@ -1241,8 +1260,8 @@ export function InlineTransactionsEditor({
                     isHidden={isHidden}
                     isManual={isManual}
                     isEdited={isEdited}
-                    isPending={isPending}
-                    hasCategoryChange={hasPendingCategoryChange || hasPendingMovementTransfer}
+                    isPending={false}
+                    hasCategoryChange={!!tx.user_corrected}
                     selectedCount={selectedIds.size}
                     {...rowContextActions}
                   >
@@ -1250,9 +1269,7 @@ export function InlineTransactionsEditor({
                       className={cn(
                         "grid items-center cursor-pointer transition-[background] duration-100",
                         isMismatch && "bg-amber-50/60 border-l-2 border-l-amber-400",
-                        isPending && "bg-warning/10 border-l-2 border-l-warning",
                         isHidden && "opacity-50 bg-muted/20",
-                        isSaved && !isMismatch && "bg-success/5",
                         isSelected && "bg-primary/[0.08]",
                       )}
                       style={{
@@ -1262,11 +1279,11 @@ export function InlineTransactionsEditor({
                         borderBottom: "1px solid hsl(var(--border) / 0.5)",
                       }}
                       onMouseEnter={(e) => {
-                        if (!isMismatch && !isPending && !isHidden && !isSaved && !isSelected)
+                        if (!isMismatch && !isHidden && !isSelected)
                           e.currentTarget.style.background = "hsl(var(--muted) / 0.4)";
                       }}
                       onMouseLeave={(e) => {
-                        if (!isMismatch && !isPending && !isHidden && !isSaved && !isSelected)
+                        if (!isMismatch && !isHidden && !isSelected)
                           e.currentTarget.style.background = "";
                       }}
                     >
@@ -1382,8 +1399,7 @@ export function InlineTransactionsEditor({
                             onChange={(e) => setEditingDescValue(e.target.value)}
                             onBlur={() => {
                               if (editingDescValue !== cleanDescription) {
-                                setPendingFor(tx.id, { description: editingDescValue });
-                                commitRow(tx, false, { ...pendingByTx[tx.id], description: editingDescValue });
+                                handleDescriptionSave(tx, editingDescValue);
                               }
                               setEditingDescId(null);
                             }}
@@ -1391,23 +1407,20 @@ export function InlineTransactionsEditor({
                               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                               if (e.key === "Escape") { setEditingDescId(null); }
                             }}
-                            className="h-6 text-[13.5px] px-1 py-0 border-primary/40"
+                            className="h-6 text-xs px-1 py-0 border-primary/40"
                             placeholder={t("imports.editDescription")}
                           />
                         ) : (
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span
                               className={cn(
-                                "truncate",
+                                "truncate text-xs font-normal text-foreground",
                                 isHidden && "line-through",
                               )}
                               title={cleanDescription}
-                              style={{ font: "500 13.5px Inter, sans-serif", color: "hsl(var(--foreground))" }}
                             >
                               {cleanDescription}
                             </span>
-                            {isSaving && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0" />}
-                            {isSaved && !isSaving && <Check className="w-3 h-3 text-success shrink-0" />}
                           </div>
                         )}
                       </span>
@@ -1415,7 +1428,7 @@ export function InlineTransactionsEditor({
                       {/* Category — native select pill */}
                       <span className="min-w-0">
                         <span
-                          className="inline-flex items-center gap-1 rounded-full pl-1.5 pr-0.5 py-0.5"
+                          className="inline-flex items-center gap-1 rounded-full pl-1.5 pr-0.5 py-0.5 min-w-[152px]"
                           style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}) / 0.13)` }}
                         >
                           <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}))` }} />
@@ -1440,35 +1453,13 @@ export function InlineTransactionsEditor({
                         {runningBalanceMap.has(tx.id) ? formatCurrency(runningBalanceMap.get(tx.id)!, undefined, true) : "—"}
                       </span>
 
-                      {/* Actions: kebab / pending save+discard */}
+                      {/* Actions: kebab menu */}
                       <span className="flex items-center justify-center">
-                        {isPending ? (
-                          <div className="flex items-center gap-0.5 justify-center">
-                            <button
-                              type="button"
-                              onClick={() => commitRow(tx, false)}
-                              disabled={isSaving}
-                              className="h-6 w-6 inline-flex items-center justify-center rounded-full bg-success/15 text-success hover:bg-success/25"
-                              title={t("imports.save")}
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => clearPendingFor(tx.id)}
-                              className="h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                              title={t("imports.cancel")}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"
-                                className="inline-flex items-center justify-center cursor-pointer"
-                                className="text-muted-foreground/50"
+                                className="inline-flex items-center justify-center cursor-pointer text-muted-foreground/50"
                               >
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" /></svg>
                               </button>
@@ -1550,7 +1541,6 @@ export function InlineTransactionsEditor({
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        )}
                       </span>
                     </div>
                   </TransactionContextMenu>
@@ -1582,8 +1572,6 @@ export function InlineTransactionsEditor({
               <div className="divide-y divide-border/40">
                 {group.rows.map((tx) => {
                   const isMismatch = mismatchedIds.has(tx.id);
-                  const isSaving = savingIds.has(tx.id);
-                  const isSaved = savedIds.has(tx.id);
                   const isHidden = tx.is_hidden;
                   const isManual = isManualTransaction(tx);
                   const txHistory = auditByTx[tx.id] || [];
@@ -1629,7 +1617,6 @@ export function InlineTransactionsEditor({
                           "relative flex items-center gap-2.5 px-3 py-2.5 bg-card select-none [-webkit-touch-callout:none]",
                           isMismatch && "bg-amber-50/60 dark:bg-amber-950/20 border-l-2 border-l-amber-400",
                           isHidden && "opacity-60 bg-muted/20",
-                          isSaved && !isMismatch && "bg-success/5",
                           actionMenu?.tx.id === tx.id && "z-20 bg-accent ring-2 ring-primary",
                           isSelected && "bg-primary/[0.08]",
                         )}
@@ -1712,11 +1699,6 @@ export function InlineTransactionsEditor({
 
                         <div className="flex shrink-0 flex-col items-end gap-0.5">
                           <div className="flex items-center gap-1">
-                            {isSaving ? (
-                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                            ) : isSaved ? (
-                              <Check className="h-3 w-3 text-success" />
-                            ) : null}
                             <span className={cn("text-[13px] tabular-nums", amountColor)}>
                               {formatCurrency(splitAmt(tx.amount, tx.account_id), undefined, true)}
                             </span>
@@ -1807,7 +1789,7 @@ export function InlineTransactionsEditor({
               getCategoryColor={getCategoryColor}
               formatCurrency={formatCurrency}
               onSave={(tx, edits, withRule, isRevert) => {
-                commitRow(tx, withRule, edits, isRevert);
+                handleDrawerSave(tx, edits, withRule, isRevert);
                 setEditingTx(null);
               }}
               onDelete={(tx) => deleteWithUndo(tx)}
@@ -1904,41 +1886,7 @@ export function InlineTransactionsEditor({
             <AlertDialogAction
               onClick={() => {
                 if (movementConfirm) {
-                  // User confirmed the mismatch — persist the pending edit
-                  // for this row, bypassing the validation in commitRow.
-                  const tx = movementConfirm.tx;
-                  const pending = pendingByTx[tx.id];
-                  if (pending) {
-                    const payload: Record<string, unknown> = {};
-                    const before: Record<string, unknown> = {};
-                    if (pending.movement && pending.movement !== tx.movement) {
-                      payload.movement = pending.movement;
-                      before.movement = tx.movement;
-                    }
-                    if (pending.category && pending.category !== tx.category) {
-                      payload.category = pending.category;
-                      payload.category_id = pending.category_id ?? null;
-                      payload.category_source = "MANUAL";
-                      payload.categorized_by = "user";
-                      payload.user_corrected = true;
-                      before.category = tx.category;
-                      before.category_id = tx.category_id;
-                    }
-                    if (pending.amount !== undefined && pending.amount !== tx.amount) {
-                      payload.amount = pending.amount;
-                      before.amount = tx.amount;
-                    }
-                    if (Object.keys(payload).length > 0) {
-                      saveMutation.mutate(
-                        { id: tx.id, payload, before },
-                        { onSuccess: () => clearPendingFor(tx.id) },
-                      );
-                    } else {
-                      clearPendingFor(tx.id);
-                    }
-                  } else {
-                    applyMovementChange(tx, movementConfirm.newMovement);
-                  }
+                  applyMovementChange(movementConfirm.tx, movementConfirm.newMovement);
                 }
                 setMovementConfirm(null);
               }}

@@ -79,19 +79,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
     [],
   );
 
-  // Pending (unsaved) edits live in the parent so they survive when the
-  // user switches to another month tab or navigates the rest of the app.
-  // Each row stays visually "yellow" until the user explicitly saves or
-  // discards it from the row actions — no modal, no toast.
-  type PendingEdit = {
-    movement?: MovementType;
-    category?: string;
-    category_id?: string | null;
-    amount?: number;
-  };
-  const [pendingByTx, setPendingByTx] = useState<Record<string, PendingEdit>>({});
-  const pendingTxIds = useMemo(() => new Set(Object.keys(pendingByTx)), [pendingByTx]);
-
   // Build month slots: latest first
   const monthSlots = useMemo(() => {
     const now = new Date();
@@ -302,9 +289,6 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
             ...(pendingFilesByMonth[activeSlot.key] || []),
             ...(pendingFilesByMonth["__auto__"] || []),
           ]}
-          pendingByTx={pendingByTx}
-          setPendingByTx={setPendingByTx}
-          pendingTxIds={pendingTxIds}
           manualEntryOpen={manualEntryOpen}
           onManualEntryOpenChange={setManualEntryOpen}
           defaultMovement={defaultMovement}
