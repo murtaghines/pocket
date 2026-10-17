@@ -454,7 +454,7 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '36px 34px 90px' }}>
+      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 80px' }}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[19px] font-semibold text-white leading-none tracking-[-0.01em]">
@@ -512,7 +512,7 @@ export function CategoriesEditor() {
       >
         <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
-          <div className="flex flex-col gap-4 h-full overflow-hidden">
+          <div className="flex flex-col gap-4 h-full">
             {/* New Category card */}
             <button
               type="button"
@@ -722,7 +722,7 @@ export function CategoriesEditor() {
                 </div>
 
                 {/* Scrollable content */}
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
                   {/* Rules section */}
                   <div style={{ padding: '16px 22px 14px' }}>
                     {/* Rules header */}
@@ -966,7 +966,7 @@ export function CategoriesEditor() {
                   <div className="mt-auto" style={{ padding: '4px 22px 16px' }}>
                     <div className="flex items-center gap-2 mb-2">
                       <Calendar size={14} style={{ color: '#5A6069' }} />
-                      <span className="text-[14px] font-bold" style={{ color: '#0C0D0E' }}>
+                      <span className="text-[12.5px] font-semibold" style={{ color: '#0C0D0E' }}>
                         {t('categories.recentTransactions')}
                       </span>
                     </div>
@@ -1012,16 +1012,20 @@ export function CategoriesEditor() {
                   </div>
                 </div>
 
-                {/* Footer — delete button for custom categories only */}
-                {selected.isCustom && (
-                  <div
-                    className="shrink-0 flex items-center justify-end"
-                    style={{
-                      padding: '12px 22px',
-                      background: '#FAFBFD',
-                      borderTop: '1px solid #F3F5F9',
-                    }}
-                  >
+                {/* Footer — disclaimer + delete for custom */}
+                <div
+                  className="shrink-0 flex items-center gap-2"
+                  style={{
+                    padding: '12px 22px',
+                    background: '#FAFBFD',
+                    borderTop: '1px solid #F3F5F9',
+                  }}
+                >
+                  <Info size={13} className="shrink-0" style={{ color: '#9AA1AC' }} />
+                  <span className="flex-1 text-[11.5px]" style={{ color: '#9AA1AC' }}>
+                    {t('categories.footerDisclaimer')}
+                  </span>
+                  {selected.isCustom && (
                     <button
                       type="button"
                       onClick={handleDeleteCustomCategory}
@@ -1034,8 +1038,8 @@ export function CategoriesEditor() {
                     >
                       {t('categories.deleteCustomCategory')}
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
