@@ -4,6 +4,9 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
@@ -15,7 +18,12 @@ import {
   SplitIcon,
   RotateCcw,
   Sparkles,
+  Tag,
 } from "lucide-react";
+import { CategoryIcon } from "@/components/ui/category-icon";
+import type { Database } from "@/integrations/supabase/types";
+
+type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 interface TransactionContextMenuProps {
   children: React.ReactNode;
@@ -35,7 +43,14 @@ interface TransactionContextMenuProps {
   onSaveWithRule: () => void;
   onBulkHide?: () => void;
   onBulkShow?: () => void;
+  onBulkAssignCategory?: (cat: Category) => void;
+  bulkCategories?: Category[];
+  getCategoryIcon?: (slug: string) => string;
+  getCategoryColor?: (slug: string) => string;
+  getCategoryLabel?: (slug: string) => string;
 }
+
+const MOVEMENT_ORDER: Category["movement_type"][] = ["INCOME", "EXPENSE", "TRANSFER"];
 
 export function TransactionContextMenu({
   children,
@@ -55,6 +70,11 @@ export function TransactionContextMenu({
   onSaveWithRule,
   onBulkHide,
   onBulkShow,
+  onBulkAssignCategory,
+  bulkCategories,
+  getCategoryIcon,
+  getCategoryColor,
+  getCategoryLabel,
 }: TransactionContextMenuProps) {
   const { t } = useTranslation("common");
 
@@ -75,6 +95,42 @@ export function TransactionContextMenu({
                 <Eye className="w-4 h-4" />
                 {t("imports.showSelected")} ({selectedCount})
               </ContextMenuItem>
+            )}
+            {onBulkAssignCategory && bulkCategories && bulkCategories.length > 0 && (
+              <>
+                {(onBulkHide || onBulkShow) && <ContextMenuSeparator />}
+                <ContextMenuSub>
+                  <ContextMenuSubTrigger className="gap-2">
+                    <Tag className="w-4 h-4" />
+                    {t("imports.assignCategory")}
+                  </ContextMenuSubTrigger>
+                  <ContextMenuSubContent className="w-52 max-h-72 overflow-y-auto">
+                    {MOVEMENT_ORDER.map((mv) => {
+                      const group = bulkCategories.filter((c) => c.movement_type === mv);
+                      if (group.length === 0) return null;
+                      return group.map((cat, i) => (
+                        <ContextMenuItem
+                          key={cat.id}
+                          onClick={() => onBulkAssignCategory(cat)}
+                          className="gap-2"
+                        >
+                          {getCategoryIcon && getCategoryColor && (
+                            <CategoryIcon
+                              iconName={getCategoryIcon(cat.slug || "")}
+                              colorVar={getCategoryColor(cat.slug || "")}
+                              size="sm"
+                              showBackground
+                            />
+                          )}
+                          <span className="truncate text-[13px]">
+                            {getCategoryLabel?.(cat.slug || "") ?? cat.slug}
+                          </span>
+                        </ContextMenuItem>
+                      ));
+                    })}
+                  </ContextMenuSubContent>
+                </ContextMenuSub>
+              </>
             )}
           </>
         ) : (
