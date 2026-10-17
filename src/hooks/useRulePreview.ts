@@ -117,7 +117,7 @@ export function useRulePreview({ matchType, pattern, tokens, movement, accountId
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [] as MatchedTransaction[];
-      return findMatchingTransactions({ userId: user.id, matchType, pattern, tokens, movement, accountIds: scopeIds });
+      return findMatchingTransactions({ userId: user.id, matchType, pattern, tokens, movement, accountIds: scopeIds, skipMovementFilter: true });
     },
   });
 
