@@ -16,8 +16,8 @@ interface BulkActionsToolbarProps {
   getCategoryColor: (slug: string) => string;
   getCategoryLabel: (slug: string) => string;
   onClear: () => void;
-  onHide: () => void;
-  onShow: () => void;
+  onHide?: () => void;
+  onShow?: () => void;
   onAssignCategory: (category: Category) => void;
 }
 
@@ -38,31 +38,35 @@ export function BulkActionsToolbar({
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4 pointer-events-none">
+    <div className="fixed bottom-4 left-0 right-0 md:left-[218px] z-30 flex justify-center px-4 pointer-events-none">
       <div className="pointer-events-auto flex max-w-[calc(100vw-2rem)] items-center gap-1 overflow-x-auto rounded-full border border-border bg-card px-2 py-1.5 shadow-lg">
         <span className="shrink-0 whitespace-nowrap px-2 text-[13px] font-semibold tabular-nums text-foreground">
           {count === 1 ? t("imports.selectedCountOne") : t("imports.selectedCount", { count })}
         </span>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 shrink-0 gap-1.5 rounded-full text-[13px]"
-          onClick={onHide}
-        >
-          <EyeOff className="h-3.5 w-3.5" />
-          {t("imports.hideSelected")}
-        </Button>
+        {onHide && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 shrink-0 gap-1.5 rounded-full text-[13px]"
+            onClick={onHide}
+          >
+            <EyeOff className="h-3.5 w-3.5" />
+            {t("imports.hideSelected")}
+          </Button>
+        )}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 shrink-0 gap-1.5 rounded-full text-[13px]"
-          onClick={onShow}
-        >
-          <Eye className="h-3.5 w-3.5" />
-          {t("imports.showSelected")}
-        </Button>
+        {onShow && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 shrink-0 gap-1.5 rounded-full text-[13px]"
+            onClick={onShow}
+          >
+            <Eye className="h-3.5 w-3.5" />
+            {t("imports.showSelected")}
+          </Button>
+        )}
 
         <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
           <PopoverTrigger asChild>
