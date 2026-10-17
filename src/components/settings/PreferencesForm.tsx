@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useLanguage } from '@/hooks/useLanguage';
 import { SUPPORTED_CURRENCIES } from '@/lib/currencies';
@@ -84,18 +83,15 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
             <Languages className="h-4 w-4" />
             {t('regional.language')}
           </Label>
-          <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
+          <div className="pk-select-wrap">
+            <select value={language} onChange={(e) => setLanguage(e.target.value)}>
               {supportedLanguages.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
+                <option key={lang.code} value={lang.code}>
                   {lang.nativeName} ({lang.name})
-                </SelectItem>
+                </option>
               ))}
-            </SelectContent>
-          </Select>
+            </select>
+          </div>
         </div>
 
         {/* Base Currency */}
@@ -104,18 +100,15 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
             <DollarSign className="h-4 w-4" />
             {t('regional.baseCurrency')}
           </Label>
-          <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
+          <div className="pk-select-wrap">
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
               {SUPPORTED_CURRENCIES.map((curr) => (
-                <SelectItem key={curr.code} value={curr.code}>
+                <option key={curr.code} value={curr.code}>
                   {curr.symbol} {curr.code} - {curr.name}
-                </SelectItem>
+                </option>
               ))}
-            </SelectContent>
-          </Select>
+            </select>
+          </div>
         </div>
 
         {/* Date Format */}
@@ -124,19 +117,16 @@ export function PreferencesForm({ className }: PreferencesFormProps) {
             <Calendar className="h-4 w-4" />
             {t('regional.dateFormat', { defaultValue: 'Date format' })}
           </Label>
-          <Select value={dateFormat} onValueChange={setDateFormat}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="AUTO">
+          <div className="pk-select-wrap">
+            <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}>
+              <option value="AUTO">
                 {t('regional.dateFormatAuto', { defaultValue: 'Auto (based on country)' })}
-              </SelectItem>
-              <SelectItem value="DMY">DD/MM/YYYY · 28/02/2026</SelectItem>
-              <SelectItem value="MDY">MM/DD/YYYY · 02/28/2026</SelectItem>
-              <SelectItem value="YMD">YYYY-MM-DD · 2026-02-28</SelectItem>
-            </SelectContent>
-          </Select>
+              </option>
+              <option value="DMY">DD/MM/YYYY · 28/02/2026</option>
+              <option value="MDY">MM/DD/YYYY · 02/28/2026</option>
+              <option value="YMD">YYYY-MM-DD · 2026-02-28</option>
+            </select>
+          </div>
         </div>
 
         {/* Preview */}

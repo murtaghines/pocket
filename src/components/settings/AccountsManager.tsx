@@ -10,14 +10,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Trash2, Building2, Loader2, Pencil, Star } from "lucide-react";
+import { Plus, Trash2, Loader2, Pencil, Star } from "lucide-react";
 import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "./AccountFormDialog";
 
@@ -259,21 +252,21 @@ export function AccountsManager({ className }: { className?: string }) {
           {!checkingLinks && hasLinkedData && (
             <div className="space-y-3 py-2">
               {otherAccounts.length > 0 ? (
-                <Select value={reassignToId} onValueChange={setReassignToId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('accounts.reassignPlaceholder', 'Move data to...')} />
-                  </SelectTrigger>
-                  <SelectContent>
+                <div className="pk-select-wrap">
+                  <select
+                    value={reassignToId}
+                    onChange={(e) => setReassignToId(e.target.value)}
+                  >
+                    <option value="" disabled>
+                      {t('accounts.reassignPlaceholder', 'Move data to...')}
+                    </option>
                     {otherAccounts.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span>{getAccountDisplayName(a)}</span>
-                        </div>
-                      </SelectItem>
+                      <option key={a.id} value={a.id}>
+                        {getAccountDisplayName(a)}
+                      </option>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </select>
+                </div>
               ) : (
                 <p className="text-sm text-destructive">
                   {t('accounts.noOtherAccounts', 'You need at least one other account to reassign data to. Create a new account first.')}
