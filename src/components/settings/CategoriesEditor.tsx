@@ -454,7 +454,7 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 80px' }}>
+      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 62px' }}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[19px] font-semibold text-white leading-none tracking-[-0.01em]">
@@ -1066,6 +1066,7 @@ export function CategoriesEditor() {
           onOpenChange={(o) => { if (!o) { setShowCreateRuleModal(false); setNewPattern(''); } }}
           mode="create"
           category={{ slug: selected.slug, label: selected.name, color: hslToHex(selectedHsl), icon: selectedIcon }}
+          movementType={selected.movement}
           accounts={activeAccounts.map(a => ({ id: a.id, label: getAccountDisplayName(a) }))}
           initialPattern={newPattern}
           initialMatchType={toModalMatchType(newMatchType)}
@@ -1081,6 +1082,7 @@ export function CategoriesEditor() {
           onOpenChange={(o) => { if (!o) setEditRuleState(null); }}
           mode="edit"
           category={{ slug: selected.slug, label: selected.name, color: hslToHex(selectedHsl), icon: selectedIcon }}
+          movementType={selected.movement}
           accounts={activeAccounts.map(a => ({ id: a.id, label: getAccountDisplayName(a) }))}
           ruleId={editRuleState.ruleId}
           initialPattern={editRuleState.pattern}

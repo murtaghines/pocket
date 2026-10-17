@@ -22,6 +22,7 @@ interface RuleModalProps {
   onOpenChange: (open: boolean) => void;
   mode: 'create' | 'edit';
   category: { slug: string; label: string; color: string; icon: string };
+  movementType?: string;
   accounts: Array<{ id: string; label: string }>;
   defaultAccountId?: string | null;
   initialPattern?: string;
@@ -53,6 +54,7 @@ export function RuleModal({
   onOpenChange,
   mode,
   category,
+  movementType,
   accounts,
   defaultAccountId,
   initialPattern = '',
@@ -126,6 +128,7 @@ export function RuleModal({
                 }}
               >
                 {isCreate ? t('categories.newRule') : t('categories.editRuleTitle')}
+                {movementType && <> · {movementType}</>}
               </p>
               <p
                 className="m-0 mt-0.5 truncate"

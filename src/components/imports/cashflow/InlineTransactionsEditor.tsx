@@ -1295,7 +1295,8 @@ export function InlineTransactionsEditor({
                             value={movement}
                             onChange={(e) => handleMovementChange(tx, e.target.value as MovementType)}
                             disabled={isHidden}
-                            className="h-auto w-full border-0 bg-transparent text-xs font-medium cursor-pointer"
+                            className="h-auto w-full border-0 bg-transparent text-xs font-semibold cursor-pointer"
+                            style={{ color: movement === 'INCOME' ? 'hsl(var(--success))' : movement === 'EXPENSE' ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))' }}
                           >
                             <option value="INCOME">{getMovementLabel("INCOME")}</option>
                             <option value="EXPENSE">{getMovementLabel("EXPENSE")}</option>
@@ -1399,13 +1400,15 @@ export function InlineTransactionsEditor({
                       </span>
 
                       {/* Category — native select */}
-                      <span className="min-w-0">
-                        <div className="pk-select-wrap pk-select-wrap--sm">
+                      <span className="min-w-0 flex items-center gap-1">
+                        <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}))` }} />
+                        <div className="pk-select-wrap pk-select-wrap--sm flex-1 min-w-0">
                           <select
                             value={category}
                             onChange={(e) => handleCategoryChange(tx, e.target.value)}
                             disabled={isHidden}
                             className="h-auto w-full border-0 bg-transparent text-xs font-medium cursor-pointer truncate"
+                            style={{ color: `hsl(var(--${getCategoryColor(category)}))` }}
                           >
                             {availableCategories.map((slug) => (
                               <option key={slug} value={slug}>{getCategoryLabel(slug)}</option>
