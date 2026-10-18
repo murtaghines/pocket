@@ -3,13 +3,14 @@ import { Plus, Trash2, Info, Sparkles, Calendar, Code2, Pencil } from 'lucide-re
 import { useTranslation } from 'react-i18next';
 
 import { useCategories } from '@/hooks/useCategories';
+import { useAuth } from '@/hooks/useAuth';
 import { useCategorizationRules, type Rule, buildDbRuleFields } from '@/hooks/useCategorizationRules';
 import { useCustomCategories, type CustomCategoryRule } from '@/hooks/useCustomCategories';
 import { useCategoryTranslations } from '@/hooks/useCategoryTranslations';
 import { useSuggestions, type Suggestion } from '@/hooks/useSuggestions';
 import { useCategoryTransactions } from '@/hooks/useCategoryTransactions';
 import { useLocalization } from '@/hooks/useLocalization';
-import { useRulePreview } from '@/hooks/useRulePreview';
+import { useRulePreview, findMatchingTransactions } from '@/hooks/useRulePreview';
 import { useToast } from '@/hooks/use-toast';
 import { useAccounts } from '@/hooks/useAccounts';
 import { CreateCategoryDialog } from './CreateCategoryDialog';
@@ -107,6 +108,7 @@ function hslToHex(hslStr: string): string {
 export function CategoriesEditor() {
   const { t } = useTranslation('settings');
   const { toast } = useToast();
+  const { user } = useAuth();
   const { formatCurrency, formatDateShort } = useLocalization();
   const { getCategoryLabel, getCategoryIcon, getCategoryColor, getCategoryHsl } = useCategoryTranslations();
   const { incomeCategories, expenseCategories, transferCategories, isLoading: catsLoading } = useCategories('CASHFLOW');
@@ -316,28 +318,56 @@ export function CategoriesEditor() {
     });
   }, [selected]);
 
-  const handleEditRuleConfirm = useCallback((payload: {
+  const handleEditRuleConfirm = useCallback(async (payload: {
     pattern: string;
     matchType: ModalMatchType;
     accountId: string | null;
     applyToExisting: boolean;
   }) => {
-    if (!editRuleState) return;
+    if (!editRuleState || !selected || !user?.id) return;
+    const dbMatchType = fromModalMatchType(payload.matchType);
+    const { dbType, pattern: builtPattern, tokens } = buildDbRuleFields(
+      payload.pattern, dbMatchType, selected.movement, selected.slug,
+    );
+
+    let matchedIds: string[] | undefined;
+    if (payload.applyToExisting) {
+      const matched = await findMatchingTransactions({
+        userId: user.id,
+        matchType: dbType as MatchType,
+        pattern: builtPattern,
+        tokens,
+        movement: selected.movement,
+        accountIds: payload.accountId ? [payload.accountId] : null,
+      });
+      matchedIds = matched.map(m => m.id);
+    }
+
     updateRule.mutate(
       {
         ruleId: editRuleState.ruleId,
-        pattern: payload.pattern.toLowerCase(),
-        match_type: fromModalMatchType(payload.matchType),
+        pattern: builtPattern,
+        match_type: dbType,
+        tokens,
+        prebuilt: true,
         account_id: payload.accountId,
+        matchingTransactionIds: matchedIds,
+        category_id: selected.id,
+        category: selected.slug,
+        movement: selected.movement,
       },
       {
         onSuccess: () => {
           setEditRuleState(null);
-          toast({ title: t('categories.ruleSaved') });
+          if (matchedIds && matchedIds.length > 0) {
+            toast({ title: t('categories.pastTransactionsUpdated', { count: matchedIds.length }) });
+          } else {
+            toast({ title: t('categories.ruleSaved') });
+          }
         },
       },
     );
-  }, [editRuleState, updateRule, toast, t]);
+  }, [editRuleState, selected, user?.id, updateRule, toast, t]);
 
   const handleEditRuleDelete = useCallback(() => {
     if (!editRuleState) return;

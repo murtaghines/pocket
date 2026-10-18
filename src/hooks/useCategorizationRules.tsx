@@ -162,6 +162,8 @@ export function useCategorizationRules() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
       queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     },
   });
@@ -222,6 +224,8 @@ export function useCategorizationRules() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
       queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     },
   });

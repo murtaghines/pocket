@@ -1125,7 +1125,7 @@ export function InlineTransactionsEditor({
           <div
             className="sticky top-0 z-10 grid items-center bg-card border-b border-border"
             style={{
-              gridTemplateColumns: "34px 94px 54px 66px 128px 102px minmax(0,1fr) 168px 108px 36px",
+              gridTemplateColumns: "34px 94px 54px 66px 96px 102px minmax(0,1fr) 180px 108px 36px",
               gap: 14,
               padding: "11px 34px",
             }}
@@ -1428,11 +1428,17 @@ export function InlineTransactionsEditor({
                       {/* Category — native select pill */}
                       <span className="min-w-0">
                         <span
-                          className="inline-flex items-center gap-1 rounded-full pl-1.5 pr-0.5 py-0.5 min-w-[152px]"
+                          className="flex items-center gap-1.5 rounded-full pl-1 pr-0.5 py-0.5 w-full"
                           style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}) / 0.13)` }}
                         >
-                          <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}))` }} />
-                          <div className="pk-select-wrap pk-select-wrap--sm min-w-0">
+                          <CategoryIcon
+                            iconName={getCategoryIcon(category)}
+                            colorVar={getCategoryColor(category)}
+                            size="sm"
+                            showBackground={false}
+                            className="shrink-0"
+                          />
+                          <div className="pk-select-wrap pk-select-wrap--sm flex-1 min-w-0">
                             <select
                               value={category}
                               onChange={(e) => handleCategoryChange(tx, e.target.value)}

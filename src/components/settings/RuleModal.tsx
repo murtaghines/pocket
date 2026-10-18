@@ -13,6 +13,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { getLucideIcon } from '@/lib/lucideIcon';
+import { cn } from '@/lib/utils';
 import { buildMatchExamples, type MatchType } from '@/lib/matchExamples';
 import { MatchTypeDropdown } from './MatchTypeDropdown';
 import { Circle } from 'lucide-react';
@@ -79,6 +80,12 @@ export function RuleModal({
       setShowDeleteConfirm(false);
     }
   }, [open, initialPattern, initialMatchType, defaultAccountId, mode]);
+
+  const hasChanges = mode === 'edit' && (
+    pattern !== initialPattern ||
+    matchType !== initialMatchType ||
+    accountId !== (defaultAccountId ?? null)
+  );
 
   const examples = useMemo(
     () => buildMatchExamples(pattern, matchType),
@@ -226,17 +233,18 @@ export function RuleModal({
             )}
 
             {/* Apply to existing toggle */}
-            <label className="flex items-center gap-2.5 cursor-pointer py-0.5">
+            <label className={cn("flex items-center gap-2.5 py-0.5", mode === 'edit' && !hasChanges ? "opacity-40 cursor-not-allowed" : "cursor-pointer")}>
               <button
                 type="button"
                 role="switch"
                 aria-checked={applyAll}
+                disabled={mode === 'edit' && !hasChanges}
                 onClick={() => setApplyAll(!applyAll)}
-                className="shrink-0 relative rounded-full transition-colors"
+                className="shrink-0 relative rounded-full transition-colors disabled:cursor-not-allowed"
                 style={{
                   width: 34,
                   height: 20,
-                  background: applyAll ? '#1B76FF' : '#D1D6DF',
+                  background: applyAll && !(mode === 'edit' && !hasChanges) ? '#1B76FF' : '#D1D6DF',
                 }}
               >
                 <span
@@ -245,7 +253,7 @@ export function RuleModal({
                     width: 16,
                     height: 16,
                     boxShadow: '0 1px 3px rgba(0,0,0,.18)',
-                    transform: applyAll ? 'translateX(14px)' : 'translateX(0)',
+                    transform: applyAll && !(mode === 'edit' && !hasChanges) ? 'translateX(14px)' : 'translateX(0)',
                   }}
                 />
               </button>
