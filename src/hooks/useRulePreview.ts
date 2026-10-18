@@ -53,7 +53,7 @@ export async function findMatchingTransactions({
   skipMovementFilter,
 }: FindMatchingArgs): Promise<MatchedTransaction[]> {
   if (!pattern.trim()) return [];
-  type RawRow = { id: string; description: string | null; description_norm: string | null; movement: string | null; categorized_by: string | null; date: string | null; account_id: string | null };
+  type RawRow = { id: string; description: string | null; description_norm: string | null; movement: string | null; date: string | null; account_id: string | null };
   const PAGE_SIZE = 1000;
   let allRows: RawRow[] = [];
   let offset = 0;
@@ -61,7 +61,7 @@ export async function findMatchingTransactions({
   while (true) {
     let query = supabase
       .from("transactions")
-      .select("id, description, description_norm, movement, categorized_by, date, account_id")
+      .select("id, description, description_norm, movement, date, account_id")
       .eq("user_id", userId)
       .range(offset, offset + PAGE_SIZE - 1);
     if (accountIds && accountIds.length > 0) {
@@ -94,7 +94,6 @@ export async function findMatchingTransactions({
         (movement === 'EXPENSE' && row.movement === 'INCOME');
       if (isSignConflict) continue;
     }
-    if (row.categorized_by === "user") continue;
     const desc = (row.description_norm || row.description || "") as string;
     if (ruleMatchesDescription(matchType, pattern, tokens, desc)) {
       results.push({ id: row.id, date: row.date as string });
