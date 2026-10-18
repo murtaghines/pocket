@@ -67,7 +67,7 @@ export async function findMatchingTransactions({
         (movement === 'EXPENSE' && row.movement === 'INCOME');
       if (isSignConflict) continue;
     }
-    if (row.categorized_by === "user" || row.categorized_by === "user_rule") continue;
+    if (row.categorized_by === "user") continue;
     const desc = (row.description_norm || row.description || "") as string;
     if (ruleMatchesDescription(matchType, pattern, tokens, desc)) {
       results.push({ id: row.id, date: row.date as string });
