@@ -1325,7 +1325,7 @@ export function InlineTransactionsEditor({
                             value={movement}
                             onChange={(e) => handleMovementChange(tx, e.target.value as MovementType)}
                             disabled={isHidden}
-                            className="h-auto w-full border-0 bg-transparent text-xs font-semibold cursor-pointer"
+                            className="h-auto w-full border-0 bg-transparent text-xs font-semibold cursor-pointer leading-none py-0"
                             style={{ color: movement === 'INCOME' ? 'hsl(var(--success))' : movement === 'EXPENSE' ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))' }}
                           >
                             <option value="INCOME">{getMovementLabel("INCOME")}</option>
@@ -1428,7 +1428,7 @@ export function InlineTransactionsEditor({
                       {/* Category — native select pill */}
                       <span className="min-w-0">
                         <span
-                          className="flex items-center gap-1.5 rounded-full pl-1 pr-0.5 py-0.5 w-full"
+                          className="flex items-center gap-1.5 rounded-full pl-[7px] pr-0.5 py-[5px] w-full"
                           style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}) / 0.13)` }}
                         >
                           <CategoryIcon
@@ -1443,7 +1443,7 @@ export function InlineTransactionsEditor({
                               value={category}
                               onChange={(e) => handleCategoryChange(tx, e.target.value)}
                               disabled={isHidden}
-                              className="h-auto w-full border-0 bg-transparent text-[11px] font-semibold cursor-pointer truncate"
+                              className="h-auto w-full border-0 bg-transparent text-[11px] font-semibold cursor-pointer truncate leading-none py-0"
                               style={{ color: `hsl(var(--${getCategoryColor(category)}))` }}
                             >
                               {availableCategories.map((slug) => (

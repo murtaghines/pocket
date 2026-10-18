@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ruleMatchesDescription, type MatchType } from "@/lib/userRules";
+import { ruleMatchesDescription, normalize, type MatchType } from "@/lib/userRules";
+
+function escapeIlike(s: string): string {
+  return s.replace(/[%_\\]/g, '\\$&');
+}
 
 export interface MatchedTransaction {
   id: string;
@@ -49,25 +53,47 @@ export async function findMatchingTransactions({
   skipMovementFilter,
 }: FindMatchingArgs): Promise<MatchedTransaction[]> {
   if (!pattern.trim()) return [];
-  let query = supabase
-    .from("transactions")
-    .select("id, description, description_norm, movement, categorized_by, date, account_id")
-    .eq("user_id", userId)
-    .limit(5000);
-  if (accountIds && accountIds.length > 0) {
-    query = query.in("account_id", accountIds);
+  type RawRow = { id: string; description: string | null; description_norm: string | null; movement: string | null; date: string | null; account_id: string | null };
+  const PAGE_SIZE = 1000;
+  let allRows: RawRow[] = [];
+  let offset = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let query = supabase
+      .from("transactions")
+      .select("id, description, description_norm, movement, date, account_id")
+      .eq("user_id", userId)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (accountIds && accountIds.length > 0) {
+      query = query.in("account_id", accountIds);
+    }
+    // Server-side pre-filter: push the heaviest filtering to the DB so we
+    // transfer only candidate rows instead of the entire transaction history.
+    // The client-side ruleMatchesDescription below is still the authoritative
+    // match — this just narrows the dataset for scalability.
+    if (matchType !== 'regex') {
+      const source = matchType === 'fuzzy' ? tokens : normalize(pattern).split(/\s+/);
+      const words = source.filter(w => w.length >= 3);
+      if (words.length > 0) {
+        const longest = words.reduce((a, b) => a.length >= b.length ? a : b);
+        query = query.ilike('description_norm', `%${escapeIlike(longest)}%`);
+      }
+    }
+    const { data, error } = await query;
+    if (error) break;
+    const page = (data || []) as RawRow[];
+    allRows = allRows.concat(page);
+    if (page.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
   }
-  const { data, error } = await query;
-  if (error) return [];
   const results: MatchedTransaction[] = [];
-  for (const row of data || []) {
+  for (const row of allRows) {
     if (!skipMovementFilter && row.movement && row.movement !== movement) {
       const isSignConflict =
         (movement === 'INCOME' && row.movement === 'EXPENSE') ||
         (movement === 'EXPENSE' && row.movement === 'INCOME');
       if (isSignConflict) continue;
     }
-    if (row.categorized_by === "user") continue;
     const desc = (row.description_norm || row.description || "") as string;
     if (ruleMatchesDescription(matchType, pattern, tokens, desc)) {
       results.push({ id: row.id, date: row.date as string });

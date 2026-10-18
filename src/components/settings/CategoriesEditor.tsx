@@ -272,19 +272,38 @@ export function CategoriesEditor() {
     setShowCreateRuleModal(true);
   }, [selected, newPattern]);
 
-  const handleCreateRuleConfirm = useCallback((payload: {
+  const handleCreateRuleConfirm = useCallback(async (payload: {
     pattern: string;
     matchType: ModalMatchType;
     accountId: string | null;
     applyToExisting: boolean;
   }) => {
-    if (!selected) return;
-    const matchedIds = payload.applyToExisting ? previewMatched.map(t => t.id) : undefined;
+    if (!selected || !user?.id) return;
+    const dbMatchType = fromModalMatchType(payload.matchType);
+    const { dbType, pattern: builtPattern, tokens } = buildDbRuleFields(
+      payload.pattern, dbMatchType, selected.movement, selected.slug,
+    );
+
+    let matchedIds: string[] | undefined;
+    if (payload.applyToExisting) {
+      const matched = await findMatchingTransactions({
+        userId: user.id,
+        matchType: dbType as MatchType,
+        pattern: builtPattern,
+        tokens,
+        movement: selected.movement,
+        accountIds: payload.accountId ? [payload.accountId] : null,
+      });
+      matchedIds = matched.map(m => m.id);
+    }
+
     addRule.mutate(
       {
         category_id: selected.id,
-        pattern: payload.pattern.toLowerCase(),
-        match_type: fromModalMatchType(payload.matchType),
+        pattern: builtPattern,
+        match_type: dbType,
+        tokens,
+        prebuilt: true,
         matchingTransactionIds: matchedIds,
         account_id: payload.accountId,
       },
@@ -300,7 +319,7 @@ export function CategoriesEditor() {
         },
       },
     );
-  }, [selected, previewMatched, addRule, toast, t]);
+  }, [selected, user?.id, addRule, toast, t]);
 
   const handleDeleteRule = useCallback((ruleId: string) => {
     deleteRule.mutate(ruleId, {
