@@ -177,13 +177,28 @@ function ExportDataSection() {
     if (!user) return;
     setIsExporting(true);
     try {
-      const [profileRes, prefsRes, accountsRes, importsRes, transactionsRes] = await Promise.all([
+      const [profileRes, prefsRes, accountsRes, importsRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("accounts").select("*").eq("user_id", user.id),
         supabase.from("imports").select("id, file_name, domain, status, uploaded_at, transactions_count").eq("user_id", user.id),
-        supabase.from("transactions").select("*").eq("user_id", user.id).limit(10000),
       ]);
+
+      // Paginate transactions — Supabase caps responses at 1000 rows
+      const PAGE_SIZE = 1000;
+      let allTransactions: Record<string, unknown>[] = [];
+      let offset = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("transactions")
+          .select("*")
+          .eq("user_id", user.id)
+          .range(offset, offset + PAGE_SIZE - 1);
+        if (error) break;
+        allTransactions = allTransactions.concat(data || []);
+        if (!data || data.length < PAGE_SIZE) break;
+        offset += PAGE_SIZE;
+      }
 
       const payload = {
         exported_at: new Date().toISOString(),
@@ -191,7 +206,7 @@ function ExportDataSection() {
         preferences: prefsRes.data,
         accounts: accountsRes.data || [],
         imports: importsRes.data || [],
-        transactions: transactionsRes.data || [],
+        transactions: allTransactions,
       };
 
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });

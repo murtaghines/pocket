@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ruleMatchesDescription, type MatchType } from "@/lib/userRules";
+import { ruleMatchesDescription, normalize, type MatchType } from "@/lib/userRules";
+
+function escapeIlike(s: string): string {
+  return s.replace(/[%_\\]/g, '\\$&');
+}
 
 export interface MatchedTransaction {
   id: string;
@@ -62,6 +66,18 @@ export async function findMatchingTransactions({
       .range(offset, offset + PAGE_SIZE - 1);
     if (accountIds && accountIds.length > 0) {
       query = query.in("account_id", accountIds);
+    }
+    // Server-side pre-filter: push the heaviest filtering to the DB so we
+    // transfer only candidate rows instead of the entire transaction history.
+    // The client-side ruleMatchesDescription below is still the authoritative
+    // match — this just narrows the dataset for scalability.
+    if (matchType !== 'regex') {
+      const source = matchType === 'fuzzy' ? tokens : normalize(pattern).split(/\s+/);
+      const words = source.filter(w => w.length >= 3);
+      if (words.length > 0) {
+        const longest = words.reduce((a, b) => a.length >= b.length ? a : b);
+        query = query.ilike('description_norm', `%${escapeIlike(longest)}%`);
+      }
     }
     const { data, error } = await query;
     if (error) break;
