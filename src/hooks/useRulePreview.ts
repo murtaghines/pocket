@@ -49,18 +49,29 @@ export async function findMatchingTransactions({
   skipMovementFilter,
 }: FindMatchingArgs): Promise<MatchedTransaction[]> {
   if (!pattern.trim()) return [];
-  let query = supabase
-    .from("transactions")
-    .select("id, description, description_norm, movement, categorized_by, date, account_id")
-    .eq("user_id", userId)
-    .limit(5000);
-  if (accountIds && accountIds.length > 0) {
-    query = query.in("account_id", accountIds);
+  type RawRow = { id: string; description: string | null; description_norm: string | null; movement: string | null; categorized_by: string | null; date: string | null; account_id: string | null };
+  const PAGE_SIZE = 1000;
+  let allRows: RawRow[] = [];
+  let offset = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let query = supabase
+      .from("transactions")
+      .select("id, description, description_norm, movement, categorized_by, date, account_id")
+      .eq("user_id", userId)
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (accountIds && accountIds.length > 0) {
+      query = query.in("account_id", accountIds);
+    }
+    const { data, error } = await query;
+    if (error) break;
+    const page = (data || []) as RawRow[];
+    allRows = allRows.concat(page);
+    if (page.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
   }
-  const { data, error } = await query;
-  if (error) return [];
   const results: MatchedTransaction[] = [];
-  for (const row of data || []) {
+  for (const row of allRows) {
     if (!skipMovementFilter && row.movement && row.movement !== movement) {
       const isSignConflict =
         (movement === 'INCOME' && row.movement === 'EXPENSE') ||
