@@ -970,9 +970,26 @@ export function InlineTransactionsEditor({
           })();
       groups.push({ accountId: acctId, accountName: name, accountColor: color, openingBalance: opening, closingBalance: closing, transactions: txs });
     }
+    const accountTypePriority: Record<string, number> = {
+      CHECKING: 0, CASH: 1, CREDIT_CARD: 1, JOINT: 2, SAVINGS: 3,
+      INVESTMENTS: 4, BROKERAGE: 4, CRYPTO: 4, RETIREMENT: 4,
+      REAL_ESTATE: 4, OTHER_INVESTMENT: 4, LOAN: 5, OTHER: 6,
+    };
     groups.sort((a, b) => {
       if (a.accountId === null) return 1;
       if (b.accountId === null) return -1;
+      const acctA = accounts.find(ac => ac.id === a.accountId);
+      const acctB = accounts.find(ac => ac.id === b.accountId);
+      const typeA = acctA?.account_type ?? 'OTHER';
+      const typeB = acctB?.account_type ?? 'OTHER';
+      const prioA = accountTypePriority[typeA] ?? 6;
+      const prioB = accountTypePriority[typeB] ?? 6;
+      if (prioA !== prioB) return prioA - prioB;
+      if (typeA === 'SAVINGS' && typeB === 'SAVINGS') {
+        const isJointA = acctA?.name?.toLowerCase().includes('joint') ? 1 : 0;
+        const isJointB = acctB?.name?.toLowerCase().includes('joint') ? 1 : 0;
+        if (isJointA !== isJointB) return isJointA - isJointB;
+      }
       return a.accountName.localeCompare(b.accountName);
     });
     return groups;
@@ -1320,13 +1337,13 @@ export function InlineTransactionsEditor({
                           className="w-[7px] h-[7px] rounded-full shrink-0"
                           style={{ backgroundColor: movement === 'INCOME' ? 'hsl(var(--success))' : movement === 'EXPENSE' ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))' }}
                         />
-                        <div className="pk-select-wrap pk-select-wrap--sm flex-1 min-w-0">
+                        <div className="pk-select-wrap pk-select-wrap--sm flex-1 min-w-0 flex items-center">
                           <select
                             value={movement}
                             onChange={(e) => handleMovementChange(tx, e.target.value as MovementType)}
                             disabled={isHidden}
-                            className="h-auto w-full border-0 bg-transparent text-xs font-semibold cursor-pointer leading-none py-0"
-                            style={{ color: movement === 'INCOME' ? 'hsl(var(--success))' : movement === 'EXPENSE' ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))' }}
+                            className="h-auto w-full border-0 bg-transparent text-xs font-semibold cursor-pointer leading-none"
+                            style={{ color: movement === 'INCOME' ? 'hsl(var(--success))' : movement === 'EXPENSE' ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))', paddingBlock: 0 }}
                           >
                             <option value="INCOME">{getMovementLabel("INCOME")}</option>
                             <option value="EXPENSE">{getMovementLabel("EXPENSE")}</option>
@@ -1428,7 +1445,7 @@ export function InlineTransactionsEditor({
                       {/* Category — native select pill */}
                       <span className="min-w-0">
                         <span
-                          className="flex items-center gap-1.5 rounded-full pl-[7px] pr-0.5 py-[5px] w-full"
+                          className="flex items-center gap-1.5 rounded-full pl-2.5 pr-0.5 py-[5px] w-full"
                           style={{ backgroundColor: `hsl(var(--${getCategoryColor(category)}) / 0.13)` }}
                         >
                           <CategoryIcon
@@ -1438,13 +1455,13 @@ export function InlineTransactionsEditor({
                             showBackground={false}
                             className="shrink-0"
                           />
-                          <div className="pk-select-wrap pk-select-wrap--sm flex-1 min-w-0">
+                          <div className="pk-select-wrap pk-select-wrap--sm flex-1 min-w-0 flex items-center">
                             <select
                               value={category}
                               onChange={(e) => handleCategoryChange(tx, e.target.value)}
                               disabled={isHidden}
-                              className="h-auto w-full border-0 bg-transparent text-[11px] font-semibold cursor-pointer truncate leading-none py-0"
-                              style={{ color: `hsl(var(--${getCategoryColor(category)}))` }}
+                              className="h-auto w-full border-0 bg-transparent text-[11px] font-semibold cursor-pointer truncate leading-none"
+                              style={{ color: `hsl(var(--${getCategoryColor(category)}))`, paddingBlock: 0 }}
                             >
                               {availableCategories.map((slug) => (
                                 <option key={slug} value={slug}>{getCategoryLabel(slug)}</option>

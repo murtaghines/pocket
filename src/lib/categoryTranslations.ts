@@ -228,8 +228,8 @@ export function getMovementLabel(movement: string): string {
 }
 
 // Categories by movement type (for onboarding)
-export const INCOME_CATEGORIES = ['salary', 'refunds', 'other_income', 'investment', 'freelance', 'rents'];
-export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets', 'taxes', 'insurance', 'donations'];
+export const INCOME_CATEGORIES = ['salary', 'refunds', 'investment', 'freelance', 'rents', 'other_income'];
+export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'pets', 'taxes', 'insurance', 'donations', 'other_expense'];
 export const TRANSFER_CATEGORIES = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'to_savings', 'from_savings'];
 export const TRANSFER_OUTGOING = ['own_transfer', 'to_investment', 'to_joint_account', 'to_savings'];
 export const TRANSFER_INCOMING = ['from_myself', 'from_investment', 'from_joint_account', 'from_savings'];
@@ -237,3 +237,4 @@ export const TRANSFER_INCOMING = ['from_myself', 'from_investment', 'from_joint_
 // Default selected categories for new users
 export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'other_income'];
 export const DEFAULT_EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'subscriptions', 'sports', 'other_expense'];
+

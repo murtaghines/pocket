@@ -1,6 +1,7 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Plus, Trash2, Info, Sparkles, Calendar, Code2, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { useCategories } from '@/hooks/useCategories';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,7 @@ import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
 import { getAccountDisplayName } from '@/lib/accountColors';
 import { categoryExamples } from '@/lib/categoryExamples';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, TRANSFER_CATEGORIES } from '@/lib/categoryTranslations';
 import type { Database } from '@/integrations/supabase/types';
 import { MATCH_TYPES } from '@/lib/matchTypes';
 import type { MatchType } from '@/lib/userRules';
@@ -117,7 +119,12 @@ export function CategoriesEditor() {
   const { data: suggestions = [] } = useSuggestions();
   const { accounts } = useAccounts();
 
-  const [activeTab, setActiveTab] = useState<TabKey>('expense');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const movementParam = searchParams.get('movement');
+  const categoryParam = searchParams.get('category');
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    movementParam === 'income' ? 'income' : movementParam === 'transfer' ? 'transfer' : 'expense'
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [editingCustomCategory, setEditingCustomCategory] = useState<CustomCategoryRule | null>(null);
@@ -152,7 +159,7 @@ export function CategoriesEditor() {
     return { cats: expenseCategories, custom: expenseCustom, movement: 'EXPENSE' };
   }, [activeTab, incomeCategories, expenseCategories, transferCategories, incomeCustom, expenseCustom, transferCustom]);
 
-  // Build the merged category list for the sidebar
+  // Build the merged category list for the sidebar, sorted to match the select dropdown order
   const categoryList = useMemo(() => {
     const items: SelectedCategory[] = [];
     for (const cat of activeData.cats) {
@@ -177,8 +184,26 @@ export function CategoriesEditor() {
         customIndex: allCustomRules.indexOf(cat),
       });
     }
+    const orderArray = activeTab === 'income' ? INCOME_CATEGORIES
+      : activeTab === 'transfer' ? TRANSFER_CATEGORIES
+      : EXPENSE_CATEGORIES;
+    items.sort((a, b) => {
+      const idxA = orderArray.indexOf(a.slug);
+      const idxB = orderArray.indexOf(b.slug);
+      const posA = idxA >= 0 ? idxA : 9999;
+      const posB = idxB >= 0 ? idxB : 9999;
+      return posA - posB;
+    });
     return items;
-  }, [activeData, getCategoryLabel, allCustomRules]);
+  }, [activeData, getCategoryLabel, allCustomRules, activeTab]);
+
+  // Restore selected category from URL on first load
+  useEffect(() => {
+    if (categoryParam && categoryList.length > 0 && !selectedId) {
+      const match = categoryList.find(c => c.slug === categoryParam);
+      if (match) setSelectedId(match.id);
+    }
+  }, [categoryParam, categoryList, selectedId]);
 
   // Auto-select first category when tab changes or list loads
   const effectiveSelected = useMemo(() => {
@@ -187,6 +212,18 @@ export function CategoriesEditor() {
   }, [selectedId, categoryList]);
 
   const selected = useMemo(() => categoryList.find(c => c.id === effectiveSelected) || null, [categoryList, effectiveSelected]);
+
+  // Sync URL when tab or selected category changes
+  useEffect(() => {
+    if (!selected) return;
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', 'categories');
+    params.set('movement', activeTab);
+    params.set('category', selected.slug);
+    const current = searchParams.toString();
+    const next = params.toString();
+    if (current !== next) setSearchParams(params, { replace: true });
+  }, [activeTab, selected?.slug]);
 
   // Raw HSL values for the selected category (e.g. "210 80% 55%")
   const selectedHsl = useMemo(() => {
@@ -503,7 +540,7 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 62px' }}>
+      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 72px' }}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[19px] font-semibold text-white leading-none tracking-[-0.01em]">
@@ -557,38 +594,25 @@ export function CategoriesEditor() {
       {/* ====== Content wrapper (overlaps banner by 58px) ====== */}
       <div
         className="flex-1 min-h-0 overflow-hidden"
-        style={{ padding: '0 34px 32px', marginTop: -46 }}
+        style={{ padding: '0 34px 32px', marginTop: -56 }}
       >
         <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
           <div className="flex flex-col gap-4 h-full">
-            {/* New Category card */}
+            {/* New Category button */}
             <button
               type="button"
               onClick={() => setShowCreateCategory(true)}
-              className="shrink-0 flex items-center gap-3 bg-white rounded-[14px] transition-colors hover:bg-[#F7F8FC]"
+              className="shrink-0 flex items-center gap-2 bg-white rounded-[10px] transition-colors hover:bg-[#F7F8FC]"
               style={{
-                padding: '12px 16px',
-                boxShadow: '0 10px 26px -14px rgba(16,24,40,.30), 0 2px 4px rgba(16,24,40,.05)',
+                padding: '8px 14px',
+                boxShadow: '0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04)',
               }}
             >
-              <div
-                className="flex items-center justify-center shrink-0"
-                style={{
-                  width: 34, height: 34, borderRadius: 10,
-                  background: '#EFF4FF', color: '#1B76FF',
-                }}
-              >
-                <Plus size={18} strokeWidth={2} />
-              </div>
-              <div className="text-left">
-                <div className="text-[14px] font-semibold" style={{ color: '#1B76FF' }}>
-                  {t('categories.newCategory')}
-                </div>
-                <div className="text-[12px]" style={{ color: '#9AA1AC' }}>
-                  {t('categories.newCategorySubtitle')}
-                </div>
-              </div>
+              <Plus size={15} strokeWidth={2.2} style={{ color: '#1B76FF' }} />
+              <span className="text-[13px] font-semibold" style={{ color: '#1B76FF' }}>
+                {t('categories.newCategory')}
+              </span>
             </button>
 
             {/* Category list card */}
