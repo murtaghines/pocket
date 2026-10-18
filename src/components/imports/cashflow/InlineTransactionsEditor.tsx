@@ -1125,7 +1125,7 @@ export function InlineTransactionsEditor({
           <div
             className="sticky top-0 z-10 grid items-center bg-card border-b border-border"
             style={{
-              gridTemplateColumns: "34px 94px 54px 66px 128px 102px minmax(0,1fr) 168px 108px 36px",
+              gridTemplateColumns: "34px 94px 54px 66px 96px 102px minmax(0,1fr) 180px 108px 36px",
               gap: 14,
               padding: "11px 34px",
             }}
