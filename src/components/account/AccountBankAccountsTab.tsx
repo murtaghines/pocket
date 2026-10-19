@@ -15,7 +15,7 @@ import {
 import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
-import { Plus, Pencil, Star, Trash2, Building2, TrendingUp, Loader2, MoreHorizontal, Archive, ArchiveRestore, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Star, Trash2, Building2, TrendingUp, Loader2, MoreHorizontal, Archive, ArchiveRestore, ArrowRightLeft, AlertTriangle, FileText } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
+import { AccountFilesPanel } from "@/components/account/AccountFilesPanel";
 
 interface AccountCardStatsProps {
   accountId: string;
@@ -116,6 +117,7 @@ export function AccountBankAccountsTab() {
     .filter((a) => a.archived)
     .sort(sortByCreated);
 
+  const [filesAccountId, setFilesAccountId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [creatingRole, setCreatingRole] = useState<"CASH" | "INVESTMENT">("CASH");
@@ -151,6 +153,8 @@ export function AccountBankAccountsTab() {
         account_number: values.account_number || null,
         initial_balance: values.initial_balance ?? 0,
         split_percentage: values.split_percentage ?? 100,
+        notes: values.notes?.trim() || null,
+        hidden_from_dashboard: values.hidden_from_dashboard ?? false,
       });
     } else {
       createAccount({
@@ -162,6 +166,8 @@ export function AccountBankAccountsTab() {
         account_number: values.account_number,
         initial_balance: values.initial_balance,
         split_percentage: values.split_percentage,
+        notes: values.notes,
+        hidden_from_dashboard: values.hidden_from_dashboard,
       });
     }
     setFormOpen(false);
@@ -282,6 +288,12 @@ export function AccountBankAccountsTab() {
                         <Pencil className="w-4 h-4 mr-2" />
                         {t("accounts.edit", "Edit")}
                       </DropdownMenuItem>
+                      {account.account_role === "CASH" && (
+                        <DropdownMenuItem onClick={() => setFilesAccountId(account.id)}>
+                          <FileText className="w-4 h-4 mr-2" />
+                          {t("accounts.manageFiles", "Manage files")}
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => handleTogglePrimary(account)}>
                         <Star className="w-4 h-4 mr-2" fill={account.is_primary ? "currentColor" : "none"} />
                         {account.is_primary
@@ -453,6 +465,8 @@ export function AccountBankAccountsTab() {
                 account_number: editingAccount.account_number ?? undefined,
                 initial_balance: editingAccount.initial_balance,
                 split_percentage: editingAccount.split_percentage,
+                notes: editingAccount.notes ?? undefined,
+                hidden_from_dashboard: editingAccount.hidden_from_dashboard ?? false,
               }
             : undefined
         }
@@ -460,6 +474,8 @@ export function AccountBankAccountsTab() {
         isSubmitting={isCreating || isUpdating}
         onSubmit={handleFormSubmit}
       />
+
+      <AccountFilesPanel accountId={filesAccountId} onClose={() => setFilesAccountId(null)} />
 
       {/* ── Delete dialog ── */}
       <Dialog

@@ -48,6 +48,7 @@ export function useLocalization() {
   const { preferences, isLoading, updatePreferences, isUpdating } = useUserPreferences();
 
   const baseCurrency = preferences.base_currency;
+  const fractionDigits = preferences.show_decimals === false ? 0 : 2;
   const locale = getLocaleForRegion(preferences.country);
   const dateFnsLocale: Locale = dateFnsLocales[i18n.language] || enUS;
 
@@ -68,8 +69,8 @@ export function useLocalization() {
     const opts: Intl.NumberFormatOptions & { useGrouping: any } = {
       style: 'currency',
       currency: currencyToUse,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
       useGrouping: 'always' as any,
       ...(signed && { signDisplay: 'exceptZero' as const }),
     };
@@ -79,7 +80,7 @@ export function useLocalization() {
       const { style: _s, currency: _c, ...rest } = opts;
       return new Intl.NumberFormat(locale, { style: 'decimal', ...rest }).format(amount) + ` ${currencyToUse}`;
     }
-  }, [locale, baseCurrency]);
+  }, [locale, baseCurrency, fractionDigits]);
 
   // Format compact currency (e.g., $1.2k, €500)
   const formatCurrencyCompact = useCallback((amount: number, currency?: string, signed?: boolean) => {

@@ -5,17 +5,17 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AccountHeader } from "@/components/account/AccountHeader";
-import { AccountOverviewTab } from "@/components/account/AccountOverviewTab";
+import { AccountGeneralTab } from "@/components/account/AccountGeneralTab";
 import { AccountBankAccountsTab } from "@/components/account/AccountBankAccountsTab";
 import { AccountPreferencesTab } from "@/components/account/AccountPreferencesTab";
 import { AccountSecurityTab } from "@/components/account/AccountSecurityTab";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-type TabKey = "overview" | "accounts" | "preferences" | "security";
+type TabKey = "general" | "accounts" | "preferences" | "security";
 
 const UNDERLINE_TAB = "rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm whitespace-nowrap shrink-0 text-white/70 data-[state=active]:text-white";
-const TAB_KEYS: TabKey[] = ["overview", "accounts", "preferences", "security"];
+const TAB_KEYS: TabKey[] = ["general", "accounts", "preferences", "security"];
 
 export default function Account() {
   const { t } = useTranslation("account");
@@ -26,14 +26,14 @@ export default function Account() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const rawTab = searchParams.get("tab") ?? "overview";
+  const rawTab = searchParams.get("tab") ?? "general";
   const activeTab: TabKey = (TAB_KEYS as string[]).includes(rawTab)
     ? (rawTab as TabKey)
-    : "overview";
+    : "general";
 
   const handleTabChange = (value: string) => {
     const next = new URLSearchParams(searchParams);
-    if (value === "overview") next.delete("tab");
+    if (value === "general") next.delete("tab");
     else next.set("tab", value);
     setSearchParams(next, { replace: true });
   };
@@ -58,8 +58,8 @@ export default function Account() {
             <div className="sticky top-12 z-20 -mx-3 -mt-2 bg-background/90 px-3 pt-2 backdrop-blur-[10px] md:top-0 md:mx-0 md:mt-0 md:px-0 md:pt-0 md:bg-primary md:backdrop-blur-none">
               <AccountHeader />
               <TabsList className="w-full justify-start bg-transparent border-b border-white/20 rounded-none p-0 h-auto mt-4 overflow-x-auto scrollbar-none md:border-white/20">
-                <TabsTrigger value="overview" className={UNDERLINE_TAB}>
-                  {t("tabs.overview", "Overview")}
+                <TabsTrigger value="general" className={UNDERLINE_TAB}>
+                  {t("tabs.general", "General")}
                 </TabsTrigger>
                 <TabsTrigger value="accounts" className={UNDERLINE_TAB}>
                   {t("tabs.accounts", "Accounts")}
@@ -73,8 +73,8 @@ export default function Account() {
               </TabsList>
             </div>
 
-            <TabsContent value="overview" className="mt-6">
-              <AccountOverviewTab onNavigateTab={handleTabChange} />
+            <TabsContent value="general" className="mt-6">
+              <AccountGeneralTab onNavigateTab={handleTabChange} />
             </TabsContent>
             <TabsContent value="accounts" className="mt-6">
               <AccountBankAccountsTab />

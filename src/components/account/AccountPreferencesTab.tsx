@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useTheme } from "@/hooks/useTheme";
-import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
+import { SUPPORTED_CURRENCIES, getLocaleForRegion } from "@/lib/currencies";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Languages, DollarSign, Calendar, Globe, Sun, Moon, Loader2, Plus, X } from "lucide-react";
+import { Languages, DollarSign, Calendar, Globe, Sun, Moon, Monitor, Users, Loader2, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
 import { Input } from "@/components/ui/input";
@@ -126,6 +127,7 @@ export function AccountPreferencesTab() {
   const [country, setCountry] = useState(preferences.country ?? "");
   const [jointAccountNames, setJointAccountNames] = useState<string[]>(preferences.joint_account_names ?? []);
   const [ownNameAliases, setOwnNameAliases] = useState<string[]>(preferences.own_name_aliases ?? []);
+  const [showDecimals, setShowDecimals] = useState(preferences.show_decimals !== false);
 
   useEffect(() => { setCurrency(preferences.base_currency); }, [preferences.base_currency]);
   useEffect(() => { setLanguage(currentLanguage); }, [currentLanguage]);
@@ -133,6 +135,21 @@ export function AccountPreferencesTab() {
   useEffect(() => { setCountry(preferences.country ?? ""); }, [preferences.country]);
   useEffect(() => { setJointAccountNames(preferences.joint_account_names ?? []); }, [preferences.joint_account_names]);
   useEffect(() => { setOwnNameAliases(preferences.own_name_aliases ?? []); }, [preferences.own_name_aliases]);
+  useEffect(() => { setShowDecimals(preferences.show_decimals !== false); }, [preferences.show_decimals]);
+
+  const numberPreview = (() => {
+    const digits = showDecimals ? 2 : 0;
+    try {
+      return new Intl.NumberFormat(getLocaleForRegion(country || undefined), {
+        style: "currency",
+        currency,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      }).format(1234567.89);
+    } catch {
+      return "";
+    }
+  })();
 
   const handleSave = () => {
     const languageChanged = language !== currentLanguage;
@@ -145,6 +162,7 @@ export function AccountPreferencesTab() {
       updates.date_format = dateFormat === "AUTO" ? null : dateFormat;
     }
     if (country !== (preferences.country ?? "")) updates.country = country || null;
+    if (showDecimals !== (preferences.show_decimals !== false)) updates.show_decimals = showDecimals;
     const currentNames = preferences.joint_account_names ?? [];
     if (
       jointAccountNames.length !== currentNames.length ||
@@ -228,12 +246,12 @@ export function AccountPreferencesTab() {
         </div>
       </div>
 
-      {/* Money */}
+      {/* Currency & numbers */}
       <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
         <SectionHeader
           icon={DollarSign}
-          title={t("preferences.money", "Money")}
-          description={t("preferences.moneyDescription", "Currency and joint account settings")}
+          title={t("preferences.money", "Currency & numbers")}
+          description={t("preferences.moneyDescription", "Base currency and how amounts are displayed")}
         />
         <div className="space-y-4">
           <div className="space-y-2">
@@ -249,7 +267,30 @@ export function AccountPreferencesTab() {
             </div>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-border">
+          <div className="flex items-center justify-between gap-4 pt-2 border-t border-border">
+            <div>
+              <Label htmlFor="show-decimals" className="text-sm">{t("preferences.showDecimals", "Show decimals")}</Label>
+              <p className="text-xs text-muted-foreground">{t("preferences.showDecimalsHelp", "Display amounts with cents, e.g. 1.234,56 instead of 1.235")}</p>
+            </div>
+            <Switch id="show-decimals" checked={showDecimals} onCheckedChange={setShowDecimals} />
+          </div>
+
+          <div className="rounded-lg bg-muted px-4 py-3 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{t("preferences.numberPreview", "Preview")}</span>
+            <span className="text-sm font-semibold text-foreground tabular-nums">{numberPreview}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Shared finances */}
+      <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+        <SectionHeader
+          icon={Users}
+          title={t("preferences.sharedFinances", "Shared finances")}
+          description={t("preferences.sharedFinancesDescription", "Joint accounts and how you appear on statements")}
+        />
+        <div className="space-y-4">
+          <div className="space-y-2">
             <Label className="text-sm">{t("preferences.jointAccountNames", "Joint account co-holders")}</Label>
             <p className="text-xs text-muted-foreground">
               {t("preferences.jointAccountNamesHelp")}
@@ -287,11 +328,12 @@ export function AccountPreferencesTab() {
             {[
               { value: "light", label: t("preferences.themeLight", "Light"), icon: Sun },
               { value: "dark", label: t("preferences.themeDark", "Dark"), icon: Moon },
+              { value: "system", label: t("preferences.themeSystem", "System"), icon: Monitor },
             ].map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 type="button"
-                onClick={() => setTheme(value as "light" | "dark")}
+                onClick={() => setTheme(value as "light" | "dark" | "system")}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors",
                   theme === value

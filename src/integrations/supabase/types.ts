@@ -30,6 +30,7 @@ export type Database = {
           institution: string
           is_primary: boolean
           name: string
+          notes: string | null
           split_percentage: number
           user_id: string
         }
@@ -48,6 +49,7 @@ export type Database = {
           institution: string
           is_primary?: boolean
           name: string
+          notes?: string | null
           split_percentage?: number
           user_id: string
         }
@@ -66,6 +68,7 @@ export type Database = {
           institution?: string
           is_primary?: boolean
           name?: string
+          notes?: string | null
           split_percentage?: number
           user_id?: string
         }
@@ -708,6 +711,7 @@ export type Database = {
           language: string
           onboarding_completed: boolean | null
           own_name_aliases: string[]
+          show_decimals: boolean
           theme: string
           updated_at: string | null
           user_id: string
@@ -722,6 +726,7 @@ export type Database = {
           language?: string
           onboarding_completed?: boolean | null
           own_name_aliases?: string[]
+          show_decimals?: boolean
           theme?: string
           updated_at?: string | null
           user_id: string
@@ -736,6 +741,7 @@ export type Database = {
           language?: string
           onboarding_completed?: boolean | null
           own_name_aliases?: string[]
+          show_decimals?: boolean
           theme?: string
           updated_at?: string | null
           user_id?: string

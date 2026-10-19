@@ -15,211 +15,109 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
-import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getAccountDisplayName } from "@/lib/accountColors";
 import {
-  User, Mail, Calendar, Pencil, Check, X, LogOut,
-  Download, Trash2, AlertTriangle, Loader2,
+  LogOut, Download, Trash2, AlertTriangle, Loader2,
 } from "lucide-react";
 
 interface AccountSecurityTabProps {
   onLogout: () => void;
 }
 
-function PersonalInfoSection({ onLogout }: { onLogout: () => void }) {
-  const { t } = useTranslation("account");
-  const { t: tc } = useTranslation("common");
-  const { user } = useAuth();
-  const { profile, updateProfile, isUpdating } = useProfile();
-  const { formatDate } = useLocalization();
-  const { toast } = useToast();
+async function fetchAllTransactions(userId: string) {
+  // Supabase caps responses at 1000 rows, so paginate
+  const PAGE_SIZE = 1000;
+  let all: Record<string, unknown>[] = [];
+  let offset = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("date", { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+  return all;
+}
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [firstName, setFirstName] = useState(profile?.first_name || "");
-  const [lastName, setLastName] = useState(profile?.last_name || "");
+function downloadBlob(content: string, type: string, filename: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
-  const handleEdit = () => {
-    setFirstName(profile?.first_name || "");
-    setLastName(profile?.last_name || "");
-    setIsEditing(true);
+const CSV_COLUMNS = ["date", "description", "account", "movement", "category", "amount", "currency"] as const;
+
+function toCsv(rows: Record<string, unknown>[], accountNames: Map<string, string>) {
+  const escape = (v: unknown) => {
+    const str = v == null ? "" : String(v);
+    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
   };
-
-  const handleSave = () => {
-    updateProfile(
-      { first_name: firstName.trim(), last_name: lastName.trim() },
-      {
-        onSuccess: () => {
-          setIsEditing(false);
-          toast({ title: t("security.updateSuccess", "Profile updated") });
-        },
-        onError: () => {
-          toast({ title: t("security.updateError", "Could not update profile"), variant: "destructive" });
-        },
-      }
-    );
-  };
-
-  const displayName =
-    profile?.first_name || profile?.last_name
-      ? `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim()
-      : null;
-
-  return (
-    <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-foreground">
-          {t("security.personalInfo", "Personal information")}
-        </h3>
-        {!isEditing && (
-          <Button variant="ghost" size="sm" onClick={handleEdit} className="h-7 px-2 gap-1 text-xs">
-            <Pencil className="w-3 h-3" />
-            {t("security.editProfile", "Edit")}
-          </Button>
-        )}
-      </div>
-
-      {isEditing ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="edit-first-name" className="text-xs">
-                {t("security.firstName", "First name")}
-              </Label>
-              <Input
-                id="edit-first-name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="h-8"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="edit-last-name" className="text-xs">
-                {t("security.lastName", "Last name")}
-              </Label>
-              <Input
-                id="edit-last-name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="h-8"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleSave} disabled={isUpdating} className="h-7">
-              <Check className="w-3.5 h-3.5 mr-1" />
-              {tc("save", "Save")}
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setIsEditing(false)} className="h-7">
-              <X className="w-3.5 h-3.5 mr-1" />
-              {tc("cancel", "Cancel")}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {displayName && (
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
-                <User className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground">{t("security.name", "Name")}</p>
-                <p className="text-sm font-medium text-foreground">{displayName}</p>
-              </div>
-            </div>
-          )}
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
-              <Mail className="w-3.5 h-3.5 text-primary" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground">{t("security.email", "Email")}</p>
-              <p className="text-sm font-medium text-foreground">{user?.email}</p>
-            </div>
-          </div>
-          {user?.created_at && (
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
-                <Calendar className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground">{t("security.memberSince", "Member since")}</p>
-                <p className="text-sm font-medium text-foreground">{formatDate(user.created_at)}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="mt-4 pt-4 border-t">
-        <Button
-          variant="outline"
-          onClick={onLogout}
-          className="w-full gap-2 text-muted-foreground hover:text-foreground"
-          size="sm"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          {t("security.logOut", "Log out")}
-        </Button>
-      </div>
-    </div>
+  const lines = rows.map((r) =>
+    [
+      r.date,
+      r.description,
+      accountNames.get(String(r.account_id)) ?? "",
+      r.movement,
+      r.category,
+      r.amount,
+      r.currency,
+    ].map(escape).join(","),
   );
+  return [CSV_COLUMNS.join(","), ...lines].join("\n");
 }
 
 function ExportDataSection() {
   const { t } = useTranslation("account");
   const { user } = useAuth();
-  const [isExporting, setIsExporting] = useState(false);
+  const [exporting, setExporting] = useState<"json" | "csv" | null>(null);
 
-  const handleExport = async () => {
+  const handleExport = async (format: "json" | "csv") => {
     if (!user) return;
-    setIsExporting(true);
+    setExporting(format);
     try {
+      const day = new Date().toISOString().slice(0, 10);
+      const transactions = await fetchAllTransactions(user.id);
+
+      if (format === "csv") {
+        const { data: accounts } = await supabase
+          .from("accounts")
+          .select("id, institution, name")
+          .eq("user_id", user.id);
+        const names = new Map((accounts || []).map((a) => [a.id, getAccountDisplayName(a)]));
+        downloadBlob(toCsv(transactions, names), "text/csv;charset=utf-8", `pocket-transactions-${day}.csv`);
+        return;
+      }
+
       const [profileRes, prefsRes, accountsRes, importsRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("user_preferences").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("accounts").select("*").eq("user_id", user.id),
         supabase.from("imports").select("id, file_name, domain, status, uploaded_at, transactions_count").eq("user_id", user.id),
       ]);
-
-      // Paginate transactions — Supabase caps responses at 1000 rows
-      const PAGE_SIZE = 1000;
-      let allTransactions: Record<string, unknown>[] = [];
-      let offset = 0;
-      while (true) {
-        const { data, error } = await supabase
-          .from("transactions")
-          .select("*")
-          .eq("user_id", user.id)
-          .range(offset, offset + PAGE_SIZE - 1);
-        if (error) break;
-        allTransactions = allTransactions.concat(data || []);
-        if (!data || data.length < PAGE_SIZE) break;
-        offset += PAGE_SIZE;
-      }
-
       const payload = {
         exported_at: new Date().toISOString(),
         profile: profileRes.data,
         preferences: prefsRes.data,
         accounts: accountsRes.data || [],
         imports: importsRes.data || [],
-        transactions: allTransactions,
+        transactions,
       };
-
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `pocket-export-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(JSON.stringify(payload, null, 2), "application/json", `pocket-export-${day}.json`);
     } catch (err) {
       console.error("Export failed:", err);
     } finally {
-      setIsExporting(false);
+      setExporting(null);
     }
   };
 
@@ -229,23 +127,46 @@ function ExportDataSection() {
         {t("security.exportData", "Export my data")}
       </h3>
       <p className="text-xs text-muted-foreground mb-4">
-        {t("security.exportDescription", "Download all your data as a JSON file")}
+        {t("security.exportDescription", "Download your data as JSON (everything) or CSV (transactions only)")}
       </p>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleExport}
-        disabled={isExporting}
-        className="gap-2"
-      >
-        {isExporting ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <Download className="w-3.5 h-3.5" />
-        )}
-        {isExporting
-          ? t("security.exporting", "Exporting...")
-          : t("security.exportDownload", "Download JSON")}
+      <div className="flex flex-wrap gap-2">
+        {(["json", "csv"] as const).map((format) => (
+          <Button
+            key={format}
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport(format)}
+            disabled={exporting !== null}
+            className="gap-2"
+          >
+            {exporting === format ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            {exporting === format
+              ? t("security.exporting", "Exporting...")
+              : t(format === "json" ? "security.exportDownload" : "security.exportDownloadCsv", format === "json" ? "Download JSON" : "Download CSV")}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SessionSection({ onLogout }: { onLogout: () => void }) {
+  const { t } = useTranslation("account");
+  return (
+    <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <h3 className="text-sm font-semibold text-foreground mb-1">
+        {t("security.session", "Session")}
+      </h3>
+      <p className="text-xs text-muted-foreground mb-4">
+        {t("security.sessionDescription", "End your session on this device. You can log back in at any time.")}
+      </p>
+      <Button variant="outline" size="sm" onClick={onLogout} className="gap-2">
+        <LogOut className="w-3.5 h-3.5" />
+        {t("security.logOut", "Log out")}
       </Button>
     </div>
   );
@@ -360,8 +281,8 @@ function DeleteAccountSection() {
 export function AccountSecurityTab({ onLogout }: AccountSecurityTabProps) {
   return (
     <div className="space-y-4 max-w-2xl">
-      <PersonalInfoSection onLogout={onLogout} />
       <ExportDataSection />
+      <SessionSection onLogout={onLogout} />
       <DeleteAccountSection />
     </div>
   );

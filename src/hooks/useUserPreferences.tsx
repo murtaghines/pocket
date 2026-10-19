@@ -14,6 +14,7 @@ export interface UserPreferences {
   joint_account_names?: string[];
   own_name_aliases?: string[];
   theme?: string;
+  show_decimals?: boolean;
   created_at: string;
   updated_at: string;
 }
