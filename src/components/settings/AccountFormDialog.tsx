@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +37,8 @@ export interface AccountFormValues {
   account_number?: string;
   initial_balance?: number;
   split_percentage?: number;
+  notes?: string;
+  hidden_from_dashboard?: boolean;
 }
 
 interface AccountFormDialogProps {
@@ -86,6 +90,8 @@ export function AccountFormDialog({
   const [accountNumber, setAccountNumber] = useState("");
   const [initialBalance, setInitialBalance] = useState("");
   const [splitPercentage, setSplitPercentage] = useState("50");
+  const [notes, setNotes] = useState("");
+  const [hideFromDashboard, setHideFromDashboard] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -108,6 +114,8 @@ export function AccountFormDialog({
           ? String(initialValues.split_percentage)
           : "50",
       );
+      setNotes(initialValues?.notes || "");
+      setHideFromDashboard(initialValues?.hidden_from_dashboard ?? false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -132,6 +140,8 @@ export function AccountFormDialog({
       split_percentage: accountType === "JOINT" && parsedSplit > 0 && parsedSplit <= 100
         ? parsedSplit
         : 100,
+      notes: notes.trim() || undefined,
+      hidden_from_dashboard: hideFromDashboard,
     });
   };
 
@@ -358,6 +368,36 @@ export function AccountFormDialog({
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <label className="text-[13px] font-medium text-muted-foreground">
+              {t("accounts.notes", "Notes")}{" "}
+              <span className="text-muted-foreground/60">
+                ({tp("accounts.optional", "optional")})
+              </span>
+            </label>
+            <Textarea
+              placeholder={t("accounts.notesPlaceholder", "e.g. Main salary account, opened in 2019")}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 py-2.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50"
+            />
+          </div>
+
+          {/* Exclude from dashboard */}
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-muted px-3.5 py-3">
+            <div>
+              <label htmlFor="hide-from-dashboard" className="text-[13px] font-medium text-foreground">
+                {t("accounts.hideFromDashboard", "Exclude from dashboard")}
+              </label>
+              <p className="text-xs text-muted-foreground">
+                {t("accounts.hideFromDashboardHelp", "Hide this account from dashboard totals and charts")}
+              </p>
+            </div>
+            <Switch id="hide-from-dashboard" checked={hideFromDashboard} onCheckedChange={setHideFromDashboard} />
           </div>
 
         </DialogBody>

@@ -1,29 +1,26 @@
 {
   "title": "Cuenta",
   "tabs": {
-    "overview": "Resumen",
+    "general": "General",
     "accounts": "Cuentas",
     "preferences": "Preferencias",
     "security": "Seguridad"
   },
-  "overview": {
-    "filesUploaded": "Archivos subidos",
-    "acrossAccounts_one": "en {{count}} cuenta",
-    "acrossAccounts_other": "en {{count}} cuentas",
-    "coverage": "Cobertura",
-    "months_one": "{{count}} mes",
-    "months_other": "{{count}} meses",
-    "transactions": "Transacciones",
-    "categorizationHealth": "Categorización",
-    "categorized": "categorizadas",
-    "recentFiles": "Archivos recientes",
-    "seeAllFiles": "Ver todos los archivos",
-    "yourAccounts": "Tus cuentas",
-    "viewAllAccounts": "Ver todas las cuentas",
-    "noFiles": "Aún no hay archivos subidos",
-    "noAccounts": "Aún no hay cuentas",
-    "noData": "Sube tu primer archivo en Mis datos para ver estadísticas aquí",
-    "uploadCta": "Ir a Mis datos"
+  "general": {
+    "profile": "Perfil",
+    "summary": {
+      "title": "Tus datos",
+      "accounts": "Cuentas",
+      "accountsValue": "{{bank}} bancarias · {{investment}} de inversión",
+      "files": "Archivos subidos",
+      "coverage": "Cobertura de datos"
+    },
+    "quick": {
+      "accounts": "Gestionar cuentas",
+      "preferences": "Moneda y formato",
+      "export": "Exportar mis datos",
+      "files": "Gestionar archivos"
+    }
   },
   "accounts": {
     "title": "Cuentas bancarias",
@@ -78,7 +75,14 @@
     "initialBalancePlaceholder": "0,00",
     "initialBalanceHelpCash": "Cuánto efectivo tenés en esta billetera ahora",
     "initialBalanceHelpManual": "El saldo de tu cuenta antes de la primera transacción que registres aquí",
-    "initialBalanceHelpFile": "Se completa automáticamente con tu primer extracto. También podés ponerlo manualmente."
+    "initialBalanceHelpFile": "Se completa automáticamente con tu primer extracto. También podés ponerlo manualmente.",
+    "manageFiles": "Gestionar archivos",
+    "noFilesForAccount": "Aún no hay archivos subidos a esta cuenta",
+    "uploadFiles": "Subir archivos",
+    "notes": "Notas",
+    "notesPlaceholder": "p. ej. Cuenta de nómina, abierta en 2019",
+    "hideFromDashboard": "Excluir del panel",
+    "hideFromDashboardHelp": "Oculta esta cuenta de los totales y gráficos del panel"
   },
   "accountTypes": {
     "checking": "Cuenta corriente",
@@ -114,8 +118,8 @@
     "title": "Preferencias",
     "regional": "Regional",
     "regionalDescription": "Idioma y formato de fecha",
-    "money": "Dinero",
-    "moneyDescription": "Moneda y configuración de cuenta conjunta",
+    "money": "Moneda y números",
+    "moneyDescription": "Moneda base y cómo se muestran los importes",
     "appearance": "Apariencia",
     "appearanceDescription": "Tema y opciones de visualización",
     "language": "Idioma",
@@ -138,7 +142,12 @@
     "save": "Guardar cambios",
     "saving": "Guardando...",
     "saved": "Preferencias guardadas",
-    "error": "Error al guardar las preferencias"
+    "error": "Error al guardar las preferencias",
+    "showDecimals": "Mostrar decimales",
+    "showDecimalsHelp": "Muestra los importes con centavos en lugar de redondear",
+    "numberPreview": "Vista previa",
+    "sharedFinances": "Finanzas compartidas",
+    "sharedFinancesDescription": "Cuentas conjuntas y cómo apareces en los extractos"
   },
   "security": {
     "title": "Seguridad",
@@ -152,11 +161,14 @@
     "updateSuccess": "Perfil actualizado",
     "updateError": "No se pudo actualizar el perfil",
     "exportData": "Exportar mis datos",
-    "exportDescription": "Descarga todos tus datos en un archivo JSON",
+    "exportDescription": "Descarga tus datos en JSON (todo) o CSV (solo transacciones)",
     "exportDownload": "Descargar JSON",
     "exporting": "Exportando...",
     "dangerZone": "Zona de peligro",
     "deleteWarning": "Esta acción no se puede deshacer. Todos tus datos serán eliminados permanentemente.",
-    "logOut": "Cerrar sesión"
+    "logOut": "Cerrar sesión",
+    "exportDownloadCsv": "Descargar CSV",
+    "session": "Sesión",
+    "sessionDescription": "Cierra tu sesión en este dispositivo. Puedes volver a entrar cuando quieras."
   }
 }

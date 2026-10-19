@@ -1,29 +1,26 @@
 {
   "title": "Account",
   "tabs": {
-    "overview": "Overview",
+    "general": "General",
     "accounts": "Accounts",
     "preferences": "Preferences",
     "security": "Security"
   },
-  "overview": {
-    "filesUploaded": "Files uploaded",
-    "acrossAccounts_one": "across {{count}} account",
-    "acrossAccounts_other": "across {{count}} accounts",
-    "coverage": "Coverage",
-    "months_one": "{{count}} month",
-    "months_other": "{{count}} months",
-    "transactions": "Transactions",
-    "categorizationHealth": "Categorization",
-    "categorized": "categorized",
-    "recentFiles": "Recent files",
-    "seeAllFiles": "See all files",
-    "yourAccounts": "Your accounts",
-    "viewAllAccounts": "View all accounts",
-    "noFiles": "No files uploaded yet",
-    "noAccounts": "No accounts yet",
-    "noData": "Upload your first file in My Data to see stats here",
-    "uploadCta": "Go to My Data"
+  "general": {
+    "profile": "Profile",
+    "summary": {
+      "title": "Your data",
+      "accounts": "Accounts",
+      "accountsValue": "{{bank}} bank · {{investment}} investment",
+      "files": "Files uploaded",
+      "coverage": "Data coverage"
+    },
+    "quick": {
+      "accounts": "Manage accounts",
+      "preferences": "Currency & formatting",
+      "export": "Export my data",
+      "files": "Manage files"
+    }
   },
   "accounts": {
     "title": "Bank accounts",
@@ -78,7 +75,14 @@
     "initialBalancePlaceholder": "0,00",
     "initialBalanceHelpCash": "How much cash is in this wallet right now",
     "initialBalanceHelpManual": "Your account balance before the first transaction you track here",
-    "initialBalanceHelpFile": "Auto-set from your first statement. You can also set it manually."
+    "initialBalanceHelpFile": "Auto-set from your first statement. You can also set it manually.",
+    "manageFiles": "Manage files",
+    "noFilesForAccount": "No files uploaded to this account yet",
+    "uploadFiles": "Upload files",
+    "notes": "Notes",
+    "notesPlaceholder": "e.g. Main salary account, opened in 2019",
+    "hideFromDashboard": "Exclude from dashboard",
+    "hideFromDashboardHelp": "Hide this account from dashboard totals and charts"
   },
   "accountTypes": {
     "checking": "Checking Account",
@@ -114,8 +118,8 @@
     "title": "Preferences",
     "regional": "Regional",
     "regionalDescription": "Language and date formatting",
-    "money": "Money",
-    "moneyDescription": "Currency and joint account settings",
+    "money": "Currency & numbers",
+    "moneyDescription": "Base currency and how amounts are displayed",
     "appearance": "Appearance",
     "appearanceDescription": "Theme and display options",
     "language": "Language",
@@ -138,7 +142,12 @@
     "save": "Save changes",
     "saving": "Saving...",
     "saved": "Preferences saved",
-    "error": "Error saving preferences"
+    "error": "Error saving preferences",
+    "showDecimals": "Show decimals",
+    "showDecimalsHelp": "Display amounts with cents instead of rounding to whole numbers",
+    "numberPreview": "Preview",
+    "sharedFinances": "Shared finances",
+    "sharedFinancesDescription": "Joint accounts and how you appear on statements"
   },
   "security": {
     "title": "Security",
@@ -152,11 +161,14 @@
     "updateSuccess": "Profile updated",
     "updateError": "Could not update profile",
     "exportData": "Export my data",
-    "exportDescription": "Download all your data as a JSON file",
+    "exportDescription": "Download your data as JSON (everything) or CSV (transactions only)",
     "exportDownload": "Download JSON",
     "exporting": "Exporting...",
     "dangerZone": "Danger zone",
     "deleteWarning": "This action cannot be undone. All your data will be permanently deleted.",
-    "logOut": "Log out"
+    "logOut": "Log out",
+    "exportDownloadCsv": "Download CSV",
+    "session": "Session",
+    "sessionDescription": "End your session on this device. You can log back in at any time."
   }
 }

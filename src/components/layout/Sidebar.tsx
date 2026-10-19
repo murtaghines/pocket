@@ -119,7 +119,7 @@ export function Sidebar() {
     return [first, last].filter(Boolean).join(" ");
   })();
 
-  const planLabel = profile?.subscription_tier === "pro" ? "Plan pro" : "Plan personal";
+  const planLabel = "Plan personal";
 
   const linkFor = (tabKey: string) => {
     const params = new URLSearchParams();
@@ -139,7 +139,7 @@ export function Sidebar() {
   const isGroup3Active = (key: string) => {
     if (!isAccountPath) return false;
     if (key === "accounts") return accountTab === "accounts";
-    if (key === "settings") return !accountTab || accountTab === "overview";
+    if (key === "settings") return !accountTab || accountTab === "general";
     if (key === "preferences") return accountTab === "preferences";
     if (key === "security") return accountTab === "security";
     return false;
