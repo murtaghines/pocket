@@ -1,3 +1,4 @@
+-- SUPERSEDED by 20261019300000_consolidate_dashboard_kpi_fixes.sql (never applied on its own).
 -- Fix "Invested & saved" KPI overcounting.
 --
 -- Problem: mv_daily_totals applied GREATEST(..., 0) per day, so investment/
