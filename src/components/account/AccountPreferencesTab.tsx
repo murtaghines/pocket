@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useTheme } from "@/hooks/useTheme";
+import type { SupportedLanguage } from "@/i18n/config";
 import { SUPPORTED_CURRENCIES, getLocaleForRegion } from "@/lib/currencies";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -153,7 +154,7 @@ export function AccountPreferencesTab() {
 
   const handleSave = () => {
     const languageChanged = language !== currentLanguage;
-    if (languageChanged) changeLanguage(language as "en" | "es");
+    if (languageChanged) changeLanguage(language);
 
     const updates: Record<string, unknown> = {};
     if (currency !== preferences.base_currency) updates.base_currency = currency;
@@ -205,7 +206,7 @@ export function AccountPreferencesTab() {
               {t("preferences.language", "Language")}
             </Label>
             <div className="pk-select-wrap">
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <select value={language} onChange={(e) => setLanguage(e.target.value as SupportedLanguage)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
                 {supportedLanguages.map((lang) => (
                   <option key={lang.code} value={lang.code}>
                     {lang.nativeName} ({lang.name})

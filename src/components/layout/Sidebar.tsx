@@ -119,7 +119,7 @@ export function Sidebar() {
     return [first, last].filter(Boolean).join(" ");
   })();
 
-  const planLabel = profile?.subscription_tier === "pro" ? "Plan pro" : "Plan personal";
+  const planLabel = "Plan personal";
 
   const linkFor = (tabKey: string) => {
     const params = new URLSearchParams();
