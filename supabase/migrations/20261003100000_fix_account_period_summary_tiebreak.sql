@@ -1,3 +1,4 @@
+-- SUPERSEDED by 20261019300000_consolidate_dashboard_kpi_fixes.sql (never applied on its own).
 -- Fix get_account_period_summary: when multiple transactions share the same date
 -- and created_at (bulk imports), DISTINCT ON picks an arbitrary running_balance,
 -- sometimes an intermediate balance instead of the final end-of-day value.
