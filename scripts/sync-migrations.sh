@@ -20,19 +20,22 @@ DRY_RUN="${DRY_RUN:-0}"
 # accept both and reduce them to two sorted files of versions: local.txt and remote.txt.
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-raw="$(supabase migration list --linked)"
+raw="$(supabase migration list --linked 2>&1 || true)"
+# Strip colour codes and normalise box-drawing separators (newer CLIs print │ instead of |).
+clean="$(sed -E $'s/\x1b\\[[0-9;]*[A-Za-z]//g; s/(│|┃|¦)/|/g' <<<"$raw")"
 
-if grep -q '^{' <<<"$raw"; then
-  json="$(grep '^{' <<<"$raw")"
+if grep -q '^{' <<<"$clean"; then
+  json="$(grep '^{' <<<"$clean")"
   jq -r '.migrations[] | select(.local  != "") | .local'  <<<"$json" | sort -u >"$tmp/local.txt"
   jq -r '.migrations[] | select(.remote != "") | .remote' <<<"$json" | sort -u >"$tmp/remote.txt"
 else
-  awk -F'|' 'NF >= 3 { gsub(/[ \t]/, "", $1); if ($1 ~ /^[0-9]+$/) print $1 }' <<<"$raw" | sort -u >"$tmp/local.txt"
-  awk -F'|' 'NF >= 3 { gsub(/[ \t]/, "", $2); if ($2 ~ /^[0-9]+$/) print $2 }' <<<"$raw" | sort -u >"$tmp/remote.txt"
+  awk -F'|' 'NF >= 3 { gsub(/[ \t]/, "", $1); if ($1 ~ /^[0-9]+$/) print $1 }' <<<"$clean" | sort -u >"$tmp/local.txt"
+  awk -F'|' 'NF >= 3 { gsub(/[ \t]/, "", $2); if ($2 ~ /^[0-9]+$/) print $2 }' <<<"$clean" | sort -u >"$tmp/remote.txt"
 fi
 
 if [ ! -s "$tmp/local.txt" ]; then
-  echo "::error::Could not read the local migration list from the CLI output" >&2
+  echo "::error::Could not read the local migration list from the CLI output. Raw output follows:" >&2
+  echo "$raw" | head -40 >&2
   exit 1
 fi
 
