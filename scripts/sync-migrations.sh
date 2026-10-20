@@ -21,8 +21,9 @@ DRY_RUN="${DRY_RUN:-0}"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 raw="$(supabase migration list --linked 2>&1 || true)"
-# Strip colour codes and normalise box-drawing separators (newer CLIs print │ instead of |).
-clean="$(sed -E $'s/\x1b\\[[0-9;]*[A-Za-z]//g; s/(│|┃|¦)/|/g' <<<"$raw")"
+# Strip colour codes and backticks (CI prints every cell as `value`) and normalise box-drawing
+# separators (newer CLIs may print │ instead of |).
+clean="$(sed -E $'s/\x1b\\[[0-9;]*[A-Za-z]//g; s/(│|┃|¦)/|/g; s/`//g' <<<"$raw")"
 
 if grep -q '^{' <<<"$clean"; then
   json="$(grep '^{' <<<"$clean")"
