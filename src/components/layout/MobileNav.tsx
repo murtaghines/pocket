@@ -210,15 +210,15 @@ export function MobileNav() {
           }}
         >
           <Link
-            to="/account"
+            to="/account?tab=accounts"
             onClick={() => setOpen(false)}
             className="text-primary-foreground/35 hover:text-primary-foreground/60 transition-colors"
           >
-            {t("navigation.account", "account")}
+            {t("navigation.tabs.data.accounts", "accounts")}
           </Link>
           <span className="text-primary-foreground/20">·</span>
           <Link
-            to="/account?tab=preferences"
+            to="/account"
             onClick={() => setOpen(false)}
             className="text-primary-foreground/35 hover:text-primary-foreground/60 transition-colors"
           >

@@ -1,26 +1,7 @@
 {
   "title": "Account",
-  "tabs": {
-    "general": "General",
-    "accounts": "Accounts",
-    "preferences": "Preferences",
-    "security": "Security"
-  },
   "general": {
-    "profile": "Profile",
-    "summary": {
-      "title": "Your data",
-      "accounts": "Accounts",
-      "accountsValue": "{{bank}} bank · {{investment}} investment",
-      "files": "Files uploaded",
-      "coverage": "Data coverage"
-    },
-    "quick": {
-      "accounts": "Manage accounts",
-      "preferences": "Currency & formatting",
-      "export": "Export my data",
-      "files": "Manage files"
-    }
+    "profile": "Profile"
   },
   "accounts": {
     "title": "Bank accounts",
@@ -170,5 +151,31 @@
     "exportDownloadCsv": "Download CSV",
     "session": "Session",
     "sessionDescription": "End your session on this device. You can log back in at any time."
+  },
+  "workspace": {
+    "title": "Accounts",
+    "subtitle": "{{bank}} bank · {{investment}} investment",
+    "bank": "Bank",
+    "investment": "Investment"
+  },
+  "detail": {
+    "more": "More actions",
+    "balance": "Balance",
+    "balanceHint": "Initial balance + movements",
+    "transactions": "Transactions",
+    "movements": "Movements",
+    "uncategorized": "{{count}} uncategorized",
+    "period": "Period",
+    "files": "Files",
+    "settings": "Settings",
+    "bank": "Bank",
+    "nickname": "Nickname",
+    "primaryTitle": "Primary account",
+    "primaryHelp": "Preselected when you upload files",
+    "filesTitle": "Uploaded files",
+    "reassignHint": "Uploaded to the wrong account? Pick another account on the file to move it, with all its transactions.",
+    "recentTransactions": "Recent transactions",
+    "recentMovements": "Recent movements",
+    "noActivity": "No activity yet"
   }
 }

@@ -22,10 +22,6 @@ import {
   LogOut, Download, Trash2, AlertTriangle, Loader2,
 } from "lucide-react";
 
-interface AccountSecurityTabProps {
-  onLogout: () => void;
-}
-
 async function fetchAllTransactions(userId: string) {
   // Supabase caps responses at 1000 rows, so paginate
   const PAGE_SIZE = 1000;
@@ -77,7 +73,7 @@ function toCsv(rows: Record<string, unknown>[], accountNames: Map<string, string
   return [CSV_COLUMNS.join(","), ...lines].join("\n");
 }
 
-function ExportDataSection() {
+export function ExportDataCard() {
   const { t } = useTranslation("account");
   const { user } = useAuth();
   const [exporting, setExporting] = useState<"json" | "csv" | null>(null);
@@ -154,7 +150,7 @@ function ExportDataSection() {
   );
 }
 
-function SessionSection({ onLogout }: { onLogout: () => void }) {
+export function SessionCard({ onLogout }: { onLogout: () => void }) {
   const { t } = useTranslation("account");
   return (
     <div className="bg-card rounded-xl p-5 md:p-6 shadow-section">
@@ -172,7 +168,7 @@ function SessionSection({ onLogout }: { onLogout: () => void }) {
   );
 }
 
-function DeleteAccountSection() {
+export function DangerZoneCard() {
   const { t } = useTranslation("profile");
   const [isOpen, setIsOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -205,7 +201,7 @@ function DeleteAccountSection() {
   };
 
   return (
-    <div className="bg-card rounded-xl p-5 md:p-6 shadow-section border border-destructive/30 lg:col-span-2">
+    <div className="bg-card rounded-xl p-5 md:p-6 shadow-section border border-destructive/30">
       <h3 className="text-lg font-semibold text-destructive mb-1">
         {ta("security.dangerZone", "Danger zone")}
       </h3>
@@ -274,16 +270,6 @@ function DeleteAccountSection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
-}
-
-export function AccountSecurityTab({ onLogout }: AccountSecurityTabProps) {
-  return (
-    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-      <ExportDataSection />
-      <SessionSection onLogout={onLogout} />
-      <DeleteAccountSection />
     </div>
   );
 }

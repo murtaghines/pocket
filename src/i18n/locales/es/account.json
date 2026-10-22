@@ -1,26 +1,7 @@
 {
   "title": "Cuenta",
-  "tabs": {
-    "general": "General",
-    "accounts": "Cuentas",
-    "preferences": "Preferencias",
-    "security": "Seguridad"
-  },
   "general": {
-    "profile": "Perfil",
-    "summary": {
-      "title": "Tus datos",
-      "accounts": "Cuentas",
-      "accountsValue": "{{bank}} bancarias · {{investment}} de inversión",
-      "files": "Archivos subidos",
-      "coverage": "Cobertura de datos"
-    },
-    "quick": {
-      "accounts": "Gestionar cuentas",
-      "preferences": "Moneda y formato",
-      "export": "Exportar mis datos",
-      "files": "Gestionar archivos"
-    }
+    "profile": "Perfil"
   },
   "accounts": {
     "title": "Cuentas bancarias",
@@ -170,5 +151,31 @@
     "exportDownloadCsv": "Descargar CSV",
     "session": "Sesión",
     "sessionDescription": "Cierra tu sesión en este dispositivo. Puedes volver a entrar cuando quieras."
+  },
+  "workspace": {
+    "title": "Cuentas",
+    "subtitle": "{{bank}} bancarias · {{investment}} de inversión",
+    "bank": "Banco",
+    "investment": "Inversión"
+  },
+  "detail": {
+    "more": "Más acciones",
+    "balance": "Saldo",
+    "balanceHint": "Saldo inicial + movimientos",
+    "transactions": "Transacciones",
+    "movements": "Movimientos",
+    "uncategorized": "{{count}} sin categorizar",
+    "period": "Período",
+    "files": "Archivos",
+    "settings": "Configuración",
+    "bank": "Banco",
+    "nickname": "Apodo",
+    "primaryTitle": "Cuenta principal",
+    "primaryHelp": "Se preselecciona al subir archivos",
+    "filesTitle": "Archivos subidos",
+    "reassignHint": "¿Lo subiste a la cuenta equivocada? Elige otra cuenta en el archivo para moverlo con todas sus transacciones.",
+    "recentTransactions": "Transacciones recientes",
+    "recentMovements": "Movimientos recientes",
+    "noActivity": "Aún no hay actividad"
   }
 }

@@ -96,8 +96,6 @@ const dataSection = NAV_SECTIONS.find((s) => s.key === "data")!;
 const GROUP_3: SidebarItem[] = [
   { key: "accounts", to: "/account?tab=accounts", iconKey: "accounts", i18nKey: "navigation.tabs.data.accounts" },
   { key: "settings", to: "/account", iconKey: "settings", i18nKey: "navigation.settings" },
-  { key: "preferences", to: "/account?tab=preferences", iconKey: "preferences", i18nKey: "navigation.preferences" },
-  { key: "security", to: "/account?tab=security", iconKey: "security", i18nKey: "navigation.security" },
 ];
 
 export function Sidebar() {
@@ -139,9 +137,7 @@ export function Sidebar() {
   const isGroup3Active = (key: string) => {
     if (!isAccountPath) return false;
     if (key === "accounts") return accountTab === "accounts";
-    if (key === "settings") return !accountTab || accountTab === "general";
-    if (key === "preferences") return accountTab === "preferences";
-    if (key === "security") return accountTab === "security";
+    if (key === "settings") return accountTab !== "accounts";
     return false;
   };
 
