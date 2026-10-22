@@ -7,7 +7,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { useTranslation } from "react-i18next";
 
 interface YearlyBalanceChartProps {
-  data: MonthlyData[];
+  data: Pick<MonthlyData, "month" | "income" | "expenses" | "balance">[];
 }
 
 export function YearlyBalanceChart({ data }: YearlyBalanceChartProps) {

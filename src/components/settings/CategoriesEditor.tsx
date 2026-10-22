@@ -107,6 +107,16 @@ function hslToHex(hslStr: string): string {
   return `#${rv.toString(16).padStart(2, '0')}${gv.toString(16).padStart(2, '0')}${bv.toString(16).padStart(2, '0')}`;
 }
 
+type KeywordRuleRow = { id: string; pattern: string; match_type: string; isKeyword: true };
+type DbRuleRow = {
+  id: string; pattern: string; match_type: string;
+  applied_count: number; last_applied_at: string | null; account_id: string | null;
+  isKeyword: false;
+};
+type SelectedRuleRow = KeywordRuleRow | DbRuleRow;
+// A guard rather than `!rule.isKeyword`: boolean-literal narrowing needs strictNullChecks, which this project doesn't enable.
+const isDbRule = (r: SelectedRuleRow): r is DbRuleRow => !r.isKeyword;
+
 export function CategoriesEditor() {
   const { t } = useTranslation('settings');
   const { toast } = useToast();
@@ -250,7 +260,7 @@ export function CategoriesEditor() {
   }, [selected, activeData.custom, getVisualOverride, getCategoryIcon]);
 
   // Rules for the selected category
-  const selectedRules = useMemo(() => {
+  const selectedRules = useMemo<SelectedRuleRow[]>(() => {
     if (!selected) return [];
     if (selected.isCustom) {
       const custom = activeData.custom.find(c => c.slug === selected.slug);
@@ -258,7 +268,7 @@ export function CategoriesEditor() {
         id: `kw-${i}`,
         pattern: kw,
         match_type: 'CONTAINS',
-        isKeyword: true,
+        isKeyword: true as const,
       }));
     }
     return getRulesForCategory(selected.id).map(r => ({
@@ -268,7 +278,7 @@ export function CategoriesEditor() {
       applied_count: r.applied_count,
       last_applied_at: r.last_applied_at,
       account_id: r.account_id,
-      isKeyword: false,
+      isKeyword: false as const,
     }));
   }, [selected, activeData.custom, getRulesForCategory]);
 
@@ -364,7 +374,7 @@ export function CategoriesEditor() {
     });
   }, [deleteRule, toast, t]);
 
-  const handleEditRule = useCallback((rule: Rule) => {
+  const handleEditRule = useCallback((rule: Pick<Rule, 'id' | 'pattern' | 'match_type' | 'account_id'>) => {
     if (!selected) return;
     setEditRuleState({
       ruleId: rule.id,
@@ -859,14 +869,14 @@ export function CategoriesEditor() {
                       {selectedRules.map((rule) => (
                         <div
                           key={rule.id}
-                          className={cn('flex items-center gap-2.5', !rule.isKeyword && 'cursor-pointer hover:border-primary/30')}
+                          className={cn('flex items-center gap-2.5', isDbRule(rule) && 'cursor-pointer hover:border-primary/30')}
                           style={{
                             background: '#FAFBFD', border: '1px solid #EDEFF4',
                             borderRadius: 11, padding: '10px 12px',
                             transition: 'border-color 150ms',
                           }}
                           onClick={() => {
-                            if (!rule.isKeyword) handleEditRule(rule as Rule);
+                            if (isDbRule(rule)) handleEditRule(rule);
                           }}
                         >
                           {/* Match type pill */}
@@ -891,7 +901,7 @@ export function CategoriesEditor() {
                           </div>
 
                           {/* Account scope */}
-                          {!rule.isKeyword && rule.account_id && (
+                          {isDbRule(rule) && rule.account_id && (
                             <span className="shrink-0 flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-white border" style={{ borderColor: '#E4E7EC', color: '#9AA1AC' }}>
                               <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                               {accountNameById.get(rule.account_id) || ''}
@@ -899,11 +909,11 @@ export function CategoriesEditor() {
                           )}
 
                           {/* Edit + Delete buttons */}
-                          {!rule.isKeyword && (
+                          {isDbRule(rule) && (
                             <div className="shrink-0 flex items-center gap-1">
                               <button
                                 type="button"
-                                onClick={(e) => { e.stopPropagation(); handleEditRule(rule as Rule); }}
+                                onClick={(e) => { e.stopPropagation(); handleEditRule(rule); }}
                                 className="flex items-center justify-center rounded-lg transition-colors"
                                 style={{ width: 28, height: 28, color: '#9AA1AC' }}
                                 onMouseEnter={(e) => { e.currentTarget.style.background = '#EFF4FF'; e.currentTarget.style.color = '#1B76FF'; }}

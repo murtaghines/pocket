@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCategories } from "@/hooks/useCategories";
+import type { Database } from "@/integrations/supabase/types";
 import { buildRuleFromCorrection, extractKeyTokens, normalize } from "@/lib/userRules";
+
+type MovementType = Database["public"]["Enums"]["movement_type"];
 
 // UI-facing shape. Mirrors the previous categorization_rules row so consumers
 // (CategoriesEditor, CategoryRulesList) can stay unchanged. `category_id` is
@@ -147,7 +150,7 @@ export function useCategorizationRules() {
         const { error: retroError } = await supabase
           .from("transactions")
           .update({
-            movement: cat.movement,
+            movement: cat.movement as MovementType,
             category: cat.slug,
             category_id: rule.category_id,
             category_source: "USER_RULE",
@@ -209,7 +212,7 @@ export function useCategorizationRules() {
         const { error: retroError } = await supabase
           .from("transactions")
           .update({
-            movement: params.movement,
+            movement: params.movement as MovementType,
             category: params.category,
             category_id: params.category_id,
             category_source: "USER_RULE",

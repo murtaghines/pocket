@@ -3,8 +3,10 @@
  * as-is (never forced into "0k"/"-0k"), and thousands only get a decimal when rounding to a
  * whole number would collide with a neighboring tick (e.g. 1500 and 2250 both becoming "2k").
  */
-export function formatCompactAxisNumber(value: number, opts?: { prefix?: string }): string {
-  const prefix = opts?.prefix ?? "";
+// Second arg is `{ prefix }` for direct calls; recharts also passes the tick index when this is
+// used as `tickFormatter={formatCompactAxisNumber}`, which must be ignored.
+export function formatCompactAxisNumber(value: number, opts?: { prefix?: string } | number): string {
+  const prefix = typeof opts === "object" ? (opts.prefix ?? "") : "";
   if (value === 0) return `${prefix}0`;
   const abs = Math.abs(value);
   if (abs < 1000) return `${prefix}${Math.round(value)}`;
