@@ -106,12 +106,14 @@ const COUNTRIES = [
 
 function SectionHeader({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description?: string }) {
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 mb-0.5">
-        <Icon className="w-4 h-4 text-muted-foreground" />
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+    <div className="mb-5 flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-accent-foreground">
+        <Icon className="h-[18px] w-[18px]" />
       </div>
-      {description && <p className="text-xs text-muted-foreground ml-6">{description}</p>}
+      <div className="min-w-0">
+        <h3 className="text-lg font-semibold leading-tight text-foreground">{title}</h3>
+        {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
+      </div>
     </div>
   );
 }
@@ -191,9 +193,9 @@ export function AccountPreferencesTab() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
       {/* Regional */}
-      <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="bg-card rounded-xl p-5 md:p-6 shadow-section">
         <SectionHeader
           icon={Globe}
           title={t("preferences.regional", "Regional")}
@@ -248,7 +250,7 @@ export function AccountPreferencesTab() {
       </div>
 
       {/* Currency & numbers */}
-      <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="bg-card rounded-xl p-5 md:p-6 shadow-section">
         <SectionHeader
           icon={DollarSign}
           title={t("preferences.money", "Currency & numbers")}
@@ -284,7 +286,7 @@ export function AccountPreferencesTab() {
       </div>
 
       {/* Shared finances */}
-      <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="bg-card rounded-xl p-5 md:p-6 shadow-section">
         <SectionHeader
           icon={Users}
           title={t("preferences.sharedFinances", "Shared finances")}
@@ -317,7 +319,7 @@ export function AccountPreferencesTab() {
       </div>
 
       {/* Appearance */}
-      <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="bg-card rounded-xl p-5 md:p-6 shadow-section">
         <SectionHeader
           icon={Sun}
           title={t("preferences.appearance", "Appearance")}
@@ -350,6 +352,7 @@ export function AccountPreferencesTab() {
         </div>
       </div>
 
+      <div className="lg:col-span-2 flex justify-end">
       <Button onClick={handleSave} disabled={isUpdating} className="w-full sm:w-auto">
         {isUpdating ? (
           <>
@@ -360,6 +363,7 @@ export function AccountPreferencesTab() {
           t("preferences.save", "Save changes")
         )}
       </Button>
+      </div>
     </div>
   );
 }

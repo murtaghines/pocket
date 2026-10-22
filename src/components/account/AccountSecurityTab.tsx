@@ -122,11 +122,11 @@ function ExportDataSection() {
   };
 
   return (
-    <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-      <h3 className="text-sm font-semibold text-foreground mb-1">
+    <div className="bg-card rounded-xl p-5 md:p-6 shadow-section">
+      <h3 className="text-lg font-semibold text-foreground mb-1">
         {t("security.exportData", "Export my data")}
       </h3>
-      <p className="text-xs text-muted-foreground mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         {t("security.exportDescription", "Download your data as JSON (everything) or CSV (transactions only)")}
       </p>
       <div className="flex flex-wrap gap-2">
@@ -157,11 +157,11 @@ function ExportDataSection() {
 function SessionSection({ onLogout }: { onLogout: () => void }) {
   const { t } = useTranslation("account");
   return (
-    <div className="bg-card rounded-xl p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-      <h3 className="text-sm font-semibold text-foreground mb-1">
+    <div className="bg-card rounded-xl p-5 md:p-6 shadow-section">
+      <h3 className="text-lg font-semibold text-foreground mb-1">
         {t("security.session", "Session")}
       </h3>
-      <p className="text-xs text-muted-foreground mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         {t("security.sessionDescription", "End your session on this device. You can log back in at any time.")}
       </p>
       <Button variant="outline" size="sm" onClick={onLogout} className="gap-2">
@@ -205,11 +205,11 @@ function DeleteAccountSection() {
   };
 
   return (
-    <div className="bg-card rounded-xl p-5 md:p-6 border border-destructive/20" style={{ boxShadow: "var(--shadow-card)" }}>
-      <h3 className="text-sm font-semibold text-destructive mb-1">
+    <div className="bg-card rounded-xl p-5 md:p-6 shadow-section border border-destructive/30 lg:col-span-2">
+      <h3 className="text-lg font-semibold text-destructive mb-1">
         {ta("security.dangerZone", "Danger zone")}
       </h3>
-      <p className="text-xs text-muted-foreground mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         {ta("security.deleteWarning", "This action cannot be undone. All your data will be permanently deleted.")}
       </p>
       <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
@@ -280,7 +280,7 @@ function DeleteAccountSection() {
 
 export function AccountSecurityTab({ onLogout }: AccountSecurityTabProps) {
   return (
-    <div className="space-y-4 max-w-2xl">
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
       <ExportDataSection />
       <SessionSection onLogout={onLogout} />
       <DeleteAccountSection />

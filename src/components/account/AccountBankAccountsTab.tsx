@@ -362,11 +362,11 @@ export function AccountBankAccountsTab() {
       {!isLoading && !error && (
         <>
           {/* ── Bank accounts ── */}
-          <div className="space-y-4">
+          <div className="bg-card rounded-xl p-5 md:p-6 shadow-section space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold text-foreground">
+                <h2 className="text-lg font-semibold text-foreground">
                   {t("accounts.bankAccountsTitle", "Bank accounts")}
                 </h2>
                 <span className="text-xs text-muted-foreground tabular-nums">
@@ -396,11 +396,11 @@ export function AccountBankAccountsTab() {
           </div>
 
           {/* ── Investment accounts ── */}
-          <div className="space-y-4 pt-6 mt-2 border-t border-border">
+          <div className="bg-card rounded-xl p-5 md:p-6 shadow-section space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold text-foreground">
+                <h2 className="text-lg font-semibold text-foreground">
                   {t("accounts.investmentAccountsTitle", "Investment accounts")}
                 </h2>
                 <span className="text-xs text-muted-foreground tabular-nums">
@@ -431,10 +431,10 @@ export function AccountBankAccountsTab() {
 
           {/* ── Archived accounts ── */}
           {archivedAccounts.length > 0 && (
-            <div className="space-y-4 pt-6 mt-2 border-t border-border">
+            <div className="bg-card rounded-xl p-5 md:p-6 shadow-section space-y-5">
               <div className="flex items-center gap-2">
                 <Archive className="w-4 h-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold text-muted-foreground">
+                <h2 className="text-lg font-semibold text-muted-foreground">
                   {t("accounts.archivedTitle", "Archived")}
                 </h2>
                 <span className="text-xs text-muted-foreground tabular-nums">
