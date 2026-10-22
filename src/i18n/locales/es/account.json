@@ -176,6 +176,60 @@
     "reassignHint": "¿Lo subiste a la cuenta equivocada? Elige otra cuenta en el archivo para moverlo con todas sus transacciones.",
     "recentTransactions": "Transacciones recientes",
     "recentMovements": "Movimientos recientes",
-    "noActivity": "Aún no hay actividad"
+    "noActivity": "Aún no hay actividad",
+    "months": "Meses",
+    "goToFiles": "Ir a todos los archivos",
+    "moreFiles": "+{{count}} más"
+  },
+  "identity": {
+    "title": "Nombre y color",
+    "iconHint": "El icono lo define el tipo de cuenta. Elige el color que quieras."
+  },
+  "files": {
+    "title": "Archivos",
+    "subtitle": "{{files}} archivos · {{accounts}} cuentas",
+    "upload": "Subir archivos",
+    "empty": "Aún no hay archivos subidos.",
+    "unassigned": "Sin asignar",
+    "clearFilter": "Ver todas las cuentas",
+    "status": {
+      "uploading": "Subiendo",
+      "processing": "Procesando",
+      "ready": "Listo",
+      "partial": "Parcial",
+      "failed": "Fallido"
+    },
+    "details": "Detalles",
+    "account": "Cuenta",
+    "pickAccount": "Elegir cuenta",
+    "unlockToMove": "Desbloquea el archivo para cambiar de cuenta",
+    "type": "Tipo",
+    "size": "Tamaño",
+    "uploaded": "Subido",
+    "modified": "Última modificación",
+    "neverEdited": "Sin ediciones desde la subida",
+    "period": "Período",
+    "transactions": "Transacciones",
+    "movements": "Movimientos",
+    "locked": "Bloqueado",
+    "moved": "Archivo movido a {{name}}",
+    "moveError": "No se pudo mover el archivo",
+    "download": "Descargar original",
+    "noOriginal": "No se guardó el archivo original de esta subida",
+    "delete": "Eliminar archivo",
+    "deleteTitle": "¿Eliminar archivo?",
+    "deleteBody": "Se eliminará {{name}} y todas sus transacciones de forma permanente. No se puede deshacer.",
+    "preview": "Vista previa de los datos",
+    "previewExtracted": "Filas tal como Pocket las leyó del archivo, antes de cualquier edición.",
+    "previewImported": "Texto original del banco de las filas importadas, antes de cualquier edición. Pocket no guarda una copia de los archivos CSV y Excel.",
+    "noPreview": "No hay filas para mostrar de este archivo.",
+    "showingRows": "Mostrando {{shown}} de {{total}} filas",
+    "col": {
+      "date": "Fecha",
+      "description": "Descripción",
+      "amount": "Importe",
+      "balance": "Saldo",
+      "type": "Tipo"
+    }
   }
 }

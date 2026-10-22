@@ -37,6 +37,8 @@ const ICON_PATHS: Record<string, string> = {
     "M3.5 18.49 9.5 12.48l4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z",
   categories:
     "M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.42-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42M5.5 7A1.5 1.5 0 1 1 7 5.5 1.5 1.5 0 0 1 5.5 7",
+  folder:
+    "M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8z",
   accounts:
     "M11.5 1 2 6v2h19V6M2 19v2h19v-2zm3-9v7h3v-7zm5 0v7h3v-7zm5 0v7h3v-7z",
   settings:
@@ -95,6 +97,7 @@ const dataSection = NAV_SECTIONS.find((s) => s.key === "data")!;
 
 const GROUP_3: SidebarItem[] = [
   { key: "accounts", to: "/account?tab=accounts", iconKey: "accounts", i18nKey: "navigation.tabs.data.accounts" },
+  { key: "files", to: "/account?tab=files", iconKey: "folder", i18nKey: "navigation.accountFiles" },
   { key: "settings", to: "/account", iconKey: "settings", i18nKey: "navigation.settings" },
 ];
 
@@ -137,7 +140,8 @@ export function Sidebar() {
   const isGroup3Active = (key: string) => {
     if (!isAccountPath) return false;
     if (key === "accounts") return accountTab === "accounts";
-    if (key === "settings") return accountTab !== "accounts";
+    if (key === "files") return accountTab === "files";
+    if (key === "settings") return accountTab !== "accounts" && accountTab !== "files";
     return false;
   };
 

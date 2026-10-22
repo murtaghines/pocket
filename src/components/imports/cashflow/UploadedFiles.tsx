@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   FileSpreadsheet,
   ChevronRight,
@@ -40,6 +40,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useLocalization } from "@/hooks/useLocalization";
 import type { Import } from "@/hooks/useImports";
+import { useReassignImport } from "@/hooks/useImportFile";
 
 export interface UploadedFilesDropdownProps {
   imports: Import[];
@@ -121,8 +122,6 @@ export interface UploadedFilesHistoryListProps {
   pendingImportIds: Set<string>;
   retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
   retryingImportIds?: Set<string>;
-  /** Render without the side-panel header and account group headers, for inline use. */
-  embedded?: boolean;
 }
 
 export function UploadedFilesHistoryList({
@@ -133,10 +132,8 @@ export function UploadedFilesHistoryList({
   pendingImportIds,
   retryImport,
   retryingImportIds,
-  embedded = false,
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
-  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   // Fetch all distinct months covered by transactions of each import.
@@ -210,32 +207,7 @@ export function UploadedFilesHistoryList({
     });
   })();
 
-  const changeAcct = async (importId: string, newId: string) => {
-    await supabase.from("imports").update({ account_id: newId }).eq("id", importId);
-
-    // Remove true duplicates before reassigning to avoid unique constraint violation
-    const [{ data: srcTx }, { data: dstTx }] = await Promise.all([
-      supabase.from("transactions").select("id, fingerprint, domain").eq("import_id", importId).not("fingerprint", "is", null),
-      supabase.from("transactions").select("fingerprint, domain").eq("account_id", newId).not("fingerprint", "is", null),
-    ]);
-    if (srcTx && dstTx) {
-      const dstKeys = new Set(dstTx.map(t => `${t.domain}|${t.fingerprint}`));
-      const conflictIds = srcTx.filter(t => dstKeys.has(`${t.domain}|${t.fingerprint}`)).map(t => t.id);
-      if (conflictIds.length > 0) {
-        await supabase.from("transactions").delete().in("id", conflictIds);
-      }
-    }
-
-    await supabase.from("transactions").update({ account_id: newId }).eq("import_id", importId);
-    try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
-    queryClient.invalidateQueries({ queryKey: ["imports"] });
-    queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-opening-balances"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
-    queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
-  };
+  const changeAcct = useReassignImport();
 
   const fileTypeLabel = (imp: Import) => {
     const fromName = imp.file_name.split(".").pop()?.toUpperCase();
@@ -377,8 +349,7 @@ export function UploadedFilesHistoryList({
   };
 
   return (
-    <div className={embedded ? undefined : "flex flex-col h-full min-h-0"}>
-      {!embedded && (
+    <div className="flex flex-col h-full min-h-0">
       <div className="px-6 py-5 border-b border-border flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold tracking-tight text-foreground leading-tight">
@@ -398,14 +369,13 @@ export function UploadedFilesHistoryList({
           </SheetClose>
         </div>
       </div>
-      )}
 
       {imports.length === 0 ? (
         <p className="text-sm text-muted-foreground py-12 text-center">
           No files uploaded yet.
         </p>
       ) : (
-        <div className={embedded ? undefined : "flex-1 min-h-0 overflow-auto"}>
+        <div className="flex-1 min-h-0 overflow-auto">
           {groupedImports.map(([accountId, groupImports]) => {
             const account = accountId !== "__unassigned__"
               ? cashAccounts.find((a) => a.id === accountId)
@@ -416,7 +386,6 @@ export function UploadedFilesHistoryList({
             return (
               <div key={accountId}>
                 {/* Account group header */}
-                {!embedded && (
                 <div className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm px-6 py-2 flex items-center gap-2 border-b border-border">
                   {account?.color && (
                     <span
@@ -431,7 +400,6 @@ export function UploadedFilesHistoryList({
                     {groupSortedImports.length} {groupSortedImports.length === 1 ? "file" : "files"}
                   </span>
                 </div>
-                )}
                 <div className="divide-y divide-border">
           {groupSortedImports.map((imp) => (
             <div
@@ -498,7 +466,7 @@ export function UploadedFilesHistoryList({
                 </div>
 
                 {/* Row 2: meta + delete on the right */}
-                <div className={cn("mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground", embedded ? "flex-wrap gap-y-1" : "whitespace-nowrap")}>
+                <div className="mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
 
                   <span className="font-medium tabular-nums">
                     {fileTypeLabel(imp)}
