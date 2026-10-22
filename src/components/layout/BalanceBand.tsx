@@ -24,7 +24,7 @@ export function BalanceBand() {
   const { selectedMonth, setSelectedMonth, availableMonths, openingBalance, transactionCount } =
     useMonthSelection();
   const { selectedPeriod, setSelectedPeriod, availablePeriods } = usePeriodSelection();
-  const { getCashAccounts } = useAccounts();
+  const { accounts: allAccounts, getCashAccounts } = useAccounts();
   const { user } = useAuth();
   const { preferences } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
@@ -67,7 +67,14 @@ export function BalanceBand() {
     return null;
   }, [tab, selectedMonth, selectedPeriod.week, selectedPeriod.year]);
 
-  const savingsKey = useMemo(() => [...savingsAccountIds].sort().join(","), [savingsAccountIds]);
+  const hiddenAccountIds = useMemo(
+    () => new Set(allAccounts.filter((a) => a.hidden_from_dashboard).map((a) => a.id)),
+    [allAccounts],
+  );
+  const savingsKey = useMemo(
+    () => [...savingsAccountIds, ...[...hiddenAccountIds].map((id) => `hidden:${id}`)].sort().join(","),
+    [savingsAccountIds, hiddenAccountIds],
+  );
 
   const { data: totalBalance } = useQuery({
     queryKey: ["band-total-balance", user?.id, periodRange?.start, periodRange?.end, savingsKey],
@@ -81,7 +88,7 @@ export function BalanceBand() {
       if (error) throw error;
       const sum = (data ?? []).reduce(
         (acc: number, r: { account_id: string; latest_balance: number }) => {
-          if (savingsAccountIds.has(r.account_id)) return acc;
+          if (savingsAccountIds.has(r.account_id) || hiddenAccountIds.has(r.account_id)) return acc;
           return acc + convertAmount(Number(r.latest_balance), "EUR", userCurrency);
         },
         0,

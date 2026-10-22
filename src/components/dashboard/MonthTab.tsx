@@ -62,8 +62,8 @@ export function MonthTab() {
   const range = latestMonthLabel ? periodRangeOf(latestMonthLabel, "month") : null;
   const prevRange = previousMonth.month ? periodRangeOf(previousMonth.month, "month") : null;
 
-  const { transactions, isLoading } = useTransactions({ startDate: range?.start, endDate: range?.end });
-  const { closingBalance: monthClosingBalance } = useAccountPeriodSummary(latestMonthLabel);
+  const { transactions, isLoading } = useTransactions({ startDate: range?.start, endDate: range?.end, excludeHiddenAccounts: true });
+  const { closingBalance: monthClosingBalance } = useAccountPeriodSummary(latestMonthLabel, "CASHFLOW", undefined, true);
 
   useEffect(() => {
     if (!prefsLoading && preferences && preferences.id) {

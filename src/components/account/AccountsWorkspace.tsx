@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAccounts, type Account } from "@/hooks/useAccounts";
 import { useImports } from "@/hooks/useImports";
 import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColors";
-import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
+import { getAccountTypeIcon, getAccountTypeI18nKey, compareAccountsForDisplay } from "@/lib/accountTypes";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 import { AccountDetailPanel } from "@/components/account/AccountDetailPanel";
 import { AccountDeleteDialog } from "@/components/account/AccountDeleteDialog";
@@ -15,7 +15,8 @@ import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 
 type RoleTab = "bank" | "investment";
 
-const byCreated = (a: Account, b: Account) => a.created_at.localeCompare(b.created_at);
+const byDisplayOrder = (a: Account, b: Account) =>
+  compareAccountsForDisplay(a, b) || getAccountDisplayName(a).localeCompare(getAccountDisplayName(b));
 
 function SectionLabel({ children, count }: { children: React.ReactNode; count: number }) {
   return (
@@ -43,8 +44,8 @@ export function AccountsWorkspace() {
 
   const roleOf = (a: Account): RoleTab => (a.account_role === "INVESTMENT" ? "investment" : "bank");
   const inRole = useMemo(() => accounts.filter((a) => roleOf(a) === role), [accounts, role]);
-  const active = useMemo(() => inRole.filter((a) => !a.archived).sort(byCreated), [inRole]);
-  const archived = useMemo(() => inRole.filter((a) => a.archived).sort(byCreated), [inRole]);
+  const active = useMemo(() => inRole.filter((a) => !a.archived).sort(byDisplayOrder), [inRole]);
+  const archived = useMemo(() => inRole.filter((a) => a.archived).sort(byDisplayOrder), [inRole]);
 
   const counts = useMemo(() => ({
     bank: accounts.filter((a) => a.account_role !== "INVESTMENT" && !a.archived).length,

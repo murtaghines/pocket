@@ -160,3 +160,30 @@ export function getAccountTypeDescriptionKey(type: AccountType): string {
   };
   return keys[type];
 }
+
+/** The order accounts are listed in everywhere: checking first, then joint, then savings, then the rest. */
+const DISPLAY_PRIORITY: Record<string, number> = {
+  CHECKING: 0,
+  CASH: 1, CREDIT_CARD: 1,
+  JOINT: 2,
+  SAVINGS: 3,
+  INVESTMENTS: 4, BROKERAGE: 4, CRYPTO: 4, RETIREMENT: 4, REAL_ESTATE: 4, OTHER_INVESTMENT: 4,
+  LOAN: 5,
+  OTHER: 6,
+};
+
+export function compareAccountsForDisplay(
+  a: { account_type: string; name?: string | null },
+  b: { account_type: string; name?: string | null },
+): number {
+  const prioA = DISPLAY_PRIORITY[a.account_type] ?? 6;
+  const prioB = DISPLAY_PRIORITY[b.account_type] ?? 6;
+  if (prioA !== prioB) return prioA - prioB;
+  if (a.account_type === "SAVINGS") {
+    // personal savings before the shared one
+    const jointA = a.name?.toLowerCase().includes("joint") ? 1 : 0;
+    const jointB = b.name?.toLowerCase().includes("joint") ? 1 : 0;
+    if (jointA !== jointB) return jointA - jointB;
+  }
+  return 0;
+}

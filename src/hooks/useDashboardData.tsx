@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useAccounts } from "./useAccounts";
 import type { MonthlyData } from "@/lib/mockData";
 import type { Database } from "@/integrations/supabase/types";
 import type { Granularity } from "@/lib/analytics";
@@ -11,6 +12,15 @@ type AppDomain = Database["public"]["Enums"]["app_domain"];
 interface UseDashboardDataOptions {
   domain?: AppDomain;
   granularity?: Granularity;
+}
+
+/** Ids of accounts the user flagged "exclude from dashboard" (empty when `active` is false). */
+export function useHiddenAccountIds(active = true): Set<string> {
+  const { accounts } = useAccounts();
+  return useMemo(
+    () => new Set(active ? accounts.filter((a) => a.hidden_from_dashboard).map((a) => a.id) : []),
+    [accounts, active],
+  );
 }
 
 export function useDashboardData(options: UseDashboardDataOptions = {}) {
@@ -107,8 +117,11 @@ export function useAccountPeriodSummary(
   monthKey: string | null,
   domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW",
   excludeAccountIds?: Set<string>,
+  /** Dashboard callers drop accounts flagged "exclude from dashboard"; the Transactions page keeps them. */
+  excludeHidden = false,
 ) {
   const { user } = useAuth();
+  const hiddenIds = useHiddenAccountIds(excludeHidden);
 
   const range = useMemo(() => {
     if (!monthKey) return null;
@@ -119,7 +132,7 @@ export function useAccountPeriodSummary(
     return { start, end };
   }, [monthKey]);
 
-  const excludeKey = excludeAccountIds ? [...excludeAccountIds].sort().join(",") : "";
+  const excludeKey = [...(excludeAccountIds ?? []), ...[...hiddenIds].map((id) => `hidden:${id}`)].sort().join(",");
 
   const { data = { total: null as number | null, byAccount: {} as Record<string, number> }, isLoading } = useQuery({
     queryKey: ["account-period-summary", user?.id, domain, monthKey, excludeKey],
@@ -136,7 +149,7 @@ export function useAccountPeriodSummary(
       (data ?? []).forEach((row: { account_id: string; latest_balance: number }) => {
         const bal = Number(row.latest_balance);
         byAccount[row.account_id] = bal;
-        if (!excludeAccountIds?.has(row.account_id)) total += bal;
+        if (!excludeAccountIds?.has(row.account_id) && !hiddenIds.has(row.account_id)) total += bal;
       });
       return { total: Math.round(total * 100) / 100, byAccount };
     },
@@ -153,9 +166,11 @@ export function usePeriodSummaryByRange(
   domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW",
 ) {
   const { user } = useAuth();
+  const hiddenIds = useHiddenAccountIds(true);
+  const hiddenKey = [...hiddenIds].sort().join(",");
 
   const { data = { total: null as number | null, byAccount: {} as Record<string, number> }, isLoading } = useQuery({
-    queryKey: ["account-period-summary", user?.id, domain, startDate, endDate],
+    queryKey: ["account-period-summary", user?.id, domain, startDate, endDate, hiddenKey],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_account_period_summary", {
         p_user_id: user!.id,
@@ -169,7 +184,7 @@ export function usePeriodSummaryByRange(
       (data ?? []).forEach((row: { account_id: string; latest_balance: number }) => {
         const bal = Number(row.latest_balance);
         byAccount[row.account_id] = bal;
-        total += bal;
+        if (!hiddenIds.has(row.account_id)) total += bal;
       });
       return { total: Math.round(total * 100) / 100, byAccount };
     },

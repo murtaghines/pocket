@@ -9,7 +9,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 import { FileDetailPanel } from "@/components/account/FileDetailPanel";
-import { getFileKind } from "@/components/account/fileBits";
+import { getFileKind, FileTypeIcon } from "@/components/account/fileBits";
 
 type RoleTab = "bank" | "investment";
 
@@ -88,7 +88,7 @@ export function FilesWorkspace() {
           <p className="px-2.5 py-6 text-center text-sm text-muted-foreground">{t("files.empty", "No files uploaded yet.")}</p>
         ) : (
           visible.map((f) => {
-            const { Icon, label } = getFileKind(f);
+            const { label } = getFileKind(f);
             const active = f.id === selected?.id;
             return (
               <button
@@ -100,16 +100,16 @@ export function FilesWorkspace() {
                   active ? "bg-primary/[0.08]" : "hover:bg-muted/60",
                 )}
               >
-                <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[10px] bg-primary/[0.12] text-primary">
-                  <Icon className="h-4 w-4" strokeWidth={2} />
-                </div>
+                <FileTypeIcon label={label} width={26} className="mx-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className={cn("truncate text-[13.5px]", active ? "font-semibold text-primary" : "font-medium text-foreground")} title={f.file_name}>{f.file_name}</div>
                   <div className="truncate text-[11.5px] text-muted-foreground">{accountName(f.account_id)} · {formatDate(f.uploaded_at)}</div>
                 </div>
-                <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold", f.status === "FAILED" ? "bg-destructive/10 text-destructive" : f.status === "NORMALIZED" ? "bg-muted text-muted-foreground" : "bg-warning/20 text-warning-foreground")}>
-                  {label}
-                </span>
+                {f.status !== "NORMALIZED" && (
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold", f.status === "FAILED" ? "bg-destructive/10 text-destructive" : "bg-warning/20 text-warning-foreground")}>
+                    {t(`files.status.${f.status === "FAILED" ? "failed" : f.status === "PARTIAL" ? "partial" : f.status === "PARSED" ? "processing" : "uploading"}`)}
+                  </span>
+                )}
               </button>
             );
           })

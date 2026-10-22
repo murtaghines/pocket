@@ -17,13 +17,16 @@ paths:
   `?tab=files` (`FilesWorkspace`) and Settings (anything else, `AccountSettingsTab`: preference cards,
   data export, danger zone). Accounts and Files are master/detail workspaces cloned from
   Categories & rules and built on `components/layout/WorkspaceShell` — it owns the 180px banner, the
-  translucent action pill + Bank/Investment selector (both 36px tall) and the content overlap (cards
-  start 78px from the top). Never tweak those numbers per page; Categories uses `WorkspaceBanner` too.
+  translucent action pill + Bank/Investment selector (both exactly 32px tall: frame h-8, buttons h-7), the
+  grid row capped to the viewport (`grid-rows-[minmax(0,1fr)]`, so long lists scroll inside their card and the
+  cards always keep 32px to the bottom edge) and the content overlap (cards start 78px from the top).
+  Page titles are `text-[19px] font-semibold tracking-[-0.01em]` Inter on every page (same as Transactions) —
+  never `font-heading`. Detail-panel hero titles are 17px. Never tweak those numbers per page; Categories uses `WorkspaceBanner` too.
   `/profile` redirects to `/account`; `/my-data?tab=accounts` → `/account?tab=accounts`; old
   `?tab=preferences|security` land on Settings. Deep links: `?account=<id>`, `?tab=files&file=<id>`,
   `?tab=files&account=<id>` (filters the list).
 - Accounts detail (`AccountDetailPanel`): no balance/transactions (those live in Dashboard/Transactions);
-  shows files, months, period, and settings edited in place (initial balance, share % for JOINT,
+  shows four tiles (files, months, currency, period) and settings edited in place (initial balance, share % for JOINT,
   exclude-from-dashboard, notes). The icon is fixed per account type; hovering it opens
   `AccountIdentityDialog` (name, nickname, colour from `ACCOUNT_COLOR_PALETTE`). Primary account is the
   star in the header. Account number is no longer asked for (column kept). Files here are read-only
@@ -46,11 +49,18 @@ paths:
 - **Never insert into `accounts` directly.** Always through `useAccounts().createAccount`/
   `updateAccount` and the shared `AccountFormDialog` UI — reused by `AccountsWorkspace`,
   `AccountSelectDialog` (imports), and `AccountsStackCard` (dashboard).
-- `getCashAccounts({ includeHidden?: boolean })` — default `false` (filters hidden accounts
-  for dashboard consumers). Account manager views should pass `{ includeHidden: true }` or
-  filter `accounts` directly.
-- `accounts.hidden_from_dashboard` (bool NOT NULL DEFAULT false) — controls visibility in
-  `AccountsStackCard` on the dashboard. Exposed as "Exclude from dashboard" in the form and detail panel.
+- `getCashAccounts({ includeArchived?, includeHidden? })` — both default `false`, so it returns the accounts the
+  dashboard should show. Account manager / Transactions views must use `accounts` directly or pass both.
+- Accounts are always listed in the order of `compareAccountsForDisplay` (`lib/accountTypes.ts`): checking, then
+  joint, then savings (personal before joint), then the rest — same as the Transactions account tabs.
+- `accounts.hidden_from_dashboard` (bool NOT NULL DEFAULT false) — "Exclude from dashboard" removes the account
+  from EVERY dashboard number: `mv_daily_totals` / `mv_opening_balances`, `get_dashboard_aggregates`,
+  `get_category_trends`, `get_weekday_spending`, `get_balance_at_date` filter it in SQL; the client drops it from
+  the totals it sums (`useAccountPeriodSummary(..., excludeHidden)`, `usePeriodSummaryByRange`, BalanceBand),
+  from `useTransactions({ excludeHiddenAccounts })` and the Year sankey. The Transactions page and per-account
+  RPCs (`get_account_period_summary`, `get_account_opening_balances`) deliberately still include it. Any NEW
+  dashboard aggregate must apply the same filter. `updateAccount` invalidates every query so the dashboard is
+  never stale after an account edit.
 - `accounts.split_percentage` (smallint NOT NULL DEFAULT 100, range 1–100) — the user's
   ownership share of a joint account. Only shown in the form when `account_type === 'JOINT'`
   (defaults to 50). All dashboard SQL RPCs and materialized views multiply amounts by
