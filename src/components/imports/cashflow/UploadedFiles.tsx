@@ -121,6 +121,8 @@ export interface UploadedFilesHistoryListProps {
   pendingImportIds: Set<string>;
   retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
   retryingImportIds?: Set<string>;
+  /** Render without the side-panel header and account group headers, for inline use. */
+  embedded?: boolean;
 }
 
 export function UploadedFilesHistoryList({
@@ -131,6 +133,7 @@ export function UploadedFilesHistoryList({
   pendingImportIds,
   retryImport,
   retryingImportIds,
+  embedded = false,
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
   const queryClient = useQueryClient();
@@ -374,7 +377,8 @@ export function UploadedFilesHistoryList({
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className={embedded ? undefined : "flex flex-col h-full min-h-0"}>
+      {!embedded && (
       <div className="px-6 py-5 border-b border-border flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold tracking-tight text-foreground leading-tight">
@@ -394,13 +398,14 @@ export function UploadedFilesHistoryList({
           </SheetClose>
         </div>
       </div>
+      )}
 
       {imports.length === 0 ? (
         <p className="text-sm text-muted-foreground py-12 text-center">
           No files uploaded yet.
         </p>
       ) : (
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div className={embedded ? undefined : "flex-1 min-h-0 overflow-auto"}>
           {groupedImports.map(([accountId, groupImports]) => {
             const account = accountId !== "__unassigned__"
               ? cashAccounts.find((a) => a.id === accountId)
@@ -411,6 +416,7 @@ export function UploadedFilesHistoryList({
             return (
               <div key={accountId}>
                 {/* Account group header */}
+                {!embedded && (
                 <div className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm px-6 py-2 flex items-center gap-2 border-b border-border">
                   {account?.color && (
                     <span
@@ -425,6 +431,7 @@ export function UploadedFilesHistoryList({
                     {groupSortedImports.length} {groupSortedImports.length === 1 ? "file" : "files"}
                   </span>
                 </div>
+                )}
                 <div className="divide-y divide-border">
           {groupSortedImports.map((imp) => (
             <div
@@ -491,7 +498,7 @@ export function UploadedFilesHistoryList({
                 </div>
 
                 {/* Row 2: meta + delete on the right */}
-                <div className="mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground whitespace-nowrap">
+                <div className={cn("mt-2.5 flex items-center gap-x-2 text-[11px] text-muted-foreground", embedded ? "flex-wrap gap-y-1" : "whitespace-nowrap")}>
 
                   <span className="font-medium tabular-nums">
                     {fileTypeLabel(imp)}

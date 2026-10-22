@@ -1,17 +1,16 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BankStatementsTabsView } from "@/components/imports/BankStatementsTabsView";
 import { InvestmentTabsView } from "@/components/imports/InvestmentTabsView";
 import { CategoriesTab } from "@/components/imports/CategoriesTab";
-import { AccountBankAccountsTab } from "@/components/account/AccountBankAccountsTab";
 import { useMonthSelection } from "@/hooks/usePeriodSelection";
 
-export type DataTab = "transactions" | "investments" | "categories" | "accounts";
+export type DataTab = "transactions" | "investments" | "categories";
 
 /**
  * MyData — full-screen workspace ("Data" section: transactions / investment files /
- * categories & rules / accounts). The header's SecondaryNavBar drives the tab switch via `?tab=`;
+ * categories & rules). The header's SecondaryNavBar drives the tab switch via `?tab=`;
  * each view renders its own toolbar/canvas edge-to-edge.
  */
 export default function MyData() {
@@ -22,7 +21,6 @@ export default function MyData() {
   const tab: DataTab =
     tabParam === "investments" ? "investments"
     : tabParam === "categories" ? "categories"
-    : tabParam === "accounts" ? "accounts"
     : "transactions";
 
   const monthParam = searchParams.get("month");
@@ -70,16 +68,14 @@ export default function MyData() {
   // no way to reach it).
   const isFullBleedTab = tab === "transactions" || tab === "categories";
 
+  // Accounts moved to /account; keep old deep links working.
+  if (tabParam === "accounts") return <Navigate to="/account?tab=accounts" replace />;
+
   return (
     <DashboardLayout fullBleed={isFullBleedTab}>
       {tab === "transactions" && <BankStatementsTabsView activeMonth={activeMonth} onMonthChange={setMonth} />}
       {tab === "investments" && <InvestmentTabsView activeMonth={activeMonth} onMonthChange={setMonth} />}
       {tab === "categories" && <CategoriesTab />}
-      {tab === "accounts" && (
-        <div className="px-3 md:px-[34px] py-6">
-          <AccountBankAccountsTab />
-        </div>
-      )}
     </DashboardLayout>
   );
 }
