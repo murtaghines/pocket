@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ACCOUNT_COLOR_PALETTE, getDefaultAccountColor } from "@/lib/accountColors";
+import { getDefaultAccountColor } from "@/lib/accountColors";
+import { AccountColorPicker } from "@/components/settings/AccountColorPicker";
 import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
 import {
   type AccountType,
@@ -34,7 +35,6 @@ export interface AccountFormValues {
   color: string;
   account_type: AccountType;
   currency_base: string;
-  account_number?: string;
   initial_balance?: number;
   split_percentage?: number;
   notes?: string;
@@ -87,7 +87,6 @@ export function AccountFormDialog({
   const [name, setName] = useState("");
   const [color, setColor] = useState("");
   const [currencyBase, setCurrencyBase] = useState(defaultCurrency);
-  const [accountNumber, setAccountNumber] = useState("");
   const [initialBalance, setInitialBalance] = useState("");
   const [splitPercentage, setSplitPercentage] = useState("50");
   const [notes, setNotes] = useState("");
@@ -103,7 +102,6 @@ export function AccountFormDialog({
       setName(initialValues?.name || "");
       setColor(initialValues?.color || getDefaultAccountColor(0));
       setCurrencyBase(initialValues?.currency_base || defaultCurrency);
-      setAccountNumber(initialValues?.account_number || "");
       setInitialBalance(
         initialValues?.initial_balance != null && initialValues.initial_balance !== 0
           ? String(initialValues.initial_balance)
@@ -135,7 +133,6 @@ export function AccountFormDialog({
       color,
       account_type: accountType,
       currency_base: currencyBase,
-      account_number: accountNumber.trim() || undefined,
       initial_balance: Number.isFinite(parsedBalance) ? parsedBalance : 0,
       split_percentage: accountType === "JOINT" && parsedSplit > 0 && parsedSplit <= 100
         ? parsedSplit
@@ -243,39 +240,23 @@ export function AccountFormDialog({
             </p>
           </div>
 
-          {/* Currency + Account number — two-column on wider screens */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
-                {t("accounts.currency", "Currency")}
-              </label>
-              <div className="pk-select-wrap">
-                <select
-                  value={currencyBase}
-                  onChange={(e) => setCurrencyBase(e.target.value)}
-                  className={inputClass}
-                >
-                  {SUPPORTED_CURRENCIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code} {c.symbol} — {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
-                {t("accounts.accountNumber", "Account number")}{" "}
-                <span className="text-muted-foreground/60">
-                  ({tp("accounts.optional", "optional")})
-                </span>
-              </label>
-              <Input
-                placeholder={t("accounts.accountNumberPlaceholder", "For your reference only")}
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
+          {/* Currency */}
+          <div className="space-y-2">
+            <label className="text-[13px] font-medium text-muted-foreground">
+              {t("accounts.currency", "Currency")}
+            </label>
+            <div className="pk-select-wrap">
+              <select
+                value={currencyBase}
+                onChange={(e) => setCurrencyBase(e.target.value)}
                 className={inputClass}
-              />
+              >
+                {SUPPORTED_CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} {c.symbol} — {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -332,72 +313,7 @@ export function AccountFormDialog({
             <label className="text-[13px] font-medium text-muted-foreground">
               {tp("accounts.color", "Color")}
             </label>
-            <div className="rounded-xl bg-muted p-4 space-y-2.5">
-              <div className="flex flex-wrap gap-2">
-                {ACCOUNT_COLOR_PALETTE.blues.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setColor(c)}
-                    className={cn(
-                      "w-8 h-8 rounded-full transition-transform hover:scale-110",
-                      color.toLowerCase() === c.toLowerCase()
-                        ? "ring-2 ring-offset-2 ring-primary"
-                        : "",
-                    )}
-                    style={{ backgroundColor: c }}
-                    aria-label={c}
-                  />
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {ACCOUNT_COLOR_PALETTE.yellows.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setColor(c)}
-                    className={cn(
-                      "w-8 h-8 rounded-full transition-transform hover:scale-110",
-                      color.toLowerCase() === c.toLowerCase()
-                        ? "ring-2 ring-offset-2 ring-primary"
-                        : "",
-                    )}
-                    style={{ backgroundColor: c }}
-                    aria-label={c}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <label className="text-[13px] font-medium text-muted-foreground">
-              {t("accounts.notes", "Notes")}{" "}
-              <span className="text-muted-foreground/60">
-                ({tp("accounts.optional", "optional")})
-              </span>
-            </label>
-            <Textarea
-              placeholder={t("accounts.notesPlaceholder", "e.g. Main salary account, opened in 2019")}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 py-2.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none placeholder:text-muted-foreground/50"
-            />
-          </div>
-
-          {/* Exclude from dashboard */}
-          <div className="flex items-center justify-between gap-4 rounded-xl bg-muted px-3.5 py-3">
-            <div>
-              <label htmlFor="hide-from-dashboard" className="text-[13px] font-medium text-foreground">
-                {t("accounts.hideFromDashboard", "Exclude from dashboard")}
-              </label>
-              <p className="text-xs text-muted-foreground">
-                {t("accounts.hideFromDashboardHelp", "Hide this account from dashboard totals and charts")}
-              </p>
-            </div>
-            <Switch id="hide-from-dashboard" checked={hideFromDashboard} onCheckedChange={setHideFromDashboard} />
+            <AccountColorPicker value={color} onChange={setColor} />
           </div>
 
         </DialogBody>
