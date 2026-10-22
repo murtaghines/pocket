@@ -10,24 +10,27 @@ export function useReassignImport() {
   const queryClient = useQueryClient();
 
   return useCallback(async (importId: string, newAccountId: string) => {
-    await supabase.from("imports").update({ account_id: newAccountId }).eq("id", importId);
+    const check = (error: { message: string } | null) => { if (error) throw new Error(error.message); };
 
-    const [{ data: srcTx }, { data: dstTx }] = await Promise.all([
+    // Drop rows that already exist in the destination (the unique index is per account), then
+    // move the transactions, and only then re-point the import, so a failure can't leave an import
+    // on one account with its transactions on another.
+    const [src, dst] = await Promise.all([
       supabase.from("transactions").select("id, fingerprint, domain").eq("import_id", importId).not("fingerprint", "is", null),
       supabase.from("transactions").select("fingerprint, domain").eq("account_id", newAccountId).not("fingerprint", "is", null),
     ]);
-    if (srcTx && dstTx) {
-      const dstKeys = new Set(dstTx.map((t) => `${t.domain}|${t.fingerprint}`));
-      const conflictIds = srcTx.filter((t) => dstKeys.has(`${t.domain}|${t.fingerprint}`)).map((t) => t.id);
-      if (conflictIds.length > 0) {
-        await supabase.from("transactions").delete().in("id", conflictIds);
-      }
-    }
+    check(src.error);
+    check(dst.error);
+    const dstKeys = new Set((dst.data ?? []).map((t) => `${t.domain}|${t.fingerprint}`));
+    const conflictIds = (src.data ?? []).filter((t) => dstKeys.has(`${t.domain}|${t.fingerprint}`)).map((t) => t.id);
+    if (conflictIds.length > 0) check((await supabase.from("transactions").delete().in("id", conflictIds)).error);
 
-    await supabase.from("transactions").update({ account_id: newAccountId }).eq("import_id", importId);
+    check((await supabase.from("transactions").update({ account_id: newAccountId }).eq("import_id", importId)).error);
+    check((await supabase.from("imports").update({ account_id: newAccountId }).eq("id", importId)).error);
+
     try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
     for (const key of [
-      "imports", "transactions", "month-transactions-inline", "dashboard-period-series",
+      "imports", "transactions", "band-total-balance", "month-transactions-inline", "dashboard-period-series",
       "dashboard-opening-balances", "dashboard-aggregates", "account-period-summary", "import-preview", "account-detail",
     ]) {
       queryClient.invalidateQueries({ queryKey: [key] });

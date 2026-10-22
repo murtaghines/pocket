@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   FileSpreadsheet,
   ChevronRight,
@@ -443,7 +444,7 @@ export function UploadedFilesHistoryList({
                       <div className="pk-select-wrap">
                         <select
                           value={imp.account_id || ""}
-                          onChange={(e) => changeAcct(imp.id, e.target.value)}
+                          onChange={(e) => changeAcct(imp.id, e.target.value).catch(() => toast.error("Couldn't move the file"))}
                           disabled={!!imp.locked}
                           className={cn(
                             "h-7 min-w-[120px] max-w-[180px] border border-input bg-background px-2.5 text-[12px] font-medium text-foreground hover:bg-accent hover:border-primary/40 transition-colors rounded-md",
