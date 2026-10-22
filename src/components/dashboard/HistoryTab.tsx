@@ -22,7 +22,7 @@ export function HistoryTab() {
   const initialSearch = searchParams.get("search") ?? "";
   const [page, setPage] = useState(1);
 
-  const { transactions, isLoading, totalCount } = useTransactions({ page, pageSize: PAGE_SIZE });
+  const { transactions, isLoading, totalCount } = useTransactions({ page, pageSize: PAGE_SIZE, excludeHiddenAccounts: true });
   const [granularity] = useGranularity();
 
   const { monthlyData: periodData, isLoading: isDashLoading } = useDashboardData({ granularity });

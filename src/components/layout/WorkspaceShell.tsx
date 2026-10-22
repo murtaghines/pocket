@@ -26,23 +26,23 @@ export function WorkspaceBanner<T extends string>({ title, subtitle, action, sel
     <div className="shrink-0 bg-primary px-3 pb-6 pt-4 md:h-[180px] md:px-[34px] md:pb-0 md:pt-[22px]">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="font-heading text-[19px] font-semibold leading-none tracking-[-0.01em] text-white">{title}</h1>
+          <h1 className="select-none text-[19px] font-semibold leading-none tracking-[-0.01em] text-white">{title}</h1>
           <p className="mt-1.5 text-[12.5px] font-medium tabular-nums text-white/80">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 self-start">
           {action && (
-            <div className="flex h-9 items-center rounded-[12px] bg-white/[0.16] p-1">
+            <div className="flex h-8 items-center rounded-[10px] bg-white/[0.16] p-0.5">
               <button
                 type="button"
                 onClick={action.onClick}
-                className="flex h-7 items-center gap-1.5 rounded-[9px] px-[13px] text-[13px] font-medium leading-none text-white/90 transition-colors hover:bg-white/10"
+                className="flex h-7 items-center gap-1.5 rounded-[8px] px-[13px] text-[13px] font-medium leading-none text-white/90 transition-colors hover:bg-white/10"
               >
                 <Plus className="h-[14px] w-[14px]" strokeWidth={2.2} />
                 {action.label}
               </button>
             </div>
           )}
-          <div className="flex h-9 items-center gap-[2px] rounded-[12px] bg-white/[0.16] p-1" role="tablist">
+          <div className="flex h-8 items-center gap-[2px] rounded-[10px] bg-white/[0.16] p-0.5" role="tablist">
             {selector.options.map((opt) => {
               const active = opt.value === selector.value;
               return (
@@ -53,7 +53,7 @@ export function WorkspaceBanner<T extends string>({ title, subtitle, action, sel
                   aria-selected={active}
                   onClick={() => selector.onChange(opt.value)}
                   className={cn(
-                    "flex h-7 items-center gap-1.5 rounded-[9px] px-[13px] text-[13px] leading-none transition-colors",
+                    "flex h-7 items-center gap-1.5 rounded-[8px] px-[13px] text-[13px] leading-none transition-colors",
                     active ? "bg-white font-semibold text-primary" : "font-medium text-white/85 hover:bg-white/10",
                   )}
                 >
@@ -82,7 +82,7 @@ export function WorkspaceShell<T extends string>({ left, right, ...banner }: Wor
     <div className="flex flex-col bg-background md:h-full md:overflow-hidden">
       <WorkspaceBanner {...banner} />
       <div className="px-3 pb-6 pt-4 md:-mt-[102px] md:min-h-0 md:flex-1 md:overflow-hidden md:px-[34px] md:pb-8 md:pt-0">
-        <div className="grid grid-cols-1 gap-4 md:h-full md:grid-cols-[336px_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-4 md:h-full md:grid-cols-[336px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)]">
           <div className="flex flex-col md:h-full md:min-h-0">{left}</div>
           <div className="md:h-full md:min-h-0">{right}</div>
         </div>

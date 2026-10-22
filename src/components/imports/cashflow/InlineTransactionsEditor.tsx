@@ -73,6 +73,7 @@ import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
 import { TransactionContextMenu } from "./TransactionContextMenu";
 import { toast as sonnerToast } from "sonner";
+import { compareAccountsForDisplay } from "@/lib/accountTypes";
 import { isManualTransaction } from "@/lib/transactionSource";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { ProcessingPanel } from "./ProcessingPanel";
@@ -970,26 +971,16 @@ export function InlineTransactionsEditor({
           })();
       groups.push({ accountId: acctId, accountName: name, accountColor: color, openingBalance: opening, closingBalance: closing, transactions: txs });
     }
-    const accountTypePriority: Record<string, number> = {
-      CHECKING: 0, CASH: 1, CREDIT_CARD: 1, JOINT: 2, SAVINGS: 3,
-      INVESTMENTS: 4, BROKERAGE: 4, CRYPTO: 4, RETIREMENT: 4,
-      REAL_ESTATE: 4, OTHER_INVESTMENT: 4, LOAN: 5, OTHER: 6,
-    };
     groups.sort((a, b) => {
       if (a.accountId === null) return 1;
       if (b.accountId === null) return -1;
       const acctA = accounts.find(ac => ac.id === a.accountId);
       const acctB = accounts.find(ac => ac.id === b.accountId);
-      const typeA = acctA?.account_type ?? 'OTHER';
-      const typeB = acctB?.account_type ?? 'OTHER';
-      const prioA = accountTypePriority[typeA] ?? 6;
-      const prioB = accountTypePriority[typeB] ?? 6;
-      if (prioA !== prioB) return prioA - prioB;
-      if (typeA === 'SAVINGS' && typeB === 'SAVINGS') {
-        const isJointA = acctA?.name?.toLowerCase().includes('joint') ? 1 : 0;
-        const isJointB = acctB?.name?.toLowerCase().includes('joint') ? 1 : 0;
-        if (isJointA !== isJointB) return isJointA - isJointB;
-      }
+      const byType = compareAccountsForDisplay(
+        { account_type: acctA?.account_type ?? "OTHER", name: acctA?.name },
+        { account_type: acctB?.account_type ?? "OTHER", name: acctB?.name },
+      );
+      if (byType !== 0) return byType;
       return a.accountName.localeCompare(b.accountName);
     });
     return groups;

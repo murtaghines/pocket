@@ -58,6 +58,7 @@ export function WeekTab() {
   const { transactions, isLoading } = useTransactions({
     startDate: range?.start,
     endDate: range?.end,
+    excludeHiddenAccounts: true,
   });
 
   const agg = usePeriodAggregates({

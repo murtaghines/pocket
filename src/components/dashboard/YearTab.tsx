@@ -17,7 +17,7 @@ import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscreti
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 
 import { useTransactions } from "@/hooks/useTransactions";
-import { useDashboardData, useOpeningBalance, usePeriodSummaryByRange } from "@/hooks/useDashboardData";
+import { useDashboardData, useHiddenAccountIds, useOpeningBalance, usePeriodSummaryByRange } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +35,8 @@ export function YearTab() {
   const { t, i18n } = useTranslation("dashboard");
   const { user } = useAuth();
   const { accounts: allAccounts } = useAccounts();
+  const hiddenAccountIds = useHiddenAccountIds();
+  const hiddenAccountKey = [...hiddenAccountIds].sort().join(",");
   const { monthlyData: yearlyData, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
@@ -70,6 +72,7 @@ export function YearTab() {
     endDate: range?.end,
     page: txPage,
     pageSize: PAGE_SIZE,
+    excludeHiddenAccounts: true,
   });
 
   const agg = usePeriodAggregates({
@@ -83,7 +86,7 @@ export function YearTab() {
   });
 
   const { data: sankeyAccountFlows = [] } = useQuery({
-    queryKey: ["year-account-flows", user?.id, selectedYear],
+    queryKey: ["year-account-flows", user?.id, selectedYear, hiddenAccountKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
@@ -96,7 +99,7 @@ export function YearTab() {
       if (error) throw error;
       const accMap = new Map<string, { name: string; income: number; expenses: number }>();
       for (const tx of data ?? []) {
-        if (!tx.account_id) continue;
+        if (!tx.account_id || hiddenAccountIds.has(tx.account_id)) continue;
         const entry = accMap.get(tx.account_id) || { name: "", income: 0, expenses: 0 };
         const amt = Math.abs(convertToUserCurrency(Number(tx.amount)));
         if (tx.movement === "INCOME") entry.income += amt;

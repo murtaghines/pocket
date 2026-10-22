@@ -571,7 +571,7 @@ export function CategoriesEditor() {
         className="flex-1 min-h-0 overflow-hidden"
         style={{ padding: '0 34px 32px', marginTop: -102 }}
       >
-        <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
+        <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)', gridTemplateRows: 'minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
           <div className="flex flex-col h-full">
             {/* Category list card */}
@@ -709,7 +709,7 @@ export function CategoriesEditor() {
 
                     {/* Name + meta */}
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-[20px] font-bold text-foreground truncate">
+                      <h2 className="text-[17px] font-bold text-foreground truncate">
                         {selected.name}
                       </h2>
                       <div className="flex items-center gap-2.5 mt-1 flex-wrap">

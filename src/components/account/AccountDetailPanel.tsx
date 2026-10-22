@@ -19,7 +19,7 @@ import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColo
 import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
 import { getCurrencyByCode } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
-import { getFileKind } from "@/components/account/fileBits";
+import { getFileKind, FileTypeIcon } from "@/components/account/fileBits";
 
 interface AccountDetailPanelProps {
   account: Account;
@@ -159,12 +159,11 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
             <Pencil className="absolute h-5 w-5 text-foreground/60 opacity-0 transition-opacity duration-150 group-hover/icon:opacity-100" />
           </button>
           <div className="min-w-[160px] flex-1">
-            <h2 className="truncate text-[19px] font-bold text-foreground">{getAccountDisplayName(account)}</h2>
+            <h2 className="truncate text-[17px] font-bold text-foreground">{getAccountDisplayName(account)}</h2>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <span className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: `${color}26`, color }}>
                 {t(getAccountTypeI18nKey(account.account_type))}
               </span>
-              <span className="text-[12px] font-medium text-muted-foreground">{account.currency_base}</span>
               {account.split_percentage < 100 && (
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10.5px] font-bold tabular-nums text-primary">
                   {account.split_percentage}%
@@ -218,7 +217,8 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
         <div className="grid grid-cols-2 gap-3 px-[22px] pb-1 pt-4 xl:grid-cols-4">
           <Stat label={t("detail.files", "Files")} value={files.length} />
           <Stat label={t("detail.months", "Months")} value={monthCount} />
-          <Stat label={t("detail.period", "Period")} value={periodLabel} className="col-span-2" />
+          <Stat label={t("accounts.currency", "Currency")} value={account.currency_base} />
+          <Stat label={t("detail.period", "Period")} value={periodLabel} />
         </div>
 
         {/* Settings, edited in place */}
@@ -287,14 +287,11 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
           ) : (
             <ul className="divide-y divide-border/60">
               {files.slice(0, FILES_PREVIEW).map((f) => {
-                const { Icon, label } = getFileKind(f);
+                const { label } = getFileKind(f);
                 return (
                   <li key={f.id} className="flex items-center gap-3 py-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      <Icon className="h-4 w-4" />
-                    </div>
+                    <FileTypeIcon label={label} width={22} className="mx-1" />
                     <span className="min-w-0 flex-1 truncate text-[13.5px] text-foreground" title={f.file_name}>{f.file_name}</span>
-                    <span className="shrink-0 text-[11.5px] font-medium text-muted-foreground">{label}</span>
                     <span className="w-[92px] shrink-0 text-right text-[12px] tabular-nums text-muted-foreground">{formatDate(f.uploaded_at)}</span>
                   </li>
                 );

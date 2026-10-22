@@ -26,7 +26,7 @@ import { useImportPreview, useReassignImport, getImportDownloadUrl } from "@/hoo
 import { useLocalization } from "@/hooks/useLocalization";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
-import { getFileKind, formatBytes, ImportStatusPill } from "@/components/account/fileBits";
+import { getFileKind, formatBytes, ImportStatusPill, FileTypeIcon } from "@/components/account/fileBits";
 
 interface FileDetailPanelProps {
   file: Import;
@@ -53,7 +53,7 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
   const [moving, setMoving] = useState(false);
 
   const isInvestment = file.domain === "INVESTING";
-  const { label: kind, Icon } = getFileKind(file);
+  const { label: kind } = getFileKind(file);
   const account = accounts.find((a) => a.id === file.account_id);
   const candidates = accounts.filter((a) => !a.archived && (a.account_role === "INVESTMENT") === isInvestment);
   const currency = account?.currency_base;
@@ -100,13 +100,10 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
       {/* Hero */}
       <div className="shrink-0 border-b border-border px-[22px] pb-3.5 pt-4" style={{ background: "linear-gradient(180deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--card)) 70%)" }}>
         <div className="flex flex-wrap items-center gap-x-3.5 gap-y-3">
-          <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-primary/[0.12] text-primary">
-            <Icon className="h-[26px] w-[26px]" strokeWidth={2} />
-          </div>
+          <FileTypeIcon label={kind} width={42} />
           <div className="min-w-[160px] flex-1">
-            <h2 className="truncate text-[19px] font-bold text-foreground" title={file.file_name}>{file.file_name}</h2>
+            <h2 className="truncate text-[17px] font-bold text-foreground" title={file.file_name}>{file.file_name}</h2>
             <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">{kind}</span>
               <ImportStatusPill status={file.status} label={statusLabels} />
               {file.locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-label={t("files.locked", "Locked")} />}
               {account && <span className="text-[12px] font-medium text-muted-foreground">{getAccountDisplayName(account)}</span>}

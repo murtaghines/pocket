@@ -31,7 +31,7 @@ export function AccountHeader() {
           {initials}
         </div>
         <div className="min-w-0">
-          <h1 className="truncate font-heading text-[22px] font-semibold leading-tight text-foreground md:text-white">{displayName}</h1>
+          <h1 className="truncate text-[19px] font-semibold leading-tight tracking-[-0.01em] text-foreground md:text-white">{displayName}</h1>
           <div className="mt-0.5 flex items-center gap-3">
             <span className="truncate text-sm text-muted-foreground md:text-white/70">{user?.email}</span>
             {user?.created_at && (

@@ -34,20 +34,22 @@ interface UseTransactionsOptions {
   endDate?: string;
   page?: number;
   pageSize?: number;
+  /** Dashboard views leave out accounts flagged "exclude from dashboard". */
+  excludeHiddenAccounts?: boolean;
 }
 
 export function useTransactions(options: UseTransactionsOptions = {}) {
-  const { domain = "CASHFLOW", periodId, startDate, endDate, page, pageSize = 100 } = options;
+  const { domain = "CASHFLOW", periodId, startDate, endDate, page, pageSize = 100, excludeHiddenAccounts = false } = options;
   const { user } = useAuth();
 
   const { data: result = { rows: [], count: null }, isLoading, error } = useQuery({
-    queryKey: ["transactions", user?.id, domain, periodId, startDate, endDate, page, pageSize],
+    queryKey: ["transactions", user?.id, domain, periodId, startDate, endDate, page, pageSize, excludeHiddenAccounts],
     queryFn: async () => {
       if (!user) return { rows: [], count: null };
 
       const { data: accountsData } = await supabase
         .from("accounts")
-        .select("id, name, institution, split_percentage")
+        .select("id, name, institution, split_percentage, hidden_from_dashboard")
         .eq("user_id", user.id);
 
       const accountMap: Record<string, string> = {};
@@ -68,6 +70,12 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
         .eq("is_hidden", false)
         .order("date", { ascending: false })
         .order("fingerprint", { ascending: false });
+
+      const hiddenIds = excludeHiddenAccounts
+        ? (accountsData || []).filter(a => a.hidden_from_dashboard).map(a => a.id)
+        : [];
+      // `not in` would also drop rows with no account (NULL), so keep those explicitly.
+      if (hiddenIds.length > 0) query = query.or(`account_id.is.null,account_id.not.in.(${hiddenIds.join(",")})`);
 
       if (periodId) query = query.eq("period_id", periodId);
       if (startDate) query = query.gte("date", startDate);

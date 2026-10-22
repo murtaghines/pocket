@@ -121,13 +121,9 @@ export function useAccounts() {
     },
     onSuccess: async () => {
       try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
-      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      // An account edit (hidden, split, initial balance, archive...) can change numbers anywhere, so
+      // refetch everything that's on screen rather than maintaining a list of keys that goes stale.
+      queryClient.invalidateQueries();
       toast.success('Account updated successfully');
     },
     onError: (error) => {
@@ -344,10 +340,13 @@ export function useAccounts() {
     return accounts.find(a => a.name.toLowerCase() === name.toLowerCase());
   };
 
-  const getCashAccounts = ({ includeArchived = false }: { includeArchived?: boolean } = {}): Account[] => {
+  const getCashAccounts = (
+    { includeArchived = false, includeHidden = false }: { includeArchived?: boolean; includeHidden?: boolean } = {},
+  ): Account[] => {
     return accounts.filter(
       (a) => a.account_role === 'CASH'
         && (includeArchived || !a.archived)
+        && (includeHidden || !a.hidden_from_dashboard)
     );
   };
 
