@@ -540,7 +540,7 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 72px' }}>
+      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', height: 180, padding: '22px 34px 0' }}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[19px] font-semibold text-white leading-none tracking-[-0.01em]">
@@ -552,6 +552,17 @@ export function CategoriesEditor() {
             >
               {t('categories.bannerSubtitle', { ruleCount: rules.length, catCount: tabCounts.expense + tabCounts.income + tabCounts.transfer })}
             </p>
+          </div>
+          <div className="flex items-center gap-[8px]">
+          <div className="flex bg-white/[0.16] rounded-[12px] p-[4px]">
+            <button
+              type="button"
+              onClick={() => setShowCreateCategory(true)}
+              className="flex items-center gap-1.5 px-[13px] h-[28px] rounded-[9px] text-[13px] font-medium text-white/90 transition-colors hover:bg-white/10"
+            >
+              <Plus size={14} strokeWidth={2.2} />
+              {t('categories.newCategory')}
+            </button>
           </div>
           {/* Segmented tab control */}
           <div
@@ -588,33 +599,18 @@ export function CategoriesEditor() {
               );
             })}
           </div>
+          </div>
         </div>
       </div>
 
       {/* ====== Content wrapper (overlaps banner by 58px) ====== */}
       <div
         className="flex-1 min-h-0 overflow-hidden"
-        style={{ padding: '0 34px 32px', marginTop: -56 }}
+        style={{ padding: '0 34px 32px', marginTop: -72 }}
       >
         <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
-          <div className="flex flex-col gap-4 h-full">
-            {/* New Category button */}
-            <button
-              type="button"
-              onClick={() => setShowCreateCategory(true)}
-              className="shrink-0 flex items-center gap-2 bg-white rounded-[10px] transition-colors hover:bg-[#F7F8FC]"
-              style={{
-                padding: '8px 14px',
-                boxShadow: '0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04)',
-              }}
-            >
-              <Plus size={15} strokeWidth={2.2} style={{ color: '#1B76FF' }} />
-              <span className="text-[13px] font-semibold" style={{ color: '#1B76FF' }}>
-                {t('categories.newCategory')}
-              </span>
-            </button>
-
+          <div className="flex flex-col h-full">
             {/* Category list card */}
             <div
               className="flex-1 min-h-0 flex flex-col bg-white rounded-[14px] overflow-hidden"
