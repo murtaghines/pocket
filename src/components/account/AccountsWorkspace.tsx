@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Plus, Landmark } from "lucide-react";
+import { Landmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts, type Account } from "@/hooks/useAccounts";
 import { useImports } from "@/hooks/useImports";
@@ -10,6 +10,8 @@ import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 import { AccountDetailPanel } from "@/components/account/AccountDetailPanel";
 import { AccountDeleteDialog } from "@/components/account/AccountDeleteDialog";
+import { AccountIdentityDialog } from "@/components/account/AccountIdentityDialog";
+import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
 
 type RoleTab = "bank" | "investment";
 
@@ -27,7 +29,7 @@ function SectionLabel({ children, count }: { children: React.ReactNode; count: n
 export function AccountsWorkspace() {
   const { t } = useTranslation("account");
   const [searchParams, setSearchParams] = useSearchParams();
-  const { accounts, isLoading, createAccount, updateAccount, isCreating, isUpdating } = useAccounts();
+  const { accounts, isLoading, createAccount, updateAccount, isCreating } = useAccounts();
   const { imports } = useImports();
 
   const initialId = searchParams.get("account");
@@ -36,8 +38,8 @@ export function AccountsWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(initialId);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Account | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
+  const [identityTarget, setIdentityTarget] = useState<Account | null>(null);
 
   const roleOf = (a: Account): RoleTab => (a.account_role === "INVESTMENT" ? "investment" : "bank");
   const inRole = useMemo(() => accounts.filter((a) => roleOf(a) === role), [accounts, role]);
@@ -70,43 +72,24 @@ export function AccountsWorkspace() {
     select(null);
   };
 
-  const openCreate = () => { setEditing(null); setFormOpen(true); };
-  const openEdit = (account: Account) => { setEditing(account); setFormOpen(true); };
+  const openCreate = () => setFormOpen(true);
 
   const handleSubmit = (values: AccountFormValues) => {
-    if (editing) {
-      updateAccount({
-        id: editing.id,
+    createAccount(
+      {
         institution: values.institution,
-        name: values.name || values.institution,
+        name: values.name,
         color: values.color,
         account_type: values.account_type,
         currency_base: values.currency_base,
-        account_number: values.account_number || null,
-        initial_balance: values.initial_balance ?? 0,
-        split_percentage: values.split_percentage ?? 100,
-        notes: values.notes?.trim() || null,
-        hidden_from_dashboard: values.hidden_from_dashboard ?? false,
-      });
-    } else {
-      createAccount(
-        {
-          institution: values.institution,
-          name: values.name,
-          color: values.color,
-          account_type: values.account_type,
-          currency_base: values.currency_base,
-          account_number: values.account_number,
-          initial_balance: values.initial_balance,
-          split_percentage: values.split_percentage,
-          notes: values.notes,
-          hidden_from_dashboard: values.hidden_from_dashboard,
-        },
-        { onSuccess: (created) => created?.id && select(created.id) },
-      );
-    }
+        initial_balance: values.initial_balance,
+        split_percentage: values.split_percentage,
+        notes: values.notes,
+        hidden_from_dashboard: values.hidden_from_dashboard,
+      },
+      { onSuccess: (created) => created?.id && select(created.id) },
+    );
     setFormOpen(false);
-    setEditing(null);
   };
 
   const renderItem = (account: Account, idx: number) => {
@@ -149,141 +132,86 @@ export function AccountsWorkspace() {
     );
   };
 
-  return (
-    <div className="flex flex-col bg-background md:h-full md:overflow-hidden">
-      {/* Banner */}
-      <div className="shrink-0 bg-primary px-3 pb-6 pt-4 md:h-[180px] md:px-[34px] md:pb-0 md:pt-[22px]">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="font-heading text-[19px] font-semibold leading-none tracking-[-0.01em] text-white">
-              {t("workspace.title", "Accounts")}
-            </h1>
-            <p className="mt-1.5 text-[12.5px] font-medium tabular-nums text-white/80">
-              {t("workspace.subtitle", { bank: counts.bank, investment: counts.investment, defaultValue: "{{bank}} bank · {{investment}} investment" })}
-            </p>
-          </div>
-          <div className="flex items-center gap-[8px] self-start">
-          <div className="flex rounded-[12px] bg-white/[0.16] p-[4px]">
-            <button
-              type="button"
-              onClick={openCreate}
-              className="flex h-[28px] items-center gap-1.5 rounded-[9px] px-[13px] text-[13px] font-medium text-white/90 transition-colors hover:bg-white/10"
-            >
-              <Plus className="h-[14px] w-[14px]" strokeWidth={2.2} />
-              {t("accounts.addAccount", "Add account")}
-            </button>
-          </div>
-          <div className="flex gap-[2px] rounded-[12px] bg-white/[0.16] p-[4px]" role="tablist">
-            {(["bank", "investment"] as RoleTab[]).map((tab) => {
-              const isActive = tab === role;
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => switchRole(tab)}
-                  className={cn(
-                    "flex h-[28px] items-center gap-1.5 rounded-[9px] px-[13px] text-[13px] transition-colors",
-                    isActive ? "bg-white font-semibold text-primary" : "font-medium text-white/85 hover:bg-white/10",
-                  )}
-                >
-                  <span>{tab === "bank" ? t("workspace.bank", "Bank") : t("workspace.investment", "Investment")}</span>
-                  <span className={cn("text-[11px] tabular-nums", isActive ? "text-primary/70" : "text-white/60")}>{counts[tab]}</span>
-                </button>
-              );
-            })}
-          </div>
-          </div>
-        </div>
-      </div>
+  const emptyLabel = role === "bank" ? t("accounts.noBankAccounts", "No bank accounts yet.") : t("accounts.noInvestmentAccounts", "No investment accounts yet.");
 
-      {/* Content (overlaps the banner) */}
-      <div className="px-3 pb-6 pt-4 md:min-h-0 md:flex-1 md:overflow-hidden md:px-[34px] md:pb-8 md:pt-0 md:mt-[-72px]">
-        <div className="grid grid-cols-1 gap-4 md:h-full md:grid-cols-[336px_minmax(0,1fr)]">
-          {/* Left column */}
-          <div className="flex flex-col md:h-full md:min-h-0">
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] bg-card px-2.5 pb-2.5 pt-3.5 shadow-bento">
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                {isLoading ? (
-                  <div className="space-y-2 p-2">
-                    {[0, 1, 2].map((i) => <div key={i} className="h-[48px] animate-pulse rounded-[10px] bg-muted" />)}
-                  </div>
-                ) : (
-                  <>
-                    <SectionLabel count={active.length}>
-                      {role === "bank" ? t("accounts.bankAccountsTitle", "Bank accounts") : t("accounts.investmentAccountsTitle", "Investment accounts")}
-                    </SectionLabel>
-                    {active.length === 0 ? (
-                      <p className="px-2.5 py-6 text-center text-sm text-muted-foreground">
-                        {role === "bank" ? t("accounts.noBankAccounts", "No bank accounts yet.") : t("accounts.noInvestmentAccounts", "No investment accounts yet.")}
-                      </p>
-                    ) : (
-                      active.map(renderItem)
-                    )}
-                    {archived.length > 0 && (
-                      <div className="mt-3">
-                        <SectionLabel count={archived.length}>{t("accounts.archivedTitle", "Archived")}</SectionLabel>
-                        {archived.map(renderItem)}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
+  const left = (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] bg-card px-2.5 pb-2.5 pt-3.5 shadow-bento">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {isLoading ? (
+          <div className="space-y-2 p-2">
+            {[0, 1, 2].map((i) => <div key={i} className="h-[48px] animate-pulse rounded-[10px] bg-muted" />)}
           </div>
-
-          {/* Right column */}
-          <div className="md:h-full md:min-h-0">
-            {selected ? (
-              <AccountDetailPanel
-                key={selected.id}
-                account={selected}
-                onEdit={() => openEdit(selected)}
-                onDelete={() => setDeleteTarget(selected)}
-              />
-            ) : (
-              <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-3 rounded-[14px] bg-card p-8 text-center shadow-bento">
-                <Landmark className="h-10 w-10 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">
-                  {role === "bank" ? t("accounts.noBankAccounts", "No bank accounts yet.") : t("accounts.noInvestmentAccounts", "No investment accounts yet.")}
-                </p>
+        ) : (
+          <>
+            <SectionLabel count={active.length}>
+              {role === "bank" ? t("accounts.bankAccountsTitle", "Bank accounts") : t("accounts.investmentAccountsTitle", "Investment accounts")}
+            </SectionLabel>
+            {active.length === 0 ? <p className="px-2.5 py-6 text-center text-sm text-muted-foreground">{emptyLabel}</p> : active.map(renderItem)}
+            {archived.length > 0 && (
+              <div className="mt-3">
+                <SectionLabel count={archived.length}>{t("accounts.archivedTitle", "Archived")}</SectionLabel>
+                {archived.map(renderItem)}
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
+    </div>
+  );
+
+  const right = selected ? (
+    <AccountDetailPanel
+      key={selected.id}
+      account={selected}
+      onEditIdentity={() => setIdentityTarget(selected)}
+      onDelete={() => setDeleteTarget(selected)}
+    />
+  ) : (
+    <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-3 rounded-[14px] bg-card p-8 text-center shadow-bento">
+      <Landmark className="h-10 w-10 text-muted-foreground/30" />
+      <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+    </div>
+  );
+
+  return (
+    <>
+      <WorkspaceShell
+        title={t("workspace.title", "Accounts")}
+        subtitle={t("workspace.subtitle", { bank: counts.bank, investment: counts.investment, defaultValue: "{{bank}} bank · {{investment}} investment" })}
+        action={{ label: t("accounts.addAccount", "Add account"), onClick: openCreate }}
+        selector={{
+          value: role,
+          onChange: switchRole,
+          options: [
+            { value: "bank", label: t("workspace.bank", "Bank"), count: counts.bank },
+            { value: "investment", label: t("workspace.investment", "Investment"), count: counts.investment },
+          ],
+        }}
+        left={left}
+        right={right}
+      />
 
       <AccountFormDialog
-        key={editing?.id ?? `create-${role}`}
+        key={`create-${role}`}
         open={formOpen}
-        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditing(null); }}
-        mode={editing ? "edit" : "create"}
-        initialValues={
-          editing
-            ? {
-                institution: editing.institution,
-                name: editing.name === editing.institution ? "" : editing.name,
-                color: editing.color || getDefaultAccountColor(accounts.findIndex((a) => a.id === editing.id)),
-                account_type: editing.account_type,
-                currency_base: editing.currency_base,
-                account_number: editing.account_number ?? undefined,
-                initial_balance: editing.initial_balance,
-                split_percentage: editing.split_percentage,
-                notes: editing.notes ?? undefined,
-                hidden_from_dashboard: editing.hidden_from_dashboard ?? false,
-              }
-            : undefined
-        }
+        onOpenChange={setFormOpen}
+        mode="create"
         typeFilter={role === "investment" ? "investment" : "bank"}
-        isSubmitting={isCreating || isUpdating}
+        isSubmitting={isCreating}
         onSubmit={handleSubmit}
       />
 
-      <AccountDeleteDialog
-        account={deleteTarget}
-        onClose={() => setDeleteTarget(null)}
+      <AccountIdentityDialog
+        account={identityTarget}
+        onClose={() => setIdentityTarget(null)}
+        onSave={(values) => {
+          if (!identityTarget) return;
+          updateAccount({ id: identityTarget.id, institution: values.institution, name: values.name || values.institution, color: values.color });
+          setIdentityTarget(null);
+        }}
       />
-    </div>
+
+      <AccountDeleteDialog account={deleteTarget} onClose={() => setDeleteTarget(null)} />
+    </>
   );
 }

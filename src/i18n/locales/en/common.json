@@ -60,7 +60,8 @@
         "categories": "Categories & rules",
         "accounts": "Accounts"
       }
-    }
+    },
+    "accountFiles": "Files"
   },
   "addData": {
     "title": "Add data",

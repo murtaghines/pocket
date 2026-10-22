@@ -99,8 +99,6 @@ export interface UploadedFilesHistoryListProps {
   deleteImport: (id: string) => void;
   isDeleting: boolean;
   pendingImportIds: Set<string>;
-  /** Render without the side-panel header, for inline use. */
-  embedded?: boolean;
 }
 
 export function UploadedFilesHistoryList({
@@ -108,7 +106,6 @@ export function UploadedFilesHistoryList({
   deleteImport,
   isDeleting,
   pendingImportIds,
-  embedded = false,
 }: UploadedFilesHistoryListProps) {
   const { formatMonth } = useLocalization();
   const { user } = useAuth();
@@ -217,8 +214,7 @@ export function UploadedFilesHistoryList({
   };
 
   return (
-    <div className={embedded ? undefined : "flex flex-col h-full min-h-0"}>
-      {!embedded && (
+    <div className="flex flex-col h-full min-h-0">
       <div className="px-6 py-5 border-b border-border flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold tracking-tight text-foreground leading-tight">
@@ -238,14 +234,13 @@ export function UploadedFilesHistoryList({
           </SheetClose>
         </div>
       </div>
-      )}
 
       {imports.length === 0 ? (
         <p className="text-sm text-muted-foreground py-12 text-center">
           No files uploaded yet.
         </p>
       ) : (
-        <div className={cn(!embedded && "flex-1 min-h-0 overflow-auto", "divide-y divide-border")}>
+        <div className="flex-1 min-h-0 overflow-auto divide-y divide-border">
           {imports.map((imp) => (
             <div
               key={imp.id}

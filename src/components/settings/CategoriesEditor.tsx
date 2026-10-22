@@ -1,3 +1,4 @@
+import { WorkspaceBanner } from '@/components/layout/WorkspaceShell';
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Plus, Trash2, Info, Sparkles, Calendar, Code2, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -550,73 +551,25 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', height: 180, padding: '22px 34px 0' }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-[19px] font-semibold text-white leading-none tracking-[-0.01em]">
-              {t('categories.title')}
-            </h1>
-            <p
-              className="tabular-nums"
-              style={{ font: '500 12.5px Inter, sans-serif', color: 'rgba(255,255,255,0.8)', marginTop: 6 }}
-            >
-              {t('categories.bannerSubtitle', { ruleCount: rules.length, catCount: tabCounts.expense + tabCounts.income + tabCounts.transfer })}
-            </p>
-          </div>
-          <div className="flex items-center gap-[8px]">
-          <div className="flex bg-white/[0.16] rounded-[12px] p-[4px]">
-            <button
-              type="button"
-              onClick={() => setShowCreateCategory(true)}
-              className="flex items-center gap-1.5 px-[13px] h-[28px] rounded-[9px] text-[13px] font-medium text-white/90 transition-colors hover:bg-white/10"
-            >
-              <Plus size={14} strokeWidth={2.2} />
-              {t('categories.newCategory')}
-            </button>
-          </div>
-          {/* Segmented tab control */}
-          <div
-            className="flex bg-white/[0.16] rounded-[12px] p-[4px] gap-[2px]"
-            role="tablist"
-          >
-            {(['expense', 'income', 'transfer'] as TabKey[]).map((tab) => {
-              const active = tab === activeTab;
-              const label = tab === 'income' ? t('categories.income') : tab === 'transfer' ? t('categories.transfers') : t('categories.expenses');
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => handleSelectTab(tab)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-[13px] h-[28px] rounded-[9px] text-[13px] transition-colors',
-                    active
-                      ? 'bg-white text-primary font-semibold'
-                      : 'text-white/85 font-medium hover:bg-white/10',
-                  )}
-                >
-                  <span>{label}</span>
-                  <span
-                    className={cn(
-                      'text-[11px] tabular-nums',
-                      active ? 'text-primary/70' : 'text-white/60',
-                    )}
-                  >
-                    {tabCounts[tab]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          </div>
-        </div>
-      </div>
+      <WorkspaceBanner
+        title={t('categories.title')}
+        subtitle={t('categories.bannerSubtitle', { ruleCount: rules.length, catCount: tabCounts.expense + tabCounts.income + tabCounts.transfer })}
+        action={{ label: t('categories.newCategory'), onClick: () => setShowCreateCategory(true) }}
+        selector={{
+          value: activeTab,
+          onChange: handleSelectTab,
+          options: (['expense', 'income', 'transfer'] as TabKey[]).map((tab) => ({
+            value: tab,
+            label: tab === 'income' ? t('categories.income') : tab === 'transfer' ? t('categories.transfers') : t('categories.expenses'),
+            count: tabCounts[tab],
+          })),
+        }}
+      />
 
       {/* ====== Content wrapper (overlaps banner by 58px) ====== */}
       <div
         className="flex-1 min-h-0 overflow-hidden"
-        style={{ padding: '0 34px 32px', marginTop: -72 }}
+        style={{ padding: '0 34px 32px', marginTop: -102 }}
       >
         <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
