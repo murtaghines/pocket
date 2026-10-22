@@ -4,24 +4,23 @@ import { DashboardFooter } from "@/components/layout/DashboardFooter";
 import { DashboardGreeting } from "@/components/dashboard/DashboardGreeting";
 import { BalanceBand } from "@/components/layout/BalanceBand";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useDashboardDefaultTab, resolveDashboardTab, withDashboardTab } from "@/hooks/useDashboardTab";
 import { MonthTab } from "@/components/dashboard/MonthTab";
 import { WeekTab } from "@/components/dashboard/WeekTab";
 import { YearTab } from "@/components/dashboard/YearTab";
 import { HistoryTab } from "@/components/dashboard/HistoryTab";
 
-const TAB_KEYS = ["month", "week", "year", "history"] as const;
-type TabKey = (typeof TAB_KEYS)[number];
-
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const rawTab = searchParams.get("tab") ?? "month";
-  const activeTab: TabKey = (TAB_KEYS as readonly string[]).includes(rawTab) ? (rawTab as TabKey) : "month";
+  const defaultTab = useDashboardDefaultTab();
+  // With no explicit tab, wait for preferences so a saved start screen doesn't flash the month view first.
+  const { isLoading: prefsLoading } = useUserPreferences();
+  const awaitingStartScreen = prefsLoading && !searchParams.get("tab");
+  const activeTab = resolveDashboardTab(searchParams.get("tab"), defaultTab);
 
   const handleTabChange = (value: string) => {
-    const next = new URLSearchParams(searchParams);
-    if (value === "month") next.delete("tab");
-    else next.set("tab", value);
-    setSearchParams(next, { replace: true });
+    setSearchParams(withDashboardTab(searchParams, value, defaultTab), { replace: true });
   };
 
   return (
@@ -37,6 +36,7 @@ export default function Dashboard() {
 
         {/* Content area with negative margin to overlap KPIs over the band */}
         <div className="px-3 md:px-[34px] md:mt-[-50px] pb-[24px]">
+        {!awaitingStartScreen && (
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsContent value="month" className="mt-0">
             <MonthTab />
@@ -51,6 +51,7 @@ export default function Dashboard() {
             <HistoryTab />
           </TabsContent>
         </Tabs>
+        )}
         <DashboardFooter />
         </div>
       </div>

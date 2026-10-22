@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { useLocalization } from "@/hooks/useLocalization";
 import { getActiveSection, getActiveTabKey } from "@/config/navigation";
+import { useSectionDefaultTab } from "@/hooks/useDashboardTab";
 
 interface HeaderMonthSelectorProps {
   variant?: "default" | "onPrimary";
@@ -16,7 +17,8 @@ export function HeaderMonthSelector({ variant = "default" }: HeaderMonthSelector
   const { selectedMonth, setSelectedMonth, availableMonths } = useMonthSelection();
 
   const section = getActiveSection(location.pathname);
-  const activeTab = getActiveTabKey(section, searchParams);
+  const sectionDefault = useSectionDefaultTab(section);
+  const activeTab = getActiveTabKey(section, searchParams, sectionDefault);
   const isDashboardMonth = section?.key === "dashboard" && activeTab === "month";
   const isCalendar = section?.key === "calendar";
   if (!isDashboardMonth && !isCalendar) return null;

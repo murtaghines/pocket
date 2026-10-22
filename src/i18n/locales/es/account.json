@@ -231,5 +231,76 @@
       "balance": "Saldo",
       "type": "Tipo"
     }
+  },
+  "settings": {
+    "editProfile": "Editar perfil",
+    "save": "Guardar",
+    "auto": "Automático",
+    "preview": "Vista previa",
+    "cards": {
+      "region": "Idioma y región",
+      "dates": "Fechas y hora",
+      "numbers": "Números y moneda",
+      "display": "Pantalla",
+      "shared": "Finanzas compartidas"
+    },
+    "countryHint": "Define los estilos de número y fecha por defecto",
+    "dateOrder": "Orden de la fecha",
+    "order": {
+      "DMY": "Día / Mes / Año",
+      "MDY": "Mes / Día / Año",
+      "YMD": "Año / Mes / Día"
+    },
+    "dateStyle": "Mes",
+    "style": {
+      "numeric": "Número (02)",
+      "short": "Nombre corto (Feb)"
+    },
+    "dateSeparator": "Separador",
+    "sep": {
+      "slash": "Barra ( / )",
+      "dash": "Guion ( - )",
+      "dot": "Punto ( . )",
+      "comma": "Coma ( , )",
+      "period": "Punto ( . )",
+      "space": "Espacio",
+      "apostrophe": "Apóstrofo ( ' )",
+      "none": "Ninguno"
+    },
+    "timeFormat": "Hora",
+    "time": {
+      "24h": "24 horas (18:30)",
+      "12h": "12 horas (6:30 PM)"
+    },
+    "startScreen": "Pantalla de inicio",
+    "startScreenHint": "La vista del panel que se abre al iniciar Pocket o al volver a entrar",
+    "period": {
+      "month": "Mes",
+      "week": "Semana",
+      "year": "Año"
+    },
+    "currencyDisplay": "Mostrar la moneda como",
+    "display": {
+      "symbol": "Símbolo ($)",
+      "code": "Código (USD)"
+    },
+    "currencyPosition": "Posición de la moneda",
+    "position": {
+      "before": "Antes ($10)",
+      "after": "Después (10$)"
+    },
+    "currencySpace": "Espacio tras la moneda",
+    "space": {
+      "yes": "Con espacio ($ 10)",
+      "no": "Sin espacio ($10)"
+    },
+    "decimalSeparator": "Separador decimal",
+    "groupSeparator": "Separador de miles",
+    "showDecimalsHint": "Mostrar centavos en lugar de números enteros",
+    "coHolders": "Personas con las que compartes cuentas",
+    "aliases": "Otros nombres con los que apareces",
+    "namePlaceholder": "Nombre completo, como en tus extractos",
+    "unsaved": "Tienes cambios sin guardar",
+    "discard": "Descartar"
   }
 }

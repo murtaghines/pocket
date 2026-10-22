@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
+import { useDashboardDefaultTab, resolveDashboardTab } from "@/hooks/useDashboardTab";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { useGranularity } from "@/hooks/useGranularity";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -97,7 +98,7 @@ export function DashboardGreeting() {
   const { selectedPeriod } = usePeriodSelection();
   const { selectedMonth, openingBalance, transactionCount } = useMonthSelection();
 
-  const tab = searchParams.get("tab") ?? "month";
+  const tab = resolveDashboardTab(searchParams.get("tab"), useDashboardDefaultTab());
 
   const weekLabel = selectedPeriod.week
     ? formatPeriodLabel(selectedPeriod.week, "week", i18n.language)

@@ -14,8 +14,8 @@ paths:
 ---
 # Account hub & user settings
 - `/account` is three sidebar pages (no in-page tab bar): `?tab=accounts` (`AccountsWorkspace`),
-  `?tab=files` (`FilesWorkspace`) and Settings (anything else, `AccountSettingsTab`: profile, session,
-  preferences, data export, danger zone). Accounts and Files are master/detail workspaces cloned from
+  `?tab=files` (`FilesWorkspace`) and Settings (anything else, `AccountSettingsTab`: preference cards,
+  data export, danger zone). Accounts and Files are master/detail workspaces cloned from
   Categories & rules and built on `components/layout/WorkspaceShell` — it owns the 180px banner, the
   translucent action pill + Bank/Investment selector (both 36px tall) and the content overlap (cards
   start 78px from the top). Never tweak those numbers per page; Categories uses `WorkspaceBanner` too.
@@ -31,7 +31,9 @@ paths:
 - Files detail (`FileDetailPanel`): details (account selector via `useReassignImport`, type, size,
   uploaded, last modified from `audit_log`, period, rows) and a raw-data preview from `useImportPreview`
   (`import_rows` when present, else the saved transactions' original bank text — CSV/Excel keep no raw copy).
-- Settings page shell: header (identity) on the layout's blue band, cards start ~20px below it. Every
+- Settings page shell: the header (name, email, member since + an "Edit profile" pill that opens
+  `EditProfileDialog`) sits on the layout's blue band — the profile is never repeated in a card, and logout
+  lives only in the sidebar. Cards start ~20px below it. Every
   block is a white `bg-card rounded-xl p-5 md:p-6 shadow-section` card with an 18px/600 title.
   Workspaces are `fullBleed` on desktop only (`useIsMobile`); mobile scrolls the document.
 - `useAccountDetail` returns only the date range covered by an account. `AccountDeleteDialog` owns the
@@ -54,6 +56,14 @@ paths:
   (defaults to 50). All dashboard SQL RPCs and materialized views multiply amounts by
   `split_percentage / 100.0` so the user sees only their share. When writing new aggregation
   queries, always JOIN accounts and apply `COALESCE(a.split_percentage, 100) / 100.0`.
+- Display formats: `user_preferences.display_format` (jsonb; decimal / group separators, currency
+  position / space / symbol-or-code, date separator / style, 12-24h; missing key = follow the country's
+  locale) is validated by `sanitizeDisplayFormat` and applied in `useLocalization` through
+  `lib/displayFormat.ts` (pure, unit-tested). Empty format == plain Intl output. Don't call `Intl.NumberFormat`
+  directly for user-visible money — use `formatCurrency`/`formatNumber`. `user_preferences.default_period`
+  (month|week|year) is the dashboard start screen: the bare `/dashboard` URL means that view, others carry
+  `?tab=` (see `hooks/useDashboardTab`). Weeks are ISO (Monday) everywhere — SQL, materialized views and
+  client — so a "week starts on" preference is intentionally NOT offered.
 - `user_preferences.show_decimals` (bool, default true) feeds `formatCurrency` in
   `useLocalization`. `accounts.notes` (text) is edited in the account detail panel.
 - `user_preferences.theme` (text NOT NULL DEFAULT 'system') — DB column exists but theme is

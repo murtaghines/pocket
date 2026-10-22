@@ -231,5 +231,76 @@
       "balance": "Balance",
       "type": "Type"
     }
+  },
+  "settings": {
+    "editProfile": "Edit profile",
+    "save": "Save",
+    "auto": "Automatic",
+    "preview": "Preview",
+    "cards": {
+      "region": "Language & region",
+      "dates": "Dates & time",
+      "numbers": "Numbers & currency",
+      "display": "Display",
+      "shared": "Shared finances"
+    },
+    "countryHint": "Sets the default number and date styles",
+    "dateOrder": "Date order",
+    "order": {
+      "DMY": "Day / Month / Year",
+      "MDY": "Month / Day / Year",
+      "YMD": "Year / Month / Day"
+    },
+    "dateStyle": "Month",
+    "style": {
+      "numeric": "Number (02)",
+      "short": "Short name (Feb)"
+    },
+    "dateSeparator": "Separator",
+    "sep": {
+      "slash": "Slash ( / )",
+      "dash": "Dash ( - )",
+      "dot": "Dot ( . )",
+      "comma": "Comma ( , )",
+      "period": "Period ( . )",
+      "space": "Space",
+      "apostrophe": "Apostrophe ( ' )",
+      "none": "None"
+    },
+    "timeFormat": "Time",
+    "time": {
+      "24h": "24-hour (18:30)",
+      "12h": "12-hour (6:30 PM)"
+    },
+    "startScreen": "Start screen",
+    "startScreenHint": "The dashboard view that opens when you start Pocket or log in",
+    "period": {
+      "month": "Month",
+      "week": "Week",
+      "year": "Year"
+    },
+    "currencyDisplay": "Show currency as",
+    "display": {
+      "symbol": "Symbol ($)",
+      "code": "Code (USD)"
+    },
+    "currencyPosition": "Currency position",
+    "position": {
+      "before": "Before ($10)",
+      "after": "After (10$)"
+    },
+    "currencySpace": "Space after the currency",
+    "space": {
+      "yes": "With space ($ 10)",
+      "no": "No space ($10)"
+    },
+    "decimalSeparator": "Decimal mark",
+    "groupSeparator": "Thousands separator",
+    "showDecimalsHint": "Show cents instead of whole numbers",
+    "coHolders": "People you share accounts with",
+    "aliases": "Other names you appear under",
+    "namePlaceholder": "Full name, as on your bank statements",
+    "unsaved": "You have unsaved changes",
+    "discard": "Discard"
   }
 }

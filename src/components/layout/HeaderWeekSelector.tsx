@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { formatPeriodLabel } from "@/lib/analytics";
 import { getActiveSection, getActiveTabKey } from "@/config/navigation";
+import { useSectionDefaultTab } from "@/hooks/useDashboardTab";
 
 interface HeaderWeekSelectorProps {
   variant?: "default" | "onPrimary";
@@ -18,7 +19,8 @@ export function HeaderWeekSelector({ variant = "default" }: HeaderWeekSelectorPr
   const { selectedPeriod, setSelectedPeriod, availablePeriods } = usePeriodSelection();
 
   const section = getActiveSection(location.pathname);
-  const activeTab = getActiveTabKey(section, searchParams);
+  const sectionDefault = useSectionDefaultTab(section);
+  const activeTab = getActiveTabKey(section, searchParams, sectionDefault);
   if (section?.key !== "dashboard" || activeTab !== "week") return null;
 
   const availableWeeks = availablePeriods.week;

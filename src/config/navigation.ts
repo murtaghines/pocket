@@ -99,9 +99,11 @@ export function getActiveSection(pathname: string): NavSection | undefined {
 export function getActiveTabKey(
   section: NavSection | undefined,
   searchParams: URLSearchParams,
+  /** Overrides `section.defaultTab` (the dashboard's start screen is a user preference). */
+  defaultTab: string | undefined = section?.defaultTab,
 ): string | undefined {
-  if (!section?.subTabs?.length || !section.defaultTab) return undefined;
+  if (!section?.subTabs?.length || !defaultTab) return undefined;
   const raw = searchParams.get("tab");
   if (raw && section.subTabs.some((t) => t.key === raw)) return raw;
-  return section.defaultTab;
+  return defaultTab;
 }

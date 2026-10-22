@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import type { DisplayFormat } from '@/lib/displayFormat';
+
+export type DefaultPeriod = 'month' | 'week' | 'year';
 
 export interface UserPreferences {
   id: string;
@@ -15,6 +18,10 @@ export interface UserPreferences {
   own_name_aliases?: string[];
   theme?: string;
   show_decimals?: boolean;
+  /** User overrides for number/currency/date formats; see lib/displayFormat. */
+  display_format?: DisplayFormat;
+  /** Dashboard view that opens by default. */
+  default_period?: DefaultPeriod;
   created_at: string;
   updated_at: string;
 }

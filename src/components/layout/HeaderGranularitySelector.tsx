@@ -2,6 +2,7 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import { GranularityToggle } from "@/components/dashboard/GranularityToggle";
 import { useGranularity } from "@/hooks/useGranularity";
 import { getActiveSection, getActiveTabKey } from "@/config/navigation";
+import { useSectionDefaultTab } from "@/hooks/useDashboardTab";
 
 interface HeaderGranularitySelectorProps {
   variant?: "default" | "onPrimary";
@@ -13,7 +14,8 @@ export function HeaderGranularitySelector({ variant = "default" }: HeaderGranula
   const [granularity, setGranularity] = useGranularity();
 
   const section = getActiveSection(location.pathname);
-  const activeTab = getActiveTabKey(section, searchParams);
+  const sectionDefault = useSectionDefaultTab(section);
+  const activeTab = getActiveTabKey(section, searchParams, sectionDefault);
   if (section?.key !== "dashboard" || activeTab !== "history") return null;
 
   return <GranularityToggle value={granularity} onChange={setGranularity} variant={variant} />;

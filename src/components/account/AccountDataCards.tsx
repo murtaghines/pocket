@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import {
-  LogOut, Download, Trash2, AlertTriangle, Loader2,
+  Download, Trash2, AlertTriangle, Loader2,
 } from "lucide-react";
 
 async function fetchAllTransactions(userId: string) {
@@ -146,24 +146,6 @@ export function ExportDataCard() {
           </Button>
         ))}
       </div>
-    </div>
-  );
-}
-
-export function SessionCard({ onLogout }: { onLogout: () => void }) {
-  const { t } = useTranslation("account");
-  return (
-    <div className="bg-card rounded-xl p-5 md:p-6 shadow-section">
-      <h3 className="text-lg font-semibold text-foreground mb-1">
-        {t("security.session", "Session")}
-      </h3>
-      <p className="text-sm text-muted-foreground mb-4">
-        {t("security.sessionDescription", "End your session on this device. You can log back in at any time.")}
-      </p>
-      <Button variant="outline" size="sm" onClick={onLogout} className="gap-2">
-        <LogOut className="w-3.5 h-3.5" />
-        {t("security.logOut", "Log out")}
-      </Button>
     </div>
   );
 }

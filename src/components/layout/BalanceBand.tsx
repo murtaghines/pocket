@@ -13,6 +13,7 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPeriodLabel, periodRangeOf } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { useDashboardDefaultTab, resolveDashboardTab, withDashboardTab } from "@/hooks/useDashboardTab";
 
 type PeriodKey = "month" | "week" | "year";
 
@@ -28,7 +29,8 @@ export function BalanceBand() {
   const { preferences } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
 
-  const tab = (searchParams.get("tab") ?? "month") as PeriodKey | "history";
+  const defaultTab = useDashboardDefaultTab();
+  const tab = resolveDashboardTab(searchParams.get("tab"), defaultTab) as PeriodKey | "history";
 
   const cashAccounts = getCashAccounts();
   const savingsAccountIds = useMemo(
@@ -90,10 +92,7 @@ export function BalanceBand() {
   });
 
   const handlePeriodChange = (period: PeriodKey) => {
-    const next = new URLSearchParams(searchParams);
-    if (period === "month") next.delete("tab");
-    else next.set("tab", period);
-    setSearchParams(next, { replace: true });
+    setSearchParams(withDashboardTab(searchParams, period, defaultTab), { replace: true });
   };
 
   // Month navigation

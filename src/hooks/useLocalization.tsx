@@ -4,6 +4,10 @@ import { useUserPreferences } from './useUserPreferences';
 import { getLocaleForRegion } from '@/lib/currencies';
 import { format, parseISO } from 'date-fns';
 import { enUS, es, ptBR, type Locale } from 'date-fns/locale';
+import {
+  sanitizeDisplayFormat, hasNumberOverrides, hasDateOverrides, formatMoneyWithFormat, formatNumberWithFormat,
+  buildFullDatePattern, buildShortDatePattern, buildDateTimePattern,
+} from '@/lib/displayFormat';
 
 const dateFnsLocales: Record<string, Locale> = {
   en: enUS,
@@ -13,7 +17,7 @@ const dateFnsLocales: Record<string, Locale> = {
 
 // Detect the canonical date pattern for a given BCP47 locale by inspecting
 // what Intl produces for a known reference date (Jan 2, 2003).
-function detectLocalePattern(locale: string): 'DMY' | 'MDY' | 'YMD' {
+export function detectLocalePattern(locale: string): 'DMY' | 'MDY' | 'YMD' {
   try {
     const parts = new Intl.DateTimeFormat(locale, {
       day: '2-digit',
@@ -29,18 +33,6 @@ function detectLocalePattern(locale: string): 'DMY' | 'MDY' | 'YMD' {
     // ignore
   }
   return 'DMY';
-}
-
-function patternToFullFormat(p: 'DMY' | 'MDY' | 'YMD'): string {
-  if (p === 'MDY') return 'MM/dd/yyyy';
-  if (p === 'YMD') return 'yyyy-MM-dd';
-  return 'dd/MM/yyyy';
-}
-
-function patternToShortFormat(p: 'DMY' | 'MDY' | 'YMD'): string {
-  if (p === 'MDY') return 'MM/dd';
-  if (p === 'YMD') return 'MM-dd';
-  return 'dd/MM';
 }
 
 export function useLocalization() {
@@ -60,8 +52,11 @@ export function useLocalization() {
     return detectLocalePattern(locale);
   }, [preferences.date_format, locale]);
 
-  const fullDateFormat = patternToFullFormat(effectivePattern);
-  const shortDateFormat = patternToShortFormat(effectivePattern);
+  const displayFormat = useMemo(() => sanitizeDisplayFormat(preferences.display_format), [preferences.display_format]);
+  const fullDateFormat = buildFullDatePattern(effectivePattern, displayFormat);
+  const shortDateFormat = buildShortDatePattern(effectivePattern, displayFormat);
+  const dateTimeFormat = hasDateOverrides(displayFormat) ? buildDateTimePattern(effectivePattern, locale, displayFormat) : 'PPp';
+  const customMoney = hasNumberOverrides(displayFormat);
 
   // Format currency according to user preferences
   const formatCurrency = useCallback((amount: number, currency?: string, signed?: boolean) => {
@@ -75,12 +70,13 @@ export function useLocalization() {
       ...(signed && { signDisplay: 'exceptZero' as const }),
     };
     try {
+      if (customMoney) return formatMoneyWithFormat(amount, locale, currencyToUse, opts, displayFormat);
       return new Intl.NumberFormat(locale, opts).format(amount);
     } catch {
       const { style: _s, currency: _c, ...rest } = opts;
       return new Intl.NumberFormat(locale, { style: 'decimal', ...rest }).format(amount) + ` ${currencyToUse}`;
     }
-  }, [locale, baseCurrency, fractionDigits]);
+  }, [locale, baseCurrency, fractionDigits, customMoney, displayFormat]);
 
   // Format compact currency (e.g., $1.2k, €500)
   const formatCurrencyCompact = useCallback((amount: number, currency?: string, signed?: boolean) => {
@@ -94,26 +90,27 @@ export function useLocalization() {
       ...(signed && { signDisplay: 'exceptZero' as const }),
     };
     try {
+      if (customMoney) return formatMoneyWithFormat(amount, locale, currencyToUse, opts, displayFormat);
       return new Intl.NumberFormat(locale, opts).format(amount);
     } catch {
       const { style: _s, currency: _c, ...rest } = opts;
       return new Intl.NumberFormat(locale, { style: 'decimal', ...rest }).format(amount) + ` ${currencyToUse}`;
     }
-  }, [locale, baseCurrency]);
+  }, [locale, baseCurrency, customMoney, displayFormat]);
 
   // Format number according to user preferences
   const formatNumber = useCallback((value: number, options?: Intl.NumberFormatOptions) => {
-    return new Intl.NumberFormat(locale, { useGrouping: 'always' as any, ...options }).format(value);
-  }, [locale]);
+    return formatNumberWithFormat(value, locale, { useGrouping: 'always' as any, ...options }, displayFormat);
+  }, [locale, displayFormat]);
 
   // Format percentage
   const formatPercent = useCallback((value: number) => {
-    return new Intl.NumberFormat(locale, {
+    return formatNumberWithFormat(value / 100, locale, {
       style: 'percent',
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
-    }).format(value / 100);
-  }, [locale]);
+    }, displayFormat);
+  }, [locale, displayFormat]);
 
   // Format date
   const formatDate = useCallback((date: string | Date) => {
@@ -170,11 +167,11 @@ export function useLocalization() {
   const formatDateTime = useCallback((date: string | Date) => {
     try {
       const dateObj = typeof date === 'string' ? parseISO(date) : date;
-      return format(dateObj, 'PPp', { locale: dateFnsLocale });
+      return format(dateObj, dateTimeFormat, { locale: dateFnsLocale });
     } catch {
       return String(date);
     }
-  }, [dateFnsLocale]);
+  }, [dateFnsLocale, dateTimeFormat]);
 
   // Format relative date (e.g., "3 days ago")
   const formatRelativeDate = useCallback((date: string | Date) => {
