@@ -176,6 +176,60 @@
     "reassignHint": "Uploaded to the wrong account? Pick another account on the file to move it, with all its transactions.",
     "recentTransactions": "Recent transactions",
     "recentMovements": "Recent movements",
-    "noActivity": "No activity yet"
+    "noActivity": "No activity yet",
+    "months": "Months",
+    "goToFiles": "Go to all files",
+    "moreFiles": "+{{count}} more"
+  },
+  "identity": {
+    "title": "Name and color",
+    "iconHint": "The icon is set by the account type. Pick any color you like."
+  },
+  "files": {
+    "title": "Files",
+    "subtitle": "{{files}} files · {{accounts}} accounts",
+    "upload": "Upload files",
+    "empty": "No files uploaded yet.",
+    "unassigned": "Unassigned",
+    "clearFilter": "Show all accounts",
+    "status": {
+      "uploading": "Uploading",
+      "processing": "Processing",
+      "ready": "Ready",
+      "partial": "Partial",
+      "failed": "Failed"
+    },
+    "details": "Details",
+    "account": "Account",
+    "pickAccount": "Pick account",
+    "unlockToMove": "Unlock the file to change account",
+    "type": "Type",
+    "size": "Size",
+    "uploaded": "Uploaded",
+    "modified": "Last modified",
+    "neverEdited": "Not edited since upload",
+    "period": "Period",
+    "transactions": "Transactions",
+    "movements": "Movements",
+    "locked": "Locked",
+    "moved": "File moved to {{name}}",
+    "moveError": "Couldn't move the file",
+    "download": "Download original",
+    "noOriginal": "The original file wasn't kept for this upload",
+    "delete": "Delete file",
+    "deleteTitle": "Delete file?",
+    "deleteBody": "This permanently removes {{name}} and all of its transactions. This can't be undone.",
+    "preview": "Data preview",
+    "previewExtracted": "Rows as Pocket read them from the file, before any edits.",
+    "previewImported": "Original bank text of the imported rows, before any edits. Pocket doesn't keep a raw copy of CSV and Excel files.",
+    "noPreview": "No rows to show for this file.",
+    "showingRows": "Showing {{shown}} of {{total}} rows",
+    "col": {
+      "date": "Date",
+      "description": "Description",
+      "amount": "Amount",
+      "balance": "Balance",
+      "type": "Type"
+    }
   }
 }

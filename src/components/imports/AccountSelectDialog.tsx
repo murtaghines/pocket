@@ -58,7 +58,6 @@ export function AccountSelectDialog({
         color: values.color,
         account_type: values.account_type,
         currency_base: values.currency_base,
-        account_number: values.account_number,
         initial_balance: values.initial_balance,
         split_percentage: values.split_percentage,
       },

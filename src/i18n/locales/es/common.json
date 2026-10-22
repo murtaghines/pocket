@@ -60,7 +60,8 @@
         "categories": "Categorías y reglas",
         "accounts": "Cuentas"
       }
-    }
+    },
+    "accountFiles": "Archivos"
   },
   "addData": {
     "title": "Agregar datos",

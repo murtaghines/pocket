@@ -63,7 +63,6 @@ export function AccountsManager({ className }: { className?: string }) {
         color: values.color,
         account_type: values.account_type,
         currency_base: values.currency_base,
-        account_number: values.account_number || null,
         split_percentage: values.split_percentage ?? 100,
       });
     } else {
@@ -73,7 +72,6 @@ export function AccountsManager({ className }: { className?: string }) {
         color: values.color,
         account_type: values.account_type,
         currency_base: values.currency_base,
-        account_number: values.account_number,
         split_percentage: values.split_percentage,
       });
     }
@@ -211,7 +209,6 @@ export function AccountsManager({ className }: { className?: string }) {
           color: editingAccount.color || getDefaultAccountColor(cashAccounts.findIndex(a => a.id === editingAccount.id)),
           account_type: editingAccount.account_type,
           currency_base: editingAccount.currency_base,
-          account_number: editingAccount.account_number ?? undefined,
         } : undefined}
         isSubmitting={isCreating || isUpdating}
         onSubmit={handleFormSubmit}

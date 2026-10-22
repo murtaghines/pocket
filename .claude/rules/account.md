@@ -13,22 +13,29 @@ paths:
   - "src/lib/accountColors.ts"
 ---
 # Account hub & user settings
-- `/account` is two sidebar pages (no in-page tab bar): `?tab=accounts` = accounts workspace
-  (`AccountsWorkspace`: master/detail cloned from Categories & rules — banner with Bank / Investment
-  segmented control, account list on the left, `AccountDetailPanel` on the right with balance/stats,
-  settings, uploaded files and recent activity); anything else = Settings (`AccountSettingsTab`:
-  profile, session, preferences, data export, danger zone). `/profile` redirects to `/account`;
-  `/my-data?tab=accounts` redirects to `/account?tab=accounts`; old `?tab=preferences|security`
-  land on Settings. `?account=<id>` deep-links a selected account.
-- Settings page shell mirrors the Dashboard: header (identity) on the layout's blue band, content
-  overlapping it with `md:mt-[-50px]`. Every block is a white `bg-card rounded-xl p-5 md:p-6
-  shadow-section` card with an 18px/600 title (never loose text on the band); two-column grids.
-  The workspace is `fullBleed` on desktop only (`useIsMobile`); mobile scrolls the document.
-- Components live in `src/components/account/`. Per-account data comes from `useAccountDetail`
-  (cash: transactions + `get_account_period_summary` balance; investment: via the account's imports →
-  `investments`). File list is `UploadedFilesHistoryList` with `embedded` — reuse, don't fork.
-  `AccountDeleteDialog` owns the reassign/force-delete flow. `DeleteAccountDialog` stays in
-  `src/components/profile/`.
+- `/account` is three sidebar pages (no in-page tab bar): `?tab=accounts` (`AccountsWorkspace`),
+  `?tab=files` (`FilesWorkspace`) and Settings (anything else, `AccountSettingsTab`: profile, session,
+  preferences, data export, danger zone). Accounts and Files are master/detail workspaces cloned from
+  Categories & rules and built on `components/layout/WorkspaceShell` — it owns the 180px banner, the
+  translucent action pill + Bank/Investment selector (both 36px tall) and the content overlap (cards
+  start 78px from the top). Never tweak those numbers per page; Categories uses `WorkspaceBanner` too.
+  `/profile` redirects to `/account`; `/my-data?tab=accounts` → `/account?tab=accounts`; old
+  `?tab=preferences|security` land on Settings. Deep links: `?account=<id>`, `?tab=files&file=<id>`,
+  `?tab=files&account=<id>` (filters the list).
+- Accounts detail (`AccountDetailPanel`): no balance/transactions (those live in Dashboard/Transactions);
+  shows files, months, period, and settings edited in place (initial balance, share % for JOINT,
+  exclude-from-dashboard, notes). The icon is fixed per account type; hovering it opens
+  `AccountIdentityDialog` (name, nickname, colour from `ACCOUNT_COLOR_PALETTE`). Primary account is the
+  star in the header. Account number is no longer asked for (column kept). Files here are read-only
+  with a "Go to all files" link; assigning a file to an account happens in Files.
+- Files detail (`FileDetailPanel`): details (account selector via `useReassignImport`, type, size,
+  uploaded, last modified from `audit_log`, period, rows) and a raw-data preview from `useImportPreview`
+  (`import_rows` when present, else the saved transactions' original bank text — CSV/Excel keep no raw copy).
+- Settings page shell: header (identity) on the layout's blue band, cards start ~20px below it. Every
+  block is a white `bg-card rounded-xl p-5 md:p-6 shadow-section` card with an 18px/600 title.
+  Workspaces are `fullBleed` on desktop only (`useIsMobile`); mobile scrolls the document.
+- `useAccountDetail` returns only the date range covered by an account. `AccountDeleteDialog` owns the
+  reassign/force-delete flow. `DeleteAccountDialog` stays in `src/components/profile/`.
 - Account deletion goes through the `delete-account` edge function (cascade FKs) — don't
   reimplement client-side.
 - **Bank accounts have a bank (`institution`) and an optional nickname (`name`)** —
@@ -48,7 +55,7 @@ paths:
   `split_percentage / 100.0` so the user sees only their share. When writing new aggregation
   queries, always JOIN accounts and apply `COALESCE(a.split_percentage, 100) / 100.0`.
 - `user_preferences.show_decimals` (bool, default true) feeds `formatCurrency` in
-  `useLocalization`. `accounts.notes` (text) is edited in `AccountFormDialog`.
+  `useLocalization`. `accounts.notes` (text) is edited in the account detail panel.
 - `user_preferences.theme` (text NOT NULL DEFAULT 'system') — DB column exists but theme is
   still localStorage-backed via `useTheme` (light / dark / system). Column reserved for cross-device sync later.
 - `src/components/settings/` is shared with the Categories module — changes here may also
