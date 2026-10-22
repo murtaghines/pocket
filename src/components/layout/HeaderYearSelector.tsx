@@ -3,6 +3,7 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { usePeriodSelection } from "@/hooks/usePeriodSelection";
 import { getActiveSection, getActiveTabKey } from "@/config/navigation";
+import { useSectionDefaultTab } from "@/hooks/useDashboardTab";
 
 interface HeaderYearSelectorProps {
   variant?: "default" | "onPrimary";
@@ -15,7 +16,8 @@ export function HeaderYearSelector({ variant = "default" }: HeaderYearSelectorPr
   const { selectedPeriod, setSelectedPeriod, availablePeriods } = usePeriodSelection();
 
   const section = getActiveSection(location.pathname);
-  const activeTab = getActiveTabKey(section, searchParams);
+  const sectionDefault = useSectionDefaultTab(section);
+  const activeTab = getActiveTabKey(section, searchParams, sectionDefault);
   if (section?.key !== "dashboard" || activeTab !== "year") return null;
 
   const availableYears = availablePeriods.year;

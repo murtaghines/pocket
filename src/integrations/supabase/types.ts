@@ -706,6 +706,8 @@ export type Database = {
           country: string | null
           created_at: string | null
           date_format: string | null
+          default_period: string
+          display_format: Json
           id: string
           joint_account_names: string[] | null
           language: string
@@ -721,6 +723,8 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           date_format?: string | null
+          default_period?: string
+          display_format?: Json
           id?: string
           joint_account_names?: string[] | null
           language?: string
@@ -736,6 +740,8 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           date_format?: string | null
+          default_period?: string
+          display_format?: Json
           id?: string
           joint_account_names?: string[] | null
           language?: string

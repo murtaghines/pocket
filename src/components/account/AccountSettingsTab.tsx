@@ -1,24 +1,17 @@
-import { AccountProfileCard } from "@/components/account/AccountProfileCard";
 import { AccountPreferencesTab } from "@/components/account/AccountPreferencesTab";
-import { ExportDataCard, SessionCard, DangerZoneCard } from "@/components/account/AccountDataCards";
+import { ExportDataCard, DangerZoneCard } from "@/components/account/AccountDataCards";
 
-interface AccountSettingsTabProps {
-  onLogout: () => void;
-}
-
-/** One page for everything about the user: profile, preferences, data export, session and deletion. */
-export function AccountSettingsTab({ onLogout }: AccountSettingsTabProps) {
+/** Everything about the user: formats and preferences, data export and account deletion. The profile
+ *  (name, email, member since) lives in the page header with its own edit dialog; logging out is in the sidebar. */
+export function AccountSettingsTab() {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-        <AccountProfileCard />
-        <SessionCard onLogout={onLogout} />
-      </div>
-      <AccountPreferencesTab />
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-        <ExportDataCard />
-        <DangerZoneCard />
-      </div>
-    </div>
+    <AccountPreferencesTab
+      rightExtra={
+        <>
+          <ExportDataCard />
+          <DangerZoneCard />
+        </>
+      }
+    />
   );
 }

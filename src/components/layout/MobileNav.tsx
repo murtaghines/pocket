@@ -8,6 +8,7 @@ import { HeaderWeekSelector } from "./HeaderWeekSelector";
 import { HeaderYearSelector } from "./HeaderYearSelector";
 import { HeaderGranularitySelector } from "./HeaderGranularitySelector";
 import { NAV_SECTIONS, getActiveSection, getActiveTabKey } from "@/config/navigation";
+import { useDashboardDefaultTab, useSectionDefaultTab } from "@/hooks/useDashboardTab";
 
 function HamburgerAsterisk({ open }: { open: boolean }) {
   const bars = [
@@ -74,7 +75,9 @@ export function MobileNav() {
   }, []);
 
   const activeSection = getActiveSection(location.pathname);
-  const activeTabKey = getActiveTabKey(activeSection, searchParams);
+  const activeSectionDefault = useSectionDefaultTab(activeSection);
+  const dashboardDefault = useDashboardDefaultTab();
+  const activeTabKey = getActiveTabKey(activeSection, searchParams, activeSectionDefault);
 
   const title = (() => {
     if (activeSection) {
@@ -90,7 +93,8 @@ export function MobileNav() {
   })();
 
   const linkFor = (section: (typeof NAV_SECTIONS)[number], tabKey?: string) => {
-    if (!tabKey || tabKey === section.defaultTab) return section.path;
+    const sectionDefault = section.key === "dashboard" ? dashboardDefault : section.defaultTab;
+    if (!tabKey || tabKey === sectionDefault) return section.path;
     return `${section.path}?tab=${tabKey}`;
   };
 
