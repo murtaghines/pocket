@@ -21,14 +21,14 @@ export function AccountHeader() {
   })();
 
   return (
-    <div className="flex items-center gap-4 pb-2">
+    <div className="flex min-w-0 items-center gap-4">
       <div
         className="w-14 h-14 rounded-full flex items-center justify-center bg-primary text-primary-foreground md:bg-white/20 md:text-white text-[18px] font-bold shrink-0"
       >
         {initials}
       </div>
       <div className="min-w-0">
-        <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-foreground md:text-white leading-tight truncate">
+        <h1 className="font-heading text-[22px] font-semibold text-foreground md:text-white leading-tight truncate">
           {displayName}
         </h1>
         <div className="flex items-center gap-3 mt-0.5">

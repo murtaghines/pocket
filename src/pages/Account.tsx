@@ -14,7 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 
 type TabKey = "general" | "accounts" | "preferences" | "security";
 
-const UNDERLINE_TAB = "rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm whitespace-nowrap shrink-0 text-white/70 data-[state=active]:text-white";
+const SEGMENT_TAB =
+  "h-[28px] shrink-0 whitespace-nowrap rounded-[9px] px-[13px] font-heading text-[13px] font-medium text-muted-foreground shadow-none transition-colors " +
+  "data-[state=active]:bg-card data-[state=active]:font-semibold data-[state=active]:text-foreground data-[state=active]:shadow-sm " +
+  "md:text-white/85 md:hover:bg-white/10 md:data-[state=active]:bg-white md:data-[state=active]:text-primary";
 const TAB_KEYS: TabKey[] = ["general", "accounts", "preferences", "security"];
 
 export default function Account() {
@@ -53,40 +56,42 @@ export default function Account() {
           isLoggingOut ? "opacity-0" : "opacity-100"
         }`}
       >
-        <main className="space-y-6 px-3 md:px-[34px]">
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <div className="sticky top-12 z-20 -mx-3 -mt-2 bg-background/90 px-3 pt-2 backdrop-blur-[10px] md:top-0 md:mx-0 md:mt-0 md:px-0 md:pt-0 md:bg-primary md:backdrop-blur-none">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <header className="px-3 pt-2 pb-4 md:px-[34px] md:pt-[24px] md:pb-[78px]">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <AccountHeader />
-              <TabsList className="w-full justify-start bg-transparent border-b border-white/20 rounded-none p-0 h-auto mt-4 overflow-x-auto scrollbar-none md:border-white/20">
-                <TabsTrigger value="general" className={UNDERLINE_TAB}>
+              <TabsList className="h-auto w-full justify-start gap-[2px] overflow-x-auto rounded-[12px] bg-muted p-[4px] scrollbar-none md:w-auto md:shrink-0 md:bg-white/[0.16]">
+                <TabsTrigger value="general" className={SEGMENT_TAB}>
                   {t("tabs.general", "General")}
                 </TabsTrigger>
-                <TabsTrigger value="accounts" className={UNDERLINE_TAB}>
+                <TabsTrigger value="accounts" className={SEGMENT_TAB}>
                   {t("tabs.accounts", "Accounts")}
                 </TabsTrigger>
-                <TabsTrigger value="preferences" className={UNDERLINE_TAB}>
+                <TabsTrigger value="preferences" className={SEGMENT_TAB}>
                   {t("tabs.preferences", "Preferences")}
                 </TabsTrigger>
-                <TabsTrigger value="security" className={UNDERLINE_TAB}>
+                <TabsTrigger value="security" className={SEGMENT_TAB}>
                   {t("tabs.security", "Security")}
                 </TabsTrigger>
               </TabsList>
             </div>
+          </header>
 
-            <TabsContent value="general" className="mt-6">
+          <div className="relative z-20 px-3 pb-6 md:mt-[-50px] md:px-[34px]">
+            <TabsContent value="general" className="mt-0">
               <AccountGeneralTab onNavigateTab={handleTabChange} />
             </TabsContent>
-            <TabsContent value="accounts" className="mt-6">
+            <TabsContent value="accounts" className="mt-0">
               <AccountBankAccountsTab />
             </TabsContent>
-            <TabsContent value="preferences" className="mt-6">
+            <TabsContent value="preferences" className="mt-0">
               <AccountPreferencesTab />
             </TabsContent>
-            <TabsContent value="security" className="mt-6">
+            <TabsContent value="security" className="mt-0">
               <AccountSecurityTab onLogout={handleLogout} />
             </TabsContent>
-          </Tabs>
-        </main>
+          </div>
+        </Tabs>
       </div>
       <DashboardFooter />
     </DashboardLayout>

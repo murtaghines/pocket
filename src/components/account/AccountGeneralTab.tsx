@@ -68,7 +68,7 @@ function ProfileCard() {
   ].filter(Boolean) as { icon: React.ElementType; label: string; value?: string | null }[];
 
   return (
-    <section className="bg-card rounded-xl p-5 md:p-6 shadow-section border border-border">
+    <section className="bg-card rounded-xl p-5 md:p-6 shadow-section">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">
           {t("general.profile", "Profile")}
@@ -177,7 +177,7 @@ function DataSummaryCard({ onNavigateTab }: AccountGeneralTabProps) {
   ];
 
   return (
-    <section className="bg-card rounded-xl p-5 md:p-6 shadow-section border border-border">
+    <section className="bg-card rounded-xl p-5 md:p-6 shadow-section">
       <h3 className="text-lg font-semibold text-foreground mb-4">
         {t("general.summary.title", "Your data")}
       </h3>
@@ -219,10 +219,10 @@ function QuickActions({ onNavigateTab }: AccountGeneralTabProps) {
     { icon: FileText, label: t("general.quick.files", "Manage files"), to: "/my-data" },
   ];
 
-  const cls = "flex items-center gap-3 bg-card rounded-xl p-4 border border-border shadow-section hover:bg-accent transition-colors text-left";
+  const cls = "flex items-center gap-3 bg-card rounded-xl p-4 shadow-section hover:bg-accent transition-colors text-left";
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:col-span-2">
       {items.map(({ icon: Icon, label, onClick, to }) => {
         const content = (
           <>
@@ -242,7 +242,7 @@ function QuickActions({ onNavigateTab }: AccountGeneralTabProps) {
 
 export function AccountGeneralTab({ onNavigateTab }: AccountGeneralTabProps) {
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
       <ProfileCard />
       <DataSummaryCard onNavigateTab={onNavigateTab} />
       <QuickActions onNavigateTab={onNavigateTab} />

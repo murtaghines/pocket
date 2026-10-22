@@ -16,6 +16,10 @@ paths:
 - The account hub lives at `/account` (4 tabs: General / Accounts / Preferences /
   Security). `/profile` is a permanent redirect to `/account`.
 - Tab state is URL-driven: `/account?tab=accounts` etc. Default tab = general (no param). General = profile + data summary + quick links; no dashboard KPIs belong in the account hub.
+- Page shell mirrors the Dashboard: header (identity left, segmented tab pills right) sits on the
+  layout's blue band, tab content overlaps it with `md:mt-[-50px]`. Every block on the page is a
+  white `bg-card rounded-xl p-5 md:p-6 shadow-section` card with an 18px/600 title (never put loose
+  text directly on the band); settings tabs use a `lg:grid-cols-2` grid.
 - Components for each tab live in `src/components/account/`. `DeleteAccountDialog` stays in
   `src/components/profile/` (reused by AccountSecurityTab). `src/components/profile/` no
   longer contains ProfileInfoCard or ProfileHeader — those are inlined in AccountSecurityTab
