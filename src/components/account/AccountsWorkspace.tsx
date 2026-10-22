@@ -152,7 +152,7 @@ export function AccountsWorkspace() {
   return (
     <div className="flex flex-col bg-background md:h-full md:overflow-hidden">
       {/* Banner */}
-      <div className="shrink-0 bg-primary px-3 pb-6 pt-4 md:px-[34px] md:pb-[72px] md:pt-[22px]">
+      <div className="shrink-0 bg-primary px-3 pb-6 pt-4 md:h-[180px] md:px-[34px] md:pb-0 md:pt-[22px]">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="font-heading text-[19px] font-semibold leading-none tracking-[-0.01em] text-white">
@@ -162,7 +162,18 @@ export function AccountsWorkspace() {
               {t("workspace.subtitle", { bank: counts.bank, investment: counts.investment, defaultValue: "{{bank}} bank · {{investment}} investment" })}
             </p>
           </div>
-          <div className="flex gap-[2px] self-start rounded-[12px] bg-white/[0.16] p-[4px]" role="tablist">
+          <div className="flex items-center gap-[8px] self-start">
+          <div className="flex rounded-[12px] bg-white/[0.16] p-[4px]">
+            <button
+              type="button"
+              onClick={openCreate}
+              className="flex h-[28px] items-center gap-1.5 rounded-[9px] px-[13px] text-[13px] font-medium text-white/90 transition-colors hover:bg-white/10"
+            >
+              <Plus className="h-[14px] w-[14px]" strokeWidth={2.2} />
+              {t("accounts.addAccount", "Add account")}
+            </button>
+          </div>
+          <div className="flex gap-[2px] rounded-[12px] bg-white/[0.16] p-[4px]" role="tablist">
             {(["bank", "investment"] as RoleTab[]).map((tab) => {
               const isActive = tab === role;
               return (
@@ -183,23 +194,15 @@ export function AccountsWorkspace() {
               );
             })}
           </div>
+          </div>
         </div>
       </div>
 
       {/* Content (overlaps the banner) */}
-      <div className="px-3 pb-6 pt-4 md:min-h-0 md:flex-1 md:overflow-hidden md:px-[34px] md:pb-8 md:pt-0 md:mt-[-56px]">
+      <div className="px-3 pb-6 pt-4 md:min-h-0 md:flex-1 md:overflow-hidden md:px-[34px] md:pb-8 md:pt-0 md:mt-[-72px]">
         <div className="grid grid-cols-1 gap-4 md:h-full md:grid-cols-[336px_minmax(0,1fr)]">
           {/* Left column */}
-          <div className="flex flex-col gap-4 md:h-full md:min-h-0">
-            <button
-              type="button"
-              onClick={openCreate}
-              className="flex shrink-0 items-center gap-2 rounded-[10px] bg-card px-3.5 py-2 shadow-card transition-colors hover:bg-muted/60"
-            >
-              <Plus className="h-[15px] w-[15px] text-primary" strokeWidth={2.2} />
-              <span className="text-[13px] font-semibold text-primary">{t("accounts.addAccount", "Add account")}</span>
-            </button>
-
+          <div className="flex flex-col md:h-full md:min-h-0">
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] bg-card px-2.5 pb-2.5 pt-3.5 shadow-bento">
               <div className="min-h-0 flex-1 overflow-y-auto">
                 {isLoading ? (

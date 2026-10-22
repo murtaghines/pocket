@@ -107,6 +107,16 @@ function hslToHex(hslStr: string): string {
   return `#${rv.toString(16).padStart(2, '0')}${gv.toString(16).padStart(2, '0')}${bv.toString(16).padStart(2, '0')}`;
 }
 
+type KeywordRuleRow = { id: string; pattern: string; match_type: string; isKeyword: true };
+type DbRuleRow = {
+  id: string; pattern: string; match_type: string;
+  applied_count: number; last_applied_at: string | null; account_id: string | null;
+  isKeyword: false;
+};
+type SelectedRuleRow = KeywordRuleRow | DbRuleRow;
+// A guard rather than `!rule.isKeyword`: boolean-literal narrowing needs strictNullChecks, which this project doesn't enable.
+const isDbRule = (r: SelectedRuleRow): r is DbRuleRow => !r.isKeyword;
+
 export function CategoriesEditor() {
   const { t } = useTranslation('settings');
   const { toast } = useToast();
@@ -250,7 +260,7 @@ export function CategoriesEditor() {
   }, [selected, activeData.custom, getVisualOverride, getCategoryIcon]);
 
   // Rules for the selected category
-  const selectedRules = useMemo(() => {
+  const selectedRules = useMemo<SelectedRuleRow[]>(() => {
     if (!selected) return [];
     if (selected.isCustom) {
       const custom = activeData.custom.find(c => c.slug === selected.slug);
@@ -258,7 +268,7 @@ export function CategoriesEditor() {
         id: `kw-${i}`,
         pattern: kw,
         match_type: 'CONTAINS',
-        isKeyword: true,
+        isKeyword: true as const,
       }));
     }
     return getRulesForCategory(selected.id).map(r => ({
@@ -268,7 +278,7 @@ export function CategoriesEditor() {
       applied_count: r.applied_count,
       last_applied_at: r.last_applied_at,
       account_id: r.account_id,
-      isKeyword: false,
+      isKeyword: false as const,
     }));
   }, [selected, activeData.custom, getRulesForCategory]);
 
@@ -364,7 +374,7 @@ export function CategoriesEditor() {
     });
   }, [deleteRule, toast, t]);
 
-  const handleEditRule = useCallback((rule: Rule) => {
+  const handleEditRule = useCallback((rule: Pick<Rule, 'id' | 'pattern' | 'match_type' | 'account_id'>) => {
     if (!selected) return;
     setEditRuleState({
       ruleId: rule.id,
@@ -540,7 +550,7 @@ export function CategoriesEditor() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: '#F7F8FC' }}>
       {/* ====== Blue banner ====== */}
-      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', padding: '22px 34px 72px' }}>
+      <div className="shrink-0" style={{ background: 'hsl(var(--primary))', height: 180, padding: '22px 34px 0' }}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[19px] font-semibold text-white leading-none tracking-[-0.01em]">
@@ -552,6 +562,17 @@ export function CategoriesEditor() {
             >
               {t('categories.bannerSubtitle', { ruleCount: rules.length, catCount: tabCounts.expense + tabCounts.income + tabCounts.transfer })}
             </p>
+          </div>
+          <div className="flex items-center gap-[8px]">
+          <div className="flex bg-white/[0.16] rounded-[12px] p-[4px]">
+            <button
+              type="button"
+              onClick={() => setShowCreateCategory(true)}
+              className="flex items-center gap-1.5 px-[13px] h-[28px] rounded-[9px] text-[13px] font-medium text-white/90 transition-colors hover:bg-white/10"
+            >
+              <Plus size={14} strokeWidth={2.2} />
+              {t('categories.newCategory')}
+            </button>
           </div>
           {/* Segmented tab control */}
           <div
@@ -588,33 +609,18 @@ export function CategoriesEditor() {
               );
             })}
           </div>
+          </div>
         </div>
       </div>
 
       {/* ====== Content wrapper (overlaps banner by 58px) ====== */}
       <div
         className="flex-1 min-h-0 overflow-hidden"
-        style={{ padding: '0 34px 32px', marginTop: -56 }}
+        style={{ padding: '0 34px 32px', marginTop: -72 }}
       >
         <div className="grid h-full gap-4" style={{ gridTemplateColumns: '336px minmax(0,1fr)' }}>
           {/* ====== LEFT COLUMN — Sidebar ====== */}
-          <div className="flex flex-col gap-4 h-full">
-            {/* New Category button */}
-            <button
-              type="button"
-              onClick={() => setShowCreateCategory(true)}
-              className="shrink-0 flex items-center gap-2 bg-white rounded-[10px] transition-colors hover:bg-[#F7F8FC]"
-              style={{
-                padding: '8px 14px',
-                boxShadow: '0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04)',
-              }}
-            >
-              <Plus size={15} strokeWidth={2.2} style={{ color: '#1B76FF' }} />
-              <span className="text-[13px] font-semibold" style={{ color: '#1B76FF' }}>
-                {t('categories.newCategory')}
-              </span>
-            </button>
-
+          <div className="flex flex-col h-full">
             {/* Category list card */}
             <div
               className="flex-1 min-h-0 flex flex-col bg-white rounded-[14px] overflow-hidden"
@@ -863,14 +869,14 @@ export function CategoriesEditor() {
                       {selectedRules.map((rule) => (
                         <div
                           key={rule.id}
-                          className={cn('flex items-center gap-2.5', !rule.isKeyword && 'cursor-pointer hover:border-primary/30')}
+                          className={cn('flex items-center gap-2.5', isDbRule(rule) && 'cursor-pointer hover:border-primary/30')}
                           style={{
                             background: '#FAFBFD', border: '1px solid #EDEFF4',
                             borderRadius: 11, padding: '10px 12px',
                             transition: 'border-color 150ms',
                           }}
                           onClick={() => {
-                            if (!rule.isKeyword) handleEditRule(rule as Rule);
+                            if (isDbRule(rule)) handleEditRule(rule);
                           }}
                         >
                           {/* Match type pill */}
@@ -895,7 +901,7 @@ export function CategoriesEditor() {
                           </div>
 
                           {/* Account scope */}
-                          {!rule.isKeyword && rule.account_id && (
+                          {isDbRule(rule) && rule.account_id && (
                             <span className="shrink-0 flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-white border" style={{ borderColor: '#E4E7EC', color: '#9AA1AC' }}>
                               <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                               {accountNameById.get(rule.account_id) || ''}
@@ -903,11 +909,11 @@ export function CategoriesEditor() {
                           )}
 
                           {/* Edit + Delete buttons */}
-                          {!rule.isKeyword && (
+                          {isDbRule(rule) && (
                             <div className="shrink-0 flex items-center gap-1">
                               <button
                                 type="button"
-                                onClick={(e) => { e.stopPropagation(); handleEditRule(rule as Rule); }}
+                                onClick={(e) => { e.stopPropagation(); handleEditRule(rule); }}
                                 className="flex items-center justify-center rounded-lg transition-colors"
                                 style={{ width: 28, height: 28, color: '#9AA1AC' }}
                                 onMouseEnter={(e) => { e.currentTarget.style.background = '#EFF4FF'; e.currentTarget.style.color = '#1B76FF'; }}

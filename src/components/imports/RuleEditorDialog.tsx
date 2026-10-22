@@ -96,7 +96,7 @@ export function RuleEditorDialog({
     return [];
   }, [matchType, pattern]);
 
-  const { matched } = useRulePreview({
+  const { matchingIds: matchedIds } = useRulePreview({
     matchType,
     pattern,
     tokens: effectiveTokens,
@@ -106,8 +106,8 @@ export function RuleEditorDialog({
   });
 
   const matchingIds = useMemo(
-    () => (applyAll ? matched : []),
-    [applyAll, matched],
+    () => (applyAll ? matchedIds : []),
+    [applyAll, matchedIds],
   );
 
   const canSave = pattern.trim().length > 0;

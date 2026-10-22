@@ -41,6 +41,9 @@ export interface MonthTransaction {
   fingerprint: string | null;
   transfer_pair_id: string | null;
   user_notes: string | null;
+  currency: string | null;
+  /** True once the user has changed the category by hand (drives the "save with rule" prompt). */
+  user_corrected: boolean | null;
 }
 
 export interface AuditEntry {

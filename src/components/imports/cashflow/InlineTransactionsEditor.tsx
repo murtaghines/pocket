@@ -274,7 +274,7 @@ export function InlineTransactionsEditor({
       const { data, error } = await supabase
         .from("transactions")
         .select(
-          "id, date, description, description_norm, original_description, amount, amount_original, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id, user_notes",
+          "id, date, description, description_norm, original_description, amount, amount_original, movement, category, category_id, account_id, is_hidden, import_id, fingerprint, transfer_pair_id, user_notes, currency, user_corrected",
         )
         .eq("user_id", user.id)
         .eq("domain", "CASHFLOW")
@@ -574,7 +574,7 @@ export function InlineTransactionsEditor({
     queryClient.invalidateQueries({ queryKey: ["dashboard-aggregates"] });
     queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
 
-    const { id: _id, created_at: _c, updated_at: _u, ...insertPayload } = fullRow;
+    const { id: _id, created_at: _c, ...insertPayload } = fullRow;
 
     const undoId = sonnerToast("Entry deleted", {
       duration: 5000,

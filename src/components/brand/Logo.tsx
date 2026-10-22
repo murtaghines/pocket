@@ -15,7 +15,7 @@ type LogoProps = React.HTMLAttributes<HTMLSpanElement> & {
  * never a separate raster per color.
  */
 export function Logo({ variant = "full", size = 24, gap = "gap-2", className, ...rest }: LogoProps) {
-  if (variant === "mark") return <AsteriskMark size={size} className={className} {...rest} />;
+  if (variant === "mark") return <AsteriskMark size={size} className={className} {...(rest as unknown as React.SVGProps<SVGSVGElement>)} />;
   if (variant === "wordmark") return <Wordmark className={className} {...rest} />;
 
   return (
