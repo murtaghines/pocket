@@ -28,7 +28,7 @@ paths:
 - Accounts detail (`AccountDetailPanel`): no balance/transactions (those live in Dashboard/Transactions);
   shows four tiles (files, months, currency, period) and settings edited in place (initial balance, share % for JOINT,
   exclude-from-dashboard, notes). The icon is fixed per account type; hovering it opens
-  `AccountIdentityDialog` (name, nickname, colour from `ACCOUNT_COLOR_PALETTE`). Primary account is the
+  `AccountIdentityDialog` (name and nickname only). Icon and colour come from the account TYPE: `getAccountTypeIcon` and `getAccountColor` (`ACCOUNT_TYPE_COLORS` in `lib/accountColors.ts`, blues / navies / grays only, no yellow). Never read `account.color` for display; the users don't pick colours. Primary account is the
   star in the header. Account number is no longer asked for (column kept). Files here are read-only
   with a "Go to all files" link; assigning a file to an account happens in Files.
 - Files detail (`FileDetailPanel`): details (account selector via `useReassignImport`, type, size,
