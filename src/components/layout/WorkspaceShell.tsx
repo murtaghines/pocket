@@ -31,18 +31,18 @@ export function WorkspaceBanner<T extends string>({ title, subtitle, action, sel
         </div>
         <div className="flex items-center gap-2 self-start">
           {action && (
-            <div className="flex h-8 items-center rounded-[10px] bg-white/[0.16] p-0.5">
+            <div className="flex h-9 items-center rounded-[12px] bg-white/[0.16] p-1">
               <button
                 type="button"
                 onClick={action.onClick}
-                className="flex h-7 items-center gap-1.5 rounded-[8px] px-[13px] text-[13px] font-medium leading-none text-white/90 transition-colors hover:bg-white/10"
+                className="flex h-7 items-center gap-1.5 rounded-[9px] px-[13px] text-[13px] font-medium leading-none text-white/90 transition-colors hover:bg-white/10"
               >
                 <Plus className="h-[14px] w-[14px]" strokeWidth={2.2} />
                 {action.label}
               </button>
             </div>
           )}
-          <div className="flex h-8 items-center gap-[2px] rounded-[10px] bg-white/[0.16] p-0.5" role="tablist">
+          <div className="flex h-9 items-center gap-[2px] rounded-[12px] bg-white/[0.16] p-1" role="tablist">
             {selector.options.map((opt) => {
               const active = opt.value === selector.value;
               return (
@@ -53,7 +53,7 @@ export function WorkspaceBanner<T extends string>({ title, subtitle, action, sel
                   aria-selected={active}
                   onClick={() => selector.onChange(opt.value)}
                   className={cn(
-                    "flex h-7 min-w-[118px] items-center justify-center gap-1.5 rounded-[8px] px-[13px] text-[13px] leading-none transition-colors",
+                    "flex h-7 min-w-[104px] items-center justify-center gap-1.5 rounded-[9px] px-[13px] text-[13px] leading-none transition-colors",
                     active ? "bg-white font-semibold text-primary" : "font-medium text-white/85 hover:bg-white/10",
                   )}
                 >
