@@ -25,6 +25,9 @@ export interface Import {
   error_message: string | null;
   transactions_count: number | null;
   locked?: boolean;
+  /** What the user sees as the file's title; `file_name` stays as the identifier. */
+  display_name?: string | null;
+  archived?: boolean;
   target_month?: string; // YYYY-MM from period
 }
 

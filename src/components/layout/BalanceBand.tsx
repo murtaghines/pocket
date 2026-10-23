@@ -13,6 +13,7 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPeriodLabel, periodRangeOf } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { isSavingsType } from "@/lib/accountTypes";
 import { useDashboardDefaultTab, resolveDashboardTab, withDashboardTab } from "@/hooks/useDashboardTab";
 
 type PeriodKey = "month" | "week" | "year";
@@ -34,7 +35,7 @@ export function BalanceBand() {
 
   const cashAccounts = getCashAccounts();
   const savingsAccountIds = useMemo(
-    () => new Set(cashAccounts.filter(a => a.account_type === "SAVINGS").map(a => a.id)),
+    () => new Set(cashAccounts.filter(a => isSavingsType(a.account_type)).map(a => a.id)),
     [cashAccounts],
   );
   const accountCount = cashAccounts.length - savingsAccountIds.size;

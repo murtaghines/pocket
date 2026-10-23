@@ -26,6 +26,7 @@ import {
   getAccountTypeI18nKey,
   deriveAccountRole,
   deriveDomainDefault,
+  isSharedType,
 } from "@/lib/accountTypes";
 
 export interface AccountFormValues {
@@ -131,7 +132,7 @@ export function AccountFormDialog({
       account_type: accountType,
       currency_base: currencyBase,
       initial_balance: Number.isFinite(parsedBalance) ? parsedBalance : 0,
-      split_percentage: accountType === "JOINT" && parsedSplit > 0 && parsedSplit <= 100
+      split_percentage: isSharedType(accountType) && parsedSplit > 0 && parsedSplit <= 100
         ? parsedSplit
         : 100,
       notes: notes.trim() || undefined,
@@ -281,7 +282,7 @@ export function AccountFormDialog({
           </div>
 
           {/* Split percentage — only for JOINT accounts */}
-          {accountType === "JOINT" && (
+          {isSharedType(accountType) && (
             <div className="space-y-2">
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("accounts.splitPercentage", "Your share (%)")}

@@ -54,7 +54,7 @@ export function AccountsWorkspace() {
 
   const filesByAccount = useMemo(() => {
     const map = new Map<string, number>();
-    for (const i of imports) if (i.account_id) map.set(i.account_id, (map.get(i.account_id) ?? 0) + 1);
+    for (const i of imports) if (i.account_id && !i.archived) map.set(i.account_id, (map.get(i.account_id) ?? 0) + 1);
     return map;
   }, [imports]);
 

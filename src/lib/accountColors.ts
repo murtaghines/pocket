@@ -22,6 +22,7 @@ export const ACCOUNT_TYPE_COLORS: Record<AccountType, string> = {
   CHECKING: "#155fd6",
   SAVINGS: "#5b9bd5",
   JOINT: "#0a2a5e",
+  JOINT_SAVINGS: "#326299",
   CASH: "#7a8499",
   CREDIT_CARD: "#3b4558",
   LOAN: "#9aa3b5",

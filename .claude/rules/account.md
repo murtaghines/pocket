@@ -31,6 +31,12 @@ paths:
   `AccountIdentityDialog` (name and nickname only). Icon and colour come from the account TYPE: `getAccountTypeIcon` and `getAccountColor` (`ACCOUNT_TYPE_COLORS` in `lib/accountColors.ts`, blues / navies / grays only, no yellow). Never read `account.color` for display; the users don't pick colours. Primary account is the
   star in the header. Account number is no longer asked for (column kept). Files here are read-only
   with a "Go to all files" link; assigning a file to an account happens in Files.
+- Files are administered only in the Files page (no upload button there). `imports.display_name` is the
+  title the user edits (`useRenameImport`); `imports.file_name` stays the identifier and is shown under the
+  title. `Archive` on a file (`set_import_archived` RPC) keeps the data but hides the file and its
+  transactions everywhere: `transactions.is_hidden` is set and `hidden_by_archive` remembers which rows
+  were hidden by the archive, so restoring never unhides rows the user hid by hand. Account views skip
+  archived files. Last edit per file comes from `get_import_last_edits`.
 - Files detail (`FileDetailPanel`): details (account selector via `useReassignImport`, type, size,
   uploaded, last modified from `audit_log`, period, rows) and a raw-data preview from `useImportPreview`
   (`import_rows` when present, else the saved transactions' original bank text — CSV/Excel keep no raw copy).
@@ -61,6 +67,12 @@ paths:
   RPCs (`get_account_period_summary`, `get_account_opening_balances`) deliberately still include it. Any NEW
   dashboard aggregate must apply the same filter. `updateAccount` invalidates every query so the dashboard is
   never stale after an account edit.
+- Account types: `CHECKING, SAVINGS, JOINT, JOINT_SAVINGS, CASH, CREDIT_CARD, LOAN, OTHER` + investment types.
+  Shared types (`isSharedType`: JOINT, JOINT_SAVINGS) carry a share %; savings types (`isSavingsType`: SAVINGS,
+  JOINT_SAVINGS) are kept out of spending analysis and dashboard totals in SQL (`mv_daily_totals`,
+  `mv_opening_balances`, `get_balance_at_date`) and in the client. Never compare `account_type` to a single
+  literal for these groups; use the helpers. The enum value was added in `20261023300000` and the existing
+  shared savings account was moved in `20261023300100`.
 - `accounts.split_percentage` (smallint NOT NULL DEFAULT 100, range 1–100) — the user's
   ownership share of a joint account. Only shown in the form when `account_type === 'JOINT'`
   (defaults to 50). All dashboard SQL RPCs and materialized views multiply amounts by

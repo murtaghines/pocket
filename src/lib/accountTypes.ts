@@ -24,6 +24,7 @@ export type AccountType =
   | "LOAN"
   | "OTHER"
   | "JOINT"
+  | "JOINT_SAVINGS"
   | "BROKERAGE"
   | "CRYPTO"
   | "RETIREMENT"
@@ -36,6 +37,7 @@ export const ACCOUNT_TYPES: AccountType[] = [
   "CREDIT_CARD",
   "SAVINGS",
   "JOINT",
+  "JOINT_SAVINGS",
   "LOAN",
   "OTHER",
   "BROKERAGE",
@@ -51,6 +53,7 @@ export const BANK_ACCOUNT_TYPES: AccountType[] = [
   "CREDIT_CARD",
   "SAVINGS",
   "JOINT",
+  "JOINT_SAVINGS",
   "LOAN",
   "OTHER",
 ];
@@ -72,6 +75,7 @@ const TYPE_TO_ROLE: Record<AccountType, "CASH" | "INVESTMENT"> = {
   LOAN: "CASH",
   OTHER: "CASH",
   JOINT: "CASH",
+  JOINT_SAVINGS: "CASH",
   BROKERAGE: "INVESTMENT",
   CRYPTO: "INVESTMENT",
   RETIREMENT: "INVESTMENT",
@@ -88,6 +92,7 @@ const TYPE_TO_DOMAIN: Record<AccountType, "CASHFLOW" | "INVESTING"> = {
   LOAN: "CASHFLOW",
   OTHER: "CASHFLOW",
   JOINT: "CASHFLOW",
+  JOINT_SAVINGS: "CASHFLOW",
   BROKERAGE: "INVESTING",
   CRYPTO: "INVESTING",
   RETIREMENT: "INVESTING",
@@ -104,6 +109,8 @@ const TYPE_ICONS: Record<AccountType, LucideIcon> = {
   LOAN: HandCoins,
   OTHER: Building2,
   JOINT: Users,
+  // Between joint and savings: savings icon, its own color (between navy and sky blue).
+  JOINT_SAVINGS: PiggyBank,
   BROKERAGE: BarChart3,
   CRYPTO: Bitcoin,
   RETIREMENT: Shield,
@@ -133,6 +140,7 @@ export function getAccountTypeI18nKey(type: AccountType): string {
     LOAN: "accountTypes.loan",
     OTHER: "accountTypes.other",
     JOINT: "accountTypes.joint",
+    JOINT_SAVINGS: "accountTypes.joint_savings",
     BROKERAGE: "accountTypes.brokerage",
     CRYPTO: "accountTypes.crypto",
     RETIREMENT: "accountTypes.retirement",
@@ -152,6 +160,7 @@ export function getAccountTypeDescriptionKey(type: AccountType): string {
     LOAN: "accountTypeDescriptions.loan",
     OTHER: "accountTypeDescriptions.other",
     JOINT: "accountTypeDescriptions.joint",
+    JOINT_SAVINGS: "accountTypeDescriptions.joint_savings",
     BROKERAGE: "accountTypeDescriptions.brokerage",
     CRYPTO: "accountTypeDescriptions.crypto",
     RETIREMENT: "accountTypeDescriptions.retirement",
@@ -161,29 +170,31 @@ export function getAccountTypeDescriptionKey(type: AccountType): string {
   return keys[type];
 }
 
-/** The order accounts are listed in everywhere: checking first, then joint, then savings, then the rest. */
+/** Shared accounts carry a share of the balance (the user's %). */
+export function isSharedType(type: AccountType | null | undefined): boolean {
+  return type === "JOINT" || type === "JOINT_SAVINGS";
+}
+
+/** Savings accounts are kept out of spending analysis and the dashboard totals. */
+export function isSavingsType(type: AccountType | null | undefined): boolean {
+  return type === "SAVINGS" || type === "JOINT_SAVINGS";
+}
+
+/** The order accounts are listed in everywhere: checking, joint, joint savings, savings, then the rest. */
 const DISPLAY_PRIORITY: Record<string, number> = {
   CHECKING: 0,
   CASH: 1, CREDIT_CARD: 1,
   JOINT: 2,
-  SAVINGS: 3,
-  INVESTMENTS: 4, BROKERAGE: 4, CRYPTO: 4, RETIREMENT: 4, REAL_ESTATE: 4, OTHER_INVESTMENT: 4,
-  LOAN: 5,
-  OTHER: 6,
+  JOINT_SAVINGS: 3,
+  SAVINGS: 4,
+  INVESTMENTS: 5, BROKERAGE: 5, CRYPTO: 5, RETIREMENT: 5, REAL_ESTATE: 5, OTHER_INVESTMENT: 5,
+  LOAN: 6,
+  OTHER: 7,
 };
 
 export function compareAccountsForDisplay(
-  a: { account_type: string; name?: string | null },
-  b: { account_type: string; name?: string | null },
+  a: { account_type: string },
+  b: { account_type: string },
 ): number {
-  const prioA = DISPLAY_PRIORITY[a.account_type] ?? 6;
-  const prioB = DISPLAY_PRIORITY[b.account_type] ?? 6;
-  if (prioA !== prioB) return prioA - prioB;
-  if (a.account_type === "SAVINGS") {
-    // personal savings before the shared one
-    const jointA = a.name?.toLowerCase().includes("joint") ? 1 : 0;
-    const jointB = b.name?.toLowerCase().includes("joint") ? 1 : 0;
-    if (jointA !== jointB) return jointA - jointB;
-  }
-  return 0;
+  return (DISPLAY_PRIORITY[a.account_type] ?? 7) - (DISPLAY_PRIORITY[b.account_type] ?? 7);
 }

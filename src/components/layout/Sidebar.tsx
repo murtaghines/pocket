@@ -96,9 +96,9 @@ const GROUP_1: SidebarItem[] = [
 const dataSection = NAV_SECTIONS.find((s) => s.key === "data")!;
 
 const GROUP_3: SidebarItem[] = [
+  { key: "settings", to: "/account", iconKey: "settings", i18nKey: "navigation.settings" },
   { key: "accounts", to: "/account?tab=accounts", iconKey: "accounts", i18nKey: "navigation.tabs.data.accounts" },
   { key: "files", to: "/account?tab=files", iconKey: "folder", i18nKey: "navigation.accountFiles" },
-  { key: "settings", to: "/account", iconKey: "settings", i18nKey: "navigation.settings" },
 ];
 
 export function Sidebar() {

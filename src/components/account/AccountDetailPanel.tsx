@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Pencil, Star, Archive, ArchiveRestore, Trash2, ChevronRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { IconAction } from "@/components/account/IconAction";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +20,7 @@ import { useImports } from "@/hooks/useImports";
 import { useAccountDetail } from "@/hooks/useAccountDetail";
 import { useLocalization } from "@/hooks/useLocalization";
 import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
-import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
+import { getAccountTypeIcon, getAccountTypeI18nKey, isSharedType } from "@/lib/accountTypes";
 import { getCurrencyByCode } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
 import { getFileKind, FileTypeIcon } from "@/components/account/fileBits";
@@ -33,39 +33,6 @@ interface AccountDetailPanelProps {
 
 const FILES_PREVIEW = 6;
 
-function IconAction({ label, description, onClick, children, active = false, tone = "default" }: {
-  label: string;
-  description: string;
-  onClick: () => void;
-  children: React.ReactNode;
-  active?: boolean;
-  tone?: "default" | "warning" | "destructive";
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={onClick}
-          aria-label={label}
-          aria-pressed={tone === "warning" ? active : undefined}
-          className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-muted",
-            tone === "warning" && (active ? "text-warning" : "text-muted-foreground hover:text-foreground"),
-            tone === "destructive" && "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
-            tone === "default" && "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {children}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" className="max-w-[240px]">
-        <p className="text-[13px] font-semibold">{label}</p>
-        <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">{description}</p>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
 
 function Section({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -155,7 +122,7 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
 
   const color = getAccountColor(account);
   const TypeIcon = getAccountTypeIcon(account.account_type);
-  const files = imports.filter((i) => i.account_id === account.id).sort((a, b) => b.uploaded_at.localeCompare(a.uploaded_at));
+  const files = imports.filter((i) => i.account_id === account.id && !i.archived).sort((a, b) => b.uploaded_at.localeCompare(a.uploaded_at));
   const symbol = getCurrencyByCode(account.currency_base)?.symbol ?? account.currency_base;
 
   const monthLabel = (d: string) => `${formatMonthShort(d)} ${d.slice(0, 4)}`;
@@ -269,7 +236,7 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
                 ariaLabel={t("accounts.initialBalance", "Initial balance")}
               />
             </Field>
-            {account.account_type === "JOINT" && (
+            {isSharedType(account.account_type) && (
               <Field label={t("accounts.splitPercentage", "Your share (%)")} hint={t("accounts.splitPercentageHelp", "Your percentage of this shared account. E.g. 50 means you pay half.")}>
                 <InlineInput
                   value={String(account.split_percentage)}

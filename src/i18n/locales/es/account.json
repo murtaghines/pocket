@@ -91,7 +91,8 @@
     "crypto": "Crypto",
     "retirement": "Jubilación",
     "real_estate": "Inmobiliario",
-    "other_investment": "Otra inversión"
+    "other_investment": "Otra inversión",
+    "joint_savings": "Ahorro conjunto"
   },
   "accountTypeDescriptions": {
     "checking": "Cuenta principal para transacciones diarias",
@@ -106,7 +107,8 @@
     "crypto": "Bitcoin, Ethereum y otros criptoactivos",
     "retirement": "Fondos de pensión, planes de jubilación",
     "real_estate": "Inversiones inmobiliarias, REITs, crowdfunding",
-    "other_investment": "Cualquier otra cuenta de inversión"
+    "other_investment": "Cualquier otra cuenta de inversión",
+    "joint_savings": "Ahorro compartido con pareja o familia, con tu parte"
   },
   "preferences": {
     "title": "Preferencias",
@@ -219,7 +221,7 @@
     "type": "Tipo",
     "size": "Tamaño",
     "uploaded": "Subido",
-    "modified": "Última modificación",
+    "modified": "Última edición",
     "neverEdited": "Sin ediciones desde la subida",
     "period": "Período",
     "transactions": "Transacciones",
@@ -230,8 +232,8 @@
     "download": "Descargar original",
     "noOriginal": "No se guardó el archivo original de esta subida",
     "delete": "Eliminar archivo",
-    "deleteTitle": "¿Eliminar archivo?",
-    "deleteBody": "Se eliminará {{name}} y todas sus transacciones de forma permanente. No se puede deshacer.",
+    "deleteTitle": "¿Seguro que quieres eliminar este archivo?",
+    "deleteBody": "{{name}} y todas sus transacciones se eliminan de forma permanente. No se puede deshacer.",
     "preview": "Vista previa de los datos",
     "previewExtracted": "Filas tal como Pocket las leyó del archivo, antes de cualquier edición.",
     "previewImported": "Texto original del banco de las filas importadas, antes de cualquier edición. Pocket no guarda una copia de los archivos CSV y Excel.",
@@ -243,7 +245,32 @@
       "amount": "Importe",
       "balance": "Saldo",
       "type": "Tipo"
-    }
+    },
+    "archivedBadge": "Archivado",
+    "restore": "Restaurar archivo",
+    "restored": "Archivo restaurado",
+    "archived": "Archivo archivado",
+    "archiveError": "No se pudo actualizar el archivo",
+    "archive": "Archivar archivo",
+    "archiveHelp": "Oculta el archivo y sus transacciones de listas y análisis. No se borra nada.",
+    "restoreHelp": "Vuelve a mostrar el archivo y sus transacciones en listas y análisis.",
+    "archiveTitle": "¿Archivar este archivo?",
+    "restoreTitle": "¿Restaurar este archivo?",
+    "archiveBody": "{{name}} y sus transacciones dejan de mostrarse en todas partes: listas, saldos, dashboard y cualquier análisis.",
+    "restoreBody": "Sus transacciones vuelven a listas, saldos y números del dashboard.",
+    "archiveKeeps": "No se borra nada. El archivo y sus datos se conservan.",
+    "archiveRestore": "Puedes restaurarlo en cualquier momento desde la sección de archivados.",
+    "archivedSection": "Archivados",
+    "downloadHelp": "Descarga el archivo exactamente como lo subiste.",
+    "deleteHelp": "Elimina el archivo y todas sus transacciones de forma permanente.",
+    "deleteAlt": "Si solo quieres sacarlo de en medio, archívalo: no se pierde nada.",
+    "identifier": "Subido como",
+    "nameLabel": "Nombre del archivo",
+    "rename": "Renombrar",
+    "renamed": "Nombre actualizado",
+    "renameError": "No se pudo renombrar el archivo",
+    "editedOn": "editado {{date}}",
+    "txShort": "trans."
   },
   "settings": {
     "editProfile": "Editar perfil",
