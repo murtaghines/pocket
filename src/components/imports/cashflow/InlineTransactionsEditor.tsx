@@ -73,7 +73,7 @@ import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
 import { TransactionContextMenu } from "./TransactionContextMenu";
 import { toast as sonnerToast } from "sonner";
-import { compareAccountsForDisplay } from "@/lib/accountTypes";
+import { compareAccountsForDisplay, isSavingsType } from "@/lib/accountTypes";
 import { isManualTransaction } from "@/lib/transactionSource";
 import { ManualEntryFooter } from "./ManualEntryFooter";
 import { ProcessingPanel } from "./ProcessingPanel";
@@ -168,7 +168,7 @@ export function InlineTransactionsEditor({
   );
 
   const savingsAccountIds = useMemo(
-    () => new Set(cashAccounts.filter(a => a.account_type === "SAVINGS").map(a => a.id)),
+    () => new Set(cashAccounts.filter(a => isSavingsType(a.account_type)).map(a => a.id)),
     [cashAccounts],
   );
 
@@ -977,8 +977,8 @@ export function InlineTransactionsEditor({
       const acctA = accounts.find(ac => ac.id === a.accountId);
       const acctB = accounts.find(ac => ac.id === b.accountId);
       const byType = compareAccountsForDisplay(
-        { account_type: acctA?.account_type ?? "OTHER", name: acctA?.name },
-        { account_type: acctB?.account_type ?? "OTHER", name: acctB?.name },
+        { account_type: acctA?.account_type ?? "OTHER" },
+        { account_type: acctB?.account_type ?? "OTHER" },
       );
       if (byType !== 0) return byType;
       return a.accountName.localeCompare(b.accountName);

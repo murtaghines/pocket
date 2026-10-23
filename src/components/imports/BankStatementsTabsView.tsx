@@ -14,6 +14,7 @@ import { toast as sonnerToast } from "sonner";
 import { AccountSelectDialog } from "./AccountSelectDialog";
 import { MonthTabStrip } from "./cashflow/MonthTabStrip";
 import { MonthWorkspace } from "./cashflow/MonthWorkspace";
+import { isSavingsType } from "@/lib/accountTypes";
 import { DataToolbar, type SortColumn, type SortDirection, type DataFilters, type TabSummary } from "./cashflow/DataToolbar";
 import type { AccountTab } from "./cashflow/AccountSheetTabs";
 import { MobileUploadFAB } from "./MobileUploadFAB";
@@ -45,7 +46,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
   const { openingBalanceByMonth } = useDashboardData();
   const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
   const savingsAccountIds = useMemo(
-    () => new Set(cashAccounts.filter(a => a.account_type === "SAVINGS").map(a => a.id)),
+    () => new Set(cashAccounts.filter(a => isSavingsType(a.account_type)).map(a => a.id)),
     [cashAccounts],
   );
   const [monthsToShow, setMonthsToShow] = useState(() => {

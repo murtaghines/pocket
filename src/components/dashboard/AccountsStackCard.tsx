@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { getAccountColor, getAccountDisplayName } from "@/lib/accountColors";
+import { isSavingsType } from "@/lib/accountTypes";
 import { type AccountType, getAccountTypeIcon } from "@/lib/accountTypes";
 import { applySplit } from "@/lib/splitAmount";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -68,7 +69,7 @@ export function AccountsStackCard({
 
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
   const hasSavingsAccounts = useMemo(
-    () => cashAccounts.some(a => a.account_type === "SAVINGS"),
+    () => cashAccounts.some(a => isSavingsType(a.account_type)),
     [cashAccounts],
   );
 
@@ -125,7 +126,7 @@ export function AccountsStackCard({
   const orderedAccounts = useMemo(() => {
     const isSavingsView = view === "savings";
     const filtered = accountsData.filter(a =>
-      isSavingsView ? a.accountType === "SAVINGS" : a.accountType !== "SAVINGS",
+      isSavingsView ? isSavingsType(a.accountType) : !isSavingsType(a.accountType),
     );
     const primary = filtered.find((a) => a.isPrimary);
     const rest = filtered.filter((a) => !a.isPrimary);

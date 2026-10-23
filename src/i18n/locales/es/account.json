@@ -91,7 +91,8 @@
     "crypto": "Crypto",
     "retirement": "Jubilación",
     "real_estate": "Inmobiliario",
-    "other_investment": "Otra inversión"
+    "other_investment": "Otra inversión",
+    "joint_savings": "Ahorro conjunto"
   },
   "accountTypeDescriptions": {
     "checking": "Cuenta principal para transacciones diarias",
@@ -106,7 +107,8 @@
     "crypto": "Bitcoin, Ethereum y otros criptoactivos",
     "retirement": "Fondos de pensión, planes de jubilación",
     "real_estate": "Inversiones inmobiliarias, REITs, crowdfunding",
-    "other_investment": "Cualquier otra cuenta de inversión"
+    "other_investment": "Cualquier otra cuenta de inversión",
+    "joint_savings": "Ahorro compartido con pareja o familia, con tu parte"
   },
   "preferences": {
     "title": "Preferencias",

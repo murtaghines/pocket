@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { isSharedType } from "@/lib/accountTypes";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import {
@@ -242,7 +243,7 @@ export function TransactionEditDrawer({
     { value: "TRANSFER", label: getMovementLabel("TRANSFER") },
   ];
 
-  const jointAccount = selectedAccount?.account_type === "JOINT" ? selectedAccount : null;
+  const jointAccount = isSharedType(selectedAccount?.account_type) ? selectedAccount : null;
   const splitPct = jointAccount?.split_percentage;
   const hasSplit = jointAccount && splitPct != null && splitPct < 100;
 

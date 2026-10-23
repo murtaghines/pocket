@@ -1128,6 +1128,7 @@ export type Database = {
         | "LOAN"
         | "OTHER"
         | "JOINT"
+        | "JOINT_SAVINGS"
         | "BROKERAGE"
         | "CRYPTO"
         | "RETIREMENT"
@@ -1275,6 +1276,7 @@ export const Constants = {
         "LOAN",
         "OTHER",
         "JOINT",
+        "JOINT_SAVINGS",
         "BROKERAGE",
         "CRYPTO",
         "RETIREMENT",

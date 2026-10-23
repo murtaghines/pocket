@@ -20,7 +20,7 @@ import { useImports } from "@/hooks/useImports";
 import { useAccountDetail } from "@/hooks/useAccountDetail";
 import { useLocalization } from "@/hooks/useLocalization";
 import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
-import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
+import { getAccountTypeIcon, getAccountTypeI18nKey, isSharedType } from "@/lib/accountTypes";
 import { getCurrencyByCode } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
 import { getFileKind, FileTypeIcon } from "@/components/account/fileBits";
@@ -236,7 +236,7 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
                 ariaLabel={t("accounts.initialBalance", "Initial balance")}
               />
             </Field>
-            {account.account_type === "JOINT" && (
+            {isSharedType(account.account_type) && (
               <Field label={t("accounts.splitPercentage", "Your share (%)")} hint={t("accounts.splitPercentageHelp", "Your percentage of this shared account. E.g. 50 means you pay half.")}>
                 <InlineInput
                   value={String(account.split_percentage)}
