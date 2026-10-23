@@ -67,10 +67,12 @@ export function AccountDeleteDialog({ account, onClose }: AccountDeleteDialogPro
             <Trash2 className="w-5 h-5 text-destructive" />
             {t("accounts.deleteTitle", "Delete account")}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="space-y-2">
             {checking
               ? t("accounts.checking", "Checking linked data...")
-              : hasLinkedData
+              : !hasLinkedData
+                ? t("accounts.deleteExplain", "This permanently deletes {{name}}. It can't be undone, and the account is removed from every page, from the dashboard and from the account pickers.", { name: account?.name })
+                : hasLinkedData
                 ? t("accounts.deleteHasData", {
                     name: account?.name,
                     imports: linkedData?.importsCount,
