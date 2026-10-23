@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
+import { getAccountColor } from "@/lib/accountColors";
 import { useLocalization } from "@/hooks/useLocalization";
 import type { Import } from "@/hooks/useImports";
 import { useReassignImport } from "@/hooks/useImportFile";
@@ -391,7 +392,7 @@ export function UploadedFilesHistoryList({
                   {account?.color && (
                     <span
                       className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: account.color }}
+                      style={{ backgroundColor: getAccountColor(account) }}
                     />
                   )}
                   <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">

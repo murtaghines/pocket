@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getDefaultAccountColor } from "@/lib/accountColors";
-import { AccountColorPicker } from "@/components/settings/AccountColorPicker";
+import { getAccountColor } from "@/lib/accountColors";
 import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
 import {
   type AccountType,
@@ -85,7 +84,6 @@ export function AccountFormDialog({
   const [accountType, setAccountType] = useState<AccountType>("CHECKING");
   const [institution, setInstitution] = useState("");
   const [name, setName] = useState("");
-  const [color, setColor] = useState("");
   const [currencyBase, setCurrencyBase] = useState(defaultCurrency);
   const [initialBalance, setInitialBalance] = useState("");
   const [splitPercentage, setSplitPercentage] = useState("50");
@@ -100,7 +98,6 @@ export function AccountFormDialog({
       setAccountType(defaultType);
       setInstitution(initialValues?.institution || "");
       setName(initialValues?.name || "");
-      setColor(initialValues?.color || getDefaultAccountColor(0));
       setCurrencyBase(initialValues?.currency_base || defaultCurrency);
       setInitialBalance(
         initialValues?.initial_balance != null && initialValues.initial_balance !== 0
@@ -130,7 +127,7 @@ export function AccountFormDialog({
     onSubmit({
       institution: institution.trim(),
       name: name.trim(),
-      color,
+      color: getAccountColor({ account_type: accountType }),
       account_type: accountType,
       currency_base: currencyBase,
       initial_balance: Number.isFinite(parsedBalance) ? parsedBalance : 0,
@@ -307,14 +304,6 @@ export function AccountFormDialog({
               </p>
             </div>
           )}
-
-          {/* Color */}
-          <div className="space-y-2">
-            <label className="text-[13px] font-medium text-muted-foreground">
-              {tp("accounts.color", "Color")}
-            </label>
-            <AccountColorPicker value={color} onChange={setColor} />
-          </div>
 
         </DialogBody>
 

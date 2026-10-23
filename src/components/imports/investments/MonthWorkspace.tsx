@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Import } from "@/hooks/useImports";
 import type { Account } from "@/hooks/useAccounts";
-import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColors";
+import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
 import { InlineInvestmentsEditor } from "./InlineInvestmentsEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
 import type { PendingFileInfo, PendingInvEdit } from "./types";
@@ -55,7 +55,7 @@ export function MonthWorkspace({
         seen.set(imp.account_id, {
           id: imp.account_id,
           label: getAccountDisplayName(account),
-          color: account.color || getDefaultAccountColor(idx),
+          color: getAccountColor(account),
           count: 1,
         });
       }

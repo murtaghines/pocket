@@ -19,7 +19,7 @@ import { useAccounts, type Account } from "@/hooks/useAccounts";
 import { useImports } from "@/hooks/useImports";
 import { useAccountDetail } from "@/hooks/useAccountDetail";
 import { useLocalization } from "@/hooks/useLocalization";
-import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColors";
+import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
 import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
 import { getCurrencyByCode } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
@@ -153,7 +153,7 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
   const [notes, setNotes] = useState(account.notes ?? "");
   useEffect(() => setNotes(account.notes ?? ""), [account.notes]);
 
-  const color = account.color || getDefaultAccountColor(0);
+  const color = getAccountColor(account);
   const TypeIcon = getAccountTypeIcon(account.account_type);
   const files = imports.filter((i) => i.account_id === account.id).sort((a, b) => b.uploaded_at.localeCompare(a.uploaded_at));
   const symbol = getCurrencyByCode(account.currency_base)?.symbol ?? account.currency_base;

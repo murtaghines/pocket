@@ -12,14 +12,13 @@ import {
   DialogBody,
 } from "@/components/ui/dialog";
 import type { Account } from "@/hooks/useAccounts";
-import { getDefaultAccountColor } from "@/lib/accountColors";
+import { getAccountColor, getAccountTint } from "@/lib/accountColors";
 import { getAccountTypeIcon } from "@/lib/accountTypes";
-import { AccountColorPicker } from "@/components/settings/AccountColorPicker";
 
 interface AccountIdentityDialogProps {
   account: Account | null;
   onClose: () => void;
-  onSave: (values: { institution: string; name: string; color: string }) => void;
+  onSave: (values: { institution: string; name: string }) => void;
 }
 
 const INPUT =
@@ -31,17 +30,16 @@ export function AccountIdentityDialog({ account, onClose, onSave }: AccountIdent
   const { t: tp } = useTranslation("profile");
   const [institution, setInstitution] = useState("");
   const [name, setName] = useState("");
-  const [color, setColor] = useState("");
 
   useEffect(() => {
     if (!account) return;
     setInstitution(account.institution);
     setName(account.name === account.institution ? "" : account.name);
-    setColor(account.color || getDefaultAccountColor(0));
   }, [account]);
 
   if (!account) return null;
   const TypeIcon = getAccountTypeIcon(account.account_type);
+  const color = getAccountColor(account);
   const isInvestment = account.account_role === "INVESTMENT";
   const canSave = institution.trim().length > 0;
 
@@ -49,15 +47,15 @@ export function AccountIdentityDialog({ account, onClose, onSave }: AccountIdent
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("identity.title", "Name and color")}</DialogTitle>
-          <DialogDescription className="sr-only">{t("identity.title", "Name and color")}</DialogDescription>
+          <DialogTitle>{t("identity.title", "Name")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("identity.title", "Name")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <div className="flex items-center gap-3 rounded-xl bg-muted px-3.5 py-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: `${color}26`, color }}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: getAccountTint(color), color }}>
               <TypeIcon className="h-5 w-5" strokeWidth={2} />
             </div>
-            <p className="text-[12.5px] text-muted-foreground">{t("identity.iconHint", "The icon is set by the account type. Pick any color you like.")}</p>
+            <p className="text-[12.5px] text-muted-foreground">{t("identity.iconHint", "Each account type has its own icon and color. Name your account however you like.")}</p>
           </div>
 
           <div className="space-y-2">
@@ -79,10 +77,6 @@ export function AccountIdentityDialog({ account, onClose, onSave }: AccountIdent
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[13px] font-medium text-muted-foreground">{tp("accounts.color", "Color")}</label>
-            <AccountColorPicker value={color} onChange={setColor} />
-          </div>
         </DialogBody>
         <DialogFooter>
           <Button
@@ -95,7 +89,7 @@ export function AccountIdentityDialog({ account, onClose, onSave }: AccountIdent
           <Button
             className="h-12 min-w-[140px] rounded-[14px] px-6 text-[15px] font-semibold"
             disabled={!canSave}
-            onClick={() => onSave({ institution: institution.trim(), name: name.trim(), color })}
+            onClick={() => onSave({ institution: institution.trim(), name: name.trim() })}
           >
             {tp("accounts.save", "Save")}
           </Button>
