@@ -5,7 +5,7 @@ import { Landmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts, type Account } from "@/hooks/useAccounts";
 import { useImports } from "@/hooks/useImports";
-import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColors";
+import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
 import { getAccountTypeIcon, getAccountTypeI18nKey, compareAccountsForDisplay } from "@/lib/accountTypes";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
 import { AccountDetailPanel } from "@/components/account/AccountDetailPanel";
@@ -94,7 +94,7 @@ export function AccountsWorkspace() {
   };
 
   const renderItem = (account: Account, idx: number) => {
-    const color = account.color || getDefaultAccountColor(idx);
+    const color = getAccountColor(account);
     const Icon = getAccountTypeIcon(account.account_type);
     const isActive = account.id === selected?.id;
     const files = filesByAccount.get(account.id) ?? 0;
@@ -207,7 +207,7 @@ export function AccountsWorkspace() {
         onClose={() => setIdentityTarget(null)}
         onSave={(values) => {
           if (!identityTarget) return;
-          updateAccount({ id: identityTarget.id, institution: values.institution, name: values.name || values.institution, color: values.color });
+          updateAccount({ id: identityTarget.id, institution: values.institution, name: values.name || values.institution });
           setIdentityTarget(null);
         }}
       />

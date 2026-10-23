@@ -6,7 +6,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { getAccountColorStyle, getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
+import { getAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { type AccountType, getAccountTypeIcon } from "@/lib/accountTypes";
 import { applySplit } from "@/lib/splitAmount";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -113,7 +113,7 @@ export function AccountsStackCard({
         hasRunningBalance: summary?.has_running_balance ?? false,
         transactionCount: summary?.tx_count ?? 0,
         createdAt: acc.created_at,
-        color: acc.color || getDefaultAccountColor(i),
+        color: getAccountColor(acc),
         isPrimary: !!acc.is_primary,
         accountType: acc.account_type,
       };

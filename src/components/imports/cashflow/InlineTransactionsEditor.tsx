@@ -52,7 +52,7 @@ import { useCategoryTranslations } from "@/hooks/useCategoryTranslations";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
 import type { Import } from "@/hooks/useImports";
-import { getAccountDisplayName } from "@/lib/accountColors";
+import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
 import { RuleEditorDialog } from "../RuleEditorDialog";
 import type { RuleEditorPayload } from "../RuleEditorDialog";
 import {
@@ -960,7 +960,7 @@ export function InlineTransactionsEditor({
     for (const [acctId, txs] of byAccount) {
       const acct = acctId ? accounts.find((a) => a.id === acctId) : null;
       const name = acct ? getAccountDisplayName(acct) : t("imports.unassignedAccount", "Unassigned");
-      const color = acct?.color ?? null;
+      const color = acct ? getAccountColor(acct) : null;
       const opening = acctId ? (accountOpeningBalances![acctId] ?? 0) : 0;
       const closing = acctId && accountClosingBalances?.[acctId] != null
         ? accountClosingBalances[acctId]

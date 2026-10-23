@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Plus, Trash2, Loader2, Pencil, Star } from "lucide-react";
-import { getDefaultAccountColor, getAccountDisplayName } from "@/lib/accountColors";
+import { getAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "./AccountFormDialog";
 
 export function AccountsManager({ className }: { className?: string }) {
@@ -131,7 +131,7 @@ export function AccountsManager({ className }: { className?: string }) {
         ) : cashAccounts.length > 0 ? (
           <ul className="space-y-1.5">
             {cashAccounts.map((account, idx) => {
-              const resolvedColor = account.color || getDefaultAccountColor(idx);
+              const resolvedColor = getAccountColor(account);
               return (
                 <li
                   key={account.id}
@@ -206,7 +206,7 @@ export function AccountsManager({ className }: { className?: string }) {
         initialValues={editingAccount ? {
           institution: editingAccount.institution,
           name: editingAccount.name === editingAccount.institution ? '' : editingAccount.name,
-          color: editingAccount.color || getDefaultAccountColor(cashAccounts.findIndex(a => a.id === editingAccount.id)),
+          color: getAccountColor(editingAccount),
           account_type: editingAccount.account_type,
           currency_base: editingAccount.currency_base,
         } : undefined}

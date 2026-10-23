@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { Pencil, MoreHorizontal, Star, Archive, ArchiveRestore, Trash2, ChevronRight, FileText } from "lucide-react";
+import { Pencil, Star, Archive, ArchiveRestore, Trash2, ChevronRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAccounts, type Account } from "@/hooks/useAccounts";
 import { useImports } from "@/hooks/useImports";
 import { useAccountDetail } from "@/hooks/useAccountDetail";
 import { useLocalization } from "@/hooks/useLocalization";
-import { getAccountDisplayName, getDefaultAccountColor } from "@/lib/accountColors";
+import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
 import { getAccountTypeIcon, getAccountTypeI18nKey } from "@/lib/accountTypes";
 import { getCurrencyByCode } from "@/lib/currencies";
 import { cn } from "@/lib/utils";
@@ -28,6 +32,40 @@ interface AccountDetailPanelProps {
 }
 
 const FILES_PREVIEW = 6;
+
+function IconAction({ label, description, onClick, children, active = false, tone = "default" }: {
+  label: string;
+  description: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  active?: boolean;
+  tone?: "default" | "warning" | "destructive";
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={label}
+          aria-pressed={tone === "warning" ? active : undefined}
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-muted",
+            tone === "warning" && (active ? "text-warning" : "text-muted-foreground hover:text-foreground"),
+            tone === "destructive" && "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
+            tone === "default" && "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-[240px]">
+        <p className="text-[13px] font-semibold">{label}</p>
+        <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">{description}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 function Section({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -108,13 +146,14 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
   const { t } = useTranslation("account");
   const { formatMonthShort, formatDate } = useLocalization();
   const { updateAccount, setPrimaryAccount, unsetPrimaryAccount } = useAccounts();
+  const [confirm, setConfirm] = useState<"archive" | null>(null);
   const isInvestment = account.account_role === "INVESTMENT";
   const { imports } = useImports(isInvestment ? "INVESTING" : "CASHFLOW");
   const { data: period } = useAccountDetail(account);
   const [notes, setNotes] = useState(account.notes ?? "");
   useEffect(() => setNotes(account.notes ?? ""), [account.notes]);
 
-  const color = account.color || getDefaultAccountColor(0);
+  const color = getAccountColor(account);
   const TypeIcon = getAccountTypeIcon(account.account_type);
   const files = imports.filter((i) => i.account_id === account.id).sort((a, b) => b.uploaded_at.localeCompare(a.uploaded_at));
   const symbol = getCurrencyByCode(account.currency_base)?.symbol ?? account.currency_base;
@@ -178,36 +217,33 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
             {!isInvestment && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn("h-8 w-8 p-0", account.is_primary ? "text-warning" : "text-muted-foreground")}
-                title={account.is_primary ? t("accounts.unsetPrimary", "Remove primary") : t("accounts.setPrimary", "Set as primary")}
-                aria-label={account.is_primary ? t("accounts.unsetPrimary", "Remove primary") : t("accounts.setPrimary", "Set as primary")}
-                aria-pressed={account.is_primary}
+              <IconAction
+                label={account.is_primary ? t("accounts.unsetPrimary", "Remove primary") : t("accounts.setPrimary", "Set as primary")}
+                description={t("accounts.primaryHelp", "The account preselected when you upload files.")}
+                active={account.is_primary}
+                tone="warning"
                 onClick={() => (account.is_primary ? unsetPrimaryAccount(account.id) : setPrimaryAccount(account.id))}
               >
                 <Star className="h-[18px] w-[18px]" fill={account.is_primary ? "currentColor" : "none"} />
-              </Button>
+              </IconAction>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground" aria-label={t("detail.more", "More actions")}>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => updateAccount({ id: account.id, archived: !account.archived })}>
-                  {account.archived ? <ArchiveRestore className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
-                  {account.archived ? t("accounts.unarchive", "Restore account") : t("accounts.archive", "Archive account")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={onDelete}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {t("accounts.delete", "Delete")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <IconAction
+              label={account.archived ? t("accounts.unarchive", "Restore account") : t("accounts.archive", "Archive account")}
+              description={account.archived
+                ? t("accounts.restoreHelp", "Brings it back to your active accounts, with its files and transactions.")
+                : t("accounts.archiveHelp", "Moves it out of your active accounts. Nothing is deleted, and you can restore it anytime.")}
+              onClick={() => setConfirm("archive")}
+            >
+              {account.archived ? <ArchiveRestore className="h-[18px] w-[18px]" /> : <Archive className="h-[18px] w-[18px]" />}
+            </IconAction>
+            <IconAction
+              label={t("accounts.delete", "Delete")}
+              description={t("accounts.deleteHelp", "Permanently removes the account. Its files and transactions are handled first.")}
+              tone="destructive"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-[18px] w-[18px]" />
+            </IconAction>
           </div>
         </div>
       </div>
@@ -305,6 +341,38 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
           )}
         </Section>
       </div>
-    </div>
+    
+      <AlertDialog open={confirm === "archive"} onOpenChange={(open) => { if (!open) setConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {account.archived ? t("accounts.restoreTitle", "Restore this account?") : t("accounts.archiveTitle", "Archive this account?")}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                {account.archived ? (
+                  <p>{t("accounts.restoreBody", "It goes back to your active accounts, with all its files and transactions, and shows up again in the Accounts list and in pickers.")}</p>
+                ) : (
+                  <>
+                    <p>{t("accounts.archiveBody", "{{name}} moves out of your active accounts.", { name: getAccountDisplayName(account) })}</p>
+                    <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                      <li>{t("accounts.archiveKeeps", "Nothing is deleted: its files and transactions are kept.")}</li>
+                      <li>{t("accounts.archiveHidden", "It leaves the active list and the account pickers when uploading.")}</li>
+                      <li>{t("accounts.archiveRestore", "You can restore it at any time from the archived section.")}</li>
+                    </ul>
+                  </>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("accounts.cancel", "Cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => updateAccount({ id: account.id, archived: !account.archived })}>
+              {account.archived ? t("accounts.restore", "Restore") : t("accounts.archive", "Archive")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+</div>
   );
 }
