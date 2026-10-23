@@ -53,7 +53,7 @@ export function WorkspaceBanner<T extends string>({ title, subtitle, action, sel
                   aria-selected={active}
                   onClick={() => selector.onChange(opt.value)}
                   className={cn(
-                    "flex h-7 items-center gap-1.5 rounded-[8px] px-[13px] text-[13px] leading-none transition-colors",
+                    "flex h-7 min-w-[118px] items-center justify-center gap-1.5 rounded-[8px] px-[13px] text-[13px] leading-none transition-colors",
                     active ? "bg-white font-semibold text-primary" : "font-medium text-white/85 hover:bg-white/10",
                   )}
                 >

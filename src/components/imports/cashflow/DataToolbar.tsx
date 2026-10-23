@@ -192,38 +192,8 @@ export function DataToolbar({
           </div>
         </div>
 
-        {/* Right side: ‹ › 📅 */}
-        <div className="flex items-center shrink-0" style={{ gap: 4 }}>
-          <button
-            type="button"
-            onClick={onPrev}
-            className="inline-flex items-center justify-center cursor-pointer"
-            style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: "rgba(255,255,255,0.14)",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
-            aria-label="Previous month"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="m15 18-6-6 6-6" /></svg>
-          </button>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={!canGoNext}
-            className="inline-flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-            style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: "rgba(255,255,255,0.14)",
-            }}
-            onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.background = "rgba(255,255,255,0.22)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
-            aria-label="Next month"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>
-          </button>
-
+        {/* Right side: month pill (like the dashboard) + calendar jump */}
+        <div className="flex items-center shrink-0" style={{ gap: 8 }}>
           <Popover open={calendarOpen} onOpenChange={(open) => { setCalendarOpen(open); if (open) setViewYear(selectedYear); }}>
             <PopoverTrigger asChild>
               <button
@@ -336,6 +306,30 @@ export function DataToolbar({
               )}
             </PopoverContent>
           </Popover>
+
+          <div className="flex items-center rounded-[10px] bg-white/[0.16] p-[4px]" style={{ gap: 2 }}>
+            <button
+              type="button"
+              onClick={onPrev}
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] transition-colors hover:bg-white/10"
+              aria-label="Previous month"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <span className="min-w-[120px] select-none text-center font-heading text-[13px] font-semibold capitalize text-white">
+              {monthLabel}
+            </span>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={!canGoNext}
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] transition-colors hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none"
+              aria-label="Next month"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6" /></svg>
+            </button>
+          </div>
+
         </div>
       </header>
 
