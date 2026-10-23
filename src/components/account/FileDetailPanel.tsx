@@ -1,14 +1,7 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { MoreHorizontal, Download, Trash2, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Download, Archive, ArchiveRestore, Trash2, Lock, Pencil, Check, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,14 +12,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
 import type { Import } from "@/hooks/useImports";
 import { useAccounts } from "@/hooks/useAccounts";
-import { useImportPreview, useReassignImport, getImportDownloadUrl } from "@/hooks/useImportFile";
+import {
+  useImportPreview,
+  useReassignImport,
+  useRenameImport,
+  useSetImportArchived,
+  useImportLastEdits,
+  getImportDownloadUrl,
+  importTitle,
+} from "@/hooks/useImportFile";
 import { useLocalization } from "@/hooks/useLocalization";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
 import { getFileKind, formatBytes, ImportStatusPill, FileTypeIcon } from "@/components/account/fileBits";
+import { IconAction } from "@/components/account/IconAction";
 
 interface FileDetailPanelProps {
   file: Import;
@@ -48,16 +49,25 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
   const { formatDateTime, formatDate, formatMonthShort, formatCurrency } = useLocalization();
   const { accounts } = useAccounts();
   const reassign = useReassignImport();
+  const rename = useRenameImport();
+  const setArchived = useSetImportArchived();
   const { data: preview, isLoading } = useImportPreview(file);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [moving, setMoving] = useState(false);
+  const { data: lastEdits } = useImportLastEdits();
 
+  const [confirm, setConfirm] = useState<"archive" | "delete" | null>(null);
+  const [moving, setMoving] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  useEffect(() => { setEditing(false); }, [file.id]);
+
+  const title = importTitle(file);
   const isInvestment = file.domain === "INVESTING";
   const { label: kind } = getFileKind(file);
   const account = accounts.find((a) => a.id === file.account_id);
   const candidates = accounts.filter((a) => !a.archived && (a.account_role === "INVESTMENT") === isInvestment);
   const currency = account?.currency_base;
   const size = formatBytes(file.file_size);
+  const lastEdited = lastEdits?.get(file.id) ?? null;
   const statusLabels = {
     UPLOADED: t("files.status.uploading", "Uploading"),
     PARSED: t("files.status.processing", "Processing"),
@@ -87,10 +97,33 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
     }
   };
 
+  const startEdit = () => { setDraft(title); setEditing(true); };
+  const saveName = async () => {
+    const next = draft.trim();
+    setEditing(false);
+    if (next === title) return;
+    try {
+      await rename(file.id, next);
+      toast.success(t("files.renamed", "Name updated"));
+    } catch {
+      toast.error(t("files.renameError", "Couldn't rename the file"));
+    }
+  };
+
   const handleDownload = async () => {
     const url = await getImportDownloadUrl(file);
     if (url) window.open(url, "_blank", "noopener");
     else toast.error(t("files.noOriginal", "The original file wasn't kept for this upload"));
+  };
+
+  const handleArchive = async () => {
+    setConfirm(null);
+    try {
+      await setArchived(file.id, !file.archived);
+      toast.success(file.archived ? t("files.restored", "File restored") : t("files.archived", "File archived"));
+    } catch {
+      toast.error(t("files.archiveError", "Couldn't update the file"));
+    }
   };
 
   const money = (n: number) => formatCurrency(n, currency);
@@ -99,34 +132,80 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
     <div className="flex h-full flex-col overflow-hidden rounded-[14px] bg-card shadow-bento">
       {/* Hero */}
       <div className="shrink-0 border-b border-border px-[22px] pb-3.5 pt-4" style={{ background: "linear-gradient(180deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--card)) 70%)" }}>
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-3">
-          <FileTypeIcon label={kind} width={42} />
-          <div className="min-w-[160px] flex-1">
-            <h2 className="truncate text-[17px] font-bold text-foreground" title={file.file_name}>{file.file_name}</h2>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
+        <div className="flex items-start gap-3.5">
+          <FileTypeIcon label={kind} width={36} className="mt-0.5" />
+          <div className="min-w-0 flex-1">
+            {editing ? (
+              <div className="flex items-center gap-1.5">
+                <input
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditing(false); }}
+                  aria-label={t("files.nameLabel", "File name")}
+                  className="h-8 min-w-0 flex-1 rounded-lg bg-muted/60 px-2.5 text-[15px] font-bold text-foreground outline-none focus:bg-card focus:ring-2 focus:ring-primary/30"
+                />
+                <button type="button" onClick={saveName} className="flex h-7 w-7 items-center justify-center rounded-md text-primary hover:bg-primary/10" aria-label={t("accounts.save", "Save")}>
+                  <Check className="h-4 w-4" />
+                </button>
+                <button type="button" onClick={() => setEditing(false)} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted" aria-label={t("accounts.cancel", "Cancel")}>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="group/title flex min-w-0 items-center gap-1.5">
+                <h2 className="truncate text-[15px] font-bold text-foreground" title={title}>{title}</h2>
+                <button
+                  type="button"
+                  onClick={startEdit}
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover/title:opacity-100 focus:opacity-100"
+                  aria-label={t("files.rename", "Rename")}
+                  title={t("files.rename", "Rename")}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            <p className="mt-0.5 truncate text-[12px] text-muted-foreground" title={file.file_name}>
+              {t("files.identifier", "Uploaded as")} <span className="font-medium">{file.file_name}</span>
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              {file.archived && (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
+                  {t("files.archivedBadge", "Archived")}
+                </span>
+              )}
               <ImportStatusPill status={file.status} label={statusLabels} />
               {file.locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-label={t("files.locked", "Locked")} />}
               {account && <span className="text-[12px] font-medium text-muted-foreground">{getAccountDisplayName(account)}</span>}
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 shrink-0 p-0 text-muted-foreground" aria-label={t("detail.more", "More actions")}>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleDownload} disabled={!file.file_storage_url}>
-                <Download className="mr-2 h-4 w-4" />
-                {t("files.download", "Download original")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive" disabled={file.locked || isDeleting} onClick={() => setConfirmDelete(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t("files.delete", "Delete file")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <IconAction
+              label={t("files.download", "Download original")}
+              description={t("files.downloadHelp", "Gets the file exactly as you uploaded it.")}
+              onClick={handleDownload}
+            >
+              <Download className="h-[18px] w-[18px]" />
+            </IconAction>
+            <IconAction
+              label={file.archived ? t("files.restore", "Restore file") : t("files.archive", "Archive file")}
+              description={file.archived
+                ? t("files.restoreHelp", "Shows the file and its transactions again, in lists and analysis.")
+                : t("files.archiveHelp", "Hides the file and its transactions from lists and analysis. Nothing is deleted.")}
+              onClick={() => setConfirm("archive")}
+            >
+              {file.archived ? <ArchiveRestore className="h-[18px] w-[18px]" /> : <Archive className="h-[18px] w-[18px]" />}
+            </IconAction>
+            <IconAction
+              label={t("files.delete", "Delete file")}
+              description={t("files.deleteHelp", "Permanently deletes the file and all its transactions.")}
+              tone="destructive"
+              onClick={() => setConfirm("delete")}
+            >
+              <Trash2 className="h-[18px] w-[18px]" />
+            </IconAction>
+          </div>
         </div>
       </div>
 
@@ -137,7 +216,6 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
           </div>
         )}
 
-        {/* File info */}
         <section className="border-b border-border px-[22px] pb-3 pt-4">
           <h3 className="pb-1 text-[15px] font-bold text-foreground">{t("files.details", "Details")}</h3>
           <dl className="divide-y divide-border/60">
@@ -158,9 +236,9 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
             <Row label={t("files.type", "Type")}>{kind}{file.file_mime ? <span className="ml-2 font-normal text-muted-foreground">{file.file_mime}</span> : null}</Row>
             {size && <Row label={t("files.size", "Size")}>{size}</Row>}
             <Row label={t("files.uploaded", "Uploaded")}><span className="tabular-nums">{formatDateTime(file.uploaded_at)}</span></Row>
-            <Row label={t("files.modified", "Last modified")}>
-              {isInvestment ? "—" : isLoading ? "…" : preview?.lastModified
-                ? <span className="tabular-nums">{formatDateTime(preview.lastModified)}</span>
+            <Row label={t("files.modified", "Last edited")}>
+              {lastEdited
+                ? <span className="tabular-nums">{formatDateTime(lastEdited)}</span>
                 : <span className="font-normal text-muted-foreground">{t("files.neverEdited", "Not edited since upload")}</span>}
             </Row>
             <Row label={t("files.period", "Period")}>{isLoading ? "…" : period}</Row>
@@ -170,7 +248,6 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
           </dl>
         </section>
 
-        {/* Raw data preview */}
         <section className="px-[22px] pb-5 pt-4">
           <h3 className="text-[15px] font-bold text-foreground">{t("files.preview", "Data preview")}</h3>
           <p className="mb-3 mt-0.5 text-[12.5px] text-muted-foreground">
@@ -220,18 +297,53 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
         </section>
       </div>
 
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+      <AlertDialog open={confirm === "archive"} onOpenChange={(open) => { if (!open) setConfirm(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("files.deleteTitle", "Delete file?")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("files.deleteBody", { name: file.file_name, defaultValue: "This permanently removes {{name}} and all of its transactions. This can't be undone." })}
+            <AlertDialogTitle>
+              {file.archived ? t("files.restoreTitle", "Restore this file?") : t("files.archiveTitle", "Archive this file?")}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                {file.archived ? (
+                  <p>{t("files.restoreBody", "Its transactions come back into your lists, balances and dashboard numbers.")}</p>
+                ) : (
+                  <>
+                    <p>{t("files.archiveBody", "{{name}} and its transactions stop showing everywhere: lists, balances, the dashboard and any analysis.", { name: title })}</p>
+                    <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                      <li>{t("files.archiveKeeps", "Nothing is deleted. The file and its data are kept.")}</li>
+                      <li>{t("files.archiveRestore", "You can restore it at any time from the archived section.")}</li>
+                    </ul>
+                  </>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("accounts.cancel", "Cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive}>
+              {file.archived ? t("files.restore", "Restore file") : t("files.archive", "Archive file")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirm === "delete"} onOpenChange={(open) => { if (!open) setConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("files.deleteTitle", "Are you sure you want to delete this file?")}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>{t("files.deleteBody", { name: title, defaultValue: "{{name}} and all of its transactions are permanently deleted. This can't be undone." })}</p>
+                <p className="text-muted-foreground">{t("files.deleteAlt", "If you only want it out of the way, archive it instead: nothing is lost.")}</p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("accounts.cancel", "Cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => onDelete(file.id)}
+              disabled={isDeleting}
+              onClick={() => { setConfirm(null); onDelete(file.id); }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("accounts.delete", "Delete")}

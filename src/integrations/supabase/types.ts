@@ -262,6 +262,8 @@ export type Database = {
           file_name: string
           file_size: number | null
           file_storage_url: string | null
+          archived: boolean
+          display_name: string | null
           id: string
           locked: boolean
           period_id: string | null
@@ -280,6 +282,8 @@ export type Database = {
           file_name: string
           file_size?: number | null
           file_storage_url?: string | null
+          archived?: boolean
+          display_name?: string | null
           id?: string
           locked?: boolean
           period_id?: string | null
@@ -298,6 +302,8 @@ export type Database = {
           file_name?: string
           file_size?: number | null
           file_storage_url?: string | null
+          archived?: boolean
+          display_name?: string | null
           id?: string
           locked?: boolean
           period_id?: string | null
@@ -539,6 +545,7 @@ export type Database = {
           description_norm: string | null
           domain: Database["public"]["Enums"]["app_domain"] | null
           fingerprint: string
+          hidden_by_archive: string | null
           id: string
           import_id: string | null
           is_hidden: boolean
@@ -572,6 +579,7 @@ export type Database = {
           description_norm?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
           fingerprint: string
+          hidden_by_archive?: string | null
           id?: string
           import_id?: string | null
           is_hidden?: boolean
@@ -605,6 +613,7 @@ export type Database = {
           description_norm?: string | null
           domain?: Database["public"]["Enums"]["app_domain"] | null
           fingerprint?: string
+          hidden_by_archive?: string | null
           id?: string
           import_id?: string | null
           is_hidden?: boolean
@@ -1100,6 +1109,11 @@ export type Database = {
           _entity_type: string
         }
         Returns: undefined
+      }
+      set_import_archived: { Args: { p_archived: boolean; p_import_id: string }; Returns: undefined }
+      get_import_last_edits: {
+        Args: { p_user_id: string }
+        Returns: { import_id: string; last_edited_at: string }[]
       }
       refresh_dashboard_views: { Args: never; Returns: undefined }
     }

@@ -167,3 +167,49 @@ export function useImportPreview(imp: Import | null) {
     queryFn: () => (imp!.domain === "INVESTING" ? loadInvestmentPreview(imp!) : loadCashPreview(imp!, user!.id)),
   });
 }
+
+/** The title shown for a file: the user's name if they set one, otherwise the uploaded file name. */
+export function importTitle(imp: Pick<Import, "display_name" | "file_name">): string {
+  return imp.display_name?.trim() || imp.file_name;
+}
+
+const FILE_KEYS = [
+  "imports", "transactions", "month-transactions-inline", "import-preview", "account-detail",
+  "dashboard-period-series", "dashboard-opening-balances", "dashboard-aggregates",
+  "account-period-summary", "band-total-balance", "import-last-edits",
+] as const;
+
+export function useRenameImport() {
+  const queryClient = useQueryClient();
+  return useCallback(async (importId: string, name: string) => {
+    const { error } = await supabase.from("imports").update({ display_name: name.trim() || null }).eq("id", importId);
+    if (error) throw new Error(error.message);
+    queryClient.invalidateQueries({ queryKey: ["imports"] });
+    queryClient.invalidateQueries({ queryKey: ["import-preview"] });
+  }, [queryClient]);
+}
+
+/** Archiving keeps the file and its transactions but hides them from every list and every analysis. */
+export function useSetImportArchived() {
+  const queryClient = useQueryClient();
+  return useCallback(async (importId: string, archived: boolean) => {
+    const { error } = await supabase.rpc("set_import_archived", { p_import_id: importId, p_archived: archived });
+    if (error) throw new Error(error.message);
+    for (const key of FILE_KEYS) queryClient.invalidateQueries({ queryKey: [key] });
+  }, [queryClient]);
+}
+
+/** Last edit per file, from the audit log. Files never edited are absent from the map. */
+export function useImportLastEdits() {
+  const { user } = useAuth();
+  return useQuery<Map<string, string>>({
+    queryKey: ["import-last-edits", user?.id],
+    enabled: !!user?.id,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_import_last_edits", { p_user_id: user!.id });
+      if (error) throw error;
+      return new Map((data ?? []).map((r) => [r.import_id, r.last_edited_at]));
+    },
+  });
+}

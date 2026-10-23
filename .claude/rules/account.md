@@ -31,6 +31,12 @@ paths:
   `AccountIdentityDialog` (name and nickname only). Icon and colour come from the account TYPE: `getAccountTypeIcon` and `getAccountColor` (`ACCOUNT_TYPE_COLORS` in `lib/accountColors.ts`, blues / navies / grays only, no yellow). Never read `account.color` for display; the users don't pick colours. Primary account is the
   star in the header. Account number is no longer asked for (column kept). Files here are read-only
   with a "Go to all files" link; assigning a file to an account happens in Files.
+- Files are administered only in the Files page (no upload button there). `imports.display_name` is the
+  title the user edits (`useRenameImport`); `imports.file_name` stays the identifier and is shown under the
+  title. `Archive` on a file (`set_import_archived` RPC) keeps the data but hides the file and its
+  transactions everywhere: `transactions.is_hidden` is set and `hidden_by_archive` remembers which rows
+  were hidden by the archive, so restoring never unhides rows the user hid by hand. Account views skip
+  archived files. Last edit per file comes from `get_import_last_edits`.
 - Files detail (`FileDetailPanel`): details (account selector via `useReassignImport`, type, size,
   uploaded, last modified from `audit_log`, period, rows) and a raw-data preview from `useImportPreview`
   (`import_rows` when present, else the saved transactions' original bank text — CSV/Excel keep no raw copy).
