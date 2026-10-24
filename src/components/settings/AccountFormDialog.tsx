@@ -37,6 +37,7 @@ export interface AccountFormValues {
   currency_base: string;
   initial_balance?: number;
   split_percentage?: number;
+  partner_name?: string;
   notes?: string;
   hidden_from_dashboard?: boolean;
 }
@@ -88,6 +89,7 @@ export function AccountFormDialog({
   const [currencyBase, setCurrencyBase] = useState(defaultCurrency);
   const [initialBalance, setInitialBalance] = useState("");
   const [splitPercentage, setSplitPercentage] = useState("50");
+  const [partnerName, setPartnerName] = useState("");
   const [notes, setNotes] = useState("");
   const [hideFromDashboard, setHideFromDashboard] = useState(false);
 
@@ -110,6 +112,7 @@ export function AccountFormDialog({
           ? String(initialValues.split_percentage)
           : "50",
       );
+      setPartnerName(initialValues?.partner_name || "");
       setNotes(initialValues?.notes || "");
       setHideFromDashboard(initialValues?.hidden_from_dashboard ?? false);
     }
@@ -135,6 +138,7 @@ export function AccountFormDialog({
       split_percentage: isSharedType(accountType) && parsedSplit > 0 && parsedSplit <= 100
         ? parsedSplit
         : 100,
+      partner_name: isSharedType(accountType) ? partnerName.trim() || undefined : undefined,
       notes: notes.trim() || undefined,
       hidden_from_dashboard: hideFromDashboard,
     });
@@ -302,6 +306,28 @@ export function AccountFormDialog({
               />
               <p className="text-xs text-muted-foreground px-1">
                 {t("accounts.splitPercentageHelp", "Your percentage of this shared account. E.g. 50 means you pay half.")}
+              </p>
+            </div>
+          )}
+
+          {/* Co-holder name — only for JOINT accounts */}
+          {isSharedType(accountType) && (
+            <div className="space-y-2">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                {t("accounts.coHolderName", "Co-holder name")}{" "}
+                <span className="text-muted-foreground/60">
+                  ({tp("accounts.optional", "optional")})
+                </span>
+              </label>
+              <Input
+                placeholder={t("accounts.coHolderPlaceholder", "e.g. Ana Ruiz")}
+                value={partnerName}
+                onChange={(e) => setPartnerName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                className={inputClass}
+              />
+              <p className="text-xs text-muted-foreground px-1">
+                {t("accounts.coHolderHelp", "As it appears on your bank statements — helps detect transfers")}
               </p>
             </div>
           )}

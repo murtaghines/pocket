@@ -11,6 +11,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { detectLocalePattern } from "@/hooks/useLocalization";
 import type { SupportedLanguage } from "@/i18n/config";
 import { SUPPORTED_CURRENCIES, getLocaleForRegion } from "@/lib/currencies";
+import { COUNTRIES } from "@/lib/onboardingConstants";
 import {
   sanitizeDisplayFormat,
   compactDisplayFormat,
@@ -74,17 +75,6 @@ function NameChipsInput({ names, onChange, placeholder }: { names: string[]; onC
   );
 }
 
-const COUNTRIES = [
-  { code: "AR", name: "Argentina" }, { code: "AU", name: "Australia" }, { code: "BO", name: "Bolivia" },
-  { code: "BR", name: "Brazil" }, { code: "CA", name: "Canada" }, { code: "CL", name: "Chile" },
-  { code: "CO", name: "Colombia" }, { code: "CR", name: "Costa Rica" }, { code: "CU", name: "Cuba" },
-  { code: "EC", name: "Ecuador" }, { code: "ES", name: "Spain" }, { code: "GB", name: "United Kingdom" },
-  { code: "GT", name: "Guatemala" }, { code: "HN", name: "Honduras" }, { code: "IE", name: "Ireland" },
-  { code: "JP", name: "Japan" }, { code: "MX", name: "Mexico" }, { code: "NI", name: "Nicaragua" },
-  { code: "NZ", name: "New Zealand" }, { code: "PA", name: "Panama" }, { code: "PE", name: "Peru" },
-  { code: "PR", name: "Puerto Rico" }, { code: "PY", name: "Paraguay" }, { code: "SV", name: "El Salvador" },
-  { code: "US", name: "United States" }, { code: "UY", name: "Uruguay" }, { code: "VE", name: "Venezuela" },
-];
 
 function Card({ icon: Icon, title, description, children }: { icon: React.ElementType; title: string; description?: string; children: ReactNode }) {
   return (

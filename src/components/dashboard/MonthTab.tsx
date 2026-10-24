@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Minus, Wallet, TrendingUp } from "lucide-react";
 
@@ -14,13 +14,11 @@ import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { WeeklyIncomeExpensesChart } from "@/components/dashboard/WeeklyIncomeExpensesChart";
 import { MonthlyFlowSankey } from "@/components/dashboard/MonthlyFlowSankey";
 
-import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useDashboardData, useAccountPeriodSummary } from "@/hooks/useDashboardData";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
-import { useProfile } from "@/hooks/useProfile";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodAggregates } from "@/hooks/usePeriodAggregates";
 import { periodRangeOf, type WeeklyPoint } from "@/lib/analytics";
@@ -33,10 +31,6 @@ export function MonthTab() {
   const { formatCurrency } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates('EUR');
-  const { profile } = useProfile();
-
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
   const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance, setTransactionCount } = useMonthSelection();
 
   const availableMonths = [...monthlyData]
@@ -65,13 +59,6 @@ export function MonthTab() {
   const { transactions, isLoading } = useTransactions({ startDate: range?.start, endDate: range?.end, excludeHiddenAccounts: true });
   const { closingBalance: monthClosingBalance } = useAccountPeriodSummary(latestMonthLabel, "CASHFLOW", undefined, true);
 
-  useEffect(() => {
-    if (!prefsLoading && preferences && preferences.id) {
-      const needsOnboarding = preferences.onboarding_completed === false || preferences.onboarding_completed === null || preferences.onboarding_completed === undefined;
-      setShowOnboarding(needsOnboarding);
-      setOnboardingChecked(true);
-    }
-  }, [preferences, prefsLoading]);
 
   const userCurrency = preferences?.base_currency || 'EUR';
   const convertToUserCurrency = useCallback(
@@ -161,13 +148,6 @@ export function MonthTab() {
 
   return (
     <>
-      {onboardingChecked && (
-        <OnboardingModal
-          open={showOnboarding}
-          onComplete={() => setShowOnboarding(false)}
-        />
-      )}
-
       <main className="w-full">
 
         {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (

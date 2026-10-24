@@ -16,44 +16,19 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
-import { StepCountry } from "@/components/onboarding/StepCountry";
-import { StepAccounts } from "@/components/onboarding/StepAccounts";
-import { StepInvestments } from "@/components/onboarding/StepInvestments";
-import { StepJointAccount } from "@/components/onboarding/StepJointAccount";
 import { StepPassword } from "@/components/onboarding/StepPassword";
+import { StepCountry } from "@/components/onboarding/StepCountry";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
 
 
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type RegisterStep = 1 | 2 | 3 | 4;
 
-const STEP_QUESTIONS: Record<RegisterStep, string> = {
-  1: "What's your name?",
-  2: "What's your email?",
-  3: "Where are you located?",
-  4: "Which banks do you use?",
-  5: "Do you invest?",
-  6: "Do you share finances?",
-  7: "Create your password",
-};
+const OPTIONAL_STEPS: RegisterStep[] = [];
 
-// One-line rationale shown under each question so the user understands why we ask.
-const STEP_WHY: Record<RegisterStep, string> = {
-  1: "So we can personalize your experience.",
-  2: "This is how you'll sign in.",
-  3: "To read your amounts, dates and decimals correctly.",
-  4: "We'll recognize your statements and set up your accounts automatically.",
-  5: "To read your investment movements. You can skip this.",
-  6: "To handle joint accounts and split shared expenses. You can skip this.",
-  7: "Keep your account secure.",
-};
-
-// Steps the user can skip without entering anything.
-const OPTIONAL_STEPS: RegisterStep[] = [4, 5, 6];
-
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 4;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, hsl(216 100% 55%) 0%, hsl(216 100% 42%) 100%)';
 
@@ -107,9 +82,6 @@ export default function Auth() {
   const [emailValid, setEmailValid] = useState(false);
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("EUR");
-  const [bankNames, setBankNames] = useState<string[]>([]);
-  const [investmentPlatforms, setInvestmentPlatforms] = useState<string[]>([]);
-  const [jointAccountNames, setJointAccountNames] = useState<string[]>([]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [language] = useState(detectBrowserLanguage());
@@ -332,18 +304,13 @@ export default function Auth() {
           country,
           base_currency: currency,
           language,
-          // Signup collects config only; the behavior questions run once inside
-          // the dashboard, so leave this false to trigger that onboarding.
           onboarding_completed: false,
-          joint_account_names: jointAccountNames,
         });
       } catch (prefError) {
         console.error('Error saving preferences:', prefError);
       }
 
       try {
-        // joint_account_names lives in user_preferences
-        // (single source of truth); profiles only holds identity fields.
         await supabase.from('profiles').upsert({
           user_id: userId,
           email: normalizedEmail,
@@ -352,26 +319,6 @@ export default function Auth() {
         }, { onConflict: 'user_id' });
       } catch (profileError) {
         console.error('Error updating profile:', profileError);
-      }
-
-      // Pre-create the accounts for the banks the user named, so their first
-      // statement upload maps to a real account.
-      if (bankNames.length > 0) {
-        try {
-          await supabase.from('accounts').insert(
-            bankNames.map((name, i) => ({
-              user_id: userId,
-              name,
-              institution: name,
-              account_role: 'CASH' as const,
-              domain_default: 'CASHFLOW' as const,
-              currency_base: currency,
-              is_primary: i === 0,
-            }))
-          );
-        } catch (accountError) {
-          console.error('Error creating accounts:', accountError);
-        }
       }
     }
 
@@ -425,15 +372,9 @@ export default function Auth() {
       case 2:
         return emailValid;
       case 3:
-        return country.length > 0 && currency.length > 0;
-      case 4:
-        return true; // banks — optional
-      case 5:
-        return true; // investments — optional
-      case 6:
-        return true; // shared finances — optional
-      case 7:
         return password.length >= 6 && password === confirmPassword;
+      case 4:
+        return country.length > 0 && currency.length > 0;
       default:
         return true;
     }
@@ -462,14 +403,6 @@ export default function Auth() {
       case 2:
         return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
       case 3:
-        return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
-      case 4:
-        return <StepAccounts accountNames={bankNames} onAccountNamesChange={setBankNames} />;
-      case 5:
-        return <StepInvestments country={country} selectedPlatforms={investmentPlatforms} onPlatformsChange={setInvestmentPlatforms} />;
-      case 6:
-        return <StepJointAccount jointAccountNames={jointAccountNames} onJointAccountNamesChange={setJointAccountNames} />;
-      case 7:
         return (
           <StepPassword
             password={password}
@@ -478,6 +411,8 @@ export default function Auth() {
             onConfirmPasswordChange={setConfirmPassword}
           />
         );
+      case 4:
+        return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
       default:
         return null;
     }
@@ -496,7 +431,7 @@ export default function Auth() {
                 Get Started
               </h1>
               <p className="text-lg text-white/70 max-w-md mx-auto">
-                Set up your pocket account in just a few steps
+                {t('onboarding.subtitle')}
               </p>
             </div>
 
@@ -519,9 +454,9 @@ export default function Auth() {
               </p>
 
               <h2 className="text-2xl font-semibold text-foreground mb-1">
-                {STEP_QUESTIONS[registerStep]}
+                {t(`onboarding.step${registerStep}.question`)}
               </h2>
-              <p className="text-sm text-muted-foreground mb-5">{STEP_WHY[registerStep]}</p>
+              <p className="text-sm text-muted-foreground mb-5">{t(`onboarding.step${registerStep}.why`)}</p>
 
               <div className="flex-1 overflow-y-auto min-h-0">
                 {renderRegisterStep()}
