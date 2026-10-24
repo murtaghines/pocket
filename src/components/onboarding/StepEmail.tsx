@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Mail, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { EmailInput } from '@/components/ui/email-input';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +13,10 @@ interface StepEmailProps {
 
 type Status = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
+const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
+
 export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityChange }: StepEmailProps) {
+  const { t } = useTranslation('auth');
   const [formatValid, setFormatValid] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
 
@@ -20,12 +24,10 @@ export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityC
     onAvailabilityChange?.(status === 'available');
   }, [status, onAvailabilityChange]);
 
-  // Combined validity: format + available
   useEffect(() => {
     onValidChange(formatValid && status === 'available');
   }, [formatValid, status, onValidChange]);
 
-  // Debounced check when email + format change
   useEffect(() => {
     if (!formatValid) {
       setStatus('idle');
@@ -54,42 +56,42 @@ export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityC
     <div className="space-y-4">
       <div className="flex items-center gap-3 text-muted-foreground">
         <Mail className="w-5 h-5" />
-        <p>We'll use this to keep your account secure.</p>
+        <p>{t('onboarding.step2.hint')}</p>
       </div>
 
       <div className="space-y-2">
         <EmailInput
-          placeholder="you@example.com"
+          placeholder={t('placeholders.email')}
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
           onValidChange={setFormatValid}
           autoFocus
           required
-          className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
+          className={inputClasses}
         />
 
         {formatValid && status === 'checking' && (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Checking availability...
+            {t('onboarding.emailStatus.checking')}
           </p>
         )}
         {status === 'available' && (
           <p className="flex items-center gap-2 text-sm text-success">
             <CheckCircle2 className="w-4 h-4" />
-            Email available
+            {t('onboarding.emailStatus.available')}
           </p>
         )}
         {status === 'taken' && (
           <p className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="w-4 h-4" />
-            An account with this email already exists. Try logging in instead.
+            {t('onboarding.emailStatus.taken')}
           </p>
         )}
         {status === 'error' && (
           <p className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="w-4 h-4" />
-            Couldn't verify email. Please try again.
+            {t('onboarding.emailStatus.error')}
           </p>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { getRememberPreference, setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
@@ -32,6 +32,8 @@ const TOTAL_STEPS = 4;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, hsl(216 100% 55%) 0%, hsl(216 100% 42%) 100%)';
 
+const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
+
 function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language || 'en';
   const baseLang = browserLang.split('-')[0];
@@ -49,9 +51,9 @@ export default function Auth() {
   const isResetMode = searchParams.get("reset") === "true";
   const modeFromUrl = searchParams.get("mode") === "login" ? "login" : "register";
   const { t } = useTranslation('auth');
-  
+
   const [authMode, setAuthModeState] = useState<AuthMode>(modeFromUrl);
-  
+
   const setAuthMode = (mode: AuthMode) => {
     setAuthModeState(mode);
     if (mode === "login") {
@@ -60,7 +62,7 @@ export default function Auth() {
       setSearchParams({});
     }
   };
-  
+
   useEffect(() => {
     setAuthModeState(modeFromUrl);
   }, [modeFromUrl]);
@@ -75,7 +77,7 @@ export default function Auth() {
     return () => sub.subscription.unsubscribe();
   }, [setSearchParams]);
   const [registerStep, setRegisterStep] = useState<RegisterStep>(1);
-  
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -85,14 +87,14 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [language] = useState(detectBrowserLanguage());
-  
+
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -114,7 +116,7 @@ export default function Auth() {
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newPassword !== confirmNewPassword) {
       toast({
         title: t('errors.title'),
@@ -148,7 +150,7 @@ export default function Auth() {
     } else {
       toast({
         title: t('success.passwordUpdated'),
-        description: "Please sign in with your new password.",
+        description: t('success.signInWithNewPassword'),
       });
       await supabase.auth.signOut();
       navigate("/auth?mode=login");
@@ -162,18 +164,18 @@ export default function Auth() {
       <div className="flex flex-col">
         <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
           <LandingHeader />
-          
+
           <div className="min-h-screen pt-24 pb-20 px-4 flex flex-col items-center justify-center">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
-                Set New Password
+                {t('setNewPassword')}
               </h1>
               <p className="text-lg text-white/70 max-w-md mx-auto">
-                Enter your new password below
+                {t('resetSubtitle')}
               </p>
             </div>
 
-            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
+            <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
               <div className="flex justify-center mb-6">
                 <div className="p-3 bg-primary/10 rounded-full">
                   <KeyRound className="w-6 h-6 text-primary" />
@@ -182,48 +184,48 @@ export default function Auth() {
 
               <form onSubmit={handleUpdatePassword} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-foreground/70 mb-2">New Password</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">{t('newPassword')}</label>
                   <PasswordInput
                     placeholder="••••••••"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full h-14 px-4 text-base text-foreground bg-white border-2 border-border rounded-xl focus:border-foreground focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
+                    className={inputClasses}
                   />
                   <PasswordStrengthIndicator password={newPassword} />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-foreground/70 mb-2">Confirm Password</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">{t('confirmPassword')}</label>
                   <PasswordInput
                     placeholder="••••••••"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full h-14 px-4 text-base text-foreground bg-white border-2 border-border rounded-xl focus:border-foreground focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
+                    className={inputClasses}
                   />
                 </div>
-                
+
                 <div className="flex justify-end pt-4">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={updateLoading}
                     className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl"
                   >
                     {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Update Password
+                    {t('updatePassword')}
                   </Button>
                 </div>
               </form>
             </div>
 
             <p className="text-center mt-8 text-white/80">
-              <button 
+              <button
                 onClick={() => navigate("/auth")}
                 className="text-white font-medium underline underline-offset-4 hover:no-underline"
               >
-                ← Back to Sign In
+                ← {t('backToSignIn')}
               </button>
             </p>
           </div>
@@ -238,8 +240,8 @@ export default function Auth() {
   const finalizeSignUp = async () => {
     if (password !== confirmPassword) {
       toast({
-        title: "Error",
-        description: "Passwords don't match",
+        title: t('errors.title'),
+        description: t('errors.passwordMismatch'),
         variant: "destructive",
       });
       return;
@@ -247,8 +249,8 @@ export default function Auth() {
 
     if (password.length < 6) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: t('errors.title'),
+        description: t('errors.passwordTooShort'),
         variant: "destructive",
       });
       return;
@@ -270,7 +272,7 @@ export default function Auth() {
 
     if (signUpError) {
       toast({
-        title: "Couldn't create your account",
+        title: t('errors.creatingAccount'),
         description: signUpError.message,
         variant: "destructive",
       });
@@ -287,8 +289,8 @@ export default function Auth() {
       });
       if (signInError) {
         toast({
-          title: "Account created",
-          description: "Please log in to continue.",
+          title: t('success.accountCreated'),
+          description: t('success.canSignIn'),
         });
         setAuthMode("login");
         setLoading(false);
@@ -326,8 +328,8 @@ export default function Auth() {
     setRememberPreference(true);
 
     toast({
-      title: "Welcome to pocket!",
-      description: "Your account is ready.",
+      title: t('success.welcome'),
+      description: t('success.accountReady'),
     });
     navigate("/dashboard");
     setLoading(false);
@@ -345,9 +347,9 @@ export default function Auth() {
     if (error) {
       const isInvalidCreds = /invalid.*credentials/i.test(error.message);
       toast({
-        title: "Couldn't sign in",
+        title: t('errors.signingIn'),
         description: isInvalidCreds
-          ? "Wrong email or password. If you just signed up, make sure you finished creating your password."
+          ? t('errors.wrongCredentials')
           : error.message,
         variant: "destructive",
       });
@@ -424,25 +426,25 @@ export default function Auth() {
       <div className="flex flex-col">
         <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
           <LandingHeader />
-          
+
           <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
             <div className="text-center mb-8">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
-                Get Started
+                {t('onboarding.getStarted')}
               </h1>
               <p className="text-lg text-white/70 max-w-md mx-auto">
                 {t('onboarding.subtitle')}
               </p>
             </div>
 
-            <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col min-h-[460px] h-auto md:h-[460px]">
+            <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col min-h-[460px] h-auto md:h-[460px]">
               <div className="flex gap-1 mb-6">
                 {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                  <div 
+                  <div
                     key={i}
                     className={`h-1 flex-1 rounded-full transition-colors ${
-                      i < registerStep 
-                        ? 'bg-primary' 
+                      i < registerStep
+                        ? 'bg-primary'
                         : 'bg-border'
                     }`}
                   />
@@ -450,7 +452,7 @@ export default function Auth() {
               </div>
 
               <p className="text-sm text-muted-foreground mb-2">
-                {registerStep} of {TOTAL_STEPS}
+                {t('onboarding.stepOf', { current: registerStep, total: TOTAL_STEPS })}
               </p>
 
               <h2 className="text-2xl font-semibold text-foreground mb-1">
@@ -469,7 +471,7 @@ export default function Auth() {
                     onClick={handleBack}
                     className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
                   >
-                    ← Back
+                    ← {t('onboarding.back')}
                   </button>
                   {OPTIONAL_STEPS.includes(registerStep) && (
                     <button
@@ -477,12 +479,12 @@ export default function Auth() {
                       onClick={() => setRegisterStep((prev) => (prev + 1) as RegisterStep)}
                       className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                     >
-                      Skip
+                      {t('onboarding.skip')}
                     </button>
                   )}
                 </div>
 
-                <Button 
+                <Button
                   type="button"
                   onClick={handleNext}
                   disabled={!canProceedStep() || loading}
@@ -491,10 +493,10 @@ export default function Auth() {
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : registerStep === TOTAL_STEPS ? (
-                    "Create Account"
+                    t('createAccount')
                   ) : (
                     <>
-                      Next
+                      {t('onboarding.next')}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </>
                   )}
@@ -503,12 +505,12 @@ export default function Auth() {
             </div>
 
             <p className="text-center mt-8 text-white/80">
-              Already have an account?{' '}
-              <button 
+              {t('hasAccount')}{' '}
+              <button
                 onClick={() => setAuthMode("login")}
                 className="text-white font-medium underline underline-offset-4 hover:no-underline"
               >
-                Log in
+                {t('login')}
               </button>
             </p>
           </div>
@@ -523,52 +525,52 @@ export default function Auth() {
     <div className="flex flex-col">
       <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
         <LandingHeader />
-        
+
         <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
-              Welcome back
+              {t('welcomeBack')}
             </h1>
             <p className="text-lg text-white/70 max-w-md mx-auto">
-              Sign in to continue to pocket
+              {t('loginSubtitle')}
             </p>
           </div>
 
-          <div className="w-full max-w-[560px] bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
+          <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
             <form onSubmit={handleSignIn} className="space-y-6 flex-1 flex flex-col">
               <div>
-                <label className="block text-sm font-medium text-foreground/70 mb-2">Email</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">{t('email')}</label>
                 <EmailInput
-                  placeholder="you@example.com"
+                  placeholder={t('placeholders.email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onValidChange={setEmailValid}
                   required
-                  className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
+                  className={inputClasses}
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-foreground/70 mb-2">Password</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">{t('password')}</label>
                 <PasswordInput
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
+                  className={inputClasses}
                 />
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="remember" 
+                  <Checkbox
+                    id="remember"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    className="border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
+                    className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
                   <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                    Remember me
+                    {t('rememberMe')}
                   </Label>
                 </div>
                 <button
@@ -576,8 +578,8 @@ export default function Auth() {
                   onClick={async () => {
                     if (!emailValid || !normalizedEmail) {
                       toast({
-                        title: "Enter your email first",
-                        description: "Type your email above so we can send you a reset link.",
+                        title: t('errors.enterEmailFirst'),
+                        description: t('errors.enterEmailFirstDesc'),
                         variant: "destructive",
                       });
                       return;
@@ -587,33 +589,33 @@ export default function Auth() {
                     });
                     if (error) {
                       toast({
-                        title: "Couldn't send reset email",
+                        title: t('errors.couldntSendReset'),
                         description: error.message,
                         variant: "destructive",
                       });
                     } else {
                       toast({
-                        title: "Check your email",
-                        description: `We sent a password reset link to ${normalizedEmail}.`,
+                        title: t('success.checkEmail'),
+                        description: t('success.resetLinkSentTo', { email: normalizedEmail }),
                       });
                     }
                   }}
                   className="text-sm text-primary hover:underline"
                 >
-                  Forgot password?
+                  {t('forgotPassword')}
                 </button>
               </div>
-              
+
               <div className="flex justify-end pt-4 mt-auto">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={loading || !emailValid}
                   className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    "Log in"
+                    t('login')
                   )}
                 </Button>
               </div>
@@ -621,12 +623,12 @@ export default function Auth() {
           </div>
 
           <p className="text-center mt-8 text-white/80">
-            Don't have an account?{' '}
-            <button 
+            {t('noAccount')}{' '}
+            <button
               onClick={() => setAuthMode("register")}
               className="text-white font-medium underline underline-offset-4 hover:no-underline"
             >
-              Get started
+              {t('getStarted')}
             </button>
           </p>
         </div>
