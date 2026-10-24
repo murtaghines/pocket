@@ -11,10 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import { useAccounts } from "@/hooks/useAccounts";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useTranslation } from "react-i18next";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
-import { type AccountType } from "@/lib/accountTypes";
+import { type AccountType, isSharedType } from "@/lib/accountTypes";
 
 interface AccountSelectDialogProps {
   open: boolean;
@@ -34,6 +35,7 @@ export function AccountSelectDialog({
   domainDefault = 'CASHFLOW',
 }: AccountSelectDialogProps) {
   const { accounts, createAccount, isCreating } = useAccounts();
+  const { preferences, updatePreferences } = useUserPreferences();
   const { t } = useTranslation('profile');
   const filteredAccounts = accounts.filter(a => a.account_role === accountRole && !a.archived);
 
@@ -65,6 +67,12 @@ export function AccountSelectDialog({
         onSuccess: (data) => {
           setSelectedAccountId(data.id);
           setShowNewForm(false);
+          if (values.partner_name && isSharedType(values.account_type)) {
+            const existing = preferences.joint_account_names ?? [];
+            if (!existing.includes(values.partner_name)) {
+              updatePreferences({ joint_account_names: [...existing, values.partner_name] });
+            }
+          }
         },
       },
     );

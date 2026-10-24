@@ -1,4 +1,4 @@
-import { Lock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PasswordInput } from '@/components/ui/password-input';
 import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator';
 
@@ -9,18 +9,21 @@ interface StepPasswordProps {
   onConfirmPasswordChange: (confirmPassword: string) => void;
 }
 
-export function StepPassword({ 
-  password, 
-  confirmPassword, 
-  onPasswordChange, 
-  onConfirmPasswordChange 
+const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
+
+export function StepPassword({
+  password,
+  confirmPassword,
+  onPasswordChange,
+  onConfirmPasswordChange
 }: StepPasswordProps) {
+  const { t } = useTranslation('auth');
+
   return (
     <div className="space-y-4">
-
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-foreground/70">Password</label>
+          <label className="block text-sm font-medium text-muted-foreground">{t('password')}</label>
           <PasswordInput
             placeholder="••••••••"
             value={password}
@@ -28,23 +31,23 @@ export function StepPassword({
             required
             minLength={6}
             autoFocus
-            className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
+            className={inputClasses}
           />
           <PasswordStrengthIndicator password={password} />
         </div>
-        
+
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-foreground/70">Confirm Password</label>
+          <label className="block text-sm font-medium text-muted-foreground">{t('confirmPassword')}</label>
           <PasswordInput
             placeholder="••••••••"
             value={confirmPassword}
             onChange={(e) => onConfirmPasswordChange(e.target.value)}
             required
             minLength={6}
-            className="w-full h-14 px-4 text-base text-foreground bg-white border border-border rounded-xl focus:border-foreground/30 focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground"
+            className={inputClasses}
           />
           {password && confirmPassword && password !== confirmPassword && (
-            <p className="text-sm text-destructive">Passwords don't match</p>
+            <p className="text-sm text-destructive">{t('errors.passwordMismatch')}</p>
           )}
         </div>
       </div>

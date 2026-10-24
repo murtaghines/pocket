@@ -5,6 +5,8 @@ import { Landmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts, type Account } from "@/hooks/useAccounts";
 import { useImports } from "@/hooks/useImports";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { isSharedType } from "@/lib/accountTypes";
 import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
 import { getAccountTypeIcon, getAccountTypeI18nKey, compareAccountsForDisplay } from "@/lib/accountTypes";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
@@ -32,6 +34,7 @@ export function AccountsWorkspace() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { accounts, isLoading, createAccount, updateAccount, isCreating } = useAccounts();
   const { imports } = useImports();
+  const { preferences, updatePreferences } = useUserPreferences();
 
   const initialId = searchParams.get("account");
   const initialRole: RoleTab = accounts.find((a) => a.id === initialId)?.account_role === "INVESTMENT" ? "investment" : "bank";
@@ -88,7 +91,17 @@ export function AccountsWorkspace() {
         notes: values.notes,
         hidden_from_dashboard: values.hidden_from_dashboard,
       },
-      { onSuccess: (created) => created?.id && select(created.id) },
+      {
+        onSuccess: (created) => {
+          if (created?.id) select(created.id);
+          if (values.partner_name && isSharedType(values.account_type)) {
+            const existing = preferences.joint_account_names ?? [];
+            if (!existing.includes(values.partner_name)) {
+              updatePreferences({ joint_account_names: [...existing, values.partner_name] });
+            }
+          }
+        },
+      },
     );
     setFormOpen(false);
   };

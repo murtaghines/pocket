@@ -217,7 +217,37 @@
     "almostDone": "¡Casi listo! Haz clic en \"Comenzar\" para empezar.",
     "income": "Ingresos",
     "expenses": "Gastos",
-    "alwaysIncluded": "siempre incluido"
+    "alwaysIncluded": "siempre incluido",
+    "postLogin": {
+      "stepGoal": "¿Qué te trae a pocket?",
+      "goalHint": "Adaptamos tu panel a lo que más te importa.",
+      "goals": {
+        "understand_spending": "Entender a dónde va mi dinero",
+        "save": "Ahorrar para una meta",
+        "investments": "Seguir mis inversiones",
+        "budget": "Armar un presupuesto"
+      },
+      "stepNames": "¿Qué nombre aparece en tus extractos bancarios?",
+      "namesHint": "Cuando transferís dinero entre tus propias cuentas, el banco registra tu nombre. Agregarlo acá nos ayuda a detectar esas transferencias automáticamente.",
+      "namePlaceholder": "Nombre completo, como en tus extractos",
+      "stepFormats": "¿Cómo leés números y fechas?",
+      "formatsHint": "Detectamos estos valores según tu país. Ajustalos si preferís algo diferente.",
+      "dateFormat": "Formato de fecha",
+      "showDecimals": "Mostrar decimales",
+      "preview": "Vista previa",
+      "stepSavings": "Fijá una meta de ahorro",
+      "savingsHint": "Vamos a mostrar tu progreso en la vista de planificación. Totalmente opcional.",
+      "hasSavingsGoal": "Tengo una meta de ahorro",
+      "howMuch": "¿Cuánto? ({{currency}})",
+      "byWhen": "¿Para cuándo?",
+      "optional": "opcional",
+      "skip": "Saltar por ahora",
+      "next": "Siguiente",
+      "back": "Volver",
+      "finish": "Finalizar",
+      "errorTitle": "Algo salió mal",
+      "errorDescription": "No pudimos guardar tus respuestas. Podés configurarlas después en tu perfil."
+    }
   },
   "language": "Idioma"
 }
