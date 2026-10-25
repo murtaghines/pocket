@@ -18,7 +18,7 @@ export function StepName({ firstName, lastName, onFirstNameChange, onLastNameCha
     <div className="space-y-6">
       <div className="flex items-center gap-3 text-muted-foreground">
         <User className="w-5 h-5" />
-        <p>{t('onboarding.step1.hint')}</p>
+        <p>{t('onboarding.step2.hint')}</p>
       </div>
 
       <div className="space-y-3">

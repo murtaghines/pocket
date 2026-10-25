@@ -27,6 +27,7 @@ import categoriesEs from './locales/es/categories.json';
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
 ] as const;
 
 // Kept as a union for backward compatibility with persisted user preferences,
@@ -72,7 +73,7 @@ i18n
     resources,
     lng: 'en',
     fallbackLng: 'en',
-    supportedLngs: ['en'],
+    supportedLngs: ['en', 'es'],
     defaultNS: 'common',
     ns: ['common', 'auth', 'dashboard', 'investments', 'profile', 'account', 'settings', 'categories'],
     interpolation: {
@@ -80,10 +81,13 @@ i18n
     },
   });
 
-// Always force English regardless of any previously cached preference.
+// Restore persisted language preference if available.
 try {
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('i18nextLng', 'en');
+    const saved = localStorage.getItem('i18nextLng');
+    if (saved && ['en', 'es'].includes(saved)) {
+      i18n.changeLanguage(saved);
+    }
   }
 } catch {
   // ignore (e.g., privacy mode)

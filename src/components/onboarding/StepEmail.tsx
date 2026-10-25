@@ -56,7 +56,7 @@ export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityC
     <div className="space-y-4">
       <div className="flex items-center gap-3 text-muted-foreground">
         <Mail className="w-5 h-5" />
-        <p>{t('onboarding.step2.hint')}</p>
+        <p>{t('onboarding.step3.hint')}</p>
       </div>
 
       <div className="space-y-2">

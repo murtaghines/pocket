@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n/config";
 import { supabase } from "@/integrations/supabase/client";
 import { getRememberPreference, setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
 import { Button } from "@/components/ui/button";
@@ -14,21 +15,27 @@ import { EmailInput } from "@/components/ui/email-input";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 
+import { StepLanguage } from "@/components/onboarding/StepLanguage";
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
 import { StepPassword } from "@/components/onboarding/StepPassword";
 import { StepCountry } from "@/components/onboarding/StepCountry";
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
+import { StepCurrency } from "@/components/onboarding/StepCurrency";
+import { StepBank } from "@/components/onboarding/StepBank";
+import { StepSharedFinances } from "@/components/onboarding/StepSharedFinances";
+import { COUNTRY_CURRENCY_MAP } from "@/lib/onboardingConstants";
+import { SUPPORTED_LANGUAGES, COUNTRY_LANGUAGE_MAP, type SupportedLanguage } from "@/i18n/config";
+import { normalize, extractKeyTokens } from "@/lib/userRules";
 
 
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4;
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-const OPTIONAL_STEPS: RegisterStep[] = [];
+const OPTIONAL_STEPS: RegisterStep[] = [7, 8];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 8;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, hsl(216 100% 55%) 0%, hsl(216 100% 42%) 100%)';
 
@@ -84,9 +91,13 @@ export default function Auth() {
   const [emailValid, setEmailValid] = useState(false);
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("EUR");
+  const [dateFormat, setDateFormat] = useState("AUTO");
+  const [bankName, setBankName] = useState("");
+  const [hasSharedAccount, setHasSharedAccount] = useState<boolean | null>(null);
+  const [coHolderName, setCoHolderName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [language] = useState(detectBrowserLanguage());
+  const [language, setLanguage] = useState(detectBrowserLanguage());
 
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -306,6 +317,8 @@ export default function Auth() {
           country,
           base_currency: currency,
           language,
+          date_format: dateFormat === 'AUTO' ? null : dateFormat,
+          joint_account_names: coHolderName.trim() ? [coHolderName.trim()] : [],
           onboarding_completed: false,
         });
       } catch (prefError) {
@@ -321,6 +334,97 @@ export default function Auth() {
         }, { onConflict: 'user_id' });
       } catch (profileError) {
         console.error('Error updating profile:', profileError);
+      }
+
+      // Auto-generate user rules based on onboarding answers
+      try {
+        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+        const rules: Array<{
+          user_id: string;
+          source: string;
+          match_type: string;
+          pattern: string;
+          tokens: string[];
+          movement: string;
+          category: string;
+          confidence: number;
+        }> = [];
+
+        if (fullName) {
+          const nameNorm = normalize(fullName);
+          const nameTokens = extractKeyTokens(fullName);
+          // "To myself" rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: nameNorm,
+            tokens: nameTokens,
+            movement: 'TRANSFER',
+            category: 'own_transfer',
+            confidence: 0.90,
+          });
+          // "From myself" rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: nameNorm,
+            tokens: nameTokens,
+            movement: 'TRANSFER',
+            category: 'from_myself',
+            confidence: 0.85,
+          });
+        }
+
+        if (coHolderName.trim()) {
+          const coNorm = normalize(coHolderName.trim());
+          const coTokens = extractKeyTokens(coHolderName.trim());
+          // "To joint account" rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: coNorm,
+            tokens: coTokens,
+            movement: 'TRANSFER',
+            category: 'to_joint_account',
+            confidence: 0.85,
+          });
+          // "From joint account" rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: coNorm,
+            tokens: coTokens,
+            movement: 'TRANSFER',
+            category: 'from_joint_account',
+            confidence: 0.80,
+          });
+        }
+
+        if (bankName.trim()) {
+          const bankNorm = normalize(bankName.trim());
+          const bankTokens = extractKeyTokens(bankName.trim());
+          // Bank name → own transfer rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: bankNorm,
+            tokens: bankTokens,
+            movement: 'TRANSFER',
+            category: 'own_transfer',
+            confidence: 0.80,
+          });
+        }
+
+        if (rules.length > 0) {
+          await supabase.from('user_rules').insert(rules);
+        }
+      } catch (rulesError) {
+        console.error('Error creating onboarding rules:', rulesError);
       }
     }
 
@@ -367,16 +471,35 @@ export default function Auth() {
     setLoading(false);
   };
 
+  const handleCountryChange = (value: string) => {
+    setCountry(value);
+    const mapped = COUNTRY_CURRENCY_MAP[value];
+    if (mapped) setCurrency(mapped);
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    setLanguage(lang as SupportedLanguage);
+    i18n.changeLanguage(lang);
+  };
+
   const canProceedStep = (): boolean => {
     switch (registerStep) {
       case 1:
-        return firstName.trim().length > 0;
+        return language.length > 0;
       case 2:
-        return emailValid;
+        return firstName.trim().length > 0;
       case 3:
-        return password.length >= 6 && password === confirmPassword;
+        return emailValid;
       case 4:
-        return country.length > 0 && currency.length > 0;
+        return password.length >= 6 && password === confirmPassword;
+      case 5:
+        return country.length > 0;
+      case 6:
+        return currency.length > 0;
+      case 7:
+        return true;
+      case 8:
+        return hasSharedAccount !== null && (hasSharedAccount === false || coHolderName.trim().length > 0);
       default:
         return true;
     }
@@ -401,10 +524,12 @@ export default function Auth() {
   const renderRegisterStep = () => {
     switch (registerStep) {
       case 1:
-        return <StepName firstName={firstName} lastName={lastName} onFirstNameChange={setFirstName} onLastNameChange={setLastName} />;
+        return <StepLanguage language={language} onLanguageChange={handleLanguageChange} />;
       case 2:
-        return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
+        return <StepName firstName={firstName} lastName={lastName} onFirstNameChange={setFirstName} onLastNameChange={setLastName} />;
       case 3:
+        return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
+      case 4:
         return (
           <StepPassword
             password={password}
@@ -413,8 +538,14 @@ export default function Auth() {
             onConfirmPasswordChange={setConfirmPassword}
           />
         );
-      case 4:
-        return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
+      case 5:
+        return <StepCountry country={country} onCountryChange={handleCountryChange} />;
+      case 6:
+        return <StepCurrency currency={currency} dateFormat={dateFormat} onCurrencyChange={setCurrency} onDateFormatChange={setDateFormat} />;
+      case 7:
+        return <StepBank bankName={bankName} onBankNameChange={setBankName} />;
+      case 8:
+        return <StepSharedFinances hasSharedAccount={hasSharedAccount} coHolderName={coHolderName} onHasSharedAccountChange={setHasSharedAccount} onCoHolderNameChange={setCoHolderName} />;
       default:
         return null;
     }
@@ -437,7 +568,7 @@ export default function Auth() {
               </p>
             </div>
 
-            <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col min-h-[460px] h-auto md:h-[460px]">
+            <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col min-h-[420px]">
               <div className="flex gap-1 mb-6">
                 {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                   <div
