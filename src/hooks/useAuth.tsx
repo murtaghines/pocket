@@ -5,6 +5,7 @@ import {
   restoreSessionFromSessionStorage,
   clearSessionOnUnload,
   getRememberPreference,
+  setRememberPreference,
   clearAuthStorage,
 } from "@/lib/sessionStorage";
 
@@ -58,6 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     // Clear local state immediately, even if API call fails (e.g., session expired)
+    setUser(null);
+    setSession(null);
+    setLoading(false);
+    // Clear the "remember me" preference so no session can be restored.
+    setRememberPreference(false);
     try {
       // Try a full sign out first (revokes refresh token when possible).
       await supabase.auth.signOut();
@@ -72,9 +78,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Ensure no session can be restored from either storage.
       clearAuthStorage();
     }
-    setUser(null);
-    setSession(null);
-    setLoading(false);
   };
 
   const value = useMemo<AuthContextValue>(
