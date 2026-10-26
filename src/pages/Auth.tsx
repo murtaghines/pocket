@@ -57,8 +57,18 @@ export default function Auth() {
 
   const setAuthMode = (mode: AuthMode) => {
     setAuthModeState(mode);
+    setPassword("");
+    setConfirmPassword("");
+    if (mode === "register") {
+      setRegisterStep(1);
+      setEmail("");
+      setEmailValid(false);
+    }
     if (mode === "login") {
       setSearchParams({ mode: "login" });
+      const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
+      if (savedEmail) setEmail(savedEmail);
+      else setEmail("");
     } else {
       setSearchParams({});
     }
@@ -170,11 +180,11 @@ export default function Auth() {
         <LandingHeader />
 
         <div className="flex-1 flex flex-col items-center justify-center px-4">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 font-display">
               {t('setNewPassword')}
             </h1>
-            <p className="text-lg text-white/70 max-w-md mx-auto">
+            <p className="text-base text-white/70 max-w-md mx-auto">
               {t('resetSubtitle')}
             </p>
           </div>
@@ -549,16 +559,16 @@ export default function Auth() {
         <LandingHeader />
 
         <div className="flex-1 flex flex-col items-center justify-center px-4">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 font-display">
               {t('onboarding.getStarted')}
             </h1>
-            <p className="text-lg text-white/70 max-w-md mx-auto">
+            <p className="text-base text-white/70 max-w-md mx-auto">
               {t('onboarding.subtitle')}
             </p>
           </div>
 
-          <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col min-h-[420px]">
+          <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col h-[460px]">
             <div className="flex gap-1 mb-6">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                 <div
@@ -587,13 +597,15 @@ export default function Auth() {
 
             <div className="flex justify-between items-center pt-6 mt-auto">
               <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
-                >
-                  ← {t('onboarding.back')}
-                </button>
+                {registerStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
+                  >
+                    ← {t('onboarding.back')}
+                  </button>
+                )}
                 {OPTIONAL_STEPS.includes(registerStep) && (
                   <button
                     type="button"
@@ -645,11 +657,11 @@ export default function Auth() {
       <LandingHeader />
 
       <div className="flex-1 flex flex-col items-center justify-center px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 font-display">
             {t('welcomeBack')}
           </h1>
-          <p className="text-lg text-white/70 max-w-md mx-auto">
+          <p className="text-base text-white/70 max-w-md mx-auto">
             {t('loginSubtitle')}
           </p>
         </div>
