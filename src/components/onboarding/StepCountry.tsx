@@ -7,7 +7,7 @@ interface StepCountryProps {
   onCountryChange: (country: string) => void;
 }
 
-const selectClasses = "w-full h-11 px-3.5 text-sm font-medium text-foreground bg-muted border-[1.5px] border-transparent rounded-xl shadow-none focus:bg-card focus:border-primary focus:ring-[3px] focus:ring-primary/[0.14] focus:outline-none transition-colors";
+const selectClasses = "w-full h-11 px-3.5 text-sm font-medium text-foreground bg-muted border-[1.5px] border-transparent rounded-xl shadow-none focus:bg-card focus:border-primary focus:ring-0 focus:outline-none transition-colors";
 
 export function StepCountry({ country, onCountryChange }: StepCountryProps) {
   const { t } = useTranslation('auth');
