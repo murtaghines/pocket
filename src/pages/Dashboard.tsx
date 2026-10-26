@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
@@ -7,7 +6,6 @@ import { BalanceBand } from "@/components/layout/BalanceBand";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useDashboardDefaultTab, resolveDashboardTab, withDashboardTab } from "@/hooks/useDashboardTab";
-import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { MonthTab } from "@/components/dashboard/MonthTab";
 import { WeekTab } from "@/components/dashboard/WeekTab";
 import { YearTab } from "@/components/dashboard/YearTab";
@@ -20,29 +18,12 @@ export default function Dashboard() {
   const awaitingStartScreen = prefsLoading && !searchParams.get("tab");
   const activeTab = resolveDashboardTab(searchParams.get("tab"), defaultTab);
 
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
-
-  useEffect(() => {
-    if (!prefsLoading && preferences && preferences.id) {
-      const needs = preferences.onboarding_completed === false || preferences.onboarding_completed === null || preferences.onboarding_completed === undefined;
-      setShowOnboarding(needs);
-      setOnboardingChecked(true);
-    }
-  }, [preferences, prefsLoading]);
-
   const handleTabChange = (value: string) => {
     setSearchParams(withDashboardTab(searchParams, value, defaultTab), { replace: true });
   };
 
   return (
     <DashboardLayout>
-      {onboardingChecked && (
-        <OnboardingModal
-          open={showOnboarding}
-          onComplete={() => setShowOnboarding(false)}
-        />
-      )}
       {/* Mobile: keep the old greeting/controls */}
       <div className="md:hidden px-3 pt-2">
         <DashboardGreeting />

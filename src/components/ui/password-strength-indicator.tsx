@@ -51,7 +51,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
   }
 
   return (
-    <div className="space-y-2 mt-2">
+    <div className="space-y-1 mt-1">
       <div className="flex items-center gap-3">
         <div className="h-2 flex-1 bg-muted rounded-full overflow-hidden">
           <div

@@ -20,36 +20,34 @@ export function StepPassword({
   const { t } = useTranslation('auth');
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-muted-foreground">{t('password')}</label>
-          <PasswordInput
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => onPasswordChange(e.target.value)}
-            required
-            minLength={6}
-            autoFocus
-            className={inputClasses}
-          />
-          <PasswordStrengthIndicator password={password} />
-        </div>
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-muted-foreground">{t('password')}</label>
+        <PasswordInput
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => onPasswordChange(e.target.value)}
+          required
+          minLength={6}
+          autoFocus
+          className={inputClasses}
+        />
+        <PasswordStrengthIndicator password={password} />
+      </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-muted-foreground">{t('confirmPassword')}</label>
-          <PasswordInput
-            placeholder="••••••••"
-            value={confirmPassword}
-            onChange={(e) => onConfirmPasswordChange(e.target.value)}
-            required
-            minLength={6}
-            className={inputClasses}
-          />
-          {password && confirmPassword && password !== confirmPassword && (
-            <p className="text-sm text-destructive">{t('errors.passwordMismatch')}</p>
-          )}
-        </div>
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-muted-foreground">{t('confirmPassword')}</label>
+        <PasswordInput
+          placeholder="••••••••"
+          value={confirmPassword}
+          onChange={(e) => onConfirmPasswordChange(e.target.value)}
+          required
+          minLength={6}
+          className={inputClasses}
+        />
+        {password && confirmPassword && password !== confirmPassword && (
+          <p className="text-sm text-destructive">{t('errors.passwordMismatch')}</p>
+        )}
       </div>
     </div>
   );

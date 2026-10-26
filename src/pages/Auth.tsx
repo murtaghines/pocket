@@ -357,7 +357,7 @@ export default function Auth() {
           language,
           date_format: dateFormat,
           joint_account_names: coHolderName.trim() ? [coHolderName.trim()] : [],
-          onboarding_completed: false,
+          onboarding_completed: true,
         });
       } catch (prefError) {
         console.error('Error saving preferences:', prefError);
@@ -387,6 +387,22 @@ export default function Auth() {
           });
         } catch (accountError) {
           console.error('Error creating bank account:', accountError);
+        }
+      }
+
+      if (hasSharedAccount && coHolderName.trim() && bankName.trim()) {
+        try {
+          await supabase.from('accounts').insert({
+            user_id: userId,
+            institution: bankName.trim(),
+            name: coHolderName.trim(),
+            account_type: 'JOINT' as const,
+            account_role: 'CASH' as const,
+            currency_base: currency,
+            initial_balance: 0,
+          });
+        } catch (jointError) {
+          console.error('Error creating joint account:', jointError);
         }
       }
 
@@ -626,7 +642,7 @@ export default function Auth() {
               )}
             </div>
 
-            <h2 className={`text-xl font-semibold text-foreground ${registerStep === 3 ? 'mb-5' : 'mb-1'}`}>
+            <h2 className={`text-xl font-semibold text-foreground ${registerStep === 3 ? 'mb-3' : 'mb-1'}`}>
               {t(`onboarding.step${registerStep}.question`)}
             </h2>
             {registerStep !== 3 && <p className="text-sm text-muted-foreground mb-5">{t(`onboarding.step${registerStep}.why`)}</p>}
@@ -635,7 +651,7 @@ export default function Auth() {
               {renderRegisterStep()}
             </div>
 
-            <div className="flex justify-between items-center pt-6 mt-auto">
+            <div className={`flex justify-between items-center mt-auto ${registerStep === 3 ? 'pt-4' : 'pt-6'}`}>
               <div className="flex items-center gap-4">
                 {registerStep > 1 && (
                   <button
