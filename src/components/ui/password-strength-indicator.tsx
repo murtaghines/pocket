@@ -54,31 +54,31 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
   }
 
   return (
-    <div className="space-y-3 mt-2">
-      <div className="space-y-1.5">
-        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+    <div className="space-y-2 mt-2">
+      <div className="flex items-center gap-3">
+        <div className="h-2 flex-1 bg-muted rounded-full overflow-hidden">
           <div
             className={cn("h-full transition-all duration-300", progressColor)}
             style={{ width: `${progressValue}%` }}
           />
         </div>
         {strengthKey && (
-          <p className={cn(
-            "text-xs font-medium",
+          <span className={cn(
+            "text-xs font-medium whitespace-nowrap",
             score <= 2 ? "text-destructive" : score <= 3 ? "text-yellow-600" : "text-emerald-600"
           )}>
             {t(`passwordStrength.${strengthKey}`)}
-          </p>
+          </span>
         )}
       </div>
 
-      <ul className="space-y-1">
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-0.5">
         {results.map((req) => (
-          <li key={req.key} className="flex items-center gap-2 text-xs">
+          <li key={req.key} className="flex items-center gap-1.5 text-xs">
             {req.passed ? (
-              <Check className="w-3.5 h-3.5 text-emerald-500" />
+              <Check className="w-3 h-3 text-emerald-500 shrink-0" />
             ) : (
-              <X className="w-3.5 h-3.5 text-muted-foreground" />
+              <X className="w-3 h-3 text-muted-foreground shrink-0" />
             )}
             <span className={cn(
               req.passed ? "text-foreground" : "text-muted-foreground"

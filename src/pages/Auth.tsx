@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, ArrowRight } from "lucide-react";
+import { Loader2, KeyRound, ArrowRight, Globe } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 
-import { StepLanguage } from "@/components/onboarding/StepLanguage";
+import { StepBankAccount } from "@/components/onboarding/StepBankAccount";
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
 import { StepPassword } from "@/components/onboarding/StepPassword";
@@ -62,6 +62,9 @@ export default function Auth() {
       setRegisterStep(1);
       setEmail("");
       setEmailValid(false);
+      setBankName("");
+      setAccountNickname("");
+      setAccountType("CHECKING");
     }
     if (mode === "login") {
       setSearchParams({ mode: "login" });
@@ -99,7 +102,42 @@ export default function Auth() {
   const [coHolderName, setCoHolderName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [language, setLanguage] = useState(detectBrowserLanguage());
+  const [bankName, setBankName] = useState("");
+  const [accountNickname, setAccountNickname] = useState("");
+  const [accountType, setAccountType] = useState<"CHECKING" | "SAVINGS" | "CREDIT_CARD">("CHECKING");
+  const [language, setLanguage] = useState<SupportedLanguage>(() => {
+    try {
+      const saved = localStorage.getItem('i18nextLng');
+      if (saved && ['en', 'es'].includes(saved)) return saved as SupportedLanguage;
+    } catch { /* ignore */ }
+    const detected = detectBrowserLanguage();
+    if (detected !== 'en') i18n.changeLanguage(detected);
+    return detected;
+  });
+
+  const handleLanguageChange = (lang: string) => {
+    setLanguage(lang as SupportedLanguage);
+    i18n.changeLanguage(lang);
+  };
+
+  const renderLanguageToggle = () => (
+    <div className="flex items-center justify-center gap-2 py-4 text-sm shrink-0">
+      <Globe className="w-3.5 h-3.5 text-white/50" />
+      <span className="text-white/50">{t('onboarding.preferredLanguage')}:</span>
+      {SUPPORTED_LANGUAGES.map((lang, i) => (
+        <span key={lang.code} className="flex items-center gap-2">
+          {i > 0 && <span className="text-white/30">|</span>}
+          <button
+            type="button"
+            onClick={() => handleLanguageChange(lang.code)}
+            className={language === lang.code ? 'text-white font-medium' : 'text-white/50 hover:text-white/70'}
+          >
+            {lang.nativeName}
+          </button>
+        </span>
+      ))}
+    </div>
+  );
 
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -241,6 +279,8 @@ export default function Auth() {
             </button>
           </p>
         </div>
+
+        {renderLanguageToggle()}
       </div>
     );
   }
@@ -333,6 +373,22 @@ export default function Auth() {
         }, { onConflict: 'user_id' });
       } catch (profileError) {
         console.error('Error updating profile:', profileError);
+      }
+
+      if (bankName.trim()) {
+        try {
+          await supabase.from('accounts').insert({
+            user_id: userId,
+            institution: bankName.trim(),
+            name: accountNickname.trim() || bankName.trim(),
+            account_type: accountType,
+            account_role: 'CASH' as const,
+            currency_base: currency,
+            initial_balance: 0,
+          });
+        } catch (accountError) {
+          console.error('Error creating bank account:', accountError);
+        }
       }
 
       // Auto-generate user rules based on onboarding answers
@@ -461,25 +517,20 @@ export default function Auth() {
     setDateFormat(COUNTRY_DATE_FORMAT_MAP[value] || 'DD/MM/YYYY');
   };
 
-  const handleLanguageChange = (lang: string) => {
-    setLanguage(lang as SupportedLanguage);
-    i18n.changeLanguage(lang);
-  };
-
   const canProceedStep = (): boolean => {
     switch (registerStep) {
       case 1:
-        return language.length > 0;
-      case 2:
         return firstName.trim().length > 0;
-      case 3:
+      case 2:
         return emailValid;
-      case 4:
+      case 3:
         return password.length >= 6 && password === confirmPassword;
-      case 5:
+      case 4:
         return country.length > 0;
-      case 6:
+      case 5:
         return currency.length > 0;
+      case 6:
+        return bankName.trim().length > 0;
       case 7:
         return hasSharedAccount !== null && (hasSharedAccount === false || coHolderName.trim().length > 0);
       default:
@@ -506,12 +557,10 @@ export default function Auth() {
   const renderRegisterStep = () => {
     switch (registerStep) {
       case 1:
-        return <StepLanguage language={language} onLanguageChange={handleLanguageChange} />;
-      case 2:
         return <StepName firstName={firstName} lastName={lastName} onFirstNameChange={setFirstName} onLastNameChange={setLastName} />;
-      case 3:
+      case 2:
         return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
-      case 4:
+      case 3:
         return (
           <StepPassword
             password={password}
@@ -520,10 +569,12 @@ export default function Auth() {
             onConfirmPasswordChange={setConfirmPassword}
           />
         );
-      case 5:
+      case 4:
         return <StepCountry country={country} onCountryChange={handleCountryChange} />;
-      case 6:
+      case 5:
         return <StepCurrency currency={currency} dateFormat={dateFormat} onCurrencyChange={setCurrency} onDateFormatChange={setDateFormat} />;
+      case 6:
+        return <StepBankAccount bankName={bankName} accountNickname={accountNickname} accountType={accountType} onBankNameChange={setBankName} onAccountNicknameChange={setAccountNickname} onAccountTypeChange={setAccountType} />;
       case 7:
         return <StepSharedFinances hasSharedAccount={hasSharedAccount} coHolderName={coHolderName} onHasSharedAccountChange={setHasSharedAccount} onCoHolderNameChange={setCoHolderName} />;
       default:
@@ -576,10 +627,10 @@ export default function Auth() {
               )}
             </div>
 
-            <h2 className="text-2xl font-semibold text-foreground mb-1">
+            <h2 className={`text-xl font-semibold text-foreground ${registerStep === 3 ? 'mb-5' : 'mb-1'}`}>
               {t(`onboarding.step${registerStep}.question`)}
             </h2>
-            <p className="text-sm text-muted-foreground mb-5">{t(`onboarding.step${registerStep}.why`)}</p>
+            {registerStep !== 3 && <p className="text-sm text-muted-foreground mb-5">{t(`onboarding.step${registerStep}.why`)}</p>}
 
             <div className="flex-1 overflow-y-auto min-h-0">
               {renderRegisterStep()}
@@ -628,6 +679,8 @@ export default function Auth() {
             </button>
           </p>
         </div>
+
+        {renderLanguageToggle()}
       </div>
     );
   }
@@ -743,6 +796,8 @@ export default function Auth() {
           </button>
         </p>
       </div>
+
+      {renderLanguageToggle()}
     </div>
   );
 }
