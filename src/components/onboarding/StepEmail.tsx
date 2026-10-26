@@ -13,7 +13,7 @@ interface StepEmailProps {
 
 type Status = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
-const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
+const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-0 focus-visible:outline-none";
 
 export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityChange }: StepEmailProps) {
   const { t } = useTranslation('auth');

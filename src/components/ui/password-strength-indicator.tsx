@@ -9,7 +9,6 @@ interface PasswordStrengthIndicatorProps {
 
 const requirementTests = [
   { key: "length", test: (pw: string) => pw.length >= 6 },
-  { key: "lowercase", test: (pw: string) => /[a-z]/.test(pw) },
   { key: "uppercase", test: (pw: string) => /[A-Z]/.test(pw) },
   { key: "number", test: (pw: string) => /[0-9]/.test(pw) },
   { key: "special", test: (pw: string) => /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\/'`;~]/.test(pw) },
@@ -19,18 +18,16 @@ const strengthKeys: Record<number, string> = {
   0: "",
   1: "veryWeak",
   2: "weak",
-  3: "fair",
-  4: "strong",
-  5: "veryStrong",
+  3: "good",
+  4: "veryStrong",
 };
 
 const strengthColors = {
   0: "bg-muted",
   1: "bg-destructive",
   2: "bg-orange-500",
-  3: "bg-yellow-500",
-  4: "bg-emerald-400",
-  5: "bg-emerald-500",
+  3: "bg-emerald-400",
+  4: "bg-emerald-500",
 };
 
 export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicatorProps) {
@@ -45,7 +42,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
     return { score, results };
   }, [password]);
 
-  const progressValue = (score / 5) * 100;
+  const progressValue = (score / 4) * 100;
   const strengthKey = strengthKeys[score as keyof typeof strengthKeys];
   const progressColor = strengthColors[score as keyof typeof strengthColors];
 

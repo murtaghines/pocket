@@ -11,8 +11,8 @@ interface StepBankAccountProps {
   onAccountTypeChange: (type: string) => void;
 }
 
-const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
-const selectClasses = "w-full h-11 px-3.5 text-sm font-medium text-foreground bg-muted border-[1.5px] border-transparent rounded-xl shadow-none focus:bg-card focus:border-primary focus:ring-[3px] focus:ring-primary/[0.14] focus:outline-none transition-colors";
+const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-0 focus-visible:outline-none";
+const selectClasses = "w-full h-11 px-3.5 text-sm font-medium text-foreground bg-muted border-[1.5px] border-transparent rounded-xl shadow-none focus:bg-card focus:border-primary focus:ring-0 focus:outline-none transition-colors";
 
 const ACCOUNT_TYPES = [
   { value: 'CHECKING', key: 'checking' },
