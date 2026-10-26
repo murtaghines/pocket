@@ -626,7 +626,7 @@ export default function Auth() {
               )}
             </div>
 
-            <h2 className={`text-xl font-semibold text-foreground ${registerStep === 3 ? 'mb-5' : 'mb-1'}`}>
+            <h2 className={`text-xl font-semibold text-foreground ${registerStep === 3 ? 'mb-3' : 'mb-1'}`}>
               {t(`onboarding.step${registerStep}.question`)}
             </h2>
             {registerStep !== 3 && <p className="text-sm text-muted-foreground mb-5">{t(`onboarding.step${registerStep}.why`)}</p>}
@@ -635,7 +635,7 @@ export default function Auth() {
               {renderRegisterStep()}
             </div>
 
-            <div className="flex justify-between items-center pt-6 mt-auto">
+            <div className={`flex justify-between items-center mt-auto ${registerStep === 3 ? 'pt-4' : 'pt-6'}`}>
               <div className="flex items-center gap-4">
                 {registerStep > 1 && (
                   <button
