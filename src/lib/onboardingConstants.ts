@@ -95,4 +95,11 @@ export const INVESTMENT_PLATFORMS_BY_COUNTRY: Record<string, string[]> = {
   OTHER: ['Interactive Brokers', 'Degiro', 'eToro', 'Trading 212'],
 };
 
+export const COUNTRY_DATE_FORMAT_MAP: Record<string, string> = {
+  US: 'MM/DD/YYYY',
+  PR: 'MM/DD/YYYY',
+  CA: 'YYYY-MM-DD',
+  JP: 'YYYY-MM-DD',
+};
+
 export const CURRENCIES = SUPPORTED_CURRENCIES;

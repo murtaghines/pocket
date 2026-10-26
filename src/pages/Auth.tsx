@@ -22,7 +22,7 @@ import { StepCountry } from "@/components/onboarding/StepCountry";
 import { StepCurrency } from "@/components/onboarding/StepCurrency";
 import { StepBank } from "@/components/onboarding/StepBank";
 import { StepSharedFinances } from "@/components/onboarding/StepSharedFinances";
-import { COUNTRY_CURRENCY_MAP } from "@/lib/onboardingConstants";
+import { COUNTRY_CURRENCY_MAP, COUNTRY_DATE_FORMAT_MAP } from "@/lib/onboardingConstants";
 import { SUPPORTED_LANGUAGES, COUNTRY_LANGUAGE_MAP, type SupportedLanguage } from "@/i18n/config";
 import { normalize, extractKeyTokens } from "@/lib/userRules";
 
@@ -95,7 +95,7 @@ export default function Auth() {
   const [emailValid, setEmailValid] = useState(false);
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("EUR");
-  const [dateFormat, setDateFormat] = useState("AUTO");
+  const [dateFormat, setDateFormat] = useState("DD/MM/YYYY");
   const [bankName, setBankName] = useState("");
   const [hasSharedAccount, setHasSharedAccount] = useState<boolean | null>(null);
   const [coHolderName, setCoHolderName] = useState("");
@@ -318,7 +318,7 @@ export default function Auth() {
           country,
           base_currency: currency,
           language,
-          date_format: dateFormat === 'AUTO' ? null : dateFormat,
+          date_format: dateFormat,
           joint_account_names: coHolderName.trim() ? [coHolderName.trim()] : [],
           onboarding_completed: false,
         });
@@ -476,6 +476,7 @@ export default function Auth() {
     setCountry(value);
     const mapped = COUNTRY_CURRENCY_MAP[value];
     if (mapped) setCurrency(mapped);
+    setDateFormat(COUNTRY_DATE_FORMAT_MAP[value] || 'DD/MM/YYYY');
   };
 
   const handleLanguageChange = (lang: string) => {
