@@ -595,7 +595,7 @@ export default function Auth() {
                 {renderRegisterStep()}
               </div>
 
-              <div className="flex justify-between items-center pt-6 mt-auto border-t border-border">
+              <div className="flex justify-between items-center pt-6 mt-auto">
                 <div className="flex items-center gap-4">
                   <button
                     type="button"

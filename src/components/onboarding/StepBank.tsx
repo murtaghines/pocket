@@ -12,9 +12,6 @@ export function StepBank({ bankName, onBankNameChange }: StepBankProps) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {t('onboarding.step7.hint')}
-      </p>
       <input
         type="text"
         placeholder={t('onboarding.step7.placeholder')}
