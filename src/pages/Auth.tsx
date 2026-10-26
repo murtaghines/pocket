@@ -115,7 +115,7 @@ export default function Auth() {
     const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
     const rememberPref = getRememberPreference();
 
-    if (savedEmail) {
+    if (savedEmail && modeFromUrl === "login") {
       setEmail(savedEmail);
     }
 
@@ -561,9 +561,20 @@ export default function Auth() {
               ))}
             </div>
 
-            <p className="text-sm text-muted-foreground mb-2">
-              {t('onboarding.stepOf', { current: registerStep, total: TOTAL_STEPS })}
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-muted-foreground">
+                {t('onboarding.stepOf', { current: registerStep, total: TOTAL_STEPS })}
+              </p>
+              {OPTIONAL_STEPS.includes(registerStep) && (
+                <button
+                  type="button"
+                  onClick={() => registerStep === TOTAL_STEPS ? handleNext() : setRegisterStep((prev) => (prev + 1) as RegisterStep)}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t('onboarding.skip')}
+                </button>
+              )}
+            </div>
 
             <h2 className="text-2xl font-semibold text-foreground mb-1">
               {t(`onboarding.step${registerStep}.question`)}
@@ -583,15 +594,6 @@ export default function Auth() {
                     className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
                   >
                     ← {t('onboarding.back')}
-                  </button>
-                )}
-                {OPTIONAL_STEPS.includes(registerStep) && (
-                  <button
-                    type="button"
-                    onClick={() => registerStep === TOTAL_STEPS ? handleNext() : setRegisterStep((prev) => (prev + 1) as RegisterStep)}
-                    className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                  >
-                    {t('onboarding.skip')}
                   </button>
                 )}
               </div>
