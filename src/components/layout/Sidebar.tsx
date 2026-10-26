@@ -149,7 +149,7 @@ export function Sidebar() {
     setLogoutOpen(false);
     await signOut();
     toast({ title: t("navigation.logoutSuccess") });
-    navigate("/auth", { replace: true });
+    navigate("/", { replace: true });
   };
 
   return (

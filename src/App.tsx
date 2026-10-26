@@ -56,9 +56,14 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const { i18n } = useTranslation();
 
-  // For unauthenticated pages (login / sign up), always follow the browser language.
+  // For unauthenticated pages, set language from localStorage or browser default,
+  // but only on initial load — not when the user has already picked a language
+  // during onboarding (step 1).
   useEffect(() => {
     if (loading || user) return;
+
+    const saved = localStorage.getItem("i18nextLng");
+    if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) return;
 
     const browserLang = navigator.language?.split("-")[0] || "en";
     const supportedBrowserLang =
@@ -69,7 +74,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
       i18n.changeLanguage(supportedBrowserLang);
     }
     localStorage.setItem("i18nextLng", supportedBrowserLang);
-  }, [i18n, loading, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user]);
 
   if (loading) {
     return (

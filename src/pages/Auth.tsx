@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n/config";
 import { supabase } from "@/integrations/supabase/client";
 import { getRememberPreference, setRememberPreference, transferSessionToSessionStorage } from "@/lib/sessionStorage";
 import { Button } from "@/components/ui/button";
@@ -12,23 +13,28 @@ import { PasswordStrengthIndicator } from "@/components/ui/password-strength-ind
 import { PasswordInput } from "@/components/ui/password-input";
 import { EmailInput } from "@/components/ui/email-input";
 import { LandingHeader } from "@/components/landing/LandingHeader";
-import { LandingFooter } from "@/components/landing/LandingFooter";
 
+import { StepLanguage } from "@/components/onboarding/StepLanguage";
 import { StepName } from "@/components/onboarding/StepName";
 import { StepEmail } from "@/components/onboarding/StepEmail";
 import { StepPassword } from "@/components/onboarding/StepPassword";
 import { StepCountry } from "@/components/onboarding/StepCountry";
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n/config";
+import { StepCurrency } from "@/components/onboarding/StepCurrency";
+import { StepBank } from "@/components/onboarding/StepBank";
+import { StepSharedFinances } from "@/components/onboarding/StepSharedFinances";
+import { COUNTRY_CURRENCY_MAP } from "@/lib/onboardingConstants";
+import { SUPPORTED_LANGUAGES, COUNTRY_LANGUAGE_MAP, type SupportedLanguage } from "@/i18n/config";
+import { normalize, extractKeyTokens } from "@/lib/userRules";
 
 
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4;
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-const OPTIONAL_STEPS: RegisterStep[] = [];
+const OPTIONAL_STEPS: RegisterStep[] = [7, 8];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 8;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, hsl(216 100% 55%) 0%, hsl(216 100% 42%) 100%)';
 
@@ -39,11 +45,6 @@ function detectBrowserLanguage(): SupportedLanguage {
   const baseLang = browserLang.split('-')[0];
   const supported = SUPPORTED_LANGUAGES.find(l => l.code === baseLang);
   return (supported?.code || 'en') as SupportedLanguage;
-}
-
-/* ── Footer shared across all auth modes — reuses landing footer ── */
-function AuthBottomSections() {
-  return <LandingFooter />;
 }
 
 export default function Auth() {
@@ -84,9 +85,13 @@ export default function Auth() {
   const [emailValid, setEmailValid] = useState(false);
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("EUR");
+  const [dateFormat, setDateFormat] = useState("AUTO");
+  const [bankName, setBankName] = useState("");
+  const [hasSharedAccount, setHasSharedAccount] = useState<boolean | null>(null);
+  const [coHolderName, setCoHolderName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [language] = useState(detectBrowserLanguage());
+  const [language, setLanguage] = useState(detectBrowserLanguage());
 
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -161,76 +166,73 @@ export default function Auth() {
   // Password Reset Mode
   if (isResetMode) {
     return (
-      <div className="flex flex-col">
-        <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
-          <LandingHeader />
+      <div className="h-dvh overflow-hidden flex flex-col" style={{ background: AUTH_GRADIENT }}>
+        <LandingHeader />
 
-          <div className="min-h-screen pt-24 pb-20 px-4 flex flex-col items-center justify-center">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 font-display">
-                {t('setNewPassword')}
-              </h1>
-              <p className="text-lg text-white/70 max-w-md mx-auto">
-                {t('resetSubtitle')}
-              </p>
-            </div>
-
-            <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
-              <div className="flex justify-center mb-6">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <KeyRound className="w-6 h-6 text-primary" />
-                </div>
-              </div>
-
-              <form onSubmit={handleUpdatePassword} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">{t('newPassword')}</label>
-                  <PasswordInput
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className={inputClasses}
-                  />
-                  <PasswordStrengthIndicator password={newPassword} />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">{t('confirmPassword')}</label>
-                  <PasswordInput
-                    placeholder="••••••••"
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className={inputClasses}
-                  />
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    type="submit"
-                    disabled={updateLoading}
-                    className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl"
-                  >
-                    {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    {t('updatePassword')}
-                  </Button>
-                </div>
-              </form>
-            </div>
-
-            <p className="text-center mt-8 text-white/80">
-              <button
-                onClick={() => navigate("/auth")}
-                className="text-white font-medium underline underline-offset-4 hover:no-underline"
-              >
-                ← {t('backToSignIn')}
-              </button>
+        <div className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
+              {t('setNewPassword')}
+            </h1>
+            <p className="text-lg text-white/70 max-w-md mx-auto">
+              {t('resetSubtitle')}
             </p>
           </div>
+
+          <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10">
+            <div className="flex justify-center mb-6">
+              <div className="p-3 bg-primary/10 rounded-full">
+                <KeyRound className="w-6 h-6 text-primary" />
+              </div>
+            </div>
+
+            <form onSubmit={handleUpdatePassword} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">{t('newPassword')}</label>
+                <PasswordInput
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className={inputClasses}
+                />
+                <PasswordStrengthIndicator password={newPassword} />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">{t('confirmPassword')}</label>
+                <PasswordInput
+                  placeholder="••••••••"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className={inputClasses}
+                />
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="submit"
+                  disabled={updateLoading}
+                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl"
+                >
+                  {updateLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {t('updatePassword')}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <p className="text-center mt-8 text-white/80">
+            <button
+              onClick={() => navigate("/auth")}
+              className="text-white font-medium underline underline-offset-4 hover:no-underline"
+            >
+              ← {t('backToSignIn')}
+            </button>
+          </p>
         </div>
-        <AuthBottomSections />
       </div>
     );
   }
@@ -306,6 +308,8 @@ export default function Auth() {
           country,
           base_currency: currency,
           language,
+          date_format: dateFormat === 'AUTO' ? null : dateFormat,
+          joint_account_names: coHolderName.trim() ? [coHolderName.trim()] : [],
           onboarding_completed: false,
         });
       } catch (prefError) {
@@ -321,6 +325,97 @@ export default function Auth() {
         }, { onConflict: 'user_id' });
       } catch (profileError) {
         console.error('Error updating profile:', profileError);
+      }
+
+      // Auto-generate user rules based on onboarding answers
+      try {
+        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+        const rules: Array<{
+          user_id: string;
+          source: string;
+          match_type: string;
+          pattern: string;
+          tokens: string[];
+          movement: string;
+          category: string;
+          confidence: number;
+        }> = [];
+
+        if (fullName) {
+          const nameNorm = normalize(fullName);
+          const nameTokens = extractKeyTokens(fullName);
+          // "To myself" rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: nameNorm,
+            tokens: nameTokens,
+            movement: 'TRANSFER',
+            category: 'own_transfer',
+            confidence: 0.90,
+          });
+          // "From myself" rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: nameNorm,
+            tokens: nameTokens,
+            movement: 'TRANSFER',
+            category: 'from_myself',
+            confidence: 0.85,
+          });
+        }
+
+        if (coHolderName.trim()) {
+          const coNorm = normalize(coHolderName.trim());
+          const coTokens = extractKeyTokens(coHolderName.trim());
+          // "To joint account" rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: coNorm,
+            tokens: coTokens,
+            movement: 'TRANSFER',
+            category: 'to_joint_account',
+            confidence: 0.85,
+          });
+          // "From joint account" rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: coNorm,
+            tokens: coTokens,
+            movement: 'TRANSFER',
+            category: 'from_joint_account',
+            confidence: 0.80,
+          });
+        }
+
+        if (bankName.trim()) {
+          const bankNorm = normalize(bankName.trim());
+          const bankTokens = extractKeyTokens(bankName.trim());
+          // Bank name → own transfer rule
+          rules.push({
+            user_id: userId,
+            source: 'onboarding',
+            match_type: 'fuzzy',
+            pattern: bankNorm,
+            tokens: bankTokens,
+            movement: 'TRANSFER',
+            category: 'own_transfer',
+            confidence: 0.80,
+          });
+        }
+
+        if (rules.length > 0) {
+          await supabase.from('user_rules').insert(rules);
+        }
+      } catch (rulesError) {
+        console.error('Error creating onboarding rules:', rulesError);
       }
     }
 
@@ -367,16 +462,35 @@ export default function Auth() {
     setLoading(false);
   };
 
+  const handleCountryChange = (value: string) => {
+    setCountry(value);
+    const mapped = COUNTRY_CURRENCY_MAP[value];
+    if (mapped) setCurrency(mapped);
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    setLanguage(lang as SupportedLanguage);
+    i18n.changeLanguage(lang);
+  };
+
   const canProceedStep = (): boolean => {
     switch (registerStep) {
       case 1:
-        return firstName.trim().length > 0;
+        return language.length > 0;
       case 2:
-        return emailValid;
+        return firstName.trim().length > 0;
       case 3:
-        return password.length >= 6 && password === confirmPassword;
+        return emailValid;
       case 4:
-        return country.length > 0 && currency.length > 0;
+        return password.length >= 6 && password === confirmPassword;
+      case 5:
+        return country.length > 0;
+      case 6:
+        return currency.length > 0;
+      case 7:
+        return true;
+      case 8:
+        return hasSharedAccount !== null && (hasSharedAccount === false || coHolderName.trim().length > 0);
       default:
         return true;
     }
@@ -401,10 +515,12 @@ export default function Auth() {
   const renderRegisterStep = () => {
     switch (registerStep) {
       case 1:
-        return <StepName firstName={firstName} lastName={lastName} onFirstNameChange={setFirstName} onLastNameChange={setLastName} />;
+        return <StepLanguage language={language} onLanguageChange={handleLanguageChange} />;
       case 2:
-        return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
+        return <StepName firstName={firstName} lastName={lastName} onFirstNameChange={setFirstName} onLastNameChange={setLastName} />;
       case 3:
+        return <StepEmail email={email} onEmailChange={setEmail} onValidChange={setEmailValid} />;
+      case 4:
         return (
           <StepPassword
             password={password}
@@ -413,8 +529,14 @@ export default function Auth() {
             onConfirmPasswordChange={setConfirmPassword}
           />
         );
-      case 4:
-        return <StepCountry country={country} currency={currency} onCountryChange={setCountry} onCurrencyChange={setCurrency} />;
+      case 5:
+        return <StepCountry country={country} onCountryChange={handleCountryChange} />;
+      case 6:
+        return <StepCurrency currency={currency} dateFormat={dateFormat} onCurrencyChange={setCurrency} onDateFormatChange={setDateFormat} />;
+      case 7:
+        return <StepBank bankName={bankName} onBankNameChange={setBankName} />;
+      case 8:
+        return <StepSharedFinances hasSharedAccount={hasSharedAccount} coHolderName={coHolderName} onHasSharedAccountChange={setHasSharedAccount} onCoHolderNameChange={setCoHolderName} />;
       default:
         return null;
     }
@@ -423,217 +545,211 @@ export default function Auth() {
   // REGISTER MODE
   if (authMode === "register") {
     return (
-      <div className="flex flex-col">
-        <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
-          <LandingHeader />
+      <div className="h-dvh overflow-hidden flex flex-col" style={{ background: AUTH_GRADIENT }}>
+        <LandingHeader />
 
-          <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
-                {t('onboarding.getStarted')}
-              </h1>
-              <p className="text-lg text-white/70 max-w-md mx-auto">
-                {t('onboarding.subtitle')}
-              </p>
-            </div>
-
-            <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col min-h-[460px] h-auto md:h-[460px]">
-              <div className="flex gap-1 mb-6">
-                {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 flex-1 rounded-full transition-colors ${
-                      i < registerStep
-                        ? 'bg-primary'
-                        : 'bg-border'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <p className="text-sm text-muted-foreground mb-2">
-                {t('onboarding.stepOf', { current: registerStep, total: TOTAL_STEPS })}
-              </p>
-
-              <h2 className="text-2xl font-semibold text-foreground mb-1">
-                {t(`onboarding.step${registerStep}.question`)}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-5">{t(`onboarding.step${registerStep}.why`)}</p>
-
-              <div className="flex-1 overflow-y-auto min-h-0">
-                {renderRegisterStep()}
-              </div>
-
-              <div className="flex justify-between items-center pt-6 mt-auto border-t border-border">
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
-                  >
-                    ← {t('onboarding.back')}
-                  </button>
-                  {OPTIONAL_STEPS.includes(registerStep) && (
-                    <button
-                      type="button"
-                      onClick={() => setRegisterStep((prev) => (prev + 1) as RegisterStep)}
-                      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                    >
-                      {t('onboarding.skip')}
-                    </button>
-                  )}
-                </div>
-
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={!canProceedStep() || loading}
-                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : registerStep === TOTAL_STEPS ? (
-                    t('createAccount')
-                  ) : (
-                    <>
-                      {t('onboarding.next')}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <p className="text-center mt-8 text-white/80">
-              {t('hasAccount')}{' '}
-              <button
-                onClick={() => setAuthMode("login")}
-                className="text-white font-medium underline underline-offset-4 hover:no-underline"
-              >
-                {t('login')}
-              </button>
+        <div className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
+              {t('onboarding.getStarted')}
+            </h1>
+            <p className="text-lg text-white/70 max-w-md mx-auto">
+              {t('onboarding.subtitle')}
             </p>
           </div>
+
+          <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col min-h-[420px]">
+            <div className="flex gap-1 mb-6">
+              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1 flex-1 rounded-full transition-colors ${
+                    i < registerStep
+                      ? 'bg-primary'
+                      : 'bg-border'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-2">
+              {t('onboarding.stepOf', { current: registerStep, total: TOTAL_STEPS })}
+            </p>
+
+            <h2 className="text-2xl font-semibold text-foreground mb-1">
+              {t(`onboarding.step${registerStep}.question`)}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-5">{t(`onboarding.step${registerStep}.why`)}</p>
+
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {renderRegisterStep()}
+            </div>
+
+            <div className="flex justify-between items-center pt-6 mt-auto">
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
+                >
+                  ← {t('onboarding.back')}
+                </button>
+                {OPTIONAL_STEPS.includes(registerStep) && (
+                  <button
+                    type="button"
+                    onClick={() => setRegisterStep((prev) => (prev + 1) as RegisterStep)}
+                    className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                  >
+                    {t('onboarding.skip')}
+                  </button>
+                )}
+              </div>
+
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={!canProceedStep() || loading}
+                className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : registerStep === TOTAL_STEPS ? (
+                  t('createAccount')
+                ) : (
+                  <>
+                    {t('onboarding.next')}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <p className="text-center mt-6 text-white/80">
+            {t('hasAccount')}{' '}
+            <button
+              onClick={() => setAuthMode("login")}
+              className="text-white font-medium underline underline-offset-4 hover:no-underline"
+            >
+              {t('login')}
+            </button>
+          </p>
         </div>
-        <AuthBottomSections />
       </div>
     );
   }
 
   // LOGIN MODE
   return (
-    <div className="flex flex-col">
-      <div className="min-h-screen relative" style={{ background: AUTH_GRADIENT }}>
-        <LandingHeader />
+    <div className="h-dvh overflow-hidden flex flex-col" style={{ background: AUTH_GRADIENT }}>
+      <LandingHeader />
 
-        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
-              {t('welcomeBack')}
-            </h1>
-            <p className="text-lg text-white/70 max-w-md mx-auto">
-              {t('loginSubtitle')}
-            </p>
-          </div>
-
-          <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
-            <form onSubmit={handleSignIn} className="space-y-6 flex-1 flex flex-col">
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-2">{t('email')}</label>
-                <EmailInput
-                  placeholder={t('placeholders.email')}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onValidChange={setEmailValid}
-                  required
-                  className={inputClasses}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-2">{t('password')}</label>
-                <PasswordInput
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className={inputClasses}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                  <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                    {t('rememberMe')}
-                  </Label>
-                </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!emailValid || !normalizedEmail) {
-                      toast({
-                        title: t('errors.enterEmailFirst'),
-                        description: t('errors.enterEmailFirstDesc'),
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-                    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-                      redirectTo: `${window.location.origin}/auth?reset=true`,
-                    });
-                    if (error) {
-                      toast({
-                        title: t('errors.couldntSendReset'),
-                        description: error.message,
-                        variant: "destructive",
-                      });
-                    } else {
-                      toast({
-                        title: t('success.checkEmail'),
-                        description: t('success.resetLinkSentTo', { email: normalizedEmail }),
-                      });
-                    }
-                  }}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {t('forgotPassword')}
-                </button>
-              </div>
-
-              <div className="flex justify-end pt-4 mt-auto">
-                <Button
-                  type="submit"
-                  disabled={loading || !emailValid}
-                  className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    t('login')
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-
-          <p className="text-center mt-8 text-white/80">
-            {t('noAccount')}{' '}
-            <button
-              onClick={() => setAuthMode("register")}
-              className="text-white font-medium underline underline-offset-4 hover:no-underline"
-            >
-              {t('getStarted')}
-            </button>
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-display">
+            {t('welcomeBack')}
+          </h1>
+          <p className="text-lg text-white/70 max-w-md mx-auto">
+            {t('loginSubtitle')}
           </p>
         </div>
+
+        <div className="w-full max-w-[560px] dashboard-theme bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] p-8 md:p-10 flex flex-col" style={{ height: '460px' }}>
+          <form onSubmit={handleSignIn} className="space-y-6 flex-1 flex flex-col">
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">{t('email')}</label>
+              <EmailInput
+                placeholder={t('placeholders.email')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onValidChange={setEmailValid}
+                required
+                className={inputClasses}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">{t('password')}</label>
+              <PasswordInput
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className={inputClasses}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+                  {t('rememberMe')}
+                </Label>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!emailValid || !normalizedEmail) {
+                    toast({
+                      title: t('errors.enterEmailFirst'),
+                      description: t('errors.enterEmailFirstDesc'),
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+                    redirectTo: `${window.location.origin}/auth?reset=true`,
+                  });
+                  if (error) {
+                    toast({
+                      title: t('errors.couldntSendReset'),
+                      description: error.message,
+                      variant: "destructive",
+                    });
+                  } else {
+                    toast({
+                      title: t('success.checkEmail'),
+                      description: t('success.resetLinkSentTo', { email: normalizedEmail }),
+                    });
+                  }
+                }}
+                className="text-sm text-primary hover:underline"
+              >
+                {t('forgotPassword')}
+              </button>
+            </div>
+
+            <div className="flex justify-end pt-4 mt-auto">
+              <Button
+                type="submit"
+                disabled={loading || !emailValid}
+                className="h-12 px-8 text-base font-medium bg-primary hover:bg-primary/90 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  t('login')
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        <p className="text-center mt-6 text-white/80">
+          {t('noAccount')}{' '}
+          <button
+            onClick={() => setAuthMode("register")}
+            className="text-white font-medium underline underline-offset-4 hover:no-underline"
+          >
+            {t('getStarted')}
+          </button>
+        </p>
       </div>
-      <AuthBottomSections />
     </div>
   );
 }

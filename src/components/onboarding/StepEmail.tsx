@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mail, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { EmailInput } from '@/components/ui/email-input';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -53,48 +53,41 @@ export function StepEmail({ email, onEmailChange, onValidChange, onAvailabilityC
   }, [email, formatValid]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 text-muted-foreground">
-        <Mail className="w-5 h-5" />
-        <p>{t('onboarding.step2.hint')}</p>
-      </div>
+    <div className="space-y-2">
+      <EmailInput
+        placeholder={t('placeholders.email')}
+        value={email}
+        onChange={(e) => onEmailChange(e.target.value)}
+        onValidChange={setFormatValid}
+        autoFocus
+        required
+        className={inputClasses}
+      />
 
-      <div className="space-y-2">
-        <EmailInput
-          placeholder={t('placeholders.email')}
-          value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
-          onValidChange={setFormatValid}
-          autoFocus
-          required
-          className={inputClasses}
-        />
-
-        {formatValid && status === 'checking' && (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            {t('onboarding.emailStatus.checking')}
-          </p>
-        )}
-        {status === 'available' && (
-          <p className="flex items-center gap-2 text-sm text-success">
-            <CheckCircle2 className="w-4 h-4" />
-            {t('onboarding.emailStatus.available')}
-          </p>
-        )}
-        {status === 'taken' && (
-          <p className="flex items-center gap-2 text-sm text-destructive">
-            <AlertCircle className="w-4 h-4" />
-            {t('onboarding.emailStatus.taken')}
-          </p>
-        )}
-        {status === 'error' && (
-          <p className="flex items-center gap-2 text-sm text-destructive">
-            <AlertCircle className="w-4 h-4" />
-            {t('onboarding.emailStatus.error')}
-          </p>
-        )}
-      </div>
+      {formatValid && status === 'checking' && (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          {t('onboarding.emailStatus.checking')}
+        </p>
+      )}
+      {status === 'available' && (
+        <p className="flex items-center gap-2 text-sm text-success">
+          <CheckCircle2 className="w-4 h-4" />
+          {t('onboarding.emailStatus.available')}
+        </p>
+      )}
+      {status === 'taken' && (
+        <p className="flex items-center gap-2 text-sm text-destructive">
+          <AlertCircle className="w-4 h-4" />
+          {t('onboarding.emailStatus.taken')}
+        </p>
+      )}
+      {status === 'error' && (
+        <p className="flex items-center gap-2 text-sm text-destructive">
+          <AlertCircle className="w-4 h-4" />
+          {t('onboarding.emailStatus.error')}
+        </p>
+      )}
     </div>
   );
 }
