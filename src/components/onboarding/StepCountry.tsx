@@ -15,7 +15,7 @@ export function StepCountry({ country, onCountryChange }: StepCountryProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="country" className="text-muted-foreground">{t('onboarding.step5.country')}</Label>
+        <Label htmlFor="country" className="text-muted-foreground">{t('onboarding.step4.country')}</Label>
         <div className="pk-select-wrap">
           <select
             id="country"
@@ -23,7 +23,7 @@ export function StepCountry({ country, onCountryChange }: StepCountryProps) {
             onChange={(e) => onCountryChange(e.target.value)}
             className={selectClasses}
           >
-            <option value="" disabled>{t('onboarding.step5.selectCountry')}</option>
+            <option value="" disabled>{t('onboarding.step4.selectCountry')}</option>
             {COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>
                 {c.name}

@@ -24,7 +24,7 @@ export function StepCurrency({ currency, dateFormat, onCurrencyChange, onDateFor
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="currency" className="text-muted-foreground">{t('onboarding.step6.currency')}</Label>
+        <Label htmlFor="currency" className="text-muted-foreground">{t('onboarding.step5.currency')}</Label>
         <div className="pk-select-wrap">
           <select
             id="currency"
@@ -32,7 +32,7 @@ export function StepCurrency({ currency, dateFormat, onCurrencyChange, onDateFor
             onChange={(e) => onCurrencyChange(e.target.value)}
             className={selectClasses}
           >
-            <option value="" disabled>{t('onboarding.step6.selectCurrency')}</option>
+            <option value="" disabled>{t('onboarding.step5.selectCurrency')}</option>
             {CURRENCIES.map((c) => (
               <option key={c.code} value={c.code}>
                 {c.symbol} {c.name} ({c.code})
@@ -43,7 +43,7 @@ export function StepCurrency({ currency, dateFormat, onCurrencyChange, onDateFor
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="dateFormat" className="text-muted-foreground">{t('onboarding.step6.dateFormat')}</Label>
+        <Label htmlFor="dateFormat" className="text-muted-foreground">{t('onboarding.step5.dateFormat')}</Label>
         <div className="pk-select-wrap">
           <select
             id="dateFormat"
