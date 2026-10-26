@@ -20,7 +20,6 @@ import { StepEmail } from "@/components/onboarding/StepEmail";
 import { StepPassword } from "@/components/onboarding/StepPassword";
 import { StepCountry } from "@/components/onboarding/StepCountry";
 import { StepCurrency } from "@/components/onboarding/StepCurrency";
-import { StepBank } from "@/components/onboarding/StepBank";
 import { StepSharedFinances } from "@/components/onboarding/StepSharedFinances";
 import { COUNTRY_CURRENCY_MAP, COUNTRY_DATE_FORMAT_MAP } from "@/lib/onboardingConstants";
 import { SUPPORTED_LANGUAGES, COUNTRY_LANGUAGE_MAP, type SupportedLanguage } from "@/i18n/config";
@@ -30,11 +29,11 @@ import { normalize, extractKeyTokens } from "@/lib/userRules";
 const REMEMBER_EMAIL_KEY = "pocket_remember_email";
 
 type AuthMode = "login" | "register";
-type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-const OPTIONAL_STEPS: RegisterStep[] = [7, 8];
+const OPTIONAL_STEPS: RegisterStep[] = [7];
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 7;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, hsl(216 100% 55%) 0%, hsl(216 100% 42%) 100%)';
 
@@ -96,7 +95,6 @@ export default function Auth() {
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("EUR");
   const [dateFormat, setDateFormat] = useState("DD/MM/YYYY");
-  const [bankName, setBankName] = useState("");
   const [hasSharedAccount, setHasSharedAccount] = useState<boolean | null>(null);
   const [coHolderName, setCoHolderName] = useState("");
   const [password, setPassword] = useState("");
@@ -405,22 +403,6 @@ export default function Auth() {
           });
         }
 
-        if (bankName.trim()) {
-          const bankNorm = normalize(bankName.trim());
-          const bankTokens = extractKeyTokens(bankName.trim());
-          // Bank name → own transfer rule
-          rules.push({
-            user_id: userId,
-            source: 'onboarding',
-            match_type: 'fuzzy',
-            pattern: bankNorm,
-            tokens: bankTokens,
-            movement: 'TRANSFER',
-            category: 'own_transfer',
-            confidence: 0.80,
-          });
-        }
-
         if (rules.length > 0) {
           await supabase.from('user_rules').insert(rules);
         }
@@ -499,8 +481,6 @@ export default function Auth() {
       case 6:
         return currency.length > 0;
       case 7:
-        return true;
-      case 8:
         return hasSharedAccount !== null && (hasSharedAccount === false || coHolderName.trim().length > 0);
       default:
         return true;
@@ -545,8 +525,6 @@ export default function Auth() {
       case 6:
         return <StepCurrency currency={currency} dateFormat={dateFormat} onCurrencyChange={setCurrency} onDateFormatChange={setDateFormat} />;
       case 7:
-        return <StepBank bankName={bankName} onBankNameChange={setBankName} />;
-      case 8:
         return <StepSharedFinances hasSharedAccount={hasSharedAccount} coHolderName={coHolderName} onHasSharedAccountChange={setHasSharedAccount} onCoHolderNameChange={setCoHolderName} />;
       default:
         return null;
@@ -610,7 +588,7 @@ export default function Auth() {
                 {OPTIONAL_STEPS.includes(registerStep) && (
                   <button
                     type="button"
-                    onClick={() => setRegisterStep((prev) => (prev + 1) as RegisterStep)}
+                    onClick={() => registerStep === TOTAL_STEPS ? handleNext() : setRegisterStep((prev) => (prev + 1) as RegisterStep)}
                     className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                   >
                     {t('onboarding.skip')}
