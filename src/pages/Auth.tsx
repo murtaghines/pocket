@@ -37,7 +37,7 @@ const TOTAL_STEPS = 7;
 
 const AUTH_GRADIENT = 'linear-gradient(to right, hsl(216 100% 55%) 0%, hsl(216 100% 42%) 100%)';
 
-const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
+const inputClasses = "w-full h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-0 focus-visible:outline-none";
 
 function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language || 'en';
@@ -123,7 +123,6 @@ export default function Auth() {
   const renderLanguageToggle = () => (
     <div className="flex items-center justify-center gap-2 py-4 text-sm shrink-0">
       <Globe className="w-3.5 h-3.5 text-white/50" />
-      <span className="text-white/50">{t('onboarding.preferredLanguage')}:</span>
       {SUPPORTED_LANGUAGES.map((lang, i) => (
         <span key={lang.code} className="flex items-center gap-2">
           {i > 0 && <span className="text-white/30">|</span>}
@@ -132,7 +131,7 @@ export default function Auth() {
             onClick={() => handleLanguageChange(lang.code)}
             className={language === lang.code ? 'text-white font-medium' : 'text-white/50 hover:text-white/70'}
           >
-            {lang.nativeName}
+            {t(`languages.${lang.code}`)}
           </button>
         </span>
       ))}

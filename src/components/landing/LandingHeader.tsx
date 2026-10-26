@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Logo } from "@/components/brand";
 
 
 export function LandingHeader() {
   // theme is determined by the section currently behind the navbar
   // Start as "dark" because the hero (first section) is always blue/dark
+  const { t } = useTranslation('auth');
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
@@ -60,13 +62,13 @@ export function LandingHeader() {
             to="/auth?mode=login"
             className={`pointer-events-auto inline-flex items-center px-4 py-2 text-sm font-semibold transition-all duration-300 rounded-full ${loginText}`}
           >
-            Log in
+            {t('login')}
           </Link>
           <Link
             to="/auth"
             className={`pointer-events-auto inline-flex items-center rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${ctaStyle}`}
           >
-            Get started
+            {t('getStarted')}
           </Link>
         </div>
       </div>
