@@ -24,7 +24,7 @@ export function StepSharedFinances({ hasSharedAccount, coHolderName, onHasShared
               : 'border-transparent bg-muted text-foreground hover:bg-muted/80'
           }`}
         >
-          {t('onboarding.step8.yes')}
+          {t('onboarding.step7.yes')}
         </button>
         <button
           type="button"
@@ -35,18 +35,18 @@ export function StepSharedFinances({ hasSharedAccount, coHolderName, onHasShared
               : 'border-transparent bg-muted text-foreground hover:bg-muted/80'
           }`}
         >
-          {t('onboarding.step8.no')}
+          {t('onboarding.step7.no')}
         </button>
       </div>
 
       {hasSharedAccount && (
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            {t('onboarding.step8.nameHint')}
+            {t('onboarding.step7.nameHint')}
           </p>
           <input
             type="text"
-            placeholder={t('onboarding.step8.placeholder')}
+            placeholder={t('onboarding.step7.placeholder')}
             value={coHolderName}
             onChange={(e) => onCoHolderNameChange(e.target.value)}
             className={inputClasses}
