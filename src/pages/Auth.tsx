@@ -357,7 +357,7 @@ export default function Auth() {
           language,
           date_format: dateFormat,
           joint_account_names: coHolderName.trim() ? [coHolderName.trim()] : [],
-          onboarding_completed: false,
+          onboarding_completed: true,
         });
       } catch (prefError) {
         console.error('Error saving preferences:', prefError);
@@ -387,6 +387,22 @@ export default function Auth() {
           });
         } catch (accountError) {
           console.error('Error creating bank account:', accountError);
+        }
+      }
+
+      if (hasSharedAccount && coHolderName.trim() && bankName.trim()) {
+        try {
+          await supabase.from('accounts').insert({
+            user_id: userId,
+            institution: bankName.trim(),
+            name: coHolderName.trim(),
+            account_type: 'JOINT' as const,
+            account_role: 'CASH' as const,
+            currency_base: currency,
+            initial_balance: 0,
+          });
+        } catch (jointError) {
+          console.error('Error creating joint account:', jointError);
         }
       }
 
