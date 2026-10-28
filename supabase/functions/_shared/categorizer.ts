@@ -266,8 +266,8 @@ const RULE_BUCKETS: RuleBucket[] = [
       'LIQUIDACION\\s*VALORES',
       'INTERESES\\s*DEPOSITO',
       'INTERES\\s*CUENTA\\s*AHORRO',
-      'RENDIMIENTO\\b',           // "RENDIMIENTO FONDO COCOS" → income
-      'RENDIMIENTO\\s*FONDO',
+      'RENDIMIENTOS?\\b(?!\\s*DIARIOS)', // "RENDIMIENTO FONDO COCOS" / "RENDIMIENTOS DE FONDO COMUN" → income (but not "RENDIMIENTOS DIARIOS" which is Revolut's product → to_investment)
+      'RENDIMIENTOS?\\s*FONDO',
       'CUPON\\s*BONO',
       'VENTA\\s*ACCIONES',
       'VENTA\\s*FONDOS',
