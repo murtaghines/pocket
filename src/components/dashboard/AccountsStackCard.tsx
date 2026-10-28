@@ -133,6 +133,13 @@ export function AccountsStackCard({
     return primary ? [primary, ...rest] : rest;
   }, [accountsData, view]);
 
+  const totalSavings = useMemo(() => {
+    if (view !== "savings") return 0;
+    return accountsData
+      .filter(a => isSavingsType(a.accountType))
+      .reduce((sum, a) => sum + a.balance, 0);
+  }, [accountsData, view]);
+
   const detailAccount = useMemo(
     () => accountsData.find((a) => a.id === detailAccountId) ?? null,
     [accountsData, detailAccountId],
@@ -193,6 +200,16 @@ export function AccountsStackCard({
           <EmptyState height="h-[160px]" />
         ) : (
           <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
+            {view === "savings" && orderedAccounts.length > 0 && (
+              <div className="flex items-center justify-between py-[10px] shrink-0 border-b border-border">
+                <span className="text-[11.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('charts.totalSavings', 'Total Savings')}
+                </span>
+                <span className="text-[15px] font-bold tabular-nums text-foreground">
+                  {formatCurrency(totalSavings)}
+                </span>
+              </div>
+            )}
             {orderedAccounts.map((acc, idx) => {
               const TypeIcon = getAccountTypeIcon(acc.accountType);
               return (

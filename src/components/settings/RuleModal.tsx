@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
@@ -16,6 +16,7 @@ import { getLucideIcon } from '@/lib/lucideIcon';
 import { cn } from '@/lib/utils';
 import { buildMatchExamples, type MatchType } from '@/lib/matchExamples';
 import { MatchTypeDropdown } from './MatchTypeDropdown';
+import { getRuleCategoryWarning } from '@/lib/ruleValidation';
 import { Circle } from 'lucide-react';
 
 interface RuleModalProps {
@@ -90,6 +91,11 @@ export function RuleModal({
   const examples = useMemo(
     () => buildMatchExamples(pattern, matchType),
     [pattern, matchType],
+  );
+
+  const categoryWarning = useMemo(
+    () => getRuleCategoryWarning(pattern, category.slug),
+    [pattern, category.slug],
   );
 
   const handleConfirm = () => {
@@ -193,6 +199,18 @@ export function RuleModal({
                 ))}
               </div>
             </div>
+
+            {/* Category mismatch warning */}
+            {categoryWarning && (
+              <div className="flex items-start gap-2.5 rounded-[10px] px-3.5 py-3 bg-warning/10">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-warning" strokeWidth={2.2} />
+                <p className="text-[12.5px] leading-[1.45] text-foreground/80">
+                  {categoryWarning === 'savings'
+                    ? t('categories.ruleWarningSavings')
+                    : t('categories.ruleWarningInvestment')}
+                </p>
+              </div>
+            )}
 
             {/* Account select */}
             {accounts.length > 1 && (

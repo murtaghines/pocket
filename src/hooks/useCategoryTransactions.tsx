@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getAccountDisplayName } from "@/lib/accountColors";
 
 export interface CategoryTransaction {
   id: string;
@@ -33,9 +34,9 @@ export function useCategoryTransactions(categoryId: string | null) {
         date: tx.date,
         description: tx.description || "",
         amount: tx.amount,
-        account_name: tx.accounts?.institution
-          ? `${tx.accounts.institution} · ${tx.accounts.name}`
-          : tx.accounts?.name || null,
+        account_name: tx.accounts
+          ? getAccountDisplayName(tx.accounts)
+          : null,
       }));
     },
     staleTime: 30_000,

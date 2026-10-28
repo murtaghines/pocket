@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
-import { getAccountColor } from "@/lib/accountColors";
+import { getAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { useLocalization } from "@/hooks/useLocalization";
 import type { Import } from "@/hooks/useImports";
 import { useReassignImport } from "@/hooks/useImportFile";
@@ -190,8 +190,10 @@ export function UploadedFilesHistoryList({
     },
   });
 
-  const acctName = (id: string | null) =>
-    (id && cashAccounts.find((a) => a.id === id)?.name) || "—";
+  const acctName = (id: string | null) => {
+    const a = id ? cashAccounts.find((acc) => acc.id === id) : null;
+    return a ? getAccountDisplayName(a) : "—";
+  };
 
   // Group imports by account_id, sorted by file count descending
   const groupedImports = (() => {
@@ -396,7 +398,7 @@ export function UploadedFilesHistoryList({
                     />
                   )}
                   <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                    {account ? (account.name !== account.institution ? `${account.institution} · ${account.name}` : account.name) : "Unassigned"}
+                    {account ? getAccountDisplayName(account) : "Unassigned"}
                   </span>
                   <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">
                     {groupSortedImports.length} {groupSortedImports.length === 1 ? "file" : "files"}
@@ -455,7 +457,7 @@ export function UploadedFilesHistoryList({
                         >
                           <option value="" disabled>Pick account</option>
                           {cashAccounts.map((a) => (
-                            <option key={a.id} value={a.id}>{a.name}</option>
+                            <option key={a.id} value={a.id}>{getAccountDisplayName(a)}</option>
                           ))}
                         </select>
                       </div>
