@@ -144,6 +144,8 @@
     "viewAll": "Ver todas",
     "noRecentTransactions": "Aún no hay transacciones en esta categoría.",
     "footerDisclaimer": "Las transacciones existentes mantienen su categoría si eliminás una regla.",
+    "ruleWarningSavings": "Este patrón menciona ahorros pero la categoría no es una transferencia de ahorro. Esto puede afectar el KPI \"Invertido y ahorrado\".",
+    "ruleWarningInvestment": "Este patrón menciona inversiones pero la categoría no es una transferencia de inversión. Esto puede afectar el KPI \"Invertido y ahorrado\".",
     "deleteCustomCategory": "Eliminar categoría",
     "defaultLocked": "Por defecto",
     "colorLabel": "COLOR",

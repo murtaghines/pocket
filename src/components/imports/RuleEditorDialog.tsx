@@ -10,11 +10,13 @@ import {
   type MatchType,
 } from "@/lib/userRules";
 import { buildMatchExamples, type MatchType as ModalMatchType } from "@/lib/matchExamples";
+import { getRuleCategoryWarning } from "@/lib/ruleValidation";
 import { useRulePreview } from "@/hooks/useRulePreview";
 import { useAccounts } from "@/hooks/useAccounts";
 import { MatchTypeDropdown } from "@/components/settings/MatchTypeDropdown";
 import { getLucideIcon } from "@/lib/lucideIcon";
 import { useTranslation } from "react-i18next";
+import { AlertTriangle } from "lucide-react";
 
 export interface RuleEditorPayload {
   match_type: MatchType;
@@ -132,6 +134,11 @@ export function RuleEditorDialog({
     [pattern, matchType],
   );
 
+  const categoryWarning = useMemo(
+    () => getRuleCategoryWarning(pattern, categorySlug),
+    [pattern, categorySlug],
+  );
+
   const IconComponent = getLucideIcon(categoryIcon ?? "") || Circle;
   const categoryColor = categoryColorVar ? `hsl(var(--${categoryColorVar}))` : undefined;
 
@@ -228,6 +235,18 @@ export function RuleEditorDialog({
               ))}
             </div>
           </div>
+
+          {/* Category mismatch warning */}
+          {categoryWarning && (
+            <div className="flex items-start gap-2.5 rounded-[10px] px-3.5 py-3 bg-warning/10">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-warning" strokeWidth={2.2} />
+              <p className="text-[12.5px] leading-[1.45] text-foreground/80">
+                {categoryWarning === 'savings'
+                  ? t('categories.ruleWarningSavings')
+                  : t('categories.ruleWarningInvestment')}
+              </p>
+            </div>
+          )}
 
           {/* Account select */}
           {accountOptions.length > 1 && (
