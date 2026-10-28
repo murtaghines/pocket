@@ -15,7 +15,7 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useTranslation } from "react-i18next";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { AccountFormDialog, type AccountFormValues } from "@/components/settings/AccountFormDialog";
-import { type AccountType, isSharedType } from "@/lib/accountTypes";
+import { isSharedType } from "@/lib/accountTypes";
 
 interface AccountSelectDialogProps {
   open: boolean;
@@ -49,8 +49,7 @@ export function AccountSelectDialog({
     }
   };
 
-  const lockedType: AccountType | undefined = accountRole === 'CASH' ? 'CHECKING' : undefined;
-  const typeFilter = accountRole === 'INVESTMENT' ? 'investment' as const : undefined;
+  const typeFilter = accountRole === 'INVESTMENT' ? 'investment' as const : 'bank' as const;
 
   const handleCreateAccount = (values: AccountFormValues) => {
     createAccount(
@@ -164,7 +163,6 @@ export function AccountSelectDialog({
         open={showNewForm}
         onOpenChange={setShowNewForm}
         mode="create"
-        lockedType={lockedType}
         typeFilter={typeFilter}
         isSubmitting={isCreating}
         onSubmit={handleCreateAccount}

@@ -13,6 +13,7 @@ import { buildMatchExamples, type MatchType as ModalMatchType } from "@/lib/matc
 import { getRuleCategoryWarning } from "@/lib/ruleValidation";
 import { useRulePreview } from "@/hooks/useRulePreview";
 import { useAccounts } from "@/hooks/useAccounts";
+import { getAccountDisplayName } from "@/lib/accountColors";
 import { MatchTypeDropdown } from "@/components/settings/MatchTypeDropdown";
 import { getLucideIcon } from "@/lib/lucideIcon";
 import { useTranslation } from "react-i18next";
@@ -145,7 +146,7 @@ export function RuleEditorDialog({
   const accountOptions = useMemo(
     () => accounts.map((a) => ({
       id: a.id,
-      label: [a.institution, a.name].filter(Boolean).join(" · "),
+      label: getAccountDisplayName(a),
     })),
     [accounts],
   );
