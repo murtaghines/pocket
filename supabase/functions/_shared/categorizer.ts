@@ -5,7 +5,7 @@
  * Languages  : Spanish (ES) + English (EN)
  * Countries  : España (ES) · Argentina (AR) · Chile (CL)
  *              Uruguay (UY) · United States (US)
- * Categories : 25 (2 TRANSFER · 7 INCOME · 16 EXPENSE)
+ * Categories : 30 (2 TRANSFER · 12 INCOME · 16 EXPENSE)
  * Patterns   : ~2.500+
  *
  * ARCHITECTURE — NO OVERLAPS GUARANTEED:
@@ -23,7 +23,7 @@
  *                  earning a return, not just parked (2026-09-26, user-confirmed)
  *   BOOKING      → rental_income if PAYOUT/DEPOSIT, else travel
  *   GAS          → housing if GAS NATURAL/NATURGAS, else transport
- *   PENSION      → to_investment if PLAN/APORTACION, else other_income
+ *   PENSION      → to_investment if PLAN/APORTACION, else benefits
  *   MERCADO PAGO → sales(income) if COBRO/ACREDITACION, else shopping
  *   CAR RENTALS  → transport always (no context to distinguish vacation)
  *   IKEA/LEROY   → shopping always (housing = recurring services only)
@@ -40,9 +40,13 @@ export type IncomeCategory =
   | 'refunds'
   | 'sales'
   | 'investments_income'
+  | 'gifts'
   | 'gifts_received'
   | 'rental_income'
   | 'transfers_in'
+  | 'benefits'
+  | 'interest'
+  | 'cashback'
   | 'other_income';
 
 export type ExpenseCategory =
@@ -951,10 +955,10 @@ const RULE_BUCKETS: RuleBucket[] = [
     ], 0.99),
   },
 
-  // ── income / other_income ─────────────────────────────────
+  // ── income / benefits ─────────────────────────────────────
   {
     movement: 'INCOME',
-    category: 'other_income',
+    category: 'benefits',
     rules: r([
       // ES: Public benefits
       'PRESTACION\\s*DESEMPLEO',
@@ -1011,7 +1015,7 @@ const RULE_BUCKETS: RuleBucket[] = [
       'STIMULUS\\s*CHECK',       // US
       'UNEMPLOYMENT\\s*BENEFIT',
       'UNEMPLOYMENT\\s*INSURANCE',
-      // Education income
+      // Education benefits
       'BURSARY\\b',
       'SCHOLARSHIP\\b',
       'STUDENT\\s*LOAN\\s*PAYMENT',
@@ -1019,10 +1023,63 @@ const RULE_BUCKETS: RuleBucket[] = [
     ], 0.95),
   },
 
-  // ── income / gifts_received ───────────────────────────────
+  // ── income / interest ───────────────────────────────────
   {
     movement: 'INCOME',
-    category: 'gifts_received',
+    category: 'interest',
+    rules: r([
+      // ES: Bank interest
+      'INTERESES\\s*ABONADOS',
+      'INTERESES\\s*CUENTA',
+      'LIQUIDACION\\s*INTERESES',
+      'ABONO\\s*INTERESES',
+      'INTERESES\\s*ACREEDORES',
+      'INTERESES\\s*A\\s*FAVOR',
+      'RETRIBUCION\\s*EN\\s*ESPECIE',  // in-kind compensation on deposits
+      // AR: Bank interest
+      'INTERESES\\s*GANADOS',
+      'INTERESES\\s*CAJA\\s*AHORRO',
+      'RENTA\\s*DEPOSITO',
+      // EN: Bank interest
+      'SAVINGS\\s*INTEREST',
+      'DEPOSIT\\s*INTEREST',
+      'ACCOUNT\\s*INTEREST',
+      'INTEREST\\s*PAID\\b',
+      'INTEREST\\s*PAYMENT',
+      'CREDIT\\s*INTEREST',
+      'ANNUAL\\s*INTEREST',
+      'MONTHLY\\s*INTEREST',
+      'ACCRUED\\s*INTEREST',
+      'BANK\\s*INTEREST',
+    ], 0.95),
+  },
+
+  // ── income / cashback ───────────────────────────────────
+  {
+    movement: 'INCOME',
+    category: 'cashback',
+    rules: r([
+      'CASHBACK\\b',
+      'CASH\\s*BACK\\b',
+      'DEVOLUCION\\s*TARJETA',
+      'BONIFICACION\\s*TARJETA',
+      'RECOMPENSA\\s*TARJETA',
+      'REEMBOLSO\\s*CASHBACK',
+      'CARD\\s*CASHBACK',
+      'CARD\\s*REWARD',
+      'LOYALTY\\s*REWARD',
+      'LOYALTY\\s*CASHBACK',
+      'PURCHASE\\s*REWARD',
+      'REWARD\\s*CREDIT',
+      'POINTS\\s*REDEMPTION',
+      'PUNTOS\\s*CANJEADOS',
+    ], 0.92),
+  },
+
+  // ── income / gifts ────────────────────────────────────────
+  {
+    movement: 'INCOME',
+    category: 'gifts',
     rules: r([
       'REGALO\\s*RECIBIDO',
       'DONACION\\s*RECIBIDA',

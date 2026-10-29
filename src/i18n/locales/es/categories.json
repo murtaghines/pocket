@@ -6,7 +6,12 @@
     "other_income": "Otros",
     "investment": "Inversión",
     "freelance": "Freelance",
-    "rents": "Alquileres"
+    "rents": "Alquileres",
+    "gifts": "Regalos",
+    "benefits": "Prestaciones",
+    "sales": "Ventas",
+    "interest": "Intereses",
+    "cashback": "Cashback"
   },
   "expense": {
     "housing": "Vivienda",
