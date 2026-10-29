@@ -299,7 +299,6 @@ const RULE_BUCKETS: RuleBucket[] = [
       'DIVIDEND\\b',
       'DIVIDENDS\\b',
       'INTEREST\\s*INCOME',
-      'SAVINGS\\s*INTEREST',
       'INVESTMENT\\s*INCOME',
       'INVESTMENT\\s*RETURN',
       'CAPITAL\\s*GAIN',
@@ -315,16 +314,31 @@ const RULE_BUCKETS: RuleBucket[] = [
       'YIELD\\s*EARNED',
       '401K\\s*DISTRIBUTION',
       'IRA\\s*DISTRIBUTION',
-      // EN — interest paid by neobanks / savings accounts
+    ], 0.99),
+  },
+
+  // ── income / interest (early) ──────────────────────────────
+  // Bank interest patterns that MUST evaluate before transfer buckets, otherwise
+  // "NET INTEREST PAID FROM SAVINGS" matches to_savings. The main interest bucket
+  // below (after transfers) covers ES/AR patterns that don't conflict.
+  {
+    movement: 'INCOME',
+    category: 'interest',
+    rules: r([
       'NET\\s*INTEREST\\s*PAID',
       'INTEREST\\s*PAID\\s*TO',
       'INTEREST\\s*EARNED',
-      'INTEREST\\s*PAYMENT',
+      'INTEREST\\s*PAYMENT(?!.*MORTGAGE)(?!.*LOAN)',
       'INTEREST\\s*CREDIT',
       'ANNUAL\\s*INTEREST',
       'MONTHLY\\s*INTEREST',
       'ACCRUED\\s*INTEREST',
-    ], 0.99),
+      'SAVINGS\\s*INTEREST',
+      'DEPOSIT\\s*INTEREST',
+      'ACCOUNT\\s*INTEREST',
+      'BANK\\s*INTEREST',
+      'CREDIT\\s*INTEREST',
+    ], 0.95),
   },
 
   // ══════════════════════════════════════════════════════════
@@ -930,9 +944,6 @@ const RULE_BUCKETS: RuleBucket[] = [
       'DEVOLUCION\\s*DGI',       // UY tax refund
       'DEVOLUCION\\s*AFIP',      // AR tax refund
       'REINTEGRO\\s*IMPUESTO',
-      'CASHBACK\\b',
-      'BONIFICACION\\s*BANCO',
-      'CASH\\s*BACK',
       // EN
       'REFUND\\b',
       'CHARGEBACK\\b',
@@ -1051,6 +1062,11 @@ const RULE_BUCKETS: RuleBucket[] = [
       'MONTHLY\\s*INTEREST',
       'ACCRUED\\s*INTEREST',
       'BANK\\s*INTEREST',
+      'NET\\s*INTEREST\\s*PAID',
+      'INTEREST\\s*PAID\\s*TO',
+      'INTEREST\\s*EARNED',
+      'INTEREST\\s*INCOME',
+      'INTEREST\\s*CREDIT',
     ], 0.95),
   },
 

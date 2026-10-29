@@ -58,7 +58,7 @@ For each transaction, extract ONLY these essential fields:
   another person (Bizum, "payment to: NAME", "transfer to OTHER PERSON") is EXPENSE, not TRANSFER.
 - category_slug: best-fit category for the transaction, from the list for its movement:
   * EXPENSE: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
-  * INCOME: salary, refunds, freelance, rents, investment, other_income
+  * INCOME: salary, refunds, freelance, rents, investment, gifts, benefits, sales, interest, cashback, other_income
   * TRANSFER: own_transfer (between own accounts) or to_investment (to own savings/investment)
   Infer from the merchant/description (supermarket→groceries, café/bakery/restaurant→restaurants,
   train/metro/toll→transport, clothing/sports store→shopping/sports). Use other_expense/other_income
@@ -116,7 +116,7 @@ INCOME: Money entering the user from external sources, increasing available cash
 - Refunds and chargebacks ("Devolución", "Refund", "Chargeback")
 - Sales income from selling items
 - Interest received, dividends
-- Category slugs: salary, refunds, freelance, rents, investment, transfers, other_income
+- Category slugs: salary, refunds, freelance, rents, investment, gifts, benefits, sales, interest, cashback, transfers, other_income
 
 EXPENSE: Money leaving to a third party representing real consumption or payment.
 - Purchases at stores, restaurants, services
@@ -161,15 +161,18 @@ If UNCERTAIN whether a transfer goes to own account or third party:
 === CATEGORY_SLUG (Step 2) ===
 
 After the movement, assign the best-fit category_slug from the list for that movement:
-- INCOME: salary, refunds, freelance, rents, investment, other_income
+- INCOME: salary, refunds, freelance, rents, investment, gifts, benefits, sales, interest, cashback, other_income
 - EXPENSE: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
 - TRANSFER: own_transfer (between the user's own accounts) or to_investment (to the user's own investment/savings account)
 
 Infer the category from the merchant name or description: a supermarket → groceries, a
 restaurant/bakery/café → restaurants, a train/metro/toll/parking → transport, a clothing or
 sports store → shopping/sports, a utility/telco/rent → housing, a streaming/app subscription →
-subscriptions, a pharmacy/clinic → health. Use other_expense / other_income ONLY when the
-description genuinely doesn't indicate a category.
+subscriptions, a pharmacy/clinic → health, a gift/birthday/present → gifts, government aid/
+unemployment/pension/scholarship → benefits, secondhand sale/marketplace/Wallapop/Vinted → sales,
+bank interest/savings interest/deposit interest → interest, cashback/card reward/loyalty reward →
+cashback. Use other_expense / other_income ONLY when the description genuinely doesn't indicate
+a category.
 
 Example output:
 [
