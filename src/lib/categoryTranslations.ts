@@ -17,6 +17,11 @@ export const categoryLabels: Record<string, string> = {
   investment: 'Investment',
   freelance: 'Freelance',
   rents: 'Rents',
+  gifts: 'Gifts',
+  benefits: 'Benefits',
+  sales: 'Sales',
+  interest: 'Interest',
+  cashback: 'Cashback',
 
   // EXPENSE categories
   housing: 'Housing',
@@ -79,6 +84,11 @@ export const categoryIcons: Record<string, string> = {
   investment: 'trending-up',
   freelance: 'laptop',
   rents: 'house',
+  gifts: 'gift',
+  benefits: 'hand-coins',
+  sales: 'tag',
+  interest: 'percent',
+  cashback: 'coins',
   own_transfer: 'arrow-left-right',
   from_myself: 'arrow-left-right',
   to_investment: 'trending-up',
@@ -99,6 +109,11 @@ export const categoryColors: Record<string, string> = {
   investment: 'category-investment',
   freelance: 'category-freelance',
   rents: 'category-rents',
+  gifts: 'category-gifts',
+  benefits: 'category-benefits',
+  sales: 'category-sales',
+  interest: 'category-interest',
+  cashback: 'category-cashback',
   // Expense
   housing: 'category-housing',
   groceries: 'category-groceries',
@@ -137,6 +152,11 @@ export const categoryHslValues: Record<string, string> = {
   'category-investment': '216 75% 42%',
   'category-freelance': '260 60% 62%',
   'category-rents': '35 90% 60%',
+  'category-gifts': '320 58% 56%',
+  'category-benefits': '165 60% 42%',
+  'category-sales': '80 58% 45%',
+  'category-interest': '188 70% 42%',
+  'category-cashback': '120 55% 42%',
   'category-housing': '14 80% 58%',
   'category-groceries': '145 55% 42%',
   'category-restaurants': '22 95% 58%',
@@ -168,8 +188,7 @@ const legacySlugMap: Record<string, string> = {
   'investments_income': 'investment',
   'rental_income': 'rents',
   'transfers_in': 'own_transfer',
-  'gifts_received': 'other_income',
-  'sales': 'other_income',
+  'gifts_received': 'gifts',
   'gifts_given': 'other_expense',
   'family': 'other_expense',
   'personal_services': 'other_expense',
@@ -228,13 +247,13 @@ export function getMovementLabel(movement: string): string {
 }
 
 // Categories by movement type (for onboarding)
-export const INCOME_CATEGORIES = ['salary', 'refunds', 'investment', 'freelance', 'rents', 'other_income'];
+export const INCOME_CATEGORIES = ['salary', 'refunds', 'investment', 'freelance', 'rents', 'gifts', 'benefits', 'sales', 'interest', 'cashback', 'other_income'];
 export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'pets', 'taxes', 'insurance', 'donations', 'other_expense'];
 export const TRANSFER_CATEGORIES = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'to_savings', 'from_savings'];
 export const TRANSFER_OUTGOING = ['own_transfer', 'to_investment', 'to_joint_account', 'to_savings'];
 export const TRANSFER_INCOMING = ['from_myself', 'from_investment', 'from_joint_account', 'from_savings'];
 
 // Default selected categories for new users
-export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'other_income'];
+export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'gifts', 'sales', 'other_income'];
 export const DEFAULT_EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'subscriptions', 'sports', 'other_expense'];
 
