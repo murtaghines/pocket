@@ -1202,12 +1202,15 @@ serve(async (req) => {
     let aiInputTokens = 0;
     let aiOutputTokens = 0;
     let lastAiError: string | null = null;
+    let processingStrategy = 'unknown';
 
     if (csvResult) {
       allTransactions = csvResult.transactions;
+      processingStrategy = 'deterministic_csv';
       console.log(`[process-import] Skipped AI — deterministic parse: ${allTransactions.length} transactions`);
     } else if (hasImages) {
       // Vision path: send all images in a single call (no chunking for images).
+      processingStrategy = 'ai_vision';
       console.log(`[process-import] Vision mode: ${imageContent.length} image(s)`);
 
       const result = await callAIWithRetry('', prompt, false, 0, imageContent);
@@ -1259,6 +1262,7 @@ serve(async (req) => {
       
       allTransactions = result.transactions || [];
     } else if (isLargeFile) {
+      processingStrategy = 'ai_chunked_sonnet';
       console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
 
       const chunks = splitIntoChunks(fileContent);
@@ -1313,6 +1317,7 @@ serve(async (req) => {
         );
       }
     } else {
+      processingStrategy = 'ai_haiku';
       console.log(`[process-import] Small file (${fileContent.length} chars), using single AI call`);
 
       const result = await callAIWithRetry(fileContent, prompt, false);
@@ -2002,6 +2007,7 @@ serve(async (req) => {
       error_message: importErrorMessage,
       ai_input_tokens: stats.aiInputTokens,
       ai_output_tokens: stats.aiOutputTokens,
+      processing_strategy: processingStrategy,
     }).eq('id', importId);
 
     // Log to audit
@@ -2049,7 +2055,7 @@ serve(async (req) => {
       ? Math.round((totalCategorized / stats.newTransactions) * 100) 
       : 0;
     console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, categorizer=${stats.categorizedByCategorizer}, AI=${stats.categorizedByAI}, local_coverage=${aiSavingsPercent}%`);
-    console.log(`[process-import] AI token usage total: input=${stats.aiInputTokens}, output=${stats.aiOutputTokens}`);
+    console.log(`[process-import] AI token usage total: input=${stats.aiInputTokens}, output=${stats.aiOutputTokens}, strategy=${processingStrategy}`);
 
     return new Response(
       JSON.stringify({
