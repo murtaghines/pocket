@@ -11,6 +11,7 @@ import {
   validateCategorySlug,
 } from "../_shared/categoryMap.ts";
 import { type MatchType, ruleMatchesDescription } from "../_shared/userRules.ts";
+import { tryDeterministicParse } from "../_shared/csvParser.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1058,7 +1059,17 @@ serve(async (req) => {
     await supabase.from('imports').update({ status: 'PARSED' }).eq('id', importId);
 
     // ========== DETERMINE PROCESSING STRATEGY ==========
-    const isLargeFile = hasText && fileContent.length > CHUNK_SIZE_THRESHOLD;
+    // Try deterministic CSV parsing first (cashflow text only — not images, not investments).
+    let deterministicParsed = false;
+    if (hasText && domain === 'CASHFLOW') {
+      const csvResult = tryDeterministicParse(fileContent);
+      if (csvResult) {
+        console.log(`[process-import] Deterministic CSV parse succeeded: ${csvResult.transactions.length} rows, delimiter="${csvResult.delimiter}", headerRow=${csvResult.headerRow}`);
+        deterministicParsed = true;
+      }
+    }
+
+    const isLargeFile = hasText && !deterministicParsed && fileContent.length > CHUNK_SIZE_THRESHOLD;
     const prompt = domain === 'INVESTING' ? INVESTING_ANALYSIS_PROMPT : CASHFLOW_ANALYSIS_PROMPT;
 
     let allTransactions: any[] = [];
@@ -1066,7 +1077,11 @@ serve(async (req) => {
     let aiOutputTokens = 0;
     let lastAiError: string | null = null;
 
-    if (hasImages) {
+    if (deterministicParsed) {
+      const csvResult = tryDeterministicParse(fileContent)!;
+      allTransactions = csvResult.transactions;
+      console.log(`[process-import] Skipped AI — deterministic parse: ${allTransactions.length} transactions`);
+    } else if (hasImages) {
       // Vision path: send all images in a single call (no chunking for images).
       console.log(`[process-import] Vision mode: ${imageContent.length} image(s)`);
 
