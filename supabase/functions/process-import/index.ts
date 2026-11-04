@@ -215,6 +215,44 @@ Example output:
 // sha256 / normalizeDescription / calculateFingerprint / extractMonthKey now live in
 // ../_shared/fingerprint.ts (unit-tested in tests/fingerprint.test.ts). Imported above.
 
+// ========== POST-AI ROW VALIDATION ==========
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function validateAIRow(t: Record<string, unknown>): { valid: boolean; date?: string; amount?: number; reason?: string } {
+  const dateRaw = (t.posted_date || t.date) as string | undefined;
+  if (!dateRaw || typeof dateRaw !== 'string') return { valid: false, reason: 'missing_date' };
+
+  // Accept ISO dates; attempt to fix common AI mistakes (DD/MM/YYYY, MM-DD-YYYY).
+  let date = dateRaw.trim();
+  if (!ISO_DATE_RE.test(date)) {
+    const slashParts = date.split(/[/.-]/);
+    if (slashParts.length === 3) {
+      const [a, b, c] = slashParts.map(Number);
+      if (a > 100) {
+        date = `${a}-${String(b).padStart(2, '0')}-${String(c).padStart(2, '0')}`;
+      } else if (c > 100) {
+        // DD/MM/YYYY or MM/DD/YYYY — if b>12 then b is day (MDY), else assume DMY
+        const [day, month] = b > 12 ? [b, a] : [a, b];
+        date = `${c}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
+    }
+    if (!ISO_DATE_RE.test(date)) return { valid: false, reason: 'bad_date' };
+  }
+
+  // Validate date components
+  const [y, m, d] = date.split('-').map(Number);
+  if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1990 || y > 2100) {
+    return { valid: false, reason: 'date_out_of_range' };
+  }
+
+  const amountRaw = t.amount_signed ?? t.amount;
+  if (amountRaw === undefined || amountRaw === null) return { valid: false, reason: 'missing_amount' };
+  const amount = typeof amountRaw === 'string' ? parseFloat(amountRaw) : Number(amountRaw);
+  if (!Number.isFinite(amount)) return { valid: false, reason: 'bad_amount' };
+
+  return { valid: true, date, amount };
+}
+
 function normalizeTargetMonth(targetMonth: string): string {
   if (targetMonth.match(/^\d{4}-\d{2}-\d{2}$/)) {
     return targetMonth.substring(0, 7);
@@ -616,11 +654,11 @@ async function getCategoryIdBySlug(
 // ========== ROBUST JSON PARSER ==========
 function parseJsonFromAIResponse(rawContent: string): { transactions: any[] | null; error: string | null } {
   let jsonString = rawContent.trim();
-  
+
   jsonString = jsonString.replace(/^```(?:json|JSON)?\s*\n?/g, '');
   jsonString = jsonString.replace(/\n?```\s*$/g, '');
   jsonString = jsonString.trim();
-  
+
   if (!jsonString.startsWith('[') && !jsonString.startsWith('{')) {
     const arrayMatch = jsonString.match(/\[[\s\S]*\]/);
     if (arrayMatch) {
@@ -629,50 +667,82 @@ function parseJsonFromAIResponse(rawContent: string): { transactions: any[] | nu
       return { transactions: null, error: 'No JSON array found in response' };
     }
   }
-  
-  if (jsonString.startsWith('[') && !jsonString.endsWith(']')) {
-    console.log('[process-import] Detected truncated JSON, attempting to fix...');
-    
-    let depth = 0;
-    let lastValidIndex = -1;
-    
-    for (let i = 0; i < jsonString.length; i++) {
-      const char = jsonString[i];
-      if (char === '[' || char === '{') {
-        depth++;
-      } else if (char === ']' || char === '}') {
-        depth--;
-        if (depth === 1 && char === '}') {
-          lastValidIndex = i;
-        }
-      }
-    }
-    
-    if (lastValidIndex > 0) {
-      jsonString = jsonString.substring(0, lastValidIndex + 1) + ']';
-      console.log('[process-import] Fixed truncated JSON, length now:', jsonString.length);
-    }
-  }
-  
+
+  // First try a clean parse — fast path for well-formed responses.
   try {
     const parsed = JSON.parse(jsonString);
-    if (!Array.isArray(parsed)) {
-      return { transactions: null, error: 'Parsed result is not an array' };
-    }
-    return { transactions: parsed, error: null };
-  } catch (parseError) {
-    const errorMsg = parseError instanceof Error ? parseError.message : 'Unknown parse error';
-    return { transactions: null, error: errorMsg };
+    if (Array.isArray(parsed)) return { transactions: parsed, error: null };
+    if (parsed && typeof parsed === 'object') return { transactions: [parsed], error: null };
+    return { transactions: null, error: 'Parsed result is not an array' };
+  } catch {
+    // Fall through to recovery.
   }
+
+  // Recovery: the AI output is likely truncated (max_tokens hit) or has trailing junk.
+  console.log('[process-import] JSON parse failed, attempting recovery...');
+
+  // Strip trailing commas, whitespace, and incomplete key-value fragments after the last
+  // complete object in the array.
+  if (jsonString.startsWith('[')) {
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    let lastCompleteObject = -1;
+
+    for (let i = 0; i < jsonString.length; i++) {
+      const ch = jsonString[i];
+      if (escape) { escape = false; continue; }
+      if (ch === '\\' && inString) { escape = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (inString) continue;
+
+      if (ch === '[' || ch === '{') depth++;
+      else if (ch === ']' || ch === '}') {
+        depth--;
+        if (depth === 1 && ch === '}') lastCompleteObject = i;
+      }
+    }
+
+    if (lastCompleteObject > 0) {
+      const recovered = jsonString.substring(0, lastCompleteObject + 1) + ']';
+      try {
+        const parsed = JSON.parse(recovered);
+        if (Array.isArray(parsed)) {
+          console.log(`[process-import] Recovered ${parsed.length} transactions from truncated JSON`);
+          return { transactions: parsed, error: null };
+        }
+      } catch {
+        // Recovery failed — fall through.
+      }
+    }
+  }
+
+  // Last resort: extract individual {...} objects via regex (very tolerant).
+  const objectPattern = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+  const objects: any[] = [];
+  let match;
+  while ((match = objectPattern.exec(jsonString)) !== null) {
+    try {
+      objects.push(JSON.parse(match[0]));
+    } catch {
+      // Skip malformed individual objects.
+    }
+  }
+  if (objects.length > 0) {
+    console.log(`[process-import] Extracted ${objects.length} transactions via object-level recovery`);
+    return { transactions: objects, error: null };
+  }
+
+  return { transactions: null, error: 'Could not parse or recover JSON from AI response' };
 }
 
 // ========== CHUNKING LOGIC ==========
 function splitIntoChunks(content: string): string[] {
   const chunks: string[] = [];
-  
+
   const pagePattern = /---\s*Page\s*\d+\s*---/gi;
   const pages = content.split(pagePattern).filter(p => p.trim().length > 0);
-  
+
   if (pages.length > 1) {
     let currentChunk = '';
     for (const page of pages) {
@@ -687,25 +757,44 @@ function splitIntoChunks(content: string): string[] {
       chunks.push(currentChunk.trim());
     }
   } else {
+    // For CSV/text without page markers: carry the header (first non-empty line)
+    // into every chunk so the AI always knows which column is which.
+    const lines = content.split('\n');
+    const headerLine = lines.find(l => l.trim().length > 0) || '';
+    const headerPrefix = headerLine ? headerLine + '\n' : '';
+    const effectiveMax = MAX_CHUNK_SIZE - headerPrefix.length;
+
     let remaining = content;
+    let isFirst = true;
     while (remaining.length > MAX_CHUNK_SIZE) {
       let breakPoint = remaining.lastIndexOf('\n', MAX_CHUNK_SIZE);
       if (breakPoint < MAX_CHUNK_SIZE / 2) {
         breakPoint = MAX_CHUNK_SIZE;
       }
-      chunks.push(remaining.substring(0, breakPoint).trim());
+      const raw = remaining.substring(0, breakPoint).trim();
+      chunks.push(isFirst ? raw : headerPrefix + raw);
       remaining = remaining.substring(breakPoint).trim();
+      isFirst = false;
     }
     if (remaining.length > 0) {
-      chunks.push(remaining);
+      chunks.push(isFirst ? remaining : headerPrefix + remaining);
     }
   }
-  
+
   console.log(`[process-import] Split content into ${chunks.length} chunks`);
   return chunks;
 }
 
 // ========== AI CALL WITH RETRY ==========
+// Supabase edge functions have a 150s hard timeout. We keep a deadline so we
+// can abort long-running AI calls and still return a partial result.
+const EDGE_FUNCTION_DEADLINE_MS = 140_000; // 140s — 10s buffer for DB writes after AI
+let requestStartTime = 0; // set in the main handler
+
+function remainingMs(): number {
+  return Math.max(0, EDGE_FUNCTION_DEADLINE_MS - (Date.now() - requestStartTime));
+}
+
 async function callAIWithRetry(
   content: string,
   prompt: string,
@@ -715,6 +804,12 @@ async function callAIWithRetry(
 ): Promise<{ transactions: any[] | null; error: string | null; usage?: { input_tokens: number; output_tokens: number } }> {
   const maxRetries = 2;
   const isVision = !!imageContent && imageContent.length > 0;
+
+  // Abort if we're running out of time (leave room for DB writes).
+  const timeLeft = remainingMs();
+  if (timeLeft < 5_000) {
+    return { transactions: null, error: 'Approaching edge function timeout — aborting AI call' };
+  }
 
   const effectivePrompt = isLargeFile ? SIMPLE_EXTRACTION_PROMPT : prompt;
   // Vision calls always use Sonnet (complex multi-modal task). Text: escalate on retry;
@@ -740,27 +835,50 @@ async function callAIWithRetry(
     });
   }
 
-  console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, isVision=${isVision}, contentLength=${content.length}, images=${imageContent?.length ?? 0}, isLargeFile=${isLargeFile}`);
+  console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, isVision=${isVision}, contentLength=${content.length}, images=${imageContent?.length ?? 0}, isLargeFile=${isLargeFile}, timeLeftMs=${timeLeft}`);
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 16000,
-      // Extraction is a structured task — no thinking, keeps output deterministic and
-      // within max_tokens (Sonnet 5 runs adaptive thinking by default otherwise).
-      thinking: { type: 'disabled' },
-      system: effectivePrompt,
-      messages: [
-        { role: 'user', content: userContent },
-      ],
-    }),
-  });
+  // AbortController with a timeout based on remaining edge-function deadline.
+  const controller = new AbortController();
+  const fetchTimeout = Math.min(timeLeft - 3_000, 120_000); // cap single call at 120s
+  const timer = setTimeout(() => controller.abort(), fetchTimeout);
+
+  let response: Response;
+  try {
+    response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY ?? '',
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 16000,
+        // Extraction is a structured task — no thinking, keeps output deterministic and
+        // within max_tokens (Sonnet 5 runs adaptive thinking by default otherwise).
+        thinking: { type: 'disabled' },
+        system: effectivePrompt,
+        messages: [
+          { role: 'user', content: userContent },
+        ],
+      }),
+    });
+  } catch (err: unknown) {
+    clearTimeout(timer);
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('abort') || msg.includes('AbortError')) {
+      console.error(`[process-import] AI call timed out after ${fetchTimeout}ms`);
+      return { transactions: null, error: `AI call timed out (${Math.round(fetchTimeout / 1000)}s)` };
+    }
+    if (retryCount < maxRetries) {
+      await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
+      return callAIWithRetry(content, prompt, isLargeFile, retryCount + 1, imageContent);
+    }
+    return { transactions: null, error: `AI fetch failed: ${msg}` };
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -827,6 +945,8 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
+    requestStartTime = Date.now();
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -1060,16 +1180,12 @@ serve(async (req) => {
 
     // ========== DETERMINE PROCESSING STRATEGY ==========
     // Try deterministic CSV parsing first (cashflow text only — not images, not investments).
-    let deterministicParsed = false;
-    if (hasText && domain === 'CASHFLOW') {
-      const csvResult = tryDeterministicParse(fileContent);
-      if (csvResult) {
-        console.log(`[process-import] Deterministic CSV parse succeeded: ${csvResult.transactions.length} rows, delimiter="${csvResult.delimiter}", headerRow=${csvResult.headerRow}`);
-        deterministicParsed = true;
-      }
+    const csvResult = (hasText && domain === 'CASHFLOW') ? tryDeterministicParse(fileContent) : null;
+    if (csvResult) {
+      console.log(`[process-import] Deterministic CSV parse succeeded: ${csvResult.transactions.length} rows, delimiter="${csvResult.delimiter}", headerRow=${csvResult.headerRow}`);
     }
 
-    const isLargeFile = hasText && !deterministicParsed && fileContent.length > CHUNK_SIZE_THRESHOLD;
+    const isLargeFile = hasText && !csvResult && fileContent.length > CHUNK_SIZE_THRESHOLD;
     const prompt = domain === 'INVESTING' ? INVESTING_ANALYSIS_PROMPT : CASHFLOW_ANALYSIS_PROMPT;
 
     let allTransactions: any[] = [];
@@ -1077,8 +1193,7 @@ serve(async (req) => {
     let aiOutputTokens = 0;
     let lastAiError: string | null = null;
 
-    if (deterministicParsed) {
-      const csvResult = tryDeterministicParse(fileContent)!;
+    if (csvResult) {
       allTransactions = csvResult.transactions;
       console.log(`[process-import] Skipped AI — deterministic parse: ${allTransactions.length} transactions`);
     } else if (hasImages) {
@@ -1415,23 +1530,25 @@ serve(async (req) => {
 
     for (let i = 0; i < allTransactions.length; i++) {
       const t = allTransactions[i];
-      
-      const postedDate = t.posted_date || t.date;
+
+      // Validate and normalize date + amount before anything else.
+      const validation = validateAIRow(t);
+      if (!validation.valid) {
+        console.log(`[process-import] Skipping invalid row ${i}: ${validation.reason}`);
+        continue;
+      }
+
+      const postedDate = validation.date!;
+      const amountSigned = validation.amount!;
       const descriptionRaw = t.description_raw || t.description || '';
       // When the AI didn't return a cleaned description (e.g. the compact chunked prompt), keep the
       // RAW text — not normalizeDescription(), which lowercases and strips words. `description` is a
       // display field; the lowercased/stripped form belongs only in description_norm (matching key).
       const descriptionClean = t.description_clean || descriptionRaw;
-      const amountSigned = t.amount_signed ?? t.amount;
       const runningBalance = t.running_balance ?? null;
       const currency = t.currency || 'EUR';
       // Merchant key for the global dictionary (null for person payments / transfers → skipped).
       const mKey = merchantKey(descriptionRaw, dictUserName);
-      
-      if (!postedDate || amountSigned === undefined) {
-        console.log(`[process-import] Skipping invalid transaction at index ${i}`);
-        continue;
-      }
 
       const txMonthKey = extractMonthKey(postedDate);
       const txPeriodId = periodIdByMonth[txMonthKey];
