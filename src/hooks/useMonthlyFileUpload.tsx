@@ -184,17 +184,27 @@ export function useMonthlyFileUpload() {
       // The AI extraction step can take 20-90s; we don't get progress events
       // back, so we ramp the bar logarithmically toward 88% to convey "still
       // working" without ever pretending we're done.
+      // Speed factor adapts to content size: small files resolve quickly, large
+      // files and images take longer — so the ramp slows down proportionally.
+      const contentSize = hasText ? extracted.text.length : (extracted.images?.length || 1) * 50_000;
+      const speedFactor = contentSize < 3000 ? 0.7 : contentSize < 10000 ? 0.45 : contentSize < 30000 ? 0.3 : 0.18;
       const aiRampStart = Date.now();
       const aiRamp = setInterval(() => {
         const elapsed = (Date.now() - aiRampStart) / 1000;
-        // Approaches ~88% asymptotically; tuned so 30s ≈ 75%, 60s ≈ 83%.
-        const pct = Math.min(88, 38 + 18 * Math.log(1 + elapsed * 0.45));
-        const labels = [
-          "Reading transactions with AI…",
-          "Categorizing each transaction…",
-          "Cross-checking with your rules…",
-          "Almost there — finalizing…",
-        ];
+        const pct = Math.min(88, 38 + 18 * Math.log(1 + elapsed * speedFactor));
+        const labels = hasImages
+          ? [
+              "Analyzing images with AI…",
+              "Extracting transactions from image…",
+              "Cross-checking with your rules…",
+              "Almost there — finalizing…",
+            ]
+          : [
+              "Reading transactions with AI…",
+              "Categorizing each transaction…",
+              "Cross-checking with your rules…",
+              "Almost there — finalizing…",
+            ];
         const labelIdx = Math.min(labels.length - 1, Math.floor(elapsed / 12));
         patch({ progressLabel: labels[labelIdx], progressPercent: pct });
       }, 1200);
