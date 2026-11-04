@@ -106,7 +106,7 @@ export function MonthWorkspace({
         type="file"
         multiple
         className="hidden"
-        accept=".xlsx,.xls,.csv,.pdf"
+        accept=".xlsx,.csv,.pdf,.jpg,.jpeg,.png,.webp,.heic"
         onChange={(e) => onPickFiles(e.target.files, monthDate)}
       />
 

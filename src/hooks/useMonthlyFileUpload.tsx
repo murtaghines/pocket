@@ -4,7 +4,13 @@ import { useAuth } from "./useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { parseExcelFile } from "@/lib/excelParser";
-import { extractPdfText, getMonthKey } from "@/lib/fileExtract";
+import {
+  extractPdfText,
+  getMonthKey,
+  isImageFile,
+  imageToBase64,
+  renderPdfPagesToImages,
+} from "@/lib/fileExtract";
 
 interface PendingFile {
   id: string;
@@ -110,16 +116,22 @@ export function useMonthlyFileUpload() {
     });
 
     try {
-      const fileContent = await extractFileContent(uploadFile.file);
+      const extracted = await extractFileContent(uploadFile.file);
       patch({ progressLabel: "Checking for duplicates…", progressPercent: 18 });
-      
-      if (!fileContent.trim()) {
+
+      const hasText = extracted.text.trim().length > 0;
+      const hasImages = (extracted.images?.length || 0) > 0;
+      if (!hasText && !hasImages) {
         throw new Error("The file is empty");
       }
 
-      // Generate file hash for deduplication BEFORE uploading
+      // Generate file hash for deduplication BEFORE uploading.
+      // For image-based content, hash the first image's base64 (stable per file).
+      const hashSource = hasText
+        ? extracted.text
+        : extracted.images![0].base64;
       const encoder = new TextEncoder();
-      const data = encoder.encode(fileContent);
+      const data = encoder.encode(hashSource);
       const hashBuffer = await crypto.subtle.digest('SHA-256', data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -192,7 +204,9 @@ export function useMonthlyFileUpload() {
         "process-import",
         {
           body: {
-            fileContent,
+            fileContent: hasText ? extracted.text : "",
+            // Vision path: send base64 images for image files / scanned PDFs
+            ...(hasImages ? { imageContent: extracted.images } : {}),
             userId: user.id,
             domain: "CASHFLOW",
             // Omit targetMonth in auto mode so the backend distributes
@@ -491,19 +505,42 @@ export function useMonthlyFileUpload() {
     }));
   }, []);
 
-  const extractFileContent = async (file: File): Promise<string> => {
+  interface ExtractedContent {
+    text: string;
+    images?: Array<{ base64: string; mediaType: string }>;
+  }
+
+  const extractFileContent = async (file: File): Promise<ExtractedContent> => {
     const extension = file.name.split(".").pop()?.toLowerCase();
-    
+
+    if (isImageFile(file.name)) {
+      const img = await imageToBase64(file);
+      return { text: "", images: [img] };
+    }
+
     if (extension === "csv") {
-      return await file.text();
+      return { text: await file.text() };
     }
-    
-    if (extension === "xlsx" || extension === "xls") {
-      return await parseExcelFile(file);
+
+    if (extension === "xlsx") {
+      return { text: await parseExcelFile(file) };
     }
-    
+
     if (extension === "pdf") {
       const result = await extractPdfText(file);
+
+      if (result.scanned) {
+        const pages = await renderPdfPagesToImages(file);
+        if (pages.length === 0) {
+          throw new Error("Could not read this scanned PDF. Try uploading a photo of each page.");
+        }
+        toast({
+          title: "Scanned PDF detected",
+          description: `Reading ${pages.length} page(s) with AI vision…`,
+        });
+        return { text: "", images: pages };
+      }
+
       if (result.truncated) {
         toast({
           title: "PDF partially processed",
@@ -511,11 +548,11 @@ export function useMonthlyFileUpload() {
           variant: "destructive",
         });
       }
-      return result.text;
+      return { text: result.text };
     }
 
     try {
-      return await file.text();
+      return { text: await file.text() };
     } catch {
       throw new Error(`Cannot read file type: ${extension}`);
     }
@@ -556,13 +593,15 @@ export function useMonthlyFileUpload() {
       }
 
       const file = new File([blob], fileName);
-      const fileContent = await extractFileContent(file);
-      if (!fileContent.trim()) {
+      const extracted = await extractFileContent(file);
+      const hasImages = !!extracted.images && extracted.images.length > 0;
+      if (!hasImages && !extracted.text.trim()) {
         throw new Error("The file is empty");
       }
 
+      const hashSource = hasImages ? extracted.images![0].base64 : extracted.text;
       const encoder = new TextEncoder();
-      const data = encoder.encode(fileContent);
+      const data = encoder.encode(hashSource);
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const fileHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -571,7 +610,8 @@ export function useMonthlyFileUpload() {
         "process-import",
         {
           body: {
-            fileContent,
+            fileContent: hasImages ? undefined : extracted.text,
+            imageContent: hasImages ? extracted.images : undefined,
             userId: user.id,
             domain: "CASHFLOW",
             fileHash,

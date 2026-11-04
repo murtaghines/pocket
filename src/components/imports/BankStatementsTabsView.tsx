@@ -225,7 +225,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         type="file"
         multiple
         className="hidden"
-        accept=".xlsx,.xls,.csv,.pdf"
+        accept=".xlsx,.csv,.pdf,.jpg,.jpeg,.png,.webp,.heic"
         onChange={(e) => {
           handleGlobalFilesPicked(e.target.files);
           e.target.value = "";

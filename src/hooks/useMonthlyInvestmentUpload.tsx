@@ -62,7 +62,7 @@ export function useMonthlyInvestmentUpload() {
       return await file.text();
     }
     
-    if (extension === "xlsx" || extension === "xls") {
+    if (extension === "xlsx") {
       return await parseExcelFile(file);
     }
     

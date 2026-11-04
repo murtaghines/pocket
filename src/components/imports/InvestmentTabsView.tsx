@@ -172,7 +172,7 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
         type="file"
         multiple
         className="hidden"
-        accept=".xlsx,.xls,.csv,.pdf"
+        accept=".xlsx,.csv,.pdf"
         onChange={(e) => {
           if (e.target.files && activeSlot) {
             handleFilesPicked(e.target.files, activeSlot.date);

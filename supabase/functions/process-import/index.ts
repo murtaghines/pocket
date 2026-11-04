@@ -709,18 +709,37 @@ async function callAIWithRetry(
   content: string,
   prompt: string,
   isLargeFile: boolean,
-  retryCount = 0
+  retryCount = 0,
+  imageContent?: Array<{ base64: string; mediaType: string }>,
 ): Promise<{ transactions: any[] | null; error: string | null; usage?: { input_tokens: number; output_tokens: number } }> {
   const maxRetries = 2;
+  const isVision = !!imageContent && imageContent.length > 0;
 
   const effectivePrompt = isLargeFile ? SIMPLE_EXTRACTION_PROMPT : prompt;
-  // Escalate to the stronger model for large files and on retry; Haiku is the fast/cheap
-  // default for a first pass on a normal-sized chunk. (Migrated off Lovable's Gemini gateway.)
-  // Model ids must be the canonical API ids — a bare `claude-haiku-4-5` alias 400s as
-  // model_not_found, which (before the 4xx fallback below) hard-failed every small upload.
-  const model = (isLargeFile || retryCount > 0) ? 'claude-sonnet-5' : 'claude-haiku-4-5-20251001';
+  // Vision calls always use Sonnet (complex multi-modal task). Text: escalate on retry;
+  // Haiku is the fast/cheap default for a first pass on a normal-sized chunk.
+  const model = (isVision || isLargeFile || retryCount > 0) ? 'claude-sonnet-5' : 'claude-haiku-4-5-20251001';
 
-  console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, contentLength=${content.length}, isLargeFile=${isLargeFile}`);
+  const userContent: any[] = [];
+  if (isVision) {
+    for (const img of imageContent) {
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
+      });
+    }
+    userContent.push({
+      type: 'text',
+      text: 'Extract ALL transactions visible in these bank statement image(s). Read every row carefully — dates, descriptions, amounts, and balances.',
+    });
+  } else {
+    userContent.push({
+      type: 'text',
+      text: `Extract ALL transactions from this financial data:\n\n${content}`,
+    });
+  }
+
+  console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, isVision=${isVision}, contentLength=${content.length}, images=${imageContent?.length ?? 0}, isLargeFile=${isLargeFile}`);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -737,7 +756,7 @@ async function callAIWithRetry(
       thinking: { type: 'disabled' },
       system: effectivePrompt,
       messages: [
-        { role: 'user', content: `Extract ALL transactions from this financial data:\n\n${content}` },
+        { role: 'user', content: userContent },
       ],
     }),
   });
@@ -758,7 +777,7 @@ async function callAIWithRetry(
     if (retryCount < maxRetries) {
       console.log(`[process-import] Retrying AI call after ${response.status} (escalating model)...`);
       await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
-      return callAIWithRetry(content, prompt, isLargeFile, retryCount + 1);
+      return callAIWithRetry(content, prompt, isLargeFile, retryCount + 1, imageContent);
     }
 
     return { transactions: null, error: `AI API error after retries: ${response.status} ${detail}` };
@@ -777,7 +796,7 @@ async function callAIWithRetry(
   if (!rawContent) {
     return { transactions: null, error: 'No content in AI response' };
   }
-  
+
   console.log(`[process-import] AI response length: ${rawContent.length}`);
   if (aiData.usage) {
     console.log(`[process-import] AI token usage: input=${aiData.usage.input_tokens}, output=${aiData.usage.output_tokens}, model=${model}`);
@@ -791,7 +810,7 @@ async function callAIWithRetry(
     console.log(`[process-import] Raw content end: START>>>>${rawContent.substring(Math.max(0, rawContent.length - 300))}<<<<END`);
 
     await new Promise(r => setTimeout(r, 1000));
-    return callAIWithRetry(content, prompt, true, retryCount + 1);
+    return callAIWithRetry(content, prompt, true, retryCount + 1, imageContent);
   }
 
   return { ...result, usage: aiData.usage };
@@ -824,6 +843,7 @@ serve(async (req) => {
     }
     const {
       fileContent,
+      imageContent,
       fileHash,
       fileName,
       fileSize,
@@ -837,10 +857,13 @@ serve(async (req) => {
     } = await req.json();
     const userId = authData.user.id;
 
-    if (!fileContent || !domain) {
+    const hasText = !!fileContent;
+    const hasImages = Array.isArray(imageContent) && imageContent.length > 0;
+
+    if ((!hasText && !hasImages) || !domain) {
       console.error('Missing required fields');
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: fileContent, domain' }),
+        JSON.stringify({ error: 'Missing required fields: fileContent or imageContent, domain' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -848,9 +871,9 @@ serve(async (req) => {
     const hintedTargetMonth = targetMonth ? normalizeTargetMonth(targetMonth) : null;
     const autoDistribute = !hintedTargetMonth;
 
-    console.log(`[process-import] Starting: domain=${domain}, targetMonth=${hintedTargetMonth ?? 'AUTO'}, contentLength=${fileContent.length}`);
+    console.log(`[process-import] Starting: domain=${domain}, targetMonth=${hintedTargetMonth ?? 'AUTO'}, mode=${hasImages ? 'vision(' + imageContent.length + ' images)' : 'text(' + fileContent.length + ' chars)'}`);
 
-    const calculatedFileHash = fileHash || await sha256(fileContent);
+    const calculatedFileHash = fileHash || await sha256(hasText ? fileContent : imageContent[0].base64);
     
     // ========== DUPLICATE FILE DETECTION (BEFORE creating import) ==========
     const { data: existingImport, error: dupCheckError } = await supabase
@@ -1035,82 +1058,19 @@ serve(async (req) => {
     await supabase.from('imports').update({ status: 'PARSED' }).eq('id', importId);
 
     // ========== DETERMINE PROCESSING STRATEGY ==========
-    const isLargeFile = fileContent.length > CHUNK_SIZE_THRESHOLD;
+    const isLargeFile = hasText && fileContent.length > CHUNK_SIZE_THRESHOLD;
     const prompt = domain === 'INVESTING' ? INVESTING_ANALYSIS_PROMPT : CASHFLOW_ANALYSIS_PROMPT;
 
     let allTransactions: any[] = [];
     let aiInputTokens = 0;
     let aiOutputTokens = 0;
-    // Last AI error seen while chunking, so a 0-result import can persist *why* it failed
-    // instead of vanishing silently.
     let lastAiError: string | null = null;
-    
-    if (isLargeFile) {
-      console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
-      
-      const chunks = splitIntoChunks(fileContent);
 
-      // Process chunks with bounded concurrency. Awaiting each AI call sequentially made large
-      // multi-page PDFs (a normal 17-page Revolut statement is ~15 chunks) exceed the edge
-      // function's ~150s wall-clock limit → HTTP 546 WORKER_RESOURCE_LIMIT, and the import
-      // stalled with 0 transactions. Running several calls at once keeps total time ≈ the
-      // slowest wave, not the sum. Cap concurrency so we don't burst the AI rate limit
-      // (callAIWithRetry already backs off on 429).
-      const CHUNK_CONCURRENCY = 5;
-      const chunkResults: Array<Awaited<ReturnType<typeof callAIWithRetry>>> = new Array(chunks.length);
-      let nextChunk = 0;
-      const runWorker = async () => {
-        while (true) {
-          const i = nextChunk++;
-          if (i >= chunks.length) return;
-          console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
-          chunkResults[i] = await callAIWithRetry(chunks[i], prompt, true);
-        }
-      };
-      await Promise.all(
-        Array.from({ length: Math.min(CHUNK_CONCURRENCY, chunks.length) }, () => runWorker()),
-      );
+    if (hasImages) {
+      // Vision path: send all images in a single call (no chunking for images).
+      console.log(`[process-import] Vision mode: ${imageContent.length} image(s)`);
 
-      for (let i = 0; i < chunks.length; i++) {
-        const result = chunkResults[i];
-        aiInputTokens += result.usage?.input_tokens || 0;
-        aiOutputTokens += result.usage?.output_tokens || 0;
-
-        if (result.error) {
-          console.error(`[process-import] Chunk ${i + 1} failed: ${result.error}`);
-          lastAiError = result.error;
-          continue;
-        }
-
-        if (result.transactions && result.transactions.length > 0) {
-          allTransactions = allTransactions.concat(result.transactions);
-          console.log(`[process-import] Chunk ${i + 1} extracted ${result.transactions.length} transactions (total: ${allTransactions.length})`);
-        }
-      }
-      
-      if (allTransactions.length === 0) {
-        // Persist WHY it failed instead of deleting the row silently. A FAILED import does not
-        // block re-upload (the dedup guard only matches NORMALIZED) but leaves a debuggable trail.
-        console.log(`[process-import] No transactions extracted, marking import ${importId} FAILED`);
-        await supabase.from('imports').update({
-          status: 'FAILED',
-          error_message: lastAiError
-            ? `AI extraction failed: ${lastAiError}`
-            : 'No transactions extracted from the file',
-        }).eq('id', importId);
-
-        return new Response(
-          JSON.stringify({
-            error: 'parse_failed',
-            message: 'Could not extract transactions. The file may be too complex. Try exporting as CSV from your bank.'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    } else {
-      console.log(`[process-import] Small file (${fileContent.length} chars), using single AI call`);
-      
-      const result = await callAIWithRetry(fileContent, prompt, false);
+      const result = await callAIWithRetry('', prompt, false, 0, imageContent);
       aiInputTokens += result.usage?.input_tokens || 0;
       aiOutputTokens += result.usage?.output_tokens || 0;
 
@@ -1157,6 +1117,109 @@ serve(async (req) => {
         );
       }
       
+      allTransactions = result.transactions || [];
+    } else if (isLargeFile) {
+      console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
+
+      const chunks = splitIntoChunks(fileContent);
+
+      const CHUNK_CONCURRENCY = 5;
+      const chunkResults: Array<Awaited<ReturnType<typeof callAIWithRetry>>> = new Array(chunks.length);
+      let nextChunk = 0;
+      const runWorker = async () => {
+        while (true) {
+          const i = nextChunk++;
+          if (i >= chunks.length) return;
+          console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
+          chunkResults[i] = await callAIWithRetry(chunks[i], prompt, true);
+        }
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(CHUNK_CONCURRENCY, chunks.length) }, () => runWorker()),
+      );
+
+      for (let i = 0; i < chunks.length; i++) {
+        const result = chunkResults[i];
+        aiInputTokens += result.usage?.input_tokens || 0;
+        aiOutputTokens += result.usage?.output_tokens || 0;
+
+        if (result.error) {
+          console.error(`[process-import] Chunk ${i + 1} failed: ${result.error}`);
+          lastAiError = result.error;
+          continue;
+        }
+
+        if (result.transactions && result.transactions.length > 0) {
+          allTransactions = allTransactions.concat(result.transactions);
+          console.log(`[process-import] Chunk ${i + 1} extracted ${result.transactions.length} transactions (total: ${allTransactions.length})`);
+        }
+      }
+
+      if (allTransactions.length === 0) {
+        console.log(`[process-import] No transactions extracted, marking import ${importId} FAILED`);
+        await supabase.from('imports').update({
+          status: 'FAILED',
+          error_message: lastAiError
+            ? `AI extraction failed: ${lastAiError}`
+            : 'No transactions extracted from the file',
+        }).eq('id', importId);
+
+        return new Response(
+          JSON.stringify({
+            error: 'parse_failed',
+            message: 'Could not extract transactions. The file may be too complex. Try exporting as CSV from your bank.'
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      console.log(`[process-import] Small file (${fileContent.length} chars), using single AI call`);
+
+      const result = await callAIWithRetry(fileContent, prompt, false);
+      aiInputTokens += result.usage?.input_tokens || 0;
+      aiOutputTokens += result.usage?.output_tokens || 0;
+
+      if (result.error) {
+        console.error(`[process-import] AI processing failed: ${result.error}`);
+
+        const is402 = result.error.includes('402');
+        const is429 = result.error.includes('429');
+
+        console.log(`[process-import] AI error, marking import ${importId} FAILED`);
+        await supabase.from('imports').update({
+          status: 'FAILED',
+          error_message: `AI extraction failed: ${result.error}`,
+        }).eq('id', importId);
+
+        if (is402) {
+          return new Response(
+            JSON.stringify({
+              error: 'payment_required',
+              message: 'The AI service is unavailable (billing). Please check the account and try again.'
+            }),
+            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (is429) {
+          return new Response(
+            JSON.stringify({
+              error: 'rate_limited',
+              message: 'Too many requests. Please wait a few minutes and try again.'
+            }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            error: 'ai_processing_failed',
+            message: `Error de procesamiento: ${result.error}`
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       allTransactions = result.transactions || [];
     }
 
