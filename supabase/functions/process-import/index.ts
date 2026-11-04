@@ -1521,6 +1521,7 @@ serve(async (req) => {
       : undefined;
     const merchantDict = new Map<string, { category: string; confidence: number }>();
     const merchantVotes: Array<{ k: string; cat: string; mov: string; w: number; sample: string }> = [];
+    const categorizerGaps: Array<{ description: string; description_norm: string; movement: string; final_category: string; categorized_by: string }> = [];
     {
       const keysNeeded = new Set<string>();
       for (const tt of allTransactions) {
@@ -1799,6 +1800,17 @@ serve(async (req) => {
         });
       }
 
+      // Track categorizer gaps: descriptions that the local categorizer couldn't handle
+      if (movement !== 'TRANSFER' && (categorySlug.startsWith('other_') || categorizedBy === 'ai')) {
+        categorizerGaps.push({
+          description: (descriptionRaw || '').substring(0, 200),
+          description_norm: (descriptionNorm || '').substring(0, 200),
+          movement,
+          final_category: categorySlug,
+          categorized_by: categorizedBy,
+        });
+      }
+
       // Canonical transactions row (Fase 4 schema cleanup). Legacy columns
       // (type, tx_type, bank, posted_date, value_date, description_raw, payment_channel)
       // were dropped — `movement` and `account_id` are the single sources of truth.
@@ -1978,6 +1990,14 @@ serve(async (req) => {
       const { error: voteError } = await supabase.rpc('apply_merchant_votes', { votes: merchantVotes });
       if (voteError) console.error('[process-import] apply_merchant_votes failed:', voteError.message);
       else console.log(`[process-import] merchant dictionary: recorded ${merchantVotes.length} votes`);
+    }
+
+    // Record categorizer gaps for pattern improvement (best-effort, max 50 per import).
+    if (categorizerGaps.length > 0) {
+      const gapRows = categorizerGaps.slice(0, 50).map(g => ({ user_id: userId, ...g }));
+      const { error: gapError } = await supabase.from('categorizer_gaps').insert(gapRows);
+      if (gapError) console.error('[process-import] categorizer_gaps insert failed:', gapError.message);
+      else console.log(`[process-import] categorizer gaps: recorded ${gapRows.length} uncovered descriptions`);
     }
 
     // Finalize import status — surface partial/total failures instead of always
