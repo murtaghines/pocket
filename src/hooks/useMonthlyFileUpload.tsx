@@ -266,7 +266,7 @@ export function useMonthlyFileUpload() {
         const message = payload?.message || "Could not process the file";
 
         // Handle specific error codes with appropriate UI
-        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited") {
+        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited" || code === "parse_failed") {
           setPendingFilesByMonth((prev) => ({
             ...prev,
             [monthKey]: (prev[monthKey] || []).map((f) =>
@@ -281,6 +281,7 @@ export function useMonthlyFileUpload() {
           else if (code === "period_closed") title = "Period closed";
           else if (code === "payment_required") title = "No AI credits";
           else if (code === "rate_limited") title = "Too many requests";
+          else if (code === "parse_failed") title = "Could not read file";
 
           toast({
             title,

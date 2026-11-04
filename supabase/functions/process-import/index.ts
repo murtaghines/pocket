@@ -57,13 +57,11 @@ For each transaction, extract ONLY these essential fields:
 - movement: INCOME, EXPENSE or TRANSFER. TRANSFER only when clearly between the user's OWN
   accounts/investments ("to/from savings", "own account", same person's wallets). A payment to
   another person (Bizum, "payment to: NAME", "transfer to OTHER PERSON") is EXPENSE, not TRANSFER.
-- category_slug: best-fit category for the transaction, from the list for its movement:
-  * EXPENSE: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
-  * INCOME: salary, refunds, freelance, rents, investment, other_income
-  * TRANSFER: own_transfer (between own accounts) or to_investment (to own savings/investment)
-  Infer from the merchant/description (supermarket→groceries, café/bakery/restaurant→restaurants,
-  train/metro/toll→transport, clothing/sports store→shopping/sports). Use other_expense/other_income
-  ONLY when the description genuinely gives no clue.
+- category_slug: one of these per movement:
+  EXPENSE: housing|groceries|restaurants|transport|health|entertainment|shopping|education|subscriptions|travel|sports|pets|other_expense
+  INCOME: salary|refunds|freelance|rents|investment|other_income
+  TRANSFER: own_transfer|to_investment
+  Infer from merchant/description. Use other_* only when no clue.
 
 STATE — SKIP any transaction whose state/status is REVERTED, DECLINED, CANCELLED or FAILED: it did
 not complete and does not affect the balance. Emit only completed transactions.
@@ -161,16 +159,11 @@ If UNCERTAIN whether a transfer goes to own account or third party:
 
 === CATEGORY_SLUG (Step 2) ===
 
-After the movement, assign the best-fit category_slug from the list for that movement:
+Assign one category_slug per movement:
 - INCOME: salary, refunds, freelance, rents, investment, other_income
 - EXPENSE: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
-- TRANSFER: own_transfer (between the user's own accounts) or to_investment (to the user's own investment/savings account)
-
-Infer the category from the merchant name or description: a supermarket → groceries, a
-restaurant/bakery/café → restaurants, a train/metro/toll/parking → transport, a clothing or
-sports store → shopping/sports, a utility/telco/rent → housing, a streaming/app subscription →
-subscriptions, a pharmacy/clinic → health. Use other_expense / other_income ONLY when the
-description genuinely doesn't indicate a category.
+- TRANSFER: own_transfer, to_investment
+Infer from the merchant/description. Use other_expense/other_income only when no clue.
 
 Example output:
 [
@@ -1149,6 +1142,23 @@ serve(async (req) => {
     const userRules: UserRuleRow[] = (userRulesRaw || []) as UserRuleRow[];
     console.log(`[process-import] Loaded ${userRules.length} active user_rules`);
 
+    // ========== RATE LIMIT: max 5 concurrent imports per user ==========
+    const { count: activeImports } = await supabase
+      .from('imports')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .in('status', ['UPLOADED', 'PARSED'])
+      .gte('uploaded_at', new Date(Date.now() - 5 * 60_000).toISOString());
+    if (activeImports && activeImports >= 5) {
+      return new Response(
+        JSON.stringify({
+          error: 'rate_limited',
+          message: 'Too many concurrent imports. Please wait a few minutes before uploading more files.',
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Create import record
     const { data: importRecord, error: importError } = await supabase
       .from('imports')
@@ -1989,7 +1999,9 @@ serve(async (req) => {
     await supabase.from('imports').update({
       status: importStatus,
       transactions_count: insertedCount,
-      error_message: importErrorMessage
+      error_message: importErrorMessage,
+      ai_input_tokens: stats.aiInputTokens,
+      ai_output_tokens: stats.aiOutputTokens,
     }).eq('id', importId);
 
     // Log to audit
