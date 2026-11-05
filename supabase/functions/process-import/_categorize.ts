@@ -369,6 +369,7 @@ export interface CategorizeContext {
   existingFingerprintsByMonth: Record<string, Set<string>>;
   existingNaturalKeysByMonth: Record<string, Set<string>>;
   dictUserName: { firstName: string; lastName: string } | undefined;
+  historyDict: Map<string, { category: string; movement: MovementType; confidence: number }>;
 }
 
 export interface CategorizeStats {
@@ -382,6 +383,7 @@ export interface CategorizeStats {
   categorizedByRule: number;
   categorizedByCategorizer: number;
   categorizedByDictionary: number;
+  categorizedByHistory: number;
   categorizedByAI: number;
   aiInputTokens: number;
   aiOutputTokens: number;
@@ -408,7 +410,7 @@ export async function categorizeAndInsert(
     supabase, userId, domain, importId, accountId,
     userContext, accountsForDetection, categorySlugToId, userRules,
     merchantDict, periodIdByMonth, existingFingerprintsByMonth,
-    existingNaturalKeysByMonth, dictUserName,
+    existingNaturalKeysByMonth, dictUserName, historyDict,
   } = ctx;
 
   const stats: CategorizeStats = {
@@ -422,6 +424,7 @@ export async function categorizeAndInsert(
     categorizedByRule: 0,
     categorizedByCategorizer: 0,
     categorizedByDictionary: 0,
+    categorizedByHistory: 0,
     categorizedByAI: 0,
     aiInputTokens: aiTokens.input,
     aiOutputTokens: aiTokens.output,
@@ -616,6 +619,16 @@ export async function categorizeAndInsert(
         categorizedBy = 'dictionary';
         stats.categorizedByDictionary++;
         console.log(`[process-import] Dictionary match: "${descriptionRaw.substring(0, 40)}" [${mKey}] → ${categorySlug}`);
+      } else if (movement !== 'TRANSFER' && historyDict.has(normalizedDesc.toLowerCase())) {
+        // ── Priority 2.7: user's own transaction history ──
+        const histHit = historyDict.get(normalizedDesc.toLowerCase())!;
+        movement = histHit.movement;
+        categorySlug = validateCategorySlug(histHit.category, movement);
+        categoryId = categorySlugToId[categorySlug] || null;
+        categorySource = 'HISTORY';
+        categorizedBy = 'history';
+        stats.categorizedByHistory++;
+        console.log(`[process-import] History match: "${descriptionRaw.substring(0, 40)}" → ${movement}/${categorySlug} (confidence: ${histHit.confidence.toFixed(2)})`);
       } else {
         if (movement !== 'TRANSFER') {
           movement = amountSigned >= 0 ? 'INCOME' : 'EXPENSE';
@@ -640,6 +653,7 @@ export async function categorizeAndInsert(
       categorySource = 'USER_RULE';
       if (categorizedBy === 'categorizer') stats.categorizedByCategorizer--;
       else if (categorizedBy === 'dictionary') stats.categorizedByDictionary--;
+      else if (categorizedBy === 'history') stats.categorizedByHistory--;
       else stats.categorizedByAI--;
       categorizedBy = 'user_rule';
       stats.categorizedByRule++;
@@ -693,7 +707,7 @@ export async function categorizeAndInsert(
 
     const confidenceMap: Record<string, number> = {
       user: 1.0, user_rule: 0.99, reconciler: 0.95,
-      dictionary: 0.92, categorizer: 0.85, ai: 0.50, sign_fallback: 0.20,
+      dictionary: 0.92, history: 0.90, categorizer: 0.85, ai: 0.50, sign_fallback: 0.20,
     };
     let confidence = confidenceMap[categorizedBy] ?? 0.50;
     if (categorizedBy === 'dictionary' && mKey && merchantDict.has(mKey)) {
