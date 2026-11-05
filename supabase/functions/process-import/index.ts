@@ -46,17 +46,8 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const authClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: authData, error: authError } = await authClient.auth.getUser();
-    if (authError || !authData?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
-    // ── Parse request ──
+    // Parse body before auth — service-role callers pass userId in the body
     const {
       fileContent,
       imageContent,
@@ -69,9 +60,33 @@ serve(async (req) => {
       domain,
       targetMonth,
       sourceType = 'OTHER',
-      confirmOutOfMonth = false
+      confirmOutOfMonth = false,
+      userId: bodyUserId,
     } = await req.json();
-    const userId = authData.user.id;
+
+    const token = authHeader.replace('Bearer ', '');
+    let userId: string;
+
+    if (token === SUPABASE_SERVICE_ROLE_KEY) {
+      // Internal call (e.g. retry-failed-imports CRON) — trust userId from body
+      if (!bodyUserId) {
+        return new Response(JSON.stringify({ error: 'Service-role calls must include userId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      userId = bodyUserId;
+    } else {
+      const authClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: authData, error: authError } = await authClient.auth.getUser();
+      if (authError || !authData?.user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      userId = authData.user.id;
+    }
 
     const hasText = !!fileContent;
     const hasImages = Array.isArray(imageContent) && imageContent.length > 0;

@@ -598,6 +598,49 @@ code path, not just in theory.
   split the pure helpers out if we want them covered.
 - Still pending in Fase 5: investment-flow preview parity (auto-processes with no review step).
 
+## Import pipeline robustness & scalability (2026-11-05)
+
+Branch `claude/wonderful-ritchie-dzbitb` — 8-phase plan to make the pipeline production-grade for
+all bank formats worldwide, with minimal AI cost.
+
+**Phase 1 — Deterministic CSV parser** (`_shared/csvParser.ts`): auto-detects delimiter, date
+format, header mapping for standard bank CSVs. Skips AI entirely when the file matches — zero
+tokens, ~100ms instead of ~10s. Falls back to AI for non-standard formats.
+
+**Phase 2 — Image & scanned PDF support**: vision-capable extraction via Claude's vision API
+for photographed statements and scanned PDFs (no OCR text layer).
+
+**Phase 3 — Robustness**: timeout handling with per-chunk budgets, lenient JSON recovery
+(markdown fences, trailing commas, truncated arrays), row-level validation with configurable
+thresholds (rejects imports where >50% of rows are invalid).
+
+**Phase 4 — Categorizer expansion**: +600 patterns for DE/FR/IT/PT banks and universal SaaS/
+developer services. Adaptive gap tracking logs uncategorized descriptions for future pattern
+additions.
+
+**Phase 5 — AI cost optimization**: dictionary-elevated categorization (Priority 1.5 — high-
+confidence merchant dictionary matches ≥0.95 skip the full categorizer scan), rate limiting
+(configurable RPM cap with backoff), per-import token tracking, processing strategy tracking
+(`deterministic`/`ai_text`/`ai_vision`).
+
+**Phase 6 — Module split + auto-retry**:
+- `process-import/index.ts` split into `_extract.ts` (AI prompts, chunking, validation) and
+  `_categorize.ts` (5-priority categorization, dedup, insertion). Orchestrator is now ~200 lines.
+- New edge function `retry-failed-imports`: CRON job (pg_cron, every 15 min) finds FAILED/PARTIAL
+  imports <24h old with <3 retries, re-downloads from Storage, re-invokes process-import. Auth
+  handled via service-role key with explicit userId passthrough.
+- Migrations: `retry_count`/`last_retry_at` columns + partial index on imports table; pg_cron
+  schedule via pg_net.
+
+**Phase 7 — Observability**: SQL views (`v_import_pipeline_stats`, `v_categorizer_gaps`) for
+monitoring pipeline health. E2E pipeline tests + expanded integrity invariant checks (195 tests).
+
+**Phase 8 — UX**: Adaptive progress feedback during import (strategy-aware messages, elapsed
+time display).
+
+**i18n**: Full coverage of all import UI strings in both `en` and `es` — upload hooks, component
+labels, status messages, error strings, mismatch/preview dialogs.
+
 ## Coverage expansion (2026-07-06) — 48 tests total
 Extracted the category-slug resolution layer (`MovementType`, slug lists, `mapCategorySlug`,
 `validateCategorySlug`) from `process-import` into `_shared/categoryMap.ts` (rewired + unit-

@@ -145,6 +145,7 @@ serve(async (req) => {
             accountId: imp.account_id,
             domain: imp.domain,
             sourceType: imp.source_type || 'OTHER',
+            userId: imp.user_id,
           }),
         });
 
