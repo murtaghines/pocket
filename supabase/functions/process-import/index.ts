@@ -8,8 +8,9 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { type UserContext } from "../_shared/categorizer.ts";
-import { sha256, extractMonthKey } from "../_shared/fingerprint.ts";
+import { sha256, extractMonthKey, normalizeDescription } from "../_shared/fingerprint.ts";
 import { merchantKey } from "../_shared/merchantKey.ts";
+import { type MovementType } from "../_shared/categoryMap.ts";
 import { tryDeterministicParse } from "../_shared/csvParser.ts";
 import { extractTransactions, setRequestStartTime } from "./_extract.ts";
 import {
@@ -447,6 +448,31 @@ serve(async (req) => {
       }
     }
 
+    // Preload user's transaction history for self-learning categorization
+    const historyDict = new Map<string, { category: string; movement: MovementType; confidence: number }>();
+    {
+      const descNormsNeeded = new Set<string>();
+      for (const tt of allTransactions) {
+        const raw = tt.description_raw || tt.description || '';
+        const norm = normalizeDescription(raw).toLowerCase();
+        if (norm.length >= 3) descNormsNeeded.add(norm);
+      }
+      if (descNormsNeeded.size > 0) {
+        const { data: histRows } = await supabase.rpc('history_category_lookup', {
+          _user_id: userId,
+          _desc_norms: [...descNormsNeeded],
+        });
+        for (const r of histRows || []) {
+          historyDict.set(r.description_norm_lower, {
+            category: r.category,
+            movement: r.movement as MovementType,
+            confidence: r.confidence,
+          });
+        }
+        console.log(`[process-import] history lookup: ${historyDict.size}/${descNormsNeeded.size} descriptions matched from past transactions`);
+      }
+    }
+
     // ── CATEGORIZE & INSERT — delegate to _categorize.ts ──
     const catCtx: CategorizeContext = {
       supabase,
@@ -463,6 +489,7 @@ serve(async (req) => {
       existingFingerprintsByMonth,
       existingNaturalKeysByMonth,
       dictUserName,
+      historyDict,
     };
 
     const catResult = await categorizeAndInsert(
@@ -526,6 +553,9 @@ serve(async (req) => {
     if (stats.categorizedByCategorizer > 0) {
       message += `, ${stats.categorizedByCategorizer} by categorizer`;
     }
+    if (stats.categorizedByHistory > 0) {
+      message += `, ${stats.categorizedByHistory} by history`;
+    }
     if (insertFailedCount > 0) {
       message += `, ${insertFailedCount} failed to save`;
     }
@@ -533,11 +563,11 @@ serve(async (req) => {
     try { await supabase.rpc("refresh_dashboard_views"); }
     catch (e) { console.error("[process-import] refresh_dashboard_views failed (non-fatal):", e); }
 
-    const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer;
+    const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer + stats.categorizedByHistory;
     const aiSavingsPercent = stats.newTransactions > 0
       ? Math.round((totalCategorized / stats.newTransactions) * 100)
       : 0;
-    console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, categorizer=${stats.categorizedByCategorizer}, dictionary=${stats.categorizedByDictionary}, AI=${stats.categorizedByAI}, local_coverage=${aiSavingsPercent}%`);
+    console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, categorizer=${stats.categorizedByCategorizer}, dictionary=${stats.categorizedByDictionary}, history=${stats.categorizedByHistory}, AI=${stats.categorizedByAI}, local_coverage=${aiSavingsPercent}%`);
     console.log(`[process-import] AI token usage total: input=${stats.aiInputTokens}, output=${stats.aiOutputTokens}, strategy=${extraction.processingStrategy}`);
 
     return new Response(
