@@ -67,4 +67,4 @@ if [ "$DRY_RUN" = "1" ]; then
 fi
 
 supabase db push --linked --include-all --dry-run
-supabase db push --linked --include-all
+supabase db push --linked --include-all --yes
