@@ -232,11 +232,11 @@ export function InlineInvestmentsEditor({
       clearPendingFor(inv.id);
       setSavedIds((s) => new Set(s).add(inv.id));
       setTimeout(() => setSavedIds((s) => { const n = new Set(s); n.delete(inv.id); return n; }), 1500);
-      toast({ title: "Saved", description: "Movement updated." });
+      toast({ title: t("imports.saved"), description: t("imports.movementUpdated") });
     } catch (e: any) {
       toast({
-        title: "Could not save",
-        description: e?.message || "Try again.",
+        title: t("imports.couldNotSave"),
+        description: e?.message || t("imports.tryAgain"),
         variant: "destructive",
       });
     } finally {
@@ -295,26 +295,26 @@ export function InlineInvestmentsEditor({
           <span className="font-semibold text-foreground tabular-nums">
             {summary.count}
           </span>
-          <span className="text-muted-foreground">movements</span>
+          <span className="text-muted-foreground">{t("imports.movementsCount")}</span>
         </div>
         <div className="inline-flex items-center gap-1.5 text-success">
           <TrendingUp className="w-3.5 h-3.5" />
           <span className="tabular-nums font-medium">
             {formatCurrency(summary.deposits)}
           </span>
-          <span className="text-muted-foreground text-xs">deposits</span>
+          <span className="text-muted-foreground text-xs">{t("imports.depositsLabel")}</span>
         </div>
         <div className="inline-flex items-center gap-1.5 text-destructive">
           <TrendingDown className="w-3.5 h-3.5" />
           <span className="tabular-nums font-medium">
             {formatCurrency(summary.withdrawals)}
           </span>
-          <span className="text-muted-foreground text-xs">withdrawals</span>
+          <span className="text-muted-foreground text-xs">{t("imports.withdrawalsLabel")}</span>
         </div>
         <div className="ml-auto inline-flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={onAddMore} disabled={isProcessing} className="h-8 gap-1.5">
             {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-            Add file
+            {t("imports.addFile")}
           </Button>
         </div>
       </div>
@@ -327,7 +327,7 @@ export function InlineInvestmentsEditor({
 
       {displayedInvestments.length === 0 ? (
         <div className="p-12 text-center text-sm text-muted-foreground">
-          No movements parsed yet for {monthLabel}.
+          {t("imports.noMovementsYet", { month: monthLabel })}
         </div>
       ) : (
         <>
@@ -337,13 +337,13 @@ export function InlineInvestmentsEditor({
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow className="hover:bg-transparent border-b border-border">
                 <TableHead className="w-[44px] text-center text-xs uppercase tracking-wide text-muted-foreground/60 font-medium">#</TableHead>
-                <TableHead className="w-[10%] text-xs uppercase tracking-wide text-muted-foreground font-medium">Date</TableHead>
-                <TableHead className="w-[24%] text-xs uppercase tracking-wide text-muted-foreground font-medium">Description</TableHead>
-                <TableHead className="w-[12%] text-xs uppercase tracking-wide text-muted-foreground font-medium">Platform</TableHead>
-                <TableHead className="w-[12%] text-xs uppercase tracking-wide text-muted-foreground font-medium">Type</TableHead>
-                <TableHead className="w-[14%] text-xs uppercase tracking-wide text-muted-foreground font-medium">Asset</TableHead>
-                <TableHead className="w-[14%] text-right text-xs uppercase tracking-wide text-muted-foreground font-medium">Amount</TableHead>
-                <TableHead className="w-[104px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">Actions</TableHead>
+                <TableHead className="w-[10%] text-xs uppercase tracking-wide text-muted-foreground font-medium">{t("imports.fieldDate")}</TableHead>
+                <TableHead className="w-[24%] text-xs uppercase tracking-wide text-muted-foreground font-medium">{t("imports.fieldDescription")}</TableHead>
+                <TableHead className="w-[12%] text-xs uppercase tracking-wide text-muted-foreground font-medium">{t("imports.fieldPlatform")}</TableHead>
+                <TableHead className="w-[12%] text-xs uppercase tracking-wide text-muted-foreground font-medium">{t("imports.fieldType")}</TableHead>
+                <TableHead className="w-[14%] text-xs uppercase tracking-wide text-muted-foreground font-medium">{t("imports.fieldAssetType")}</TableHead>
+                <TableHead className="w-[14%] text-right text-xs uppercase tracking-wide text-muted-foreground font-medium">{t("imports.fieldAmount")}</TableHead>
+                <TableHead className="w-[104px] text-center text-xs uppercase tracking-wide text-muted-foreground font-medium">{t("imports.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -540,7 +540,7 @@ export function InlineInvestmentsEditor({
                               className="h-7 w-7 bg-success/15 text-success hover:bg-success/25"
                               onClick={() => commitRow(inv)}
                               disabled={isSaving}
-                              title="Save changes"
+                              title={t("imports.saveChanges")}
                             >
                               {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                             </Button>
@@ -550,7 +550,7 @@ export function InlineInvestmentsEditor({
                               className="h-7 w-7 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                               onClick={() => clearPendingFor(inv.id)}
                               disabled={isSaving}
-                              title="Discard changes"
+                              title={t("imports.discardChanges")}
                             >
                               <X className="w-3.5 h-3.5" />
                             </Button>
@@ -562,7 +562,7 @@ export function InlineInvestmentsEditor({
                               size="icon"
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
                               onClick={() => handleToggleHidden(inv)}
-                              title={isHidden ? "Show — include in totals again" : "Hide from totals"}
+                              title={isHidden ? t("imports.showIncludeInTotals") : t("imports.hideEntry", "Hide from totals")}
                             >
                               {isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                             </Button>

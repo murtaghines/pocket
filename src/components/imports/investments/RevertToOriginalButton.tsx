@@ -1,4 +1,5 @@
 import { RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -11,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { FIELD_LABELS, formatAuditValue } from "./helpers";
+import { getFieldLabel, formatAuditValue } from "./helpers";
 
 export interface RevertToOriginalButtonProps {
   original: Record<string, unknown>;
@@ -28,6 +29,8 @@ export function RevertToOriginalButton({
   formatCurrency,
   onConfirm,
 }: RevertToOriginalButtonProps) {
+  const { t } = useTranslation("common");
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -35,7 +38,7 @@ export function RevertToOriginalButton({
           variant="ghost"
           size="icon"
           className="h-7 w-7 mx-auto text-primary hover:text-primary hover:bg-primary/10"
-          title="Restore this row to its original imported values"
+          title={t("imports.restoreTooltip")}
         >
           <RotateCcw className="w-4 h-4" />
         </Button>
@@ -44,24 +47,23 @@ export function RevertToOriginalButton({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <RotateCcw className="w-5 h-5 text-primary" />
-            Restore original values?
+            {t("imports.restoreTitle")}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                This will discard all your manual edits and bring this movement back to the
-                values it had when it was first imported.
+                {t("imports.restoreDescriptionInv")}
               </p>
               <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1.5">
                 {fields.map((f) => (
                   <div key={f} className="text-xs text-foreground flex items-baseline gap-1.5 flex-wrap">
-                    <span className="text-muted-foreground font-medium">{FIELD_LABELS[f] || f}:</span>
+                    <span className="text-muted-foreground font-medium">{getFieldLabel(f, t)}:</span>
                     <span className="line-through text-muted-foreground/70">
-                      {formatAuditValue(f, current[f], formatCurrency)}
+                      {formatAuditValue(f, current[f], formatCurrency, t)}
                     </span>
                     <span className="text-muted-foreground">→</span>
                     <span className="font-medium text-primary">
-                      {formatAuditValue(f, original[f], formatCurrency)}
+                      {formatAuditValue(f, original[f], formatCurrency, t)}
                     </span>
                   </div>
                 ))}
@@ -70,8 +72,10 @@ export function RevertToOriginalButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Restore original</AlertDialogAction>
+          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {t("imports.restoreOriginal")}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
