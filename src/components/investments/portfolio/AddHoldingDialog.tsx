@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useHoldings } from "@/hooks/useHoldings";
+import { useAccounts } from "@/hooks/useAccounts";
+import { getAccountDisplayName } from "@/lib/accountColors";
 import { ASSET_CLASS_KEYS, ASSET_CLASS_CONFIG } from "./assetClassConfig";
 
 interface AddHoldingDialogProps {
@@ -30,8 +32,11 @@ interface AddHoldingDialogProps {
 export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) {
   const { t } = useTranslation("investments");
   const { addHolding } = useHoldings();
+  const { getInvestmentAccounts } = useAccounts();
+  const investmentAccounts = getInvestmentAccounts();
 
   const [assetName, setAssetName] = useState("");
+  const [accountId, setAccountId] = useState<string>("none");
   const [ticker, setTicker] = useState("");
   const [assetClass, setAssetClass] = useState("stocks");
   const [quantity, setQuantity] = useState("");
@@ -44,6 +49,7 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
 
   const reset = () => {
     setAssetName("");
+    setAccountId("none");
     setTicker("");
     setAssetClass("stocks");
     setQuantity("");
@@ -62,6 +68,7 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
 
     try {
       await addHolding.mutateAsync({
+        account_id: accountId !== "none" ? accountId : null,
         asset_name: assetName.trim(),
         ticker: ticker.trim() || null,
         asset_class: assetClass,
@@ -112,7 +119,7 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-[13px] font-medium text-muted-foreground">
                     {t("portfolio.assetClassLabel")}
@@ -130,6 +137,26 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
                     </SelectContent>
                   </Select>
                 </div>
+                {investmentAccounts.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-[13px] font-medium text-muted-foreground">
+                      {t("portfolio.accountLabel")}
+                    </Label>
+                    <Select value={accountId} onValueChange={setAccountId}>
+                      <SelectTrigger className={inputClass}>
+                        <SelectValue placeholder={t("portfolio.noAccount")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">{t("portfolio.noAccount")}</SelectItem>
+                        {investmentAccounts.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {getAccountDisplayName(a)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-[13px] font-medium text-muted-foreground">
                     {t("portfolio.currencyLabel")}

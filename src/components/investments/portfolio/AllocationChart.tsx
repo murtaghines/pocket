@@ -7,9 +7,10 @@ import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
 interface AllocationChartProps {
   data: Record<string, { value: number; costBasis: number; pnl: number; count: number }>;
   totalValue: number;
+  title?: string;
 }
 
-export function AllocationChart({ data, totalValue }: AllocationChartProps) {
+export function AllocationChart({ data, totalValue, title }: AllocationChartProps) {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
 
@@ -32,7 +33,7 @@ export function AllocationChart({ data, totalValue }: AllocationChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t("portfolio.allocation")}</CardTitle>
+          <CardTitle>{title ?? t("portfolio.allocation")}</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[200px]">
           <p className="text-muted-foreground text-sm">{t("portfolio.noHoldings")}</p>
@@ -44,7 +45,7 @@ export function AllocationChart({ data, totalValue }: AllocationChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("portfolio.allocation")}</CardTitle>
+        <CardTitle>{title ?? t("portfolio.allocation")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row items-center gap-4">

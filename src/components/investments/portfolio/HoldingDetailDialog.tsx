@@ -10,11 +10,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   TrendingUp,
   TrendingDown,
   Pencil,
   Plus,
-  X,
+  Archive,
   ShoppingCart,
   Coins,
   Receipt,
@@ -58,6 +68,7 @@ export function HoldingDetailDialog({
   const { deleteHolding } = useHoldings();
   const [showPrice, setShowPrice] = useState(false);
   const [showRecord, setShowRecord] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const cfg = ASSET_CLASS_CONFIG[holding.asset_class] ?? ASSET_CLASS_CONFIG.other;
   const pnlPct =
@@ -66,8 +77,9 @@ export function HoldingDetailDialog({
       : 0;
   const isPositive = holding.unrealized_pnl >= 0;
 
-  const handleClose = async () => {
+  const handleClosePosition = async () => {
     await deleteHolding.mutateAsync(holding.id);
+    setShowCloseConfirm(false);
     onOpenChange(false);
   };
 
@@ -197,11 +209,11 @@ export function HoldingDetailDialog({
                 size="sm"
                 variant="ghost"
                 className="gap-1.5 text-destructive hover:text-destructive ml-auto"
-                onClick={handleClose}
+                onClick={() => setShowCloseConfirm(true)}
                 disabled={deleteHolding.isPending}
               >
-                <X className="w-3.5 h-3.5" />
-                {t("portfolio.cancel")}
+                <Archive className="w-3.5 h-3.5" />
+                {t("portfolio.closePosition")}
               </Button>
             </div>
 
@@ -275,6 +287,25 @@ export function HoldingDetailDialog({
         onOpenChange={setShowRecord}
         preselectedHolding={holding}
       />
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("portfolio.closePosition")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("portfolio.confirmClose")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("portfolio.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClosePosition}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("portfolio.closePosition")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

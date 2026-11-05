@@ -86,6 +86,8 @@
     "assetNamePlaceholder": "Ej.: Apple Inc, Bitcoin, VWCE",
     "tickerLabel": "Ticker",
     "assetClassLabel": "Clase de Activo",
+    "accountLabel": "Cuenta",
+    "noAccount": "Sin cuenta",
     "currencyLabel": "Moneda",
     "quantityLabel": "Cantidad",
     "avgCostLabel": "Costo Prom. / Unidad",
@@ -98,6 +100,9 @@
     "priceUpdated": "Precio actualizado",
     "errorUpdating": "Error al actualizar precio",
     "cancel": "Cancelar",
+    "closePosition": "Cerrar Posición",
+    "confirmClose": "¿Estás seguro? Esto marca la posición como cerrada.",
+    "positionClosed": "Posición cerrada",
     "add": "Agregar",
     "adding": "Agregando...",
     "save": "Guardar"

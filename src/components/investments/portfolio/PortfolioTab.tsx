@@ -49,10 +49,12 @@ export function PortfolioTab() {
         <AllocationChart
           data={summary.byAssetClass}
           totalValue={summary.totalValue}
+          title={t("portfolio.allocation")}
         />
         <AllocationChart
           data={summary.byAccount}
           totalValue={summary.totalValue}
+          title={t("portfolio.allocationByAccount")}
         />
       </div>
 
