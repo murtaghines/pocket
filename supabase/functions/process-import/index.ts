@@ -1,932 +1,31 @@
+/**
+ * process-import — orchestrator
+ *
+ * Handles auth, duplicate detection, strategy decision, delegates extraction
+ * to _extract.ts and categorization+insertion to _categorize.ts, then finalizes.
+ */
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
-import { categorize, normalize as normalizeForCategorizer, type UserContext, type CategorizationResult, type Category } from "../_shared/categorizer.ts";
-import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
-import { runningBalanceIsReliable } from "../_shared/runningBalance.ts";
+import { type UserContext } from "../_shared/categorizer.ts";
+import { sha256, extractMonthKey } from "../_shared/fingerprint.ts";
 import { merchantKey } from "../_shared/merchantKey.ts";
-import {
-  type MovementType,
-  mapCategorySlug,
-  validateCategorySlug,
-} from "../_shared/categoryMap.ts";
-import { type MatchType, ruleMatchesDescription } from "../_shared/userRules.ts";
 import { tryDeterministicParse } from "../_shared/csvParser.ts";
+import { extractTransactions, setRequestStartTime } from "./_extract.ts";
+import {
+  normalizeTargetMonth,
+  categorizeAndInsert,
+  type UserRuleRow,
+  type CategorizeContext,
+} from "./_categorize.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-// ========== MOVEMENT TYPES ==========
-// Category-slug resolution (MovementType, slug lists, mapCategorySlug, validateCategorySlug)
-// now lives in ../_shared/categoryMap.ts (unit-tested in tests/categoryMap.test.ts).
-
-// ========== TX_TYPE to MOVEMENT MAPPING ==========
-const TX_TYPE_TO_MOVEMENT: Record<string, MovementType> = {
-  'INCOME': 'INCOME',
-  'INTEREST': 'INCOME',
-  'REFUND': 'INCOME',
-  'EXPENSE': 'EXPENSE',
-  'FEE': 'EXPENSE',
-  'TRANSFER_INTERNAL': 'TRANSFER',
-  'SAVINGS_MOVE': 'TRANSFER',
-  'OTHER': 'EXPENSE',
-};
-
-
-// ========== CHUNKING CONFIG ==========
-const CHUNK_SIZE_THRESHOLD = 6000;
-const MAX_CHUNK_SIZE = 4000;
-
-// ========== SIMPLIFIED EXTRACTION PROMPT (for large files) ==========
-const SIMPLE_EXTRACTION_PROMPT = `You are a financial data extraction expert. Extract transactions from this bank statement data.
-
-CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
-
-For each transaction, extract ONLY these essential fields:
-- posted_date: ISO format (YYYY-MM-DD)
-- description_raw: Original description as-is
-- amount_signed: Numeric value (positive for deposits/income, negative for withdrawals/expenses)
-- running_balance: Balance after transaction if shown, otherwise null
-- currency: Currency code if visible (EUR, USD, etc.)
-- movement: INCOME, EXPENSE or TRANSFER. TRANSFER only when clearly between the user's OWN
-  accounts/investments ("to/from savings", "own account", same person's wallets). A payment to
-  another person (Bizum, "payment to: NAME", "transfer to OTHER PERSON") is EXPENSE, not TRANSFER.
-- category_slug: one of these per movement:
-  EXPENSE: housing|groceries|restaurants|transport|health|entertainment|shopping|education|subscriptions|travel|sports|pets|other_expense
-  INCOME: salary|refunds|freelance|rents|investment|other_income
-  TRANSFER: own_transfer|to_investment
-  Infer from merchant/description. Use other_* only when no clue.
-
-STATE — SKIP any transaction whose state/status is REVERTED, DECLINED, CANCELLED or FAILED: it did
-not complete and does not affect the balance. Emit only completed transactions.
-FEE — if the data has a separate fee/commission column with a NON-ZERO value, set amount_signed to
-(amount − fee): the fee is charged on top of the amount and moves the balance further. When the fee
-is 0 or absent, amount_signed = amount.
-FORMAT — rows may arrive pre-parsed as "<date> | <description> | <±amount> | bal <balance>": the
-leading +/− is the sign of amount_signed, and the value after "bal" is running_balance.
-
-Example output:
-[
-  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA MERCADONA","amount_signed":-87.43,"running_balance":1234.56,"currency":"EUR","movement":"EXPENSE","category_slug":"groceries"},
-  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE","amount_signed":2850.00,"running_balance":3084.56,"currency":"EUR","movement":"INCOME","category_slug":"salary"}
-]
-
-Extract ALL completed transactions visible in the data (skip reverted/declined/cancelled ones).`;
-
-// ========== FULL PROMPT (for smaller files) ==========
-// bank/payment_channel/value_date removed below: none of them survive downstream (grep-verified
-// dead reads) — cutting them saves prompt + output tokens with no behavior change.
-// category_slug IS used now: the AI's INCOME/EXPENSE category is kept whenever the local
-// categorizer (higher priority) doesn't match, so the AI covers the long tail of merchants the
-// finite regex dictionary can't — user_rules > categorizer > AI category > other_*.
-const CASHFLOW_ANALYSIS_PROMPT = `You are a financial data extraction expert specialized in bank statements from any country. Your task is to analyze messy, unstructured financial data and extract clean transaction data.
-
-CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
-
-STATE — SKIP any transaction whose state/status is REVERTED, DECLINED, CANCELLED or FAILED: it did
-not complete and does not affect the balance. Emit only completed transactions.
-FORMAT — rows may arrive pre-parsed as "<date> | <description> | <±amount> | bal <balance>": the
-leading +/− is the sign of amount_signed, and the value after "bal" is running_balance.
-
-For each transaction, extract:
-- posted_date: ISO format (YYYY-MM-DD). This is the main transaction date shown on the statement.
-- description_raw: Original raw description from the statement.
-- description_clean: Clean, readable description removing reference numbers and noise.
-- amount_signed: Numeric value (positive for income, negative for expenses/transfers out). If the
-  data has a separate fee/commission column with a NON-ZERO value, use (amount − fee): the fee is
-  charged on top and moves the balance further. Fee 0 or absent → amount_signed = amount.
-- running_balance: Balance after transaction if shown, otherwise null.
-- movement: One of: INCOME, EXPENSE, TRANSFER (the fundamental type of money movement)
-- category_slug: Best-fit category for the transaction — see CATEGORY_SLUG rule below.
-- currency: Currency code (EUR, USD, GBP, ARS, MXN, etc.) - detect from symbols or context
-
-=== MOVEMENT CLASSIFICATION (Step 1 - CRITICAL) ===
-
-You MUST first determine the movement type, then assign a category within that movement.
-
-INCOME: Money entering the user from external sources, increasing available cash.
-- Salary, payroll, wages ("Nómina", "Sueldo", "Salary", "Payroll")
-- Refunds and chargebacks ("Devolución", "Refund", "Chargeback")
-- Sales income from selling items
-- Interest received, dividends
-- Category slugs: salary, refunds, freelance, rents, investment, transfers, other_income
-
-EXPENSE: Money leaving to a third party representing real consumption or payment.
-- Purchases at stores, restaurants, services
-- Rent, utilities, subscriptions
-- Payments to external merchants or people
-- CRITICAL: If a "transfer" goes to a THIRD PARTY (not own account, not investment), it's EXPENSE, not TRANSFER!
-- Category slugs: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
-
-TRANSFER: Movement between the user's OWN accounts or to their OWN investment accounts. NO consumption.
-- Between own bank accounts (Santander ↔ Revolut ↔ MercadoPago)
-- To own savings/investment accounts (broker, instant access savings, trading)
-- CRITICAL: Only TRANSFER if destination is CONFIRMED to be user's own account or investment platform!
-- CRITICAL: "Transferencia recibida/emitida", "Bizum recibido/enviado" are NOT automatically TRANSFER!
-- Category slugs: own_transfer (between own accounts), to_investment (to savings/investment)
-
-=== TRANSFER vs EXPENSE/INCOME DECISION (CRITICAL RULE) ===
-
-A transaction is ONLY a TRANSFER if you can confirm with HIGH CONFIDENCE that:
-1. It goes to another account belonging to the SAME USER (own_transfer), OR
-2. It goes to the user's OWN investment/savings account (to_investment)
-
-Signals for TRANSFER (own_transfer):
-- "Traspaso entre cuentas", "Transferencia a cuenta propia", "A mi cuenta"
-- Counterparty matches user's other known accounts/banks
-- "From savings", "To savings" within same bank
-- Movement between digital wallets of same person
-
-Signals for TRANSFER (to_investment):
-- Destination is a broker, trading platform, investment account
-- "Instant Access Savings", "Trading", "ETF", "Broker", "Cocos", "Trade Republic"
-- Movement to remunerative savings accounts
-
-CRITICAL - These are NOT TRANSFER:
-- "Transferencia recibida" or "Transferencia emitida" without explicit self-transfer context
-- "Bizum recibido" or "Bizum enviado" (these are payments to/from other people)
-- Any transfer to/from a person whose name is NOT the user
-- When uncertain: positive amount → INCOME, negative amount → EXPENSE
-
-If UNCERTAIN whether a transfer goes to own account or third party:
-→ Use the amount sign: positive = INCOME, negative = EXPENSE
-
-=== CATEGORY_SLUG (Step 2) ===
-
-Assign one category_slug per movement:
-- INCOME: salary, refunds, freelance, rents, investment, other_income
-- EXPENSE: housing, groceries, restaurants, transport, health, entertainment, shopping, education, subscriptions, travel, sports, pets, other_expense
-- TRANSFER: own_transfer, to_investment
-Infer from the merchant/description. Use other_expense/other_income only when no clue.
-
-Example output:
-[
-  {"posted_date":"2024-12-15","description_raw":"COMPRA TARJETA *1234 MERCADONA","description_clean":"Supermercado Mercadona","amount_signed":-87.43,"running_balance":1234.56,"movement":"EXPENSE","category_slug":"groceries","currency":"EUR"},
-  {"posted_date":"2024-12-14","description_raw":"NOMINA DICIEMBRE EMPRESA SA","description_clean":"Nómina Diciembre","amount_signed":2850.00,"running_balance":3084.56,"movement":"INCOME","category_slug":"salary","currency":"EUR"},
-  {"posted_date":"2024-12-13","description_raw":"TRF A CTA PROPIA REVOLUT","description_clean":"Traspaso a Revolut","amount_signed":-500.00,"running_balance":2584.56,"movement":"TRANSFER","category_slug":"own_transfer","currency":"EUR"},
-  {"posted_date":"2024-12-12","description_raw":"BIZUM A JUAN GARCIA","description_clean":"Bizum a Juan García","amount_signed":-30.00,"running_balance":2554.56,"movement":"EXPENSE","category_slug":"other_expense","currency":"EUR"}
-]`;
-
-// platform/asset_type/value_date removed: this prompt feeds process-import's shared
-// txRecord loop (not process-investment-file), which has no columns for them — dead reads.
-const INVESTING_ANALYSIS_PROMPT = `You are an investment data extraction expert. Analyze investment platform statements and extract transaction data.
-
-CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
-
-For each transaction, extract:
-- posted_date: ISO format (YYYY-MM-DD)
-- description_raw: Original description
-- description_clean: Clean description of the investment activity
-- amount_signed: Numeric value (positive for contributions/dividends, negative for withdrawals/fees)
-- source_transaction_id: Platform transaction ID if visible
-- movement: One of: INCOME, EXPENSE, TRANSFER
-- category_slug: For TRANSFER only — 'to_investment' (contribution/buy) or 'own_transfer'
-  (withdrawal to own account). Null for INCOME/EXPENSE — the app assigns detailed categories
-  automatically.
-- currency: Currency code (EUR, USD, etc.)
-
-Movement guide:
-- Contributions/deposits, buy/sell trades: TRANSFER (category_slug: to_investment)
-- Withdrawals to own account: TRANSFER (category_slug: own_transfer)
-- Dividends, interest received: INCOME (category_slug: null)
-- Platform fees: EXPENSE (category_slug: null)
-
-Example output:
-[
-  {"posted_date":"2024-12-15","description_raw":"Aporte mensual","description_clean":"Aporte mensual","amount_signed":500.00,"source_transaction_id":"TX123456","movement":"TRANSFER","category_slug":"to_investment","currency":"EUR"},
-  {"posted_date":"2024-12-10","description_raw":"Dividendo Apple Inc AAPL","description_clean":"Dividendo Apple Inc","amount_signed":12.50,"source_transaction_id":null,"movement":"INCOME","category_slug":null,"currency":"USD"},
-  {"posted_date":"2024-12-05","description_raw":"Comisión custodia","description_clean":"Comisión custodia mensual","amount_signed":-1.50,"source_transaction_id":null,"movement":"EXPENSE","category_slug":null,"currency":"EUR"}
-]`;
-
-// ========== UTILITY FUNCTIONS ==========
-// sha256 / normalizeDescription / calculateFingerprint / extractMonthKey now live in
-// ../_shared/fingerprint.ts (unit-tested in tests/fingerprint.test.ts). Imported above.
-
-// ========== POST-AI ROW VALIDATION ==========
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-function validateAIRow(t: Record<string, unknown>): { valid: boolean; date?: string; amount?: number; reason?: string } {
-  const dateRaw = (t.posted_date || t.date) as string | undefined;
-  if (!dateRaw || typeof dateRaw !== 'string') return { valid: false, reason: 'missing_date' };
-
-  // Accept ISO dates; attempt to fix common AI mistakes (DD/MM/YYYY, MM-DD-YYYY).
-  let date = dateRaw.trim();
-  if (!ISO_DATE_RE.test(date)) {
-    const slashParts = date.split(/[/.-]/);
-    if (slashParts.length === 3) {
-      const [a, b, c] = slashParts.map(Number);
-      if (a > 100) {
-        date = `${a}-${String(b).padStart(2, '0')}-${String(c).padStart(2, '0')}`;
-      } else if (c > 100) {
-        // DD/MM/YYYY or MM/DD/YYYY — if b>12 then b is day (MDY), else assume DMY
-        const [day, month] = b > 12 ? [b, a] : [a, b];
-        date = `${c}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      }
-    }
-    if (!ISO_DATE_RE.test(date)) return { valid: false, reason: 'bad_date' };
-  }
-
-  // Validate date components
-  const [y, m, d] = date.split('-').map(Number);
-  if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1990 || y > 2100) {
-    return { valid: false, reason: 'date_out_of_range' };
-  }
-
-  const amountRaw = t.amount_signed ?? t.amount;
-  if (amountRaw === undefined || amountRaw === null) return { valid: false, reason: 'missing_amount' };
-  const amount = typeof amountRaw === 'string' ? parseFloat(amountRaw) : Number(amountRaw);
-  if (!Number.isFinite(amount)) return { valid: false, reason: 'bad_amount' };
-
-  return { valid: true, date, amount };
-}
-
-function normalizeTargetMonth(targetMonth: string): string {
-  if (targetMonth.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return targetMonth.substring(0, 7);
-  }
-  return targetMonth;
-}
-
-function validateMovement(movement: string | null): MovementType {
-  if (!movement) return 'EXPENSE';
-  const upper = movement.toUpperCase();
-  if (upper === 'INCOME' || upper === 'EXPENSE' || upper === 'TRANSFER') {
-    return upper as MovementType;
-  }
-  return 'EXPENSE';
-}
-
-function detectInternalTransfer(
-  movement: MovementType,
-  descriptionRaw: string,
-  descriptionClean: string,
-  userAccounts: Array<{ name: string; institution: string | null; account_role: string }>,
-  userName?: { firstName: string | null; lastName: string | null }
-): { isTransfer: boolean; categorySlug: string } {
-  // DO NOT blindly trust AI's TRANSFER classification.
-  // Only confirm as transfer if explicit signals are found below.
-  // The counterparty is read straight from the description — banks put the other party there
-  // ("Bizum payment to: X", "Payment from Y", "From Instant Access Savings").
-
-  const textToCheck = `${descriptionRaw} ${descriptionClean}`.toLowerCase();
-  
-  const ownTransferPatterns = [
-    /traspaso entre cuentas/i,
-    /transferencia a cuenta propia/i,
-    /a mi cuenta/i,
-    /entre mis cuentas/i,
-    /a favor de mi/i,
-    /cuenta de ahorro propia/i,
-    /traspaso a ahorro/i,
-    /from savings/i,
-    /to savings/i,
-    /internal transfer/i,
-    /movimiento interno/i,
-    /own account/i,
-  ];
-  
-  const investmentPatterns = [
-    /instant access savings/i,
-    /broker/i,
-    /trading/i,
-    /etf/i,
-    /investment/i,
-    /cocos/i,
-    /trade republic/i,
-    /degiro/i,
-    /myinvestor/i,
-  ];
-  
-  for (const pattern of investmentPatterns) {
-    if (pattern.test(textToCheck)) {
-      return { isTransfer: true, categorySlug: 'to_investment' };
-    }
-  }
-  
-  for (const pattern of ownTransferPatterns) {
-    if (pattern.test(textToCheck)) {
-      return { isTransfer: true, categorySlug: 'own_transfer' };
-    }
-  }
-  
-  // Check if the user's own name appears in the description/counterparty
-  // If so, it's a transfer between own accounts (sending money to yourself).
-  // Word boundaries (\b) are required \u2014 plain `.includes()` used to match e.g. "Ana" inside
-  // "PALANCA" or "Ivo" inside "IVOOX", spuriously flagging merchant descriptions as own transfers.
-  if (userName?.firstName && userName?.lastName &&
-      userName.firstName.length >= 3 && userName.lastName.length >= 3) {
-    const descNorm = textToCheck.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const firstNorm = userName.firstName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const lastNorm  = userName.lastName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const firstRe = new RegExp(`\\b${escapeRe(firstNorm)}\\b`, 'i');
-    const lastRe  = new RegExp(`\\b${escapeRe(lastNorm)}\\b`, 'i');
-    if (firstRe.test(descNorm) && lastRe.test(descNorm)) {
-      return { isTransfer: true, categorySlug: 'own_transfer' };
-    }
-  }
-  
-  return { isTransfer: false, categorySlug: '' };
-}
-
-// ========== CROSS-ACCOUNT TRANSFER RECONCILIATION ==========
-// After inserting new transactions, scan for transfer pairs across accounts.
-// Conservative: better to miss a genuine transfer than falsely mark an expense.
-
-const TRANSFER_WORDS = /\b(traspaso|transferencia|transfer|movimiento\s*interno|internal\s*transfer|own\s*account|entre\s*cuentas)\b/i;
-
-interface ReconciliationCandidate {
-  id: string;
-  account_id: string;
-  date: string;
-  amount: number;
-  currency: string;
-  movement: string;
-  categorized_by: string | null;
-  description: string;
-  description_norm: string | null;
-  transfer_pair_id: string | null;
-}
-
-async function reconcileTransferPairs(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  accountId: string,
-  insertedFingerprints: Set<string>,
-  userAccounts: Array<{ id: string; name: string; institution: string | null; account_role: string }>,
-  userName: { firstName: string | null; lastName: string | null } | undefined,
-  categorySlugToId: Record<string, string>,
-): Promise<number> {
-  if (userAccounts.length < 2) return 0;
-
-  // 1. Fetch newly inserted transactions for THIS import
-  const { data: newTxs } = await supabase
-    .from('transactions')
-    .select('id, account_id, date, amount, currency, movement, categorized_by, description, description_norm, transfer_pair_id')
-    .eq('user_id', userId)
-    .eq('account_id', accountId)
-    .in('fingerprint', [...insertedFingerprints].slice(0, 500))
-    .is('transfer_pair_id', null);
-  if (!newTxs || newTxs.length === 0) return 0;
-
-  // 2. Compute date window: [minDate - 2 days, maxDate + 2 days]
-  const dates = newTxs.map(t => t.date).sort();
-  const minDate = new Date(dates[0]);
-  const maxDate = new Date(dates[dates.length - 1]);
-  minDate.setDate(minDate.getDate() - 2);
-  maxDate.setDate(maxDate.getDate() + 2);
-  const windowStart = minDate.toISOString().split('T')[0];
-  const windowEnd = maxDate.toISOString().split('T')[0];
-
-  // 3. Fetch unmatched candidates on OTHER accounts within the date window
-  const otherAccountIds = userAccounts.filter(a => a.id !== accountId).map(a => a.id);
-  const { data: candidates } = await supabase
-    .from('transactions')
-    .select('id, account_id, date, amount, currency, movement, categorized_by, description, description_norm, transfer_pair_id')
-    .eq('user_id', userId)
-    .in('account_id', otherAccountIds)
-    .is('transfer_pair_id', null)
-    .gte('date', windowStart)
-    .lte('date', windowEnd);
-  if (!candidates || candidates.length === 0) return 0;
-
-  const usedCandidateIds = new Set<string>();
-  const pairsToUpdate: Array<{ id1: string; id2: string; categorySlug: string }> = [];
-
-  for (const tx of newTxs as ReconciliationCandidate[]) {
-    // Hard reject: user already decided
-    if (tx.categorized_by === 'user' || tx.categorized_by === 'user_rule') continue;
-
-    // Hard reject: the description names a third party (not the user / their accounts)
-    if (looksThirdParty(tx.description_norm || tx.description, userAccounts, userName)) continue;
-
-    const bestMatch = findBestMatch(tx, candidates as ReconciliationCandidate[], userAccounts, userName, usedCandidateIds);
-    if (bestMatch) {
-      usedCandidateIds.add(bestMatch.candidate.id);
-      pairsToUpdate.push({
-        id1: tx.id,
-        id2: bestMatch.candidate.id,
-        categorySlug: bestMatch.categorySlug,
-      });
-    }
-  }
-
-  // 4. Apply pair updates
-  let pairsMatched = 0;
-  for (const pair of pairsToUpdate) {
-    const pairId = crypto.randomUUID();
-    const categoryId = categorySlugToId[pair.categorySlug] || null;
-    const { error } = await supabase
-      .from('transactions')
-      .update({
-        transfer_pair_id: pairId,
-        movement: 'TRANSFER' as MovementType,
-        category: pair.categorySlug,
-        category_id: categoryId,
-        categorized_by: 'reconciler',
-        category_source: 'RECONCILER',
-        confidence: 0.95,
-      })
-      .in('id', [pair.id1, pair.id2]);
-    if (!error) {
-      pairsMatched++;
-      console.log(`[process-import] Reconciled transfer pair: ${pair.id1} ↔ ${pair.id2} → ${pair.categorySlug}`);
-    }
-  }
-  return pairsMatched;
-}
-
-// Does the transaction text (its description) name a THIRD PARTY — i.e. not the user and not one
-// of their own accounts? Used to reject false transfer pairings: a payment to someone else is not
-// an internal transfer. Reads the description, where banks put the other party
-// ("Bizum payment to: X", "Payment from Y", "From Instant Access Savings").
-function looksThirdParty(
-  text: string | null,
-  userAccounts: Array<{ name: string; institution: string | null }>,
-  userName: { firstName: string | null; lastName: string | null } | undefined,
-): boolean {
-  if (!text || text.trim().length === 0) return false;
-  const cp = text.toLowerCase();
-
-  // Check if counterparty matches any of the user's account names or institutions
-  for (const account of userAccounts) {
-    if (account.name && cp.includes(account.name.toLowerCase())) return false;
-    if (account.institution && cp.includes(account.institution.toLowerCase())) return false;
-  }
-  // Check if counterparty matches user's own name
-  if (userName?.firstName && userName?.lastName &&
-      userName.firstName.length >= 3 && userName.lastName.length >= 3) {
-    const cpNorm = cp.normalize('NFD').replace(/[̀-ͯ]/g, '');
-    const firstNorm = userName.firstName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    const lastNorm = userName.lastName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    if (new RegExp(`\\b${escapeRe(firstNorm)}\\b`, 'i').test(cpNorm) &&
-        new RegExp(`\\b${escapeRe(lastNorm)}\\b`, 'i').test(cpNorm)) {
-      return false;
-    }
-  }
-  // Has a counterparty that doesn't match user's accounts or name → third party
-  return true;
-}
-
-function findBestMatch(
-  tx: ReconciliationCandidate,
-  candidates: ReconciliationCandidate[],
-  userAccounts: Array<{ id: string; name: string; institution: string | null; account_role: string }>,
-  userName: { firstName: string | null; lastName: string | null } | undefined,
-  usedIds: Set<string>,
-): { candidate: ReconciliationCandidate; categorySlug: string } | null {
-  const accountById = new Map(userAccounts.map(a => [a.id, a]));
-  type ScoredMatch = { candidate: ReconciliationCandidate; score: number; categorySlug: string };
-  const scored: ScoredMatch[] = [];
-
-  for (const c of candidates) {
-    if (usedIds.has(c.id)) continue;
-    if (c.account_id === tx.account_id) continue;
-
-    // Hard reject: user already decided on this candidate
-    if (c.categorized_by === 'user' || c.categorized_by === 'user_rule') continue;
-    // Hard reject: already paired
-    if (c.transfer_pair_id) continue;
-    // Hard reject: the candidate's description names a third party
-    if (looksThirdParty(c.description_norm || c.description, userAccounts, userName)) continue;
-
-    // Opposite signs
-    if ((tx.amount > 0 && c.amount > 0) || (tx.amount < 0 && c.amount < 0)) continue;
-    if (tx.amount === 0 || c.amount === 0) continue;
-
-    // Same currency, exact amount match
-    const txCurrency = (tx.currency || 'EUR').toUpperCase();
-    const cCurrency = (c.currency || 'EUR').toUpperCase();
-    if (txCurrency !== cCurrency) continue;
-    if (Math.abs(Math.abs(tx.amount) - Math.abs(c.amount)) > 0.01) continue;
-
-    // Date proximity: <= 2 calendar days
-    const txDate = new Date(tx.date);
-    const cDate = new Date(c.date);
-    const dayDiff = Math.abs((txDate.getTime() - cDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (dayDiff > 2) continue;
-
-    // Confirmatory signal required
-    let signals = 0;
-
-    // Signal: either already classified as TRANSFER
-    if (tx.movement === 'TRANSFER') signals++;
-    if (c.movement === 'TRANSFER') signals++;
-
-    // Signal: this transaction's description names the OTHER account (its name/institution),
-    // e.g. "From Instant Access Savings" on the Personal side names the Savings account.
-    const txAccount = accountById.get(tx.account_id);
-    const cAccount = accountById.get(c.account_id);
-    const txDescLower = (tx.description_norm || tx.description || '').toLowerCase();
-    const cDescLower = (c.description_norm || c.description || '').toLowerCase();
-    if (cAccount) {
-      if ((cAccount.name && txDescLower.includes(cAccount.name.toLowerCase())) ||
-          (cAccount.institution && txDescLower.includes(cAccount.institution.toLowerCase()))) {
-        signals++;
-      }
-    }
-    if (txAccount) {
-      if ((txAccount.name && cDescLower.includes(txAccount.name.toLowerCase())) ||
-          (txAccount.institution && cDescLower.includes(txAccount.institution.toLowerCase()))) {
-        signals++;
-      }
-    }
-
-    // Signal: user's own name in either description
-    if (userName?.firstName && userName?.lastName &&
-        userName.firstName.length >= 3 && userName.lastName.length >= 3) {
-      const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const firstNorm = userName.firstName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-      const lastNorm = userName.lastName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-      const firstRe = new RegExp(`\\b${escapeRe(firstNorm)}\\b`, 'i');
-      const lastRe = new RegExp(`\\b${escapeRe(lastNorm)}\\b`, 'i');
-      for (const desc of [tx.description, tx.description_norm, c.description, c.description_norm]) {
-        if (!desc) continue;
-        const descNorm = desc.normalize('NFD').replace(/[̀-ͯ]/g, '');
-        if (firstRe.test(descNorm) && lastRe.test(descNorm)) {
-          signals++;
-          break;
-        }
-      }
-    }
-
-    // Signal: BOTH descriptions contain transfer-indicative words
-    const txText = `${tx.description} ${tx.description_norm || ''}`;
-    const cText = `${c.description} ${c.description_norm || ''}`;
-    if (TRANSFER_WORDS.test(txText) && TRANSFER_WORDS.test(cText)) {
-      signals++;
-    }
-
-    if (signals === 0) continue;
-
-    // Determine category: to_investment if either account is INVESTMENT
-    let categorySlug = 'own_transfer';
-    if (txAccount?.account_role === 'INVESTMENT' || cAccount?.account_role === 'INVESTMENT') {
-      categorySlug = 'to_investment';
-    }
-
-    // Score: prefer closer date + more signals
-    const score = signals * 10 + (2 - dayDiff);
-    scored.push({ candidate: c, score, categorySlug });
-  }
-
-  if (scored.length === 0) return null;
-
-  scored.sort((a, b) => b.score - a.score);
-
-  // Ambiguity guard: if top two candidates have the same score, don't match
-  if (scored.length >= 2 && scored[0].score === scored[1].score) {
-    console.log(`[process-import] Reconciliation ambiguity: ${scored.length} equal-score candidates for tx ${tx.id}, skipping`);
-    return null;
-  }
-
-  return scored[0];
-}
-
-// ========== USER RULES (learned from corrections in My Data + Settings) ==========
-// Single source of truth for user-authored rules. Both the imports flow (RuleEditorDialog)
-// and the Categories page (AddRuleDialog) write into `user_rules`. Takes priority over the
-// generic categorizer. Replaced the previous `categorization_rules` table (dropped in the
-// same change) which had a divergent match_type set and no UI for editing rules created via
-// the imports flow.
-interface UserRuleRow {
-  id: string;
-  match_type: string;
-  pattern: string;
-  tokens: string[] | null;
-  movement: string;
-  category: string;
-  source: string;
-  account_id: string | null;
-}
-
-function applyUserRulesMatch(
-  description: string,
-  rules: UserRuleRow[],
-  transactionMovement: string,
-  transactionAccountId: string,
-): { movement: string; category: string; ruleId: string } | null {
-  for (const rule of rules) {
-    const isSignConflict =
-      (rule.movement === 'INCOME' && transactionMovement === 'EXPENSE') ||
-      (rule.movement === 'EXPENSE' && transactionMovement === 'INCOME');
-    if (isSignConflict) continue;
-    if (rule.account_id && rule.account_id !== transactionAccountId) continue;
-    const mt = (rule.match_type || '').toLowerCase() as MatchType;
-    const matched = ruleMatchesDescription(mt, rule.pattern || '', rule.tokens || [], description);
-    if (matched) {
-      return { movement: rule.movement, category: rule.category, ruleId: rule.id };
-    }
-  }
-  return null;
-}
-
-async function getCategoryIdBySlug(
-  supabase: any,
-  slug: string,
-  domain: string
-): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('id')
-    .eq('slug', slug)
-    .eq('domain', domain)
-    .maybeSingle();
-  
-  if (error || !data) return null;
-  return data.id;
-}
-
-// ========== ROBUST JSON PARSER ==========
-function parseJsonFromAIResponse(rawContent: string): { transactions: any[] | null; error: string | null } {
-  let jsonString = rawContent.trim();
-
-  jsonString = jsonString.replace(/^```(?:json|JSON)?\s*\n?/g, '');
-  jsonString = jsonString.replace(/\n?```\s*$/g, '');
-  jsonString = jsonString.trim();
-
-  if (!jsonString.startsWith('[') && !jsonString.startsWith('{')) {
-    const arrayMatch = jsonString.match(/\[[\s\S]*\]/);
-    if (arrayMatch) {
-      jsonString = arrayMatch[0];
-    } else {
-      return { transactions: null, error: 'No JSON array found in response' };
-    }
-  }
-
-  // First try a clean parse — fast path for well-formed responses.
-  try {
-    const parsed = JSON.parse(jsonString);
-    if (Array.isArray(parsed)) return { transactions: parsed, error: null };
-    if (parsed && typeof parsed === 'object') return { transactions: [parsed], error: null };
-    return { transactions: null, error: 'Parsed result is not an array' };
-  } catch {
-    // Fall through to recovery.
-  }
-
-  // Recovery: the AI output is likely truncated (max_tokens hit) or has trailing junk.
-  console.log('[process-import] JSON parse failed, attempting recovery...');
-
-  // Strip trailing commas, whitespace, and incomplete key-value fragments after the last
-  // complete object in the array.
-  if (jsonString.startsWith('[')) {
-    let depth = 0;
-    let inString = false;
-    let escape = false;
-    let lastCompleteObject = -1;
-
-    for (let i = 0; i < jsonString.length; i++) {
-      const ch = jsonString[i];
-      if (escape) { escape = false; continue; }
-      if (ch === '\\' && inString) { escape = true; continue; }
-      if (ch === '"') { inString = !inString; continue; }
-      if (inString) continue;
-
-      if (ch === '[' || ch === '{') depth++;
-      else if (ch === ']' || ch === '}') {
-        depth--;
-        if (depth === 1 && ch === '}') lastCompleteObject = i;
-      }
-    }
-
-    if (lastCompleteObject > 0) {
-      const recovered = jsonString.substring(0, lastCompleteObject + 1) + ']';
-      try {
-        const parsed = JSON.parse(recovered);
-        if (Array.isArray(parsed)) {
-          console.log(`[process-import] Recovered ${parsed.length} transactions from truncated JSON`);
-          return { transactions: parsed, error: null };
-        }
-      } catch {
-        // Recovery failed — fall through.
-      }
-    }
-  }
-
-  // Last resort: extract individual {...} objects via regex (very tolerant).
-  const objectPattern = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
-  const objects: any[] = [];
-  let match;
-  while ((match = objectPattern.exec(jsonString)) !== null) {
-    try {
-      objects.push(JSON.parse(match[0]));
-    } catch {
-      // Skip malformed individual objects.
-    }
-  }
-  if (objects.length > 0) {
-    console.log(`[process-import] Extracted ${objects.length} transactions via object-level recovery`);
-    return { transactions: objects, error: null };
-  }
-
-  return { transactions: null, error: 'Could not parse or recover JSON from AI response' };
-}
-
-// ========== CHUNKING LOGIC ==========
-function splitIntoChunks(content: string): string[] {
-  const chunks: string[] = [];
-
-  const pagePattern = /---\s*Page\s*\d+\s*---/gi;
-  const pages = content.split(pagePattern).filter(p => p.trim().length > 0);
-
-  if (pages.length > 1) {
-    let currentChunk = '';
-    for (const page of pages) {
-      if (currentChunk.length + page.length > MAX_CHUNK_SIZE && currentChunk.length > 0) {
-        chunks.push(currentChunk.trim());
-        currentChunk = page;
-      } else {
-        currentChunk += '\n' + page;
-      }
-    }
-    if (currentChunk.trim().length > 0) {
-      chunks.push(currentChunk.trim());
-    }
-  } else {
-    // For CSV/text without page markers: carry the header (first non-empty line)
-    // into every chunk so the AI always knows which column is which.
-    const lines = content.split('\n');
-    const headerLine = lines.find(l => l.trim().length > 0) || '';
-    const headerPrefix = headerLine ? headerLine + '\n' : '';
-    const effectiveMax = MAX_CHUNK_SIZE - headerPrefix.length;
-
-    let remaining = content;
-    let isFirst = true;
-    while (remaining.length > MAX_CHUNK_SIZE) {
-      let breakPoint = remaining.lastIndexOf('\n', MAX_CHUNK_SIZE);
-      if (breakPoint < MAX_CHUNK_SIZE / 2) {
-        breakPoint = MAX_CHUNK_SIZE;
-      }
-      const raw = remaining.substring(0, breakPoint).trim();
-      chunks.push(isFirst ? raw : headerPrefix + raw);
-      remaining = remaining.substring(breakPoint).trim();
-      isFirst = false;
-    }
-    if (remaining.length > 0) {
-      chunks.push(isFirst ? remaining : headerPrefix + remaining);
-    }
-  }
-
-  console.log(`[process-import] Split content into ${chunks.length} chunks`);
-  return chunks;
-}
-
-// ========== AI CALL WITH RETRY ==========
-// Supabase edge functions have a 150s hard timeout. We keep a deadline so we
-// can abort long-running AI calls and still return a partial result.
-const EDGE_FUNCTION_DEADLINE_MS = 140_000; // 140s — 10s buffer for DB writes after AI
-let requestStartTime = 0; // set in the main handler
-
-function remainingMs(): number {
-  return Math.max(0, EDGE_FUNCTION_DEADLINE_MS - (Date.now() - requestStartTime));
-}
-
-async function callAIWithRetry(
-  content: string,
-  prompt: string,
-  isLargeFile: boolean,
-  retryCount = 0,
-  imageContent?: Array<{ base64: string; mediaType: string }>,
-): Promise<{ transactions: any[] | null; error: string | null; usage?: { input_tokens: number; output_tokens: number } }> {
-  const maxRetries = 2;
-  const isVision = !!imageContent && imageContent.length > 0;
-
-  // Abort if we're running out of time (leave room for DB writes).
-  const timeLeft = remainingMs();
-  if (timeLeft < 5_000) {
-    return { transactions: null, error: 'Approaching edge function timeout — aborting AI call' };
-  }
-
-  const effectivePrompt = isLargeFile ? SIMPLE_EXTRACTION_PROMPT : prompt;
-  // Vision calls always use Sonnet (complex multi-modal task). Text: escalate on retry;
-  // Haiku is the fast/cheap default for a first pass on a normal-sized chunk.
-  const model = (isVision || isLargeFile || retryCount > 0) ? 'claude-sonnet-5' : 'claude-haiku-4-5-20251001';
-
-  const userContent: any[] = [];
-  if (isVision) {
-    for (const img of imageContent) {
-      userContent.push({
-        type: 'image',
-        source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
-      });
-    }
-    userContent.push({
-      type: 'text',
-      text: 'Extract ALL transactions visible in these bank statement image(s). Read every row carefully — dates, descriptions, amounts, and balances.',
-    });
-  } else {
-    userContent.push({
-      type: 'text',
-      text: `Extract ALL transactions from this financial data:\n\n${content}`,
-    });
-  }
-
-  console.log(`[process-import] AI call attempt ${retryCount + 1}: model=${model}, isVision=${isVision}, contentLength=${content.length}, images=${imageContent?.length ?? 0}, isLargeFile=${isLargeFile}, timeLeftMs=${timeLeft}`);
-
-  // AbortController with a timeout based on remaining edge-function deadline.
-  const controller = new AbortController();
-  const fetchTimeout = Math.min(timeLeft - 3_000, 120_000); // cap single call at 120s
-  const timer = setTimeout(() => controller.abort(), fetchTimeout);
-
-  let response: Response;
-  try {
-    response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'x-api-key': ANTHROPIC_API_KEY ?? '',
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 16000,
-        // Extraction is a structured task — no thinking, keeps output deterministic and
-        // within max_tokens (Sonnet 5 runs adaptive thinking by default otherwise).
-        thinking: { type: 'disabled' },
-        system: effectivePrompt,
-        messages: [
-          { role: 'user', content: userContent },
-        ],
-      }),
-    });
-  } catch (err: unknown) {
-    clearTimeout(timer);
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes('abort') || msg.includes('AbortError')) {
-      console.error(`[process-import] AI call timed out after ${fetchTimeout}ms`);
-      return { transactions: null, error: `AI call timed out (${Math.round(fetchTimeout / 1000)}s)` };
-    }
-    if (retryCount < maxRetries) {
-      await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
-      return callAIWithRetry(content, prompt, isLargeFile, retryCount + 1, imageContent);
-    }
-    return { transactions: null, error: `AI fetch failed: ${msg}` };
-  } finally {
-    clearTimeout(timer);
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`[process-import] AI API error: ${response.status} (model=${model})`, errorText);
-    const detail = errorText.slice(0, 300);
-
-    // Auth / billing (401/402/403) won't be fixed by a retry or a different model — surface now.
-    if (response.status === 401 || response.status === 402 || response.status === 403) {
-      return { transactions: null, error: `API error: ${response.status} ${detail}` };
-    }
-
-    // 400 (e.g. unknown/removed model id), 429 (rate limit) and 5xx: retry, escalating to the
-    // stronger model on the next attempt (retryCount>0 -> sonnet). A bad first-pass model id
-    // must not hard-fail the whole upload without trying the fallback model.
-    if (retryCount < maxRetries) {
-      console.log(`[process-import] Retrying AI call after ${response.status} (escalating model)...`);
-      await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
-      return callAIWithRetry(content, prompt, isLargeFile, retryCount + 1, imageContent);
-    }
-
-    return { transactions: null, error: `AI API error after retries: ${response.status} ${detail}` };
-  }
-
-  const aiData = await response.json();
-
-  if (aiData.stop_reason === 'refusal') {
-    return { transactions: null, error: 'AI declined to process the file' };
-  }
-
-  const rawContent = Array.isArray(aiData.content)
-    ? aiData.content.find((b: any) => b.type === 'text')?.text
-    : undefined;
-
-  if (!rawContent) {
-    return { transactions: null, error: 'No content in AI response' };
-  }
-
-  console.log(`[process-import] AI response length: ${rawContent.length}`);
-  if (aiData.usage) {
-    console.log(`[process-import] AI token usage: input=${aiData.usage.input_tokens}, output=${aiData.usage.output_tokens}, model=${model}`);
-  }
-
-  const result = parseJsonFromAIResponse(rawContent);
-
-  if (result.error && retryCount < maxRetries) {
-    console.log(`[process-import] Parse failed (${result.error}), retrying with pro model...`);
-    console.log(`[process-import] Raw content preview: START>>>>${rawContent.substring(0, 300)}<<<<END`);
-    console.log(`[process-import] Raw content end: START>>>>${rawContent.substring(Math.max(0, rawContent.length - 300))}<<<<END`);
-
-    await new Promise(r => setTimeout(r, 1000));
-    return callAIWithRetry(content, prompt, true, retryCount + 1, imageContent);
-  }
-
-  return { ...result, usage: aiData.usage };
-}
 
 // ========== MAIN HANDLER ==========
 
@@ -938,8 +37,9 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    requestStartTime = Date.now();
+    setRequestStartTime(Date.now());
 
+    // ── Auth ──
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -955,6 +55,8 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // ── Parse request ──
     const {
       fileContent,
       imageContent,
@@ -987,21 +89,21 @@ serve(async (req) => {
 
     console.log(`[process-import] Starting: domain=${domain}, targetMonth=${hintedTargetMonth ?? 'AUTO'}, mode=${hasImages ? 'vision(' + imageContent.length + ' images)' : 'text(' + fileContent.length + ' chars)'}`);
 
+    // ── Duplicate file detection ──
     const calculatedFileHash = fileHash || await sha256(hasText ? fileContent : imageContent[0].base64);
-    
-    // ========== DUPLICATE FILE DETECTION (BEFORE creating import) ==========
-    const { data: existingImport, error: dupCheckError } = await supabase
+
+    const { data: existingImport } = await supabase
       .from('imports')
       .select('id, status, file_name, uploaded_at, transactions_count')
       .eq('user_id', userId)
       .eq('file_hash_sha256', calculatedFileHash)
       .eq('status', 'NORMALIZED')
       .maybeSingle();
-    
+
     if (existingImport) {
-      console.log(`[process-import] Duplicate file detected! Hash: ${calculatedFileHash.substring(0, 16)}... Original import: ${existingImport.id}`);
+      console.log(`[process-import] Duplicate file detected! Hash: ${calculatedFileHash.substring(0, 16)}...`);
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'duplicate_file',
           message: `This file was already processed (${existingImport.file_name}, ${existingImport.transactions_count || 0} transactions). Duplicate files are not allowed.`,
           existingImportId: existingImport.id,
@@ -1010,11 +112,8 @@ serve(async (req) => {
         { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    // Resolve the INITIAL period for the import row.
-    // - If targetMonth hint was provided, use that month (fail fast if closed).
-    // - In auto mode, leave it null for now; we'll pick the earliest detected
-    //   month after AI extraction and patch the import row later.
+
+    // ── Resolve initial period ──
     let initialPeriodId: string | null = null;
     if (hintedTargetMonth) {
       const { data: period } = await supabase
@@ -1056,19 +155,14 @@ serve(async (req) => {
       }
     }
 
-    // Get user's accounts for internal transfer detection
+    // ── Gather context for categorization ──
     const { data: userAccounts } = await supabase
       .from('accounts')
       .select('id, name, institution, account_role')
       .eq('user_id', userId);
-    
+
     const accountsForDetection = userAccounts || [];
 
-    // ========== BUILD USER CONTEXT FOR ADVANCED CATEGORIZER ==========
-    // NOTE: joint_account_names lives in user_preferences, not profiles (schema drift from
-    // an earlier migration) — a prior version of this query selected it from profiles, which
-    // doesn't have that column, so the whole profiles fetch silently failed (unchecked error)
-    // and userContext was undefined for every user. See docs/epics/uploads.md.
     const { data: userProfile } = await supabase
       .from('profiles')
       .select('first_name, last_name, custom_category_rules')
@@ -1081,9 +175,6 @@ serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
-    // Parse custom_category_rules from profile. Only the `custom_category` shape is live —
-    // the old `rule_override` shape had no UI writer and was dropped along with the dead
-    // categorizer step that consumed it.
     const customRules = (userProfile?.custom_category_rules as any[]) || [];
     const customCategories = customRules
       .filter((r: any) => r.type === 'custom_category')
@@ -1117,12 +208,11 @@ serve(async (req) => {
       console.log(`[process-import] No UserContext (no profile data)`);
     }
 
-    // Pre-fetch category IDs for all slugs
     const { data: allCategories } = await supabase
       .from('categories')
       .select('id, slug')
       .eq('domain', domain);
-    
+
     const categorySlugToId: Record<string, string> = {};
     for (const cat of (allCategories || [])) {
       if (cat.slug) {
@@ -1130,19 +220,17 @@ serve(async (req) => {
       }
     }
 
-    // Load user_rules — corrections learned from My Data. Highest priority,
-    // applied before Settings rules and the generic categorizer.
     const { data: userRulesRaw } = await supabase
       .from('user_rules')
       .select('id, match_type, pattern, tokens, movement, category, source, account_id')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .order('source', { ascending: false })       // 'user_correction' > 'manual'
-      .order('created_at', { ascending: false });  // newest first
+      .order('source', { ascending: false })
+      .order('created_at', { ascending: false });
     const userRules: UserRuleRow[] = (userRulesRaw || []) as UserRuleRow[];
     console.log(`[process-import] Loaded ${userRules.length} active user_rules`);
 
-    // ========== RATE LIMIT: max 5 concurrent imports per user ==========
+    // ── Rate limit ──
     const { count: activeImports } = await supabase
       .from('imports')
       .select('id', { count: 'exact', head: true })
@@ -1159,7 +247,7 @@ serve(async (req) => {
       );
     }
 
-    // Create import record
+    // ── Create import record ──
     const { data: importRecord, error: importError } = await supabase
       .from('imports')
       .insert({
@@ -1185,194 +273,43 @@ serve(async (req) => {
 
     const importId = importRecord.id;
     console.log(`[process-import] Created import record: ${importId}`);
-
     await supabase.from('imports').update({ status: 'PARSED' }).eq('id', importId);
 
-    // ========== DETERMINE PROCESSING STRATEGY ==========
-    // Try deterministic CSV parsing first (cashflow text only — not images, not investments).
+    // ── EXTRACTION — delegate to _extract.ts ──
     const csvResult = (hasText && domain === 'CASHFLOW') ? tryDeterministicParse(fileContent) : null;
     if (csvResult) {
       console.log(`[process-import] Deterministic CSV parse succeeded: ${csvResult.transactions.length} rows, delimiter="${csvResult.delimiter}", headerRow=${csvResult.headerRow}`);
     }
 
-    const isLargeFile = hasText && !csvResult && fileContent.length > CHUNK_SIZE_THRESHOLD;
-    const prompt = domain === 'INVESTING' ? INVESTING_ANALYSIS_PROMPT : CASHFLOW_ANALYSIS_PROMPT;
+    const extraction = await extractTransactions({
+      fileContent: hasText ? fileContent : null,
+      imageContent: hasImages ? imageContent : null,
+      domain,
+      csvResult,
+    });
 
-    let allTransactions: any[] = [];
-    let aiInputTokens = 0;
-    let aiOutputTokens = 0;
-    let lastAiError: string | null = null;
-    let processingStrategy = 'unknown';
+    if (extraction.error) {
+      console.log(`[process-import] Extraction failed, marking import ${importId} FAILED`);
+      await supabase.from('imports').update({
+        status: 'FAILED',
+        error_message: `AI extraction failed: ${extraction.error.message}`,
+      }).eq('id', importId);
 
-    if (csvResult) {
-      allTransactions = csvResult.transactions;
-      processingStrategy = 'deterministic_csv';
-      console.log(`[process-import] Skipped AI — deterministic parse: ${allTransactions.length} transactions`);
-    } else if (hasImages) {
-      // Vision path: send all images in a single call (no chunking for images).
-      processingStrategy = 'ai_vision';
-      console.log(`[process-import] Vision mode: ${imageContent.length} image(s)`);
-
-      const result = await callAIWithRetry('', prompt, false, 0, imageContent);
-      aiInputTokens += result.usage?.input_tokens || 0;
-      aiOutputTokens += result.usage?.output_tokens || 0;
-
-      if (result.error) {
-        console.error(`[process-import] AI processing failed: ${result.error}`);
-
-        const is402 = result.error.includes('402');
-        const is429 = result.error.includes('429');
-
-        // Persist the real error (status + Anthropic's message) instead of deleting the row
-        // silently, so failures are visible in the UI and readable via SQL for debugging.
-        console.log(`[process-import] AI error, marking import ${importId} FAILED`);
-        await supabase.from('imports').update({
-          status: 'FAILED',
-          error_message: `AI extraction failed: ${result.error}`,
-        }).eq('id', importId);
-
-        if (is402) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'payment_required',
-              message: 'The AI service is unavailable (billing). Please check the account and try again.'
-            }),
-            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        if (is429) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'rate_limited',
-              message: 'Too many requests. Please wait a few minutes and try again.'
-            }),
-            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        return new Response(
-          JSON.stringify({ 
-            error: 'ai_processing_failed',
-            message: `Error de procesamiento: ${result.error}`
-          }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      allTransactions = result.transactions || [];
-    } else if (isLargeFile) {
-      processingStrategy = 'ai_chunked_sonnet';
-      console.log(`[process-import] Large file detected (${fileContent.length} chars), using chunked processing`);
-
-      const chunks = splitIntoChunks(fileContent);
-
-      const CHUNK_CONCURRENCY = 5;
-      const chunkResults: Array<Awaited<ReturnType<typeof callAIWithRetry>>> = new Array(chunks.length);
-      let nextChunk = 0;
-      const runWorker = async () => {
-        while (true) {
-          const i = nextChunk++;
-          if (i >= chunks.length) return;
-          console.log(`[process-import] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
-          chunkResults[i] = await callAIWithRetry(chunks[i], prompt, true);
-        }
-      };
-      await Promise.all(
-        Array.from({ length: Math.min(CHUNK_CONCURRENCY, chunks.length) }, () => runWorker()),
+      return new Response(
+        JSON.stringify({
+          error: extraction.error.type,
+          message: extraction.error.type === 'ai_processing_failed'
+            ? `Error de procesamiento: ${extraction.error.message}`
+            : extraction.error.message,
+        }),
+        { status: extraction.error.statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-
-      for (let i = 0; i < chunks.length; i++) {
-        const result = chunkResults[i];
-        aiInputTokens += result.usage?.input_tokens || 0;
-        aiOutputTokens += result.usage?.output_tokens || 0;
-
-        if (result.error) {
-          console.error(`[process-import] Chunk ${i + 1} failed: ${result.error}`);
-          lastAiError = result.error;
-          continue;
-        }
-
-        if (result.transactions && result.transactions.length > 0) {
-          allTransactions = allTransactions.concat(result.transactions);
-          console.log(`[process-import] Chunk ${i + 1} extracted ${result.transactions.length} transactions (total: ${allTransactions.length})`);
-        }
-      }
-
-      if (allTransactions.length === 0) {
-        console.log(`[process-import] No transactions extracted, marking import ${importId} FAILED`);
-        await supabase.from('imports').update({
-          status: 'FAILED',
-          error_message: lastAiError
-            ? `AI extraction failed: ${lastAiError}`
-            : 'No transactions extracted from the file',
-        }).eq('id', importId);
-
-        return new Response(
-          JSON.stringify({
-            error: 'parse_failed',
-            message: 'Could not extract transactions. The file may be too complex. Try exporting as CSV from your bank.'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    } else {
-      processingStrategy = 'ai_haiku';
-      console.log(`[process-import] Small file (${fileContent.length} chars), using single AI call`);
-
-      const result = await callAIWithRetry(fileContent, prompt, false);
-      aiInputTokens += result.usage?.input_tokens || 0;
-      aiOutputTokens += result.usage?.output_tokens || 0;
-
-      if (result.error) {
-        console.error(`[process-import] AI processing failed: ${result.error}`);
-
-        const is402 = result.error.includes('402');
-        const is429 = result.error.includes('429');
-
-        console.log(`[process-import] AI error, marking import ${importId} FAILED`);
-        await supabase.from('imports').update({
-          status: 'FAILED',
-          error_message: `AI extraction failed: ${result.error}`,
-        }).eq('id', importId);
-
-        if (is402) {
-          return new Response(
-            JSON.stringify({
-              error: 'payment_required',
-              message: 'The AI service is unavailable (billing). Please check the account and try again.'
-            }),
-            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        if (is429) {
-          return new Response(
-            JSON.stringify({
-              error: 'rate_limited',
-              message: 'Too many requests. Please wait a few minutes and try again.'
-            }),
-            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        return new Response(
-          JSON.stringify({
-            error: 'ai_processing_failed',
-            message: `Error de procesamiento: ${result.error}`
-          }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      allTransactions = result.transactions || [];
     }
 
+    const allTransactions = extraction.transactions;
     console.log(`[process-import] Total transactions parsed: ${allTransactions.length}`);
 
-    // ========== MULTI-MONTH DISTRIBUTION ==========
-    // Group transactions by their actual posted month, resolve a period for
-    // each detected month, and skip any month whose period is CLOSED.
+    // ── MULTI-MONTH DISTRIBUTION ──
     const monthCounts: Record<string, number> = {};
     for (const t of allTransactions) {
       const txDate = t.posted_date || t.date;
@@ -1383,14 +320,11 @@ serve(async (req) => {
     }
 
     const detectedMonths = Object.keys(monthCounts).sort();
-    const earliestMonth = detectedMonths[0] || hintedTargetMonth || null;
 
-    // Resolve period for each detected month (auto-create OPEN periods).
     const periodIdByMonth: Record<string, string> = {};
     const skippedMonths: Array<{ month: string; reason: string; count: number }> = [];
 
     for (const m of detectedMonths) {
-      // Reuse the hinted period if it matches.
       if (hintedTargetMonth === m && initialPeriodId) {
         periodIdByMonth[m] = initialPeriodId;
         continue;
@@ -1424,9 +358,7 @@ serve(async (req) => {
       }
     }
 
-    // Patch the import row's period_id to point at the earliest VALID month
-    // (so the file appears in that month tab in the UI). Falls back to the
-    // hinted period if all detected months were skipped.
+    // Patch the import row's period_id
     const earliestValidMonth = detectedMonths.find((m) => periodIdByMonth[m]) || null;
     const importPeriodId =
       (earliestValidMonth && periodIdByMonth[earliestValidMonth]) ||
@@ -1436,15 +368,14 @@ serve(async (req) => {
       await supabase.from('imports').update({ period_id: importPeriodId }).eq('id', importId);
     }
 
-    // Pre-fetch existing transactions for ALL detected months in one query so
-    // duplicate detection is scoped per-month but cheap.
+    // Pre-fetch existing fingerprints for dedup
     const existingFingerprintsByMonth: Record<string, Set<string>> = {};
     const existingNaturalKeysByMonth: Record<string, Set<string>> = {};
     if (detectedMonths.length > 0) {
       const minMonth = detectedMonths[0];
       const maxMonth = detectedMonths[detectedMonths.length - 1];
-      const [minY, minM] = minMonth.split('-').map(Number);
-      const [maxY, maxM] = maxMonth.split('-').map(Number);
+      const [, maxM] = maxMonth.split('-').map(Number);
+      const [maxY] = maxMonth.split('-').map(Number);
       const queryStart = `${minMonth}-01`;
       const nextM = maxM === 12 ? 1 : maxM + 1;
       const nextY = maxM === 12 ? maxY + 1 : maxY;
@@ -1474,54 +405,11 @@ serve(async (req) => {
       console.log(`[process-import] Distribution: ${JSON.stringify(monthCounts)}, valid months: ${Object.keys(periodIdByMonth).length}, skipped: ${skippedMonths.length}`);
     }
 
-    // Process and create transactions
-    const stats = {
-      totalParsed: allTransactions.length,
-      newTransactions: 0,
-      duplicatesIgnored: 0,
-      skippedClosedMonth: 0,
-      transfers: 0,
-      income: 0,
-      expenses: 0,
-      categorizedByRule: 0,
-      categorizedByCategorizer: 0,
-      categorizedByDictionary: 0,
-      categorizedByAI: 0,
-      aiInputTokens,
-      aiOutputTokens,
-      failed: 0
-    };
-    const monthsDistribution: Record<string, { new: number; duplicates: number }> = {};
-    for (const m of Object.keys(periodIdByMonth)) {
-      monthsDistribution[m] = { new: 0, duplicates: 0 };
-    }
-
-    const newTransactions: any[] = [];
-    // Per-month dedupe trackers (so identical txs in different months stay distinct).
-    const seenFingerprintsByMonth: Record<string, Set<string>> = {};
-    const seenNaturalKeysByMonth: Record<string, Set<string>> = {};
-    // Nth occurrence of an identical (date|amount|normalized-description) key WITHIN this import,
-    // in file order. Feeds the fingerprint + natural-key so two genuinely-distinct same-day rows
-    // aren't collapsed into one (see calculateFingerprint's `sequence` note).
-    const occurrenceByKey: Record<string, number> = {};
-    // Accumulates user_rule hits during the loop, batch-applied via increment_rule_stats
-    // after the loop instead of one round-trip per matched transaction.
-    const ruleHitCounts = new Map<string, number>();
-    // import_rows records don't affect dedup decisions (audit-only), so they're collected
-    // here and batch-upserted after the loop instead of one round-trip per row — was a major
-    // contributor to WORKER_RESOURCE_LIMIT on large statements.
-    const importRowRecords: Record<string, unknown>[] = [];
-
-    // ── Global learning merchant dictionary (Phase 2) ──────────────────────────
-    // Preload resolved merchant→category answers for the merchants in THIS import (one query),
-    // and collect votes to feed back after the loop. merchantKey() returns null for
-    // person-to-person payments / transfers, so no PII ever enters the dictionary.
+    // Preload merchant dictionary
     const dictUserName = userContext
       ? { firstName: userContext.firstName, lastName: userContext.lastName }
       : undefined;
     const merchantDict = new Map<string, { category: string; confidence: number }>();
-    const merchantVotes: Array<{ k: string; cat: string; mov: string; w: number; sample: string }> = [];
-    const categorizerGaps: Array<{ description: string; description_norm: string; movement: string; final_category: string; categorized_by: string }> = [];
     {
       const keysNeeded = new Set<string>();
       for (const tt of allTransactions) {
@@ -1544,477 +432,41 @@ serve(async (req) => {
       }
     }
 
-    for (let i = 0; i < allTransactions.length; i++) {
-      const t = allTransactions[i];
+    // ── CATEGORIZE & INSERT — delegate to _categorize.ts ──
+    const catCtx: CategorizeContext = {
+      supabase,
+      userId,
+      domain,
+      importId,
+      accountId,
+      userContext,
+      accountsForDetection,
+      categorySlugToId,
+      userRules,
+      merchantDict,
+      periodIdByMonth,
+      existingFingerprintsByMonth,
+      existingNaturalKeysByMonth,
+      dictUserName,
+    };
 
-      // Validate and normalize date + amount before anything else.
-      const validation = validateAIRow(t);
-      if (!validation.valid) {
-        console.log(`[process-import] Skipping invalid row ${i}: ${validation.reason}`);
-        continue;
-      }
+    const catResult = await categorizeAndInsert(
+      allTransactions,
+      catCtx,
+      { input: extraction.aiInputTokens, output: extraction.aiOutputTokens },
+    );
 
-      const postedDate = validation.date!;
-      const amountSigned = validation.amount!;
-      const descriptionRaw = t.description_raw || t.description || '';
-      // When the AI didn't return a cleaned description (e.g. the compact chunked prompt), keep the
-      // RAW text — not normalizeDescription(), which lowercases and strips words. `description` is a
-      // display field; the lowercased/stripped form belongs only in description_norm (matching key).
-      const descriptionClean = t.description_clean || descriptionRaw;
-      const runningBalance = t.running_balance ?? null;
-      const currency = t.currency || 'EUR';
-      // Merchant key for the global dictionary (null for person payments / transfers → skipped).
-      const mKey = merchantKey(descriptionRaw, dictUserName);
+    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples } = catResult;
 
-      const txMonthKey = extractMonthKey(postedDate);
-      const txPeriodId = periodIdByMonth[txMonthKey];
-      if (!txPeriodId) {
-        // Month is closed or failed to provision a period — skip but track.
-        stats.skippedClosedMonth++;
-        continue;
-      }
-      if (!seenFingerprintsByMonth[txMonthKey]) {
-        seenFingerprintsByMonth[txMonthKey] = new Set();
-        seenNaturalKeysByMonth[txMonthKey] = new Set();
-      }
-      const existingFingerprints = existingFingerprintsByMonth[txMonthKey] || new Set<string>();
-      const existingNaturalKeys = existingNaturalKeysByMonth[txMonthKey] || new Set<string>();
-      const seenFingerprints = seenFingerprintsByMonth[txMonthKey];
-      const seenNaturalKeys = seenNaturalKeysByMonth[txMonthKey];
-
-      const normalizedDesc = normalizeDescription(descriptionRaw);
-      const baseKey = `${postedDate}|${amountSigned.toFixed(2)}|${normalizedDesc.toLowerCase()}`;
-      const occurrence = occurrenceByKey[baseKey] ?? 0;
-      occurrenceByKey[baseKey] = occurrence + 1;
-
-      const fingerprint = await calculateFingerprint(
-        'import',
-        postedDate,
-        amountSigned,
-        currency,
-        descriptionRaw,
-        occurrence,
-      );
-
-      const rowHash = await sha256(JSON.stringify(t));
-
-      importRowRecords.push({
-        import_id: importId,
-        row_index: i,
-        raw_json: t,
-        row_hash_sha256: rowHash,
-        parsed_date: postedDate,
-        parsed_amount: amountSigned,
-        parsed_currency: currency,
-        parsed_description: descriptionClean
-      });
-
-      if (existingFingerprints.has(fingerprint) || seenFingerprints.has(fingerprint)) {
-        stats.duplicatesIgnored++;
-        if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
-        monthsDistribution[txMonthKey].duplicates++;
-        console.log(`[process-import] Duplicate by fingerprint: ${descriptionClean.substring(0, 50)}`);
-        continue;
-      }
-
-      // Same occurrence tiebreaker as the fingerprint: distinct same-day/same-amount rows keep
-      // distinct keys instead of collapsing into one.
-      const naturalKey = occurrence > 0 ? `${baseKey}|#${occurrence}` : baseKey;
-
-      if (existingNaturalKeys.has(naturalKey) || seenNaturalKeys.has(naturalKey)) {
-        stats.duplicatesIgnored++;
-        if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
-        monthsDistribution[txMonthKey].duplicates++;
-        console.log(`[process-import] Duplicate by natural key: ${naturalKey.substring(0, 60)}`);
-        continue;
-      }
-
-      seenFingerprints.add(fingerprint);
-      seenNaturalKeys.add(naturalKey);
-
-      // === CATEGORIZATION LOGIC ===
-      // Priority: User Rules > Advanced Categorizer (2500+ patterns) > AI
-      
-      // Start with AI/derived categorization as baseline
-      let movement: MovementType;
-      let categorySlug: string;
-      let categorizedBy: string = 'ai';
-      
-      if (t.movement) {
-        movement = validateMovement(t.movement);
-        categorySlug = validateCategorySlug(t.category_slug, movement);
-      } else {
-        movement = amountSigned >= 0 ? 'INCOME' : 'EXPENSE';
-        categorySlug = movement === 'INCOME' ? 'other_income' : 'other_expense';
-      }
-      
-      // Detect internal transfers (may override classification)
-      const transferDetection = detectInternalTransfer(
-        movement,
-        descriptionRaw,
-        descriptionClean,
-        accountsForDetection,
-        userContext ? { firstName: userContext.firstName, lastName: userContext.lastName } : undefined
-      );
-      
-      if (transferDetection.isTransfer && movement !== 'TRANSFER') {
-        movement = 'TRANSFER';
-        categorySlug = transferDetection.categorySlug;
-        stats.transfers++;
-      }
-
-      let categoryId: string | null = null;
-      let categorizationRuleId: string | null = null;
-      let categorySource = 'AI';
-      
-      // ── Priority 2: Advanced Categorizer (2500+ regex patterns) ──
-      // Uses the description_raw for best matching against bank descriptions.
-      // Also tries description_clean as fallback — but only when it would actually differ:
-      // categorize() normalizes its input internally, so if raw and clean normalize to the
-      // same string the second pass is guaranteed to repeat the same 2500+ rule scan for an
-      // identical result. Skipping it in that (common) case doesn't change any outcome, and
-      // was a real contributor to CPU-time timeouts on large statements (each full unmatched
-      // pass over RULE_BUCKETS is the expensive case, and it used to always run twice).
-      const rawMatch = categorize(descriptionRaw, amountSigned, userContext)
-                    || (normalizeForCategorizer(descriptionRaw) !== normalizeForCategorizer(descriptionClean)
-                          ? categorize(descriptionClean, amountSigned, userContext)
-                          : null);
-
-      // Sign-first guardrail: reject categorizer matches whose movement
-      // contradicts the amount sign (TRANSFER is exempt — it can be ±).
-      let categorizerMatch = rawMatch;
-      if (rawMatch && rawMatch.movement !== 'TRANSFER') {
-        if (rawMatch.movement === 'EXPENSE' && amountSigned > 0) {
-          console.log(`[process-import] Rejected categorizer match (positive amount but EXPENSE rule): "${descriptionRaw.substring(0, 40)}" rule=${rawMatch.matchedRule}`);
-          categorizerMatch = null;
-        } else if (rawMatch.movement === 'INCOME' && amountSigned < 0) {
-          console.log(`[process-import] Rejected categorizer match (negative amount but INCOME rule): "${descriptionRaw.substring(0, 40)}" rule=${rawMatch.matchedRule}`);
-          categorizerMatch = null;
-        }
-      }
-
-      // A categorizer match that only resolves to other_* (non-transfer) is not a real category —
-      // let the learned dictionary and the AI try before settling for "other".
-      const categorizerCategory = categorizerMatch
-        ? validateCategorySlug(mapCategorySlug(categorizerMatch.category), categorizerMatch.movement as MovementType)
-        : null;
-      const categorizerIsReal = !!categorizerMatch &&
-        (categorizerMatch.movement === 'TRANSFER' || !categorizerCategory!.startsWith('other_'));
-
-      if (categorizerMatch && categorizerIsReal) {
-        const mappedCategory = mapCategorySlug(categorizerMatch.category);
-        movement = categorizerMatch.movement as MovementType;
-        categorySlug = mappedCategory;
-        categorySlug = validateCategorySlug(categorySlug, movement);
-        categoryId = categorySlugToId[categorySlug] || null;
-        categorySource = 'CATEGORIZER';
-        categorizedBy = 'categorizer';
-        stats.categorizedByCategorizer++;
-
-        console.log(`[process-import] Categorizer match: "${descriptionRaw.substring(0, 40)}" → ${categorizerMatch.category}→${categorySlug} (confidence: ${categorizerMatch.confidence}, rule: ${categorizerMatch.matchedRule.substring(0, 40)})`);
-      } else if (movement !== 'TRANSFER' && mKey && merchantDict.has(mKey)) {
-        // ── Priority 2.5: learned global merchant dictionary ──
-        // A known merchant → its cross-user consensus category (where user corrections propagate).
-        // Checked after the static categorizer, before falling back to the AI's per-import guess,
-        // so the same merchant is categorized consistently everywhere.
-        const hit = merchantDict.get(mKey)!;
-        movement = amountSigned >= 0 ? 'INCOME' : 'EXPENSE';
-        categorySlug = validateCategorySlug(hit.category, movement);
-        categoryId = categorySlugToId[categorySlug] || null;
-        categorySource = 'DICTIONARY';
-        categorizedBy = 'dictionary';
-        stats.categorizedByDictionary++;
-        console.log(`[process-import] Dictionary match: "${descriptionRaw.substring(0, 40)}" [${mKey}] → ${categorySlug}`);
-      } else {
-        // No categorizer or dictionary match — KEEP the AI's own category suggestion (it generalizes
-        // across merchants/countries/languages far better than the finite regex dictionary) instead
-        // of dumping everything into other_*. `categorySlug` already holds the AI baseline from above.
-        // Re-derive movement from sign as a guardrail (except transfers), then re-validate the AI
-        // slug against that movement — an empty/invalid slug still resolves to other_income /
-        // other_expense, so nothing regresses when the AI gives no usable category.
-        if (movement !== 'TRANSFER') {
-          movement = amountSigned >= 0 ? 'INCOME' : 'EXPENSE';
-        }
-        categorySlug = validateCategorySlug(categorySlug, movement);
-        categoryId = categorySlugToId[categorySlug] || null;
-        stats.categorizedByAI++;
-      }
-      
-      // ── Priority 1: user_rules (unified rule table — both Categories page and
-      //    "save as rule" flow in imports write here) ──
-      const userRuleHit = applyUserRulesMatch(descriptionRaw, userRules, movement, accountId)
-                       || applyUserRulesMatch(descriptionClean, userRules, movement, accountId);
-
-      if (userRuleHit) {
-        const mappedCat = mapCategorySlug(userRuleHit.category);
-        const validatedCat = validateCategorySlug(mappedCat, userRuleHit.movement as MovementType);
-        movement = userRuleHit.movement as MovementType;
-        categorySlug = validatedCat;
-        categoryId = categorySlugToId[categorySlug] || null;
-        categorizationRuleId = userRuleHit.ruleId;
-        categorySource = 'USER_RULE';
-        categorizedBy = 'user_rule';
-        if (categorizerMatch) stats.categorizedByCategorizer--;
-        else stats.categorizedByAI--;
-        stats.categorizedByRule++;
-        ruleHitCounts.set(userRuleHit.ruleId, (ruleHitCounts.get(userRuleHit.ruleId) || 0) + 1);
-        console.log(`[process-import] user_rule match: "${descriptionRaw.substring(0, 40)}" → ${userRuleHit.movement}/${categorySlug} (rule=${userRuleHit.ruleId})`);
-      }
-
-      // ── Sign sanity check: amount sign must agree with movement (except TRANSFER
-      //    and user_rule — when the user explicitly authored a rule, trust it even if
-      //    the sign contradicts; refunds, chargebacks and bank corrections are valid
-      //    reasons for the mismatch) ──
-      if (categorizedBy !== 'user_rule') {
-        const priorSource = categorySource;
-        if (movement === 'EXPENSE' && amountSigned > 0) {
-          movement = 'INCOME';
-          categorySlug = 'other_income';
-          categoryId = categorySlugToId[categorySlug] || null;
-          categorySource = 'SIGN_FALLBACK';
-          categorizedBy = 'sign_fallback';
-          console.log(`[process-import] Sign correction (ex-${priorSource}): positive amount ${amountSigned} re-classified EXPENSE→INCOME for "${descriptionRaw.substring(0, 40)}"`);
-        } else if (movement === 'INCOME' && amountSigned < 0) {
-          movement = 'EXPENSE';
-          categorySlug = 'other_expense';
-          categoryId = categorySlugToId[categorySlug] || null;
-          categorySource = 'SIGN_FALLBACK';
-          categorizedBy = 'sign_fallback';
-          console.log(`[process-import] Sign correction (ex-${priorSource}): negative amount ${amountSigned} re-classified INCOME→EXPENSE for "${descriptionRaw.substring(0, 40)}"`);
-        }
-      }
-
-      if (movement === 'INCOME') stats.income++;
-      else if (movement === 'EXPENSE') stats.expenses++;
-      else if (movement === 'TRANSFER') stats.transfers++;
-
-      // ── Learn: record a global-dictionary vote for a genuine merchant with a real category ──
-      // mKey is null for person payments / transfers (never stored); other_* is skipped; a
-      // dictionary-sourced category is not re-voted (no self-reinforcing loop). A user_rule
-      // correction carries weight 100 so a single correction wins the consensus.
-      if (mKey && movement !== 'TRANSFER' && !categorySlug.startsWith('other_') && categorizedBy !== 'dictionary') {
-        merchantVotes.push({
-          k: mKey, cat: categorySlug, mov: movement,
-          w: categorizedBy === 'user_rule' ? 100 : 1,
-          sample: (descriptionClean || descriptionRaw).substring(0, 80),
-        });
-      }
-
-      // Track categorizer gaps: descriptions that the local categorizer couldn't handle
-      if (movement !== 'TRANSFER' && (categorySlug.startsWith('other_') || categorizedBy === 'ai')) {
-        categorizerGaps.push({
-          description: (descriptionRaw || '').substring(0, 200),
-          description_norm: (descriptionNorm || '').substring(0, 200),
-          movement,
-          final_category: categorySlug,
-          categorized_by: categorizedBy,
-        });
-      }
-
-      // Canonical transactions row (Fase 4 schema cleanup). Legacy columns
-      // (type, tx_type, bank, posted_date, value_date, description_raw, payment_channel)
-      // were dropped — `movement` and `account_id` are the single sources of truth.
-      const confidenceMap: Record<string, number> = {
-        user: 1.0, user_rule: 0.99, reconciler: 0.95,
-        dictionary: 0.90, categorizer: 0.85, ai: 0.50, sign_fallback: 0.20,
-      };
-      const confidence = confidenceMap[categorizedBy] ?? 0.50;
-
-      const txRecord: any = {
-        user_id: userId,
-        domain: domain,
-        period_id: txPeriodId,
-        _month_key: txMonthKey,
-        import_id: importId,
-        account_id: accountId,
-        date: postedDate,
-        amount: amountSigned,
-        currency: currency,
-        running_balance: runningBalance,
-        description: descriptionClean || 'Sin descripción',
-        description_norm: normalizeDescription(descriptionRaw),
-        original_description: descriptionRaw || null,
-        movement: movement,
-        category: categorySlug,
-        category_id: categoryId,
-        categorization_rule_id: categorizationRuleId,
-        category_source: categorySource,
-        categorized_by: categorizedBy,
-        confidence: confidence,
-        fingerprint: fingerprint,
-        source_row_hash: rowHash,
-      };
-
-      newTransactions.push(txRecord);
-    }
-
-    // ── Running-balance reliability check ─────────────────────────
-    // Neobank exports (Revolut, etc.) can interleave several sub-account running_balance tracks
-    // into one file, which makes the balance meaningless for a single Pocket account. When the
-    // rows can't be reconstructed into one consistent chain, NULL the balances so Pocket falls
-    // back to the computed path (initial_balance + Σamount). This reconstruction is order-
-    // independent, so clean statements with multiple same-day transactions are NOT false-flagged.
-    const rbRowCount = newTransactions.filter((tx) => tx.running_balance != null).length;
-    if (rbRowCount >= 5 && !runningBalanceIsReliable(newTransactions)) {
-      console.log(`[process-import] Running balance unreliable across ${rbRowCount} rows (couldn't form a single balance chain — likely mixed sub-accounts). NULLing running_balance for this import.`);
-      for (const tx of newTransactions) tx.running_balance = null;
-    }
-
-    // Batch-upsert the import_rows audit records collected during the loop above — real
-    // multi-row upserts (matches the plain UNIQUE (import_id, row_hash_sha256) constraint),
-    // not one request per row.
-    const IMPORT_ROW_BATCH_SIZE = 50;
-    for (let start = 0; start < importRowRecords.length; start += IMPORT_ROW_BATCH_SIZE) {
-      const batch = importRowRecords.slice(start, start + IMPORT_ROW_BATCH_SIZE);
-      const { error } = await supabase.from('import_rows').upsert(batch, {
-        onConflict: 'import_id,row_hash_sha256',
-        ignoreDuplicates: true
-      });
-      if (error) console.log(`[process-import] import_rows batch upsert error: ${error.message}`);
-    }
-
-    // Insert transactions as real multi-row batches (upsert + ignoreDuplicates on the
-    // (user_id, domain, fingerprint) partial unique index) instead of one HTTP request per
-    // row — cuts a 300-row statement from ~300 round-trips to ~6. A batch-level duplicate
-    // (23505-equivalent) is handled by ignoreDuplicates without failing the whole batch; we
-    // detect which rows landed by comparing returned fingerprints against what we sent. If
-    // the batch itself errors for a real reason (not a duplicate), fall back to inserting
-    // that one batch row-by-row so a single bad row doesn't sink otherwise-good ones and we
-    // keep the existing failed-vs-duplicate accounting.
-    const TX_BATCH_SIZE = 50;
-    let insertFailedCount = 0;
-    const insertErrorSamples: string[] = [];
-    const allInsertedFingerprints = new Set<string>();
-    if (newTransactions.length > 0) {
-      let successCount = 0;
-      let duplicateCount = 0;
-
-      const recordDuplicate = (txMonthKey: string) => {
-        duplicateCount++;
-        if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
-        monthsDistribution[txMonthKey].duplicates++;
-      };
-      const recordSuccess = (txMonthKey: string) => {
-        successCount++;
-        if (!monthsDistribution[txMonthKey]) monthsDistribution[txMonthKey] = { new: 0, duplicates: 0 };
-        monthsDistribution[txMonthKey].new++;
-      };
-      const recordFailure = (message: string) => {
-        insertFailedCount++;
-        if (insertErrorSamples.length < 5) insertErrorSamples.push(message);
-        console.error('[process-import] Error inserting transaction:', message);
-      };
-
-      for (let start = 0; start < newTransactions.length; start += TX_BATCH_SIZE) {
-        const batch = newTransactions.slice(start, start + TX_BATCH_SIZE);
-        const batchClean = batch.map(({ _month_key, ...rest }) => rest);
-
-        const { data: inserted, error: batchError } = await supabase
-          .from('transactions')
-          .upsert(batchClean, { onConflict: 'user_id,domain,account_id,fingerprint', ignoreDuplicates: true })
-          .select('fingerprint');
-
-        if (batchError) {
-          // Real error somewhere in this batch — isolate it row-by-row so one bad row
-          // doesn't sink the other 49, and so we can still tell duplicate from failure.
-          for (const tx of batch) {
-            const txMonthKey: string = tx._month_key;
-            const { _month_key, ...txClean } = tx;
-            const { error } = await supabase.from('transactions').insert(txClean);
-            if (error) {
-              if (error.code === '23505') recordDuplicate(txMonthKey);
-              else recordFailure(error.message);
-            } else {
-              recordSuccess(txMonthKey);
-              allInsertedFingerprints.add(tx.fingerprint);
-            }
-          }
-          continue;
-        }
-
-        const batchInsertedFps = new Set((inserted || []).map((r: { fingerprint: string }) => r.fingerprint));
-        for (const tx of batch) {
-          if (batchInsertedFps.has(tx.fingerprint)) {
-            recordSuccess(tx._month_key);
-            allInsertedFingerprints.add(tx.fingerprint);
-          } else {
-            recordDuplicate(tx._month_key);
-          }
-        }
-      }
-
-      stats.newTransactions = successCount;
-      stats.duplicatesIgnored += duplicateCount;
-      stats.failed = insertFailedCount;
-
-      console.log(`[process-import] Inserted ${successCount} transactions, ${duplicateCount} duplicates skipped, ${insertFailedCount} failed`);
-    }
-
-    // Cross-account transfer reconciliation: after all transactions are inserted,
-    // scan for matching pairs across the user's different accounts.
-    let reconcilerPairs = 0;
-    if (allInsertedFingerprints.size > 0 && accountsForDetection.length >= 2) {
-      try {
-        reconcilerPairs = await reconcileTransferPairs(
-          supabase,
-          userId,
-          accountId,
-          allInsertedFingerprints,
-          accountsForDetection,
-          userContext ? { firstName: userContext.firstName, lastName: userContext.lastName } : undefined,
-          categorySlugToId,
-        );
-        if (reconcilerPairs > 0) {
-          console.log(`[process-import] Reconciled ${reconcilerPairs} cross-account transfer pair(s)`);
-        }
-      } catch (e) {
-        console.error(`[process-import] Reconciliation error (non-fatal):`, e);
-      }
-    }
-
-    // Activate applied_count/last_applied_at on matched user_rules (batched — one RPC
-    // call per distinct rule instead of per transaction).
-    for (const [ruleId, hitCount] of ruleHitCounts) {
-      const { error: statsError } = await supabase.rpc('increment_rule_stats', {
-        _rule_id: ruleId,
-        _hit_count: hitCount,
-      });
-      if (statsError) {
-        console.error(`[process-import] Failed to update rule stats for ${ruleId}:`, statsError);
-      }
-    }
-
-    // Feed the global merchant dictionary (Phase 2): one batched RPC with this import's votes.
-    // Best-effort — a failure here must never fail the import.
-    if (merchantVotes.length > 0) {
-      const { error: voteError } = await supabase.rpc('apply_merchant_votes', { votes: merchantVotes });
-      if (voteError) console.error('[process-import] apply_merchant_votes failed:', voteError.message);
-      else console.log(`[process-import] merchant dictionary: recorded ${merchantVotes.length} votes`);
-    }
-
-    // Record categorizer gaps for pattern improvement (best-effort, max 50 per import).
-    if (categorizerGaps.length > 0) {
-      const gapRows = categorizerGaps.slice(0, 50).map(g => ({ user_id: userId, ...g }));
-      const { error: gapError } = await supabase.from('categorizer_gaps').insert(gapRows);
-      if (gapError) console.error('[process-import] categorizer_gaps insert failed:', gapError.message);
-      else console.log(`[process-import] categorizer gaps: recorded ${gapRows.length} uncovered descriptions`);
-    }
-
-    // Finalize import status — surface partial/total failures instead of always
-    // reporting NORMALIZED (which used to mask silently-dropped rows).
+    // ── Finalize import status ──
     const insertedCount = stats.newTransactions;
     let importStatus: 'NORMALIZED' | 'FAILED' | 'PARTIAL' = 'NORMALIZED';
     let importErrorMessage: string | null = null;
 
     if (insertFailedCount > 0 && insertedCount === 0) {
-      // Nothing landed and at least one row errored (not just duplicates) → hard failure.
       importStatus = 'FAILED';
       importErrorMessage = `All ${insertFailedCount} transaction insert(s) failed. First errors: ${insertErrorSamples.join(' | ')}`;
     } else if (insertFailedCount > 0) {
-      // Some rows landed, some errored → partial import; keep the data, flag it as PARTIAL
-      // (not NORMALIZED) so it's distinguishable at the status level, not just via
-      // error_message. Retrying re-processes the same file — already-inserted rows are
-      // silently skipped by the fingerprint uniqueness constraint, only the missing ones land.
       importStatus = 'PARTIAL';
       importErrorMessage = `${insertFailedCount} of ${insertFailedCount + insertedCount} transaction(s) failed to insert. First errors: ${insertErrorSamples.join(' | ')}`;
     } else if (insertedCount === 0 && stats.duplicatesIgnored > 0) {
@@ -2027,10 +479,9 @@ serve(async (req) => {
       error_message: importErrorMessage,
       ai_input_tokens: stats.aiInputTokens,
       ai_output_tokens: stats.aiOutputTokens,
-      processing_strategy: processingStrategy,
+      processing_strategy: extraction.processingStrategy,
     }).eq('id', importId);
 
-    // Log to audit
     await supabase.from('audit_log').insert({
       user_id: userId,
       entity_type: 'import',
@@ -2051,9 +502,8 @@ serve(async (req) => {
     if (stats.duplicatesIgnored > 0) {
       message += `, ${stats.duplicatesIgnored} duplicates ignored`;
     }
-    if (stats.transfers > 0 || reconcilerPairs > 0) {
+    if (stats.transfers > 0) {
       message += `, ${stats.transfers} transfers`;
-      if (reconcilerPairs > 0) message += ` (${reconcilerPairs} reconciled)`;
     }
     if (stats.categorizedByRule > 0) {
       message += `, ${stats.categorizedByRule} by rules`;
@@ -2065,17 +515,15 @@ serve(async (req) => {
       message += `, ${insertFailedCount} failed to save`;
     }
 
-    // Refresh materialized views so dashboard reads fresh data (non-fatal)
     try { await supabase.rpc("refresh_dashboard_views"); }
     catch (e) { console.error("[process-import] refresh_dashboard_views failed (non-fatal):", e); }
 
-    // Log categorization savings
     const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer;
-    const aiSavingsPercent = stats.newTransactions > 0 
-      ? Math.round((totalCategorized / stats.newTransactions) * 100) 
+    const aiSavingsPercent = stats.newTransactions > 0
+      ? Math.round((totalCategorized / stats.newTransactions) * 100)
       : 0;
-    console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, categorizer=${stats.categorizedByCategorizer}, AI=${stats.categorizedByAI}, local_coverage=${aiSavingsPercent}%`);
-    console.log(`[process-import] AI token usage total: input=${stats.aiInputTokens}, output=${stats.aiOutputTokens}, strategy=${processingStrategy}`);
+    console.log(`[process-import] Categorization stats: rules=${stats.categorizedByRule}, categorizer=${stats.categorizedByCategorizer}, dictionary=${stats.categorizedByDictionary}, AI=${stats.categorizedByAI}, local_coverage=${aiSavingsPercent}%`);
+    console.log(`[process-import] AI token usage total: input=${stats.aiInputTokens}, output=${stats.aiOutputTokens}, strategy=${extraction.processingStrategy}`);
 
     return new Response(
       JSON.stringify({
@@ -2098,7 +546,7 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error('[process-import] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
