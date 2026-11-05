@@ -301,7 +301,22 @@
     "deleteFileDesc": "Esto eliminará permanentemente {{fileName}} y todas sus transacciones. Esta acción no se puede deshacer.",
     "deleteFileDescInv": "Esto eliminará permanentemente {{fileName}} y todos sus movimientos. Esta acción no se puede deshacer.",
     "retry": "Reintentar",
-    "pickAccount": "Elegir cuenta"
+    "pickAccount": "Elegir cuenta",
+    "mismatchTitle": "El signo y el movimiento no coinciden",
+    "mismatchAmountIs": "El monto es",
+    "mismatchNegative": "negativo",
+    "mismatchPositive": "positivo",
+    "mismatchMarkingAs": "pero estás marcándolo como",
+    "mismatchUsuallyIncome": "Normalmente los ingresos son positivos (dinero que entra). Podés guardarlo igual si es correcto.",
+    "mismatchUsuallyExpense": "Normalmente los gastos son negativos (dinero que sale). Podés guardarlo igual si es correcto.",
+    "saveAnyway": "Guardar igual",
+    "rowCopied": "Fila copiada",
+    "rowsCopied": "{{count}} filas copiadas",
+    "confirming": "Confirmando...",
+    "confirmAndSave": "Confirmar y guardar",
+    "investmentPreview": "Vista previa de inversiones",
+    "total": "Total",
+    "noInvestmentsFound": "No se encontraron inversiones en este archivo"
   },
   "status": {
     "active": "Activo",

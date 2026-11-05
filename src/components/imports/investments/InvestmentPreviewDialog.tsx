@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SheetPanel, SHEET_BUTTON } from "../SheetPanel";
@@ -28,6 +29,7 @@ export function InvestmentPreviewDialog({
   onConfirm,
   onCancel,
 }: InvestmentPreviewDialogProps) {
+  const { t } = useTranslation("common");
   const deposits = investments.filter((i) => i.type === "deposit").length;
   const withdrawals = investments.filter((i) => i.type === "withdrawal").length;
 
@@ -49,10 +51,10 @@ export function InvestmentPreviewDialog({
         {isConfirming ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Confirming...
+            {t("imports.confirming")}
           </>
         ) : (
-          "Confirm & Save"
+          t("imports.confirmAndSave")
         )}
       </Button>
       <Button
@@ -61,7 +63,7 @@ export function InvestmentPreviewDialog({
         onClick={onCancel}
         disabled={isConfirming}
       >
-        Cancel
+        {t("cancel")}
       </Button>
     </>
   );
@@ -70,7 +72,7 @@ export function InvestmentPreviewDialog({
     <SheetPanel
       open={isOpen}
       onOpenChange={(next) => { if (!next) onCancel(); }}
-      title="investment preview"
+      title={t("imports.investmentPreview")}
       footer={footer}
     >
       <>
@@ -80,7 +82,7 @@ export function InvestmentPreviewDialog({
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-xl bg-muted p-3 text-center">
                 <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                  Total
+                  {t("imports.total")}
                 </div>
                 <div className="text-xl font-bold tabular-nums mt-1">
                   {investments.length}
@@ -88,7 +90,7 @@ export function InvestmentPreviewDialog({
               </div>
               <div className="rounded-xl bg-muted p-3 text-center">
                 <div className="text-[11px] font-medium text-success uppercase tracking-wide">
-                  Deposits
+                  {t("imports.depositsLabel")}
                 </div>
                 <div className="text-xl font-bold tabular-nums text-success mt-1">
                   {deposits}
@@ -96,7 +98,7 @@ export function InvestmentPreviewDialog({
               </div>
               <div className="rounded-xl bg-muted p-3 text-center">
                 <div className="text-[11px] font-medium text-destructive uppercase tracking-wide">
-                  Withdrawals
+                  {t("imports.withdrawalsLabel")}
                 </div>
                 <div className="text-xl font-bold tabular-nums text-destructive mt-1">
                   {withdrawals}
@@ -141,7 +143,7 @@ export function InvestmentPreviewDialog({
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <AlertCircle className="w-12 h-12 mb-3 opacity-50" />
-            <p className="text-sm">No investments found in this file</p>
+            <p className="text-sm">{t("imports.noInvestmentsFound")}</p>
           </div>
         )}
       </>

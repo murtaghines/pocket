@@ -435,7 +435,7 @@ export function InlineTransactionsEditor({
       .filter(Boolean) as MonthTransaction[];
     if (rows.length === 0) return;
     copiedRowsRef.current = rows;
-    sonnerToast(rows.length === 1 ? "Row copied" : `${rows.length} rows copied`);
+    sonnerToast(rows.length === 1 ? t("imports.rowCopied") : t("imports.rowsCopied", { count: rows.length }));
   }, [selectedIds, transactions]);
 
   const handlePasteRows = useCallback(async () => {
@@ -1856,16 +1856,16 @@ export function InlineTransactionsEditor({
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 ring-1 ring-warning/20 mb-1">
               <AlertTriangle className="w-5 h-5 text-warning" />
             </div>
-            <AlertDialogTitle>Sign and movement don't match</AlertDialogTitle>
+            <AlertDialogTitle>{t("imports.mismatchTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {movementConfirm && (
                 <span className="block space-y-3">
                   <span className="block">
-                    The amount is{" "}
+                    {t("imports.mismatchAmountIs")}{" "}
                     <span className="font-semibold text-foreground">
-                      {movementConfirm.tx.amount < 0 ? "negative" : "positive"}
+                      {movementConfirm.tx.amount < 0 ? t("imports.mismatchNegative") : t("imports.mismatchPositive")}
                     </span>
-                    , but you're marking this as{" "}
+                    {", "}{t("imports.mismatchMarkingAs")}{" "}
                     <span className="font-semibold text-foreground">
                       {getMovementLabel(movementConfirm.newMovement)}
                     </span>
@@ -1873,7 +1873,7 @@ export function InlineTransactionsEditor({
                   </span>
                   <span className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs">
                     <span className="uppercase tracking-wide text-muted-foreground/80 font-medium">
-                      Amount
+                      {t("imports.amount")}
                     </span>
                     <span
                       className={cn(
@@ -1885,18 +1885,16 @@ export function InlineTransactionsEditor({
                     </span>
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    Usually{" "}
                     {movementConfirm.newMovement === "INCOME"
-                      ? "income is positive (money in)"
-                      : "expenses are negative (money out)"}
-                    . You can save it anyway if it's correct.
+                      ? t("imports.mismatchUsuallyIncome")
+                      : t("imports.mismatchUsuallyExpense")}
                   </span>
                 </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (movementConfirm) {
@@ -1905,7 +1903,7 @@ export function InlineTransactionsEditor({
                 setMovementConfirm(null);
               }}
             >
-              Save anyway
+              {t("imports.saveAnyway")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

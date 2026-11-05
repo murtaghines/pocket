@@ -301,7 +301,22 @@
     "deleteFileDesc": "This will permanently remove {{fileName}} and all its transactions. This action cannot be undone.",
     "deleteFileDescInv": "This will permanently remove {{fileName}} and all its movements. This action cannot be undone.",
     "retry": "Retry",
-    "pickAccount": "Pick account"
+    "pickAccount": "Pick account",
+    "mismatchTitle": "Sign and movement don't match",
+    "mismatchAmountIs": "The amount is",
+    "mismatchNegative": "negative",
+    "mismatchPositive": "positive",
+    "mismatchMarkingAs": "but you're marking this as",
+    "mismatchUsuallyIncome": "Usually income is positive (money in). You can save it anyway if it's correct.",
+    "mismatchUsuallyExpense": "Usually expenses are negative (money out). You can save it anyway if it's correct.",
+    "saveAnyway": "Save anyway",
+    "rowCopied": "Row copied",
+    "rowsCopied": "{{count}} rows copied",
+    "confirming": "Confirming...",
+    "confirmAndSave": "Confirm & Save",
+    "investmentPreview": "Investment preview",
+    "total": "Total",
+    "noInvestmentsFound": "No investments found in this file"
   },
   "status": {
     "active": "Active",
