@@ -127,7 +127,8 @@
     "investedThisMonth": "invested this month",
     "noInvestments": "No investments recorded",
     "viewInvestments": "View investments",
-    "return": "Return"
+    "return": "Return",
+    "costBasis": "Cost basis"
   },
   "period": {
     "title": "Accounting Periods",

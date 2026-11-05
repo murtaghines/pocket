@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowUpCircle,
-  ArrowDownCircle,
   ShoppingCart,
   TrendingDown,
   Coins,
@@ -79,7 +77,7 @@ export function TransactionsList({ transactions }: TransactionsListProps) {
         <div className="md:hidden flex flex-col gap-2">
           {displayed.map((tx) => {
             const cfg = TYPE_CONFIG[tx.type as keyof typeof TYPE_CONFIG];
-            const Icon = cfg?.icon ?? ArrowUpCircle;
+            const Icon = cfg?.icon ?? ShoppingCart;
             const amount =
               tx.type === "sell" || tx.type === "fee"
                 ? -tx.total_amount
