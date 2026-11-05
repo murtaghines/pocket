@@ -54,6 +54,11 @@
       "planning": {
         "planned": "Pagos planificados"
       },
+      "investments": {
+        "portfolio": "Portafolio",
+        "activity": "Actividad",
+        "accounts": "Cuentas"
+      },
       "data": {
         "transactions": "Transacciones",
         "investments": "Archivos de inversión",
