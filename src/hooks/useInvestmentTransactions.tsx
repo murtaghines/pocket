@@ -84,6 +84,7 @@ export function useInvestmentTransactions(holdingId?: string) {
       queryClient.invalidateQueries({ queryKey: ["investment-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["holdings"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
+      supabase.rpc("take_portfolio_snapshot", { p_user_id: user!.id }).catch(() => {});
     },
   });
 

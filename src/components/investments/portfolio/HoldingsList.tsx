@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, ArrowUpDown, TrendingUp, TrendingDown, Pencil } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, ArrowUpDown, TrendingUp, TrendingDown, Pencil, Search } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import type { Holding } from "@/hooks/useHoldings";
 import { AddHoldingDialog } from "./AddHoldingDialog";
@@ -27,6 +28,7 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
   const [addOpen, setAddOpen] = useState(false);
   const [priceHoldingId, setPriceHoldingId] = useState<string | null>(null);
   const [detailHolding, setDetailHolding] = useState<Holding | null>(null);
+  const [search, setSearch] = useState("");
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -37,7 +39,17 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
     }
   };
 
-  const sorted = [...holdings].sort((a, b) => {
+  const filtered = search
+    ? holdings.filter((h) => {
+        const q = search.toLowerCase();
+        return (
+          h.asset_name.toLowerCase().includes(q) ||
+          (h.ticker?.toLowerCase().includes(q) ?? false)
+        );
+      })
+    : holdings;
+
+  const sorted = [...filtered].sort((a, b) => {
     let va: number | string;
     let vb: number | string;
     switch (sortKey) {
@@ -83,12 +95,32 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{t("portfolio.holdings")}</CardTitle>
-        <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          {t("portfolio.addHolding")}
-        </Button>
+      <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <CardTitle>
+          {t("portfolio.holdings")}
+          {holdings.length > 0 && (
+            <Badge variant="secondary" className="ml-2 text-xs tabular-nums">
+              {holdings.length}
+            </Badge>
+          )}
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          {holdings.length > 5 && (
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("portfolio.asset")}
+                className="h-8 w-[160px] pl-8 text-sm rounded-lg"
+              />
+            </div>
+          )}
+          <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            {t("portfolio.addHolding")}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {holdings.length === 0 ? (

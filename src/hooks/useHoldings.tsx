@@ -181,6 +181,9 @@ export function useHoldings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["holdings"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
+      if (user) {
+        supabase.rpc("take_portfolio_snapshot", { p_user_id: user.id }).catch(() => {});
+      }
     },
   });
 
