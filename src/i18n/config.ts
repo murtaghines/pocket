@@ -25,6 +25,9 @@ import settingsEs from './locales/es/settings.json';
 import categoriesEn from './locales/en/categories.json';
 import categoriesEs from './locales/es/categories.json';
 
+import importsEn from './locales/en/imports.json';
+import importsEs from './locales/es/imports.json';
+
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'es', name: 'Spanish', nativeName: 'Español' },
@@ -44,6 +47,7 @@ const resources = {
     account: accountEn,
     settings: settingsEn,
     categories: categoriesEn,
+    imports: importsEn,
   },
   es: {
     common: commonEs,
@@ -54,6 +58,7 @@ const resources = {
     account: accountEn,
     settings: settingsEs,
     categories: categoriesEs,
+    imports: importsEs,
   },
 };
 
@@ -75,7 +80,7 @@ i18n
     fallbackLng: 'en',
     supportedLngs: ['en', 'es'],
     defaultNS: 'common',
-    ns: ['common', 'auth', 'dashboard', 'investments', 'profile', 'account', 'settings', 'categories'],
+    ns: ['common', 'auth', 'dashboard', 'investments', 'profile', 'account', 'settings', 'categories', 'imports'],
     interpolation: {
       escapeValue: false,
     },

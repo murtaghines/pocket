@@ -1,0 +1,63 @@
+{
+  "progress": {
+    "readingFile": "Reading file…",
+    "checkingDuplicates": "Checking for duplicates…",
+    "uploading": "Uploading to your vault…",
+    "readingWithAi": "Reading transactions with AI…",
+    "analyzingImages": "Analyzing images with AI…",
+    "extractingFromImage": "Extracting transactions from image…",
+    "crossChecking": "Cross-checking with your rules…",
+    "almostDone": "Almost there — finalizing…",
+    "categorizing": "Categorizing each transaction…",
+    "verifying": "Verifying with server…",
+    "saving": "Saving transactions…",
+    "done": "Done · {{count}} new transactions"
+  },
+  "error": {
+    "fileEmpty": "The file is empty",
+    "processingError": "Processing error",
+    "couldNotProcess": "Could not process the file",
+    "duplicateFile": "Duplicate file",
+    "duplicateFileDescription": "This file was already processed ({{fileName}}, {{count}} transactions).",
+    "duplicateInvestmentDescription": "This file was already processed ({{fileName}}, {{count}} investments).",
+    "periodClosed": "Period closed",
+    "noAiCredits": "No AI credits",
+    "tooManyRequests": "Too many requests",
+    "couldNotReadFile": "Could not read file",
+    "cannotReadFileType": "Cannot read file type: {{extension}}",
+    "notSignedIn": "You must be signed in to upload files.",
+    "noConnection": "No connection",
+    "noConnectionDescription": "You cannot upload files without an internet connection.",
+    "couldNotUpload": "Could not upload the file (connection interrupted). Please try again.",
+    "cantRetry": "Can't retry",
+    "cantRetryOriginalUnavailable": "The original file is no longer available.",
+    "couldNotRedownload": "Could not re-download the original file.",
+    "retryFailed": "Retry failed",
+    "retryFailedDescription": "Could not retry this import.",
+    "couldNotSaveInvestments": "Could not save investments",
+    "unknownError": "Unknown error",
+    "genericError": "Error"
+  },
+  "toast": {
+    "newTransactions": "{{count}} new transactions",
+    "newTransactionsDistributed": "{{count}} new transactions distributed across {{breakdown}}",
+    "newInMonth": "{{count}} new in {{month}}",
+    "duplicatesIgnored": ", {{count}} duplicates ignored",
+    "skippedMonthsTitle": "Some months were skipped",
+    "skippedMonthsDescription": "Closed or unavailable: {{list}}. Reopen them to import.",
+    "integrityVerified": "Integrity verified",
+    "transfersLinked": "{{count}} transfers linked",
+    "retryComplete": "Retry complete",
+    "retryCompleteDescription": "{{count}} new transaction(s) added",
+    "retryCompleteWithDuplicates": "{{count}} new transaction(s) added, {{duplicates}} already existed",
+    "investmentsSaved": "Investments saved",
+    "movementsSaved": "{{count}} movements saved",
+    "movementsSavedWithDuplicates": "{{count}} movements saved, {{duplicates}} duplicates ignored"
+  },
+  "pdf": {
+    "scannedDetected": "Scanned PDF detected",
+    "scannedDescription": "Reading {{count}} page(s) with AI vision…",
+    "partiallyProcessed": "PDF partially processed",
+    "partiallyProcessedDescription": "Only {{processed}} of {{total}} pages were processed. Some transactions may be missing."
+  }
+}

@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,6 +28,7 @@ export function useMonthlyInvestmentUpload() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useTranslation('imports');
 
   // Returns the created PendingFile entries so a caller that wants to auto-process
   // immediately (see processFilesForMonth's `filesOverride`) doesn't have to read them back
@@ -72,8 +74,8 @@ export function useMonthlyInvestmentUpload() {
       const result = await extractPdfText(file, { reconstructTables: false });
       if (result.truncated) {
         toast({
-          title: "PDF partially processed",
-          description: `Only ${result.processedPages} of ${result.totalPages} pages were processed. Some transactions may be missing.`,
+          title: t('pdf.partiallyProcessed'),
+          description: t('pdf.partiallyProcessedDescription', { processed: result.processedPages, total: result.totalPages }),
           variant: "destructive",
         });
       }
@@ -83,7 +85,7 @@ export function useMonthlyInvestmentUpload() {
     try {
       return await file.text();
     } catch {
-      throw new Error(`Cannot read file type: ${extension}`);
+      throw new Error(t('error.cannotReadFileType', { extension }));
     }
   };
 
@@ -95,8 +97,8 @@ export function useMonthlyInvestmentUpload() {
   const processFilesForMonth = useCallback(async (targetMonth: Date, filesOverride?: PendingFile[], accountId?: string) => {
     if (!user) {
       toast({
-        title: "Error",
-        description: "You must be logged in to upload files.",
+        title: t('error.genericError'),
+        description: t('error.notSignedIn'),
         variant: "destructive",
       });
       return;
@@ -123,7 +125,7 @@ export function useMonthlyInvestmentUpload() {
         const fileContent = await extractFileContent(uploadFile.file);
 
         if (!fileContent.trim()) {
-          throw new Error("The file is empty");
+          throw new Error(t('error.fileEmpty'));
         }
 
         // Generate file hash BEFORE uploading, so an exact re-upload short-circuits with a
@@ -145,15 +147,15 @@ export function useMonthlyInvestmentUpload() {
 
         if (existingImport) {
           toast({
-            title: "Duplicate file",
-            description: `This file was already processed (${existingImport.file_name}, ${existingImport.transactions_count || 0} investments).`,
+            title: t('error.duplicateFile'),
+            description: t('error.duplicateInvestmentDescription', { fileName: existingImport.file_name, count: existingImport.transactions_count || 0 }),
             variant: "destructive",
           });
           setPendingFilesByMonth((prev) => ({
             ...prev,
             [monthKey]: (prev[monthKey] || []).map((f) =>
               f.id === uploadFile.id
-                ? { ...f, status: "error" as const, error: "Duplicate file" }
+                ? { ...f, status: "error" as const, error: t('error.duplicateFile') }
                 : f
             ),
           }));
@@ -236,13 +238,13 @@ export function useMonthlyInvestmentUpload() {
         }));
 
         toast({
-          title: "Processing error",
-          description: error.message || "Could not process the file",
+          title: t('error.processingError'),
+          description: error.message || t('error.couldNotProcess'),
           variant: "destructive",
         });
       }
     }
-  }, [user, pendingFilesByMonth, toast, queryClient]);
+  }, [user, pendingFilesByMonth, toast, queryClient, t]);
 
   const isProcessingMonth = useCallback((monthKey: string): boolean => {
     return (pendingFilesByMonth[monthKey] || []).some((f) => f.status === "processing");
@@ -278,13 +280,12 @@ export function useMonthlyInvestmentUpload() {
       if (error) throw error;
 
       const stats = data.stats;
-      let description = `${stats?.newInvestments || 0} movements saved`;
-      if (stats?.duplicatesIgnored > 0) {
-        description += `, ${stats.duplicatesIgnored} duplicates ignored`;
-      }
+      const description = stats?.duplicatesIgnored > 0
+        ? t('toast.movementsSavedWithDuplicates', { count: stats?.newInvestments || 0, duplicates: stats.duplicatesIgnored })
+        : t('toast.movementsSaved', { count: stats?.newInvestments || 0 });
 
       toast({
-        title: "Investments saved",
+        title: t('toast.investmentsSaved'),
         description,
       });
 
@@ -297,14 +298,14 @@ export function useMonthlyInvestmentUpload() {
     } catch (error: any) {
       console.error("Error confirming investments:", error);
       toast({
-        title: "Error",
-        description: error.message || "Could not save investments",
+        title: t('error.genericError'),
+        description: error.message || t('error.couldNotSaveInvestments'),
         variant: "destructive",
       });
     } finally {
       setIsConfirming(false);
     }
-  }, [pendingImportId, user, queryClient, toast, previewInvestments]);
+  }, [pendingImportId, user, queryClient, toast, previewInvestments, t]);
 
   const cancelPreview = useCallback(() => {
     setShowPreview(false);
