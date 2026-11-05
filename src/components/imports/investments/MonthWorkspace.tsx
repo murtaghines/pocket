@@ -113,7 +113,7 @@ export function MonthWorkspace({
                   type="file"
                   multiple
                   className="hidden"
-                  accept=".xlsx,.xls,.csv,.pdf"
+                  accept=".xlsx,.csv,.pdf"
                   onChange={(e) => onPickFiles(e.target.files, monthDate)}
                 />
                 <Button
@@ -143,7 +143,7 @@ export function MonthWorkspace({
         type="file"
         multiple
         className="hidden"
-        accept=".xlsx,.xls,.csv,.pdf"
+        accept=".xlsx,.csv,.pdf"
         onChange={(e) => onPickFiles(e.target.files, monthDate)}
       />
       {accountChips.length > 1 && (

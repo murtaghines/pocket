@@ -149,7 +149,7 @@ export function ManualEntryFooter({
         });
 
         if (existingRuleId) {
-          toast({ title: "Entry added", description: "Rule already exists for this pattern", duration: 3000 });
+          toast({ title: t("imports.entryAdded"), description: t("imports.ruleAlreadyExists"), duration: 3000 });
         } else {
           try {
             // prebuilt: true — pattern/tokens are already fully resolved above; the
@@ -168,31 +168,31 @@ export function ManualEntryFooter({
               original_description: cleanDesc,
               matchingTransactionIds: matchIds,
             });
-            const base = `Rule saved: future "${cleanDesc}" transactions will be categorized as ${getCategoryLabel(entry.categorySlug)}.`;
+            const base = t("imports.ruleSaved", { desc: cleanDesc, category: getCategoryLabel(entry.categorySlug) });
             toast({
-              title: "Entry added",
+              title: t("imports.entryAdded"),
               description: matchIds.length > 0
-                ? `${base} ${matchIds.length} existing transaction${matchIds.length === 1 ? "" : "s"} updated too.`
+                ? t("imports.ruleSavedRetro", { base, count: matchIds.length })
                 : base,
               duration: 3500,
             });
           } catch (ruleErr) {
             toast({
-              title: "Entry added",
-              description: "Couldn't save rule: " + (ruleErr instanceof Error ? ruleErr.message : ""),
+              title: t("imports.entryAdded"),
+              description: t("imports.entryAddedRuleFailed", { error: ruleErr instanceof Error ? ruleErr.message : "" }),
               variant: "destructive",
             });
           }
         }
       } else {
-        toast({ title: "Entry added", duration: 2500 });
+        toast({ title: t("imports.entryAdded"), duration: 2500 });
       }
       setOpen(false);
     } catch (err) {
       console.error("[ManualEntryFooter] insert error", err);
       toast({
-        title: "Error",
-        description: "Could not add entry. Please try again.",
+        title: t("imports.genericError"),
+        description: t("imports.couldNotAddEntry"),
         variant: "destructive",
       });
     }

@@ -37,7 +37,75 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get all transactions for this user
+    const issues: { check: string; count: number; details?: string }[] = [];
+
+    // ── Check 1: Transactions with NULL fingerprint ────────────────
+    const { count: nullFingerprints } = await supabase
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('fingerprint', null);
+    if (nullFingerprints && nullFingerprints > 0) {
+      issues.push({ check: 'null_fingerprint', count: nullFingerprints, details: 'Transactions with NULL fingerprint — dedup invariant broken' });
+      console.warn(`INTEGRITY: ${nullFingerprints} transactions with NULL fingerprint`);
+    }
+
+    // ── Check 2: Orphaned transactions (no import_id and not manual) ──
+    const { count: orphaned } = await supabase
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('import_id', null)
+      .neq('source', 'manual');
+    if (orphaned && orphaned > 0) {
+      issues.push({ check: 'orphaned_transactions', count: orphaned, details: 'Imported transactions with no import_id link' });
+      console.warn(`INTEGRITY: ${orphaned} orphaned transactions (no import_id, not manual)`);
+    }
+
+    // ── Check 3: Stuck imports (UPLOADED/PARSED for >1 hour) ──────
+    const oneHourAgo = new Date(Date.now() - 60 * 60_000).toISOString();
+    const { count: stuckImports } = await supabase
+      .from('imports')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .in('status', ['UPLOADED', 'PARSED'])
+      .lt('uploaded_at', oneHourAgo);
+    if (stuckImports && stuckImports > 0) {
+      issues.push({ check: 'stuck_imports', count: stuckImports, details: 'Imports stuck in UPLOADED/PARSED for >1 hour' });
+      console.warn(`INTEGRITY: ${stuckImports} stuck imports`);
+    }
+
+    // ── Check 4: Future-dated transactions (>7 days from now) ─────
+    const futureDate = new Date(Date.now() + 7 * 86400_000).toISOString().slice(0, 10);
+    const { count: futureTx } = await supabase
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gt('date', futureDate);
+    if (futureTx && futureTx > 0) {
+      issues.push({ check: 'future_transactions', count: futureTx, details: `Transactions dated after ${futureDate}` });
+      console.warn(`INTEGRITY: ${futureTx} future-dated transactions`);
+    }
+
+    // ── Check 5: Invalid category slugs ───────────────────────────
+    const { data: validSlugs } = await supabase.from('categories').select('slug');
+    if (validSlugs) {
+      const slugSet = new Set(validSlugs.map(c => c.slug));
+      const { data: txWithCategories } = await supabase
+        .from('transactions')
+        .select('id, category')
+        .eq('user_id', userId)
+        .not('category', 'is', null);
+      if (txWithCategories) {
+        const invalidCount = txWithCategories.filter(tx => tx.category && !slugSet.has(tx.category)).length;
+        if (invalidCount > 0) {
+          issues.push({ check: 'invalid_category_slug', count: invalidCount, details: 'Transactions with category slug not in categories table' });
+          console.warn(`INTEGRITY: ${invalidCount} transactions with invalid category slug`);
+        }
+      }
+    }
+
+    // Get all transactions for this user (for transfer reconciliation)
     const { data: transactions, error: fetchError } = await supabase
       .from('transactions')
       .select('*')
@@ -48,10 +116,10 @@ serve(async (req) => {
 
     if (!transactions || transactions.length === 0) {
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           message: 'No transactions to check',
-          stats: { duplicatesRemoved: 0, transfersLinked: 0, hashesUpdated: 0 }
+          stats: { duplicatesRemoved: 0, transfersLinked: 0, hashesUpdated: 0, issues }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -193,17 +261,23 @@ serve(async (req) => {
       }
     }
 
-    const message = `Integrity verified: ${transfersLinked} transfer pairs linked`;
+    const hasIssues = issues.length > 0;
+    const message = hasIssues
+      ? `Integrity check found ${issues.length} issue type(s); ${transfersLinked} transfer pairs linked`
+      : `Integrity verified: ${transfersLinked} transfer pairs linked`;
     console.log(message);
 
     return new Response(
       JSON.stringify({
         success: true,
+        healthy: !hasIssues,
         message,
         stats: {
           transfersLinked,
-          totalChecked: transactions.length
-        }
+          totalChecked: transactions.length,
+          issueCount: issues.reduce((sum, i) => sum + i.count, 0),
+        },
+        issues,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

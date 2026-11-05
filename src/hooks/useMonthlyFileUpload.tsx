@@ -1,10 +1,17 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { parseExcelFile } from "@/lib/excelParser";
-import { extractPdfText, getMonthKey } from "@/lib/fileExtract";
+import {
+  extractPdfText,
+  getMonthKey,
+  isImageFile,
+  imageToBase64,
+  renderPdfPagesToImages,
+} from "@/lib/fileExtract";
 
 interface PendingFile {
   id: string;
@@ -76,6 +83,7 @@ export function useMonthlyFileUpload() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useTranslation('imports');
 
   const processFile = useCallback(async (
     uploadFile: PendingFile,
@@ -104,22 +112,28 @@ export function useMonthlyFileUpload() {
     // Update status to processing
     patch({
       status: "processing",
-      progressLabel: "Reading file…",
+      progressLabel: t('progress.readingFile'),
       progressPercent: 5,
       startedAt: Date.now(),
     });
 
     try {
-      const fileContent = await extractFileContent(uploadFile.file);
-      patch({ progressLabel: "Checking for duplicates…", progressPercent: 18 });
-      
-      if (!fileContent.trim()) {
-        throw new Error("The file is empty");
+      const extracted = await extractFileContent(uploadFile.file);
+      patch({ progressLabel: t('progress.checkingDuplicates'), progressPercent: 18 });
+
+      const hasText = extracted.text.trim().length > 0;
+      const hasImages = (extracted.images?.length || 0) > 0;
+      if (!hasText && !hasImages) {
+        throw new Error(t('error.fileEmpty'));
       }
 
-      // Generate file hash for deduplication BEFORE uploading
+      // Generate file hash for deduplication BEFORE uploading.
+      // For image-based content, hash the first image's base64 (stable per file).
+      const hashSource = hasText
+        ? extracted.text
+        : extracted.images![0].base64;
       const encoder = new TextEncoder();
-      const data = encoder.encode(fileContent);
+      const data = encoder.encode(hashSource);
       const hashBuffer = await crypto.subtle.digest('SHA-256', data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -135,8 +149,8 @@ export function useMonthlyFileUpload() {
 
       if (existingImport) {
         toast({
-          title: "Duplicate file",
-          description: `This file was already processed (${existingImport.file_name}, ${existingImport.transactions_count || 0} transactions).`,
+          title: t('error.duplicateFile'),
+          description: t('error.duplicateFileDescription', { fileName: existingImport.file_name, count: existingImport.transactions_count || 0 }),
           variant: "destructive",
         });
 
@@ -144,14 +158,14 @@ export function useMonthlyFileUpload() {
           ...prev,
           [monthKey]: (prev[monthKey] || []).map((f) =>
             f.id === uploadFile.id
-              ? { ...f, status: "error" as const, error: "Duplicate file" }
+              ? { ...f, status: "error" as const, error: t('error.duplicateFile') }
               : f
           ),
         }));
         return;
       }
 
-      patch({ progressLabel: "Uploading to your vault…", progressPercent: 28 });
+      patch({ progressLabel: t('progress.uploading'), progressPercent: 28 });
       // Upload original file to storage
       const filePath = `${user.id}/${Date.now()}_${uploadFile.name}`;
       const { error: uploadError } = await supabase.storage
@@ -159,30 +173,38 @@ export function useMonthlyFileUpload() {
         .upload(filePath, uploadFile.file);
 
       if (uploadError) {
-        throw new Error(
-          "Could not upload the file (connection interrupted). Please try again."
-        );
+        throw new Error(t('error.couldNotUpload'));
       }
 
       patch({
-        progressLabel: "Reading transactions with AI…",
+        progressLabel: t('progress.readingWithAi'),
         progressPercent: 38,
       });
 
       // The AI extraction step can take 20-90s; we don't get progress events
       // back, so we ramp the bar logarithmically toward 88% to convey "still
       // working" without ever pretending we're done.
+      // Speed factor adapts to content size: small files resolve quickly, large
+      // files and images take longer — so the ramp slows down proportionally.
+      const contentSize = hasText ? extracted.text.length : (extracted.images?.length || 1) * 50_000;
+      const speedFactor = contentSize < 3000 ? 0.7 : contentSize < 10000 ? 0.45 : contentSize < 30000 ? 0.3 : 0.18;
       const aiRampStart = Date.now();
       const aiRamp = setInterval(() => {
         const elapsed = (Date.now() - aiRampStart) / 1000;
-        // Approaches ~88% asymptotically; tuned so 30s ≈ 75%, 60s ≈ 83%.
-        const pct = Math.min(88, 38 + 18 * Math.log(1 + elapsed * 0.45));
-        const labels = [
-          "Reading transactions with AI…",
-          "Categorizing each transaction…",
-          "Cross-checking with your rules…",
-          "Almost there — finalizing…",
-        ];
+        const pct = Math.min(88, 38 + 18 * Math.log(1 + elapsed * speedFactor));
+        const labels = hasImages
+          ? [
+              t('progress.analyzingImages'),
+              t('progress.extractingFromImage'),
+              t('progress.crossChecking'),
+              t('progress.almostDone'),
+            ]
+          : [
+              t('progress.readingWithAi'),
+              t('progress.categorizing'),
+              t('progress.crossChecking'),
+              t('progress.almostDone'),
+            ];
         const labelIdx = Math.min(labels.length - 1, Math.floor(elapsed / 12));
         patch({ progressLabel: labels[labelIdx], progressPercent: pct });
       }, 1200);
@@ -192,7 +214,9 @@ export function useMonthlyFileUpload() {
         "process-import",
         {
           body: {
-            fileContent,
+            fileContent: hasText ? extracted.text : "",
+            // Vision path: send base64 images for image files / scanned PDFs
+            ...(hasImages ? { imageContent: extracted.images } : {}),
             userId: user.id,
             domain: "CASHFLOW",
             // Omit targetMonth in auto mode so the backend distributes
@@ -215,7 +239,7 @@ export function useMonthlyFileUpload() {
       // is there with NORMALIZED status, processing actually succeeded and we
       // should treat this as success.
       if (error) {
-        patch({ progressLabel: "Verifying with server…", progressPercent: 90 });
+        patch({ progressLabel: t('progress.verifying'), progressPercent: 90 });
         const recovered = await pollForImportSuccess(user.id, fileHash);
         if (recovered) {
           processData = recovered;
@@ -249,10 +273,9 @@ export function useMonthlyFileUpload() {
         }
 
         const code = payload?.error;
-        const message = payload?.message || "Could not process the file";
+        const message = payload?.message || t('error.couldNotProcess');
 
-        // Handle specific error codes with appropriate UI
-        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited") {
+        if (code === "duplicate_file" || code === "period_closed" || code === "payment_required" || code === "rate_limited" || code === "parse_failed") {
           setPendingFilesByMonth((prev) => ({
             ...prev,
             [monthKey]: (prev[monthKey] || []).map((f) =>
@@ -262,14 +285,16 @@ export function useMonthlyFileUpload() {
             ),
           }));
 
-          let title = "Processing error";
-          if (code === "duplicate_file") title = "Duplicate file";
-          else if (code === "period_closed") title = "Period closed";
-          else if (code === "payment_required") title = "No AI credits";
-          else if (code === "rate_limited") title = "Too many requests";
+          const titleMap: Record<string, string> = {
+            duplicate_file: t('error.duplicateFile'),
+            period_closed: t('error.periodClosed'),
+            payment_required: t('error.noAiCredits'),
+            rate_limited: t('error.tooManyRequests'),
+            parse_failed: t('error.couldNotReadFile'),
+          };
 
           toast({
-            title,
+            title: titleMap[code] || t('error.processingError'),
             description: message,
             variant: "destructive",
           });
@@ -281,7 +306,7 @@ export function useMonthlyFileUpload() {
       }
 
       const stats = processData?.stats;
-      patch({ progressLabel: "Saving transactions…", progressPercent: 92 });
+      patch({ progressLabel: t('progress.saving'), progressPercent: 92 });
       const monthsDistribution: Record<string, { new: number; duplicates: number }> =
         processData?.monthsDistribution || {};
       const skippedMonths: Array<{ month: string; reason: string; count: number }> =
@@ -299,7 +324,7 @@ export function useMonthlyFileUpload() {
                 ...f,
                 status: "completed" as const,
                 transactionsCount: stats?.newTransactions || 0,
-                progressLabel: `Done · ${stats?.newTransactions || 0} new transactions`,
+                progressLabel: t('progress.done', { count: stats?.newTransactions || 0 }),
                 progressPercent: 100,
               }
             : f
@@ -309,18 +334,18 @@ export function useMonthlyFileUpload() {
       // Build human-friendly distribution summary
       const totalNew = stats?.newTransactions || 0;
       const totalDup = stats?.duplicatesIgnored || 0;
-      let description = `${totalNew} new transactions`;
+      let description = t('toast.newTransactions', { count: totalNew });
       if (distributedMonths.length > 1) {
         const breakdown = distributedMonths
           .filter(([, v]) => (v.new || 0) > 0)
           .map(([m, v]) => `${formatMonthLabel(m)} (${v.new})`)
           .join(", ");
-        description = `${totalNew} new transactions distributed across ${breakdown}`;
+        description = t('toast.newTransactionsDistributed', { count: totalNew, breakdown });
       } else if (distributedMonths.length === 1) {
         const [m, v] = distributedMonths[0];
-        description = `${v.new} new in ${formatMonthLabel(m)}`;
+        description = t('toast.newInMonth', { count: v.new, month: formatMonthLabel(m) });
       }
-      if (totalDup > 0) description += `, ${totalDup} duplicates ignored`;
+      if (totalDup > 0) description += t('toast.duplicatesIgnored', { count: totalDup });
 
       toast({
         title: uploadFile.name,
@@ -333,8 +358,8 @@ export function useMonthlyFileUpload() {
           .map((s) => `${formatMonthLabel(s.month)} (${s.count})`)
           .join(", ");
         toast({
-          title: "Some months were skipped",
-          description: `Closed or unavailable: ${skippedList}. Reopen them to import.`,
+          title: t('toast.skippedMonthsTitle'),
+          description: t('toast.skippedMonthsDescription', { list: skippedList }),
           variant: "destructive",
         });
       }
@@ -359,8 +384,8 @@ export function useMonthlyFileUpload() {
         
         if (integrityData?.stats?.transfersLinked > 0) {
           toast({
-            title: "Integrity verified",
-            description: `${integrityData.stats.transfersLinked} transfers linked`,
+            title: t('toast.integrityVerified'),
+            description: t('toast.transfersLinked', { count: integrityData.stats.transfersLinked }),
           });
           try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -389,34 +414,33 @@ export function useMonthlyFileUpload() {
         ...prev,
         [monthKey]: (prev[monthKey] || []).map((f) =>
           f.id === uploadFile.id
-            ? { ...f, status: "error" as const, error: error.message || "Unknown error" }
+            ? { ...f, status: "error" as const, error: error.message || t('error.unknownError') }
             : f
         ),
       }));
 
       toast({
-        title: "Processing error",
-        description: error.message || "Could not process the file",
+        title: t('error.processingError'),
+        description: error.message || t('error.couldNotProcess'),
         variant: "destructive",
       });
     }
-  }, [user, toast, queryClient]);
+  }, [user, toast, queryClient, t]);
 
   const addFilesForMonth = useCallback((files: File[], targetMonth: Date, accountId?: string) => {
     if (!user) {
       toast({
-        title: "Error",
-        description: "You must be signed in to upload files.",
+        title: t('error.genericError'),
+        description: t('error.notSignedIn'),
         variant: "destructive",
       });
       return;
     }
 
-    // Check network status before attempting upload
     if (!navigator.onLine) {
       toast({
-        title: "No connection",
-        description: "You cannot upload files without an internet connection.",
+        title: t('error.noConnection'),
+        description: t('error.noConnectionDescription'),
         variant: "destructive",
       });
       return;
@@ -436,11 +460,10 @@ export function useMonthlyFileUpload() {
       [monthKey]: [...(prev[monthKey] || []), ...newFiles],
     }));
 
-    // Auto-process each file immediately with the selected account
     newFiles.forEach((newFile) => {
       processFile(newFile, targetMonth, monthKey, accountId);
     });
-  }, [user, toast, processFile]);
+  }, [user, toast, processFile, t]);
 
   /**
    * Auto-distribute mode: upload one or more files without forcing a target
@@ -450,16 +473,16 @@ export function useMonthlyFileUpload() {
   const addFiles = useCallback((files: File[], accountId?: string) => {
     if (!user) {
       toast({
-        title: "Error",
-        description: "You must be signed in to upload files.",
+        title: t('error.genericError'),
+        description: t('error.notSignedIn'),
         variant: "destructive",
       });
       return;
     }
     if (!navigator.onLine) {
       toast({
-        title: "No connection",
-        description: "You cannot upload files without an internet connection.",
+        title: t('error.noConnection'),
+        description: t('error.noConnectionDescription'),
         variant: "destructive",
       });
       return;
@@ -482,7 +505,7 @@ export function useMonthlyFileUpload() {
     newFiles.forEach((newFile) => {
       processFile(newFile, null, monthKey, accountId);
     });
-  }, [user, toast, processFile]);
+  }, [user, toast, processFile, t]);
 
   const removeFileFromMonth = useCallback((monthKey: string, fileId: string) => {
     setPendingFilesByMonth((prev) => ({
@@ -491,33 +514,56 @@ export function useMonthlyFileUpload() {
     }));
   }, []);
 
-  const extractFileContent = async (file: File): Promise<string> => {
+  interface ExtractedContent {
+    text: string;
+    images?: Array<{ base64: string; mediaType: string }>;
+  }
+
+  const extractFileContent = async (file: File): Promise<ExtractedContent> => {
     const extension = file.name.split(".").pop()?.toLowerCase();
-    
+
+    if (isImageFile(file.name)) {
+      const img = await imageToBase64(file);
+      return { text: "", images: [img] };
+    }
+
     if (extension === "csv") {
-      return await file.text();
+      return { text: await file.text() };
     }
-    
-    if (extension === "xlsx" || extension === "xls") {
-      return await parseExcelFile(file);
+
+    if (extension === "xlsx") {
+      return { text: await parseExcelFile(file) };
     }
-    
+
     if (extension === "pdf") {
       const result = await extractPdfText(file);
+
+      if (result.scanned) {
+        const pages = await renderPdfPagesToImages(file);
+        if (pages.length === 0) {
+          throw new Error("Could not read this scanned PDF. Try uploading a photo of each page.");
+        }
+        toast({
+          title: t('pdf.scannedDetected'),
+          description: t('pdf.scannedDescription', { count: pages.length }),
+        });
+        return { text: "", images: pages };
+      }
+
       if (result.truncated) {
         toast({
-          title: "PDF partially processed",
-          description: `Only ${result.processedPages} of ${result.totalPages} pages were processed. Some transactions may be missing.`,
+          title: t('pdf.partiallyProcessed'),
+          description: t('pdf.partiallyProcessedDescription', { processed: result.processedPages, total: result.totalPages }),
           variant: "destructive",
         });
       }
-      return result.text;
+      return { text: result.text };
     }
 
     try {
-      return await file.text();
+      return { text: await file.text() };
     } catch {
-      throw new Error(`Cannot read file type: ${extension}`);
+      throw new Error(t('error.cannotReadFileType', { extension }));
     }
   };
 
@@ -539,8 +585,8 @@ export function useMonthlyFileUpload() {
     if (!user) return;
     if (!fileStorageUrl) {
       toast({
-        title: "Can't retry",
-        description: "The original file is no longer available.",
+        title: t('error.cantRetry'),
+        description: t('error.cantRetryOriginalUnavailable'),
         variant: "destructive",
       });
       return;
@@ -552,17 +598,19 @@ export function useMonthlyFileUpload() {
         .from("financial-files")
         .download(fileStorageUrl);
       if (downloadError || !blob) {
-        throw new Error("Could not re-download the original file.");
+        throw new Error(t('error.couldNotRedownload'));
       }
 
       const file = new File([blob], fileName);
-      const fileContent = await extractFileContent(file);
-      if (!fileContent.trim()) {
-        throw new Error("The file is empty");
+      const extracted = await extractFileContent(file);
+      const hasImages = !!extracted.images && extracted.images.length > 0;
+      if (!hasImages && !extracted.text.trim()) {
+        throw new Error(t('error.fileEmpty'));
       }
 
+      const hashSource = hasImages ? extracted.images![0].base64 : extracted.text;
       const encoder = new TextEncoder();
-      const data = encoder.encode(fileContent);
+      const data = encoder.encode(hashSource);
       const hashBuffer = await crypto.subtle.digest("SHA-256", data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const fileHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -571,7 +619,8 @@ export function useMonthlyFileUpload() {
         "process-import",
         {
           body: {
-            fileContent,
+            fileContent: hasImages ? undefined : extracted.text,
+            imageContent: hasImages ? extracted.images : undefined,
             userId: user.id,
             domain: "CASHFLOW",
             fileHash,
@@ -586,15 +635,15 @@ export function useMonthlyFileUpload() {
       );
 
       if (error) {
-        throw new Error(error.message || "Retry failed");
+        throw new Error(error.message || t('error.retryFailed'));
       }
 
       const stats = processData?.stats;
       toast({
-        title: "Retry complete",
-        description: `${stats?.newTransactions || 0} new transaction(s) added${
-          stats?.duplicatesIgnored ? `, ${stats.duplicatesIgnored} already existed` : ""
-        }.`,
+        title: t('toast.retryComplete'),
+        description: stats?.duplicatesIgnored
+          ? t('toast.retryCompleteWithDuplicates', { count: stats?.newTransactions || 0, duplicates: stats.duplicatesIgnored })
+          : t('toast.retryCompleteDescription', { count: stats?.newTransactions || 0 }),
       });
 
       try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
@@ -608,8 +657,8 @@ export function useMonthlyFileUpload() {
       queryClient.invalidateQueries({ queryKey: ["account-period-summary"] });
     } catch (err: any) {
       toast({
-        title: "Retry failed",
-        description: err.message || "Could not retry this import.",
+        title: t('error.retryFailed'),
+        description: err.message || t('error.retryFailedDescription'),
         variant: "destructive",
       });
     } finally {
@@ -619,7 +668,7 @@ export function useMonthlyFileUpload() {
         return next;
       });
     }
-  }, [user, toast, queryClient]);
+  }, [user, toast, queryClient, t]);
 
   // Keep for backwards compatibility but now it's a no-op since files auto-process
   const processFilesForMonth = useCallback(async (_targetMonth: Date) => {

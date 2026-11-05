@@ -1,9 +1,11 @@
 import { Loader2, FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { PendingFileInfo } from "./types";
 
 /* ─────────────────────────  Processing panel  ───────────────────────── */
 
 export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
+  const { t } = useTranslation("common");
   return (
     <div className="rounded-xl border border-border/70 bg-card shadow-[0_2px_18px_-8px_rgb(8_8_8_/_0.08)] overflow-hidden">
       <div className="px-5 py-4 border-b border-border/60 bg-muted/30 flex items-center gap-3">
@@ -12,10 +14,10 @@ export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
         </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold text-foreground">
-            Processing your file{files.length > 1 ? "s" : ""}
+            {files.length > 1 ? t("imports.processingTitlePlural") : t("imports.processingTitle")}
           </div>
           <div className="text-[11px] text-muted-foreground">
-            This usually takes 20–60 seconds. You can keep working in another tab.
+            {t("imports.processingSubtitle")}
           </div>
         </div>
       </div>
@@ -27,7 +29,7 @@ export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
               <span className="text-sm font-medium text-foreground truncate">{f.name}</span>
             </div>
             <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">
-              {f.status === "processing" ? "Processing…" : "Pending"}
+              {f.status === "processing" ? t("imports.processingStatus") : t("imports.pendingStatus")}
             </span>
           </div>
         ))}

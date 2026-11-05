@@ -378,8 +378,8 @@ export function InlineTransactionsEditor({
     },
     onError: (err: any) => {
       toast({
-        title: "Couldn't save change",
-        description: err?.message ?? "Please try again.",
+        title: t("imports.couldNotSave"),
+        description: err?.message ?? t("imports.pleaseTryAgain"),
         variant: "destructive",
       });
     },
@@ -419,7 +419,7 @@ export function InlineTransactionsEditor({
       is_hidden: false,
     });
     if (error) {
-      toast({ title: "Couldn't duplicate row", description: error.message, variant: "destructive" });
+      toast({ title: t("imports.couldNotDuplicate"), description: error.message, variant: "destructive" });
       return;
     }
     try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
@@ -435,7 +435,7 @@ export function InlineTransactionsEditor({
       .filter(Boolean) as MonthTransaction[];
     if (rows.length === 0) return;
     copiedRowsRef.current = rows;
-    sonnerToast(rows.length === 1 ? "Row copied" : `${rows.length} rows copied`);
+    sonnerToast(rows.length === 1 ? t("imports.rowCopied") : t("imports.rowsCopied", { count: rows.length }));
   }, [selectedIds, transactions]);
 
   const handlePasteRows = useCallback(async () => {
@@ -530,8 +530,8 @@ export function InlineTransactionsEditor({
     },
     onError: (err: any) => {
       toast({
-        title: "Couldn't update categories",
-        description: err?.message ?? "Please try again.",
+        title: t("imports.couldNotUpdateCategories"),
+        description: err?.message ?? t("imports.pleaseTryAgain"),
         variant: "destructive",
       });
     },
@@ -562,7 +562,7 @@ export function InlineTransactionsEditor({
 
     const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
     if (error) {
-      toast({ title: "Couldn't delete entry", description: error.message, variant: "destructive" });
+      toast({ title: t("imports.couldNotDelete"), description: error.message, variant: "destructive" });
       return;
     }
 
@@ -1086,8 +1086,8 @@ export function InlineTransactionsEditor({
         <FileSpreadsheet className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
         <p className="text-sm text-muted-foreground">
           {imports.length > 0
-            ? "File uploaded but no transactions detected yet. They will appear here once processing finishes."
-            : "No transactions yet. Upload a file or add entries manually."}
+            ? t("imports.emptyStateProcessing")
+            : t("imports.emptyState")}
         </p>
       </div>
     );
@@ -1856,16 +1856,16 @@ export function InlineTransactionsEditor({
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 ring-1 ring-warning/20 mb-1">
               <AlertTriangle className="w-5 h-5 text-warning" />
             </div>
-            <AlertDialogTitle>Sign and movement don't match</AlertDialogTitle>
+            <AlertDialogTitle>{t("imports.mismatchTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {movementConfirm && (
                 <span className="block space-y-3">
                   <span className="block">
-                    The amount is{" "}
+                    {t("imports.mismatchAmountIs")}{" "}
                     <span className="font-semibold text-foreground">
-                      {movementConfirm.tx.amount < 0 ? "negative" : "positive"}
+                      {movementConfirm.tx.amount < 0 ? t("imports.mismatchNegative") : t("imports.mismatchPositive")}
                     </span>
-                    , but you're marking this as{" "}
+                    {", "}{t("imports.mismatchMarkingAs")}{" "}
                     <span className="font-semibold text-foreground">
                       {getMovementLabel(movementConfirm.newMovement)}
                     </span>
@@ -1873,7 +1873,7 @@ export function InlineTransactionsEditor({
                   </span>
                   <span className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs">
                     <span className="uppercase tracking-wide text-muted-foreground/80 font-medium">
-                      Amount
+                      {t("imports.amount")}
                     </span>
                     <span
                       className={cn(
@@ -1885,18 +1885,16 @@ export function InlineTransactionsEditor({
                     </span>
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    Usually{" "}
                     {movementConfirm.newMovement === "INCOME"
-                      ? "income is positive (money in)"
-                      : "expenses are negative (money out)"}
-                    . You can save it anyway if it's correct.
+                      ? t("imports.mismatchUsuallyIncome")
+                      : t("imports.mismatchUsuallyExpense")}
                   </span>
                 </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (movementConfirm) {
@@ -1905,7 +1903,7 @@ export function InlineTransactionsEditor({
                 setMovementConfirm(null);
               }}
             >
-              Save anyway
+              {t("imports.saveAnyway")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1928,14 +1926,14 @@ export function InlineTransactionsEditor({
           categoryRulePrompt ? getCategoryIcon(categoryRulePrompt.newSlug) : undefined
         }
         onSkip={() => setCategoryRulePrompt(null)}
-        skipLabel={categoryRulePrompt?.existingRuleId ? "Cancel" : "Don't create rule"}
+        skipLabel={categoryRulePrompt?.existingRuleId ? t("imports.cancel", "Cancel") : t("imports.dontCreateRule")}
         onConfirm={async (payload) => {
           if (!user || !categoryRulePrompt) {
             setCategoryRulePrompt(null);
             return;
           }
           if (!categoryRulePrompt.newCategoryId) {
-            toast({ title: "Couldn't save rule", description: "Unknown category", variant: "destructive" });
+            toast({ title: t("imports.couldNotSaveRule"), description: t("imports.unknownCategory"), variant: "destructive" });
             setCategoryRulePrompt(null);
             return;
           }
@@ -1957,7 +1955,7 @@ export function InlineTransactionsEditor({
                 category: payload.category,
                 movement: payload.movement,
               });
-              toast({ title: "Rule updated" });
+              toast({ title: t("imports.ruleUpdated") });
             } else {
               // Create the rule (the primary path now — the stable dialog is where the
               // user confirms the pattern, account scope and time range). `prebuilt: true`
@@ -1979,12 +1977,14 @@ export function InlineTransactionsEditor({
             if (payload.matchingTransactionIds.length > 0) {
               const retroCount = payload.matchingTransactionIds.length;
               toast({
-                title: `${retroCount} transaction${retroCount === 1 ? "" : "s"} updated`,
+                title: retroCount === 1
+                  ? t("imports.transactionsUpdatedOne")
+                  : t("imports.transactionsUpdated", { count: retroCount }),
               });
             }
           } catch (err) {
             toast({
-              title: "Couldn't save rule",
+              title: t("imports.couldNotSaveRule"),
               description: err instanceof Error ? err.message : undefined,
               variant: "destructive",
             });

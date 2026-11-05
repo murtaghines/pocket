@@ -1,0 +1,63 @@
+{
+  "progress": {
+    "readingFile": "Leyendo archivo…",
+    "checkingDuplicates": "Verificando duplicados…",
+    "uploading": "Subiendo a tu bóveda…",
+    "readingWithAi": "Leyendo transacciones con IA…",
+    "analyzingImages": "Analizando imágenes con IA…",
+    "extractingFromImage": "Extrayendo transacciones de la imagen…",
+    "crossChecking": "Verificando con tus reglas…",
+    "almostDone": "Casi listo — finalizando…",
+    "categorizing": "Categorizando cada transacción…",
+    "verifying": "Verificando con el servidor…",
+    "saving": "Guardando transacciones…",
+    "done": "Listo · {{count}} transacciones nuevas"
+  },
+  "error": {
+    "fileEmpty": "El archivo está vacío",
+    "processingError": "Error de procesamiento",
+    "couldNotProcess": "No se pudo procesar el archivo",
+    "duplicateFile": "Archivo duplicado",
+    "duplicateFileDescription": "Este archivo ya fue procesado ({{fileName}}, {{count}} transacciones).",
+    "duplicateInvestmentDescription": "Este archivo ya fue procesado ({{fileName}}, {{count}} inversiones).",
+    "periodClosed": "Período cerrado",
+    "noAiCredits": "Sin créditos de IA",
+    "tooManyRequests": "Demasiadas solicitudes",
+    "couldNotReadFile": "No se pudo leer el archivo",
+    "cannotReadFileType": "No se puede leer el tipo de archivo: {{extension}}",
+    "notSignedIn": "Debes iniciar sesión para subir archivos.",
+    "noConnection": "Sin conexión",
+    "noConnectionDescription": "No puedes subir archivos sin conexión a internet.",
+    "couldNotUpload": "No se pudo subir el archivo (conexión interrumpida). Intenta de nuevo.",
+    "cantRetry": "No se puede reintentar",
+    "cantRetryOriginalUnavailable": "El archivo original ya no está disponible.",
+    "couldNotRedownload": "No se pudo volver a descargar el archivo original.",
+    "retryFailed": "Reintento fallido",
+    "retryFailedDescription": "No se pudo reintentar esta importación.",
+    "couldNotSaveInvestments": "No se pudieron guardar las inversiones",
+    "unknownError": "Error desconocido",
+    "genericError": "Error"
+  },
+  "toast": {
+    "newTransactions": "{{count}} transacciones nuevas",
+    "newTransactionsDistributed": "{{count}} transacciones nuevas distribuidas en {{breakdown}}",
+    "newInMonth": "{{count}} nuevas en {{month}}",
+    "duplicatesIgnored": ", {{count}} duplicados ignorados",
+    "skippedMonthsTitle": "Algunos meses fueron omitidos",
+    "skippedMonthsDescription": "Cerrados o no disponibles: {{list}}. Reábrelos para importar.",
+    "integrityVerified": "Integridad verificada",
+    "transfersLinked": "{{count}} transferencias vinculadas",
+    "retryComplete": "Reintento completado",
+    "retryCompleteDescription": "{{count}} transacción(es) nueva(s) agregada(s)",
+    "retryCompleteWithDuplicates": "{{count}} transacción(es) nueva(s) agregada(s), {{duplicates}} ya existían",
+    "investmentsSaved": "Inversiones guardadas",
+    "movementsSaved": "{{count}} movimientos guardados",
+    "movementsSavedWithDuplicates": "{{count}} movimientos guardados, {{duplicates}} duplicados ignorados"
+  },
+  "pdf": {
+    "scannedDetected": "PDF escaneado detectado",
+    "scannedDescription": "Leyendo {{count}} página(s) con IA de visión…",
+    "partiallyProcessed": "PDF parcialmente procesado",
+    "partiallyProcessedDescription": "Solo se procesaron {{processed}} de {{total}} páginas. Algunas transacciones podrían faltar."
+  }
+}

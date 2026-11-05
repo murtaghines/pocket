@@ -6,6 +6,7 @@ import {
   Trash2,
   Download,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export function UploadedFilesDropdown({
   isDeleting,
   pendingImportIds,
 }: UploadedFilesDropdownProps) {
+  const { t } = useTranslation("common");
   const count = imports.length;
   const pendingCount = imports.filter((i) => pendingImportIds.has(i.id)).length;
 
@@ -54,7 +56,7 @@ export function UploadedFilesDropdown({
           variant="outline"
           size="sm"
           disabled={count === 0}
-          title="View or delete uploaded files"
+          title={t("imports.uploadedFilesTooltipInv")}
           aria-label="Manage uploaded files"
           className={cn(
             "group h-8 md:h-9 gap-2 px-2 md:pl-3 md:pr-2 font-medium border-2 shadow-sm",
@@ -64,7 +66,7 @@ export function UploadedFilesDropdown({
           )}
         >
           <FileSpreadsheet className={cn("w-4 h-4", pendingCount > 0 ? "text-warning" : "text-primary")} />
-          <span className="hidden md:inline tabular-nums">Manage files</span>
+          <span className="hidden md:inline tabular-nums">{t("imports.manageFiles")}</span>
           <span
             className={cn(
               "inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums",
@@ -107,6 +109,7 @@ export function UploadedFilesHistoryList({
   isDeleting,
   pendingImportIds,
 }: UploadedFilesHistoryListProps) {
+  const { t } = useTranslation("common");
   const { formatMonth } = useLocalization();
   const { user } = useAuth();
 
@@ -172,12 +175,12 @@ export function UploadedFilesHistoryList({
 
   const statusIndicator = (imp: Import) => {
     if (imp.status === "FAILED") {
-      return <PillBadge tone="red">Failed</PillBadge>;
+      return <PillBadge tone="red">{t("imports.failedStatus")}</PillBadge>;
     }
     if (imp.status === "PARSED" || imp.status === "UPLOADED") {
       return (
         <PillBadge tone="amber">
-          {imp.status === "UPLOADED" ? "Uploading" : "Processing"}
+          {imp.status === "UPLOADED" ? t("imports.uploading") : t("imports.processing")}
         </PillBadge>
       );
     }
@@ -186,10 +189,10 @@ export function UploadedFilesHistoryList({
         <span
           className="inline-flex items-center gap-1 text-[11px] font-medium text-warning"
           aria-label="Unsaved changes"
-          title="This file has unsaved changes"
+          title={t("imports.unsavedChanges")}
         >
           <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
-          Unsaved
+          {t("imports.unsavedLabel")}
         </span>
       );
     }
@@ -218,17 +221,17 @@ export function UploadedFilesHistoryList({
       <div className="px-6 py-5 border-b border-border flex items-start justify-between gap-3 shrink-0">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold tracking-tight text-foreground leading-tight">
-            Uploaded files
+            {t("imports.uploadedFilesTitle")}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            All historical data
+            {t("imports.allHistoricalData")}
           </p>
         </div>
         <div className="flex items-center shrink-0 mt-1">
           <SheetClose
             className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label="Close panel"
-            title="Close"
+            title={t("imports.close")}
           >
             <ChevronRight className="w-4 h-4" />
           </SheetClose>
@@ -237,7 +240,7 @@ export function UploadedFilesHistoryList({
 
       {imports.length === 0 ? (
         <p className="text-sm text-muted-foreground py-12 text-center">
-          No files uploaded yet.
+          {t("imports.noFilesYet")}
         </p>
       ) : (
         <div className="flex-1 min-h-0 overflow-auto divide-y divide-border">
@@ -272,11 +275,11 @@ export function UploadedFilesHistoryList({
                     {fileSizeLabel(imp.file_size)}
                   </span>
                   <span aria-hidden>·</span>
-                  <span title="Upload date and time" className="tabular-nums">
+                  <span title={t("imports.uploadDateTime")} className="tabular-nums">
                     {formatUploadedAt(imp.uploaded_at)}
                   </span>
                   <span aria-hidden>·</span>
-                  <span className="capitalize" title="Months covered by this file">
+                  <span className="capitalize" title={t("imports.monthsCovered")}>
                     {monthsLabel(imp)}
                   </span>
                   {imp.transactions_count != null &&
@@ -298,7 +301,7 @@ export function UploadedFilesHistoryList({
                     download
                     target="_blank"
                     rel="noreferrer"
-                    title="Download original file"
+                    title={t("imports.downloadOriginal")}
                     className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -311,27 +314,25 @@ export function UploadedFilesHistoryList({
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-destructive"
                       disabled={isDeleting}
-                      title="Delete file"
+                      title={t("imports.deleteFile")}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete file?</AlertDialogTitle>
+                      <AlertDialogTitle>{t("imports.deleteFileTitle")}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently remove{" "}
-                        <strong>{imp.file_name}</strong> and all its
-                        movements. This action cannot be undone.
+                        {t("imports.deleteFileDescInv", { fileName: imp.file_name })}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => deleteImport(imp.id)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        Delete
+                        {t("delete")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

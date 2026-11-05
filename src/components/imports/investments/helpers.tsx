@@ -18,40 +18,46 @@ export const USER_TRACKED_FIELDS = new Set<string>([
   "is_hidden",
 ]);
 
-export const FIELD_LABELS: Record<string, string> = {
-  platform: "Platform",
-  asset_type: "Asset type",
-  description: "Description",
-  amount: "Amount",
-  date: "Date",
-  type: "Type",
-  is_hidden: "Visibility",
+const FIELD_LABEL_KEYS: Record<string, string> = {
+  platform: "imports.fieldPlatform",
+  asset_type: "imports.fieldAssetType",
+  description: "imports.fieldDescription",
+  amount: "imports.fieldAmount",
+  date: "imports.fieldDate",
+  type: "imports.fieldType",
+  is_hidden: "imports.fieldVisibility",
 };
+
+export function getFieldLabel(field: string, t: (key: string) => string): string {
+  const key = FIELD_LABEL_KEYS[field];
+  return key ? t(key) : field;
+}
 
 export function formatAuditValue(
   field: string,
   value: unknown,
   formatCurrency: (n: number) => string,
+  t?: (key: string) => string,
 ): string {
   if (value === null || value === undefined || value === "") return "—";
   if (field === "amount" && typeof value === "number") return formatCurrency(value);
-  if (field === "is_hidden") return value ? "Hidden" : "Visible";
+  if (field === "is_hidden") return value ? (t?.("imports.hidden") ?? "Hidden") : (t?.("imports.visible") ?? "Visible");
   if (field === "type" && typeof value === "string") {
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
   return String(value);
 }
 
-export function formatRelativeTime(iso: string): string {
+export function formatRelativeTime(iso: string, t?: (key: string, opts?: Record<string, unknown>) => string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const sec = Math.round(diffMs / 1000);
-  if (sec < 60) return "just now";
+  if (sec < 60) return t?.("imports.justNow") ?? "just now";
   const min = Math.round(sec / 60);
-  if (min < 60) return `${min}m ago`;
+  if (min < 60) return t?.("imports.minutesAgo", { count: min }) ?? `${min}m ago`;
   const hr = Math.round(min / 60);
-  if (hr < 24) return `${hr}h ago`;
+  if (hr < 24) return t?.("imports.hoursAgo", { count: hr }) ?? `${hr}h ago`;
   const days = Math.round(hr / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return t?.("imports.daysAgo", { count: days }) ?? `${days}d ago`;
   return new Date(iso).toLocaleDateString();
 }
 
