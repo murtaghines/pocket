@@ -45,4 +45,4 @@ jobs:
           fi
 
       - name: Deploy all edge functions
-        run: supabase functions deploy --project-ref "$PROJECT_REF"
+        run: supabase functions deploy --project-ref "$PROJECT_REF" --yes
