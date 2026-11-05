@@ -235,14 +235,26 @@ This phase is particularly relevant for Argentine users who invest across curren
 - Tab navigation (portfolio/activity/accounts) via NAV_SECTIONS
 - Full i18n (en + es)
 
-### Phase 2 — IN PROGRESS
+### Phase 2 — DONE
 - Migration: `investment_transactions` with BUY/SELL/DIVIDEND/FEE types
 - DB trigger: `process_investment_transaction()` auto-updates holdings on buy/sell
 - `useInvestmentTransactions` hook
-- RecordTransactionDialog
-- TransactionsList component (enhanced activity view)
+- RecordTransactionDialog with holding picker
+- TransactionsList component (enhanced activity view with type badges, realized P&L)
 - Enhanced ActivityTab with unified timeline + record button
 
+### Phase 3 — DONE
+- Migration: `get_portfolio_performance` RPC + `take_portfolio_snapshot` function
+- `usePortfolioPerformance` hook with period selector (1M/3M/6M/YTD/1Y/ALL)
+- PerformanceChart: dual-area chart (portfolio value vs cost basis), period toggle,
+  annualized return, manual snapshot button
+- Integrated into PortfolioTab
+
+### Enhancements
+- HoldingDetailDialog: click any holding to see KPIs, position details, quick actions
+  (record transaction, update price, close), and per-holding transaction history
+
 ## Next step
-- Apply migration and test end-to-end flow (add holding → record buy → verify qty updates)
-- Phase 3: Performance analytics, snapshot engine, performance charts
+- Apply all 3 migrations and test end-to-end
+- Phase 4: Multi-currency + dollar tracking
+- Phase 5: Polish (dividend calendar, fee analysis, rebalancing, CSV export)

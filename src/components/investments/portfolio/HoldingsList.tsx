@@ -9,6 +9,7 @@ import { useLocalization } from "@/hooks/useLocalization";
 import type { Holding } from "@/hooks/useHoldings";
 import { AddHoldingDialog } from "./AddHoldingDialog";
 import { UpdatePricePopover } from "./UpdatePricePopover";
+import { HoldingDetailDialog } from "./HoldingDetailDialog";
 import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
 
 type SortKey = "asset_name" | "current_value" | "unrealized_pnl" | "weight";
@@ -25,6 +26,7 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
   const [sortAsc, setSortAsc] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [priceHoldingId, setPriceHoldingId] = useState<string | null>(null);
+  const [detailHolding, setDetailHolding] = useState<Holding | null>(null);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -107,9 +109,10 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
                 const pnl = pnlPercent(h);
                 const cfg = ASSET_CLASS_CONFIG[h.asset_class] ?? ASSET_CLASS_CONFIG.other;
                 return (
-                  <div
+                  <button
                     key={h.id}
-                    className="bg-background border border-border rounded-xl p-3 flex items-center gap-3"
+                    onClick={() => setDetailHolding(h)}
+                    className="bg-background border border-border rounded-xl p-3 flex items-center gap-3 w-full text-left hover:border-primary/30 transition-colors"
                   >
                     <div
                       className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[14px] font-bold"
@@ -151,7 +154,7 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
                         {pnl.toFixed(1)}%
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -184,7 +187,7 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
                     const cfg = ASSET_CLASS_CONFIG[h.asset_class] ?? ASSET_CLASS_CONFIG.other;
                     const isPositive = h.unrealized_pnl >= 0;
                     return (
-                      <TableRow key={h.id}>
+                      <TableRow key={h.id} className="cursor-pointer" onClick={() => setDetailHolding(h)}>
                         <TableCell>
                           <div className="flex items-center gap-2.5">
                             <div
@@ -222,7 +225,7 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
                         </TableCell>
                         <TableCell className="text-right">
                           <button
-                            onClick={() => setPriceHoldingId(h.id)}
+                            onClick={(e) => { e.stopPropagation(); setPriceHoldingId(h.id); }}
                             className="inline-flex items-center gap-1 tabular-nums hover:text-primary transition-colors group"
                           >
                             {h.current_price != null
@@ -277,6 +280,13 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
           holdingId={priceHoldingId}
           currentPrice={holdings.find((h) => h.id === priceHoldingId)?.current_price ?? null}
           onClose={() => setPriceHoldingId(null)}
+        />
+      )}
+      {detailHolding && (
+        <HoldingDetailDialog
+          holding={detailHolding}
+          open={!!detailHolding}
+          onOpenChange={(open) => { if (!open) setDetailHolding(null); }}
         />
       )}
     </Card>
