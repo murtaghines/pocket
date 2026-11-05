@@ -107,7 +107,12 @@
     "positionClosed": "Position closed",
     "add": "Add",
     "adding": "Adding...",
-    "save": "Save"
+    "save": "Save",
+    "editHolding": "Edit Holding",
+    "holdingUpdated": "Holding updated",
+    "errorUpdating": "Error updating holding",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Optional notes"
   },
   "performance": {
     "title": "Performance",

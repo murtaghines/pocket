@@ -35,6 +35,7 @@ import type { Holding } from "@/hooks/useHoldings";
 import { useHoldings } from "@/hooks/useHoldings";
 import { UpdatePricePopover } from "./UpdatePricePopover";
 import { RecordTransactionDialog } from "../RecordTransactionDialog";
+import { EditHoldingDialog } from "./EditHoldingDialog";
 import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
 
 interface HoldingDetailDialogProps {
@@ -68,6 +69,7 @@ export function HoldingDetailDialog({
   const { deleteHolding } = useHoldings();
   const [showPrice, setShowPrice] = useState(false);
   const [showRecord, setShowRecord] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const cfg = ASSET_CLASS_CONFIG[holding.asset_class] ?? ASSET_CLASS_CONFIG.other;
@@ -185,8 +187,12 @@ export function HoldingDetailDialog({
               </span>
             </div>
 
+            {holding.notes && (
+              <p className="text-sm text-muted-foreground mb-4 italic">{holding.notes}</p>
+            )}
+
             {/* Actions */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 flex-wrap">
               <Button
                 size="sm"
                 variant="outline"
@@ -204,6 +210,15 @@ export function HoldingDetailDialog({
               >
                 <Pencil className="w-3.5 h-3.5" />
                 {t("portfolio.updatePrice")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => setShowEdit(true)}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                {t("portfolio.editHolding")}
               </Button>
               <Button
                 size="sm"
@@ -286,6 +301,11 @@ export function HoldingDetailDialog({
         open={showRecord}
         onOpenChange={setShowRecord}
         preselectedHolding={holding}
+      />
+      <EditHoldingDialog
+        holding={holding}
+        open={showEdit}
+        onOpenChange={setShowEdit}
       />
       <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
         <AlertDialogContent>

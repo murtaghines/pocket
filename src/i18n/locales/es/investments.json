@@ -105,7 +105,12 @@
     "positionClosed": "Posición cerrada",
     "add": "Agregar",
     "adding": "Agregando...",
-    "save": "Guardar"
+    "save": "Guardar",
+    "editHolding": "Editar Posición",
+    "holdingUpdated": "Posición actualizada",
+    "errorUpdating": "Error al actualizar posición",
+    "notesLabel": "Notas",
+    "notesPlaceholder": "Notas opcionales"
   },
   "performance": {
     "title": "Rendimiento",
