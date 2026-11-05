@@ -224,7 +224,25 @@ This phase is particularly relevant for Argentine users who invest across curren
   tracking. Holdings with actual quantities + prices replaces this entirely. Migration path:
   convert each `investment_accounts` row into a single holding per account.
 
+## Progress
+
+### Phase 1 — DONE
+- Migration: `holdings`, `portfolio_snapshots`, `get_portfolio_summary` RPC
+- `useHoldings` hook with CRUD + summary
+- Portfolio tab: KPIs, allocation charts (by asset class & account), sortable holdings table
+- AddHoldingDialog, UpdatePricePopover
+- ActivityTab wrapping existing deposit/withdrawal components
+- Tab navigation (portfolio/activity/accounts) via NAV_SECTIONS
+- Full i18n (en + es)
+
+### Phase 2 — IN PROGRESS
+- Migration: `investment_transactions` with BUY/SELL/DIVIDEND/FEE types
+- DB trigger: `process_investment_transaction()` auto-updates holdings on buy/sell
+- `useInvestmentTransactions` hook
+- RecordTransactionDialog
+- TransactionsList component (enhanced activity view)
+- Enhanced ActivityTab with unified timeline + record button
+
 ## Next step
-- **Phase 1 implementation.** Start with the migration, `useHoldings` hook, and the
-  Portfolio tab with HoldingsList + AllocationChart. The existing Activity (deposits/
-  withdrawals) and Accounts functionality stays as-is in their tabs.
+- Apply migration and test end-to-end flow (add holding → record buy → verify qty updates)
+- Phase 3: Performance analytics, snapshot engine, performance charts

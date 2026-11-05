@@ -425,6 +425,77 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          holding_id: string | null
+          account_id: string | null
+          type: string
+          ticker: string | null
+          asset_name: string | null
+          quantity: number
+          price_per_unit: number
+          total_amount: number
+          fee: number
+          currency: string
+          exchange_rate: number | null
+          realized_pnl: number | null
+          notes: string | null
+          date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          holding_id?: string | null
+          account_id?: string | null
+          type: string
+          ticker?: string | null
+          asset_name?: string | null
+          quantity?: number
+          price_per_unit?: number
+          fee?: number
+          currency?: string
+          exchange_rate?: number | null
+          notes?: string | null
+          date?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          holding_id?: string | null
+          account_id?: string | null
+          type?: string
+          ticker?: string | null
+          asset_name?: string | null
+          quantity?: number
+          price_per_unit?: number
+          fee?: number
+          currency?: string
+          exchange_rate?: number | null
+          notes?: string | null
+          date?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investment_transactions_holding_id_fkey"
+            columns: ["holding_id"]
+            isOneToOne: false
+            referencedRelation: "holdings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investment_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investments: {
         Row: {
           amount: number
