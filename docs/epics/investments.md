@@ -250,9 +250,17 @@ This phase is particularly relevant for Argentine users who invest across curren
   annualized return, manual snapshot button
 - Integrated into PortfolioTab
 
-### Enhancements
+### Enhancements — DONE
 - HoldingDetailDialog: click any holding to see KPIs, position details, quick actions
-  (record transaction, update price, close), and per-holding transaction history
+  (record transaction, update price, edit, close position), per-holding transaction history,
+  notes display. Close position has AlertDialog confirmation.
+- EditHoldingDialog: edit name, ticker, asset class, account, quantity, avg cost, notes
+- AddHoldingDialog: account selector linking holdings to investment accounts
+- AllocationChart: distinct titles for by-class vs by-account charts
+- HoldingsList: search/filter by name or ticker (appears at 5+ holdings), count badge
+- InvestmentSummaryCard (dashboard): shows portfolio value + P&L from holdings when available,
+  falls back to deposit/withdrawal totals when no holdings exist
+- Auto-snapshot: portfolio snapshot auto-taken after recording transactions or updating prices
 
 ## Next step
 - Apply all 3 migrations and test end-to-end
