@@ -596,6 +596,40 @@ export async function extractTransactions(input: ExtractionInput): Promise<Extra
     allTransactions = result.transactions || [];
   }
 
+  // Post-extraction dedup: when the AI extracts the same transaction twice
+  // (e.g. from a summary and detail section of a PDF), keep only the row whose
+  // running_balance fits the surrounding sequence. Two rows are "same" if they
+  // share date + amount + description; if their running_balance differs, one is
+  // a phantom from a summary/pocket section.
+  if (allTransactions.length > 1) {
+    const keyOf = (t: any) => {
+      const d = t.posted_date || t.date || '';
+      const a = parseFloat(t.amount_signed ?? t.amount ?? 0).toFixed(2);
+      const desc = (t.description_raw || t.description || '').toLowerCase().trim();
+      return `${d}|${a}|${desc}`;
+    };
+    const groups = new Map<string, any[]>();
+    for (const t of allTransactions) {
+      const k = keyOf(t);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(t);
+    }
+    let removed = 0;
+    const deduped: any[] = [];
+    for (const [, group] of groups) {
+      if (group.length === 1) { deduped.push(group[0]); continue; }
+      const balances = group.map(t => t.running_balance);
+      const allSameBalance = balances.every((b: any) => b == null || b === balances[0]);
+      if (allSameBalance) { deduped.push(...group); continue; }
+      deduped.push(group[0]);
+      removed += group.length - 1;
+    }
+    if (removed > 0) {
+      console.log(`[process-import] Post-extraction dedup: removed ${removed} phantom duplicate(s)`);
+      allTransactions = deduped;
+    }
+  }
+
   console.log(`[process-import] Total transactions parsed: ${allTransactions.length}`);
   return { transactions: allTransactions, aiInputTokens, aiOutputTokens, processingStrategy, lastAiError };
 }

@@ -1163,20 +1163,20 @@ const RULE_BUCKETS: RuleBucket[] = [
   },
 
 
-  // ── transfer / transfers_in ────────────────────────────────
-  // Generic incoming Bizum / transfer.
-  // LOW priority: only fires if no more specific income rule
-  // (salary, sales, refunds, rents, gifts…) matched first.
-  // Classified as TRANSFER (not INCOME) so it doesn't inflate
-  // income KPIs when money just moves between the user's own
-  // accounts.
+  // ── income / other_income ──────────────────────────────────
+  // Generic incoming Bizum / transfer from another person.
+  // Classified as INCOME: when the sender IS the user (own-account
+  // transfer), the name-match in Step 1 fires first at 0.99 and
+  // overrides this to TRANSFER/own_transfer. So this bucket only
+  // catches genuine third-party inflows.
   {
-    movement: 'TRANSFER',
-    category: 'transfers_in',
+    movement: 'INCOME',
+    category: 'other_income',
     rules: r([
       'BIZUM\\s*DE\\b',
       'BIZUM\\s*RECIBIDO',
       'BIZUM\\s*A\\s*FAVOR',
+      'DINERO\\s*A[NÑ]ADIDO\\s*A\\s*TRAV[EÉ]S\\s*DE\\s*BIZUM',
       'TRANSFERENCIA\\s*RECIBIDA',
       'TRANSFERENCIA\\s*A\\s*FAVOR',
       'TRANSFERENCIA\\s*INMEDIATA\\s*A\\s*FAVOR',
