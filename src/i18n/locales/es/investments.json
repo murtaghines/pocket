@@ -102,6 +102,14 @@
     "adding": "Agregando...",
     "save": "Guardar"
   },
+  "performance": {
+    "title": "Rendimiento",
+    "noData": "Sin snapshots aún — tomá uno para comenzar a trackear",
+    "takeSnapshot": "Tomar Snapshot",
+    "annualized": "Retorno anualizado",
+    "totalReturn": "Retorno Total",
+    "periodReturn": "Retorno del Período"
+  },
   "transactions": {
     "buy": "Compra",
     "sell": "Venta",

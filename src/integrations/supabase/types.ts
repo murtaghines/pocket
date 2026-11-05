@@ -1194,6 +1194,15 @@ export type Database = {
       }
       get_investment_summary: { Args: { p_user_id: string }; Returns: Json }
       get_portfolio_summary: { Args: { p_user_id: string }; Returns: Json }
+      get_portfolio_performance: {
+        Args: {
+          p_user_id: string
+          p_from?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      take_portfolio_snapshot: { Args: { p_user_id: string }; Returns: undefined }
       get_monthly_series: {
         Args: {
           p_domain: Database["public"]["Enums"]["app_domain"]

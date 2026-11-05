@@ -104,6 +104,14 @@
     "adding": "Adding...",
     "save": "Save"
   },
+  "performance": {
+    "title": "Performance",
+    "noData": "No snapshots yet — take one to start tracking",
+    "takeSnapshot": "Take Snapshot",
+    "annualized": "Annualized return",
+    "totalReturn": "Total Return",
+    "periodReturn": "Period Return"
+  },
   "transactions": {
     "buy": "Buy",
     "sell": "Sell",

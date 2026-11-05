@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PortfolioKpis } from "./PortfolioKpis";
 import { HoldingsList } from "./HoldingsList";
 import { AllocationChart } from "./AllocationChart";
+import { PerformanceChart } from "./PerformanceChart";
 import { useState } from "react";
 import { AddHoldingDialog } from "./AddHoldingDialog";
 
@@ -54,6 +55,8 @@ export function PortfolioTab() {
           totalValue={summary.totalValue}
         />
       </div>
+
+      <PerformanceChart />
 
       <HoldingsList holdings={holdings} totalValue={summary.totalValue} />
     </div>
