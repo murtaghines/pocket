@@ -1,16 +1,18 @@
 import { Loader2, FileText, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { PendingFileInfo } from "./types";
 
-export const PROCESSING_STAGES: { threshold: number; label: string }[] = [
-  { threshold: 18, label: "Read your file" },
-  { threshold: 28, label: "Checked for duplicates" },
-  { threshold: 38, label: "Uploaded securely" },
-  { threshold: 92, label: "Read transactions with AI" },
-  { threshold: 100, label: "Saved & categorized" },
-];
+const STAGE_KEYS = [
+  { threshold: 18, key: "imports.stageReadFile" },
+  { threshold: 28, key: "imports.stageCheckDuplicates" },
+  { threshold: 38, key: "imports.stageUploaded" },
+  { threshold: 92, key: "imports.stageReadAi" },
+  { threshold: 100, key: "imports.stageSaved" },
+] as const;
 
 export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
+  const { t } = useTranslation("common");
   return (
     <div className="rounded-xl border border-border/70 bg-card shadow-[0_2px_18px_-8px_rgb(8_8_8_/_0.08)] overflow-hidden">
       {/* Header */}
@@ -20,10 +22,10 @@ export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
         </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold text-foreground">
-            Processing your file{files.length > 1 ? "s" : ""}
+            {files.length > 1 ? t("imports.processingTitlePlural") : t("imports.processingTitle")}
           </div>
           <div className="text-[11px] text-muted-foreground">
-            This usually takes 20–60 seconds. You can keep working in another tab.
+            {t("imports.processingSubtitle")}
           </div>
         </div>
       </div>
@@ -38,8 +40,9 @@ export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
 }
 
 export function FileProgress({ file }: { file: PendingFileInfo }) {
+  const { t } = useTranslation("common");
   const pct = Math.max(0, Math.min(100, file.progressPercent ?? 0));
-  const label = file.progressLabel || "Preparing…";
+  const label = file.progressLabel || t("imports.preparing");
   const sizeKb = file.size ? Math.round(file.size / 102.4) / 10 : null;
 
   return (
@@ -78,14 +81,15 @@ export function FileProgress({ file }: { file: PendingFileInfo }) {
 
       {/* Stage checklist */}
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 pt-1">
-        {PROCESSING_STAGES.map((stage) => {
+        {STAGE_KEYS.map((stage) => {
           const done = pct >= stage.threshold;
           const active = !done && pct >= (
-            PROCESSING_STAGES[PROCESSING_STAGES.indexOf(stage) - 1]?.threshold ?? 0
+            STAGE_KEYS[STAGE_KEYS.indexOf(stage) - 1]?.threshold ?? 0
           );
+          const stageLabel = t(stage.key);
           return (
             <li
-              key={stage.label}
+              key={stage.key}
               className={cn(
                 "flex items-center gap-1.5 text-[11px]",
                 done
@@ -102,7 +106,7 @@ export function FileProgress({ file }: { file: PendingFileInfo }) {
               ) : (
                 <span className="w-3 h-3 rounded-full border border-border shrink-0" />
               )}
-              <span>{stage.label}</span>
+              <span>{stageLabel}</span>
             </li>
           );
         })}

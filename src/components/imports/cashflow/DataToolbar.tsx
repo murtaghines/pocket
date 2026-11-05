@@ -392,7 +392,7 @@ export function DataToolbar({
                   onClick={() => toggleMovementFilter(m)}
                   className="inline-flex items-center gap-1 px-2 py-[3px] text-[11px] font-medium rounded bg-primary/[0.08] text-primary hover:bg-primary/[0.14] transition-colors shrink-0"
                 >
-                  {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
+                  {m === "INCOME" ? t("imports.income") : m === "EXPENSE" ? t("imports.expense") : t("imports.transfer")}
                   <X className="w-3 h-3" />
                 </button>
               ))}
@@ -412,7 +412,7 @@ export function DataToolbar({
                 onClick={() => onFiltersChange({ ...filters, accounts: [], movements: [], categories: [] })}
                 className="text-[11px] text-muted-foreground hover:text-foreground shrink-0 px-1"
               >
-                Clear
+                {t("imports.clear")}
               </button>
             </div>
           )}
@@ -459,7 +459,7 @@ export function DataToolbar({
                           onCheckedChange={() => toggleMovementFilter(m)}
                         />
                         <span className="text-sm text-foreground">
-                          {m === "INCOME" ? "Income" : m === "EXPENSE" ? "Expense" : "Transfer"}
+                          {m === "INCOME" ? t("imports.income") : m === "EXPENSE" ? t("imports.expense") : t("imports.transfer")}
                         </span>
                       </label>
                     ))}

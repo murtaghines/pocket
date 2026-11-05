@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { Import } from "@/hooks/useImports";
@@ -23,6 +24,7 @@ export function MonthTabStrip({
   onShowLess,
   canShowLess,
 }: MonthTabStripProps) {
+  const { t } = useTranslation("common");
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollBy = (dir: -1 | 1) => {
     if (!scrollRef.current) return;
@@ -144,8 +146,8 @@ export function MonthTabStrip({
               size="sm"
               className="h-7 w-7 p-0 text-muted-foreground hover:bg-card"
               onClick={onShowLess}
-              title="Show fewer months"
-              aria-label="Show fewer months"
+              title={t("imports.showFewerMonths")}
+              aria-label={t("imports.showFewerMonths")}
             >
               <Minus className="w-3.5 h-3.5" />
             </Button>
@@ -155,8 +157,8 @@ export function MonthTabStrip({
             size="sm"
             className="h-7 w-7 p-0 text-muted-foreground hover:bg-card"
             onClick={onLoadMore}
-            title="Show one older month"
-            aria-label="Show one older month"
+            title={t("imports.showOlderMonth")}
+            aria-label={t("imports.showOlderMonth")}
           >
             <Plus className="w-3.5 h-3.5" />
           </Button>
