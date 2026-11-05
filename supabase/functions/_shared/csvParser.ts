@@ -67,6 +67,15 @@ const CURRENCY_HEADERS = new Set([
   'currency', 'moneda', 'divisa', 'währung', 'waehrung', 'devise', 'valuta', 'ccy',
 ]);
 
+const STATUS_HEADERS = new Set([
+  'state', 'status', 'estado', 'zustand', 'état', 'etat', 'stato', 'transaction state',
+  'transaction status',
+]);
+
+const SKIP_STATUSES = new Set([
+  'reverted', 'declined', 'cancelled', 'canceled', 'failed', 'reversed',
+]);
+
 // ─── Delimiter detection ────────────────────────────────────────────────────────
 
 const CANDIDATE_DELIMITERS = [',', ';', '\t', '|'] as const;
@@ -153,6 +162,7 @@ interface ColumnMap {
   credit: number | null;
   balance: number | null;
   currency: number | null;
+  status: number | null;
 }
 
 function findHeaderRow(
@@ -177,6 +187,7 @@ function findHeaderRow(
     let creditCol: number | null = null;
     let balanceCol: number | null = null;
     let currencyCol: number | null = null;
+    let statusCol: number | null = null;
 
     for (let c = 0; c < normalized.length; c++) {
       const h = normalized[c];
@@ -187,6 +198,7 @@ function findHeaderRow(
       else if (creditCol === null && CREDIT_HEADERS.has(h)) creditCol = c;
       else if (balanceCol === null && BALANCE_HEADERS.has(h)) balanceCol = c;
       else if (currencyCol === null && CURRENCY_HEADERS.has(h)) currencyCol = c;
+      else if (statusCol === null && STATUS_HEADERS.has(h)) statusCol = c;
     }
 
     // Minimum: date + description + (amount OR debit/credit)
@@ -202,6 +214,7 @@ function findHeaderRow(
           credit: creditCol,
           balance: balanceCol,
           currency: currencyCol,
+          status: statusCol,
         },
       };
     }
@@ -372,9 +385,16 @@ export function tryDeterministicParse(csvText: string): DeterministicParseResult
   const decimalStyle = inferDecimalStyle(sampleAmounts);
 
   const transactions: DeterministicRow[] = [];
+  let statusSkipped = 0;
 
   for (const line of dataLines) {
     const fields = splitCsvLine(line, delim);
+
+    // Skip non-completed transactions (REVERTED, DECLINED, etc.)
+    if (cols.status !== null) {
+      const statusVal = (fields[cols.status] ?? '').trim().toLowerCase();
+      if (SKIP_STATUSES.has(statusVal)) { statusSkipped++; continue; }
+    }
 
     // Parse date
     const dateRaw = fields[cols.date];
@@ -424,8 +444,10 @@ export function tryDeterministicParse(csvText: string): DeterministicParseResult
     });
   }
 
-  // Confidence check: if we parsed < 80% of data lines, the parser is misreading — bail.
-  const parseRate = transactions.length / dataLines.length;
+  // Confidence check: if we parsed < 80% of eligible data lines, the parser is misreading — bail.
+  // Status-skipped rows are intentionally excluded, not parse failures.
+  const eligibleLines = dataLines.length - statusSkipped;
+  const parseRate = eligibleLines > 0 ? transactions.length / eligibleLines : 0;
   if (parseRate < 0.8 || transactions.length === 0) return null;
 
   return {

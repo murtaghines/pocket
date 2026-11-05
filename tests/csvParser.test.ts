@@ -309,3 +309,42 @@ describe("Windows line endings (CRLF)", () => {
     expect(r!.transactions).toHaveLength(2);
   });
 });
+
+// ─── Status column filtering (REVERTED, DECLINED, etc.) ─────────────────────
+
+describe("status column filtering", () => {
+  const csv = `Date,Description,Amount,Currency,State,Balance
+2024-12-15,MERCADONA,-87.43,EUR,COMPLETED,1234.56
+2024-12-14,AIRBNB,-0.89,EUR,REVERTED,1322.00
+2024-12-13,NOMINA,2850.00,EUR,COMPLETED,3084.56
+2024-12-12,SPOTIFY,-9.99,EUR,COMPLETED,234.56
+2024-12-11,UBER,-12.50,EUR,COMPLETED,244.55
+2024-12-10,LIDL,-35.20,EUR,COMPLETED,257.05
+2024-12-09,FAILED TXN,-50.00,EUR,FAILED,292.25
+2024-12-08,CANCELLED,-25.00,EUR,CANCELLED,342.25
+2024-12-07,DECLINED,-10.00,EUR,DECLINED,367.25
+2024-12-06,VODAFONE,-29.99,EUR,COMPLETED,397.24`;
+
+  it("skips REVERTED, FAILED, CANCELLED, and DECLINED rows", () => {
+    const r = tryDeterministicParse(csv);
+    expect(r).not.toBeNull();
+    expect(r!.transactions).toHaveLength(6);
+    const descs = r!.transactions.map(t => t.description_raw);
+    expect(descs).toContain("MERCADONA");
+    expect(descs).toContain("NOMINA");
+    expect(descs).not.toContain("AIRBNB");
+    expect(descs).not.toContain("FAILED TXN");
+    expect(descs).not.toContain("CANCELLED");
+    expect(descs).not.toContain("DECLINED");
+  });
+
+  it("works without a status column (all rows kept)", () => {
+    const noStatusCsv = `Date,Description,Amount,Currency,Balance
+2024-12-15,MERCADONA,-87.43,EUR,1234.56
+2024-12-14,AIRBNB,-0.89,EUR,1322.00
+2024-12-13,NOMINA,2850.00,EUR,3084.56`;
+    const r = tryDeterministicParse(noStatusCsv);
+    expect(r).not.toBeNull();
+    expect(r!.transactions).toHaveLength(3);
+  });
+});
