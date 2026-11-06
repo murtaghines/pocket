@@ -1,14 +1,13 @@
-import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardFooter } from "@/components/layout/DashboardFooter";
+import { InvestmentsBand } from "@/components/investments/InvestmentsBand";
 import { PortfolioTab } from "@/components/investments/portfolio/PortfolioTab";
 import { ActivityTab } from "@/components/investments/ActivityTab";
 import { InvestmentAccountsManager } from "@/components/investments/InvestmentAccountsManager";
 import { useInvestments } from "@/hooks/useInvestments";
 
 export default function Investments() {
-  const { t } = useTranslation("investments");
   const [searchParams] = useSearchParams();
   const { accounts } = useInvestments();
 
@@ -16,7 +15,8 @@ export default function Investments() {
 
   return (
     <DashboardLayout>
-      <main className="w-full px-3 md:px-[34px]">
+      {tab === "portfolio" && <InvestmentsBand />}
+      <main className={`w-full px-3 md:px-[34px] ${tab === "portfolio" ? "md:mt-[-50px] relative z-10" : ""}`}>
         {tab === "portfolio" && <PortfolioTab />}
         {tab === "activity" && <ActivityTab />}
         {tab === "accounts" && <InvestmentAccountsManager accounts={accounts} />}

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -89,20 +88,20 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
 
   if (!hasTargets && !editing) {
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("rebalancing.title")}</CardTitle>
+      <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+        <div className="flex flex-row items-center justify-between px-6 pt-5 pb-3 shrink-0">
+          <h3 className="text-base font-semibold">{t("rebalancing.title")}</h3>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={startEditing}>
             <Settings2 className="w-3.5 h-3.5" />
             {t("rebalancing.setTargets")}
           </Button>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="px-6 pb-5 flex-1 min-h-0 flex items-center justify-center">
           <p className="text-sm text-muted-foreground text-center py-4">
             {t("rebalancing.noTargets")}
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -113,9 +112,9 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
     );
 
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("rebalancing.setTargets")}</CardTitle>
+      <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+        <div className="flex flex-row items-center justify-between px-6 pt-5 pb-3 shrink-0">
+          <h3 className="text-base font-semibold">{t("rebalancing.setTargets")}</h3>
           <div className="flex gap-2">
             <Button
               variant="ghost"
@@ -134,8 +133,8 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
               {t("portfolio.save")}
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="px-6 pb-5 flex-1 min-h-0 overflow-y-auto">
           <div className="flex flex-col gap-2">
             {ASSET_CLASS_KEYS.map((cls) => {
               const cfg = ASSET_CLASS_CONFIG[cls];
@@ -178,16 +177,16 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
               {draftTotal.toFixed(0)}%
             </span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+      <div className="flex flex-row items-center justify-between px-6 pt-5 pb-3 shrink-0">
         <div>
-          <CardTitle>{t("rebalancing.title")}</CardTitle>
+          <h3 className="text-base font-semibold">{t("rebalancing.title")}</h3>
           {totalTargetPct < 100 && (
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {t("rebalancing.allocated", { pct: totalTargetPct.toFixed(0) })}
@@ -198,8 +197,8 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
           <Settings2 className="w-3.5 h-3.5" />
           {t("rebalancing.edit")}
         </Button>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="px-6 pb-5 flex-1 min-h-0 overflow-y-auto">
         <div className="flex flex-col gap-2">
           {rows.map((r) => {
             const overweight = r.diff > 2;
@@ -270,7 +269,7 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

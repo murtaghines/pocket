@@ -1,5 +1,10 @@
 {
   "title": "Investments",
+  "band": {
+    "portfolioValue": "Portfolio value",
+    "holdings": "holdings",
+    "accounts": "accounts"
+  },
   "summary": {
     "totalValue": "Total Value",
     "totalInvested": "Total Invested",
