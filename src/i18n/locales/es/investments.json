@@ -171,6 +171,32 @@
     "errorDeleting": "Error al eliminar cotización",
     "currency": "Moneda"
   },
+  "insights": {
+    "totalDividends": "Dividendos",
+    "totalFees": "Comisiones Pagadas",
+    "realizedPnl": "P&L Realizado",
+    "payments": "pagos",
+    "ofVolume": "del volumen",
+    "fromSales": "de posiciones cerradas"
+  },
+  "rebalancing": {
+    "title": "Rebalanceo",
+    "setTargets": "Definir Objetivos",
+    "edit": "Editar",
+    "noTargets": "Definí porcentajes objetivo por clase de activo para ver sugerencias de rebalanceo.",
+    "total": "Total",
+    "totalExceeds100": "El total supera el 100%",
+    "saved": "Objetivos guardados",
+    "allocated": "{{pct}}% asignado"
+  },
+  "export": {
+    "button": "Exportar",
+    "holdings": "Posiciones (CSV)",
+    "transactions": "Transacciones (CSV)",
+    "all": "Todo (CSV)",
+    "noData": "Sin datos para exportar",
+    "exported": "Exportación descargada"
+  },
   "upload": {
     "title": "Subir Extracto de Inversiones",
     "description": "Sube el extracto de tu cuenta de inversiones para rastrear tu portafolio"

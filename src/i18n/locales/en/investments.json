@@ -173,6 +173,32 @@
     "errorDeleting": "Error deleting rate",
     "currency": "Currency"
   },
+  "insights": {
+    "totalDividends": "Dividends",
+    "totalFees": "Fees Paid",
+    "realizedPnl": "Realized P&L",
+    "payments": "payments",
+    "ofVolume": "of volume",
+    "fromSales": "from closed positions"
+  },
+  "rebalancing": {
+    "title": "Rebalancing",
+    "setTargets": "Set Targets",
+    "edit": "Edit",
+    "noTargets": "Set target allocation percentages per asset class to see rebalancing suggestions.",
+    "total": "Total",
+    "totalExceeds100": "Total target exceeds 100%",
+    "saved": "Targets saved",
+    "allocated": "{{pct}}% allocated"
+  },
+  "export": {
+    "button": "Export",
+    "holdings": "Holdings (CSV)",
+    "transactions": "Transactions (CSV)",
+    "all": "All (CSV)",
+    "noData": "No data to export",
+    "exported": "Export downloaded"
+  },
   "upload": {
     "title": "Upload Investment Statement",
     "description": "Upload your investment account statement to track your portfolio"

@@ -281,6 +281,22 @@ This phase is particularly relevant for Argentine users who invest across curren
 - `AddHoldingDialog`: added BRL to currency options
 - Full i18n (en + es) for all multicurrency keys
 
+### Phase 5: Polish — DONE
+- Migration: `target_allocations` table, `get_investment_insights` RPC
+  (dividends/fees/realized P&L aggregation with monthly breakdown)
+- `useInvestmentInsights` hook: calls RPC, returns totals + monthly series
+- `useTargetAllocations` hook: CRUD for target allocation percentages per asset class
+- `InsightsCards`: KPI cards for total dividends, total fees (as % of volume),
+  realized P&L — auto-hidden when no transactions exist
+- `RebalancingCard`: set target % per asset class, visual actual-vs-target bars,
+  deviation badges (overweight/underweight), inline editing mode
+- `ExportButton`: CSV export for holdings, transactions, or both — with proper
+  escaping and BOM for Excel compatibility
+- Integrated into PortfolioTab: export button in toolbar, insights cards after
+  allocation charts, rebalancing card before holdings list
+- Full i18n (en + es) for insights, rebalancing, and export keys
+
 ## Next step
-- Apply all 4 migrations and test end-to-end
-- Phase 5: Polish (dividend calendar, fee analysis, rebalancing, CSV export)
+- Apply all 5 migrations and test end-to-end
+- Remaining Phase 5 items: dividend calendar (ex-dates), tax lot tracking (FIFO/LIFO),
+  price alerts

@@ -7,6 +7,9 @@ import { PortfolioKpis } from "./PortfolioKpis";
 import { HoldingsList } from "./HoldingsList";
 import { AllocationChart } from "./AllocationChart";
 import { PerformanceChart } from "./PerformanceChart";
+import { InsightsCards } from "./InsightsCards";
+import { RebalancingCard } from "./RebalancingCard";
+import { ExportButton } from "./ExportButton";
 import { ExchangeRatesDialog } from "./ExchangeRatesDialog";
 import { useState } from "react";
 import { AddHoldingDialog } from "./AddHoldingDialog";
@@ -46,27 +49,32 @@ export function PortfolioTab() {
 
   return (
     <div className="flex flex-col gap-[16px]">
-      {isMultiCurrency && (
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs tabular-nums gap-1">
-            {t("multicurrency.displayIn")} {displayCurrency}
-          </Badge>
-          {summary.unconvertedCount != null && summary.unconvertedCount > 0 && (
-            <Badge variant="secondary" className="text-xs text-warning gap-1">
-              {t("multicurrency.unconvertedCount", { count: summary.unconvertedCount })}
+      <div className="flex items-center gap-2 flex-wrap">
+        {isMultiCurrency && (
+          <>
+            <Badge variant="outline" className="text-xs tabular-nums gap-1">
+              {t("multicurrency.displayIn")} {displayCurrency}
             </Badge>
-          )}
-          <Button
-            size="sm"
-            variant="ghost"
-            className="gap-1.5 text-xs ml-auto"
-            onClick={() => setRatesOpen(true)}
-          >
-            <ArrowLeftRight className="w-3.5 h-3.5" />
-            {t("multicurrency.manageRates")}
-          </Button>
+            {summary.unconvertedCount != null && summary.unconvertedCount > 0 && (
+              <Badge variant="secondary" className="text-xs text-warning gap-1">
+                {t("multicurrency.unconvertedCount", { count: summary.unconvertedCount })}
+              </Badge>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="gap-1.5 text-xs"
+              onClick={() => setRatesOpen(true)}
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+              {t("multicurrency.manageRates")}
+            </Button>
+          </>
+        )}
+        <div className="ml-auto">
+          <ExportButton holdings={holdings} />
         </div>
-      )}
+      </div>
       <PortfolioKpis summary={summary} pnlPercent={pnlPercent} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
@@ -82,7 +90,11 @@ export function PortfolioTab() {
         />
       </div>
 
+      <InsightsCards />
+
       <PerformanceChart />
+
+      <RebalancingCard summary={summary} />
 
       <HoldingsList holdings={holdings} totalValue={summary.totalValue} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
 
