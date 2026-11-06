@@ -12,6 +12,7 @@ import { DividendCalendar } from "./DividendCalendar";
 import { RebalancingCard } from "./RebalancingCard";
 import { ExportButton } from "./ExportButton";
 import { ExchangeRatesDialog } from "./ExchangeRatesDialog";
+import { CostMethodSelector } from "./CostMethodSelector";
 import { useState } from "react";
 import { AddHoldingDialog } from "./AddHoldingDialog";
 
@@ -72,6 +73,7 @@ export function PortfolioTab() {
             </Button>
           </>
         )}
+        <CostMethodSelector />
         <div className="ml-auto">
           <ExportButton holdings={holdings} />
         </div>

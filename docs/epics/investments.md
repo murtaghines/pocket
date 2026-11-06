@@ -324,5 +324,19 @@ This phase is particularly relevant for Argentine users who invest across curren
 - Auto-hidden when no dividend transactions exist
 - Full i18n (en + es)
 
+### Tax Lot Tracking (FIFO/LIFO) — DONE (2026-11-06)
+- Migration: `tax_lots` table, `tax_lot_disposals` table, `cost_method` on `user_preferences`
+- Enhanced `process_investment_transaction()` trigger: average cost for `cost_method='average'`,
+  defers to lot-based for FIFO/LIFO
+- New `process_tax_lots()` AFTER INSERT trigger: creates lots on BUY, consumes in FIFO/LIFO
+  order on SELL, records disposals with per-lot realized P&L
+- `useTaxLots` hook: `useTaxLots(holdingId)` returns open/closed lots, `useTaxLotDisposals(sellTransactionId)`
+- `TaxLotsSection` component: shows open lots per holding (acquired date, qty remaining/original,
+  cost per unit, remaining % bar) — integrated into HoldingDetailDialog
+- `CostMethodSelector` component: FIFO/LIFO/Average dropdown in PortfolioTab toolbar,
+  persists to `user_preferences.cost_method`
+- `CostMethod` type exported from `useUserPreferences`
+- Full i18n (en + es)
+
 ## Next step
-- Remaining Phase 5 items: tax lot tracking (FIFO/LIFO), price alerts
+- All planned phases complete. Remaining Phase 5 ideas (not planned): price alerts (requires external API, costs money)

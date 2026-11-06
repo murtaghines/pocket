@@ -218,6 +218,21 @@
     "showAll": "Show all ({{count}})",
     "showLess": "Show less"
   },
+  "taxLots": {
+    "title": "Tax Lots",
+    "fifo": "FIFO",
+    "lifo": "LIFO",
+    "average": "Average",
+    "costMethod": "Cost Method",
+    "openCount": "{{count}} open",
+    "closedCount": "{{count}} closed",
+    "acquired": "Acquired",
+    "remaining": "Remaining",
+    "lotCost": "Lot Cost",
+    "fifoDescription": "First In, First Out — sell oldest shares first",
+    "lifoDescription": "Last In, First Out — sell newest shares first",
+    "averageDescription": "Average cost basis across all shares"
+  },
   "smartImport": {
     "title": "Import Preview",
     "confirming": "Importing...",

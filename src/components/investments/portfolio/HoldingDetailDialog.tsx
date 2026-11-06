@@ -37,6 +37,7 @@ import { useHoldings } from "@/hooks/useHoldings";
 import { UpdatePricePopover } from "./UpdatePricePopover";
 import { RecordTransactionDialog } from "../RecordTransactionDialog";
 import { EditHoldingDialog } from "./EditHoldingDialog";
+import { TaxLotsSection } from "./TaxLotsSection";
 import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
 
 interface HoldingDetailDialogProps {
@@ -260,6 +261,9 @@ export function HoldingDetailDialog({
                 {t("portfolio.closePosition")}
               </Button>
             </div>
+
+            {/* Tax lots */}
+            <TaxLotsSection holdingId={holding.id} currency={holding.currency} />
 
             {/* Transaction history */}
             <div className="border-t border-border pt-3">

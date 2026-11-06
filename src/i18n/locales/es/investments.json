@@ -216,6 +216,21 @@
     "showAll": "Ver todos ({{count}})",
     "showLess": "Ver menos"
   },
+  "taxLots": {
+    "title": "Lotes Fiscales",
+    "fifo": "FIFO",
+    "lifo": "LIFO",
+    "average": "Promedio",
+    "costMethod": "Método de Costo",
+    "openCount": "{{count}} abiertos",
+    "closedCount": "{{count}} cerrados",
+    "acquired": "Adquirido",
+    "remaining": "Restante",
+    "lotCost": "Costo del Lote",
+    "fifoDescription": "Primero en entrar, primero en salir — vende las acciones más antiguas primero",
+    "lifoDescription": "Último en entrar, primero en salir — vende las acciones más nuevas primero",
+    "averageDescription": "Costo promedio de todas las acciones"
+  },
   "smartImport": {
     "title": "Vista previa de importación",
     "confirming": "Importando...",
