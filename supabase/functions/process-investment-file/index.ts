@@ -155,8 +155,39 @@ Amounts appear in both EUR and USD — use EUR as the primary currency.`,
     };
   }
 
-  // Revolut Trading Account Statement (PDF) — must come AFTER crypto checks
-  if (/revolut/i.test(content) && /account\s+statement/i.test(content) && !/crypto/i.test(content)) {
+  // Revolut General Account / Commodity CSV (Type,Product,Started Date,...)
+  if (/Type[,;]Product[,;]Started Date[,;]Completed Date[,;]Description[,;]Amount[,;]Fee[,;]Currency[,;]State/i.test(firstLines)) {
+    return {
+      broker: 'Revolut',
+      format: 'general_account_csv',
+      hint: `This is a Revolut general account statement CSV (covers commodities like gold/silver and currency exchanges).
+Columns: Type, Product, Started Date (YYYY-MM-DD HH:MM:SS), Completed Date, Description, Amount, Fee, Currency, State, Balance.
+Currency can be XAU (gold), XAG (silver), or standard currencies (EUR, USD, GBP).
+Type "Exchange" with Description "Exchanged to XAU/XAG" = commodity purchase → output as type "buy", asset_class "commodities", ticker "XAU" or "XAG".
+Fees are in the same currency as the commodity (e.g., fee in XAU).
+Only include rows where State is "COMPLETED".
+Convert dates to YYYY-MM-DD. Amounts are already standard decimals.`,
+    };
+  }
+
+  // Revolut Commodity Statement (PDF — "XAU Statement", "XAG Statement")
+  if (/revolut/i.test(content) && /XA[UG]\s+Statement/i.test(content)) {
+    return {
+      broker: 'Revolut',
+      format: 'commodity_statement_pdf',
+      hint: `This is a Revolut commodity (gold/silver) statement PDF.
+"Balance summary" shows opening/closing balances in XAU/XAG and EUR equivalent.
+"Account transactions" section has movements: "Exchanged to XAU" = buy, "Exchanged from XAU" = sell.
+The "Money in" column shows XAU/XAG received, "Money out" shows XAU/XAG sold or fees.
+Extract positions from the balance summary (closing balance as position) and transactions from the movements.
+asset_class is always "commodities". ticker is "XAU" for gold, "XAG" for silver.
+Currency is XAU/XAG for quantities — also note the EUR equivalent when shown (e.g., "€400.00" next to "0.094937 XAU").
+Use EUR as the currency in the output since that's the user's base currency, with quantity in commodity units.`,
+    };
+  }
+
+  // Revolut Trading Account Statement (PDF) — must come AFTER crypto and commodity checks
+  if (/revolut/i.test(content) && /account\s+statement/i.test(content) && !/crypto/i.test(content) && !/XA[UG]/i.test(content)) {
     return {
       broker: 'Revolut',
       format: 'trading_statement_pdf',
@@ -246,7 +277,7 @@ Each element represents a buy, sell, dividend, fee, deposit, or withdrawal:
 
 ## General rules
 - ticker: the instrument ticker/symbol. Null for cash movements or when not identifiable
-- asset_class: "stocks" for individual stocks and CEDEARs, "etf" for ETFs (including UCITS like QDVW), "bonds" for government and corporate bonds and letras, "fci" for mutual funds, "crypto" for cryptocurrency, "cash" for cash/currency, "real_estate" for REITs, "other" for anything else
+- asset_class: "stocks" for individual stocks and CEDEARs, "etf" for ETFs (including UCITS like QDVW), "bonds" for government and corporate bonds and letras, "fci" for mutual funds, "crypto" for cryptocurrency, "commodities" for gold (XAU), silver (XAG) and other precious metals, "cash" for cash/currency, "real_estate" for REITs, "other" for anything else
 - quantity: number of units. Fractional shares are common (e.g. 0.30252152). Use 0 for dividends/fees with no units
 - price_per_unit: price per unit. For lump-sum dividends/fees, put the total amount in price_per_unit with quantity 1
 - fee: commission/expenses. 0 if none or already included in the price
@@ -373,7 +404,7 @@ function normalizeAssetClass(ac: string | null): string {
     fci: 'fci', 'mutual fund': 'fci', 'mutual funds': 'fci', fund: 'fci', funds: 'fci', fondos: 'fci',
     cash: 'cash', currency: 'cash',
     'real estate': 'real_estate', real_estate: 'real_estate',
-    commodities: 'commodities', commodity: 'commodities',
+    commodities: 'commodities', commodity: 'commodities', gold: 'commodities', silver: 'commodities', xau: 'commodities', xag: 'commodities',
   };
   return map[lower] || 'other';
 }
@@ -386,7 +417,7 @@ function normalizeTransactionType(raw: string | null | undefined): string {
     buy: 'buy', compra: 'buy', 'buy - market': 'buy', 'buy - limit': 'buy',
     'trade-market': 'buy', 'trade-limit': 'buy',
     'liq suscripcion fci': 'buy', spinoff: 'buy', 'stock dividend': 'buy',
-    'dividendo en especie': 'buy',
+    'dividendo en especie': 'buy', exchange: 'buy',
     sell: 'sell', venta: 'sell', 'sell - market': 'sell', 'sell - limit': 'sell',
     amortization: 'sell', amortización: 'sell',
     dividend: 'dividend', dividendo: 'dividend', renta: 'dividend',
