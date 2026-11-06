@@ -44,8 +44,11 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     isProcessingMonth,
     getPendingCountForMonth,
     showPreview,
-    previewInvestments,
+    previewData,
+    previewStats,
     isConfirming,
+    saveExchangeRates,
+    setSaveExchangeRates,
     confirmPreview,
     cancelPreview,
   } = useMonthlyInvestmentUpload();
@@ -264,8 +267,11 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
 
       <InvestmentPreviewDialog
         isOpen={showPreview}
-        investments={previewInvestments}
+        previewData={previewData}
+        stats={previewStats}
         isConfirming={isConfirming}
+        saveExchangeRates={saveExchangeRates}
+        onSaveExchangeRatesChange={setSaveExchangeRates}
         onConfirm={confirmPreview}
         onCancel={cancelPreview}
       />

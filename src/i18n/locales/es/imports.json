@@ -52,7 +52,10 @@
     "retryCompleteWithDuplicates": "{{count}} transacción(es) nueva(s) agregada(s), {{duplicates}} ya existían",
     "investmentsSaved": "Inversiones guardadas",
     "movementsSaved": "{{count}} movimientos guardados",
-    "movementsSavedWithDuplicates": "{{count}} movimientos guardados, {{duplicates}} duplicados ignorados"
+    "movementsSavedWithDuplicates": "{{count}} movimientos guardados, {{duplicates}} duplicados ignorados",
+    "smartImportTx": "{{count}} transacciones",
+    "smartImportPositions": "{{count}} posiciones",
+    "smartImportRates": "{{count}} tipos de cambio"
   },
   "pdf": {
     "scannedDetected": "PDF escaneado detectado",

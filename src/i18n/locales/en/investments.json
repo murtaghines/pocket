@@ -202,5 +202,19 @@
   "upload": {
     "title": "Upload Investment Statement",
     "description": "Upload your investment account statement to track your portfolio"
+  },
+  "smartImport": {
+    "title": "Import Preview",
+    "confirming": "Importing...",
+    "confirmAndImport": "Import {{count}} items",
+    "positions": "Positions",
+    "positionsTitle": "Portfolio Positions",
+    "positionSnapshot": "snapshot",
+    "exchangeRatesTitle": "Exchange Rates",
+    "saveRates": "Save to portfolio",
+    "holdingsImpact": "Holdings Impact",
+    "noDataFound": "No investment data found in this file",
+    "showAll": "Show all {{count}}",
+    "showLess": "Show less"
   }
 }

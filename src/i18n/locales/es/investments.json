@@ -200,5 +200,19 @@
   "upload": {
     "title": "Subir Extracto de Inversiones",
     "description": "Sube el extracto de tu cuenta de inversiones para rastrear tu portafolio"
+  },
+  "smartImport": {
+    "title": "Vista previa de importación",
+    "confirming": "Importando...",
+    "confirmAndImport": "Importar {{count}} items",
+    "positions": "Posiciones",
+    "positionsTitle": "Posiciones del Portafolio",
+    "positionSnapshot": "snapshot",
+    "exchangeRatesTitle": "Tipos de Cambio",
+    "saveRates": "Guardar en portafolio",
+    "holdingsImpact": "Impacto en Posiciones",
+    "noDataFound": "No se encontraron datos de inversión en este archivo",
+    "showAll": "Ver todos ({{count}})",
+    "showLess": "Ver menos"
   }
 }
