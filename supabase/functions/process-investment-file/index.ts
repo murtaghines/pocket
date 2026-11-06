@@ -98,12 +98,113 @@ Columns may be split into ARS / USD MEP / USD Cable sections.`,
     };
   }
 
+  // ─── Revolut ────────────────────────────────────────────────────────────────
+
+  // Revolut Trading CSV
+  if (/Date[,;]Ticker[,;]Type[,;]Quantity[,;]Price per share[,;]Total Amount[,;]Currency[,;]FX Rate/i.test(firstLines)) {
+    return {
+      broker: 'Revolut',
+      format: 'trading_csv',
+      hint: `This is a Revolut Trading account CSV export.
+Columns: Date (ISO timestamp), Ticker, Type, Quantity, Price per share, Total Amount, Currency, FX Rate.
+Types: "CASH TOP-UP" → deposit, "CASH WITHDRAWAL" → withdrawal, "BUY - MARKET"/"BUY - LIMIT" → buy, "SELL - MARKET"/"SELL - LIMIT" → sell, "DIVIDEND" → dividend, "Spinoff" → buy with price 0 (stock split/spinoff).
+Total Amount and Price per share include currency prefix like "USD 200" or "EUR 184.42" — strip the prefix and output as plain number.
+Multi-currency: USD and EUR entries coexist in the same file. Keep each row's original currency.
+Fractional shares are common (e.g., quantity 0.30252152).
+FX Rate column is the EUR/base conversion rate — extract as exchange_rates when present.
+This file has ONLY transactions, no positions. Output positions as [].`,
+    };
+  }
+
+  // Revolut Crypto CSV
+  if (/Symbol[,;]Type[,;]Quantity[,;]Price[,;]Value[,;]Fees[,;]Date/i.test(firstLines)) {
+    return {
+      broker: 'Revolut Crypto',
+      format: 'crypto_csv',
+      hint: `This is a Revolut Crypto account CSV export.
+Columns: Symbol (e.g. BTC), Type (Buy/Sell), Quantity, Price (per unit with currency symbol like "€71,655.05"), Value (total with currency symbol), Fees (with currency symbol), Date (human-readable like "Jan 30, 2026, 8:11:48 PM").
+All amounts use European format with € prefix — strip currency symbols and convert to standard decimals: "€71,655.05" → 71655.05, "€100.00" → 100.0, "€1.48" → 1.48.
+asset_class is always "crypto". Convert dates to YYYY-MM-DD.`,
+    };
+  }
+
+  // Revolut Crypto Account Statement (PDF)
+  if (/revolut/i.test(content) && /crypto\s+account\s+statement/i.test(content)) {
+    return {
+      broker: 'Revolut Crypto',
+      format: 'crypto_statement_pdf',
+      hint: `This is a Revolut Crypto Account Statement PDF.
+Sections: "Account summary" (opening/closing values), "Portfolio breakdown" (current positions), "Transactions" (buy/sell history), "Staking rewards".
+Extract positions from "Portfolio breakdown" into the positions array.
+Extract buy/sell from "Transactions" into transactions array. asset_class is always "crypto".
+Fees are listed per transaction. Dates may be in "Jan 30, 2026, 8:11:48PM" format — convert to YYYY-MM-DD.
+Currency is typically EUR. Strip any currency symbols from amounts.`,
+    };
+  }
+
+  // Revolut Custom Statement / tax summary (PDF)
+  if (/revolut/i.test(content) && /custom\s+statement/i.test(content)) {
+    return {
+      broker: 'Revolut Crypto',
+      format: 'custom_statement_pdf',
+      hint: `This is a Revolut Custom Statement PDF (crypto tax summary).
+It contains "Crypto Summaries" (capital gains, staking income) and "End of Year holding statement" (positions).
+Extract positions from the "End of Year holding statement" table into the positions array: Symbol, Units held, Unit price, Value held.
+This is NOT a transaction file — output transactions as []. Focus on extracting the position snapshot.
+Amounts appear in both EUR and USD — use EUR as the primary currency.`,
+    };
+  }
+
+  // Revolut Trading Account Statement (PDF) — must come AFTER crypto checks
+  if (/revolut/i.test(content) && /account\s+statement/i.test(content) && !/crypto/i.test(content)) {
+    return {
+      broker: 'Revolut',
+      format: 'trading_statement_pdf',
+      hint: `This is a Revolut Trading Account Statement PDF.
+It has multiple sections per currency (e.g., "USD Account summary", "EUR Account summary"):
+1. "Portfolio breakdown" — extract into positions array: Symbol, Company, ISIN, Quantity, Price, Value, % of Portfolio
+2. "Transactions" — extract into transactions array: Date, Symbol, Type (Trade-Market/Trade-Limit/Cash top-up/Dividend/Spinoff), Quantity, Price, Side (Buy/Sell), Value, Fees, Commission
+Extract BOTH positions AND transactions.
+Types: "Trade - Market"/"Trade - Limit" with Side "Buy" → buy, Side "Sell" → sell. "Cash top-up" → deposit. "Cash withdrawal" → withdrawal. "Dividend" → dividend. "Spinoff" → buy with price 0.
+Multi-currency: USD and EUR sections on different pages. Keep each section's currency.
+Amounts have currency prefix like "US$200" or "€184.42" — strip and output as plain numbers.
+ISINs are shown in the portfolio breakdown — include them in the position's asset_name.`,
+    };
+  }
+
+  // ─── IOL (InvertirOnline) ───────────────────────────────────────────────────
+
+  // IOL exports HTML tables as .xls — detect by column headers
+  if (/Nro\.\s*de\s*Mov/i.test(firstLines) || /Tipo\s*Cuenta/i.test(firstLines) ||
+      (/Operaci[oó]n/i.test(firstLines) && /S[ií]mbolo/i.test(firstLines) && /Monto/i.test(firstLines))) {
+    return {
+      broker: 'IOL',
+      format: 'movements_html',
+      hint: `This is an IOL (InvertirOnline, Argentine broker) movements export. It's an HTML table served as .xls.
+Key columns: Fecha (DD/MM/YY), Nro. de Mov., Tipo Cuenta, Operación, Símbolo, Cantidad, Precio, Monto, Comis., IVA Com., Otros Imp.
+"Tipo Cuenta" ending in "Pesos" → currency ARS. Ending in "Dolares" → currency USD.
+"Monto" is the NET total (already includes commission). The sum of Comis. + IVA Com. + Otros Imp. = fee breakdown (for reference, don't double-count).
+Operations:
+- "Compra(TICKER)" → buy. "Venta(TICKER)" → sell
+- "Pago de Dividendos(TICKER)" → dividend
+- "Pago de Renta(TICKER)" → dividend (bond coupon)
+- "Pago de Amortización(TICKER)" → sell (bond capital repayment, note "amortization" in description)
+- "Crédito" (no ticker, small amounts, day 1) → deposit
+- "Transferencia de Titulos OUT/IN" → skip (internal transfer)
+Ticker suffix D/C (e.g., SUPVD, AL30D, AL30C) indicates dollar-settlement — strip the D/C suffix from the ticker, but ONLY when the Tipo Cuenta is "Dolares". "YPFD" is a real ticker, not a D-suffix.
+Argentine number format: "." = thousands, "," = decimal.
+USD operations often have a PAIRED ARS row with the same Nro. de Mov. — that ARS row contains the fees in pesos. Merge them: the USD row is the main transaction, the ARS row's amount is the fee (in ARS).
+Asset classes: CEDEARs (foreign tickers traded on BYMA) → stocks. Local Argentine stocks (GGAL, YPFD, PAMP) → stocks. Letras (tickers matching S/T + 2 digits + letter + 1 digit, like S31O5, T15E7) → bonds. Bonos soberanos (AL30, GD30, etc.) → bonds.
+Skip rows with Operación "Cancelada".`,
+    };
+  }
+
   return null;
 }
 
 // ─── AI prompt ───────────────────────────────────────────────────────────────
 
-const SMART_EXTRACTION_PROMPT = `You are a financial data extraction expert for investment broker statements. Extract ALL investment transactions and positions from the data.
+const SMART_EXTRACTION_PROMPT = `You are a financial data extraction expert for international investment broker statements. You handle brokers from any country — Revolut (Europe), IOL / Cocos / Balanz (Argentina), Interactive Brokers, Trade Republic, Degiro, and more. Extract ALL investment transactions and positions from the data.
 
 CRITICAL: Respond ONLY with a valid JSON object (no markdown, no explanation). The object has these arrays:
 
@@ -117,30 +218,67 @@ CRITICAL: Respond ONLY with a valid JSON object (no markdown, no explanation). T
 Each element represents a buy, sell, dividend, fee, deposit, or withdrawal:
 {
   "type": "buy"|"sell"|"dividend"|"fee"|"deposit"|"withdrawal",
-  "ticker": "MELI"|"AL30"|null,
-  "asset_name": "CEDEAR MERCADOLIBRE INC.",
-  "asset_class": "stocks"|"etf"|"bonds"|"crypto"|"fci"|"cash"|"commodities"|"other",
+  "ticker": "MELI"|"AL30"|"BTC"|null,
+  "asset_name": "MercadoLibre Inc.",
+  "asset_class": "stocks"|"etf"|"bonds"|"crypto"|"fci"|"cash"|"commodities"|"real_estate"|"other",
   "quantity": 10,
   "price_per_unit": 19970.00,
   "fee": 1570.64,
-  "currency": "ARS"|"USD"|"EUR",
+  "currency": "ARS"|"USD"|"EUR"|"GBP",
   "date": "2026-03-30",
-  "description": "Compra MELI x10 @ $19.970",
-  "exchange_rates": {"usd_mep": 1434.00, "usd_ccl": 1482.49, "usd_official": 1382.50}
+  "description": "Buy MELI x10 @ $19,970",
+  "isin": "US58733R1023",
+  "exchange_rates": {"usd_mep": 1434.00, "usd_ccl": 1482.49}
 }
 
-Rules:
-- type: "buy" for purchases, "sell" for sales, "dividend" for dividends/coupons/interest/rent, "fee" for standalone fees, "deposit" for cash into broker, "withdrawal" for cash out
+## Type mapping rules
+- "buy", "compra", "BUY - MARKET", "BUY - LIMIT", "Buy", "Liq Suscripcion Fci" → type "buy"
+- "sell", "venta", "SELL - MARKET", "SELL - LIMIT", "Sell" → type "sell"
+- "dividend", "dividendo", "DIVIDEND", "Pago de Renta", "renta", "coupon", "interest", "staking reward" → type "dividend"
+- "CASH TOP-UP", "deposit", "depósito", "Recibo De Cobro" → type "deposit"
+- "CASH WITHDRAWAL", "withdrawal", "retiro" → type "withdrawal"
+- "fee", "comisión", "commission" → type "fee"
+- "Spinoff", "stock split" → type "buy" with price_per_unit 0 (corporate action creating new shares)
+- "Amortización", "amortization" → type "sell" with description noting it was a bond amortization
+- "stock dividend", "dividendo en especie" → type "buy" with price_per_unit 0 (shares received as dividend)
+- "Transferencia entre brokers", "broker transfer" → SKIP (not an economic event)
+- "Nota De Credito Conversion", internal credit notes → SKIP
+
+## General rules
 - ticker: the instrument ticker/symbol. Null for cash movements or when not identifiable
-- asset_class: "stocks" for individual stocks and CEDEARs, "etf" for ETFs, "bonds" for government and corporate bonds, "fci" for mutual funds (FCI/fondos), "crypto" for cryptocurrency, "cash" for cash/currency, "other" for anything else
-- quantity: number of units. 0 for dividends/fees when no units are involved
-- price_per_unit: price per unit. 0 for dividends/fees when it's a lump sum (put the amount in price_per_unit and quantity as 1 in that case)
-- fee: commission/expenses. 0 if none or already included
-- currency: the currency the amounts are denominated in
-- date: always YYYY-MM-DD format
-- exchange_rates: only when the source data includes exchange rate information per row
-- ALL numbers must be standard decimal (no thousands separators). E.g., Argentine "96.525,00" → 96525.00
-- Amounts are always positive. The "type" field indicates direction
+- asset_class: "stocks" for individual stocks and CEDEARs, "etf" for ETFs (including UCITS like QDVW), "bonds" for government and corporate bonds and letras, "fci" for mutual funds, "crypto" for cryptocurrency, "cash" for cash/currency, "real_estate" for REITs, "other" for anything else
+- quantity: number of units. Fractional shares are common (e.g. 0.30252152). Use 0 for dividends/fees with no units
+- price_per_unit: price per unit. For lump-sum dividends/fees, put the total amount in price_per_unit with quantity 1
+- fee: commission/expenses. 0 if none or already included in the price
+- currency: the actual currency of the transaction. Multi-currency files are common — keep each row's original currency
+- date: always YYYY-MM-DD format. Convert from any source format (ISO timestamps, "Jan 30, 2026", DD-MM-YYYY, etc.)
+- isin: the ISIN code if present in the source data, null otherwise
+- exchange_rates: only when the source data includes per-row FX rate information
+- ALL numbers must be standard decimal format (no thousands separators). Convert locale-specific formats:
+  - Argentine: "96.525,00" → 96525.00 ("." = thousands, "," = decimal)
+  - European: "€71.655,05" → 71655.05 (strip currency symbol, same conversion)
+  - US/UK: "$1,234.56" → 1234.56 (strip currency symbol, "," = thousands, "." = decimal)
+  - Currency-prefixed: "USD 200" or "EUR 184.42" → strip the currency prefix, output plain number
+- Amounts are always positive. The "type" field indicates direction (buy = money out, sell = money in, etc.)
+
+## Broker-specific knowledge
+
+### Revolut Trading
+- Types: "CASH TOP-UP" → deposit, "CASH WITHDRAWAL" → withdrawal, "BUY - MARKET"/"BUY - LIMIT" → buy, "SELL - MARKET"/"SELL - LIMIT" → sell, "DIVIDEND" → dividend, "Spinoff" → buy (price 0)
+- FX Rate column = EUR-to-base conversion rate. Extract as exchange_rates
+- Multi-currency (USD + EUR) in single file — keep original currency per row
+
+### Revolut Crypto
+- Always asset_class "crypto". Fees are explicit per transaction
+- European number format with € prefix
+
+### Argentine brokers (IOL, Cocos Capital, Balanz)
+- CEDEARs: foreign stocks traded on BYMA — asset_class "stocks", keep the original ticker (MELI, AAPL, etc.)
+- Letras: short-term bonds, tickers like S31O5, T15E7 — asset_class "bonds"
+- Bonos soberanos: AL30, GD30, AE38, etc. — asset_class "bonds"
+- Exchange rates: Dólar MEP, Dólar CCL, Dólar Oficial — extract all as exchange_rates
+- IOL: USD operations may have paired ARS fee rows with same Nro. de Mov. — merge: USD row is the transaction, ARS row amount is the fee
+- "Pesos" = ARS, "Dólares" = USD
 
 ## exchange_rates array
 Unique exchange rates found in the file:
@@ -148,29 +286,32 @@ Unique exchange rates found in the file:
   "from": "USD",
   "to": "ARS",
   "rate": 1434.00,
-  "rate_type": "mep"|"ccl"|"official"|"custom",
+  "rate_type": "mep"|"ccl"|"official"|"spot"|"custom",
   "date": "2026-03-30"
 }
 - Deduplicate: one entry per unique (from, to, rate_type, date) combination
 - Only include if the file explicitly contains exchange rate data
+- For Revolut FX Rate column: from = row currency, to = "EUR", rate = the FX Rate value, rate_type = "spot"
 
 ## positions array
 Current holdings (only for position/portfolio snapshots, NOT transaction files):
 {
   "ticker": "MELI",
-  "asset_name": "CEDEAR MERCADOLIBRE INC.",
+  "asset_name": "MercadoLibre Inc.",
   "asset_class": "stocks",
   "quantity": 25,
   "current_price": 22150.00,
   "current_value": 553750.00,
-  "currency": "ARS"
+  "currency": "ARS",
+  "isin": "US58733R1023"
 }
 - Only populate for consolidated position / portfolio snapshot files
-- Leave empty [] for transaction-based files
+- Leave empty [] for transaction-only files
+- When a file has both positions and transactions (e.g., Revolut account statement), put each in its own array
 
 IMPORTANT:
 - Extract EVERY row. Do not skip or summarize
-- Skip internal transfers, credit notes, and purely informational rows that don't represent real economic events
+- Skip internal transfers, credit notes, cancelled operations, and purely informational rows that don't represent real economic events
 - When a file has both positions and transactions, put each in its own array
 - If no data for an array, return it as []
 `;
@@ -198,6 +339,10 @@ function normalizePlatform(platform: string): string {
     if (lower.includes('revolut')) return 'Revolut Savings';
     if (lower.includes('n26')) return 'N26 Savings';
     return 'Savings Account';
+  }
+  if (lower.includes('revolut')) {
+    if (lower.includes('crypto')) return 'Revolut Crypto';
+    return 'Revolut';
   }
   if (lower.includes('cocos')) return 'Cocos Capital';
   if (lower.includes('balanz')) return 'Balanz';
@@ -231,6 +376,28 @@ function normalizeAssetClass(ac: string | null): string {
     commodities: 'commodities', commodity: 'commodities',
   };
   return map[lower] || 'other';
+}
+
+// Map type strings from AI to our canonical 6 types
+function normalizeTransactionType(raw: string | null | undefined): string {
+  if (!raw) return 'buy';
+  const lower = raw.toLowerCase().trim();
+  const map: Record<string, string> = {
+    buy: 'buy', compra: 'buy', 'buy - market': 'buy', 'buy - limit': 'buy',
+    'trade-market': 'buy', 'trade-limit': 'buy',
+    'liq suscripcion fci': 'buy', spinoff: 'buy', 'stock dividend': 'buy',
+    'dividendo en especie': 'buy',
+    sell: 'sell', venta: 'sell', 'sell - market': 'sell', 'sell - limit': 'sell',
+    amortization: 'sell', amortización: 'sell',
+    dividend: 'dividend', dividendo: 'dividend', renta: 'dividend',
+    'pago de renta': 'dividend', coupon: 'dividend', interest: 'dividend',
+    'staking reward': 'dividend', 'staking rewards': 'dividend',
+    fee: 'fee', comisión: 'fee', commission: 'fee',
+    deposit: 'deposit', depósito: 'deposit', 'cash top-up': 'deposit',
+    'cash deposit': 'deposit', 'recibo de cobro': 'deposit',
+    withdrawal: 'withdrawal', retiro: 'withdrawal', 'cash withdrawal': 'withdrawal',
+  };
+  return map[lower] || 'buy';
 }
 
 // ─── Dedup fingerprint for investment_transactions ───────────────────────────
@@ -415,7 +582,7 @@ serve(async (req) => {
 
     // Normalize all transactions
     const normalizedTx = transactions.map((tx: any) => ({
-      type: ['buy', 'sell', 'dividend', 'fee', 'deposit', 'withdrawal'].includes(tx.type) ? tx.type : 'buy',
+      type: normalizeTransactionType(tx.type),
       ticker: tx.ticker || null,
       asset_name: tx.asset_name || tx.description || 'Unknown',
       asset_class: normalizeAssetClass(tx.asset_class),
