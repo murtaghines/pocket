@@ -6,6 +6,8 @@ import type { DisplayFormat } from '@/lib/displayFormat';
 
 export type DefaultPeriod = 'month' | 'week' | 'year';
 
+export type CostMethod = 'fifo' | 'lifo' | 'average';
+
 export interface UserPreferences {
   id: string;
   user_id: string;
@@ -22,6 +24,8 @@ export interface UserPreferences {
   display_format?: DisplayFormat;
   /** Dashboard view that opens by default. */
   default_period?: DefaultPeriod;
+  /** Tax lot cost method for realized gains calculation. */
+  cost_method?: CostMethod;
   created_at: string;
   updated_at: string;
 }

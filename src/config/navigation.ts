@@ -55,6 +55,12 @@ export const NAV_SECTIONS: NavSection[] = [
     i18nKey: "navigation.investments",
     icon: PiggyBank,
     match: ["/investments"],
+    defaultTab: "portfolio",
+    subTabs: [
+      { key: "portfolio", i18nKey: "navigation.tabs.investments.portfolio" },
+      { key: "activity", i18nKey: "navigation.tabs.investments.activity" },
+      { key: "accounts", i18nKey: "navigation.tabs.investments.accounts" },
+    ],
   },
   {
     key: "planning",

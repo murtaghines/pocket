@@ -252,6 +252,71 @@ export type Database = {
           },
         ]
       }
+      holdings: {
+        Row: {
+          id: string
+          user_id: string
+          account_id: string | null
+          ticker: string | null
+          asset_name: string
+          asset_class: string
+          quantity: number
+          avg_cost_per_unit: number
+          cost_basis: number
+          currency: string
+          current_price: number | null
+          current_value: number
+          unrealized_pnl: number
+          price_updated_at: string | null
+          is_closed: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          account_id?: string | null
+          ticker?: string | null
+          asset_name: string
+          asset_class?: string
+          quantity?: number
+          avg_cost_per_unit?: number
+          currency?: string
+          current_price?: number | null
+          price_updated_at?: string | null
+          is_closed?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          account_id?: string | null
+          ticker?: string | null
+          asset_name?: string
+          asset_class?: string
+          quantity?: number
+          avg_cost_per_unit?: number
+          currency?: string
+          current_price?: number | null
+          price_updated_at?: string | null
+          is_closed?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holdings_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imports: {
         Row: {
           account_id: string | null
@@ -360,6 +425,77 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          holding_id: string | null
+          account_id: string | null
+          type: string
+          ticker: string | null
+          asset_name: string | null
+          quantity: number
+          price_per_unit: number
+          total_amount: number
+          fee: number
+          currency: string
+          exchange_rate: number | null
+          realized_pnl: number | null
+          notes: string | null
+          date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          holding_id?: string | null
+          account_id?: string | null
+          type: string
+          ticker?: string | null
+          asset_name?: string | null
+          quantity?: number
+          price_per_unit?: number
+          fee?: number
+          currency?: string
+          exchange_rate?: number | null
+          notes?: string | null
+          date?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          holding_id?: string | null
+          account_id?: string | null
+          type?: string
+          ticker?: string | null
+          asset_name?: string | null
+          quantity?: number
+          price_per_unit?: number
+          fee?: number
+          currency?: string
+          exchange_rate?: number | null
+          notes?: string | null
+          date?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investment_transactions_holding_id_fkey"
+            columns: ["holding_id"]
+            isOneToOne: false
+            referencedRelation: "holdings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investment_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investments: {
         Row: {
           amount: number
@@ -452,6 +588,43 @@ export type Database = {
           resolved_category?: string | null
           resolved_confidence?: number | null
           sample_description?: string | null
+        }
+        Relationships: []
+      }
+      portfolio_snapshots: {
+        Row: {
+          id: string
+          user_id: string
+          snapshot_date: string
+          total_value: number
+          total_cost_basis: number
+          total_pnl: number
+          deposits_cumulative: number
+          withdrawals_cumulative: number
+          currency: string
+          breakdown: Json | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          snapshot_date: string
+          total_value: number
+          total_cost_basis: number
+          deposits_cumulative?: number
+          withdrawals_cumulative?: number
+          currency?: string
+          breakdown?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          snapshot_date?: string
+          total_value?: number
+          total_cost_basis?: number
+          deposits_cumulative?: number
+          withdrawals_cumulative?: number
+          currency?: string
+          breakdown?: Json | null
         }
         Relationships: []
       }
@@ -1020,6 +1193,16 @@ export type Database = {
         }[]
       }
       get_investment_summary: { Args: { p_user_id: string }; Returns: Json }
+      get_portfolio_summary: { Args: { p_user_id: string }; Returns: Json }
+      get_portfolio_performance: {
+        Args: {
+          p_user_id: string
+          p_from?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      take_portfolio_snapshot: { Args: { p_user_id: string }; Returns: undefined }
       get_monthly_series: {
         Args: {
           p_domain: Database["public"]["Enums"]["app_domain"]

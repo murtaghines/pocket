@@ -126,7 +126,8 @@
     "investedThisMonth": "invertido este mes",
     "noInvestments": "Sin inversiones registradas",
     "viewInvestments": "Ver inversiones",
-    "return": "Retorno"
+    "return": "Retorno",
+    "costBasis": "Costo base"
   },
   "period": {
     "title": "Períodos Contables",

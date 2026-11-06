@@ -52,7 +52,10 @@
     "retryCompleteWithDuplicates": "{{count}} new transaction(s) added, {{duplicates}} already existed",
     "investmentsSaved": "Investments saved",
     "movementsSaved": "{{count}} movements saved",
-    "movementsSavedWithDuplicates": "{{count}} movements saved, {{duplicates}} duplicates ignored"
+    "movementsSavedWithDuplicates": "{{count}} movements saved, {{duplicates}} duplicates ignored",
+    "smartImportTx": "{{count}} transactions",
+    "smartImportPositions": "{{count}} positions",
+    "smartImportRates": "{{count}} exchange rates"
   },
   "pdf": {
     "scannedDetected": "Scanned PDF detected",
