@@ -51,6 +51,9 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     setSaveExchangeRates,
     confirmPreview,
     cancelPreview,
+    updateTransaction,
+    removeTransaction,
+    removePosition,
   } = useMonthlyInvestmentUpload();
 
   const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
@@ -274,6 +277,9 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
         onSaveExchangeRatesChange={setSaveExchangeRates}
         onConfirm={confirmPreview}
         onCancel={cancelPreview}
+        onUpdateTransaction={updateTransaction}
+        onRemoveTransaction={removeTransaction}
+        onRemovePosition={removePosition}
       />
     </div>
   );

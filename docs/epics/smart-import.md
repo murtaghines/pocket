@@ -363,10 +363,23 @@ exchange rates, investments legacy row).
 
 ## Migration checklist
 
-- [ ] `ALTER TABLE investment_transactions ADD COLUMN import_id`
-- [ ] Enhanced `process_investment_transaction()` trigger with auto-create holding
-- [ ] Rewrite `process-investment-file/index.ts` with new prompt + processing
-- [ ] New `InvestmentPreviewDialog` (rich preview)
-- [ ] Update `useMonthlyInvestmentUpload` for new data shape
-- [ ] i18n keys for all new UI strings
-- [ ] Test with all 5 broker files
+- [x] `ALTER TABLE investment_transactions ADD COLUMN import_id`
+- [x] Enhanced `process_investment_transaction()` trigger with auto-create holding
+- [x] Rewrite `process-investment-file/index.ts` with new prompt + processing
+- [x] New `InvestmentPreviewDialog` (rich preview)
+- [x] Update `useMonthlyInvestmentUpload` for new data shape
+- [x] i18n keys for all new UI strings
+- [x] Row-level editing in preview (edit ticker, type, amounts; remove rows)
+- [ ] Test with all 5 broker files (manual — upload through UI after deploy)
+
+## Progress
+
+### Steps 1-5 — DONE (2026-11-06)
+- Migration `20261106130000_smart_import_bridge.sql`: import_id column + enhanced trigger
+- Edge function rewrite: format detection (Balanz CSV, Cocos CSV, 3 PDF types, generic),
+  rich AI prompt, smart confirm path with cross-import dedup, position snapshot import,
+  exchange rate capture, backward-compatible legacy path
+- InvestmentPreviewDialog rewrite: type badges, ticker/qty/price columns, holdings impact,
+  exchange rates toggle, position snapshot section
+- useMonthlyInvestmentUpload: smartImportData confirm path, invalidates holdings/transactions/portfolio queries
+- Full i18n (en + es)

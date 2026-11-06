@@ -329,6 +329,31 @@ export function useMonthlyInvestmentUpload() {
     setPendingImportId(null);
   }, []);
 
+  const updateTransaction = useCallback((index: number, updated: SmartImportPreview["transactions"][number]) => {
+    setPreviewData((prev) => {
+      if (!prev) return prev;
+      const txs = [...prev.transactions];
+      txs[index] = updated;
+      return { ...prev, transactions: txs };
+    });
+  }, []);
+
+  const removeTransaction = useCallback((index: number) => {
+    setPreviewData((prev) => {
+      if (!prev) return prev;
+      const txs = prev.transactions.filter((_, i) => i !== index);
+      return { ...prev, transactions: txs };
+    });
+  }, []);
+
+  const removePosition = useCallback((index: number) => {
+    setPreviewData((prev) => {
+      if (!prev) return prev;
+      const positions = prev.positions.filter((_, i) => i !== index);
+      return { ...prev, positions };
+    });
+  }, []);
+
   return {
     pendingFilesByMonth,
     addFilesForMonth,
@@ -345,5 +370,8 @@ export function useMonthlyInvestmentUpload() {
     setSaveExchangeRates,
     confirmPreview,
     cancelPreview,
+    updateTransaction,
+    removeTransaction,
+    removePosition,
   };
 }

@@ -296,7 +296,23 @@ This phase is particularly relevant for Argentine users who invest across curren
   allocation charts, rebalancing card before holdings list
 - Full i18n (en + es) for insights, rebalancing, and export keys
 
+### Smart Import — DONE (2026-11-06)
+- See `docs/epics/smart-import.md` for full details
+- Migration: `import_id` on `investment_transactions`, enhanced trigger auto-creates holdings
+- Edge function: format detection (Balanz/Cocos CSV + PDF), rich AI extraction,
+  smart confirm with dedup, position snapshots, exchange rate capture
+- UI: rich preview dialog (type badges, ticker/qty/price, holdings impact, exchange rates toggle)
+- Hook: smartImportData confirm path, invalidates all portfolio queries
+
+### Smart Import Row Editing — DONE (2026-11-06)
+- Inline editing in smart import preview: tap pencil icon to expand transaction row
+  into editable form (type, ticker, asset class, currency, quantity, price, fee)
+- Remove button (trash icon) on each transaction and position row
+- Callbacks in `useMonthlyInvestmentUpload`: `updateTransaction`, `removeTransaction`, `removePosition`
+- Wired through `InvestmentTabsView` → `InvestmentPreviewDialog`
+- Mobile-friendly: edit/remove buttons always visible on touch, hover-reveal on desktop
+- Full i18n (en + es)
+
 ## Next step
-- Apply all 5 migrations and test end-to-end
 - Remaining Phase 5 items: dividend calendar (ex-dates), tax lot tracking (FIFO/LIFO),
   price alerts

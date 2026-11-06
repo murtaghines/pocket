@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Loader2,
   AlertCircle,
@@ -14,6 +22,9 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  Pencil,
+  Trash2,
+  Check,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
@@ -88,6 +99,9 @@ interface InvestmentPreviewDialogProps {
   onSaveExchangeRatesChange: (save: boolean) => void;
   onConfirm: () => Promise<void>;
   onCancel: () => void;
+  onUpdateTransaction?: (index: number, updated: SmartImportTransaction) => void;
+  onRemoveTransaction?: (index: number) => void;
+  onRemovePosition?: (index: number) => void;
 }
 
 // ─── Type badge config ──────────────────────────────────────────────────────
@@ -176,6 +190,9 @@ export function InvestmentPreviewDialog({
   onSaveExchangeRatesChange,
   onConfirm,
   onCancel,
+  onUpdateTransaction,
+  onRemoveTransaction,
+  onRemovePosition,
 }: InvestmentPreviewDialogProps) {
   const { t } = useTranslation("investments");
   const { t: tc } = useTranslation("common");
@@ -314,9 +331,18 @@ export function InvestmentPreviewDialog({
                   {t("transactions.title")} ({transactions.length})
                 </h3>
                 <div className="space-y-1.5">
-                  {visibleTx.map((tx, idx) => (
-                    <TransactionRow key={idx} tx={tx} />
-                  ))}
+                  {visibleTx.map((tx, idx) => {
+                    const realIdx = showAllTx ? idx : idx;
+                    return (
+                      <TransactionRow
+                        key={realIdx}
+                        tx={tx}
+                        index={realIdx}
+                        onUpdate={onUpdateTransaction}
+                        onRemove={onRemoveTransaction}
+                      />
+                    );
+                  })}
                 </div>
                 {transactions.length > TX_PREVIEW_LIMIT && (
                   <button
@@ -350,7 +376,12 @@ export function InvestmentPreviewDialog({
                 </h3>
                 <div className="space-y-1.5">
                   {positions.map((pos, idx) => (
-                    <PositionRow key={idx} pos={pos} />
+                    <PositionRow
+                      key={idx}
+                      pos={pos}
+                      index={idx}
+                      onRemove={onRemovePosition}
+                    />
                   ))}
                 </div>
               </div>
@@ -424,15 +455,143 @@ function SummaryCard({
   );
 }
 
-function TransactionRow({ tx }: { tx: SmartImportTransaction }) {
+const TX_TYPES = ["buy", "sell", "dividend", "fee", "deposit", "withdrawal"] as const;
+const ASSET_CLASSES = ["stocks", "etf", "bonds", "fci", "crypto", "cash", "other"] as const;
+
+function TransactionRow({
+  tx,
+  index,
+  onUpdate,
+  onRemove,
+}: {
+  tx: SmartImportTransaction;
+  index: number;
+  onUpdate?: (index: number, updated: SmartImportTransaction) => void;
+  onRemove?: (index: number) => void;
+}) {
+  const { t } = useTranslation("investments");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(tx);
+
   const total =
     tx.quantity > 0 && tx.price_per_unit > 0
       ? tx.quantity * tx.price_per_unit
       : tx.price_per_unit;
 
+  const commitEdit = () => {
+    if (onUpdate) onUpdate(index, draft);
+    setEditing(false);
+  };
+
+  const startEdit = () => {
+    setDraft(tx);
+    setEditing(true);
+  };
+
+  if (editing) {
+    return (
+      <div className="rounded-xl bg-muted p-3 space-y-2 ring-1 ring-primary/30">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+            {t("smartImport.editRow")}
+          </span>
+          <button
+            onClick={commitEdit}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary"
+          >
+            <Check className="w-3.5 h-3.5" />
+            {t("smartImport.done")}
+          </button>
+        </div>
+        {/* Type + Ticker */}
+        <div className="grid grid-cols-2 gap-2">
+          <Select
+            value={draft.type}
+            onValueChange={(v) => setDraft({ ...draft, type: v as SmartImportTransaction["type"] })}
+          >
+            <SelectTrigger className="h-8 text-[12px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TX_TYPES.map((t_) => (
+                <SelectItem key={t_} value={t_}>
+                  {t(`transactions.${t_}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            value={draft.ticker || ""}
+            onChange={(e) => setDraft({ ...draft, ticker: e.target.value || null })}
+            placeholder={t("smartImport.tickerPlaceholder")}
+            className="h-8 text-[12px]"
+          />
+        </div>
+        {/* Asset class + Currency */}
+        <div className="grid grid-cols-2 gap-2">
+          <Select
+            value={draft.asset_class}
+            onValueChange={(v) => setDraft({ ...draft, asset_class: v })}
+          >
+            <SelectTrigger className="h-8 text-[12px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ASSET_CLASSES.map((ac) => (
+                <SelectItem key={ac} value={ac}>
+                  {t(`byAssetType.types.${ac}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            value={draft.currency}
+            onChange={(e) => setDraft({ ...draft, currency: e.target.value.toUpperCase() })}
+            placeholder="USD"
+            className="h-8 text-[12px] uppercase"
+            maxLength={3}
+          />
+        </div>
+        {/* Qty + Price + Fee */}
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <label className="text-[10px] text-muted-foreground">{t("transactions.quantity")}</label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={draft.quantity || ""}
+              onChange={(e) => setDraft({ ...draft, quantity: parseFloat(e.target.value) || 0 })}
+              className="h-8 text-[12px] tabular-nums"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground">{t("transactions.pricePerUnit")}</label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={draft.price_per_unit || ""}
+              onChange={(e) => setDraft({ ...draft, price_per_unit: parseFloat(e.target.value) || 0 })}
+              className="h-8 text-[12px] tabular-nums"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground">{t("transactions.feeLabel")}</label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={draft.fee || ""}
+              onChange={(e) => setDraft({ ...draft, fee: parseFloat(e.target.value) || 0 })}
+              className="h-8 text-[12px] tabular-nums"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-xl bg-muted p-3 space-y-1.5">
-      {/* Row 1: type badge + ticker + amount */}
+    <div className="rounded-xl bg-muted p-3 space-y-1.5 group">
+      {/* Row 1: type badge + ticker + actions + amount */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <TypeBadge type={tx.type} />
@@ -442,9 +601,29 @@ function TransactionRow({ tx }: { tx: SmartImportTransaction }) {
             </span>
           )}
         </div>
-        <span className="text-sm font-semibold tabular-nums shrink-0 text-foreground">
-          {formatAmount(total, tx.currency)}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onUpdate && (
+            <button
+              onClick={startEdit}
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-background/60 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+              aria-label={t("smartImport.editRow")}
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {onRemove && (
+            <button
+              onClick={() => onRemove(index)}
+              className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+              aria-label={t("smartImport.removeRow")}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <span className="text-sm font-semibold tabular-nums text-foreground">
+            {formatAmount(total, tx.currency)}
+          </span>
+        </div>
       </div>
       {/* Row 2: details */}
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -472,9 +651,18 @@ function TransactionRow({ tx }: { tx: SmartImportTransaction }) {
   );
 }
 
-function PositionRow({ pos }: { pos: SmartImportPosition }) {
+function PositionRow({
+  pos,
+  index,
+  onRemove,
+}: {
+  pos: SmartImportPosition;
+  index: number;
+  onRemove?: (index: number) => void;
+}) {
+  const { t } = useTranslation("investments");
   return (
-    <div className="rounded-xl bg-muted p-3 flex items-center justify-between gap-2">
+    <div className="rounded-xl bg-muted p-3 flex items-center justify-between gap-2 group">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           {pos.ticker && (
@@ -490,12 +678,23 @@ function PositionRow({ pos }: { pos: SmartImportPosition }) {
           {pos.asset_name}
         </p>
       </div>
-      <div className="text-right shrink-0">
-        <div className="text-sm font-semibold tabular-nums text-foreground">
-          {formatAmount(pos.current_value, pos.currency)}
-        </div>
-        <div className="text-[11px] text-muted-foreground tabular-nums">
-          {formatQty(pos.quantity)} × {formatAmount(pos.current_price, pos.currency)}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {onRemove && (
+          <button
+            onClick={() => onRemove(index)}
+            className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            aria-label={t("smartImport.removeRow")}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+        <div className="text-right">
+          <div className="text-sm font-semibold tabular-nums text-foreground">
+            {formatAmount(pos.current_value, pos.currency)}
+          </div>
+          <div className="text-[11px] text-muted-foreground tabular-nums">
+            {formatQty(pos.quantity)} × {formatAmount(pos.current_price, pos.currency)}
+          </div>
         </div>
       </div>
     </div>

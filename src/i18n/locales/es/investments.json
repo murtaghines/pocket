@@ -213,6 +213,10 @@
     "holdingsImpact": "Impacto en Posiciones",
     "noDataFound": "No se encontraron datos de inversión en este archivo",
     "showAll": "Ver todos ({{count}})",
-    "showLess": "Ver menos"
+    "showLess": "Ver menos",
+    "editRow": "Editar",
+    "removeRow": "Eliminar",
+    "done": "Listo",
+    "tickerPlaceholder": "AAPL, BTC..."
   }
 }
