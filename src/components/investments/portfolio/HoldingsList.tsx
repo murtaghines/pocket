@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -95,16 +94,16 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
   );
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <CardTitle>
+    <div className="rounded-xl bg-card shadow-section overflow-hidden flex flex-col">
+      <div className="flex flex-row items-center justify-between gap-3 px-6 pt-5 pb-3 shrink-0">
+        <h3 className="text-base font-semibold flex items-center gap-2">
           {t("portfolio.holdings")}
           {holdings.length > 0 && (
-            <Badge variant="secondary" className="ml-2 text-xs tabular-nums">
+            <Badge variant="secondary" className="text-xs tabular-nums">
               {holdings.length}
             </Badge>
           )}
-        </CardTitle>
+        </h3>
         <div className="flex items-center gap-2">
           {holdings.length > 5 && (
             <div className="relative">
@@ -122,8 +121,8 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
             {t("portfolio.addHolding")}
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="px-6 pb-5">
         {holdings.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground text-sm mb-4">
@@ -315,7 +314,7 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
             </div>
           </>
         )}
-      </CardContent>
+      </div>
 
       <AddHoldingDialog open={addOpen} onOpenChange={setAddOpen} />
       {priceHoldingId && (
@@ -332,6 +331,6 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
           onOpenChange={(open) => { if (!open) setDetailHolding(null); }}
         />
       )}
-    </Card>
+    </div>
   );
 }
