@@ -153,7 +153,7 @@ export function DividendCalendar() {
         {/* Per-holding breakdown */}
         {data.byHolding.length > 0 && (
           <div className="space-y-1">
-            <h4 className="text-[12px] font-medium text-muted-foreground uppercase tracking-wide">
+            <h4 className="text-[13px] font-medium text-muted-foreground">
               {t("dividends.byHolding")}
             </h4>
             <div className="space-y-1">
@@ -189,7 +189,7 @@ export function DividendCalendar() {
         {/* Quarterly summary */}
         {data.byQuarter.length > 1 && (
           <div className="space-y-1">
-            <h4 className="text-[12px] font-medium text-muted-foreground uppercase tracking-wide">
+            <h4 className="text-[13px] font-medium text-muted-foreground">
               {t("dividends.byQuarter")}
             </h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -231,7 +231,7 @@ function KpiMini({
     <div className="rounded-xl bg-muted p-3">
       <div className={cn("flex items-center gap-1.5 mb-1", color)}>
         {icon}
-        <span className="text-[11px] font-semibold uppercase tracking-wide">
+        <span className="text-[13px] font-medium">
           {label}
         </span>
       </div>
