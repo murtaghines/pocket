@@ -92,10 +92,10 @@ export function ExchangeRatesDialog({ open, onOpenChange }: ExchangeRatesDialogP
           </p>
 
           {/* Add rate form */}
-          <div className="flex flex-col gap-3 mb-5 p-4 bg-muted/50 rounded-xl">
+          <div className="flex flex-col gap-3 mb-5 p-4 bg-muted rounded-xl">
             <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-end">
               <div className="flex flex-col gap-1.5">
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                <Label className="text-[13px] font-medium text-muted-foreground">
                   {t("multicurrency.from")}
                 </Label>
                 <Select value={fromCurrency} onValueChange={setFromCurrency}>
@@ -111,7 +111,7 @@ export function ExchangeRatesDialog({ open, onOpenChange }: ExchangeRatesDialogP
               </div>
               <ArrowRight className="w-4 h-4 text-muted-foreground mb-3" />
               <div className="flex flex-col gap-1.5">
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                <Label className="text-[13px] font-medium text-muted-foreground">
                   {t("multicurrency.to")}
                 </Label>
                 <Select value={toCurrency} onValueChange={setToCurrency}>
@@ -128,7 +128,7 @@ export function ExchangeRatesDialog({ open, onOpenChange }: ExchangeRatesDialogP
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1.5">
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                <Label className="text-[13px] font-medium text-muted-foreground">
                   {t("multicurrency.rate")}
                 </Label>
                 <Input
@@ -142,7 +142,7 @@ export function ExchangeRatesDialog({ open, onOpenChange }: ExchangeRatesDialogP
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                <Label className="text-[13px] font-medium text-muted-foreground">
                   {t("multicurrency.rateType")}
                 </Label>
                 <Select value={rateType} onValueChange={(v) => setRateType(v as RateType)}>
@@ -176,33 +176,37 @@ export function ExchangeRatesDialog({ open, onOpenChange }: ExchangeRatesDialogP
               {t("multicurrency.noOverrides")}
             </p>
           ) : (
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               {overrides.map((o) => (
                 <div
                   key={o.id}
-                  className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card text-sm"
+                  className="flex items-center gap-2 p-3 bg-background border border-border rounded-xl hover:border-primary/30 transition-colors text-sm"
                 >
-                  <span className="font-medium tabular-nums">
-                    1 {o.from_currency}
-                  </span>
-                  <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
-                  <span className="font-medium tabular-nums">
-                    {o.rate} {o.to_currency}
-                  </span>
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-1">
-                    {t(`multicurrency.rate${o.rate_type.charAt(0).toUpperCase() + o.rate_type.slice(1)}`)}
-                  </Badge>
-                  <span className="text-[11px] text-muted-foreground ml-auto">
-                    {new Date(o.updated_at).toLocaleDateString()}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium tabular-nums">
+                        1 {o.from_currency}
+                      </span>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                      <span className="font-medium tabular-nums">
+                        {o.rate} {o.to_currency}
+                      </span>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-1">
+                        {t(`multicurrency.rate${o.rate_type.charAt(0).toUpperCase() + o.rate_type.slice(1)}`)}
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {new Date(o.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="w-7 h-7 text-destructive hover:text-destructive shrink-0"
+                    className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
                     onClick={() => handleDelete(o)}
                     disabled={deleteRate.isPending}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               ))}

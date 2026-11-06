@@ -130,7 +130,7 @@ export function HoldingDetailDialog({
             {/* KPI row */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-muted rounded-xl p-3">
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">
+                <p className="text-[13px] font-medium text-muted-foreground">
                   {t("portfolio.value")}
                   {isOtherCurrency && (
                     <span className="ml-1 font-mono">{holding.currency}</span>
@@ -146,7 +146,7 @@ export function HoldingDetailDialog({
                 )}
               </div>
               <div className="bg-muted rounded-xl p-3">
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">
+                <p className="text-[13px] font-medium text-muted-foreground">
                   P&L
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -156,24 +156,14 @@ export function HoldingDetailDialog({
                     <TrendingDown className="w-4 h-4 text-destructive" />
                   )}
                   <span
-                    className="text-lg font-bold tabular-nums"
-                    style={{
-                      color: isPositive
-                        ? "hsl(var(--success))"
-                        : "hsl(var(--destructive))",
-                    }}
+                    className={`text-lg font-bold tabular-nums ${isPositive ? "text-success" : "text-destructive"}`}
                   >
                     {isPositive ? "+" : ""}
                     {pnlPct.toFixed(1)}%
                   </span>
                 </div>
                 <p
-                  className="text-xs tabular-nums mt-0.5"
-                  style={{
-                    color: isPositive
-                      ? "hsl(var(--success))"
-                      : "hsl(var(--destructive))",
-                  }}
+                  className={`text-xs tabular-nums mt-0.5 ${isPositive ? "text-success" : "text-destructive"}`}
                 >
                   {formatCurrency(holding.unrealized_pnl, holding.currency)}
                 </p>
@@ -288,22 +278,38 @@ export function HoldingDetailDialog({
                     return (
                       <div
                         key={tx.id}
-                        className="flex items-center gap-2 text-sm py-1"
+                        className="flex items-center gap-2 text-sm p-2 bg-background border border-border rounded-lg"
                       >
-                        <Icon className={`w-3.5 h-3.5 ${color}`} />
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                          {t(`transactions.${tx.type}`)}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(tx.date)}
-                        </span>
-                        {tx.quantity > 0 && (
-                          <span className="text-xs text-muted-foreground tabular-nums">
-                            {tx.quantity}×{formatCurrency(tx.price_per_unit)}
-                          </span>
-                        )}
+                        <div
+                          className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
+                            tx.type === "buy"
+                              ? "bg-success/15"
+                              : tx.type === "sell"
+                                ? "bg-destructive/15"
+                                : tx.type === "dividend"
+                                  ? "bg-[hsl(270,60%,55%)]/15"
+                                  : "bg-warning/15"
+                          }`}
+                        >
+                          <Icon className={`w-3 h-3 ${color}`} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {t(`transactions.${tx.type}`)}
+                            </Badge>
+                            <span className="text-[11px] text-muted-foreground">
+                              {formatDate(tx.date)}
+                            </span>
+                          </div>
+                          {tx.quantity > 0 && (
+                            <p className="text-[11px] text-muted-foreground tabular-nums mt-0.5">
+                              {tx.quantity} × {formatCurrency(tx.price_per_unit)}
+                            </p>
+                          )}
+                        </div>
                         <span
-                          className={`ml-auto font-medium tabular-nums ${
+                          className={`shrink-0 text-sm font-semibold tabular-nums ${
                             amount > 0
                               ? "text-success"
                               : amount < 0
