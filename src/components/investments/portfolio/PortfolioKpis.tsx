@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, BarChart3 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import type { PortfolioSummary } from "@/hooks/useHoldings";
 
@@ -14,87 +13,68 @@ export function PortfolioKpis({ summary, pnlPercent, displayCurrency }: Portfoli
   const { formatCurrency } = useLocalization();
 
   const isPositive = summary.totalPnl >= 0;
+  const pnlDot = isPositive ? "bg-success" : "bg-destructive";
+  const pnlLabel = isPositive ? "text-success" : "text-destructive";
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-[16px]">
-      <KpiCard
-        label={t("portfolio.totalValue")}
-        icon={<Wallet className="w-[15px] h-[15px]" />}
-        iconClass="bg-primary/10 text-primary"
-        value={formatCurrency(summary.totalValue, displayCurrency)}
-        valueClass="text-primary"
-      />
-      <KpiCard
-        label={t("portfolio.costBasis")}
-        icon={<PiggyBank className="w-[15px] h-[15px]" />}
-        iconClass="bg-primary/10 text-primary"
-        value={formatCurrency(summary.totalCostBasis, displayCurrency)}
-      />
-      <KpiCard
-        label={t("portfolio.unrealizedPnl")}
-        icon={
-          isPositive ? (
-            <TrendingUp className="w-[15px] h-[15px]" />
-          ) : (
-            <TrendingDown className="w-[15px] h-[15px]" />
-          )
-        }
-        iconClass={isPositive ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}
-        value={formatCurrency(summary.totalPnl, displayCurrency)}
-        valueClass={isPositive ? "text-success" : "text-destructive"}
-        subtext={summary.totalCostBasis > 0 ? `${isPositive ? "+" : ""}${pnlPercent.toFixed(1)}%` : undefined}
-        subtextClass={isPositive ? "text-success" : "text-destructive"}
-      />
-      <KpiCard
-        label={t("portfolio.holdingsCount")}
-        icon={<BarChart3 className="w-[15px] h-[15px]" />}
-        iconClass="bg-primary/10 text-primary"
-        value={String(summary.holdingsCount)}
-        subtext={`${Object.keys(summary.byAssetClass).length} ${t("portfolio.assetClasses")}`}
-      />
-    </div>
-  );
-}
-
-function KpiCard({
-  label,
-  icon,
-  iconClass,
-  value,
-  valueClass,
-  subtext,
-  subtextClass,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  iconClass: string;
-  value: string;
-  valueClass?: string;
-  subtext?: string;
-  subtextClass?: string;
-}) {
-  return (
-    <div className="rounded-xl p-[18px_18px_16px] bg-card border border-border shadow-section">
-      <div className="flex items-center justify-between mb-[14px]">
-        <span className="text-[12px] font-semibold uppercase tracking-[.04em] text-muted-foreground">
-          {label}
-        </span>
-        <div
-          className={`flex items-center justify-center w-[30px] h-[30px] rounded-[9px] shrink-0 ${iconClass}`}
-        >
-          {icon}
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-[12px]">
+      <div className="flex h-full flex-col rounded-xl px-[14px] py-3 md:px-5 md:py-[14px] shadow-section lg:h-[104px] overflow-hidden bg-card">
+        <div className="flex items-center gap-[6px] mb-[10px]">
+          <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-primary" />
+          <span className="text-[13px] font-medium text-primary">{t("portfolio.totalValue")}</span>
+        </div>
+        <div className="mt-auto">
+          <div className="text-[18px] md:text-[22px] font-medium tracking-[-0.025em] tabular-nums leading-none text-foreground">
+            {formatCurrency(summary.totalValue, displayCurrency)}
+          </div>
         </div>
       </div>
-      <div
-        className={`text-[15px] md:text-[20px] font-semibold tracking-[-0.02em] tabular-nums leading-none truncate ${valueClass ?? "text-foreground"}`}
-      >
-        {value}
+
+      <div className="flex h-full flex-col rounded-xl px-[14px] py-3 md:px-5 md:py-[14px] shadow-section lg:h-[104px] overflow-hidden bg-card">
+        <div className="flex items-center gap-[6px] mb-[10px]">
+          <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-primary" />
+          <span className="text-[13px] font-medium text-primary">{t("portfolio.costBasis")}</span>
+        </div>
+        <div className="mt-auto">
+          <div className="text-[18px] md:text-[22px] font-medium tracking-[-0.025em] tabular-nums leading-none text-foreground">
+            {formatCurrency(summary.totalCostBasis, displayCurrency)}
+          </div>
+        </div>
       </div>
-      {subtext && (
-        <p className={`text-[12px] mt-[5px] tabular-nums ${subtextClass ?? "text-muted-foreground"}`}>
-          {subtext}
-        </p>
-      )}
+
+      <div className="flex h-full flex-col rounded-xl px-[14px] py-3 md:px-5 md:py-[14px] shadow-section lg:h-[104px] overflow-hidden bg-card">
+        <div className="flex items-center gap-[6px] mb-[10px]">
+          <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${pnlDot}`} />
+          <span className={`text-[13px] font-medium ${pnlLabel}`}>{t("portfolio.unrealizedPnl")}</span>
+        </div>
+        <div className="mt-auto">
+          <div className="text-[18px] md:text-[22px] font-medium tracking-[-0.025em] tabular-nums leading-none text-foreground">
+            {formatCurrency(summary.totalPnl, displayCurrency)}
+          </div>
+          {summary.totalCostBasis > 0 && (
+            <div className="text-[12.5px] mt-[5px] text-muted-foreground truncate">
+              <span className={`font-medium ${pnlLabel}`}>
+                {isPositive ? "+" : ""}{pnlPercent.toFixed(1)}%
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex h-full flex-col rounded-xl px-[14px] py-3 md:px-5 md:py-[14px] shadow-section lg:h-[104px] overflow-hidden bg-card">
+        <div className="flex items-center gap-[6px] mb-[10px]">
+          <span className="w-[7px] h-[7px] rounded-full shrink-0 bg-primary" />
+          <span className="text-[13px] font-medium text-primary">{t("portfolio.holdingsCount")}</span>
+        </div>
+        <div className="mt-auto">
+          <div className="text-[18px] md:text-[22px] font-medium tracking-[-0.025em] tabular-nums leading-none text-foreground">
+            {String(summary.holdingsCount)}
+          </div>
+          <div className="text-[12.5px] mt-[5px] text-muted-foreground truncate">
+            {Object.keys(summary.byAssetClass).length} {t("portfolio.assetClasses")}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
