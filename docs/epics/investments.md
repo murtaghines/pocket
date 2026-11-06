@@ -351,5 +351,24 @@ This phase is particularly relevant for Argentine users who invest across curren
   dividends → performance → rebalancing → info → holdings list
 - Full i18n (en + es)
 
+### International Import Pipeline Upgrade — DONE (2026-11-06)
+- Analyzed Alpha Tracker's AI prompt for domain knowledge gaps (Argentine broker types,
+  transaction type mapping, business rules like renta→dividend, amortización→sell)
+- Rewrote `SMART_EXTRACTION_PROMPT` to be international (not Argentina-specific):
+  universal type mapping, multi-currency support, fractional shares, ISIN extraction
+- Added broker-specific knowledge sections: Revolut Trading, Revolut Crypto, Argentine brokers
+- 8 new format detectors in `detectFileFormat()`:
+  - Revolut Trading CSV (`Date,Ticker,Type,...`)
+  - Revolut Crypto CSV (`Symbol,Type,Quantity,...`)
+  - Revolut General Account/Commodity CSV (`Type,Product,Started Date,...`)
+  - Revolut Trading PDF, Crypto PDF, Custom Statement PDF, Commodity PDF
+  - IOL (InvertirOnline) HTML/XLS
+- New `normalizeTransactionType()`: maps ~30 type variants (English + Spanish + broker labels)
+  to 6 canonical types (buy/sell/dividend/fee/deposit/withdrawal)
+- New `normalizePlatform()`: handles Revolut vs Revolut Crypto distinction
+- Enhanced `normalizeAssetClass()`: added commodities (XAU/XAG/gold/silver)
+- "exchange" → "buy" mapping for commodity purchases
+- Multi-currency handling (USD + EUR in same file, XAU for commodities)
+
 ## Next step
 - All planned phases complete. Remaining Phase 5 ideas (not planned): price alerts (requires external API, costs money)
