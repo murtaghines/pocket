@@ -203,6 +203,21 @@
     "title": "Upload Investment Statement",
     "description": "Upload your investment account statement to track your portfolio"
   },
+  "dividends": {
+    "title": "Dividends",
+    "totalReceived": "Total Received",
+    "monthlyAvg": "Monthly Avg",
+    "projected": "Projected Annual",
+    "trailing12m": "trailing 12 months",
+    "yield": "Div. Yield",
+    "annualized": "annualized",
+    "total": "Total",
+    "payments": "payments",
+    "byHolding": "By Holding",
+    "byQuarter": "By Quarter",
+    "showAll": "Show all ({{count}})",
+    "showLess": "Show less"
+  },
   "smartImport": {
     "title": "Import Preview",
     "confirming": "Importing...",

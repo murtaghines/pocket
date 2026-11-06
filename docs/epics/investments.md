@@ -313,6 +313,16 @@ This phase is particularly relevant for Argentine users who invest across curren
 - Mobile-friendly: edit/remove buttons always visible on touch, hover-reveal on desktop
 - Full i18n (en + es)
 
+### Dividend Calendar — DONE (2026-11-06)
+- Migration: `get_dividend_calendar` RPC (per-holding breakdown, quarterly aggregation,
+  monthly chart data, trailing 12-month total, dividend yield calculation)
+- `useDividendCalendar` hook
+- `DividendCalendar` component: KPI row (total received, monthly avg, projected annual,
+  dividend yield), monthly bar chart (last 12 months), per-holding breakdown with
+  proportional bars, quarterly summary grid, show more/less for 5+ holdings
+- Integrated into PortfolioTab after InsightsCards
+- Auto-hidden when no dividend transactions exist
+- Full i18n (en + es)
+
 ## Next step
-- Remaining Phase 5 items: dividend calendar (ex-dates), tax lot tracking (FIFO/LIFO),
-  price alerts
+- Remaining Phase 5 items: tax lot tracking (FIFO/LIFO), price alerts

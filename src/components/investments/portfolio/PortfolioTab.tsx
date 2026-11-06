@@ -8,6 +8,7 @@ import { HoldingsList } from "./HoldingsList";
 import { AllocationChart } from "./AllocationChart";
 import { PerformanceChart } from "./PerformanceChart";
 import { InsightsCards } from "./InsightsCards";
+import { DividendCalendar } from "./DividendCalendar";
 import { RebalancingCard } from "./RebalancingCard";
 import { ExportButton } from "./ExportButton";
 import { ExchangeRatesDialog } from "./ExchangeRatesDialog";
@@ -91,6 +92,8 @@ export function PortfolioTab() {
       </div>
 
       <InsightsCards />
+
+      <DividendCalendar />
 
       <PerformanceChart />
 

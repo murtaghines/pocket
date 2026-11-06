@@ -201,6 +201,21 @@
     "title": "Subir Extracto de Inversiones",
     "description": "Sube el extracto de tu cuenta de inversiones para rastrear tu portafolio"
   },
+  "dividends": {
+    "title": "Dividendos",
+    "totalReceived": "Total Recibido",
+    "monthlyAvg": "Promedio Mensual",
+    "projected": "Proyección Anual",
+    "trailing12m": "últimos 12 meses",
+    "yield": "Renta Div.",
+    "annualized": "anualizado",
+    "total": "Total",
+    "payments": "pagos",
+    "byHolding": "Por Posición",
+    "byQuarter": "Por Trimestre",
+    "showAll": "Ver todos ({{count}})",
+    "showLess": "Ver menos"
+  },
   "smartImport": {
     "title": "Vista previa de importación",
     "confirming": "Importando...",
