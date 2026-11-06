@@ -1,0 +1,263 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Camera, TrendingUp, TrendingDown } from "lucide-react";
+import { useLocalization } from "@/hooks/useLocalization";
+import {
+  usePortfolioPerformance,
+  type PerformanceData,
+} from "@/hooks/usePortfolioPerformance";
+
+const PERIODS = ["1M", "3M", "6M", "YTD", "1Y", "ALL"] as const;
+type Period = (typeof PERIODS)[number];
+
+export function PerformanceChart() {
+  const { t } = useTranslation("investments");
+  const { formatCurrency } = useLocalization();
+  const [period, setPeriod] = useState<Period>("1Y");
+  const { performance, isLoading, takeSnapshot } = usePortfolioPerformance(period);
+
+  const hasSeries = performance.series.length > 0;
+  const isPositive = performance.totalReturn >= 0;
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0].payload;
+    return (
+      <div className="bg-card rounded-xl shadow-lg p-3 min-w-[170px]">
+        <p className="text-xs text-muted-foreground mb-1">{d.date}</p>
+        <div className="flex justify-between gap-4">
+          <span className="text-xs text-muted-foreground">
+            {t("portfolio.totalValue")}
+          </span>
+          <span className="text-sm font-semibold tabular-nums">
+            {formatCurrency(d.totalValue)}
+          </span>
+        </div>
+        <div className="flex justify-between gap-4">
+          <span className="text-xs text-muted-foreground">
+            {t("portfolio.costBasis")}
+          </span>
+          <span className="text-sm tabular-nums text-muted-foreground">
+            {formatCurrency(d.totalCostBasis)}
+          </span>
+        </div>
+        {d.pnl !== 0 && (
+          <div className="flex justify-between gap-4 mt-1 pt-1 border-t border-border">
+            <span className="text-xs text-muted-foreground">P&L</span>
+            <span
+              className="text-sm font-semibold tabular-nums"
+              style={{
+                color:
+                  d.pnl > 0
+                    ? "hsl(var(--success))"
+                    : d.pnl < 0
+                      ? "hsl(var(--destructive))"
+                      : "hsl(var(--muted-foreground))",
+              }}
+            >
+              {d.pnl > 0 ? "+" : ""}
+              {formatCurrency(d.pnl)}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
+        <div>
+          <CardTitle>{t("performance.title")}</CardTitle>
+          <div className="flex items-center gap-2 mt-1">
+            {isPositive ? (
+              <TrendingUp className="w-4 h-4 text-success" />
+            ) : (
+              <TrendingDown className="w-4 h-4 text-destructive" />
+            )}
+            <span
+              className="text-sm font-semibold tabular-nums"
+              style={{
+                color: isPositive
+                  ? "hsl(var(--success))"
+                  : "hsl(var(--destructive))",
+              }}
+            >
+              {isPositive ? "+" : ""}
+              {performance.totalReturnPercent.toFixed(1)}%
+            </span>
+            <span className="text-xs text-muted-foreground">
+              ({isPositive ? "+" : ""}
+              {formatCurrency(performance.totalReturn)})
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            {PERIODS.map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                  period === p
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => takeSnapshot.mutate()}
+            disabled={takeSnapshot.isPending}
+            title={t("performance.takeSnapshot")}
+          >
+            <Camera className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {!hasSeries ? (
+          <div className="flex items-center justify-center h-[220px]">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                {t("performance.noData")}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => takeSnapshot.mutate()}
+                disabled={takeSnapshot.isPending}
+                className="gap-1.5"
+              >
+                <Camera className="w-4 h-4" />
+                {t("performance.takeSnapshot")}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={performance.series}
+                margin={{ top: 6, right: 4, left: 4, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="perfValueGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="0%"
+                      stopColor="hsl(var(--primary))"
+                      stopOpacity={0.16}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="hsl(var(--primary))"
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                  <linearGradient id="perfCostGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="0%"
+                      stopColor="hsl(var(--muted-foreground))"
+                      stopOpacity={0.08}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="hsl(var(--muted-foreground))"
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  stroke="hsl(var(--border))"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{
+                    fill: "hsl(var(--muted-foreground))",
+                    fontSize: 11,
+                  }}
+                  dy={8}
+                />
+                <YAxis
+                  hide
+                  domain={["auto", "auto"]}
+                />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{
+                    stroke: "hsl(var(--primary))",
+                    strokeWidth: 1,
+                    strokeDasharray: "4 2",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="totalCostBasis"
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 3"
+                  fill="url(#perfCostGrad)"
+                  dot={false}
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="totalValue"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2.2}
+                  fill="url(#perfValueGrad)"
+                  dot={false}
+                  activeDot={{
+                    r: 4,
+                    fill: "hsl(var(--primary))",
+                    strokeWidth: 0,
+                  }}
+                  isAnimationActive={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {hasSeries && performance.periodDays >= 365 && (
+          <div className="flex items-center justify-center mt-3 pt-3 border-t border-border">
+            <span className="text-xs text-muted-foreground">
+              {t("performance.annualized")}:{" "}
+              <span
+                className="font-semibold tabular-nums"
+                style={{
+                  color:
+                    performance.annualizedReturn >= 0
+                      ? "hsl(var(--success))"
+                      : "hsl(var(--destructive))",
+                }}
+              >
+                {performance.annualizedReturn >= 0 ? "+" : ""}
+                {performance.annualizedReturn.toFixed(1)}%
+              </span>
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

@@ -6,6 +6,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { parseExcelFile } from "@/lib/excelParser";
 import { extractPdfText, getMonthKey } from "@/lib/fileExtract";
+import type {
+  SmartImportPreview,
+  SmartImportStats,
+} from "@/components/imports/investments/InvestmentPreviewDialog";
 
 interface PendingFile {
   id: string;
@@ -21,18 +25,17 @@ type PendingFilesByMonth = Record<string, PendingFile[]>;
 
 export function useMonthlyInvestmentUpload() {
   const [pendingFilesByMonth, setPendingFilesByMonth] = useState<PendingFilesByMonth>({});
-  const [previewInvestments, setPreviewInvestments] = useState<any[]>([]);
+  const [previewData, setPreviewData] = useState<SmartImportPreview | null>(null);
+  const [previewStats, setPreviewStats] = useState<SmartImportStats | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [pendingImportId, setPendingImportId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [saveExchangeRates, setSaveExchangeRates] = useState(true);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { t } = useTranslation('imports');
 
-  // Returns the created PendingFile entries so a caller that wants to auto-process
-  // immediately (see processFilesForMonth's `filesOverride`) doesn't have to read them back
-  // out of `pendingFilesByMonth` state, which may not have committed yet.
   const addFilesForMonth = useCallback((files: File[], targetMonth: Date): PendingFile[] => {
     const monthKey = getMonthKey(targetMonth);
     const newFiles: PendingFile[] = files.map((file) => ({
@@ -59,18 +62,16 @@ export function useMonthlyInvestmentUpload() {
 
   const extractFileContent = async (file: File): Promise<string> => {
     const extension = file.name.split(".").pop()?.toLowerCase();
-    
+
     if (extension === "csv") {
       return await file.text();
     }
-    
+
     if (extension === "xlsx") {
       return await parseExcelFile(file);
     }
-    
+
     if (extension === "pdf") {
-      // Investment statements carry holdings/quantities/prices, not just signed transaction
-      // rows — never reshape them with the two-column table logic (bank-statement only).
       const result = await extractPdfText(file, { reconstructTables: false });
       if (result.truncated) {
         toast({
@@ -89,11 +90,6 @@ export function useMonthlyInvestmentUpload() {
     }
   };
 
-  // `filesOverride` lets a caller that just added files via addFilesForMonth process
-  // exactly those files immediately, instead of reading pendingFilesByMonth back out of
-  // this hook's closure — that state update may not have committed/re-rendered yet, which
-  // previously made auto-process-after-add silently no-op (found zero pending files and
-  // returned before ever calling the AI). Falls back to reading state for any other caller.
   const processFilesForMonth = useCallback(async (targetMonth: Date, filesOverride?: PendingFile[], accountId?: string) => {
     if (!user) {
       toast({
@@ -128,9 +124,6 @@ export function useMonthlyInvestmentUpload() {
           throw new Error(t('error.fileEmpty'));
         }
 
-        // Generate file hash BEFORE uploading, so an exact re-upload short-circuits with a
-        // clean message instead of hitting imports' UNIQUE(user_id, file_hash_sha256) as a
-        // raw Postgres error. Mirrors useMonthlyFileUpload.tsx's bank-statement flow.
         const encoder = new TextEncoder();
         const hashData = encoder.encode(fileContent);
         const hashBuffer = await crypto.subtle.digest('SHA-256', hashData);
@@ -171,7 +164,6 @@ export function useMonthlyInvestmentUpload() {
           console.error("Storage upload error:", uploadError);
         }
 
-        // Create import record (unified system)
         const { data: importRecord, error: insertError } = await supabase
           .from("imports")
           .insert({
@@ -191,8 +183,7 @@ export function useMonthlyInvestmentUpload() {
 
         if (insertError) throw insertError;
 
-        // First pass: preview only (don't persist yet)
-        const { data: previewData, error: previewError } = await supabase.functions.invoke(
+        const { data: responseData, error: previewError } = await supabase.functions.invoke(
           "process-investment-file",
           {
             body: {
@@ -206,13 +197,24 @@ export function useMonthlyInvestmentUpload() {
 
         if (previewError) throw previewError;
 
-        // Show preview dialog
-        const previewInvestments = previewData.data || [];
-        setPreviewInvestments(previewInvestments);
+        // Smart import: edge function returns { data: { transactions, exchangeRates, positions }, stats }
+        const smartData: SmartImportPreview = responseData.data || {
+          transactions: [],
+          exchangeRates: [],
+          positions: [],
+        };
+        const smartStats: SmartImportStats = responseData.stats || null;
+
+        setPreviewData(smartData);
+        setPreviewStats(smartStats);
         setPendingImportId(importRecord.id);
+        setSaveExchangeRates(true);
         setShowPreview(true);
 
-        // Mark file as ready for preview
+        const totalCount =
+          (smartData.transactions?.length || 0) +
+          (smartData.positions?.length || 0);
+
         setPendingFilesByMonth((prev) => ({
           ...prev,
           [monthKey]: (prev[monthKey] || []).map((f) =>
@@ -220,7 +222,7 @@ export function useMonthlyInvestmentUpload() {
               ? {
                   ...f,
                   status: "completed" as const,
-                  transactionsCount: previewInvestments.length,
+                  transactionsCount: totalCount,
                 }
               : f
           ),
@@ -257,14 +259,10 @@ export function useMonthlyInvestmentUpload() {
   }, [pendingFilesByMonth]);
 
   const confirmPreview = useCallback(async () => {
-    if (!pendingImportId || !user) return;
+    if (!pendingImportId || !user || !previewData) return;
 
     setIsConfirming(true);
     try {
-      // Second pass: persist. Sends back the exact array the first pass already parsed and
-      // returned (previewInvestments) instead of fileContent — the edge function skips the
-      // AI call entirely on this path, so what gets saved is guaranteed to match what was
-      // shown in the preview, with no second AI round-trip.
       const { data, error } = await supabase.functions.invoke(
         "process-investment-file",
         {
@@ -272,7 +270,12 @@ export function useMonthlyInvestmentUpload() {
             importId: pendingImportId,
             userId: user.id,
             previewOnly: false,
-            investments: previewInvestments,
+            smartImportData: {
+              transactions: previewData.transactions,
+              exchangeRates: previewData.exchangeRates,
+              positions: previewData.positions,
+              saveExchangeRates,
+            },
           },
         }
       );
@@ -280,23 +283,35 @@ export function useMonthlyInvestmentUpload() {
       if (error) throw error;
 
       const stats = data.stats;
-      const description = stats?.duplicatesIgnored > 0
-        ? t('toast.movementsSavedWithDuplicates', { count: stats?.newInvestments || 0, duplicates: stats.duplicatesIgnored })
-        : t('toast.movementsSaved', { count: stats?.newInvestments || 0 });
+      const parts: string[] = [];
+      if (stats?.transactionsInserted > 0) {
+        parts.push(t('toast.smartImportTx', { count: stats.transactionsInserted }));
+      }
+      if (stats?.positionsUpserted > 0) {
+        parts.push(t('toast.smartImportPositions', { count: stats.positionsUpserted }));
+      }
+      if (stats?.ratesSaved > 0) {
+        parts.push(t('toast.smartImportRates', { count: stats.ratesSaved }));
+      }
 
       toast({
         title: t('toast.investmentsSaved'),
-        description,
+        description: parts.join(", ") || t('toast.movementsSaved', { count: 0 }),
       });
 
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });
+      queryClient.invalidateQueries({ queryKey: ["investment-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["holdings"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
 
       setShowPreview(false);
-      setPreviewInvestments([]);
+      setPreviewData(null);
+      setPreviewStats(null);
       setPendingImportId(null);
     } catch (error: any) {
-      console.error("Error confirming investments:", error);
+      console.error("Error confirming smart import:", error);
       toast({
         title: t('error.genericError'),
         description: error.message || t('error.couldNotSaveInvestments'),
@@ -305,12 +320,38 @@ export function useMonthlyInvestmentUpload() {
     } finally {
       setIsConfirming(false);
     }
-  }, [pendingImportId, user, queryClient, toast, previewInvestments, t]);
+  }, [pendingImportId, user, queryClient, toast, previewData, saveExchangeRates, t]);
 
   const cancelPreview = useCallback(() => {
     setShowPreview(false);
-    setPreviewInvestments([]);
+    setPreviewData(null);
+    setPreviewStats(null);
     setPendingImportId(null);
+  }, []);
+
+  const updateTransaction = useCallback((index: number, updated: SmartImportPreview["transactions"][number]) => {
+    setPreviewData((prev) => {
+      if (!prev) return prev;
+      const txs = [...prev.transactions];
+      txs[index] = updated;
+      return { ...prev, transactions: txs };
+    });
+  }, []);
+
+  const removeTransaction = useCallback((index: number) => {
+    setPreviewData((prev) => {
+      if (!prev) return prev;
+      const txs = prev.transactions.filter((_, i) => i !== index);
+      return { ...prev, transactions: txs };
+    });
+  }, []);
+
+  const removePosition = useCallback((index: number) => {
+    setPreviewData((prev) => {
+      if (!prev) return prev;
+      const positions = prev.positions.filter((_, i) => i !== index);
+      return { ...prev, positions };
+    });
   }, []);
 
   return {
@@ -322,9 +363,15 @@ export function useMonthlyInvestmentUpload() {
     getPendingCountForMonth,
     // Preview dialog state and handlers
     showPreview,
-    previewInvestments,
+    previewData,
+    previewStats,
     isConfirming,
+    saveExchangeRates,
+    setSaveExchangeRates,
     confirmPreview,
     cancelPreview,
+    updateTransaction,
+    removeTransaction,
+    removePosition,
   };
 }
