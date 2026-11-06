@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useLocalization } from "@/hooks/useLocalization";
 import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
@@ -31,26 +30,46 @@ export function AllocationChart({ data, totalValue, title }: AllocationChartProp
 
   if (chartData.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title ?? t("portfolio.allocation")}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center h-[200px]">
+      <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+        <div className="px-5 pt-4 pb-2 shrink-0">
+          <h3 className="text-[13px] font-medium text-muted-foreground">
+            {title ?? t("portfolio.allocation")}
+          </h3>
+        </div>
+        <div className="flex-1 min-h-0 flex items-center justify-center px-5 pb-4">
           <p className="text-muted-foreground text-sm">{t("portfolio.noHoldings")}</p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.[0]) return null;
+    const d = payload[0].payload;
+    return (
+      <div className="bg-card rounded-xl shadow-lg border border-border/50 px-4 py-3 min-w-[160px]">
+        <p className="text-[13px] font-medium text-foreground mb-1">{d.name}</p>
+        <p className="text-[15px] font-semibold tabular-nums text-foreground">
+          {formatCurrency(d.value)}
+        </p>
+        <p className="text-[12px] text-muted-foreground tabular-nums mt-0.5">
+          {d.weight.toFixed(1)}%
+        </p>
+      </div>
+    );
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title ?? t("portfolio.allocation")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          <div className="w-full md:w-1/2">
-            <ResponsiveContainer width="100%" height={220}>
+    <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+      <div className="px-5 pt-4 pb-2 shrink-0">
+        <h3 className="text-[13px] font-medium text-muted-foreground">
+          {title ?? t("portfolio.allocation")}
+        </h3>
+      </div>
+      <div className="flex-1 min-h-0 px-5 pb-4">
+        <div className="flex flex-col md:flex-row items-center gap-4 h-full">
+          <div className="w-full md:w-1/2 min-h-0 flex-1">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
@@ -66,42 +85,33 @@ export function AllocationChart({ data, totalValue, title }: AllocationChartProp
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(value: number) => [formatCurrency(value), ""]}
-                  labelFormatter={(_, payload) =>
-                    payload?.[0]?.payload?.name ?? ""
-                  }
-                />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="w-full md:w-1/2 flex flex-col gap-2">
+          <div className="w-full md:w-1/2 flex flex-col gap-1.5 min-h-0 overflow-y-auto">
             {chartData.map((d) => (
               <div key={d.name} className="flex items-center gap-2.5">
                 <div
-                  className="w-3 h-3 rounded-full shrink-0"
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: d.color }}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
+                  <p className="text-[13px] font-medium text-foreground truncate">
                     {d.name}
                   </p>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-sm font-semibold tabular-nums">
-                    {d.weight.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="text-right shrink-0 w-[90px]">
-                  <span className="text-[12px] text-muted-foreground tabular-nums">
-                    {formatCurrency(d.value)}
-                  </span>
-                </div>
+                <span className="text-[13px] font-semibold tabular-nums shrink-0">
+                  {d.weight.toFixed(1)}%
+                </span>
+                <span className="text-[12px] text-muted-foreground tabular-nums shrink-0 w-[80px] text-right">
+                  {formatCurrency(d.value)}
+                </span>
               </div>
             ))}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

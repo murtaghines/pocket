@@ -2,9 +2,8 @@ import { useHoldings } from "@/hooks/useHoldings";
 import { useInvestmentInsights } from "@/hooks/useInvestmentInsights";
 import { usePortfolioHighlights } from "@/hooks/usePortfolioHighlights";
 import { useTranslation } from "react-i18next";
-import { Loader2, PiggyBank, Plus, ArrowLeftRight } from "lucide-react";
+import { Loader2, PiggyBank, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { PortfolioKpis } from "./PortfolioKpis";
 import { PortfolioHighlights } from "./PortfolioHighlights";
 import { HoldingsList } from "./HoldingsList";
@@ -59,44 +58,19 @@ export function PortfolioTab() {
   const showCurrencyExposure = highlights.currencyExposure.length > 1;
 
   return (
-    <div className="flex flex-col gap-[16px]">
-      <div className="flex items-center gap-2 flex-wrap">
-        {isMultiCurrency && (
-          <>
-            <Badge variant="outline" className="text-xs tabular-nums gap-1">
-              {t("multicurrency.displayIn")} {displayCurrency}
-            </Badge>
-            {summary.unconvertedCount != null && summary.unconvertedCount > 0 && (
-              <Badge variant="secondary" className="text-xs text-warning gap-1">
-                {t("multicurrency.unconvertedCount", { count: summary.unconvertedCount })}
-              </Badge>
-            )}
-            <Button
-              size="sm"
-              variant="ghost"
-              className="gap-1.5 text-xs"
-              onClick={() => setRatesOpen(true)}
-            >
-              <ArrowLeftRight className="w-3.5 h-3.5" />
-              {t("multicurrency.manageRates")}
-            </Button>
-          </>
-        )}
-        <CostMethodSelector />
-        <div className="ml-auto">
-          <ExportButton holdings={holdings} />
-        </div>
-      </div>
-
+    <div className="flex flex-col gap-[14px]">
+      {/* Row 1: KPIs */}
       <PortfolioKpis summary={summary} pnlPercent={pnlPercent} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
 
+      {/* Row 2: Highlights */}
       <PortfolioHighlights
         highlights={highlights}
         insights={insights}
         displayCurrency={isMultiCurrency ? displayCurrency : undefined}
       />
 
-      <div className={`grid grid-cols-1 gap-[16px] ${showCurrencyExposure ? "lg:grid-cols-3" : "md:grid-cols-2"}`}>
+      {/* Row 3: Allocation charts + Currency Exposure */}
+      <div className={`grid grid-cols-1 gap-[14px] ${showCurrencyExposure ? "lg:grid-cols-3" : "md:grid-cols-2"} lg:h-[300px]`}>
         <AllocationChart
           data={summary.byAssetClass}
           totalValue={summary.totalValue}
@@ -116,16 +90,24 @@ export function PortfolioTab() {
         )}
       </div>
 
+      {/* Row 4: Insights */}
       <InsightsCards />
 
-      <DividendCalendar />
+      {/* Row 5: Performance chart */}
+      <div className="lg:h-[300px]">
+        <PerformanceChart />
+      </div>
 
-      <PerformanceChart />
+      {/* Row 6: Dividend calendar + Rebalancing side-by-side */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px] lg:h-[370px]">
+        <DividendCalendar />
+        <RebalancingCard summary={summary} />
+      </div>
 
-      <RebalancingCard summary={summary} />
-
+      {/* Row 7: Info section */}
       <PortfolioInfoSection info={highlights.info} />
 
+      {/* Row 8: Holdings list */}
       <HoldingsList holdings={holdings} totalValue={summary.totalValue} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
 
       {ratesOpen && (
