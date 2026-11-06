@@ -1,8 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import { useLocalization } from "@/hooks/useLocalization";
-import { formatCompactAxisNumber } from "@/lib/chartFormat";
 
 interface AssetData {
   deposits: number;
@@ -53,40 +51,68 @@ export function InvestmentsByAssetType({ data }: InvestmentsByAssetTypeProps) {
     .filter(d => d.value > 0)
     .sort((a, b) => b.value - a.value);
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0].payload;
+    return (
+      <div className="bg-card rounded-xl shadow-lg border border-border/50 px-4 py-3 min-w-[150px]">
+        <p className="text-xs font-medium text-foreground mb-1">{d.name}</p>
+        <div className="flex justify-between gap-4">
+          <span className="text-xs text-muted-foreground">{t('byAssetType.invested')}</span>
+          <span className="text-sm font-semibold tabular-nums">
+            {formatCurrency(d.value)}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   if (chartData.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('byAssetType.title')}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center h-[200px]">
-          <p className="text-muted-foreground">{t('byAssetType.noData')}</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+        <div className="px-6 pt-5 pb-3 shrink-0">
+          <h3 className="text-base font-semibold">{t('byAssetType.title')}</h3>
+        </div>
+        <div className="flex-1 min-h-0 flex items-center justify-center px-6 pb-5">
+          <p className="text-sm text-muted-foreground">{t('byAssetType.noData')}</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('byAssetType.title')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={chartData} layout="vertical">
-            <XAxis type="number" tickFormatter={(v) => formatCompactAxisNumber(v, { prefix: "€" })} />
-            <YAxis type="category" dataKey="name" width={70} />
-            <Tooltip
-              formatter={(value: number) => [formatCurrency(value), t('byAssetType.invested')]}
+    <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+      <div className="px-6 pt-5 pb-3 shrink-0">
+        <h3 className="text-base font-semibold">{t('byAssetType.title')}</h3>
+      </div>
+      <div className="flex-1 min-h-0 px-6 pb-5">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+            <CartesianGrid stroke="hsl(var(--border))" horizontal={false} />
+            <XAxis
+              type="number"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+              tickFormatter={(v) => formatCurrency(v)}
             />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={70}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.5)" }} />
+            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

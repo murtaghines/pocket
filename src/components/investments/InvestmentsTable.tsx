@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
@@ -35,11 +34,11 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
   const displayedInvestments = investments.slice(0, 50);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('history.title')}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="rounded-xl bg-card shadow-section overflow-hidden flex flex-col">
+      <div className="px-6 pt-5 pb-3 shrink-0">
+        <h3 className="text-base font-semibold">{t('history.title')}</h3>
+      </div>
+      <div className="px-6 pb-5">
         {/* Mobile: stacked cards */}
         <div className="md:hidden flex flex-col gap-2">
           {displayedInvestments.length === 0 && (
@@ -145,7 +144,7 @@ export function InvestmentsTable({ investments }: InvestmentsTableProps) {
             {investments.length - 50}+
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,10 @@
 {
   "title": "Inversiones",
+  "band": {
+    "portfolioValue": "Valor del portafolio",
+    "holdings": "posiciones",
+    "accounts": "cuentas"
+  },
   "summary": {
     "totalValue": "Valor Total",
     "totalInvested": "Total Invertido",

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,12 +64,12 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
+    <div className="rounded-xl bg-card shadow-section overflow-hidden flex flex-col">
+      <div className="flex flex-row items-center justify-between px-6 pt-5 pb-3 shrink-0">
+        <h3 className="text-base font-semibold flex items-center gap-2">
           <Building2 className="w-5 h-5" />
           {t('accounts.title')}
-        </CardTitle>
+        </h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline">
@@ -126,35 +125,36 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
             </form>
           </DialogContent>
         </Dialog>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="px-6 pb-5">
         {accounts.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             {t('accounts.noAccounts')}
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-2">
             {accounts.map((account) => (
               <div
                 key={account.id}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                className="flex items-center justify-between p-3 bg-background border border-border rounded-xl hover:border-primary/30 transition-colors"
               >
-                <div>
-                  <p className="font-medium">{account.platform}</p>
-                  <p className="text-sm text-muted-foreground">{account.account_name}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{account.platform}</p>
+                  <p className="text-[13px] text-muted-foreground truncate">{account.account_name}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <p className="font-semibold tabular-nums text-success">
+                    <p className="text-sm font-semibold tabular-nums text-foreground">
                       {formatCurrency(account.current_value)}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       {new Date(account.last_updated).toLocaleDateString(i18n.language)}
                     </p>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8"
                     onClick={() => handleDelete(account.id)}
                     disabled={deleteAccount.isPending}
                   >
@@ -165,7 +165,7 @@ export function InvestmentAccountsManager({ accounts }: InvestmentAccountsManage
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

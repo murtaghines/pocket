@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -55,24 +54,22 @@ export function TransactionsList({ transactions }: TransactionsListProps) {
 
   if (transactions.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8">
-          <p className="text-sm text-muted-foreground text-center">
-            {t("transactions.noTransactions")}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl bg-card shadow-section overflow-hidden py-8">
+        <p className="text-sm text-muted-foreground text-center">
+          {t("transactions.noTransactions")}
+        </p>
+      </div>
     );
   }
 
   const displayed = transactions.slice(0, 50);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("transactions.title")}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="rounded-xl bg-card shadow-section overflow-hidden flex flex-col">
+      <div className="px-6 pt-5 pb-3 shrink-0">
+        <h3 className="text-base font-semibold">{t("transactions.title")}</h3>
+      </div>
+      <div className="px-6 pb-5">
         {/* Mobile: stacked cards */}
         <div className="md:hidden flex flex-col gap-2">
           {displayed.map((tx) => {
@@ -241,7 +238,7 @@ export function TransactionsList({ transactions }: TransactionsListProps) {
             {transactions.length - 50}+
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

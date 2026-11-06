@@ -52,7 +52,7 @@ export function ActivityTab() {
   }
 
   return (
-    <div className="flex flex-col gap-[16px]">
+    <div className="flex flex-col gap-[14px]">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">
           {t("transactions.allActivity")}
@@ -65,12 +65,16 @@ export function ActivityTab() {
 
       {transactions.length > 0 && <TransactionsList transactions={transactions} />}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-[14px] lg:h-[300px]">
         <InvestmentsByPlatform data={byPlatform} />
         <InvestmentsByAssetType data={byAssetType} />
       </div>
 
-      {monthlyHistory.length > 0 && <InvestmentsHistory data={monthlyHistory} />}
+      {monthlyHistory.length > 0 && (
+        <div className="lg:h-[300px]">
+          <InvestmentsHistory data={monthlyHistory} />
+        </div>
+      )}
 
       {investments.length > 0 && <InvestmentsTable investments={investments} />}
 

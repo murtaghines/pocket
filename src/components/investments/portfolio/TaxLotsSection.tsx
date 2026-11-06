@@ -57,7 +57,7 @@ export function TaxLotsSection({ holdingId, currency }: TaxLotsSectionProps) {
             return (
               <div
                 key={lot.id}
-                className="flex items-center gap-2 text-sm py-1 px-2 rounded-md bg-muted/50"
+                className="flex items-center gap-2 text-sm p-2 rounded-lg bg-muted"
               >
                 <span className="text-xs text-muted-foreground shrink-0">
                   {formatDate(lot.acquired_at)}
