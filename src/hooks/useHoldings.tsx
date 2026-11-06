@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useLocalization } from "./useLocalization";
 
 export interface Holding {
   id: string;
@@ -43,11 +44,16 @@ interface TopHolding {
   assetName: string;
   ticker: string | null;
   assetClass: string;
+  currency?: string;
   currentValue: number;
+  nativeValue?: number;
   costBasis: number;
+  nativeCostBasis?: number;
   pnl: number;
+  nativePnl?: number;
   pnlPercent: number;
   weight: number;
+  hasRate?: boolean;
 }
 
 export interface PortfolioSummary {
@@ -55,6 +61,9 @@ export interface PortfolioSummary {
   totalCostBasis: number;
   totalPnl: number;
   holdingsCount: number;
+  displayCurrency?: string;
+  unconvertedCount?: number;
+  currencies?: string[];
   byAssetClass: Record<string, AssetClassBreakdown>;
   byAccount: Record<string, AccountBreakdown>;
   topHoldings: TopHolding[];
@@ -73,6 +82,7 @@ const EMPTY_SUMMARY: PortfolioSummary = {
 export function useHoldings() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { baseCurrency } = useLocalization();
 
   const { data: holdings = [], isLoading: isLoadingHoldings } = useQuery({
     queryKey: ["holdings", user?.id],
@@ -90,31 +100,59 @@ export function useHoldings() {
     enabled: !!user,
   });
 
-  const { data: summary = EMPTY_SUMMARY, isLoading: isLoadingSummary } = useQuery({
-    queryKey: ["portfolio-summary", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_portfolio_summary", {
-        p_user_id: user!.id,
-      });
-      if (error) throw error;
-      if (!data) return EMPTY_SUMMARY;
+  const isMultiCurrency = holdings.length > 0 &&
+    new Set(holdings.map((h) => h.currency)).size > 1;
 
-      const d = data as Record<string, unknown>;
-      return {
-        totalValue: Number(d.totalValue ?? 0),
-        totalCostBasis: Number(d.totalCostBasis ?? 0),
-        totalPnl: Number(d.totalPnl ?? 0),
-        holdingsCount: Number(d.holdingsCount ?? 0),
-        byAssetClass: (d.byAssetClass ?? {}) as Record<string, AssetClassBreakdown>,
-        byAccount: (d.byAccount ?? {}) as Record<string, AccountBreakdown>,
-        topHoldings: Array.isArray(d.topHoldings)
-          ? (d.topHoldings as TopHolding[])
-          : [],
-      } satisfies PortfolioSummary;
+  const { data: summary = EMPTY_SUMMARY, isLoading: isLoadingSummary } = useQuery({
+    queryKey: ["portfolio-summary", user?.id, baseCurrency, isMultiCurrency],
+    queryFn: async () => {
+      // Use multi-currency RPC when holdings span currencies
+      if (isMultiCurrency) {
+        const { data, error } = await supabase.rpc("get_portfolio_summary_multicurrency", {
+          p_user_id: user!.id,
+          p_display_currency: baseCurrency,
+          p_rate_type: "official",
+        });
+        if (error) {
+          // Fall back to basic RPC if multicurrency one isn't deployed yet
+          console.warn("Multicurrency RPC not available, falling back:", error.message);
+          return fetchBasicSummary();
+        }
+        if (!data) return EMPTY_SUMMARY;
+        return parseSummary(data as Record<string, unknown>);
+      }
+
+      return fetchBasicSummary();
     },
     enabled: !!user,
     staleTime: 30_000,
   });
+
+  async function fetchBasicSummary(): Promise<PortfolioSummary> {
+    const { data, error } = await supabase.rpc("get_portfolio_summary", {
+      p_user_id: user!.id,
+    });
+    if (error) throw error;
+    if (!data) return EMPTY_SUMMARY;
+    return parseSummary(data as Record<string, unknown>);
+  }
+
+  function parseSummary(d: Record<string, unknown>): PortfolioSummary {
+    return {
+      totalValue: Number(d.totalValue ?? 0),
+      totalCostBasis: Number(d.totalCostBasis ?? 0),
+      totalPnl: Number(d.totalPnl ?? 0),
+      holdingsCount: Number(d.holdingsCount ?? 0),
+      displayCurrency: (d.displayCurrency as string) ?? undefined,
+      unconvertedCount: d.unconvertedCount != null ? Number(d.unconvertedCount) : undefined,
+      currencies: Array.isArray(d.currencies) ? (d.currencies as string[]) : undefined,
+      byAssetClass: (d.byAssetClass ?? {}) as Record<string, AssetClassBreakdown>,
+      byAccount: (d.byAccount ?? {}) as Record<string, AccountBreakdown>,
+      topHoldings: Array.isArray(d.topHoldings)
+        ? (d.topHoldings as TopHolding[])
+        : [],
+    };
+  }
 
   const addHolding = useMutation({
     mutationFn: async (holding: {
@@ -206,11 +244,16 @@ export function useHoldings() {
       ? (summary.totalPnl / summary.totalCostBasis) * 100
       : 0;
 
+  const currencies = [...new Set(holdings.map((h) => h.currency))];
+
   return {
     holdings,
     summary,
     isLoading: isLoadingHoldings || isLoadingSummary,
     hasHoldings: holdings.length > 0,
+    isMultiCurrency,
+    currencies,
+    displayCurrency: summary.displayCurrency ?? baseCurrency,
     pnlPercent,
     addHolding,
     updateHolding,

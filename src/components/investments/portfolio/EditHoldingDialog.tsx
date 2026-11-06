@@ -43,6 +43,7 @@ export function EditHoldingDialog({ holding, open, onOpenChange }: EditHoldingDi
   const [accountId, setAccountId] = useState(holding.account_id ?? "none");
   const [quantity, setQuantity] = useState(String(holding.quantity));
   const [avgCost, setAvgCost] = useState(String(holding.avg_cost_per_unit));
+  const [currency, setCurrency] = useState(holding.currency);
   const [notes, setNotes] = useState(holding.notes ?? "");
 
   const inputClass =
@@ -65,6 +66,7 @@ export function EditHoldingDialog({ holding, open, onOpenChange }: EditHoldingDi
         account_id: accountId !== "none" ? accountId : null,
         quantity: parseFloat(quantity),
         avg_cost_per_unit: parseFloat(avgCost),
+        currency,
         notes: notes.trim() || null,
       });
       toast.success(t("portfolio.holdingUpdated"));
@@ -146,6 +148,26 @@ export function EditHoldingDialog({ holding, open, onOpenChange }: EditHoldingDi
                 )}
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-[13px] font-medium text-muted-foreground">
+                    {t("portfolio.currencyLabel")}
+                  </Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger className={inputClass}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="ARS">ARS</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="BRL">BRL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-[13px] font-medium text-muted-foreground">
                     {t("portfolio.quantityLabel")} *
                   </Label>
                   <Input
@@ -157,9 +179,6 @@ export function EditHoldingDialog({ holding, open, onOpenChange }: EditHoldingDi
                     className={`${inputClass} tabular-nums`}
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-[13px] font-medium text-muted-foreground">
                     {t("portfolio.avgCostLabel")} *

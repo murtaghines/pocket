@@ -1,18 +1,21 @@
 import { useHoldings } from "@/hooks/useHoldings";
 import { useTranslation } from "react-i18next";
-import { Loader2, PiggyBank, Plus } from "lucide-react";
+import { Loader2, PiggyBank, Plus, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PortfolioKpis } from "./PortfolioKpis";
 import { HoldingsList } from "./HoldingsList";
 import { AllocationChart } from "./AllocationChart";
 import { PerformanceChart } from "./PerformanceChart";
+import { ExchangeRatesDialog } from "./ExchangeRatesDialog";
 import { useState } from "react";
 import { AddHoldingDialog } from "./AddHoldingDialog";
 
 export function PortfolioTab() {
   const { t } = useTranslation("investments");
-  const { holdings, summary, isLoading, hasHoldings, pnlPercent } = useHoldings();
+  const { holdings, summary, isLoading, hasHoldings, isMultiCurrency, displayCurrency, pnlPercent } = useHoldings();
   const [addOpen, setAddOpen] = useState(false);
+  const [ratesOpen, setRatesOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -43,7 +46,28 @@ export function PortfolioTab() {
 
   return (
     <div className="flex flex-col gap-[16px]">
-      <PortfolioKpis summary={summary} pnlPercent={pnlPercent} />
+      {isMultiCurrency && (
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs tabular-nums gap-1">
+            {t("multicurrency.displayIn")} {displayCurrency}
+          </Badge>
+          {summary.unconvertedCount != null && summary.unconvertedCount > 0 && (
+            <Badge variant="secondary" className="text-xs text-warning gap-1">
+              {t("multicurrency.unconvertedCount", { count: summary.unconvertedCount })}
+            </Badge>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-1.5 text-xs ml-auto"
+            onClick={() => setRatesOpen(true)}
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5" />
+            {t("multicurrency.manageRates")}
+          </Button>
+        </div>
+      )}
+      <PortfolioKpis summary={summary} pnlPercent={pnlPercent} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
         <AllocationChart
@@ -60,7 +84,11 @@ export function PortfolioTab() {
 
       <PerformanceChart />
 
-      <HoldingsList holdings={holdings} totalValue={summary.totalValue} />
+      <HoldingsList holdings={holdings} totalValue={summary.totalValue} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
+
+      {ratesOpen && (
+        <ExchangeRatesDialog open={ratesOpen} onOpenChange={setRatesOpen} />
+      )}
     </div>
   );
 }

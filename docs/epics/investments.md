@@ -262,7 +262,25 @@ This phase is particularly relevant for Argentine users who invest across curren
   falls back to deposit/withdrawal totals when no holdings exist
 - Auto-snapshot: portfolio snapshot auto-taken after recording transactions or updating prices
 
+### Phase 4: Multi-Currency — DONE
+- Migration: `portfolio_rate_overrides` table (user-specific rates with rate_type: official/mep/blue/custom),
+  `preferred_rate_type` column on `user_preferences`,
+  `get_portfolio_summary_multicurrency` RPC (converts holdings to display currency using user overrides → global rates → fallback)
+- `usePortfolioRates` hook: merges user rate overrides with automatic frankfurter.app rates,
+  convert() utility with override → auto fallback chain
+- `useHoldings` updated: auto-detects multi-currency portfolios, calls multicurrency RPC
+  when holdings span currencies, exposes `isMultiCurrency`, `displayCurrency`, `currencies`
+- `ExchangeRatesDialog`: manage custom exchange rates (from/to/rate/type), supports MEP/Blue/Custom types
+- `PortfolioTab`: shows display currency badge + unconverted holdings warning when multi-currency,
+  "Exchange Rates" management button
+- `PortfolioKpis`: passes display currency to `formatCurrency` for correct symbol display
+- `HoldingsList`: currency badge on holdings in different currency than display (mobile + desktop)
+- `HoldingDetailDialog`: shows native currency values + converted "≈" values when holding is
+  in a different currency, currency label in details grid
+- `EditHoldingDialog`: added currency selector (USD/EUR/ARS/GBP/BRL)
+- `AddHoldingDialog`: added BRL to currency options
+- Full i18n (en + es) for all multicurrency keys
+
 ## Next step
-- Apply all 3 migrations and test end-to-end
-- Phase 4: Multi-currency + dollar tracking
+- Apply all 4 migrations and test end-to-end
 - Phase 5: Polish (dividend calendar, fee analysis, rebalancing, CSV export)

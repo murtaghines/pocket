@@ -18,9 +18,10 @@ type SortKey = "asset_name" | "current_value" | "unrealized_pnl" | "weight";
 interface HoldingsListProps {
   holdings: Holding[];
   totalValue: number;
+  displayCurrency?: string;
 }
 
-export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
+export function HoldingsList({ holdings, totalValue, displayCurrency }: HoldingsListProps) {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
   const [sortKey, setSortKey] = useState<SortKey>("current_value");
@@ -171,6 +172,11 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
                         >
                           {t(`byAssetType.types.${cfg.i18nKey}`)}
                         </Badge>
+                        {displayCurrency && h.currency !== displayCurrency && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
+                            {h.currency}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -245,6 +251,11 @@ export function HoldingsList({ holdings, totalValue }: HoldingsListProps) {
                                 >
                                   {t(`byAssetType.types.${cfg.i18nKey}`)}
                                 </Badge>
+                                {displayCurrency && h.currency !== displayCurrency && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
+                                    {h.currency}
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </div>

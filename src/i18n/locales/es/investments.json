@@ -149,6 +149,28 @@
     "noTransactions": "Sin transacciones aún",
     "allActivity": "Toda la Actividad"
   },
+  "multicurrency": {
+    "displayIn": "Mostrando en",
+    "unconvertedCount": "{{count}} tenencia(s) sin tipo de cambio",
+    "manageRates": "Tipos de Cambio",
+    "manageRatesDescription": "Configurá tipos de cambio personalizados para tu portafolio. Estos sobreescriben las cotizaciones automáticas.",
+    "from": "Desde",
+    "to": "Hacia",
+    "rate": "Cotización",
+    "rateType": "Tipo",
+    "rateOfficial": "Oficial",
+    "rateMep": "MEP",
+    "rateBlue": "Blue",
+    "rateCustom": "Personalizado",
+    "addRate": "Agregar",
+    "noOverrides": "Sin cotizaciones personalizadas. Se usarán las automáticas.",
+    "invalidRate": "Ingresá una cotización válida con monedas diferentes",
+    "rateSaved": "Tipo de cambio guardado",
+    "rateDeleted": "Tipo de cambio eliminado",
+    "errorSaving": "Error al guardar cotización",
+    "errorDeleting": "Error al eliminar cotización",
+    "currency": "Moneda"
+  },
   "upload": {
     "title": "Subir Extracto de Inversiones",
     "description": "Sube el extracto de tu cuenta de inversiones para rastrear tu portafolio"

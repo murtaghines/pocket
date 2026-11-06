@@ -170,6 +170,7 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
                       <SelectItem value="EUR">EUR</SelectItem>
                       <SelectItem value="ARS">ARS</SelectItem>
                       <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="BRL">BRL</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

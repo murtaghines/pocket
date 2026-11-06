@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useInvestmentTransactions } from "@/hooks/useInvestmentTransactions";
+import { usePortfolioRates } from "@/hooks/usePortfolioRates";
 import type { Holding } from "@/hooks/useHoldings";
 import { useHoldings } from "@/hooks/useHoldings";
 import { UpdatePricePopover } from "./UpdatePricePopover";
@@ -64,9 +65,18 @@ export function HoldingDetailDialog({
   onOpenChange,
 }: HoldingDetailDialogProps) {
   const { t } = useTranslation("investments");
-  const { formatCurrency, formatDate } = useLocalization();
+  const { formatCurrency, formatDate, baseCurrency } = useLocalization();
   const { transactions, isLoading } = useInvestmentTransactions(holding.id);
   const { deleteHolding } = useHoldings();
+  const { convert } = usePortfolioRates();
+
+  const isOtherCurrency = holding.currency !== baseCurrency;
+  const convertedValue = isOtherCurrency
+    ? convert(holding.current_value, holding.currency, baseCurrency)
+    : null;
+  const convertedPnl = isOtherCurrency
+    ? convert(holding.unrealized_pnl, holding.currency, baseCurrency)
+    : null;
   const [showPrice, setShowPrice] = useState(false);
   const [showRecord, setShowRecord] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -121,10 +131,18 @@ export function HoldingDetailDialog({
               <div className="bg-muted rounded-xl p-3">
                 <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">
                   {t("portfolio.value")}
+                  {isOtherCurrency && (
+                    <span className="ml-1 font-mono">{holding.currency}</span>
+                  )}
                 </p>
                 <p className="text-lg font-bold tabular-nums mt-0.5">
-                  {formatCurrency(holding.current_value)}
+                  {formatCurrency(holding.current_value, holding.currency)}
                 </p>
+                {convertedValue?.hasRate && (
+                  <p className="text-xs text-muted-foreground tabular-nums mt-0.5">
+                    ≈ {formatCurrency(convertedValue.converted, baseCurrency)}
+                  </p>
+                )}
               </div>
               <div className="bg-muted rounded-xl p-3">
                 <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">
@@ -156,8 +174,13 @@ export function HoldingDetailDialog({
                       : "hsl(var(--destructive))",
                   }}
                 >
-                  {formatCurrency(holding.unrealized_pnl)}
+                  {formatCurrency(holding.unrealized_pnl, holding.currency)}
                 </p>
+                {convertedPnl?.hasRate && (
+                  <p className="text-xs text-muted-foreground tabular-nums mt-0.5">
+                    ≈ {formatCurrency(convertedPnl.converted, baseCurrency)}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -183,8 +206,14 @@ export function HoldingDetailDialog({
               </span>
               <span className="text-muted-foreground">{t("portfolio.costBasis")}</span>
               <span className="text-right font-medium tabular-nums">
-                {formatCurrency(holding.cost_basis)}
+                {formatCurrency(holding.cost_basis, holding.currency)}
               </span>
+              {isOtherCurrency && (
+                <>
+                  <span className="text-muted-foreground">{t("multicurrency.currency")}</span>
+                  <span className="text-right font-medium font-mono">{holding.currency}</span>
+                </>
+              )}
             </div>
 
             {holding.notes && (

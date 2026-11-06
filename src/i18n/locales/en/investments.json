@@ -151,6 +151,28 @@
     "noTransactions": "No transactions yet",
     "allActivity": "All Activity"
   },
+  "multicurrency": {
+    "displayIn": "Showing in",
+    "unconvertedCount": "{{count}} holding(s) without exchange rate",
+    "manageRates": "Exchange Rates",
+    "manageRatesDescription": "Set custom exchange rates for your portfolio. These override the automatic rates for investment conversions.",
+    "from": "From",
+    "to": "To",
+    "rate": "Rate",
+    "rateType": "Type",
+    "rateOfficial": "Official",
+    "rateMep": "MEP",
+    "rateBlue": "Blue",
+    "rateCustom": "Custom",
+    "addRate": "Add Rate",
+    "noOverrides": "No custom rates set. Automatic rates will be used.",
+    "invalidRate": "Enter a valid rate with different currencies",
+    "rateSaved": "Exchange rate saved",
+    "rateDeleted": "Exchange rate deleted",
+    "errorSaving": "Error saving rate",
+    "errorDeleting": "Error deleting rate",
+    "currency": "Currency"
+  },
   "upload": {
     "title": "Upload Investment Statement",
     "description": "Upload your investment account statement to track your portfolio"

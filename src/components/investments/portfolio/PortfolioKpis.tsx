@@ -6,9 +6,10 @@ import type { PortfolioSummary } from "@/hooks/useHoldings";
 interface PortfolioKpisProps {
   summary: PortfolioSummary;
   pnlPercent: number;
+  displayCurrency?: string;
 }
 
-export function PortfolioKpis({ summary, pnlPercent }: PortfolioKpisProps) {
+export function PortfolioKpis({ summary, pnlPercent, displayCurrency }: PortfolioKpisProps) {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
 
@@ -20,14 +21,14 @@ export function PortfolioKpis({ summary, pnlPercent }: PortfolioKpisProps) {
         label={t("portfolio.totalValue")}
         icon={<Wallet className="w-[15px] h-[15px]" />}
         iconClass="bg-primary/10 text-primary"
-        value={formatCurrency(summary.totalValue)}
+        value={formatCurrency(summary.totalValue, displayCurrency)}
         valueClass="text-primary"
       />
       <KpiCard
         label={t("portfolio.costBasis")}
         icon={<PiggyBank className="w-[15px] h-[15px]" />}
         iconClass="bg-primary/10 text-primary"
-        value={formatCurrency(summary.totalCostBasis)}
+        value={formatCurrency(summary.totalCostBasis, displayCurrency)}
       />
       <KpiCard
         label={t("portfolio.unrealizedPnl")}
@@ -39,7 +40,7 @@ export function PortfolioKpis({ summary, pnlPercent }: PortfolioKpisProps) {
           )
         }
         iconClass={isPositive ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}
-        value={formatCurrency(summary.totalPnl)}
+        value={formatCurrency(summary.totalPnl, displayCurrency)}
         valueClass={isPositive ? "text-success" : "text-destructive"}
         subtext={summary.totalCostBasis > 0 ? `${isPositive ? "+" : ""}${pnlPercent.toFixed(1)}%` : undefined}
         subtextClass={isPositive ? "text-success" : "text-destructive"}
