@@ -216,6 +216,24 @@
     "showAll": "Ver todos ({{count}})",
     "showLess": "Ver menos"
   },
+  "highlights": {
+    "ytdReturn": "Rendimiento YTD",
+    "totalReturn": "Retorno Total",
+    "bestPosition": "Mejor Posición",
+    "worstPosition": "Peor Posición",
+    "winRate": "Win Rate (Cerradas)",
+    "dividendsCollected": "Dividendos Cobrados",
+    "currencyExposure": "Exposición Cambiaria",
+    "yieldOnCost": "Yield sobre Costo (YOC)",
+    "yieldOnCurrent": "Yield sobre Valor Actual",
+    "information": "Información",
+    "assetsTraded": "Activos Operados",
+    "assetsCount": "{{count}} activos",
+    "firstOperation": "Primera Operación",
+    "lastOperation": "Última Operación",
+    "totalMovements": "Total Movimientos",
+    "movementsCount": "{{count}} registros"
+  },
   "taxLots": {
     "title": "Lotes Fiscales",
     "fifo": "FIFO",

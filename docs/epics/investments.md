@@ -338,5 +338,18 @@ This phase is particularly relevant for Argentine users who invest across curren
 - `CostMethod` type exported from `useUserPreferences`
 - Full i18n (en + es)
 
+### Portfolio Dashboard Enhancements — DONE (2026-11-06)
+- Migration: `get_portfolio_highlights` RPC (win rate, info stats, YTD baseline)
+- `usePortfolioHighlights` hook: server-side RPC + client-side computations
+  (best/worst position, currency exposure, yield on cost/current)
+- `PortfolioHighlights` component: 5-card row (YTD return, best/worst position,
+  win rate, dividends collected) — inspired by Alpha Tracker's "Posiciones Destacadas"
+- `CurrencyExposureCard`: currency breakdown with progress bars + yield metrics —
+  auto-shown when holdings span multiple currencies
+- `PortfolioInfoSection`: info cards (assets traded, first/last operation, total movements)
+- PortfolioTab reorganized: KPIs → highlights → allocation + currency exposure → insights →
+  dividends → performance → rebalancing → info → holdings list
+- Full i18n (en + es)
+
 ## Next step
 - All planned phases complete. Remaining Phase 5 ideas (not planned): price alerts (requires external API, costs money)

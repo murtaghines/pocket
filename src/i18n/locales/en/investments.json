@@ -218,6 +218,24 @@
     "showAll": "Show all ({{count}})",
     "showLess": "Show less"
   },
+  "highlights": {
+    "ytdReturn": "YTD Return",
+    "totalReturn": "Total Return",
+    "bestPosition": "Best Position",
+    "worstPosition": "Worst Position",
+    "winRate": "Win Rate (Closed)",
+    "dividendsCollected": "Dividends Collected",
+    "currencyExposure": "Currency Exposure",
+    "yieldOnCost": "Yield on Cost (YOC)",
+    "yieldOnCurrent": "Yield on Current Value",
+    "information": "Information",
+    "assetsTraded": "Assets Traded",
+    "assetsCount": "{{count}} assets",
+    "firstOperation": "First Operation",
+    "lastOperation": "Last Operation",
+    "totalMovements": "Total Movements",
+    "movementsCount": "{{count}} records"
+  },
   "taxLots": {
     "title": "Tax Lots",
     "fifo": "FIFO",

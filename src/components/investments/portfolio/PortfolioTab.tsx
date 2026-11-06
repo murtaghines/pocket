@@ -1,15 +1,20 @@
 import { useHoldings } from "@/hooks/useHoldings";
+import { useInvestmentInsights } from "@/hooks/useInvestmentInsights";
+import { usePortfolioHighlights } from "@/hooks/usePortfolioHighlights";
 import { useTranslation } from "react-i18next";
 import { Loader2, PiggyBank, Plus, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioKpis } from "./PortfolioKpis";
+import { PortfolioHighlights } from "./PortfolioHighlights";
 import { HoldingsList } from "./HoldingsList";
 import { AllocationChart } from "./AllocationChart";
+import { CurrencyExposureCard } from "./CurrencyExposureCard";
 import { PerformanceChart } from "./PerformanceChart";
 import { InsightsCards } from "./InsightsCards";
 import { DividendCalendar } from "./DividendCalendar";
 import { RebalancingCard } from "./RebalancingCard";
+import { PortfolioInfoSection } from "./PortfolioInfoSection";
 import { ExportButton } from "./ExportButton";
 import { ExchangeRatesDialog } from "./ExchangeRatesDialog";
 import { CostMethodSelector } from "./CostMethodSelector";
@@ -19,6 +24,8 @@ import { AddHoldingDialog } from "./AddHoldingDialog";
 export function PortfolioTab() {
   const { t } = useTranslation("investments");
   const { holdings, summary, isLoading, hasHoldings, isMultiCurrency, displayCurrency, pnlPercent } = useHoldings();
+  const { insights } = useInvestmentInsights();
+  const { highlights } = usePortfolioHighlights(holdings, summary, insights);
   const [addOpen, setAddOpen] = useState(false);
   const [ratesOpen, setRatesOpen] = useState(false);
 
@@ -49,6 +56,8 @@ export function PortfolioTab() {
     );
   }
 
+  const showCurrencyExposure = highlights.currencyExposure.length > 1;
+
   return (
     <div className="flex flex-col gap-[16px]">
       <div className="flex items-center gap-2 flex-wrap">
@@ -78,9 +87,16 @@ export function PortfolioTab() {
           <ExportButton holdings={holdings} />
         </div>
       </div>
+
       <PortfolioKpis summary={summary} pnlPercent={pnlPercent} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+      <PortfolioHighlights
+        highlights={highlights}
+        insights={insights}
+        displayCurrency={isMultiCurrency ? displayCurrency : undefined}
+      />
+
+      <div className={`grid grid-cols-1 gap-[16px] ${showCurrencyExposure ? "lg:grid-cols-3" : "md:grid-cols-2"}`}>
         <AllocationChart
           data={summary.byAssetClass}
           totalValue={summary.totalValue}
@@ -91,6 +107,13 @@ export function PortfolioTab() {
           totalValue={summary.totalValue}
           title={t("portfolio.allocationByAccount")}
         />
+        {showCurrencyExposure && (
+          <CurrencyExposureCard
+            exposure={highlights.currencyExposure}
+            yieldOnCost={highlights.yieldOnCost}
+            yieldOnCurrent={highlights.yieldOnCurrent}
+          />
+        )}
       </div>
 
       <InsightsCards />
@@ -100,6 +123,8 @@ export function PortfolioTab() {
       <PerformanceChart />
 
       <RebalancingCard summary={summary} />
+
+      <PortfolioInfoSection info={highlights.info} />
 
       <HoldingsList holdings={holdings} totalValue={summary.totalValue} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
 
