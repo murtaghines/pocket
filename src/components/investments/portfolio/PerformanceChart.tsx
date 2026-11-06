@@ -9,14 +9,10 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, TrendingUp, TrendingDown } from "lucide-react";
 import { useLocalization } from "@/hooks/useLocalization";
-import {
-  usePortfolioPerformance,
-  type PerformanceData,
-} from "@/hooks/usePortfolioPerformance";
+import { usePortfolioPerformance } from "@/hooks/usePortfolioPerformance";
 
 const PERIODS = ["1M", "3M", "6M", "YTD", "1Y", "ALL"] as const;
 type Period = (typeof PERIODS)[number];
@@ -76,10 +72,10 @@ export function PerformanceChart() {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
+    <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+      <div className="flex flex-row items-center justify-between gap-4 flex-wrap px-6 pt-5 pb-3 shrink-0">
         <div>
-          <CardTitle>{t("performance.title")}</CardTitle>
+          <h3 className="text-base font-semibold">{t("performance.title")}</h3>
           <div className="flex items-center gap-2 mt-1">
             {isPositive ? (
               <TrendingUp className="w-4 h-4 text-success" />
@@ -130,8 +126,8 @@ export function PerformanceChart() {
             <Camera className="w-4 h-4" />
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="px-6 pb-5 flex-1 min-h-0 flex flex-col">
         {!hasSeries ? (
           <div className="flex items-center justify-center h-[220px]">
             <div className="text-center">
@@ -239,7 +235,7 @@ export function PerformanceChart() {
         )}
 
         {hasSeries && performance.periodDays >= 365 && (
-          <div className="flex items-center justify-center mt-3 pt-3 border-t border-border">
+          <div className="flex items-center justify-center mt-3 pt-3 border-t border-border shrink-0">
             <span className="text-xs text-muted-foreground">
               {t("performance.annualized")}:{" "}
               <span
@@ -257,7 +253,7 @@ export function PerformanceChart() {
             </span>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

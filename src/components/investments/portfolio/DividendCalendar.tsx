@@ -9,7 +9,6 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, Calendar, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalization } from "@/hooks/useLocalization";
@@ -72,18 +71,18 @@ export function DividendCalendar() {
   };
 
   return (
-    <Card className="shadow-section">
-      <CardHeader className="pb-2">
+    <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
+      <div className="px-6 pt-5 pb-2 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-[hsl(270,60%,55%)]/10 text-[hsl(270,60%,55%)]">
             <Coins className="w-[15px] h-[15px]" />
           </div>
-          <CardTitle className="text-base font-semibold">
+          <h3 className="text-base font-semibold">
             {t("dividends.title")}
-          </CardTitle>
+          </h3>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-5">
+      </div>
+      <div className="px-6 pb-5 flex-1 min-h-0 overflow-y-auto space-y-5">
         {/* KPI row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiMini
@@ -210,8 +209,8 @@ export function DividendCalendar() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -232,7 +231,7 @@ function KpiMini({
     <div className="rounded-xl bg-muted p-3">
       <div className={cn("flex items-center gap-1.5 mb-1", color)}>
         {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-wide">
+        <span className="text-[11px] font-semibold uppercase tracking-wide">
           {label}
         </span>
       </div>

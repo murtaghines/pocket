@@ -35,7 +35,7 @@ export function CurrencyExposureCard({
 
   return (
     <div className="rounded-xl p-5 bg-card border border-border shadow-section min-w-0 flex flex-col">
-      <p className="text-[11px] font-semibold uppercase tracking-[.14em] text-muted-foreground mb-4">
+      <p className="text-[13px] font-medium text-muted-foreground mb-4">
         {t("highlights.currencyExposure")}
       </p>
 
