@@ -500,6 +500,44 @@ serve(async (req) => {
 
     const { stats, monthsDistribution, insertFailedCount, insertErrorSamples } = catResult;
 
+    // ── Infer initial_balance from the earliest transaction with running_balance ──
+    // Formula: initial_balance = earliest_tx.running_balance - earliest_tx.amount
+    // Recalculates on every import that adds transactions, because a later upload
+    // may introduce earlier-dated transactions (e.g. user uploads Nov first, then
+    // Jan later). The initial_balance always reflects the state before the
+    // globally-earliest known transaction.
+    if (accountId && stats.newTransactions > 0) {
+      const { data: earliest } = await supabase
+        .from('transactions')
+        .select('amount, running_balance, date')
+        .eq('user_id', userId)
+        .eq('account_id', accountId)
+        .not('running_balance', 'is', null)
+        .order('date', { ascending: true })
+        .order('amount', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (earliest?.running_balance != null && earliest?.amount != null) {
+        const inferred = parseFloat(String(earliest.running_balance)) - parseFloat(String(earliest.amount));
+        if (Number.isFinite(inferred)) {
+          const { data: acct } = await supabase
+            .from('accounts')
+            .select('initial_balance')
+            .eq('id', accountId)
+            .single();
+          const current = acct?.initial_balance ?? 0;
+          if (current !== inferred) {
+            await supabase
+              .from('accounts')
+              .update({ initial_balance: inferred })
+              .eq('id', accountId);
+            console.log(`[process-import] Updated initial_balance: ${current} → ${inferred} (from ${earliest.date}: balance=${earliest.running_balance}, amount=${earliest.amount})`);
+          }
+        }
+      }
+    }
+
     // ── Finalize import status ──
     const insertedCount = stats.newTransactions;
     let importStatus: 'NORMALIZED' | 'FAILED' | 'PARTIAL' = 'NORMALIZED';

@@ -128,7 +128,7 @@ export function DataToolbar({
     onFiltersChange({ ...filters, categories: next });
   };
 
-  const showAccountTabs = (accountTabs?.length ?? 0) > 1;
+  const showAccountTabs = (accountTabs?.length ?? 0) >= 1;
   const displayCount = globalSummary ? globalSummary.total - globalSummary.hidden : txCount;
 
   return (
