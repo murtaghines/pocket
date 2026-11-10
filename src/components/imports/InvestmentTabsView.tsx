@@ -1,17 +1,14 @@
-import { useState, useMemo, useRef, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { uploadFileRejection } from "@/lib/fileExtract";
 import { toast as sonnerToast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyInvestmentUpload } from "@/hooks/useMonthlyInvestmentUpload";
 import { AccountSelectDialog } from "./AccountSelectDialog";
-import { UploadedFilesDropdown } from "./investments/UploadedFiles";
 import { MonthTabStrip } from "./investments/MonthTabStrip";
 import { MonthWorkspace } from "./investments/MonthWorkspace";
 import { InvestmentPreviewDialog } from "./investments/InvestmentPreviewDialog";
@@ -67,8 +64,6 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
 
   // Pending edits live in the parent so they survive month-tab switches.
   const [pendingByInv, setPendingByInv] = useState<Record<string, PendingInvEdit>>({});
-  const pendingInvIds = useMemo(() => new Set(Object.keys(pendingByInv)), [pendingByInv]);
-
   // Account tab state — lifted so InvestmentDataToolbar can render tabs
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
   const [accountTabsData, setAccountTabsData] = useState<InvestmentAccountTab[]>([]);
@@ -78,34 +73,11 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     setGlobalSummary(data.globalSummary);
   }, []);
 
-  // Map pending inv ids → import_id so the file list shows yellow indicators.
-  const { data: pendingInvImportMap = {} } = useQuery({
-    queryKey: ["pending-inv-imports", user?.id, Array.from(pendingInvIds).sort().join(",")],
-    enabled: !!user?.id && pendingInvIds.size > 0,
-    queryFn: async () => {
-      const ids = Array.from(pendingInvIds);
-      if (ids.length === 0) return {} as Record<string, string>;
-      const { data, error } = await supabase
-        .from("investments")
-        .select("id, upload_id")
-        .in("id", ids);
-      if (error) throw error;
-      const map: Record<string, string> = {};
-      (data || []).forEach((row: { id: string; upload_id: string | null }) => {
-        if (row.upload_id) map[row.id] = row.upload_id;
-      });
-      return map;
-    },
-  });
-
-  const pendingImportIds = useMemo(() => {
-    const set = new Set<string>();
-    pendingInvIds.forEach((id) => {
-      const importId = pendingInvImportMap[id];
-      if (importId) set.add(importId);
-    });
-    return set;
-  }, [pendingInvIds, pendingInvImportMap]);
+  useEffect(() => {
+    if (activeAccountId === null && accountTabsData.length > 0) {
+      setActiveAccountId(accountTabsData[0].id);
+    }
+  }, [activeAccountId, accountTabsData]);
 
   // Build month slots: latest first
   const monthSlots = useMemo(() => {
@@ -248,14 +220,6 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
         activeAccountId={activeAccountId}
         onAccountSelect={setActiveAccountId}
         globalSummary={globalSummary}
-        actionSlot={
-          <UploadedFilesDropdown
-            imports={imports}
-            deleteImport={deleteImport}
-            isDeleting={isDeleting}
-            pendingImportIds={pendingImportIds}
-          />
-        }
       />
 
       {/* ============= Month Tab Strip (mobile only) ============= */}

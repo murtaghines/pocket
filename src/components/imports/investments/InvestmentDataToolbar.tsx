@@ -42,7 +42,6 @@ interface InvestmentDataToolbarProps {
   activeAccountId: string | null;
   onAccountSelect: (id: string | null) => void;
   globalSummary?: InvestmentSummary;
-  actionSlot?: React.ReactNode;
 }
 
 export function InvestmentDataToolbar({
@@ -61,7 +60,6 @@ export function InvestmentDataToolbar({
   activeAccountId,
   onAccountSelect,
   globalSummary,
-  actionSlot,
 }: InvestmentDataToolbarProps) {
   const { t, i18n } = useTranslation("common");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -307,7 +305,6 @@ export function InvestmentDataToolbar({
 
         {/* Actions */}
         <div className="flex items-center shrink-0" style={{ gap: 8 }}>
-          {actionSlot}
           <button
             type="button"
             onClick={onUploadFile}
