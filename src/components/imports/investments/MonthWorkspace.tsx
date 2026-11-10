@@ -194,7 +194,6 @@ export function MonthWorkspace({
         investmentAccounts={investmentAccounts}
         deleteImport={deleteImport}
         isDeleting={isDeleting}
-        onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
         pendingFiles={activePending}
         pendingByInv={pendingByInv}
