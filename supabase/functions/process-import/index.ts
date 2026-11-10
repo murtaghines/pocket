@@ -500,6 +500,42 @@ serve(async (req) => {
 
     const { stats, monthsDistribution, insertFailedCount, insertErrorSamples } = catResult;
 
+    // ── Infer initial_balance from the earliest transaction with running_balance ──
+    // Formula: initial_balance = earliest_tx.running_balance - earliest_tx.amount
+    // Only sets it when the account's initial_balance is still 0 (never been set by
+    // the user or a previous import) and there's reliable running_balance data.
+    if (accountId && stats.newTransactions > 0) {
+      const { data: acct } = await supabase
+        .from('accounts')
+        .select('initial_balance')
+        .eq('id', accountId)
+        .single();
+
+      if (acct && (acct.initial_balance === 0 || acct.initial_balance === null)) {
+        const { data: earliest } = await supabase
+          .from('transactions')
+          .select('amount, running_balance, date')
+          .eq('user_id', userId)
+          .eq('account_id', accountId)
+          .not('running_balance', 'is', null)
+          .order('date', { ascending: true })
+          .order('amount', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (earliest?.running_balance != null && earliest?.amount != null) {
+          const inferred = parseFloat(String(earliest.running_balance)) - parseFloat(String(earliest.amount));
+          if (Number.isFinite(inferred) && inferred !== 0) {
+            await supabase
+              .from('accounts')
+              .update({ initial_balance: inferred })
+              .eq('id', accountId);
+            console.log(`[process-import] Inferred initial_balance: ${inferred} (from ${earliest.date}: balance=${earliest.running_balance}, amount=${earliest.amount})`);
+          }
+        }
+      }
+    }
+
     // ── Finalize import status ──
     const insertedCount = stats.newTransactions;
     let importStatus: 'NORMALIZED' | 'FAILED' | 'PARTIAL' = 'NORMALIZED';
