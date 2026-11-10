@@ -1044,19 +1044,18 @@ export function InlineTransactionsEditor({
   const tabSummary = useMemo(() => {
     if (activeAccountId === null) return summary;
     const visible = rowsToRender.filter((t) => !t.is_hidden);
-    const nonSavings = visible.filter((t) => !savingsAccountIds.has(t.account_id ?? ""));
-    const income = nonSavings
+    const income = visible
       .filter((t) => t.movement === "INCOME")
       .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
-    const expenses = nonSavings
+    const expenses = visible
       .filter((t) => t.movement === "EXPENSE")
       .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
-    const transferTxs = nonSavings.filter((t) => t.movement === "TRANSFER");
+    const transferTxs = visible.filter((t) => t.movement === "TRANSFER");
     const transfers = transferTxs.length;
     const transfersNet = transferTxs.reduce((s, t) => s + splitAmt(t.amount, t.account_id), 0);
     const hidden = rowsToRender.filter((t) => t.is_hidden).length;
     return { income, expenses, transfers, transfersNet, hidden, total: rowsToRender.length };
-  }, [activeAccountId, summary, rowsToRender, savingsAccountIds, splitAmt]);
+  }, [activeAccountId, summary, rowsToRender, splitAmt]);
 
   // Report account tabs + summary to parent for the toolbar
   const tabsCallbackRef = useRef(onTabsDataChange);

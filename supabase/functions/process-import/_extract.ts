@@ -46,6 +46,17 @@ FEE — if the data has a separate fee/commission column with a NON-ZERO value, 
 is 0 or absent, amount_signed = amount.
 FORMAT — rows may arrive pre-parsed as "<date> | <description> | <±amount> | bal <balance>": the
 leading +/− is the sign of amount_signed, and the value after "bal" is running_balance.
+REVOLUT PDF SECTIONS — Revolut PDFs contain SUMMARY sections after the main transactions that MUST
+be skipped entirely:
+  • "Revertidas" / "Reversed" — these are cancelled/reversed transactions already excluded from the
+    balance; importing them would double-count or create phantom entries.
+  • "Transacciones de Pockets personales y grupales Pro" / "Personal & Group Pockets Pro
+    transactions" — these REPEAT the same pocket transfers already listed in the main section but
+    with a different running_balance (the pocket's balance instead of the main account's). Importing
+    them would create duplicates.
+  • Any "Resumen del saldo" / "Balance summary" table — these are aggregate totals, not transactions.
+Only extract transactions from the MAIN transaction listing. If the same transaction appears in both
+the main section and a summary/pockets section, emit it ONCE (from the main section).
 
 Example output:
 [
@@ -63,6 +74,14 @@ STATE — SKIP any transaction whose state/status is REVERTED, DECLINED, CANCELL
 not complete and does not affect the balance. Emit only completed transactions.
 FORMAT — rows may arrive pre-parsed as "<date> | <description> | <±amount> | bal <balance>": the
 leading +/− is the sign of amount_signed, and the value after "bal" is running_balance.
+REVOLUT PDF SECTIONS — Revolut PDFs contain SUMMARY sections after the main transactions that MUST
+be skipped entirely:
+  • "Revertidas" / "Reversed" — cancelled/reversed transactions, already excluded from the balance.
+  • "Transacciones de Pockets personales y grupales Pro" / "Personal & Group Pockets Pro
+    transactions" — these REPEAT pocket transfers from the main section with a different balance.
+  • Any "Resumen del saldo" / "Balance summary" — aggregate totals, not transactions.
+Only extract from the MAIN transaction listing. If you see the same transaction in both a main and
+a summary section, emit it ONCE (from the main section).
 
 For each transaction, extract:
 - posted_date: ISO format (YYYY-MM-DD). This is the main transaction date shown on the statement.
@@ -605,7 +624,7 @@ export async function extractTransactions(input: ExtractionInput): Promise<Extra
     const keyOf = (t: any) => {
       const d = t.posted_date || t.date || '';
       const a = parseFloat(t.amount_signed ?? t.amount ?? 0).toFixed(2);
-      const desc = (t.description_raw || t.description || '').toLowerCase().trim();
+      const desc = (t.description_raw || t.description || '').toLowerCase().trim().replace(/\s+/g, ' ');
       return `${d}|${a}|${desc}`;
     };
     const groups = new Map<string, any[]>();
