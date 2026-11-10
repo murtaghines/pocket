@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import { Loader2, Plus, Upload, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
 import { InlineInvestmentsEditor } from "./InlineInvestmentsEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
 import type { PendingFileInfo, PendingInvEdit } from "./types";
+import type { InvestmentSummary, InvestmentAccountTab } from "./InvestmentDataToolbar";
 
 export interface MonthWorkspaceProps {
   monthKey: string;
@@ -22,6 +23,9 @@ export interface MonthWorkspaceProps {
   pendingFiles?: PendingFileInfo[];
   pendingByInv: Record<string, PendingInvEdit>;
   setPendingByInv: React.Dispatch<React.SetStateAction<Record<string, PendingInvEdit>>>;
+  activeAccountId: string | null;
+  onAccountChange: (id: string | null) => void;
+  onTabsDataChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentSummary }) => void;
 }
 
 export function MonthWorkspace({
@@ -37,9 +41,13 @@ export function MonthWorkspace({
   pendingFiles,
   pendingByInv,
   setPendingByInv,
+  activeAccountId,
+  onAccountChange,
+  onTabsDataChange,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const selectedAccountId = activeAccountId;
+  const setSelectedAccountId = onAccountChange;
 
   const accountChips = useMemo(() => {
     const seen = new Map<string, { id: string; label: string; color: string | null; count: number }>();
@@ -147,7 +155,7 @@ export function MonthWorkspace({
         onChange={(e) => onPickFiles(e.target.files, monthDate)}
       />
       {accountChips.length > 1 && (
-        <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-muted/20 overflow-x-auto scrollbar-none">
+        <div className="md:hidden flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-muted/20 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setSelectedAccountId(null)}
             className={cn(
@@ -183,6 +191,7 @@ export function MonthWorkspace({
         monthKey={monthKey}
         monthLabel={monthLabel}
         imports={imports}
+        investmentAccounts={investmentAccounts}
         deleteImport={deleteImport}
         isDeleting={isDeleting}
         onAddMore={() => fileInputRef.current?.click()}
@@ -191,6 +200,7 @@ export function MonthWorkspace({
         pendingByInv={pendingByInv}
         setPendingByInv={setPendingByInv}
         filterUploadIds={filterUploadIds}
+        onTabsDataChange={onTabsDataChange}
       />
     </div>
   );
