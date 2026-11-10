@@ -52,32 +52,28 @@ export function UploadedFilesDropdown({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           disabled={count === 0}
           title={t("imports.uploadedFilesTooltipInv")}
           aria-label="Manage uploaded files"
           className={cn(
-            "group h-8 md:h-9 gap-2 px-2 md:pl-3 md:pr-2 font-medium border-2 shadow-sm",
-            pendingCount > 0
-              ? "border-warning/40 bg-warning/10 text-foreground hover:bg-warning/20 hover:border-warning/60"
-              : "border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10 hover:border-primary/50",
+            "flex items-center cursor-pointer border-none disabled:opacity-50 disabled:pointer-events-none",
+            pendingCount > 0 ? "text-warning bg-warning/[0.06]" : "text-muted-foreground hover:bg-muted",
           )}
+          style={{
+            gap: 6, height: 32, padding: "0 11px", borderRadius: 9,
+            font: "600 12.5px Inter, sans-serif",
+          }}
         >
-          <FileSpreadsheet className={cn("w-4 h-4", pendingCount > 0 ? "text-warning" : "text-primary")} />
+          <FileSpreadsheet className="w-[13px] h-[13px]" />
           <span className="hidden md:inline tabular-nums">{t("imports.manageFiles")}</span>
-          <span
-            className={cn(
-              "inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums",
-              pendingCount > 0
-                ? "bg-warning text-warning-foreground"
-                : "bg-primary text-primary-foreground",
-            )}
-          >
-            {count}
-          </span>
-        </Button>
+          {pendingCount > 0 && (
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-warning text-warning-foreground text-[10px] font-bold">
+              {pendingCount}
+            </span>
+          )}
+        </button>
       </SheetTrigger>
       <SheetContent
         side="right"

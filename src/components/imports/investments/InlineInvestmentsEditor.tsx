@@ -4,9 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
   FileSpreadsheet,
-  TrendingUp,
-  TrendingDown,
-  Plus,
   Check,
   X,
   Eye,
@@ -17,7 +14,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -95,7 +91,6 @@ export interface InlineInvestmentsEditorProps {
   investmentAccounts: Account[];
   deleteImport: (id: string) => void;
   isDeleting: boolean;
-  onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
   pendingByInv: Record<string, PendingInvEdit>;
@@ -111,7 +106,6 @@ export function InlineInvestmentsEditor({
   investmentAccounts,
   deleteImport,
   isDeleting,
-  onAddMore,
   isProcessing,
   pendingFiles,
   pendingByInv,
@@ -388,36 +382,6 @@ export function InlineInvestmentsEditor({
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Status bar */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-6 py-3 border-b border-border bg-muted/20 text-sm">
-        <div className="inline-flex items-center gap-1.5">
-          <FileSpreadsheet className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="font-semibold text-foreground tabular-nums">
-            {summary.count}
-          </span>
-          <span className="text-muted-foreground">{t("imports.movementsCount")}</span>
-        </div>
-        <div className="inline-flex items-center gap-1.5 text-success">
-          <TrendingUp className="w-3.5 h-3.5" />
-          <span className="tabular-nums font-medium">
-            {formatCurrency(summary.deposits)}
-          </span>
-          <span className="text-muted-foreground text-xs">{t("imports.depositsLabel")}</span>
-        </div>
-        <div className="inline-flex items-center gap-1.5 text-destructive">
-          <TrendingDown className="w-3.5 h-3.5" />
-          <span className="tabular-nums font-medium">
-            {formatCurrency(summary.withdrawals)}
-          </span>
-          <span className="text-muted-foreground text-xs">{t("imports.withdrawalsLabel")}</span>
-        </div>
-        <div className="ml-auto inline-flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onAddMore} disabled={isProcessing} className="h-8 gap-1.5">
-            {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-            {t("imports.addFile")}
-          </Button>
-        </div>
-      </div>
 
       {pendingFiles && pendingFiles.length > 0 && (
         <div className="px-6 py-3 border-b border-border">

@@ -3,9 +3,6 @@ import { useTranslation } from "react-i18next";
 import {
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
-  TrendingDown,
-  Upload,
 } from "lucide-react";
 import {
   Popover,
@@ -108,10 +105,9 @@ export function InvestmentDataToolbar({
               <>
                 <span className="rounded-full bg-white/50" style={{ width: 3, height: 3 }} />
                 <span
-                  className="tabular-nums text-white inline-flex items-center"
-                  style={{ font: "600 12.5px Inter, sans-serif", gap: 4 }}
+                  className="tabular-nums text-white"
+                  style={{ font: "600 12.5px Inter, sans-serif" }}
                 >
-                  <TrendingUp className="w-[13px] h-[13px]" style={{ opacity: 0.85 }} />
                   +{formatCurrency(globalSummary.deposits)}
                 </span>
               </>
@@ -120,10 +116,9 @@ export function InvestmentDataToolbar({
               <>
                 <span className="rounded-full bg-white/50" style={{ width: 3, height: 3 }} />
                 <span
-                  className="tabular-nums text-white inline-flex items-center"
-                  style={{ font: "600 12.5px Inter, sans-serif", gap: 4 }}
+                  className="tabular-nums text-white"
+                  style={{ font: "600 12.5px Inter, sans-serif" }}
                 >
-                  <TrendingDown className="w-[13px] h-[13px]" style={{ opacity: 0.85 }} />
                   −{formatCurrency(globalSummary.withdrawals)}
                 </span>
               </>
@@ -269,44 +264,13 @@ export function InvestmentDataToolbar({
         {/* Account tabs */}
         {showAccountTabs && (
           <div className="flex items-stretch flex-1 min-w-0 overflow-x-auto scrollbar-none" style={{ height: 52, gap: 0 }}>
-            <button
-              type="button"
-              onClick={() => onAccountSelect(null)}
-              className="flex items-center shrink-0 cursor-pointer whitespace-nowrap"
-              style={{
-                gap: 8,
-                padding: "0 14px",
-                marginRight: 4,
-                background: "transparent",
-                border: "none",
-                borderBottomWidth: 2,
-                borderBottomStyle: "solid",
-                borderBottomColor: activeAccountId === null ? "hsl(var(--primary))" : "transparent",
-              }}
-            >
-              <span
-                className={activeAccountId === null ? "text-primary" : "text-muted-foreground"}
-                style={{ font: `${activeAccountId === null ? 700 : 500} 13px Inter, sans-serif` }}
-              >
-                {t("allAccounts")}
-              </span>
-              <span
-                className={cn(
-                  "tabular-nums rounded-full",
-                  activeAccountId === null ? "bg-primary/[0.12] text-primary" : "bg-muted text-muted-foreground",
-                )}
-                style={{ padding: "1px 7px", font: "600 10.5px Inter, sans-serif" }}
-              >
-                {globalSummary?.count ?? 0}
-              </span>
-            </button>
             {accountTabs!.map((tab) => {
               const isActive = activeAccountId === tab.id;
               return (
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => onAccountSelect(tab.id)}
+                  onClick={() => onAccountSelect(isActive ? null : tab.id)}
                   className="flex items-center shrink-0 cursor-pointer whitespace-nowrap"
                   style={{
                     gap: 8,
@@ -343,6 +307,7 @@ export function InvestmentDataToolbar({
 
         {/* Actions */}
         <div className="flex items-center shrink-0" style={{ gap: 8 }}>
+          {actionSlot}
           <button
             type="button"
             onClick={onUploadFile}
@@ -353,10 +318,9 @@ export function InvestmentDataToolbar({
               font: "600 12.5px Inter, sans-serif",
             }}
           >
-            <Upload className="w-[13px] h-[13px]" />
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" /></svg>
             {t("imports.addFile")}
           </button>
-          {actionSlot}
         </div>
       </div>
     </div>
