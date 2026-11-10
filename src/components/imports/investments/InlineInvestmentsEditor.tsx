@@ -345,21 +345,21 @@ export function InlineInvestmentsEditor({
   }, [displayedInvestments]);
 
   const accountTabsData = useMemo<InvestmentAccountTab[]>(() => {
-    const map = new Map<string, { id: string; name: string; color: string | null; count: number }>();
+    const map = new Map<string, { id: string; name: string; color: string | null; txCount: number }>();
     for (const inv of investments) {
       if (!inv.upload_id) continue;
       const imp = imports.find((i) => i.id === inv.upload_id);
       if (!imp?.account_id) continue;
       const existing = map.get(imp.account_id);
       if (existing) {
-        existing.count++;
+        existing.txCount++;
       } else {
         const acct = investmentAccounts.find((a) => a.id === imp.account_id);
         map.set(imp.account_id, {
           id: imp.account_id,
           name: acct ? getAccountDisplayName(acct) : imp.account_id,
           color: null,
-          count: 1,
+          txCount: 1,
         });
       }
     }
