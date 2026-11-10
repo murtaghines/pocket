@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,7 +30,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useToast } from "@/hooks/use-toast";
 import type { Import } from "@/hooks/useImports";
+import type { Account } from "@/hooks/useAccounts";
+import { getAccountDisplayName } from "@/lib/accountColors";
 import { ProcessingPanel } from "./ProcessingPanel";
+import type { InvestmentSummary, InvestmentAccountTab } from "./InvestmentDataToolbar";
 import { InvestmentEditDrawer } from "./InvestmentEditDrawer";
 import { RowEditIndicator } from "./RowEditIndicator";
 import { RevertToOriginalButton } from "./RevertToOriginalButton";
@@ -89,6 +92,7 @@ export interface InlineInvestmentsEditorProps {
   monthKey: string;
   monthLabel: string;
   imports: Import[];
+  investmentAccounts: Account[];
   deleteImport: (id: string) => void;
   isDeleting: boolean;
   onAddMore: () => void;
@@ -97,12 +101,14 @@ export interface InlineInvestmentsEditorProps {
   pendingByInv: Record<string, PendingInvEdit>;
   setPendingByInv: React.Dispatch<React.SetStateAction<Record<string, PendingInvEdit>>>;
   filterUploadIds?: Set<string>;
+  onTabsDataChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentSummary }) => void;
 }
 
 export function InlineInvestmentsEditor({
   monthKey,
   monthLabel,
   imports,
+  investmentAccounts,
   deleteImport,
   isDeleting,
   onAddMore,
@@ -111,6 +117,7 @@ export function InlineInvestmentsEditor({
   pendingByInv,
   setPendingByInv,
   filterUploadIds,
+  onTabsDataChange,
 }: InlineInvestmentsEditorProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -342,6 +349,34 @@ export function InlineInvestmentsEditor({
     const hidden = displayedInvestments.length - visible.length;
     return { count: visible.length, deposits, withdrawals, net: deposits - withdrawals, hidden };
   }, [displayedInvestments]);
+
+  const accountTabsData = useMemo<InvestmentAccountTab[]>(() => {
+    const map = new Map<string, { id: string; name: string; color: string | null; count: number }>();
+    for (const inv of investments) {
+      if (!inv.upload_id) continue;
+      const imp = imports.find((i) => i.id === inv.upload_id);
+      if (!imp?.account_id) continue;
+      const existing = map.get(imp.account_id);
+      if (existing) {
+        existing.count++;
+      } else {
+        const acct = investmentAccounts.find((a) => a.id === imp.account_id);
+        map.set(imp.account_id, {
+          id: imp.account_id,
+          name: acct ? getAccountDisplayName(acct) : imp.account_id,
+          color: null,
+          count: 1,
+        });
+      }
+    }
+    return Array.from(map.values());
+  }, [investments, imports, investmentAccounts]);
+
+  const tabsCallbackRef = useRef(onTabsDataChange);
+  tabsCallbackRef.current = onTabsDataChange;
+  useEffect(() => {
+    tabsCallbackRef.current?.({ tabs: accountTabsData, globalSummary: summary });
+  }, [accountTabsData, summary]);
 
   if (isLoading) {
     return (

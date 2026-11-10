@@ -1,11 +1,10 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { uploadFileRejection } from "@/lib/fileExtract";
 import { toast as sonnerToast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
@@ -16,6 +15,8 @@ import { UploadedFilesDropdown } from "./investments/UploadedFiles";
 import { MonthTabStrip } from "./investments/MonthTabStrip";
 import { MonthWorkspace } from "./investments/MonthWorkspace";
 import { InvestmentPreviewDialog } from "./investments/InvestmentPreviewDialog";
+import { InvestmentDataToolbar } from "./investments/InvestmentDataToolbar";
+import type { InvestmentSummary, InvestmentAccountTab } from "./investments/InvestmentDataToolbar";
 import { MobileUploadFAB } from "./MobileUploadFAB";
 import type { PendingInvEdit } from "./investments/types";
 
@@ -33,7 +34,7 @@ interface InvestmentTabsViewProps {
 export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTabsViewProps) {
   const { user } = useAuth();
   const { t } = useTranslation("common");
-  const { formatMonth } = useLocalization();
+  const { formatMonth, formatCurrency } = useLocalization();
   const { imports, isLoading, deleteImport, isDeleting } = useImports("INVESTING");
   const { getInvestmentAccounts } = useAccounts();
   const investmentAccounts = getInvestmentAccounts();
@@ -56,11 +57,26 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     removePosition,
   } = useMonthlyInvestmentUpload();
 
-  const [monthsToShow, setMonthsToShow] = useState(DEFAULT_MONTHS);
+  const [monthsToShow, setMonthsToShow] = useState(() => {
+    if (!activeMonth) return DEFAULT_MONTHS;
+    const now = new Date();
+    const [y, m] = activeMonth.split("-").map(Number);
+    const diff = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m) + 1;
+    return Math.max(DEFAULT_MONTHS, diff);
+  });
 
   // Pending edits live in the parent so they survive month-tab switches.
   const [pendingByInv, setPendingByInv] = useState<Record<string, PendingInvEdit>>({});
   const pendingInvIds = useMemo(() => new Set(Object.keys(pendingByInv)), [pendingByInv]);
+
+  // Account tab state — lifted so InvestmentDataToolbar can render tabs
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+  const [accountTabsData, setAccountTabsData] = useState<InvestmentAccountTab[]>([]);
+  const [globalSummary, setGlobalSummary] = useState<InvestmentSummary | undefined>(undefined);
+  const handleTabsDataChange = useCallback((data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentSummary }) => {
+    setAccountTabsData(data.tabs);
+    setGlobalSummary(data.globalSummary);
+  }, []);
 
   // Map pending inv ids → import_id so the file list shows yellow indicators.
   const { data: pendingInvImportMap = {} } = useQuery({
@@ -111,15 +127,43 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     return g;
   }, [imports]);
 
+  const monthsWithData = useMemo(() => new Set(Object.keys(importsByMonth)), [importsByMonth]);
+  const firstMonthWithData = useMemo(() => {
+    const keys = Object.keys(importsByMonth).sort();
+    return keys.length > 0 ? keys[0] : null;
+  }, [importsByMonth]);
+
   const defaultMonth = monthSlots[0]?.key ?? "";
   const activeKey = activeMonth && monthSlots.some((s) => s.key === activeMonth) ? activeMonth : defaultMonth;
   const setActiveKey = onMonthChange;
 
   const activeSlot = monthSlots.find((s) => s.key === activeKey) ?? monthSlots[0];
+  const activeIdx = monthSlots.findIndex((s) => s.key === activeKey);
   const isProcessingAny = useMemo(
     () => Object.values(pendingFilesByMonth).some((arr) => arr.some((f) => f.status === "processing" || f.status === "pending")),
     [pendingFilesByMonth],
   );
+
+  // Month navigation
+  const goPrevMonth = () => {
+    if (activeIdx < monthSlots.length - 1) setActiveKey(monthSlots[activeIdx + 1].key);
+    else setMonthsToShow((n) => n + MONTHS_INCREMENT);
+  };
+  const goNextMonth = () => {
+    if (activeIdx > 0) setActiveKey(monthSlots[activeIdx - 1].key);
+  };
+  const handleMonthJump = (date: Date) => {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const slot = monthSlots.find((s) => s.key === key);
+    if (slot) {
+      setActiveKey(key);
+    } else {
+      const now = new Date();
+      const diff = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth()) + 1;
+      setMonthsToShow(Math.max(monthsToShow, diff));
+      setTimeout(() => setActiveKey(key), 0);
+    }
+  };
 
   const globalFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,7 +215,7 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Shared hidden file input */}
       <input
         ref={globalFileInputRef}
@@ -187,43 +231,47 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
         }}
       />
 
-      {/* ============= Toolbar (desktop only): actions ============= */}
-      <div className="hidden md:flex items-center justify-end gap-2 px-6 py-[14px] border-b border-border/60 bg-[#F5F7F9]">
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={() => globalFileInputRef.current?.click()}
-            disabled={isProcessingAny}
-            className="flex gap-2 h-8 px-4 text-[12.5px] font-semibold shadow-[0_1px_3px_rgba(27,118,255,0.3)]"
-          >
-            {isProcessingAny ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-            Add file
-          </Button>
+      {/* ============= Data Toolbar (desktop only) ============= */}
+      <InvestmentDataToolbar
+        monthLabel={activeSlot?.label ?? ""}
+        monthDate={activeSlot?.date ?? new Date()}
+        formatCurrency={formatCurrency}
+        onPrev={goPrevMonth}
+        onNext={goNextMonth}
+        canGoNext={activeIdx > 0}
+        onMonthJump={handleMonthJump}
+        monthsWithData={monthsWithData}
+        firstMonthWithData={firstMonthWithData}
+        onUploadFile={() => globalFileInputRef.current?.click()}
+        isProcessing={isProcessingAny}
+        accountTabs={accountTabsData}
+        activeAccountId={activeAccountId}
+        onAccountSelect={setActiveAccountId}
+        globalSummary={globalSummary}
+        actionSlot={
           <UploadedFilesDropdown
             imports={imports}
             deleteImport={deleteImport}
             isDeleting={isDeleting}
             pendingImportIds={pendingImportIds}
           />
-        </div>
-      </div>
-
-      {/* ============= Month Tab Strip ============= */}
-      <MonthTabStrip
-        slots={monthSlots}
-        activeKey={activeKey}
-        onActivate={setActiveKey}
-        importsByMonth={importsByMonth}
-        onLoadMore={() => setMonthsToShow((n) => n + MONTHS_INCREMENT)}
-        onShowLess={() =>
-          setMonthsToShow((n) => Math.max(MIN_MONTHS, n - MONTHS_INCREMENT))
         }
-        canShowLess={monthsToShow > MIN_MONTHS}
       />
+
+      {/* ============= Month Tab Strip (mobile only) ============= */}
+      <div className="md:hidden">
+        <MonthTabStrip
+          slots={monthSlots}
+          activeKey={activeKey}
+          onActivate={setActiveKey}
+          importsByMonth={importsByMonth}
+          onLoadMore={() => setMonthsToShow((n) => n + MONTHS_INCREMENT)}
+          onShowLess={() =>
+            setMonthsToShow((n) => Math.max(MIN_MONTHS, n - MONTHS_INCREMENT))
+          }
+          canShowLess={monthsToShow > MIN_MONTHS}
+        />
+      </div>
 
       {/* ============= Active month workspace ============= */}
       {activeSlot && (
@@ -245,6 +293,9 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
           }))}
           pendingByInv={pendingByInv}
           setPendingByInv={setPendingByInv}
+          activeAccountId={activeAccountId}
+          onAccountChange={setActiveAccountId}
+          onTabsDataChange={handleTabsDataChange}
         />
       )}
 
