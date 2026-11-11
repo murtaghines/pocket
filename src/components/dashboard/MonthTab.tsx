@@ -1,11 +1,11 @@
 import { useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, Wallet, TrendingUp } from "lucide-react";
+import { Plus, Minus, TrendingUp } from "lucide-react";
 
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
+import { NetBalanceKpiCard } from "@/components/dashboard/NetBalanceKpiCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
@@ -185,27 +185,17 @@ export function MonthTab() {
                     formatCurrency={formatCurrency}
                     positiveIsGood={false}
                   />
-                  <TrendKpiCard
-                    kind="balance"
-                    label={t('stats.netBalance')}
-                    icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                    bgClass="bg-foreground"
-                    monthKey={latestMonthLabel}
-                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                  <NetBalanceKpiCard
                     total={convertedCurrentMonth.balance}
                     previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
+                    income={convertedCurrentMonth.income}
+                    expenses={convertedCurrentMonth.expenses}
+                    monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
                     formatCurrency={formatCurrency}
-                    positiveIsGood
                   />
                 </div>
                 <div className={KPI_RIGHT_GRID}>
-                  <SavingsRateRingCard
-                    income={convertedCurrentMonth.income}
-                    expenses={convertedCurrentMonth.expenses}
-                    previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                    previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
-                    monthKey={latestMonthLabel}
-                  />
                   <TrendKpiCard
                     kind="invest"
                     label={t('stats.sentToInvest')}
