@@ -35,17 +35,17 @@ export function SavingsRateRing({ income, expenses }: SavingsRateRingProps) {
       role="img"
       aria-label={ariaLabel}
       title={t("stats.savingsRate")}
-      className="relative w-[60px] h-[60px] shrink-0"
+      className="relative w-[66px] h-[66px] shrink-0"
     >
       <svg
-        width="60"
-        height="60"
-        viewBox="0 0 60 60"
+        width="66"
+        height="66"
+        viewBox="0 0 66 66"
         aria-hidden="true"
       >
         <circle
-          cx="30"
-          cy="30"
+          cx="33"
+          cy="33"
           r={radius}
           fill="none"
           stroke="hsl(var(--border))"
@@ -53,19 +53,19 @@ export function SavingsRateRing({ income, expenses }: SavingsRateRingProps) {
         />
         {filled > 0 && (
           <circle
-            cx="30"
-            cy="30"
+            cx="33"
+            cy="33"
             r={radius}
             fill="none"
             stroke={strokeColor}
             strokeWidth={6}
             strokeLinecap="round"
             strokeDasharray={`${dash} ${circumference}`}
-            transform="rotate(-90 30 30)"
+            transform="rotate(-90 33 33)"
           />
         )}
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center font-title font-bold text-[14px] text-foreground tabular-nums">
+      <span className="absolute inset-0 flex items-center justify-center font-semibold text-[14px] text-foreground tabular-nums">
         {rate !== null ? `${rate}%` : "—"}
       </span>
     </div>

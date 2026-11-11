@@ -29,7 +29,7 @@ import { periodRangeOf, formatPeriodLabel, type DailyOfWeekPoint } from "@/lib/a
 export function WeekTab() {
   const { t, i18n } = useTranslation("dashboard");
   const { monthlyData: weeklyData, isLoading: isDashLoading } = useDashboardData({ granularity: "week" });
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatNumber } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
   const { selectedPeriod, setSelectedPeriod, setAvailablePeriods, setOpeningBalance, setTransactionCount } = usePeriodSelection();
@@ -164,6 +164,7 @@ export function WeekTab() {
                 transfersIn={agg.transfersIn}
                 transfersOut={agg.transfersOut}
                 formatCurrency={formatCurrency}
+                formatNumber={formatNumber}
               />
               <TrendKpiCard
                 kind="invest"

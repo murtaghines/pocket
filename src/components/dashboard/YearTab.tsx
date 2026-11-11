@@ -40,7 +40,7 @@ export function YearTab() {
   const hiddenAccountIds = useHiddenAccountIds();
   const hiddenAccountKey = [...hiddenAccountIds].sort().join(",");
   const { monthlyData: yearlyData, isLoading: isDashLoading } = useDashboardData({ granularity: "year" });
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatNumber } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates("EUR");
   const { selectedPeriod, setSelectedPeriod, setAvailablePeriods, setOpeningBalance, setTransactionCount } = usePeriodSelection();
@@ -206,6 +206,7 @@ export function YearTab() {
                 transfersIn={agg.transfersIn}
                 transfersOut={agg.transfersOut}
                 formatCurrency={formatCurrency}
+                formatNumber={formatNumber}
               />
               <TrendKpiCard
                 kind="invest"

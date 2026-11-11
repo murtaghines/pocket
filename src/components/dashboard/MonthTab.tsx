@@ -30,7 +30,7 @@ export function MonthTab() {
   const { t } = useTranslation('dashboard');
   const { monthlyData, openingBalanceByMonth, isLoading: isDashLoading } = useDashboardData();
 
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatNumber } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates('EUR');
   const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance, setTransactionCount } = useMonthSelection();
@@ -201,6 +201,7 @@ export function MonthTab() {
                     transfersIn={agg.transfersIn}
                     transfersOut={agg.transfersOut}
                     formatCurrency={formatCurrency}
+                    formatNumber={formatNumber}
                   />
                   <TrendKpiCard
                     kind="invest"
