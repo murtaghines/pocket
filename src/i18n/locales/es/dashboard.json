@@ -24,7 +24,12 @@
     "openingBalance": "Saldo inicial",
     "netBalance": "Balance neto",
     "savingsRateAria": "Tasa de ahorro {{rate}}%",
-    "savedThisMonth": "ahorrado este mes"
+    "savedThisMonth": "ahorrado este mes",
+    "transfers": "Transferencias",
+    "transfersOut": "Salida a cuentas propias",
+    "transfersIn": "Entrada desde cuentas propias",
+    "transfersOutLabel": "Salida",
+    "transfersInLabel": "Entrada"
   },
   "granularity": {
     "week": "Semana",

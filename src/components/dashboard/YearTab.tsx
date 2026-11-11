@@ -5,6 +5,7 @@ import { Plus, Minus, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react
 
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { NetBalanceKpiCard } from "@/components/dashboard/NetBalanceKpiCard";
+import { TransfersKpiCard } from "@/components/dashboard/TransfersKpiCard";
 import { PeriodBreakdownChart } from "@/components/dashboard/PeriodBreakdownChart";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { MonthlyFlowChart } from "@/components/dashboard/MonthlyFlowChart";
@@ -201,6 +202,11 @@ export function YearTab() {
               />
             </div>
             <div className={KPI_RIGHT_GRID}>
+              <TransfersKpiCard
+                transfersIn={agg.transfersIn}
+                transfersOut={agg.transfersOut}
+                formatCurrency={formatCurrency}
+              />
               <TrendKpiCard
                 kind="invest"
                 label={t("stats.sentToInvest")}

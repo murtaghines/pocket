@@ -6,6 +6,7 @@ import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { NetBalanceKpiCard } from "@/components/dashboard/NetBalanceKpiCard";
+import { TransfersKpiCard } from "@/components/dashboard/TransfersKpiCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
@@ -196,6 +197,11 @@ export function MonthTab() {
                   />
                 </div>
                 <div className={KPI_RIGHT_GRID}>
+                  <TransfersKpiCard
+                    transfersIn={agg.transfersIn}
+                    transfersOut={agg.transfersOut}
+                    formatCurrency={formatCurrency}
+                  />
                   <TrendKpiCard
                     kind="invest"
                     label={t('stats.sentToInvest')}
