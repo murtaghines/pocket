@@ -23,7 +23,13 @@
     "previousBalance": "Previous month balance",
     "openingBalance": "Opening balance",
     "netBalance": "Net balance",
-    "savedThisMonth": "saved this month"
+    "savingsRateAria": "Savings rate {{rate}}%",
+    "savedThisMonth": "saved this month",
+    "transfers": "Transfers",
+    "transfersOut": "Out to own accounts",
+    "transfersIn": "In from own accounts",
+    "transfersOutLabel": "Out",
+    "transfersInLabel": "In"
   },
   "granularity": {
     "week": "Week",

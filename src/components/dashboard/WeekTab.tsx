@@ -1,9 +1,10 @@
 import { useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, Wallet, TrendingUp } from "lucide-react";
+import { Plus, Minus, TrendingUp } from "lucide-react";
 
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
-import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
+import { NetBalanceKpiCard } from "@/components/dashboard/NetBalanceKpiCard";
+import { TransfersKpiCard } from "@/components/dashboard/TransfersKpiCard";
 import { PeriodBreakdownChart } from "@/components/dashboard/PeriodBreakdownChart";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
@@ -13,6 +14,7 @@ import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { FixedVsDiscretionaryCard } from "@/components/dashboard/FixedVsDiscretionaryCard";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
+import { DASHBOARD_GRID, KPI_LEFT_GRID, KPI_RIGHT_GRID } from "@/components/dashboard/kpiGridLayout";
 
 import { useTransactions } from "@/hooks/useTransactions";
 import { useDashboardData, useOpeningBalance, usePeriodSummaryByRange } from "@/hooks/useDashboardData";
@@ -120,9 +122,9 @@ export function WeekTab() {
   return (
     <main className="w-full">
       <div className="flex flex-col gap-[14px]">
-          {/* KPI row — 5 cards, split to align with chart grid below */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
-            <div className="contents lg:grid lg:grid-cols-3 lg:gap-[12px]">
+          {/* KPI row — aligned with chart grid below via shared constants */}
+          <div className={DASHBOARD_GRID}>
+            <div className={KPI_LEFT_GRID}>
               <TrendKpiCard
                 kind="income"
                 label={t("stats.income")}
@@ -147,27 +149,21 @@ export function WeekTab() {
                 formatCurrency={formatCurrency}
                 positiveIsGood={false}
               />
-              <TrendKpiCard
-                kind="balance"
-                label={t("stats.netBalance")}
-                icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                bgClass="bg-foreground"
-                monthKey={selectedWeek}
-                previousPeriodLabel={previousPeriodLabel}
+              <NetBalanceKpiCard
                 total={convertToUserCurrency(current.balance)}
                 previousTotal={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
-                formatCurrency={formatCurrency}
-                positiveIsGood
-              />
-            </div>
-            <div className="contents lg:grid lg:grid-cols-2 lg:gap-[12px]">
-              <SavingsRateRingCard
                 income={convertToUserCurrency(current.income)}
                 expenses={convertToUserCurrency(current.expenses)}
-                previousIncome={hasPreviousData ? convertToUserCurrency(previous.income) : undefined}
-                previousExpenses={hasPreviousData ? convertToUserCurrency(previous.expenses) : undefined}
-                previousPeriodLabel={previousPeriodLabel}
                 monthKey={selectedWeek}
+                previousPeriodLabel={previousPeriodLabel}
+                formatCurrency={formatCurrency}
+              />
+            </div>
+            <div className={KPI_RIGHT_GRID}>
+              <TransfersKpiCard
+                transfersIn={agg.transfersIn}
+                transfersOut={agg.transfersOut}
+                formatCurrency={formatCurrency}
               />
               <TrendKpiCard
                 kind="invest"

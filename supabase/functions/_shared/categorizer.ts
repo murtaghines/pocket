@@ -20,10 +20,10 @@
  *
  * OVERLAP DECISIONS DOCUMENTED:
  *   AMAZON       → subscriptions if PRIME/MUSIC/VIDEO, else shopping
- *   REVOLUT      → own_transfer for generic savings pockets, EXCEPT "Rendimientos
- *                  Diarios" (their yield/interest product) → to_investment /
- *                  from_investment, since that money is actively invested and
- *                  earning a return, not just parked (2026-09-26, user-confirmed)
+ *   REVOLUT      → to_savings for pockets (earmarked savings sub-accounts),
+ *                  to_investment / from_investment for "Rendimientos Diarios"
+ *                  (yield/interest product, actively invested, 2026-09-26),
+ *                  own_transfer only for generic inter-account moves
  *   BOOKING      → rental_income if PAYOUT/DEPOSIT, else travel
  *   GAS          → housing if GAS NATURAL/NATURGAS, else transport
  *   PENSION      → to_investment if PLAN/APORTACION, else benefits
@@ -546,6 +546,10 @@ const RULE_BUCKETS: RuleBucket[] = [
   // neobanks. Interest-earning but not broker-invested — distinct from
   // own_transfer (generic inter-account) and to_investment (broker).
   // flipTransferDirection flips to from_savings for positive amounts.
+  //
+  // Neobank "pockets" (Revolut Pockets, Wise Jars, etc.) are savings:
+  // the user sets aside money they don't plan to touch. These count in
+  // the Invested/Saved KPI, NOT as invisible own_transfer.
   {
     movement: 'TRANSFER',
     category: 'to_savings',
@@ -565,6 +569,11 @@ const RULE_BUCKETS: RuleBucket[] = [
       'MONZO\\s*POT',
       'STARLING\\s*SAVINGS',
       'TRANSFER\\s*TO\\s*MY\\s*SAVINGS',
+      // Neobank pockets / jars — earmarked savings sub-accounts
+      '\\b[A-Z]{3}\\s+\\w+\\s+POCKET\\b',
+      '\\bTO\\s+.*\\bPOCKET\\b',
+      '\\bFROM\\s+.*\\bPOCKET\\b',
+      '\\bWISE\\s+JAR\\b',
     ], 0.99),
   },
 

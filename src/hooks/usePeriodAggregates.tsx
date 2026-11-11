@@ -63,6 +63,9 @@ export interface PeriodAggregates {
   topExpenses: TopExpenseRow[];
   essentialSplit: EssentialSplit;
   subBreakdown: WeeklyPoint[] | DailyOfWeekPoint[] | MonthOfYearPoint[];
+  transfersIn: number;
+  transfersOut: number;
+  transfersNet: number;
   volatility: number;
   volatilityLevel: "steady" | "moderate" | "erratic";
   isLoading: boolean;
@@ -75,6 +78,7 @@ interface DashboardAggregatesResponse {
   prev_expense_categories: Array<{ category: string; total: number }>;
   top_expenses: Array<{ id: string; description: string; date: string; amount: number; category: string }>;
   essential_split: Array<{ category: string; kind: string; total: number }>;
+  transfer_totals: { transfers_out: number; transfers_in: number };
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -254,6 +258,11 @@ export function usePeriodAggregates({
     ...r,
     amount: round2(cvt(Number(r.amount))),
   }));
+  const tt = agg?.transfer_totals ?? { transfers_out: 0, transfers_in: 0 };
+  const transfersIn = round2(cvt(Number(tt.transfers_in)));
+  const transfersOut = round2(cvt(Number(tt.transfers_out)));
+  const transfersNet = round2(transfersIn - transfersOut);
+
   const spendPoints = granularity === "month"
     ? dailyTotals.map((d) => cvt(d.expenses))
     : (subBreakdown as any[]).map((p: any) => p.spend);
@@ -267,6 +276,9 @@ export function usePeriodAggregates({
     topExpenses,
     essentialSplit,
     subBreakdown,
+    transfersIn,
+    transfersOut,
+    transfersNet,
     volatility,
     volatilityLevel,
     isLoading,

@@ -219,6 +219,23 @@ describe('categorize — neobank savings pockets route to to_savings/from_saving
     const r = categorize('NET INTEREST PAID FROM SAVINGS', 2.50);
     expect(r?.movement).not.toBe('TRANSFER');
   });
+
+  it('routes Revolut pocket (outflow) to to_savings', () => {
+    const r = categorize('To EUR Points pocket', -1000);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('to_savings');
+  });
+
+  it('routes Revolut pocket (inflow) to from_savings', () => {
+    const r = categorize('From EUR Points pocket', 1000);
+    expect(r?.movement).toBe('TRANSFER');
+    expect(r?.category).toBe('from_savings');
+  });
+
+  it('routes any named pocket to to_savings', () => {
+    expect(categorize('To GBP Travel pocket', -200)?.category).toBe('to_savings');
+    expect(categorize('To EUR Emergency pocket', -500)?.category).toBe('to_savings');
+  });
 });
 
 describe('categorize — Revolut "Rendimientos Diarios" is invested money, not a savings pocket', () => {
