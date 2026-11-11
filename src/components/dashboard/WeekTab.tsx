@@ -1,10 +1,9 @@
 import { useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, TrendingUp } from "lucide-react";
+import { Plus, Minus, Wallet, TrendingUp } from "lucide-react";
 
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
-import { NetBalanceKpiCard } from "@/components/dashboard/NetBalanceKpiCard";
-import { TransfersKpiCard } from "@/components/dashboard/TransfersKpiCard";
+import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
 import { PeriodBreakdownChart } from "@/components/dashboard/PeriodBreakdownChart";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
@@ -74,7 +73,7 @@ export function WeekTab() {
 
   useEffect(() => {
     setAvailablePeriods("week", availableWeeks);
-  }, [availableWeeks.join("|")]); 
+  }, [availableWeeks.join("|")]);
 
   useEffect(() => {
     if (selectedWeek && selectedPeriod.week !== selectedWeek) {
@@ -149,21 +148,27 @@ export function WeekTab() {
                 formatCurrency={formatCurrency}
                 positiveIsGood={false}
               />
-              <NetBalanceKpiCard
-                total={convertToUserCurrency(current.balance)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
-                income={convertToUserCurrency(current.income)}
-                expenses={convertToUserCurrency(current.expenses)}
+              <TrendKpiCard
+                kind="balance"
+                label={t("stats.netBalance")}
+                icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
+                bgClass="bg-foreground"
                 monthKey={selectedWeek}
                 previousPeriodLabel={previousPeriodLabel}
+                total={convertToUserCurrency(current.balance)}
+                previousTotal={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
                 formatCurrency={formatCurrency}
+                positiveIsGood
               />
             </div>
             <div className={KPI_RIGHT_GRID}>
-              <TransfersKpiCard
-                transfersIn={agg.transfersIn}
-                transfersOut={agg.transfersOut}
-                formatCurrency={formatCurrency}
+              <SavingsRateRingCard
+                income={convertToUserCurrency(current.income)}
+                expenses={convertToUserCurrency(current.expenses)}
+                previousIncome={hasPreviousData ? convertToUserCurrency(previous.income) : undefined}
+                previousExpenses={hasPreviousData ? convertToUserCurrency(previous.expenses) : undefined}
+                previousPeriodLabel={previousPeriodLabel}
+                monthKey={selectedWeek}
               />
               <TrendKpiCard
                 kind="invest"
