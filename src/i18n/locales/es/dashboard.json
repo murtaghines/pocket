@@ -23,7 +23,13 @@
     "previousBalance": "Saldo del mes anterior",
     "openingBalance": "Saldo inicial",
     "netBalance": "Balance neto",
-    "savedThisMonth": "ahorrado este mes"
+    "savingsRateAria": "Tasa de ahorro {{rate}}%",
+    "savedThisMonth": "ahorrado este mes",
+    "transfers": "Transferencias",
+    "transfersOut": "Salida a cuentas propias",
+    "transfersIn": "Entrada desde cuentas propias",
+    "transfersOutLabel": "Salida",
+    "transfersInLabel": "Entrada"
   },
   "granularity": {
     "week": "Semana",
@@ -126,7 +132,8 @@
     "investedThisMonth": "invertido este mes",
     "noInvestments": "Sin inversiones registradas",
     "viewInvestments": "Ver inversiones",
-    "return": "Retorno"
+    "return": "Retorno",
+    "costBasis": "Costo base"
   },
   "period": {
     "title": "Períodos Contables",
