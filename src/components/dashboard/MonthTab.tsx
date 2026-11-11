@@ -1,11 +1,12 @@
 import { useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Minus, Wallet, TrendingUp } from "lucide-react";
+import { Plus, Minus, TrendingUp } from "lucide-react";
 
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
 import { SpendingByCategoryChart } from "@/components/dashboard/SpendingByCategoryChart";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
-import { SavingsRateRingCard } from "@/components/dashboard/SavingsRateRingCard";
+import { NetBalanceKpiCard } from "@/components/dashboard/NetBalanceKpiCard";
+import { TransfersKpiCard } from "@/components/dashboard/TransfersKpiCard";
 import { TopExpensesCard } from "@/components/dashboard/TopExpensesCard";
 import { TrendKpiCard } from "@/components/dashboard/TrendKpiCard";
 import { DailyFlowChart } from "@/components/dashboard/DailyFlowChart";
@@ -13,6 +14,7 @@ import { DailyHeatmapCard } from "@/components/dashboard/DailyHeatmapCard";
 import { AccountsStackCard } from "@/components/dashboard/AccountsStackCard";
 import { WeeklyIncomeExpensesChart } from "@/components/dashboard/WeeklyIncomeExpensesChart";
 import { MonthlyFlowSankey } from "@/components/dashboard/MonthlyFlowSankey";
+import { DASHBOARD_GRID, KPI_LEFT_GRID, KPI_RIGHT_GRID } from "@/components/dashboard/kpiGridLayout";
 
 import { useTransactions } from "@/hooks/useTransactions";
 import { useDashboardData, useAccountPeriodSummary } from "@/hooks/useDashboardData";
@@ -157,9 +159,9 @@ export function MonthTab() {
         )}
 
         <div className="flex flex-col gap-[14px]">
-              {/* KPI row — 5 cards, split to align with chart grid below */}
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1.55fr_1fr] lg:gap-[14px]">
-                <div className="contents lg:grid lg:grid-cols-3 lg:gap-[12px]">
+              {/* KPI row — aligned with chart grid below via shared constants */}
+              <div className={DASHBOARD_GRID}>
+                <div className={KPI_LEFT_GRID}>
                   <TrendKpiCard
                     kind="income"
                     label={t('stats.income')}
@@ -184,26 +186,21 @@ export function MonthTab() {
                     formatCurrency={formatCurrency}
                     positiveIsGood={false}
                   />
-                  <TrendKpiCard
-                    kind="balance"
-                    label={t('stats.netBalance')}
-                    icon={<Wallet className="w-[17px] h-[17px]" strokeWidth={2.2} />}
-                    bgClass="bg-foreground"
-                    monthKey={latestMonthLabel}
-                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                  <NetBalanceKpiCard
                     total={convertedCurrentMonth.balance}
                     previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
-                    formatCurrency={formatCurrency}
-                    positiveIsGood
-                  />
-                </div>
-                <div className="contents lg:grid lg:grid-cols-2 lg:gap-[12px]">
-                  <SavingsRateRingCard
                     income={convertedCurrentMonth.income}
                     expenses={convertedCurrentMonth.expenses}
-                    previousIncome={hasPreviousData ? convertedPreviousMonth.income : undefined}
-                    previousExpenses={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
                     monthKey={latestMonthLabel}
+                    previousMonthKey={hasPreviousData ? previousMonth.month : null}
+                    formatCurrency={formatCurrency}
+                  />
+                </div>
+                <div className={KPI_RIGHT_GRID}>
+                  <TransfersKpiCard
+                    transfersIn={agg.transfersIn}
+                    transfersOut={agg.transfersOut}
+                    formatCurrency={formatCurrency}
                   />
                   <TrendKpiCard
                     kind="invest"
@@ -221,7 +218,7 @@ export function MonthTab() {
               </div>
 
               {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[250px] gap-[14px]">
+              <div className={`${DASHBOARD_GRID} lg:h-[250px]`}>
                 <WeeklyIncomeExpensesChart weekly={agg.subBreakdown as WeeklyPoint[]} />
                 <AccountsStackCard
                   startDate={range?.start}
