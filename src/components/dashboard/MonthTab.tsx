@@ -21,11 +21,12 @@ import { useDashboardData, useAccountPeriodSummary } from "@/hooks/useDashboardD
 import { useLocalization } from "@/hooks/useLocalization";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { useAccounts } from "@/hooks/useAccounts";
 import { useMonthSelection } from "@/hooks/useMonthSelection";
 import { usePeriodAggregates } from "@/hooks/usePeriodAggregates";
 import { periodRangeOf, type WeeklyPoint } from "@/lib/analytics";
 
-/** Dashboard's "month" tab — current month vs. previous month. Verbatim body of the former Index.tsx page. */
+/** Dashboard's "month" tab — current month vs. previous month. */
 export function MonthTab() {
   const { t } = useTranslation('dashboard');
   const { monthlyData, openingBalanceByMonth, isLoading: isDashLoading } = useDashboardData();
@@ -33,7 +34,20 @@ export function MonthTab() {
   const { formatCurrency, formatNumber } = useLocalization();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { convertAmount } = useExchangeRates('EUR');
+  const { accounts } = useAccounts();
   const { selectedMonth, setSelectedMonth, setAvailableMonths, setOpeningBalance, setTransactionCount } = useMonthSelection();
+
+  const userCurrency = preferences?.base_currency || 'EUR';
+  const convertToUserCurrency = useCallback(
+    (amount: number, currency: string = 'EUR') => convertAmount(amount, currency, userCurrency),
+    [convertAmount, userCurrency],
+  );
+
+  const accountCurrencyMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const a of accounts) m.set(a.id, a.currency_base || 'EUR');
+    return m;
+  }, [accounts]);
 
   const availableMonths = [...monthlyData]
     .map((m) => m.month)
@@ -61,13 +75,6 @@ export function MonthTab() {
   const { transactions, isLoading } = useTransactions({ startDate: range?.start, endDate: range?.end, excludeHiddenAccounts: true });
   const { closingBalance: monthClosingBalance } = useAccountPeriodSummary(latestMonthLabel, "CASHFLOW", undefined, true);
 
-
-  const userCurrency = preferences?.base_currency || 'EUR';
-  const convertToUserCurrency = useCallback(
-    (amount: number) => convertAmount(amount, 'EUR', userCurrency),
-    [convertAmount, userCurrency],
-  );
-
   const agg = usePeriodAggregates({
     startDate: range?.start,
     endDate: range?.end,
@@ -78,7 +85,6 @@ export function MonthTab() {
     periodMonth: latestMonthLabel,
   });
 
-  // Sync month state into the layout header
   useEffect(() => {
     setAvailableMonths(availableMonths);
   }, [availableMonths.join('|')]);
@@ -91,7 +97,7 @@ export function MonthTab() {
 
   useEffect(() => {
     if (latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null) {
-      setOpeningBalance(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]));
+      setOpeningBalance(openingBalanceByMonth[latestMonthLabel]);
     } else {
       setOpeningBalance(null);
     }
@@ -105,32 +111,17 @@ export function MonthTab() {
     const accMap = new Map<string, { name: string; income: number; expenses: number }>();
     for (const tx of transactions) {
       if (!tx.account_id || tx.type === "transfer") continue;
+      const currency = accountCurrencyMap.get(tx.account_id) || 'EUR';
       const entry = accMap.get(tx.account_id) || { name: tx.account || "Unknown", income: 0, expenses: 0 };
-      if (tx.type === "income") entry.income += Math.abs(convertToUserCurrency(tx.amount));
-      else if (tx.type === "expense") entry.expenses += Math.abs(convertToUserCurrency(tx.amount));
+      if (tx.type === "income") entry.income += Math.abs(convertToUserCurrency(tx.amount, currency));
+      else if (tx.type === "expense") entry.expenses += Math.abs(convertToUserCurrency(tx.amount, currency));
       accMap.set(tx.account_id, entry);
     }
     return Array.from(accMap.entries())
       .map(([id, data]) => ({ id, name: data.name, income: data.income, expenses: data.expenses }))
       .filter(a => a.income > 0 || a.expenses > 0)
       .sort((a, b) => (b.income + b.expenses) - (a.income + a.expenses));
-  }, [transactions, convertToUserCurrency]);
-
-  const convertedCurrentMonth = {
-    ...currentMonth,
-    income: convertToUserCurrency(currentMonth.income),
-    expenses: convertToUserCurrency(currentMonth.expenses),
-    balance: convertToUserCurrency(currentMonth.balance),
-    sentToInvest: convertToUserCurrency(currentMonth.sentToInvest ?? 0),
-  };
-
-  const convertedPreviousMonth = {
-    ...previousMonth,
-    income: convertToUserCurrency(previousMonth.income),
-    expenses: convertToUserCurrency(previousMonth.expenses),
-    balance: convertToUserCurrency(previousMonth.balance),
-    sentToInvest: convertToUserCurrency(previousMonth.sentToInvest ?? 0),
-  };
+  }, [transactions, convertToUserCurrency, accountCurrencyMap]);
 
   const hasPreviousData = monthlyData.length >= 2;
 
@@ -142,11 +133,9 @@ export function MonthTab() {
     ? Math.round(((currentMonth.expenses - previousMonth.expenses) / previousMonth.expenses) * 100)
     : undefined;
 
-  const balanceChange = hasPreviousData && convertedPreviousMonth.balance !== 0
-    ? Math.round(((convertedCurrentMonth.balance - convertedPreviousMonth.balance) / Math.abs(convertedPreviousMonth.balance)) * 100)
+  const balanceChange = hasPreviousData && previousMonth.balance !== 0
+    ? Math.round(((currentMonth.balance - previousMonth.balance) / Math.abs(previousMonth.balance)) * 100)
     : undefined;
-
-
 
   return (
     <>
@@ -154,12 +143,12 @@ export function MonthTab() {
 
         {latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null && (
           <p className="mb-5 text-sm tabular-nums text-muted-foreground md:hidden">
-            {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(convertToUserCurrency(openingBalanceByMonth[latestMonthLabel]))}
+            {t('stats.openingBalance', { defaultValue: 'Opening balance' })}: {formatCurrency(openingBalanceByMonth[latestMonthLabel])}
           </p>
         )}
 
         <div className="flex flex-col gap-[14px]">
-              {/* KPI row — aligned with chart grid below via shared constants */}
+              {/* KPI row */}
               <div className={DASHBOARD_GRID}>
                 <div className={KPI_LEFT_GRID}>
                   <TrendKpiCard
@@ -169,8 +158,8 @@ export function MonthTab() {
                     bgClass="bg-success"
                     monthKey={latestMonthLabel}
                     previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                    total={convertedCurrentMonth.income}
-                    previousTotal={hasPreviousData ? convertedPreviousMonth.income : undefined}
+                    total={currentMonth.income}
+                    previousTotal={hasPreviousData ? previousMonth.income : undefined}
                     formatCurrency={formatCurrency}
                     positiveIsGood
                   />
@@ -181,16 +170,16 @@ export function MonthTab() {
                     bgClass="bg-destructive"
                     monthKey={latestMonthLabel}
                     previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                    total={convertedCurrentMonth.expenses}
-                    previousTotal={hasPreviousData ? convertedPreviousMonth.expenses : undefined}
+                    total={currentMonth.expenses}
+                    previousTotal={hasPreviousData ? previousMonth.expenses : undefined}
                     formatCurrency={formatCurrency}
                     positiveIsGood={false}
                   />
                   <NetBalanceKpiCard
-                    total={convertedCurrentMonth.balance}
-                    previousTotal={hasPreviousData ? convertedPreviousMonth.balance : undefined}
-                    income={convertedCurrentMonth.income}
-                    expenses={convertedCurrentMonth.expenses}
+                    total={currentMonth.balance}
+                    previousTotal={hasPreviousData ? previousMonth.balance : undefined}
+                    income={currentMonth.income}
+                    expenses={currentMonth.expenses}
                     monthKey={latestMonthLabel}
                     previousMonthKey={hasPreviousData ? previousMonth.month : null}
                     formatCurrency={formatCurrency}
@@ -210,36 +199,33 @@ export function MonthTab() {
                     bgClass="bg-primary"
                     monthKey={latestMonthLabel}
                     previousMonthKey={hasPreviousData ? previousMonth.month : null}
-                    total={convertedCurrentMonth.sentToInvest}
-                    previousTotal={hasPreviousData ? convertedPreviousMonth.sentToInvest : undefined}
+                    total={currentMonth.sentToInvest}
+                    previousTotal={hasPreviousData ? previousMonth.sentToInvest : undefined}
                     formatCurrency={formatCurrency}
                     positiveIsGood
                   />
                 </div>
               </div>
 
-              {/* Row 2: weekly income vs expenses (this month, wide) + Accounts */}
+              {/* Row 2: weekly income vs expenses + Accounts */}
               <div className={`${DASHBOARD_GRID} lg:h-[250px]`}>
                 <WeeklyIncomeExpensesChart weekly={agg.subBreakdown as WeeklyPoint[]} />
                 <AccountsStackCard
                   startDate={range?.start}
                   endDate={range?.end}
-                  convert={convertToUserCurrency}
                   formatCurrency={formatCurrency}
                 />
               </div>
 
-              {/* Row 3: Daily balance chart (wide) + Daily view heatmap (with stats, in its square) */}
+              {/* Row 3: Daily balance chart + Daily view heatmap */}
               <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] lg:h-[300px] gap-[14px]">
                 <DailyFlowChart
                   dailyTotals={agg.dailyTotals}
                   monthKey={latestMonthLabel}
-                  convert={convertToUserCurrency}
                 />
                 <DailyHeatmapCard
                   dailyTotals={agg.dailyTotals}
                   monthKey={latestMonthLabel}
-                  convert={convertToUserCurrency}
                 />
               </div>
 
@@ -256,7 +242,7 @@ export function MonthTab() {
                   expenseCategories={agg.expenseCategoryData}
                   accountFlows={sankeyAccountFlows}
                   openingBalance={latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null
-                    ? convertToUserCurrency(openingBalanceByMonth[latestMonthLabel])
+                    ? openingBalanceByMonth[latestMonthLabel]
                     : 0}
                 />
                 <TopExpensesCard topExpenses={agg.topExpenses} />
@@ -269,11 +255,9 @@ export function MonthTab() {
                   transactions={transactions}
                   monthKey={latestMonthLabel ?? undefined}
                   openingBalance={latestMonthLabel && openingBalanceByMonth[latestMonthLabel] != null
-                    ? convertToUserCurrency(openingBalanceByMonth[latestMonthLabel])
+                    ? openingBalanceByMonth[latestMonthLabel]
                     : null}
-                  closingBalance={monthClosingBalance != null
-                    ? convertToUserCurrency(monthClosingBalance)
-                    : null}
+                  closingBalance={monthClosingBalance}
                 />
                 </div>
               </div>

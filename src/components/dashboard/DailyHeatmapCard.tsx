@@ -11,12 +11,14 @@ type Metric = "expense" | "income" | "count";
 interface DailyHeatmapCardProps {
   dailyTotals: DailyTotal[];
   monthKey: string | null;
-  convert: (amount: number) => number;
+  convert?: (amount: number) => number;
 }
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
-export function DailyHeatmapCard({ dailyTotals, monthKey, convert }: DailyHeatmapCardProps) {
+const identity = (n: number) => n;
+
+export function DailyHeatmapCard({ dailyTotals, monthKey, convert = identity }: DailyHeatmapCardProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const [metric, setMetric] = useState<Metric>("expense");

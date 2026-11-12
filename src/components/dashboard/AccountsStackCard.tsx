@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { getAccountColor, getAccountDisplayName } from "@/lib/accountColors";
@@ -16,7 +18,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 interface AccountsStackCardProps {
   startDate?: string;
   endDate?: string;
-  convert: (amount: number) => number;
   formatCurrency: (amount: number) => string;
   subtitleOverride?: string;
 }
@@ -57,7 +58,6 @@ interface DetailTx {
 export function AccountsStackCard({
   startDate,
   endDate,
-  convert,
   formatCurrency,
   subtitleOverride,
 }: AccountsStackCardProps) {
@@ -65,8 +65,16 @@ export function AccountsStackCard({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { accounts, getCashAccounts } = useAccounts();
+  const { preferences } = useUserPreferences();
+  const { convertAmount } = useExchangeRates("EUR");
   const [detailAccountId, setDetailAccountId] = useState<string | null>(null);
   const [view, setView] = useState<"accounts" | "savings">("accounts");
+
+  const userCurrency = preferences?.base_currency || "EUR";
+  const convert = useCallback(
+    (amount: number, currency: string = "EUR") => convertAmount(amount, currency, userCurrency),
+    [convertAmount, userCurrency],
+  );
 
   const cashAccounts = useMemo(() => getCashAccounts(), [accounts]);
   const hasSavingsAccounts = useMemo(
@@ -84,8 +92,9 @@ export function AccountsStackCard({
         p_end: endDate,
       });
       if (error) throw error;
-      return (data ?? []).map((r: { account_id: string; latest_balance: number; has_running_balance: boolean; tx_count: number }) => ({
+      return (data ?? []).map((r: { account_id: string; currency: string; latest_balance: number; has_running_balance: boolean; tx_count: number }) => ({
         account_id: r.account_id,
+        currency: r.currency || "EUR",
         latest_balance: Number(r.latest_balance),
         has_running_balance: r.has_running_balance,
         tx_count: Number(r.tx_count),
@@ -95,7 +104,7 @@ export function AccountsStackCard({
   });
 
   const summaryMap = useMemo(() => {
-    const m = new Map<string, { latest_balance: number; has_running_balance: boolean; tx_count: number }>();
+    const m = new Map<string, { currency: string; latest_balance: number; has_running_balance: boolean; tx_count: number }>();
     for (const r of summaryRows) m.set(r.account_id, r);
     return m;
   }, [summaryRows]);
@@ -105,13 +114,14 @@ export function AccountsStackCard({
 
     const mapped = cashAccounts.map((acc, i) => {
       const summary = summaryMap.get(acc.id);
+      const currency = summary?.currency || acc.currency_base || "EUR";
       return {
         id: acc.id,
         name: acc.name,
         institution: acc.institution,
         displayName: getAccountDisplayName(acc),
         currency: acc.currency_base,
-        balance: convert(summary?.latest_balance ?? 0),
+        balance: convert(summary?.latest_balance ?? 0, currency),
         hasRunningBalance: summary?.has_running_balance ?? false,
         transactionCount: summary?.tx_count ?? 0,
         createdAt: acc.created_at,
@@ -282,7 +292,7 @@ export function AccountsStackCard({
                         </div>
                         <span className="text-sm font-semibold tabular-nums shrink-0 text-foreground">
                           {tx.movement === "EXPENSE" ? "-" : tx.movement === "INCOME" ? "+" : ""}
-                          {formatCurrency(convert(Math.abs(applySplit(tx.amount, detailAccountId, accounts))))}
+                          {formatCurrency(convert(Math.abs(applySplit(tx.amount, detailAccountId, accounts)), detailAccount?.currency || "EUR"))}
                         </span>
                       </li>
                     ))}
