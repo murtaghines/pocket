@@ -121,7 +121,6 @@ export function useAccounts() {
       if (error) throw error;
     },
     onSuccess: async () => {
-      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       // An account edit (hidden, split, initial balance, archive...) can change numbers anywhere, so
       // refetch everything that's on screen rather than maintaining a list of keys that goes stale.
       queryClient.invalidateQueries();
@@ -143,7 +142,6 @@ export function useAccounts() {
       if (error) throw error;
     },
     onSuccess: async () => {
-      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
@@ -232,7 +230,6 @@ export function useAccounts() {
       if (delErr) throw delErr;
     },
     onSuccess: async () => {
-      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -289,7 +286,6 @@ export function useAccounts() {
       if (delErr) throw delErr;
     },
     onSuccess: async () => {
-      try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });

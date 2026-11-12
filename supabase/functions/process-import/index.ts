@@ -627,8 +627,6 @@ serve(async (req) => {
       message += `, ${insertFailedCount} failed to save`;
     }
 
-    try { await supabase.rpc("refresh_dashboard_views"); }
-    catch (e) { console.error("[process-import] refresh_dashboard_views failed (non-fatal):", e); }
 
     const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer + stats.categorizedByHistory;
     const aiSavingsPercent = stats.newTransactions > 0
