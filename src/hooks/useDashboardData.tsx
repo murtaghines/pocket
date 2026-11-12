@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useAccounts } from "./useAccounts";
+import { useUserPreferences } from "./useUserPreferences";
+import { useExchangeRates } from "./useExchangeRates";
 import type { MonthlyData } from "@/lib/mockData";
 import type { Database } from "@/integrations/supabase/types";
 import type { Granularity } from "@/lib/analytics";
+import type { CurrencyConvert } from "./usePeriodAggregates";
 
 type AppDomain = Database["public"]["Enums"]["app_domain"];
 
@@ -23,11 +26,51 @@ export function useHiddenAccountIds(active = true): Set<string> {
   );
 }
 
+interface RawSeriesRow {
+  month: string;
+  currency: string;
+  income: number;
+  expenses: number;
+  balance: number;
+  sent_to_invest: number;
+}
+
+function aggregateSeriesByCurrency(
+  raw: RawSeriesRow[],
+  cvt: CurrencyConvert,
+): MonthlyData[] {
+  const byPeriod = new Map<string, MonthlyData>();
+  for (const row of raw) {
+    const currency = row.currency || "EUR";
+    const existing = byPeriod.get(row.month);
+    if (existing) {
+      existing.income += cvt(Number(row.income), currency);
+      existing.expenses += cvt(Number(row.expenses), currency);
+      existing.balance += cvt(Number(row.balance), currency);
+      existing.sentToInvest += cvt(Number(row.sent_to_invest), currency);
+    } else {
+      byPeriod.set(row.month, {
+        month: row.month,
+        income: cvt(Number(row.income), currency),
+        expenses: cvt(Number(row.expenses), currency),
+        balance: cvt(Number(row.balance), currency),
+        sentToInvest: cvt(Number(row.sent_to_invest), currency),
+      });
+    }
+  }
+  return Array.from(byPeriod.values()).sort((a, b) => a.month.localeCompare(b.month));
+}
+
 export function useDashboardData(options: UseDashboardDataOptions = {}) {
   const { domain = "CASHFLOW", granularity = "month" } = options;
   const { user } = useAuth();
+  const { preferences } = useUserPreferences();
+  const { convertAmount } = useExchangeRates("EUR");
+  const userCurrency = preferences?.base_currency || "EUR";
 
-  const { data: monthlyData = [], isLoading: isLoadingSeries } = useQuery({
+  const cvt: CurrencyConvert = (n, currency) => convertAmount(n, currency, userCurrency);
+
+  const { data: rawSeries = [], isLoading: isLoadingSeries } = useQuery({
     queryKey: ["dashboard-period-series", user?.id, domain, granularity],
     queryFn: async () => {
       if (granularity === "month") {
@@ -36,12 +79,13 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
           p_domain: domain,
         });
         if (error) throw error;
-        return (data ?? []).map((row: { month: string; income: number; expenses: number; balance: number; sent_to_invest: number }): MonthlyData => ({
+        return (data ?? []).map((row: any): RawSeriesRow => ({
           month: row.month,
+          currency: row.currency || "EUR",
           income: Number(row.income),
           expenses: Number(row.expenses),
           balance: Number(row.balance),
-          sentToInvest: Number(row.sent_to_invest),
+          sent_to_invest: Number(row.sent_to_invest),
         }));
       }
       const { data, error } = await supabase.rpc("get_period_series", {
@@ -50,19 +94,25 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
         p_granularity: granularity,
       });
       if (error) throw error;
-      return (data ?? []).map((row: { period: string; income: number; expenses: number; balance: number; sent_to_invest: number }): MonthlyData => ({
+      return (data ?? []).map((row: any): RawSeriesRow => ({
         month: row.period,
+        currency: row.currency || "EUR",
         income: Number(row.income),
         expenses: Number(row.expenses),
         balance: Number(row.balance),
-        sentToInvest: Number(row.sent_to_invest),
+        sent_to_invest: Number(row.sent_to_invest),
       }));
     },
     enabled: !!user,
     staleTime: 30_000,
   });
 
-  const { data: openingBalanceByMonth = {}, isLoading: isLoadingBalances } = useQuery({
+  const monthlyData = useMemo(
+    () => aggregateSeriesByCurrency(rawSeries, cvt),
+    [rawSeries, convertAmount, userCurrency],
+  );
+
+  const { data: rawOpeningBalances = [], isLoading: isLoadingBalances } = useQuery({
     queryKey: ["dashboard-opening-balances", user?.id, domain],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_opening_balances", {
@@ -70,15 +120,20 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
         p_domain: domain,
       });
       if (error) throw error;
-      const result: Record<string, number> = {};
-      (data ?? []).forEach((row: { month: string; opening_balance: number }) => {
-        result[row.month] = Number(row.opening_balance);
-      });
-      return result;
+      return (data ?? []) as Array<{ month: string; currency: string; opening_balance: number }>;
     },
     enabled: !!user,
     staleTime: 30_000,
   });
+
+  const openingBalanceByMonth = useMemo(() => {
+    const result: Record<string, number> = {};
+    for (const row of rawOpeningBalances) {
+      const currency = row.currency || "EUR";
+      result[row.month] = (result[row.month] ?? 0) + cvt(Number(row.opening_balance), currency);
+    }
+    return result;
+  }, [rawOpeningBalances, convertAmount, userCurrency]);
 
   return {
     monthlyData,
@@ -117,11 +172,13 @@ export function useAccountPeriodSummary(
   monthKey: string | null,
   domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW",
   excludeAccountIds?: Set<string>,
-  /** Dashboard callers drop accounts flagged "exclude from dashboard"; the Transactions page keeps them. */
   excludeHidden = false,
 ) {
   const { user } = useAuth();
   const hiddenIds = useHiddenAccountIds(excludeHidden);
+  const { preferences } = useUserPreferences();
+  const { convertAmount } = useExchangeRates("EUR");
+  const userCurrency = preferences?.base_currency || "EUR";
 
   const range = useMemo(() => {
     if (!monthKey) return null;
@@ -135,7 +192,7 @@ export function useAccountPeriodSummary(
   const excludeKey = [...(excludeAccountIds ?? []), ...[...hiddenIds].map((id) => `hidden:${id}`)].sort().join(",");
 
   const { data = { total: null as number | null, byAccount: {} as Record<string, number> }, isLoading } = useQuery({
-    queryKey: ["account-period-summary", user?.id, domain, monthKey, excludeKey],
+    queryKey: ["account-period-summary", user?.id, domain, monthKey, excludeKey, userCurrency],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_account_period_summary", {
         p_user_id: user!.id,
@@ -146,8 +203,9 @@ export function useAccountPeriodSummary(
       if (error) throw error;
       const byAccount: Record<string, number> = {};
       let total = 0;
-      (data ?? []).forEach((row: { account_id: string; latest_balance: number }) => {
-        const bal = Number(row.latest_balance);
+      (data ?? []).forEach((row: { account_id: string; currency: string; latest_balance: number }) => {
+        const currency = row.currency || "EUR";
+        const bal = convertAmount(Number(row.latest_balance), currency, userCurrency);
         byAccount[row.account_id] = bal;
         if (!excludeAccountIds?.has(row.account_id) && !hiddenIds.has(row.account_id)) total += bal;
       });
@@ -168,9 +226,12 @@ export function usePeriodSummaryByRange(
   const { user } = useAuth();
   const hiddenIds = useHiddenAccountIds(true);
   const hiddenKey = [...hiddenIds].sort().join(",");
+  const { preferences } = useUserPreferences();
+  const { convertAmount } = useExchangeRates("EUR");
+  const userCurrency = preferences?.base_currency || "EUR";
 
   const { data = { total: null as number | null, byAccount: {} as Record<string, number> }, isLoading } = useQuery({
-    queryKey: ["account-period-summary", user?.id, domain, startDate, endDate, hiddenKey],
+    queryKey: ["account-period-summary", user?.id, domain, startDate, endDate, hiddenKey, userCurrency],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_account_period_summary", {
         p_user_id: user!.id,
@@ -181,8 +242,9 @@ export function usePeriodSummaryByRange(
       if (error) throw error;
       const byAccount: Record<string, number> = {};
       let total = 0;
-      (data ?? []).forEach((row: { account_id: string; latest_balance: number }) => {
-        const bal = Number(row.latest_balance);
+      (data ?? []).forEach((row: { account_id: string; currency: string; latest_balance: number }) => {
+        const currency = row.currency || "EUR";
+        const bal = convertAmount(Number(row.latest_balance), currency, userCurrency);
         byAccount[row.account_id] = bal;
         if (!hiddenIds.has(row.account_id)) total += bal;
       });
@@ -197,16 +259,26 @@ export function usePeriodSummaryByRange(
 
 export function useOpeningBalance(date: string | null, domain: Database["public"]["Enums"]["app_domain"] = "CASHFLOW") {
   const { user } = useAuth();
+  const { preferences } = useUserPreferences();
+  const { convertAmount } = useExchangeRates("EUR");
+  const userCurrency = preferences?.base_currency || "EUR";
 
   const { data: openingBalance = null, isLoading } = useQuery({
-    queryKey: ["opening-balance-at-date", user?.id, domain, date],
+    queryKey: ["opening-balance-at-date", user?.id, domain, date, userCurrency],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_balance_at_date", {
+      const { data, error } = await supabase.rpc("get_balance_at_date" as any, {
         p_user_id: user!.id,
         p_domain: domain,
         p_date: date!,
       });
       if (error) throw error;
+      if (Array.isArray(data)) {
+        let total = 0;
+        for (const row of data as Array<{ currency: string; balance: number }>) {
+          total += convertAmount(Number(row.balance), row.currency || "EUR", userCurrency);
+        }
+        return Math.round(total * 100) / 100;
+      }
       const n = Number(data);
       return isNaN(n) ? 0 : n;
     },

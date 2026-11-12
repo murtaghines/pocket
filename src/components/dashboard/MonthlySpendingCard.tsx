@@ -11,10 +11,12 @@ type Metric = "expense" | "income" | "count";
 interface MonthlySpendingCardProps {
   dailyTotals: DailyTotal[];
   yearKey: string | null;
-  convert: (amount: number) => number;
+  convert?: (amount: number) => number;
 }
 
-export function MonthlySpendingCard({ dailyTotals, yearKey, convert }: MonthlySpendingCardProps) {
+const identity = (n: number) => n;
+
+export function MonthlySpendingCard({ dailyTotals, yearKey, convert = identity }: MonthlySpendingCardProps) {
   const { t, i18n } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
   const [metric, setMetric] = useState<Metric>("expense");

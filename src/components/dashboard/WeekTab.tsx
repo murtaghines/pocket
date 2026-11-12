@@ -36,7 +36,7 @@ export function WeekTab() {
 
   const userCurrency = preferences?.base_currency || "EUR";
   const convertToUserCurrency = useCallback(
-    (amount: number) => convertAmount(amount, "EUR", userCurrency),
+    (amount: number, currency: string = "EUR") => convertAmount(amount, currency, userCurrency),
     [convertAmount, userCurrency],
   );
 
@@ -87,7 +87,7 @@ export function WeekTab() {
 
   useEffect(() => {
     if (weekOpeningBalance != null) {
-      setOpeningBalance(convertToUserCurrency(weekOpeningBalance));
+      setOpeningBalance(weekOpeningBalance);
     } else {
       setOpeningBalance(null);
     }
@@ -122,7 +122,7 @@ export function WeekTab() {
   return (
     <main className="w-full">
       <div className="flex flex-col gap-[14px]">
-          {/* KPI row — aligned with chart grid below via shared constants */}
+          {/* KPI row */}
           <div className={DASHBOARD_GRID}>
             <div className={KPI_LEFT_GRID}>
               <TrendKpiCard
@@ -132,8 +132,8 @@ export function WeekTab() {
                 bgClass="bg-success"
                 monthKey={selectedWeek}
                 previousPeriodLabel={previousPeriodLabel}
-                total={convertToUserCurrency(current.income)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.income) : undefined}
+                total={current.income}
+                previousTotal={hasPreviousData ? previous.income : undefined}
                 formatCurrency={formatCurrency}
                 positiveIsGood
               />
@@ -144,16 +144,16 @@ export function WeekTab() {
                 bgClass="bg-destructive"
                 monthKey={selectedWeek}
                 previousPeriodLabel={previousPeriodLabel}
-                total={convertToUserCurrency(current.expenses)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.expenses) : undefined}
+                total={current.expenses}
+                previousTotal={hasPreviousData ? previous.expenses : undefined}
                 formatCurrency={formatCurrency}
                 positiveIsGood={false}
               />
               <NetBalanceKpiCard
-                total={convertToUserCurrency(current.balance)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
-                income={convertToUserCurrency(current.income)}
-                expenses={convertToUserCurrency(current.expenses)}
+                total={current.balance}
+                previousTotal={hasPreviousData ? previous.balance : undefined}
+                income={current.income}
+                expenses={current.expenses}
                 monthKey={selectedWeek}
                 previousPeriodLabel={previousPeriodLabel}
                 formatCurrency={formatCurrency}
@@ -173,8 +173,8 @@ export function WeekTab() {
                 bgClass="bg-primary"
                 monthKey={selectedWeek}
                 previousPeriodLabel={previousPeriodLabel}
-                total={convertToUserCurrency(current.sentToInvest ?? 0)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.sentToInvest ?? 0) : undefined}
+                total={current.sentToInvest ?? 0}
+                previousTotal={hasPreviousData ? (previous.sentToInvest ?? 0) : undefined}
                 formatCurrency={formatCurrency}
                 positiveIsGood
               />
@@ -187,7 +187,6 @@ export function WeekTab() {
             <AccountsStackCard
               startDate={range?.start}
               endDate={range?.end}
-              convert={convertToUserCurrency}
               formatCurrency={formatCurrency}
               subtitleOverride={t("charts.accountsWeekSubtitle", "Week-end balance")}
             />
@@ -198,12 +197,10 @@ export function WeekTab() {
             <DailyFlowChart
               dailyTotals={agg.dailyTotals}
               monthKey={displayMonthKey}
-              convert={convertToUserCurrency}
             />
             <DailyHeatmapCard
               dailyTotals={agg.dailyTotals}
               monthKey={displayMonthKey}
-              convert={convertToUserCurrency}
             />
           </div>
 
@@ -224,12 +221,8 @@ export function WeekTab() {
             <div className="max-h-[700px] overflow-y-auto">
               <TransactionTable
                 transactions={transactions}
-                openingBalance={weekOpeningBalance != null
-                  ? convertToUserCurrency(weekOpeningBalance)
-                  : null}
-                closingBalance={weekClosingBalance != null
-                  ? convertToUserCurrency(weekClosingBalance)
-                  : null}
+                openingBalance={weekOpeningBalance}
+                closingBalance={weekClosingBalance}
               />
             </div>
           </div>

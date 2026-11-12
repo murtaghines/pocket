@@ -48,9 +48,15 @@ export function YearTab() {
 
   const userCurrency = preferences?.base_currency || "EUR";
   const convertToUserCurrency = useCallback(
-    (amount: number) => convertAmount(amount, "EUR", userCurrency),
+    (amount: number, currency: string = "EUR") => convertAmount(amount, currency, userCurrency),
     [convertAmount, userCurrency],
   );
+
+  const accountCurrencyMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const a of allAccounts) m.set(a.id, a.currency_base || "EUR");
+    return m;
+  }, [allAccounts]);
 
   const availableYears = useMemo(() => yearlyData.map((y) => y.month), [yearlyData]);
 
@@ -88,7 +94,7 @@ export function YearTab() {
   });
 
   const { data: sankeyAccountFlows = [] } = useQuery({
-    queryKey: ["year-account-flows", user?.id, selectedYear, hiddenAccountKey],
+    queryKey: ["year-account-flows", user?.id, selectedYear, hiddenAccountKey, userCurrency],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
@@ -102,8 +108,9 @@ export function YearTab() {
       const accMap = new Map<string, { name: string; income: number; expenses: number }>();
       for (const tx of data ?? []) {
         if (!tx.account_id || hiddenAccountIds.has(tx.account_id)) continue;
+        const currency = accountCurrencyMap.get(tx.account_id) || "EUR";
         const entry = accMap.get(tx.account_id) || { name: "", income: 0, expenses: 0 };
-        const amt = Math.abs(convertToUserCurrency(Number(tx.amount)));
+        const amt = Math.abs(convertToUserCurrency(Number(tx.amount), currency));
         if (tx.movement === "INCOME") entry.income += amt;
         else if (tx.movement === "EXPENSE") entry.expenses += amt;
         accMap.set(tx.account_id, entry);
@@ -139,7 +146,7 @@ export function YearTab() {
 
   useEffect(() => {
     if (yearOpeningBalance != null) {
-      setOpeningBalance(convertToUserCurrency(yearOpeningBalance));
+      setOpeningBalance(yearOpeningBalance);
     } else {
       setOpeningBalance(null);
     }
@@ -164,7 +171,7 @@ export function YearTab() {
   return (
     <main className="w-full">
       <div className="flex flex-col gap-[14px]">
-          {/* KPI row — aligned with chart grid below via shared constants */}
+          {/* KPI row */}
           <div className={DASHBOARD_GRID}>
             <div className={KPI_LEFT_GRID}>
               <TrendKpiCard
@@ -174,8 +181,8 @@ export function YearTab() {
                 bgClass="bg-success"
                 monthKey={selectedYear}
                 previousPeriodLabel={previousPeriodLabel}
-                total={convertToUserCurrency(current.income)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.income) : undefined}
+                total={current.income}
+                previousTotal={hasPreviousData ? previous.income : undefined}
                 formatCurrency={formatCurrency}
                 positiveIsGood
               />
@@ -186,16 +193,16 @@ export function YearTab() {
                 bgClass="bg-destructive"
                 monthKey={selectedYear}
                 previousPeriodLabel={previousPeriodLabel}
-                total={convertToUserCurrency(current.expenses)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.expenses) : undefined}
+                total={current.expenses}
+                previousTotal={hasPreviousData ? previous.expenses : undefined}
                 formatCurrency={formatCurrency}
                 positiveIsGood={false}
               />
               <NetBalanceKpiCard
-                total={convertToUserCurrency(current.balance)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.balance) : undefined}
-                income={convertToUserCurrency(current.income)}
-                expenses={convertToUserCurrency(current.expenses)}
+                total={current.balance}
+                previousTotal={hasPreviousData ? previous.balance : undefined}
+                income={current.income}
+                expenses={current.expenses}
                 monthKey={selectedYear}
                 previousPeriodLabel={previousPeriodLabel}
                 formatCurrency={formatCurrency}
@@ -215,8 +222,8 @@ export function YearTab() {
                 bgClass="bg-primary"
                 monthKey={selectedYear}
                 previousPeriodLabel={previousPeriodLabel}
-                total={convertToUserCurrency(current.sentToInvest ?? 0)}
-                previousTotal={hasPreviousData ? convertToUserCurrency(previous.sentToInvest ?? 0) : undefined}
+                total={current.sentToInvest ?? 0}
+                previousTotal={hasPreviousData ? (previous.sentToInvest ?? 0) : undefined}
                 formatCurrency={formatCurrency}
                 positiveIsGood
               />
@@ -232,7 +239,6 @@ export function YearTab() {
             <AccountsStackCard
               startDate={range?.start}
               endDate={range?.end}
-              convert={convertToUserCurrency}
               formatCurrency={formatCurrency}
               subtitleOverride={t("charts.accountsYearSubtitle", "Year-end balance")}
             />
@@ -243,12 +249,10 @@ export function YearTab() {
             <MonthlyFlowChart
               dailyTotals={agg.dailyTotals}
               yearKey={selectedYear}
-              convert={convertToUserCurrency}
             />
             <MonthlySpendingCard
               dailyTotals={agg.dailyTotals}
               yearKey={selectedYear}
-              convert={convertToUserCurrency}
             />
           </div>
 
@@ -266,7 +270,7 @@ export function YearTab() {
             incomeCategories={agg.incomeCategoryData}
             expenseCategories={agg.expenseCategoryData}
             accountFlows={sankeyAccountFlows}
-            openingBalance={yearOpeningBalance != null ? convertToUserCurrency(yearOpeningBalance) : 0}
+            openingBalance={yearOpeningBalance ?? 0}
           />
 
           {/* Row 6: Fixed vs discretionary + Top expenses */}
@@ -281,12 +285,8 @@ export function YearTab() {
               <TransactionTable
                 transactions={transactions}
                 totalCount={totalCount ?? undefined}
-                openingBalance={yearOpeningBalance != null
-                  ? convertToUserCurrency(yearOpeningBalance)
-                  : null}
-                closingBalance={yearClosingBalance != null
-                  ? convertToUserCurrency(yearClosingBalance)
-                  : null}
+                openingBalance={yearOpeningBalance}
+                closingBalance={yearClosingBalance}
               />
             </div>
             {totalCount != null && totalCount > PAGE_SIZE && (

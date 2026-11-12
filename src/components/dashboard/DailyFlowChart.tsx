@@ -8,13 +8,15 @@ import type { DailyTotal } from "@/hooks/usePeriodAggregates";
 interface DailyFlowChartProps {
   dailyTotals: DailyTotal[];
   monthKey: string | null;
-  convert: (amount: number) => number;
+  convert?: (amount: number) => number;
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-export function DailyFlowChart({ dailyTotals, monthKey, convert }: DailyFlowChartProps) {
+const identity = (n: number) => n;
+
+export function DailyFlowChart({ dailyTotals, monthKey, convert = identity }: DailyFlowChartProps) {
   const { t } = useTranslation("dashboard");
   const { formatCurrency } = useLocalization();
 

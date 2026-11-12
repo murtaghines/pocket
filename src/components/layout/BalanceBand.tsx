@@ -88,9 +88,10 @@ export function BalanceBand() {
       });
       if (error) throw error;
       const sum = (data ?? []).reduce(
-        (acc: number, r: { account_id: string; latest_balance: number }) => {
+        (acc: number, r: { account_id: string; currency: string; latest_balance: number }) => {
           if (savingsAccountIds.has(r.account_id) || hiddenAccountIds.has(r.account_id)) return acc;
-          return acc + convertAmount(Number(r.latest_balance), "EUR", userCurrency);
+          const currency = r.currency || "EUR";
+          return acc + convertAmount(Number(r.latest_balance), currency, userCurrency);
         },
         0,
       );
