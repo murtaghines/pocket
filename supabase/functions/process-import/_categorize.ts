@@ -7,7 +7,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { categorize, normalize as normalizeForCategorizer, type UserContext, type CategorizationResult } from "../_shared/categorizer.ts";
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
-import { runningBalanceIsReliable } from "../_shared/runningBalance.ts";
+import { runningBalanceIsReliable, inferMultiTrackOpeningBalance } from "../_shared/runningBalance.ts";
 import { merchantKey } from "../_shared/merchantKey.ts";
 import {
   type MovementType,
@@ -399,6 +399,7 @@ export interface CategorizeResult {
   categorizerGaps: Array<{ description: string; description_norm: string; movement: string; final_category: string; categorized_by: string }>;
   insertFailedCount: number;
   insertErrorSamples: string[];
+  inferredInitialBalance: number | null;
 }
 
 export async function categorizeAndInsert(
@@ -743,9 +744,16 @@ export async function categorizeAndInsert(
   }
 
   // ── Running-balance reliability check ──
+  let inferredInitialBalance: number | null = null;
   const rbRowCount = newTransactions.filter((tx) => tx.running_balance != null).length;
   if (rbRowCount >= 5 && !runningBalanceIsReliable(newTransactions)) {
-    console.log(`[process-import] Running balance unreliable across ${rbRowCount} rows. NULLing running_balance for this import.`);
+    // Before NULLing, try to decompose into multiple chains and infer the total opening balance
+    inferredInitialBalance = inferMultiTrackOpeningBalance(newTransactions);
+    if (inferredInitialBalance != null) {
+      console.log(`[process-import] Running balance unreliable (multi-track) across ${rbRowCount} rows. Inferred combined opening balance: ${inferredInitialBalance}. NULLing running_balance.`);
+    } else {
+      console.log(`[process-import] Running balance unreliable across ${rbRowCount} rows. NULLing running_balance for this import.`);
+    }
     for (const tx of newTransactions) tx.running_balance = null;
   }
 
@@ -884,5 +892,6 @@ export async function categorizeAndInsert(
     categorizerGaps,
     insertFailedCount,
     insertErrorSamples,
+    inferredInitialBalance,
   };
 }

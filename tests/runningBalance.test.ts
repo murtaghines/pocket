@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { runningBalanceIsReliable } from '../supabase/functions/_shared/runningBalance';
+import { runningBalanceIsReliable, inferMultiTrackOpeningBalance } from '../supabase/functions/_shared/runningBalance';
 
 // The imports pipeline NULLs running_balance when a file interleaves several sub-account
 // balance tracks (Revolut mixing two pockets/accounts into one export), so Pocket falls back to
@@ -77,5 +77,57 @@ describe('runningBalanceIsReliable', () => {
       { amount: '-10', running_balance: '50' },
     ];
     expect(runningBalanceIsReliable(rows)).toBe(true);
+  });
+});
+
+describe('inferMultiTrackOpeningBalance', () => {
+  it('decomposes two interleaved tracks and sums their opening balances', () => {
+    // Track A: opening 100, rows -10 → 90, -10 → 80, -10 → 70
+    // Track B: opening 5000, rows -100 → 4900, -100 → 4800, -100 → 4700
+    // Total opening: 100 + 5000 = 5100
+    const rows = [
+      { amount: -10, running_balance: 90 },
+      { amount: -100, running_balance: 4900 },
+      { amount: -10, running_balance: 80 },
+      { amount: -100, running_balance: 4800 },
+      { amount: -10, running_balance: 70 },
+      { amount: -100, running_balance: 4700 },
+    ];
+    expect(inferMultiTrackOpeningBalance(rows)).toBe(5100);
+  });
+
+  it('returns null for a single-track statement', () => {
+    const rows = [
+      { amount: 100, running_balance: 100 },
+      { amount: -10, running_balance: 90 },
+      { amount: -10, running_balance: 80 },
+      { amount: -10, running_balance: 70 },
+      { amount: -10, running_balance: 60 },
+    ];
+    // Only one chain → chainsFound < 2 → null
+    expect(inferMultiTrackOpeningBalance(rows)).toBeNull();
+  });
+
+  it('returns null when there are too few rows', () => {
+    expect(inferMultiTrackOpeningBalance([
+      { amount: -10, running_balance: 90 },
+    ])).toBeNull();
+  });
+
+  it('handles a realistic Revolut savings scenario (two pockets)', () => {
+    // Pocket 1 (Instant Access): opening 1169.78
+    //   +0.04 → 1169.82, +0.04 → 1169.86, +500 → 1669.86
+    // Pocket 2 (Savings Challenge): opening 1403.15
+    //   +0.03 → 1403.18, +0.03 → 1403.21, +200 → 1603.21
+    // Interleaved chronologically, total opening = 1169.78 + 1403.15 = 2572.93
+    const rows = [
+      { amount: 0.04, running_balance: 1169.82 },
+      { amount: 0.03, running_balance: 1403.18 },
+      { amount: 0.04, running_balance: 1169.86 },
+      { amount: 0.03, running_balance: 1403.21 },
+      { amount: 500, running_balance: 1669.86 },
+      { amount: 200, running_balance: 1603.21 },
+    ];
+    expect(inferMultiTrackOpeningBalance(rows)).toBe(2572.93);
   });
 });

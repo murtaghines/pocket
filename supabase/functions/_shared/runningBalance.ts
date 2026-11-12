@@ -63,3 +63,64 @@ export function runningBalanceIsReliable(
   // duplicate-balance tie that the greedy walk might mis-step on.
   return consumed >= chain.length - 1;
 }
+
+// When runningBalanceIsReliable returns false, the pipeline NULLs running_balance and the
+// standard initial_balance inference (earliest tx with running_balance) finds nothing. This
+// function decomposes the rows into multiple balance chains (one per sub-account/pocket) and
+// sums each chain's opening balance to produce the account's total initial_balance.
+export function inferMultiTrackOpeningBalance(
+  rows: Array<{ amount: number | string; running_balance: number | string | null }>,
+): number | null {
+  const data = rows
+    .filter((t) => t.running_balance != null)
+    .map((t) => ({ amt: r2(Number(t.amount)), rb: r2(Number(t.running_balance)) }))
+    .filter((r) => Number.isFinite(r.amt) && Number.isFinite(r.rb));
+
+  if (data.length < 2) return null;
+
+  const used = new Array(data.length).fill(false);
+  let totalOpening = 0;
+  let chainsFound = 0;
+  let totalConsumed = 0;
+
+  for (let pass = 0; pass < 10; pass++) {
+    // Build index for remaining rows
+    const byPred = new Map<number, number[]>();
+    const rbSet = new Set<number>();
+    data.forEach((row, i) => {
+      if (used[i]) return;
+      const pred = r2(row.rb - row.amt);
+      if (!byPred.has(pred)) byPred.set(pred, []);
+      byPred.get(pred)!.push(i);
+      rbSet.add(row.rb);
+    });
+
+    // Find start: unused row whose predecessor is not any unused row's rb
+    const startIdx = data.findIndex((row, i) => !used[i] && !rbSet.has(r2(row.rb - row.amt)));
+    if (startIdx < 0) break;
+
+    const opening = r2(data[startIdx].rb - data[startIdx].amt);
+
+    // Walk this chain greedily
+    let cur = opening;
+    let consumed = 0;
+    while (true) {
+      const candidates = (byPred.get(cur) ?? []).filter((i) => !used[i]);
+      if (candidates.length === 0) break;
+      used[candidates[0]] = true;
+      consumed++;
+      cur = data[candidates[0]].rb;
+    }
+
+    if (consumed === 0) break;
+    totalOpening += opening;
+    totalConsumed += consumed;
+    chainsFound++;
+  }
+
+  if (chainsFound >= 2 && totalConsumed >= data.length * 0.8) {
+    return r2(totalOpening);
+  }
+
+  return null;
+}

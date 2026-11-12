@@ -498,7 +498,7 @@ serve(async (req) => {
       { input: extraction.aiInputTokens, output: extraction.aiOutputTokens },
     );
 
-    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples } = catResult;
+    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples, inferredInitialBalance } = catResult;
 
     // ── Infer initial_balance from the earliest transaction with running_balance ──
     // Formula: initial_balance = earliest_tx.running_balance - earliest_tx.amount
@@ -537,6 +537,21 @@ serve(async (req) => {
                 .eq('id', accountId);
               console.log(`[process-import] Updated initial_balance: ${current} → ${inferred} (from ${earliest.date}: balance=${earliest.running_balance}, amount=${earliest.amount})`);
             }
+          }
+        } else if (inferredInitialBalance != null) {
+          // Fallback: multi-track chain decomposition (e.g. Revolut savings with multiple pockets)
+          const { data: acct } = await supabase
+            .from('accounts')
+            .select('initial_balance')
+            .eq('id', accountId)
+            .single();
+          const current = parseFloat(String(acct?.initial_balance ?? 0));
+          if (current !== inferredInitialBalance) {
+            await supabase
+              .from('accounts')
+              .update({ initial_balance: inferredInitialBalance })
+              .eq('id', accountId);
+            console.log(`[process-import] Updated initial_balance (multi-track fallback): ${current} → ${inferredInitialBalance}`);
           }
         } else {
           console.log(`[process-import] No running_balance data for account ${accountId} — cannot infer initial_balance`);
