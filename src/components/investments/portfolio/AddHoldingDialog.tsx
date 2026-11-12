@@ -21,8 +21,10 @@ import {
 import { toast } from "sonner";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useAccounts } from "@/hooks/useAccounts";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { ASSET_CLASS_KEYS, ASSET_CLASS_CONFIG } from "./assetClassConfig";
+import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
 
 interface AddHoldingDialogProps {
   open: boolean;
@@ -33,7 +35,9 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
   const { t } = useTranslation("investments");
   const { addHolding } = useHoldings();
   const { getInvestmentAccounts } = useAccounts();
+  const { preferences } = useUserPreferences();
   const investmentAccounts = getInvestmentAccounts();
+  const baseCurrency = preferences?.base_currency || "EUR";
 
   const [assetName, setAssetName] = useState("");
   const [accountId, setAccountId] = useState<string>("none");
@@ -42,7 +46,15 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
   const [quantity, setQuantity] = useState("");
   const [avgCost, setAvgCost] = useState("");
   const [currentPrice, setCurrentPrice] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState(baseCurrency);
+
+  const handleAccountChange = (id: string) => {
+    setAccountId(id);
+    if (id !== "none") {
+      const acct = investmentAccounts.find((a) => a.id === id);
+      if (acct) setCurrency(acct.currency_base);
+    }
+  };
 
   const inputClass =
     "h-11 rounded-xl bg-muted border-[1.5px] border-transparent shadow-none px-3.5 text-sm font-medium focus-visible:bg-card focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/[0.14] focus-visible:outline-none";
@@ -55,7 +67,7 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
     setQuantity("");
     setAvgCost("");
     setCurrentPrice("");
-    setCurrency("USD");
+    setCurrency(baseCurrency);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -142,7 +154,7 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
                     <Label className="text-[13px] font-medium text-muted-foreground">
                       {t("portfolio.accountLabel")}
                     </Label>
-                    <Select value={accountId} onValueChange={setAccountId}>
+                    <Select value={accountId} onValueChange={handleAccountChange}>
                       <SelectTrigger className={inputClass}>
                         <SelectValue placeholder={t("portfolio.noAccount")} />
                       </SelectTrigger>
@@ -166,11 +178,11 @@ export function AddHoldingDialog({ open, onOpenChange }: AddHoldingDialogProps) 
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="ARS">ARS</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                      <SelectItem value="BRL">BRL</SelectItem>
+                      {SUPPORTED_CURRENCIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.code} {c.symbol}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -24,6 +24,7 @@ import { useHoldings } from "@/hooks/useHoldings";
 import { useAccounts } from "@/hooks/useAccounts";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { ASSET_CLASS_KEYS, ASSET_CLASS_CONFIG } from "./assetClassConfig";
+import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
 
 interface EditHoldingDialogProps {
   holding: Holding;
@@ -155,11 +156,11 @@ export function EditHoldingDialog({ holding, open, onOpenChange }: EditHoldingDi
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="ARS">ARS</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                      <SelectItem value="BRL">BRL</SelectItem>
+                      {SUPPORTED_CURRENCIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.code} {c.symbol}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -17,6 +17,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAccountColor } from "@/lib/accountColors";
 import { SUPPORTED_CURRENCIES } from "@/lib/currencies";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import {
   type AccountType,
   BANK_ACCOUNT_TYPES,
@@ -79,14 +80,16 @@ export function AccountFormDialog({
   onSubmit,
   lockedType,
   typeFilter,
-  defaultCurrency = "EUR",
+  defaultCurrency,
 }: AccountFormDialogProps) {
   const { t } = useTranslation("account");
+  const { preferences } = useUserPreferences();
+  const resolvedCurrency = defaultCurrency || preferences?.base_currency || "EUR";
   const { t: tp } = useTranslation("profile");
   const [accountType, setAccountType] = useState<AccountType>("CHECKING");
   const [institution, setInstitution] = useState("");
   const [name, setName] = useState("");
-  const [currencyBase, setCurrencyBase] = useState(defaultCurrency);
+  const [currencyBase, setCurrencyBase] = useState(resolvedCurrency);
   const [initialBalance, setInitialBalance] = useState("");
   const [splitPercentage, setSplitPercentage] = useState("50");
   const [partnerName, setPartnerName] = useState("");
@@ -101,7 +104,7 @@ export function AccountFormDialog({
       setAccountType(defaultType);
       setInstitution(initialValues?.institution || "");
       setName(initialValues?.name || "");
-      setCurrencyBase(initialValues?.currency_base || defaultCurrency);
+      setCurrencyBase(initialValues?.currency_base || resolvedCurrency);
       setInitialBalance(
         initialValues?.initial_balance != null && initialValues.initial_balance !== 0
           ? String(initialValues.initial_balance)
