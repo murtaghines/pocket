@@ -28,7 +28,6 @@ export function useReassignImport() {
     check((await supabase.from("transactions").update({ account_id: newAccountId }).eq("import_id", importId)).error);
     check((await supabase.from("imports").update({ account_id: newAccountId }).eq("id", importId)).error);
 
-    try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
     for (const key of [
       "imports", "transactions", "band-total-balance", "month-transactions-inline", "dashboard-period-series",
       "dashboard-opening-balances", "dashboard-aggregates", "account-period-summary", "import-preview", "account-detail",

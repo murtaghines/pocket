@@ -236,7 +236,6 @@ export function useImports(domain?: AppDomain) {
       }
     },
     onSuccess: async () => {
-      try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
@@ -267,7 +266,6 @@ export function useImports(domain?: AppDomain) {
         .delete()
         .eq("id", importId);
 
-      try { await supabase.rpc("refresh_dashboard_views" as any); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });

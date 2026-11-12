@@ -367,7 +367,6 @@ export function InlineTransactionsEditor({
       return id;
     },
     onSuccess: async () => {
-      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
@@ -422,7 +421,6 @@ export function InlineTransactionsEditor({
       toast({ title: t("imports.couldNotDuplicate"), description: error.message, variant: "destructive" });
       return;
     }
-    try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
@@ -519,7 +517,6 @@ export function InlineTransactionsEditor({
       return ids;
     },
     onSuccess: async () => {
-      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["tx-audit", monthKey, user?.id] });
@@ -566,7 +563,6 @@ export function InlineTransactionsEditor({
       return;
     }
 
-    try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
     queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
@@ -583,7 +579,6 @@ export function InlineTransactionsEditor({
         label: "undo",
         onClick: async () => {
           await supabase.from("transactions").insert(insertPayload);
-          try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
           queryClient.invalidateQueries({ queryKey: ["month-transactions-inline", monthKey, user?.id] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           queryClient.invalidateQueries({ queryKey: ["tx-count", monthKey, user?.id] });
@@ -871,7 +866,7 @@ export function InlineTransactionsEditor({
     const transfers = transferTxs.length;
     const transfersNet = transferTxs.reduce((s, t) => s + splitAmt(t.amount, t.account_id), 0);
     const hidden = transactions.filter((t) => t.is_hidden).length;
-    return { income, expenses, transfers, transfersNet, hidden, total: transactions.length };
+    return { income, expenses, transfers, transfersNet, hidden, total: nonSavings.length + hidden };
   }, [transactions, splitAmt, savingsAccountIds]);
 
   const hasAccountBalances = accountOpeningBalances && Object.keys(accountOpeningBalances).length > 0;

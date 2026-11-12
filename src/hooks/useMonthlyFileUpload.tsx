@@ -365,7 +365,6 @@ export function useMonthlyFileUpload() {
       }
 
       // Refresh data
-      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["periods"] });
@@ -387,7 +386,6 @@ export function useMonthlyFileUpload() {
             title: t('toast.integrityVerified'),
             description: t('toast.transfersLinked', { count: integrityData.stats.transfersLinked }),
           });
-          try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
           queryClient.invalidateQueries({ queryKey: ["month-transactions-inline"] });
           queryClient.invalidateQueries({ queryKey: ["dashboard-period-series"] });
@@ -646,7 +644,6 @@ export function useMonthlyFileUpload() {
           : t('toast.retryCompleteDescription', { count: stats?.newTransactions || 0 }),
       });
 
-      try { await supabase.rpc("refresh_dashboard_views"); } catch { /* best-effort */ }
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["imports"] });
       queryClient.invalidateQueries({ queryKey: ["periods"] });

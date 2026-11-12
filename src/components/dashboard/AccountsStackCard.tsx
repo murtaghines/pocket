@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { getAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { isSavingsType } from "@/lib/accountTypes";
 import { type AccountType, getAccountTypeIcon } from "@/lib/accountTypes";
@@ -34,6 +34,7 @@ type AccountDisplay = {
   color: string;
   isPrimary: boolean;
   accountType: AccountType;
+  needsBalanceReview: boolean;
 };
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -117,6 +118,7 @@ export function AccountsStackCard({
         color: getAccountColor(acc),
         isPrimary: !!acc.is_primary,
         accountType: acc.account_type,
+        needsBalanceReview: acc.initial_balance_source === 'failed',
       };
     });
 
@@ -131,13 +133,6 @@ export function AccountsStackCard({
     const primary = filtered.find((a) => a.isPrimary);
     const rest = filtered.filter((a) => !a.isPrimary);
     return primary ? [primary, ...rest] : rest;
-  }, [accountsData, view]);
-
-  const totalSavings = useMemo(() => {
-    if (view !== "savings") return 0;
-    return accountsData
-      .filter(a => isSavingsType(a.accountType))
-      .reduce((sum, a) => sum + a.balance, 0);
   }, [accountsData, view]);
 
   const detailAccount = useMemo(
@@ -200,16 +195,7 @@ export function AccountsStackCard({
           <EmptyState height="h-[160px]" />
         ) : (
           <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
-            {view === "savings" && orderedAccounts.length > 0 && (
-              <div className="flex items-center justify-between py-[10px] shrink-0 border-b border-border">
-                <span className="text-[11.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('charts.totalSavings', 'Total Savings')}
-                </span>
-                <span className="text-[15px] font-bold tabular-nums text-foreground">
-                  {formatCurrency(totalSavings)}
-                </span>
-              </div>
-            )}
+            {/* Total savings row removed — the account list is sufficient */}
             {orderedAccounts.map((acc, idx) => {
               const TypeIcon = getAccountTypeIcon(acc.accountType);
               return (
@@ -237,8 +223,13 @@ export function AccountsStackCard({
                       {acc.transactionCount} {t('charts.txCount', 'tx')}
                     </p>
                   </div>
-                  <span className="text-[14px] font-semibold tabular-nums text-foreground shrink-0">
-                    {formatCurrency(acc.balance)}
+                  <span className="inline-flex items-center gap-1 shrink-0">
+                    {acc.needsBalanceReview && (
+                      <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                    )}
+                    <span className="text-[14px] font-semibold tabular-nums text-foreground">
+                      {formatCurrency(acc.balance)}
+                    </span>
                   </span>
                 </button>
               </div>

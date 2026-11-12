@@ -498,7 +498,74 @@ serve(async (req) => {
       { input: extraction.aiInputTokens, output: extraction.aiOutputTokens },
     );
 
-    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples } = catResult;
+    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples, inferredInitialBalance } = catResult;
+
+    // ── Infer initial_balance from the earliest transaction with running_balance ──
+    // Formula: initial_balance = earliest_tx.running_balance - earliest_tx.amount
+    // Runs on EVERY import for this account (not just when new transactions were
+    // added), because a re-import or correction could change running_balance data.
+    // The initial_balance always reflects the state before the globally-earliest
+    // known transaction.
+    if (accountId) {
+      try {
+        const { data: earliest } = await supabase
+          .from('transactions')
+          .select('amount, running_balance, date')
+          .eq('user_id', userId)
+          .eq('account_id', accountId)
+          .not('running_balance', 'is', null)
+          .order('date', { ascending: true })
+          .order('amount', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (earliest?.running_balance != null && earliest?.amount != null) {
+          const inferred = Math.round(
+            (parseFloat(String(earliest.running_balance)) - parseFloat(String(earliest.amount))) * 100
+          ) / 100;
+          if (Number.isFinite(inferred)) {
+            const { data: acct } = await supabase
+              .from('accounts')
+              .select('initial_balance')
+              .eq('id', accountId)
+              .single();
+            const current = parseFloat(String(acct?.initial_balance ?? 0));
+            if (current !== inferred) {
+              await supabase
+                .from('accounts')
+                .update({ initial_balance: inferred, initial_balance_source: 'inferred' })
+                .eq('id', accountId);
+              console.log(`[process-import] Updated initial_balance: ${current} → ${inferred} (from ${earliest.date}: balance=${earliest.running_balance}, amount=${earliest.amount})`);
+            }
+          }
+        } else if (inferredInitialBalance != null) {
+          // Fallback: multi-track chain decomposition (e.g. Revolut savings with multiple pockets)
+          const { data: acct } = await supabase
+            .from('accounts')
+            .select('initial_balance')
+            .eq('id', accountId)
+            .single();
+          const current = parseFloat(String(acct?.initial_balance ?? 0));
+          if (current !== inferredInitialBalance) {
+            await supabase
+              .from('accounts')
+              .update({ initial_balance: inferredInitialBalance, initial_balance_source: 'multi_track' })
+              .eq('id', accountId);
+            console.log(`[process-import] Updated initial_balance (multi-track fallback): ${current} → ${inferredInitialBalance}`);
+          }
+        } else {
+          // Flag the account so the UI can warn the user to set it manually
+          await supabase
+            .from('accounts')
+            .update({ initial_balance_source: 'failed' })
+            .eq('id', accountId)
+            .is('initial_balance_source', null);
+          console.log(`[process-import] No running_balance data for account ${accountId} — cannot infer initial_balance, flagged for review`);
+        }
+      } catch (e) {
+        console.error(`[process-import] initial_balance inference failed for account ${accountId}:`, e);
+      }
+    }
 
     // ── Infer initial_balance from the earliest transaction with running_balance ──
     // Formula: initial_balance = earliest_tx.running_balance - earliest_tx.amount
@@ -606,8 +673,6 @@ serve(async (req) => {
       message += `, ${insertFailedCount} failed to save`;
     }
 
-    try { await supabase.rpc("refresh_dashboard_views"); }
-    catch (e) { console.error("[process-import] refresh_dashboard_views failed (non-fatal):", e); }
 
     const totalCategorized = stats.categorizedByRule + stats.categorizedByCategorizer + stats.categorizedByHistory;
     const aiSavingsPercent = stats.newTransactions > 0

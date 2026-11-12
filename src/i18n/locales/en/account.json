@@ -60,6 +60,7 @@
     "initialBalanceHelpCash": "How much cash is in this wallet right now",
     "initialBalanceHelpManual": "Your account balance before the first transaction you track here",
     "initialBalanceHelpFile": "Auto-set from your first statement. You can also set it manually.",
+    "balanceNeedsReview": "The opening balance couldn't be determined automatically. Please verify or set it manually below.",
     "manageFiles": "Manage files",
     "noFilesForAccount": "No files uploaded to this account yet",
     "uploadFiles": "Upload files",
