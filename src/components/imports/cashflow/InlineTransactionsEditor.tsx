@@ -871,7 +871,7 @@ export function InlineTransactionsEditor({
     const transfers = transferTxs.length;
     const transfersNet = transferTxs.reduce((s, t) => s + splitAmt(t.amount, t.account_id), 0);
     const hidden = transactions.filter((t) => t.is_hidden).length;
-    return { income, expenses, transfers, transfersNet, hidden, total: transactions.length };
+    return { income, expenses, transfers, transfersNet, hidden, total: nonSavings.length + hidden };
   }, [transactions, splitAmt, savingsAccountIds]);
 
   const hasAccountBalances = accountOpeningBalances && Object.keys(accountOpeningBalances).length > 0;
