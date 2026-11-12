@@ -852,22 +852,21 @@ export function InlineTransactionsEditor({
     return ids;
   }, [transactions]);
 
-  // Summary — excludes savings accounts to stay consistent with opening/closing balance
+  // Global summary — includes all accounts (header reflects everything visible on the page)
   const summary = useMemo(() => {
     const visible = transactions.filter((t) => !t.is_hidden);
-    const nonSavings = visible.filter((t) => !savingsAccountIds.has(t.account_id ?? ""));
-    const income = nonSavings
+    const income = visible
       .filter((t) => t.movement === "INCOME")
       .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
-    const expenses = nonSavings
+    const expenses = visible
       .filter((t) => t.movement === "EXPENSE")
       .reduce((s, t) => s + Math.abs(splitAmt(t.amount, t.account_id)), 0);
-    const transferTxs = nonSavings.filter((t) => t.movement === "TRANSFER");
+    const transferTxs = visible.filter((t) => t.movement === "TRANSFER");
     const transfers = transferTxs.length;
     const transfersNet = transferTxs.reduce((s, t) => s + splitAmt(t.amount, t.account_id), 0);
     const hidden = transactions.filter((t) => t.is_hidden).length;
-    return { income, expenses, transfers, transfersNet, hidden, total: nonSavings.length + hidden };
-  }, [transactions, splitAmt, savingsAccountIds]);
+    return { income, expenses, transfers, transfersNet, hidden, total: visible.length + hidden };
+  }, [transactions, splitAmt]);
 
   const hasAccountBalances = accountOpeningBalances && Object.keys(accountOpeningBalances).length > 0;
 

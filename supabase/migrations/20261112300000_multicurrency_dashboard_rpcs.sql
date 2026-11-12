@@ -2,6 +2,19 @@
 -- Adds `currency` (from accounts.currency_base) to every aggregate so the
 -- frontend can convert each currency group to the user's display currency
 -- before summing, instead of assuming all amounts are EUR.
+--
+-- Functions that use RETURNS TABLE must be dropped before recreation when
+-- adding columns, because CREATE OR REPLACE cannot change the return type.
+
+-- Drop all RETURNS TABLE functions whose signatures change
+DROP FUNCTION IF EXISTS public.get_monthly_series(uuid, app_domain, text, text);
+DROP FUNCTION IF EXISTS public.get_period_series(uuid, app_domain, text);
+DROP FUNCTION IF EXISTS public.get_opening_balances(uuid, app_domain);
+DROP FUNCTION IF EXISTS public.get_account_period_summary(uuid, date, date, app_domain);
+DROP FUNCTION IF EXISTS public.get_account_opening_balances(uuid, app_domain, text);
+DROP FUNCTION IF EXISTS public.get_balance_at_date(uuid, app_domain, date);
+DROP FUNCTION IF EXISTS public.get_category_trends(uuid, app_domain, text, integer);
+DROP FUNCTION IF EXISTS public.get_weekday_spending(uuid, app_domain);
 
 -------------------------------------------------------------------------
 -- 1. get_dashboard_aggregates — add currency to every sub-query
