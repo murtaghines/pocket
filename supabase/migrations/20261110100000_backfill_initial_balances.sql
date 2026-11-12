@@ -21,7 +21,7 @@ inferred AS (
     ROUND(e.running_balance - e.amount, 2) AS new_initial
   FROM earliest e
   WHERE (e.running_balance - e.amount) IS NOT NULL
-    AND isfinite((e.running_balance - e.amount)::double precision)
+    AND (e.running_balance - e.amount)::text NOT IN ('NaN', 'Infinity', '-Infinity')
 )
 UPDATE accounts a
 SET initial_balance = i.new_initial
