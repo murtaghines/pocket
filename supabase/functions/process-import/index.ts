@@ -533,7 +533,7 @@ serve(async (req) => {
             if (current !== inferred) {
               await supabase
                 .from('accounts')
-                .update({ initial_balance: inferred })
+                .update({ initial_balance: inferred, initial_balance_source: 'inferred' })
                 .eq('id', accountId);
               console.log(`[process-import] Updated initial_balance: ${current} → ${inferred} (from ${earliest.date}: balance=${earliest.running_balance}, amount=${earliest.amount})`);
             }
@@ -549,12 +549,18 @@ serve(async (req) => {
           if (current !== inferredInitialBalance) {
             await supabase
               .from('accounts')
-              .update({ initial_balance: inferredInitialBalance })
+              .update({ initial_balance: inferredInitialBalance, initial_balance_source: 'multi_track' })
               .eq('id', accountId);
             console.log(`[process-import] Updated initial_balance (multi-track fallback): ${current} → ${inferredInitialBalance}`);
           }
         } else {
-          console.log(`[process-import] No running_balance data for account ${accountId} — cannot infer initial_balance`);
+          // Flag the account so the UI can warn the user to set it manually
+          await supabase
+            .from('accounts')
+            .update({ initial_balance_source: 'failed' })
+            .eq('id', accountId)
+            .is('initial_balance_source', null);
+          console.log(`[process-import] No running_balance data for account ${accountId} — cannot infer initial_balance, flagged for review`);
         }
       } catch (e) {
         console.error(`[process-import] initial_balance inference failed for account ${accountId}:`, e);

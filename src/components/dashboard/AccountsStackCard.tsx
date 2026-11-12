@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { getAccountColor, getAccountDisplayName } from "@/lib/accountColors";
 import { isSavingsType } from "@/lib/accountTypes";
 import { type AccountType, getAccountTypeIcon } from "@/lib/accountTypes";
@@ -34,6 +34,7 @@ type AccountDisplay = {
   color: string;
   isPrimary: boolean;
   accountType: AccountType;
+  needsBalanceReview: boolean;
 };
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -117,6 +118,7 @@ export function AccountsStackCard({
         color: getAccountColor(acc),
         isPrimary: !!acc.is_primary,
         accountType: acc.account_type,
+        needsBalanceReview: acc.initial_balance_source === 'failed',
       };
     });
 
@@ -221,8 +223,13 @@ export function AccountsStackCard({
                       {acc.transactionCount} {t('charts.txCount', 'tx')}
                     </p>
                   </div>
-                  <span className="text-[14px] font-semibold tabular-nums text-foreground shrink-0">
-                    {formatCurrency(acc.balance)}
+                  <span className="inline-flex items-center gap-1 shrink-0">
+                    {acc.needsBalanceReview && (
+                      <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                    )}
+                    <span className="text-[14px] font-semibold tabular-nums text-foreground">
+                      {formatCurrency(acc.balance)}
+                    </span>
                   </span>
                 </button>
               </div>

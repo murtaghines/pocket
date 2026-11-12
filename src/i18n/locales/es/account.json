@@ -60,6 +60,7 @@
     "initialBalanceHelpCash": "Cuánto efectivo tenés en esta billetera ahora",
     "initialBalanceHelpManual": "El saldo de tu cuenta antes de la primera transacción que registres aquí",
     "initialBalanceHelpFile": "Se completa automáticamente con tu primer extracto. También podés ponerlo manualmente.",
+    "balanceNeedsReview": "No se pudo determinar el saldo inicial automáticamente. Por favor verificalo o ingresalo manualmente abajo.",
     "manageFiles": "Gestionar archivos",
     "noFilesForAccount": "Aún no hay archivos subidos a esta cuenta",
     "uploadFiles": "Subir archivos",

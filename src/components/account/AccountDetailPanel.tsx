@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { Pencil, Star, Archive, ArchiveRestore, Trash2, ChevronRight, FileText } from "lucide-react";
+import { Pencil, Star, Archive, ArchiveRestore, Trash2, ChevronRight, FileText, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { IconAction } from "@/components/account/IconAction";
@@ -138,8 +138,9 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
 
   const commitBalance = (raw: string) => {
     const n = parseFloat(raw.replace(",", "."));
-    if (Number.isFinite(n)) updateAccount({ id: account.id, initial_balance: n });
+    if (Number.isFinite(n)) updateAccount({ id: account.id, initial_balance: n, initial_balance_source: 'user' } as any);
   };
+  const needsBalanceReview = account.initial_balance_source === 'failed';
   const commitShare = (raw: string) => {
     const n = parseInt(raw, 10);
     if (n >= 1 && n <= 100) updateAccount({ id: account.id, split_percentage: n });
@@ -226,6 +227,14 @@ export function AccountDetailPanel({ account, onEditIdentity, onDelete }: Accoun
 
         {/* Settings, edited in place */}
         <Section title={t("detail.settings", "Settings")}>
+          {needsBalanceReview && (
+            <div className="mb-2 flex items-start gap-2.5 rounded-lg bg-warning/10 px-3 py-2.5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+              <p className="text-[12.5px] leading-snug text-foreground/80">
+                {t("accounts.balanceNeedsReview", "The opening balance couldn't be determined automatically. Please verify or set it manually below.")}
+              </p>
+            </div>
+          )}
           <div className="divide-y divide-border/60">
             <Field label={t("accounts.initialBalance", "Initial balance")} hint={t("accounts.initialBalanceHelpFile", "Auto-set from your first statement. You can also set it manually.")}>
               <InlineInput

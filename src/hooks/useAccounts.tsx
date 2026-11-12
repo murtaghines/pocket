@@ -22,6 +22,7 @@ export interface Account {
   hidden_from_dashboard?: boolean;
   account_number?: string | null;
   initial_balance: number;
+  initial_balance_source?: string | null;
   split_percentage: number;
   archived: boolean;
   notes?: string | null;
