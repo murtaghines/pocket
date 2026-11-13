@@ -1,28 +1,53 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useLocalization } from "@/hooks/useLocalization";
 import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
+import { cn } from "@/lib/utils";
+
+type ViewMode = "assetClass" | "account";
 
 interface AllocationChartProps {
-  data: Record<string, { value: number; costBasis: number; pnl: number; count: number }>;
+  byAssetClass: Record<string, { value: number; costBasis: number; pnl: number; count: number }>;
+  byAccount: Record<string, { value: number; costBasis: number; pnl: number; count: number }>;
   totalValue: number;
-  title?: string;
 }
 
-export function AllocationChart({ data, totalValue, title }: AllocationChartProps) {
+const ACCOUNT_COLORS = [
+  "hsl(216 85% 52%)",
+  "hsl(170 70% 38%)",
+  "hsl(32 90% 52%)",
+  "hsl(285 65% 60%)",
+  "hsl(350 72% 55%)",
+  "hsl(95 55% 38%)",
+  "hsl(198 85% 40%)",
+  "hsl(250 60% 60%)",
+];
+
+export function AllocationChart({ byAssetClass, byAccount, totalValue }: AllocationChartProps) {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
+  const [view, setView] = useState<ViewMode>("assetClass");
+
+  const hasAccounts = Object.keys(byAccount).length > 0;
+  const data = view === "assetClass" ? byAssetClass : byAccount;
 
   const chartData = Object.entries(data)
-    .map(([key, v]) => {
-      const cfg = ASSET_CLASS_CONFIG[key] ?? ASSET_CLASS_CONFIG.other;
+    .map(([key, v], i) => {
+      if (view === "assetClass") {
+        const cfg = ASSET_CLASS_CONFIG[key] ?? ASSET_CLASS_CONFIG.other;
+        return {
+          name: t(`byAssetType.types.${cfg.i18nKey}`),
+          value: v.value,
+          weight: totalValue > 0 ? (v.value / totalValue) * 100 : 0,
+          color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}%)`,
+        };
+      }
       return {
-        name: t(`byAssetType.types.${cfg.i18nKey}`),
+        name: key || t("portfolio.noAccount"),
         value: v.value,
-        pnl: v.pnl,
-        count: v.count,
         weight: totalValue > 0 ? (v.value / totalValue) * 100 : 0,
-        color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}%)`,
+        color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
       };
     })
     .filter((d) => d.value > 0)
@@ -33,7 +58,7 @@ export function AllocationChart({ data, totalValue, title }: AllocationChartProp
       <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
         <div className="px-5 pt-4 pb-2 shrink-0">
           <h3 className="text-[13px] font-medium text-muted-foreground">
-            {title ?? t("portfolio.allocation")}
+            {t("portfolio.allocation")}
           </h3>
         </div>
         <div className="flex-1 min-h-0 flex items-center justify-center px-5 pb-4">
@@ -61,10 +86,36 @@ export function AllocationChart({ data, totalValue, title }: AllocationChartProp
 
   return (
     <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
-      <div className="px-5 pt-4 pb-2 shrink-0">
+      <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
         <h3 className="text-[13px] font-medium text-muted-foreground">
-          {title ?? t("portfolio.allocation")}
+          {t("portfolio.allocation")}
         </h3>
+        {hasAccounts && (
+          <div className="flex bg-muted/60 rounded-[8px] p-[3px]">
+            <button
+              onClick={() => setView("assetClass")}
+              className={cn(
+                "px-2.5 py-[3px] rounded-[6px] text-[11px] font-medium transition-all",
+                view === "assetClass"
+                  ? "bg-card shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t("portfolio.allocation")}
+            </button>
+            <button
+              onClick={() => setView("account")}
+              className={cn(
+                "px-2.5 py-[3px] rounded-[6px] text-[11px] font-medium transition-all",
+                view === "account"
+                  ? "bg-card shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t("portfolio.allocationByAccount")}
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex-1 min-h-0 px-5 pb-4">
         <div className="flex flex-col md:flex-row items-center gap-4 h-full">

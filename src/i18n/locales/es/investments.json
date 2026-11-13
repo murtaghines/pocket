@@ -31,6 +31,14 @@
     "noAccountsDescription": "Agrega tu primera cuenta de inversión para comenzar a rastrear tu portafolio",
     "addFirst": "Agregar Primera Cuenta",
     "adding": "Agregando...",
+    "add": "Agregar",
+    "addOrUpdate": "Agregar o Actualizar Cuenta",
+    "save": "Guardar Cuenta",
+    "saving": "Guardando...",
+    "saved": "Cuenta guardada exitosamente",
+    "fillAllFields": "Completá todos los campos",
+    "errorSaving": "Error al guardar cuenta",
+    "errorDeleting": "Error al eliminar cuenta",
     "accountAdded": "Cuenta de inversión agregada",
     "accountDeleted": "Cuenta de inversión eliminada",
     "confirmDelete": "¿Eliminar esta cuenta de inversión?"
@@ -44,7 +52,9 @@
     "platform": "Plataforma",
     "description": "Descripción",
     "totalAccumulated": "Total Acumulado",
-    "deposits": "Depósitos"
+    "deposits": "Depósitos",
+    "withdrawals": "Retiros",
+    "net": "Neto"
   },
   "byPlatform": {
     "title": "Por Plataforma",
@@ -53,6 +63,7 @@
   "byAssetType": {
     "title": "Por Tipo de Activo",
     "noData": "Sin datos por tipo de activo",
+    "invested": "Invertido",
     "types": {
       "stocks": "Acciones",
       "etf": "ETFs",

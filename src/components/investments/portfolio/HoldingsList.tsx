@@ -11,6 +11,7 @@ import { AddHoldingDialog } from "./AddHoldingDialog";
 import { UpdatePricePopover } from "./UpdatePricePopover";
 import { HoldingDetailDialog } from "./HoldingDetailDialog";
 import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
+import { cn } from "@/lib/utils";
 
 type SortKey = "asset_name" | "current_value" | "unrealized_pnl" | "weight";
 
@@ -18,9 +19,11 @@ interface HoldingsListProps {
   holdings: Holding[];
   totalValue: number;
   displayCurrency?: string;
+  bestHoldingId?: string | null;
+  worstHoldingId?: string | null;
 }
 
-export function HoldingsList({ holdings, totalValue, displayCurrency }: HoldingsListProps) {
+export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldingId, worstHoldingId }: HoldingsListProps) {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
   const [sortKey, setSortKey] = useState<SortKey>("current_value");
@@ -144,7 +147,11 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
                   <button
                     key={h.id}
                     onClick={() => setDetailHolding(h)}
-                    className="bg-background border border-border rounded-xl p-3 flex items-center gap-3 w-full text-left hover:border-primary/30 transition-colors"
+                    className={cn(
+                      "bg-background border border-border rounded-xl p-3 flex items-center gap-3 w-full text-left hover:border-primary/30 transition-colors",
+                      h.id === bestHoldingId && "border-l-[3px] border-l-success",
+                      h.id === worstHoldingId && "border-l-[3px] border-l-destructive",
+                    )}
                   >
                     <div
                       className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[14px] font-bold"
@@ -224,7 +231,15 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
                     const cfg = ASSET_CLASS_CONFIG[h.asset_class] ?? ASSET_CLASS_CONFIG.other;
                     const isPositive = h.unrealized_pnl >= 0;
                     return (
-                      <TableRow key={h.id} className="cursor-pointer" onClick={() => setDetailHolding(h)}>
+                      <TableRow
+                        key={h.id}
+                        className={cn(
+                          "cursor-pointer",
+                          h.id === bestHoldingId && "border-l-[3px] border-l-success",
+                          h.id === worstHoldingId && "border-l-[3px] border-l-destructive",
+                        )}
+                        onClick={() => setDetailHolding(h)}
+                      >
                         <TableCell>
                           <div className="flex items-center gap-2.5">
                             <div
