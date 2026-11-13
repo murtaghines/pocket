@@ -126,7 +126,8 @@
     "holdingUpdated": "Posición actualizada",
     "errorUpdating": "Error al actualizar posición",
     "notesLabel": "Notas",
-    "notesPlaceholder": "Notas opcionales"
+    "notesPlaceholder": "Notas opcionales",
+    "pnl": "P&L"
   },
   "performance": {
     "title": "Rendimiento",

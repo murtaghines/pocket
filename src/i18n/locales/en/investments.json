@@ -117,7 +117,8 @@
     "holdingUpdated": "Holding updated",
     "errorUpdating": "Error updating holding",
     "notesLabel": "Notes",
-    "notesPlaceholder": "Optional notes"
+    "notesPlaceholder": "Optional notes",
+    "pnl": "P&L"
   },
   "performance": {
     "title": "Performance",

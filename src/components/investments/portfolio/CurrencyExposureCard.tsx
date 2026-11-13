@@ -2,20 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useLocalization } from "@/hooks/useLocalization";
 import type { CurrencyExposure } from "@/hooks/usePortfolioHighlights";
 
-const CURRENCY_COLORS: Record<string, string> = {
-  USD: "hsl(216, 85%, 52%)",
-  EUR: "hsl(240, 55%, 55%)",
-  ARS: "hsl(170, 60%, 42%)",
-  GBP: "hsl(350, 60%, 50%)",
-  BRL: "hsl(130, 50%, 40%)",
-};
-
-function getCurrencyColor(currency: string, index: number): string {
-  return (
-    CURRENCY_COLORS[currency] ??
-    `hsl(${(index * 67 + 200) % 360}, 55%, 50%)`
-  );
-}
+const CHART_COLORS = Array.from({ length: 8 }, (_, i) => `hsl(var(--chart-${i + 1}))`);
 
 interface CurrencyExposureCardProps {
   exposure: CurrencyExposure[];
@@ -34,7 +21,7 @@ export function CurrencyExposureCard({
   if (exposure.length <= 1) return null;
 
   return (
-    <div className="rounded-xl p-5 bg-card border border-border shadow-section min-w-0 flex flex-col">
+    <div className="rounded-xl p-5 bg-card shadow-section min-w-0 flex flex-col">
       <p className="text-[13px] font-medium text-muted-foreground mb-4">
         {t("highlights.currencyExposure")}
       </p>
@@ -54,7 +41,7 @@ export function CurrencyExposureCard({
               <div
                 className="h-full rounded-full transition-all"
                 style={{
-                  backgroundColor: getCurrencyColor(exp.currency, i),
+                  backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
                   width: `${exp.pct}%`,
                 }}
               />

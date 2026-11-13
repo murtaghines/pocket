@@ -13,16 +13,23 @@ interface AllocationChartProps {
   totalValue: number;
 }
 
-const ACCOUNT_COLORS = [
-  "hsl(216 85% 52%)",
-  "hsl(170 70% 38%)",
-  "hsl(32 90% 52%)",
-  "hsl(285 65% 60%)",
-  "hsl(350 72% 55%)",
-  "hsl(95 55% 38%)",
-  "hsl(198 85% 40%)",
-  "hsl(250 60% 60%)",
-];
+const CHART_COLORS = Array.from({ length: 8 }, (_, i) => `hsl(var(--chart-${i + 1}))`);
+
+function AllocationTooltip({ active, payload }: any) {
+  if (!active || !payload?.[0]) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-card rounded-lg shadow-popup px-4 py-3 min-w-[160px]">
+      <p className="text-[13px] font-medium text-foreground mb-1">{d.name}</p>
+      <p className="text-[15px] font-semibold tabular-nums text-foreground">
+        {d.formattedValue}
+      </p>
+      <p className="text-[12px] text-muted-foreground tabular-nums mt-0.5">
+        {d.weight.toFixed(1)}%
+      </p>
+    </div>
+  );
+}
 
 export function AllocationChart({ byAssetClass, byAccount, totalValue }: AllocationChartProps) {
   const { t } = useTranslation("investments");
@@ -39,6 +46,7 @@ export function AllocationChart({ byAssetClass, byAccount, totalValue }: Allocat
         return {
           name: t(`byAssetType.types.${cfg.i18nKey}`),
           value: v.value,
+          formattedValue: formatCurrency(v.value),
           weight: totalValue > 0 ? (v.value / totalValue) * 100 : 0,
           color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}%)`,
         };
@@ -46,8 +54,9 @@ export function AllocationChart({ byAssetClass, byAccount, totalValue }: Allocat
       return {
         name: key || t("portfolio.noAccount"),
         value: v.value,
+        formattedValue: formatCurrency(v.value),
         weight: totalValue > 0 ? (v.value / totalValue) * 100 : 0,
-        color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+        color: CHART_COLORS[i % CHART_COLORS.length],
       };
     })
     .filter((d) => d.value > 0)
@@ -68,22 +77,6 @@ export function AllocationChart({ byAssetClass, byAccount, totalValue }: Allocat
     );
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.[0]) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="bg-card rounded-xl shadow-lg border border-border/50 px-4 py-3 min-w-[160px]">
-        <p className="text-[13px] font-medium text-foreground mb-1">{d.name}</p>
-        <p className="text-[15px] font-semibold tabular-nums text-foreground">
-          {formatCurrency(d.value)}
-        </p>
-        <p className="text-[12px] text-muted-foreground tabular-nums mt-0.5">
-          {d.weight.toFixed(1)}%
-        </p>
-      </div>
-    );
-  };
-
   return (
     <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
       <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
@@ -93,6 +86,7 @@ export function AllocationChart({ byAssetClass, byAccount, totalValue }: Allocat
         {hasAccounts && (
           <div className="flex bg-muted/60 rounded-[8px] p-[3px]">
             <button
+              type="button"
               onClick={() => setView("assetClass")}
               className={cn(
                 "px-2.5 py-[3px] rounded-[6px] text-[11px] font-medium transition-all",
@@ -104,6 +98,7 @@ export function AllocationChart({ byAssetClass, byAccount, totalValue }: Allocat
               {t("portfolio.allocation")}
             </button>
             <button
+              type="button"
               onClick={() => setView("account")}
               className={cn(
                 "px-2.5 py-[3px] rounded-[6px] text-[11px] font-medium transition-all",
@@ -132,11 +127,11 @@ export function AllocationChart({ byAssetClass, byAccount, totalValue }: Allocat
                   dataKey="value"
                   strokeWidth={0}
                 >
-                  {chartData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
+                  {chartData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<AllocationTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -156,7 +151,7 @@ export function AllocationChart({ byAssetClass, byAccount, totalValue }: Allocat
                   {d.weight.toFixed(1)}%
                 </span>
                 <span className="text-[12px] text-muted-foreground tabular-nums shrink-0 w-[80px] text-right">
-                  {formatCurrency(d.value)}
+                  {d.formattedValue}
                 </span>
               </div>
             ))}

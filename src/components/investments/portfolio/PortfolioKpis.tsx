@@ -21,20 +21,19 @@ export function PortfolioKpis({
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
 
-  const isPositivePnl = summary.totalPnl >= 0;
-  const pnlDot = isPositivePnl ? "bg-success" : "bg-destructive";
-  const pnlLabel = isPositivePnl ? "text-success" : "text-destructive";
+  const pnlDot = summary.totalPnl > 0 ? "bg-success" : summary.totalPnl < 0 ? "bg-destructive" : "bg-muted-foreground";
+  const pnlLabel = summary.totalPnl > 0 ? "text-success" : summary.totalPnl < 0 ? "text-destructive" : "text-muted-foreground";
 
-  const ytdUp = ytdReturnPct == null || ytdReturnPct >= 0;
-  const ytdColor = ytdReturnPct == null
+  const ytdColor = ytdReturnPct == null || ytdReturnPct === 0
     ? { dot: "bg-muted-foreground", label: "text-muted-foreground" }
-    : ytdUp
+    : ytdReturnPct > 0
       ? { dot: "bg-success", label: "text-success" }
       : { dot: "bg-destructive", label: "text-destructive" };
 
   const hasDividends = insights.dividendCount > 0;
   const hasRealized = insights.totalRealizedPnl !== 0;
-  const realizedPositive = insights.totalRealizedPnl >= 0;
+  const realizedDot = insights.totalRealizedPnl > 0 ? "bg-success" : insights.totalRealizedPnl < 0 ? "bg-destructive" : "bg-muted-foreground";
+  const realizedLabel = insights.totalRealizedPnl > 0 ? "text-success" : insights.totalRealizedPnl < 0 ? "text-destructive" : "text-muted-foreground";
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-[14px]">
@@ -54,7 +53,7 @@ export function PortfolioKpis({
         value={formatCurrency(summary.totalPnl, displayCurrency)}
         sub={
           summary.totalCostBasis > 0
-            ? `${isPositivePnl ? "+" : ""}${pnlPercent.toFixed(1)}%`
+            ? `${summary.totalPnl > 0 ? "+" : ""}${pnlPercent.toFixed(1)}%`
             : undefined
         }
         subClass={pnlLabel}
@@ -67,7 +66,7 @@ export function PortfolioKpis({
         label={ytdReturnPct != null ? t("highlights.ytdReturn") : t("highlights.totalReturn")}
         value={
           ytdReturnPct != null
-            ? `${ytdReturnPct >= 0 ? "+" : ""}${ytdReturnPct.toFixed(2)}%`
+            ? `${ytdReturnPct > 0 ? "+" : ""}${ytdReturnPct.toFixed(2)}%`
             : "—"
         }
       />
@@ -83,10 +82,10 @@ export function PortfolioKpis({
         />
       ) : hasRealized ? (
         <KpiCard
-          dotClass={realizedPositive ? "bg-success" : "bg-destructive"}
-          labelClass={realizedPositive ? "text-success" : "text-destructive"}
+          dotClass={realizedDot}
+          labelClass={realizedLabel}
           label={t("insights.realizedPnl")}
-          value={`${realizedPositive ? "+" : ""}${formatCurrency(insights.totalRealizedPnl, displayCurrency)}`}
+          value={`${insights.totalRealizedPnl > 0 ? "+" : ""}${formatCurrency(insights.totalRealizedPnl, displayCurrency)}`}
           sub={t("insights.fromSales")}
         />
       ) : (

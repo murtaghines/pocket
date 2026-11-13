@@ -56,7 +56,7 @@ const TX_ICON = {
 const TX_COLOR = {
   buy: "text-success",
   sell: "text-destructive",
-  dividend: "text-[hsl(270,60%,55%)]",
+  dividend: "text-[hsl(var(--dividend))]",
   fee: "text-warning",
 } as const;
 
@@ -287,7 +287,7 @@ export function HoldingDetailDialog({
                               : tx.type === "sell"
                                 ? "bg-destructive/15"
                                 : tx.type === "dividend"
-                                  ? "bg-[hsl(270,60%,55%)]/15"
+                                  ? "bg-[hsl(var(--dividend))]/15"
                                   : "bg-warning/15"
                           }`}
                         >

@@ -191,10 +191,10 @@ export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldin
                       </div>
                       <div
                         className={`text-[11px] tabular-nums font-medium ${
-                          h.unrealized_pnl >= 0 ? "text-success" : "text-destructive"
+                          h.unrealized_pnl > 0 ? "text-success" : h.unrealized_pnl < 0 ? "text-destructive" : "text-muted-foreground"
                         }`}
                       >
-                        {h.unrealized_pnl >= 0 ? "+" : ""}
+                        {h.unrealized_pnl > 0 ? "+" : ""}
                         {pnl.toFixed(1)}%
                       </div>
                     </div>
@@ -218,7 +218,7 @@ export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldin
                       <SortHeader k="current_value">{t("portfolio.value")}</SortHeader>
                     </TableHead>
                     <TableHead className="text-right">
-                      <SortHeader k="unrealized_pnl">P&L</SortHeader>
+                      <SortHeader k="unrealized_pnl">{t("portfolio.pnl")}</SortHeader>
                     </TableHead>
                     <TableHead className="text-right">
                       <SortHeader k="weight">{t("portfolio.weight")}</SortHeader>
@@ -229,7 +229,8 @@ export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldin
                   {sorted.map((h) => {
                     const pnl = pnlPercent(h);
                     const cfg = ASSET_CLASS_CONFIG[h.asset_class] ?? ASSET_CLASS_CONFIG.other;
-                    const isPositive = h.unrealized_pnl >= 0;
+                    const isPositive = h.unrealized_pnl > 0;
+                    const isZeroPnl = h.unrealized_pnl === 0;
                     return (
                       <TableRow
                         key={h.id}
@@ -296,14 +297,14 @@ export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldin
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {isPositive ? (
+                            {!isZeroPnl && (isPositive ? (
                               <TrendingUp className="w-3.5 h-3.5 text-success" />
                             ) : (
                               <TrendingDown className="w-3.5 h-3.5 text-destructive" />
-                            )}
+                            ))}
                             <span
                               className={`tabular-nums font-medium text-sm ${
-                                isPositive ? "text-success" : "text-destructive"
+                                isZeroPnl ? "text-muted-foreground" : isPositive ? "text-success" : "text-destructive"
                               }`}
                             >
                               {isPositive ? "+" : ""}
@@ -312,7 +313,7 @@ export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldin
                           </div>
                           <p
                             className={`text-[11px] tabular-nums ${
-                              isPositive ? "text-success" : "text-destructive"
+                              isZeroPnl ? "text-muted-foreground" : isPositive ? "text-success" : "text-destructive"
                             }`}
                           >
                             {formatCurrency(h.unrealized_pnl)}

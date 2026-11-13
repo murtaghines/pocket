@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/select";
 import { ExportButton } from "./ExportButton";
 import { ExchangeRatesDialog } from "./ExchangeRatesDialog";
-import type { PortfolioSummary } from "@/hooks/useHoldings";
-import type { Holding } from "@/hooks/useHoldings";
+import type { PortfolioSummary, Holding } from "@/hooks/useHoldings";
 
 interface PortfolioHeaderProps {
   summary: PortfolioSummary;
@@ -37,7 +36,8 @@ export function PortfolioHeader({
   const [ratesOpen, setRatesOpen] = useState(false);
 
   const costMethod: CostMethod = preferences.cost_method ?? "fifo";
-  const isPositive = summary.totalPnl >= 0;
+  const isZero = summary.totalPnl === 0;
+  const isPositive = summary.totalPnl > 0;
   const pnlFormatted = `${isPositive ? "+" : ""}${formatCurrency(summary.totalPnl, isMultiCurrency ? displayCurrency : undefined)}`;
   const pnlPctFormatted = `${isPositive ? "+" : ""}${pnlPercent.toFixed(1)}%`;
   const accountCount = Object.keys(summary.byAccount).length;
@@ -58,16 +58,18 @@ export function PortfolioHeader({
               <span
                 className={cn(
                   "inline-flex items-center gap-1 px-2.5 py-[2px] rounded-full text-[12px] font-semibold tabular-nums",
-                  isPositive
-                    ? "bg-success/10 text-success"
-                    : "bg-destructive/10 text-destructive",
+                  isZero
+                    ? "bg-muted text-muted-foreground"
+                    : isPositive
+                      ? "bg-success/10 text-success"
+                      : "bg-destructive/10 text-destructive",
                 )}
               >
-                {isPositive ? (
+                {!isZero && (isPositive ? (
                   <TrendingUp className="w-3 h-3" />
                 ) : (
                   <TrendingDown className="w-3 h-3" />
-                )}
+                ))}
                 {pnlFormatted}
                 <span className="text-[11px] font-medium opacity-70">
                   ({pnlPctFormatted})

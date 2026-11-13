@@ -74,7 +74,7 @@ export function DividendCalendar() {
     <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
       <div className="px-6 pt-5 pb-2 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-[hsl(270,60%,55%)]/10 text-[hsl(270,60%,55%)]">
+          <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-[hsl(var(--dividend))]/10 text-[hsl(var(--dividend))]">
             <Coins className="w-[15px] h-[15px]" />
           </div>
           <h3 className="text-base font-semibold">
@@ -90,7 +90,7 @@ export function DividendCalendar() {
             value={formatCurrency(data.totalAllTime)}
             sub={`${data.totalPayments} ${t("dividends.payments")}`}
             icon={<Coins className="w-3.5 h-3.5" />}
-            color="text-[hsl(270,60%,55%)]"
+            color="text-[hsl(var(--dividend))]"
           />
           <KpiMini
             label={t("dividends.monthlyAvg")}
@@ -142,7 +142,7 @@ export function DividendCalendar() {
                 <Tooltip content={<CustomTooltip />} />
                 <Bar
                   dataKey="amount"
-                  fill="hsl(270, 60%, 55%)"
+                  fill="hsl(var(--dividend))"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -269,7 +269,7 @@ function HoldingDividendRow({
         </div>
         <div className="h-1.5 rounded-full bg-border mt-1 overflow-hidden">
           <div
-            className="h-full rounded-full bg-[hsl(270,60%,55%)]"
+            className="h-full rounded-full bg-[hsl(var(--dividend))]"
             style={{ width: `${Math.max(barPct, 2)}%` }}
           />
         </div>
