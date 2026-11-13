@@ -58,7 +58,8 @@
   },
   "byPlatform": {
     "title": "Por Plataforma",
-    "noData": "Sin datos por plataforma"
+    "noData": "Sin datos por plataforma",
+    "net": "Neto"
   },
   "byAssetType": {
     "title": "Por Tipo de Activo",

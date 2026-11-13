@@ -13,6 +13,30 @@ interface InvestmentsHistoryProps {
   data: MonthlyData[];
 }
 
+function HistoryTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-card rounded-lg shadow-popup px-4 py-3 min-w-[170px]">
+      <p className="text-xs text-muted-foreground mb-1">{d.monthLabel}</p>
+      <div className="flex justify-between gap-4">
+        <span className="text-xs text-muted-foreground">{d._labelAccum}</span>
+        <span className="text-sm font-semibold tabular-nums">{d._fmtCumulative}</span>
+      </div>
+      <div className="flex justify-between gap-4">
+        <span className="text-xs text-muted-foreground">{d._labelDeposits}</span>
+        <span className="text-sm tabular-nums text-success">{d._fmtDeposits}</span>
+      </div>
+      {d.withdrawals > 0 && (
+        <div className="flex justify-between gap-4">
+          <span className="text-xs text-muted-foreground">{d._labelNet}</span>
+          <span className="text-sm tabular-nums text-muted-foreground">{d._fmtNet}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
   const { t, i18n } = useTranslation('investments');
   const { formatCurrency } = useLocalization();
@@ -30,32 +54,14 @@ export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
       ...d,
       monthLabel: formatMonth(d.month),
       cumulative,
+      _labelAccum: t('history.totalAccumulated'),
+      _labelDeposits: t('history.deposits'),
+      _labelNet: t('history.net'),
+      _fmtCumulative: formatCurrency(cumulative),
+      _fmtDeposits: formatCurrency(d.deposits),
+      _fmtNet: formatCurrency(d.net),
     };
   });
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="bg-card rounded-xl shadow-lg border border-border/50 px-4 py-3 min-w-[170px]">
-        <p className="text-xs text-muted-foreground mb-1">{d.monthLabel}</p>
-        <div className="flex justify-between gap-4">
-          <span className="text-xs text-muted-foreground">{t('history.totalAccumulated')}</span>
-          <span className="text-sm font-semibold tabular-nums">{formatCurrency(d.cumulative)}</span>
-        </div>
-        <div className="flex justify-between gap-4">
-          <span className="text-xs text-muted-foreground">{t('history.deposits')}</span>
-          <span className="text-sm tabular-nums text-success">{formatCurrency(d.deposits)}</span>
-        </div>
-        {d.withdrawals > 0 && (
-          <div className="flex justify-between gap-4">
-            <span className="text-xs text-muted-foreground">{t('history.net')}</span>
-            <span className="text-sm tabular-nums text-muted-foreground">{formatCurrency(d.net)}</span>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
@@ -87,7 +93,7 @@ export function InvestmentsHistory({ data }: InvestmentsHistoryProps) {
               width={70}
             />
             <Tooltip
-              content={<CustomTooltip />}
+              content={<HistoryTooltip />}
               cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "4 2" }}
             />
             <Area
