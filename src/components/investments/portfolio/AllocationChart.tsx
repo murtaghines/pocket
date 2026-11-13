@@ -1,28 +1,62 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useLocalization } from "@/hooks/useLocalization";
-import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
+import { ASSET_CLASS_CONFIG, assetColor } from "./assetClassConfig";
+import { cn } from "@/lib/utils";
+
+type ViewMode = "assetClass" | "account";
 
 interface AllocationChartProps {
-  data: Record<string, { value: number; costBasis: number; pnl: number; count: number }>;
+  byAssetClass: Record<string, { value: number; costBasis: number; pnl: number; count: number }>;
+  byAccount: Record<string, { value: number; costBasis: number; pnl: number; count: number }>;
   totalValue: number;
-  title?: string;
 }
 
-export function AllocationChart({ data, totalValue, title }: AllocationChartProps) {
+const CHART_COLORS = Array.from({ length: 8 }, (_, i) => `hsl(var(--chart-${i + 1}))`);
+
+function AllocationTooltip({ active, payload }: any) {
+  if (!active || !payload?.[0]) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-card rounded-lg shadow-popup px-4 py-3 min-w-[160px]">
+      <p className="text-[13px] font-medium text-foreground mb-1">{d.name}</p>
+      <p className="text-[15px] font-semibold tabular-nums text-foreground">
+        {d.formattedValue}
+      </p>
+      <p className="text-[12px] text-muted-foreground tabular-nums mt-0.5">
+        {d.weight.toFixed(1)}%
+      </p>
+    </div>
+  );
+}
+
+export function AllocationChart({ byAssetClass, byAccount, totalValue }: AllocationChartProps) {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
+  const [view, setView] = useState<ViewMode>("assetClass");
+
+  const hasAccounts = Object.keys(byAccount).length > 0;
+  const data = view === "assetClass" ? byAssetClass : byAccount;
 
   const chartData = Object.entries(data)
-    .map(([key, v]) => {
-      const cfg = ASSET_CLASS_CONFIG[key] ?? ASSET_CLASS_CONFIG.other;
+    .map(([key, v], i) => {
+      if (view === "assetClass") {
+        const cfg = ASSET_CLASS_CONFIG[key] ?? ASSET_CLASS_CONFIG.other;
+        return {
+          name: t(`byAssetType.types.${cfg.i18nKey}`),
+          value: v.value,
+          formattedValue: formatCurrency(v.value),
+          weight: totalValue > 0 ? (v.value / totalValue) * 100 : 0,
+          color: assetColor(cfg),
+        };
+      }
       return {
-        name: t(`byAssetType.types.${cfg.i18nKey}`),
+        name: key || t("portfolio.noAccount"),
         value: v.value,
-        pnl: v.pnl,
-        count: v.count,
+        formattedValue: formatCurrency(v.value),
         weight: totalValue > 0 ? (v.value / totalValue) * 100 : 0,
-        color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}%)`,
+        color: CHART_COLORS[i % CHART_COLORS.length],
       };
     })
     .filter((d) => d.value > 0)
@@ -33,7 +67,7 @@ export function AllocationChart({ data, totalValue, title }: AllocationChartProp
       <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
         <div className="px-5 pt-4 pb-2 shrink-0">
           <h3 className="text-[13px] font-medium text-muted-foreground">
-            {title ?? t("portfolio.allocation")}
+            {t("portfolio.allocation")}
           </h3>
         </div>
         <div className="flex-1 min-h-0 flex items-center justify-center px-5 pb-4">
@@ -43,28 +77,40 @@ export function AllocationChart({ data, totalValue, title }: AllocationChartProp
     );
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.[0]) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="bg-card rounded-xl shadow-lg border border-border/50 px-4 py-3 min-w-[160px]">
-        <p className="text-[13px] font-medium text-foreground mb-1">{d.name}</p>
-        <p className="text-[15px] font-semibold tabular-nums text-foreground">
-          {formatCurrency(d.value)}
-        </p>
-        <p className="text-[12px] text-muted-foreground tabular-nums mt-0.5">
-          {d.weight.toFixed(1)}%
-        </p>
-      </div>
-    );
-  };
-
   return (
     <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
-      <div className="px-5 pt-4 pb-2 shrink-0">
+      <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
         <h3 className="text-[13px] font-medium text-muted-foreground">
-          {title ?? t("portfolio.allocation")}
+          {t("portfolio.allocation")}
         </h3>
+        {hasAccounts && (
+          <div className="flex bg-muted/60 rounded-[8px] p-[3px]">
+            <button
+              type="button"
+              onClick={() => setView("assetClass")}
+              className={cn(
+                "px-2.5 py-[3px] rounded-[6px] text-[11px] font-medium transition-all",
+                view === "assetClass"
+                  ? "bg-card shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t("portfolio.allocation")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("account")}
+              className={cn(
+                "px-2.5 py-[3px] rounded-[6px] text-[11px] font-medium transition-all",
+                view === "account"
+                  ? "bg-card shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t("portfolio.allocationByAccount")}
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex-1 min-h-0 px-5 pb-4">
         <div className="flex flex-col md:flex-row items-center gap-4 h-full">
@@ -81,11 +127,11 @@ export function AllocationChart({ data, totalValue, title }: AllocationChartProp
                   dataKey="value"
                   strokeWidth={0}
                 >
-                  {chartData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
+                  {chartData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<AllocationTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -105,7 +151,7 @@ export function AllocationChart({ data, totalValue, title }: AllocationChartProp
                   {d.weight.toFixed(1)}%
                 </span>
                 <span className="text-[12px] text-muted-foreground tabular-nums shrink-0 w-[80px] text-right">
-                  {formatCurrency(d.value)}
+                  {d.formattedValue}
                 </span>
               </div>
             ))}

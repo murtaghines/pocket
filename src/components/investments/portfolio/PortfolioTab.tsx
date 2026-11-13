@@ -1,22 +1,18 @@
-import { useHoldings } from "@/hooks/useHoldings";
-import { useInvestmentInsights } from "@/hooks/useInvestmentInsights";
-import { usePortfolioHighlights } from "@/hooks/usePortfolioHighlights";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, PiggyBank, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useHoldings } from "@/hooks/useHoldings";
+import { useInvestmentInsights } from "@/hooks/useInvestmentInsights";
+import { usePortfolioHighlights } from "@/hooks/usePortfolioHighlights";
+import { PortfolioHeader } from "./PortfolioHeader";
 import { PortfolioKpis } from "./PortfolioKpis";
-import { PortfolioHighlights } from "./PortfolioHighlights";
 import { HoldingsList } from "./HoldingsList";
 import { AllocationChart } from "./AllocationChart";
 import { CurrencyExposureCard } from "./CurrencyExposureCard";
 import { PerformanceChart } from "./PerformanceChart";
-import { InsightsCards } from "./InsightsCards";
 import { DividendCalendar } from "./DividendCalendar";
 import { RebalancingCard } from "./RebalancingCard";
-import { PortfolioInfoSection } from "./PortfolioInfoSection";
-import { ExchangeRatesDialog } from "./ExchangeRatesDialog";
-import { CostMethodSelector } from "./CostMethodSelector";
-import { useState } from "react";
 import { AddHoldingDialog } from "./AddHoldingDialog";
 
 export function PortfolioTab() {
@@ -25,7 +21,6 @@ export function PortfolioTab() {
   const { insights } = useInvestmentInsights();
   const { highlights } = usePortfolioHighlights(holdings, summary, insights);
   const [addOpen, setAddOpen] = useState(false);
-  const [ratesOpen, setRatesOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -55,62 +50,63 @@ export function PortfolioTab() {
   }
 
   const showCurrencyExposure = highlights.currencyExposure.length > 1;
+  const currencyForDisplay = isMultiCurrency ? displayCurrency : undefined;
+
+  const bestId = highlights.bestPosition?.id ?? null;
+  const worstId = highlights.worstPosition?.id ?? null;
 
   return (
     <div className="flex flex-col gap-[14px]">
-      {/* Row 1: KPIs */}
-      <PortfolioKpis summary={summary} pnlPercent={pnlPercent} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
-
-      {/* Row 2: Highlights */}
-      <PortfolioHighlights
-        highlights={highlights}
-        insights={insights}
-        displayCurrency={isMultiCurrency ? displayCurrency : undefined}
+      {/* Row 0: Header — total value, P&L, controls */}
+      <PortfolioHeader
+        summary={summary}
+        pnlPercent={pnlPercent}
+        isMultiCurrency={isMultiCurrency}
+        displayCurrency={displayCurrency}
+        holdings={holdings}
       />
 
-      {/* Row 3: Allocation charts + Currency Exposure */}
-      <div className={`grid grid-cols-1 gap-[14px] ${showCurrencyExposure ? "lg:grid-cols-3" : "md:grid-cols-2"} lg:h-[300px]`}>
-        <AllocationChart
-          data={summary.byAssetClass}
-          totalValue={summary.totalValue}
-          title={t("portfolio.allocation")}
-        />
-        <AllocationChart
-          data={summary.byAccount}
-          totalValue={summary.totalValue}
-          title={t("portfolio.allocationByAccount")}
-        />
-        {showCurrencyExposure && (
-          <CurrencyExposureCard
-            exposure={highlights.currencyExposure}
-            yieldOnCost={highlights.yieldOnCost}
-            yieldOnCurrent={highlights.yieldOnCurrent}
-          />
-        )}
-      </div>
+      {/* Row 1: 4 consolidated KPIs */}
+      <PortfolioKpis
+        summary={summary}
+        pnlPercent={pnlPercent}
+        displayCurrency={currencyForDisplay}
+        ytdReturnPct={highlights.ytdReturnPct}
+        insights={insights}
+      />
 
-      {/* Row 4: Insights */}
-      <InsightsCards />
-
-      {/* Row 5: Performance chart */}
-      <div className="lg:h-[300px]">
+      {/* Row 2: Performance chart + Allocation (side by side) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px] lg:h-[300px]">
         <PerformanceChart />
+        <AllocationChart
+          byAssetClass={summary.byAssetClass}
+          byAccount={summary.byAccount}
+          totalValue={summary.totalValue}
+        />
       </div>
 
-      {/* Row 6: Dividend calendar + Rebalancing side-by-side */}
+      {/* Row 3: Holdings table (promoted) */}
+      <HoldingsList
+        holdings={holdings}
+        totalValue={summary.totalValue}
+        displayCurrency={currencyForDisplay}
+        bestHoldingId={bestId}
+        worstHoldingId={worstId}
+      />
+
+      {/* Row 4: Dividend calendar + Rebalancing (conditional) */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px] lg:h-[370px]">
         <DividendCalendar />
         <RebalancingCard summary={summary} />
       </div>
 
-      {/* Row 7: Info section */}
-      <PortfolioInfoSection info={highlights.info} />
-
-      {/* Row 8: Holdings list */}
-      <HoldingsList holdings={holdings} totalValue={summary.totalValue} displayCurrency={isMultiCurrency ? displayCurrency : undefined} />
-
-      {ratesOpen && (
-        <ExchangeRatesDialog open={ratesOpen} onOpenChange={setRatesOpen} />
+      {/* Row 5: Currency exposure (conditional) */}
+      {showCurrencyExposure && (
+        <CurrencyExposureCard
+          exposure={highlights.currencyExposure}
+          yieldOnCost={highlights.yieldOnCost}
+          yieldOnCurrent={highlights.yieldOnCurrent}
+        />
       )}
     </div>
   );

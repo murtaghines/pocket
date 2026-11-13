@@ -36,9 +36,9 @@ const TYPE_CONFIG = {
   },
   dividend: {
     icon: Coins,
-    color: "text-[hsl(270,60%,55%)]",
-    bg: "bg-[hsl(270,60%,55%)]/15",
-    badge: "bg-[hsl(270,60%,55%)] text-white",
+    color: "text-[hsl(var(--dividend))]",
+    bg: "bg-[hsl(var(--dividend))]/15",
+    badge: "bg-[hsl(var(--dividend))] text-white",
   },
   fee: {
     icon: Receipt,

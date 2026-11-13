@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useTargetAllocations } from "@/hooks/useTargetAllocations";
 import type { PortfolioSummary } from "@/hooks/useHoldings";
-import { ASSET_CLASS_CONFIG, ASSET_CLASS_KEYS } from "./assetClassConfig";
+import { ASSET_CLASS_CONFIG, ASSET_CLASS_KEYS, assetColor } from "./assetClassConfig";
 
 interface RebalancingCardProps {
   summary: PortfolioSummary;
@@ -142,7 +142,7 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
                 <div key={cls} className="flex items-center gap-3">
                   <div
                     className="w-3 h-3 rounded-full shrink-0"
-                    style={{ backgroundColor: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}%)` }}
+                    style={{ backgroundColor: assetColor(cfg) }}
                   />
                   <span className="text-sm flex-1 min-w-0 truncate">
                     {t(`byAssetType.types.${cfg.i18nKey}`)}
@@ -207,7 +207,7 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
               <div key={r.cls} className="flex items-center gap-2.5">
                 <div
                   className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: `hsl(${r.cfg.hue} ${r.cfg.sat}% ${r.cfg.light}%)` }}
+                  style={{ backgroundColor: assetColor(r.cfg) }}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -232,7 +232,7 @@ export function RebalancingCard({ summary }: RebalancingCardProps) {
                         className="absolute inset-y-0 left-0 rounded-full"
                         style={{
                           width: `${Math.min(r.actualPct, 100)}%`,
-                          backgroundColor: `hsl(${r.cfg.hue} ${r.cfg.sat}% ${r.cfg.light}%)`,
+                          backgroundColor: assetColor(r.cfg),
                         }}
                       />
                     </div>

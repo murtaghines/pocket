@@ -23,21 +23,21 @@ const COLORS = [
   'hsl(var(--category-rents))',
 ];
 
-const CustomTooltip = ({ active, payload, formatCurrency }: any) => {
+function PlatformTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-card rounded-xl shadow-lg border border-border/50 px-4 py-3 min-w-[150px]">
+    <div className="bg-card rounded-lg shadow-popup px-4 py-3 min-w-[150px]">
       <p className="text-xs font-medium text-foreground mb-1">{d.name}</p>
       <div className="flex justify-between gap-4">
-        <span className="text-xs text-muted-foreground">Net</span>
+        <span className="text-xs text-muted-foreground">{d._labelNet}</span>
         <span className="text-sm font-semibold tabular-nums">
-          {formatCurrency(d.value)}
+          {d._fmtValue}
         </span>
       </div>
     </div>
   );
-};
+}
 
 export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
   const { t } = useTranslation('investments');
@@ -50,6 +50,8 @@ export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
       deposits: values.deposits,
       withdrawals: values.withdrawals,
       color: COLORS[index % COLORS.length],
+      _labelNet: t('byPlatform.net'),
+      _fmtValue: formatCurrency(values.net),
     }))
     .filter(d => d.value > 0)
     .sort((a, b) => b.value - a.value);
@@ -92,7 +94,7 @@ export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
+              <Tooltip content={<PlatformTooltip />} />
             </PieChart>
           </ResponsiveContainer>
         </div>

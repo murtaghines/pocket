@@ -10,7 +10,8 @@ import type { Holding } from "@/hooks/useHoldings";
 import { AddHoldingDialog } from "./AddHoldingDialog";
 import { UpdatePricePopover } from "./UpdatePricePopover";
 import { HoldingDetailDialog } from "./HoldingDetailDialog";
-import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
+import { ASSET_CLASS_CONFIG, assetColorAlpha, assetColorDarken } from "./assetClassConfig";
+import { cn } from "@/lib/utils";
 
 type SortKey = "asset_name" | "current_value" | "unrealized_pnl" | "weight";
 
@@ -18,9 +19,11 @@ interface HoldingsListProps {
   holdings: Holding[];
   totalValue: number;
   displayCurrency?: string;
+  bestHoldingId?: string | null;
+  worstHoldingId?: string | null;
 }
 
-export function HoldingsList({ holdings, totalValue, displayCurrency }: HoldingsListProps) {
+export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldingId, worstHoldingId }: HoldingsListProps) {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
   const [sortKey, setSortKey] = useState<SortKey>("current_value");
@@ -144,13 +147,17 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
                   <button
                     key={h.id}
                     onClick={() => setDetailHolding(h)}
-                    className="bg-background border border-border rounded-xl p-3 flex items-center gap-3 w-full text-left hover:border-primary/30 transition-colors"
+                    className={cn(
+                      "bg-background border border-border rounded-xl p-3 flex items-center gap-3 w-full text-left hover:border-primary/30 transition-colors",
+                      h.id === bestHoldingId && "border-l-[3px] border-l-success",
+                      h.id === worstHoldingId && "border-l-[3px] border-l-destructive",
+                    )}
                   >
                     <div
                       className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[14px] font-bold"
                       style={{
-                        backgroundColor: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}% / 0.15)`,
-                        color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light - 10}%)`,
+                        backgroundColor: assetColorAlpha(cfg, 0.15),
+                        color: assetColorDarken(cfg),
                       }}
                     >
                       {(h.ticker ?? h.asset_name).slice(0, 2).toUpperCase()}
@@ -184,10 +191,10 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
                       </div>
                       <div
                         className={`text-[11px] tabular-nums font-medium ${
-                          h.unrealized_pnl >= 0 ? "text-success" : "text-destructive"
+                          h.unrealized_pnl > 0 ? "text-success" : h.unrealized_pnl < 0 ? "text-destructive" : "text-muted-foreground"
                         }`}
                       >
-                        {h.unrealized_pnl >= 0 ? "+" : ""}
+                        {h.unrealized_pnl > 0 ? "+" : ""}
                         {pnl.toFixed(1)}%
                       </div>
                     </div>
@@ -211,7 +218,7 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
                       <SortHeader k="current_value">{t("portfolio.value")}</SortHeader>
                     </TableHead>
                     <TableHead className="text-right">
-                      <SortHeader k="unrealized_pnl">P&L</SortHeader>
+                      <SortHeader k="unrealized_pnl">{t("portfolio.pnl")}</SortHeader>
                     </TableHead>
                     <TableHead className="text-right">
                       <SortHeader k="weight">{t("portfolio.weight")}</SortHeader>
@@ -222,16 +229,25 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
                   {sorted.map((h) => {
                     const pnl = pnlPercent(h);
                     const cfg = ASSET_CLASS_CONFIG[h.asset_class] ?? ASSET_CLASS_CONFIG.other;
-                    const isPositive = h.unrealized_pnl >= 0;
+                    const isPositive = h.unrealized_pnl > 0;
+                    const isZeroPnl = h.unrealized_pnl === 0;
                     return (
-                      <TableRow key={h.id} className="cursor-pointer" onClick={() => setDetailHolding(h)}>
+                      <TableRow
+                        key={h.id}
+                        className={cn(
+                          "cursor-pointer",
+                          h.id === bestHoldingId && "border-l-[3px] border-l-success",
+                          h.id === worstHoldingId && "border-l-[3px] border-l-destructive",
+                        )}
+                        onClick={() => setDetailHolding(h)}
+                      >
                         <TableCell>
                           <div className="flex items-center gap-2.5">
                             <div
                               className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold"
                               style={{
-                                backgroundColor: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}% / 0.15)`,
-                                color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light - 10}%)`,
+                                backgroundColor: assetColorAlpha(cfg, 0.15),
+                                color: assetColorDarken(cfg),
                               }}
                             >
                               {(h.ticker ?? h.asset_name).slice(0, 2).toUpperCase()}
@@ -281,14 +297,14 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {isPositive ? (
+                            {!isZeroPnl && (isPositive ? (
                               <TrendingUp className="w-3.5 h-3.5 text-success" />
                             ) : (
                               <TrendingDown className="w-3.5 h-3.5 text-destructive" />
-                            )}
+                            ))}
                             <span
                               className={`tabular-nums font-medium text-sm ${
-                                isPositive ? "text-success" : "text-destructive"
+                                isZeroPnl ? "text-muted-foreground" : isPositive ? "text-success" : "text-destructive"
                               }`}
                             >
                               {isPositive ? "+" : ""}
@@ -297,7 +313,7 @@ export function HoldingsList({ holdings, totalValue, displayCurrency }: Holdings
                           </div>
                           <p
                             className={`text-[11px] tabular-nums ${
-                              isPositive ? "text-success" : "text-destructive"
+                              isZeroPnl ? "text-muted-foreground" : isPositive ? "text-success" : "text-destructive"
                             }`}
                           >
                             {formatCurrency(h.unrealized_pnl)}
