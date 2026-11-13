@@ -10,7 +10,7 @@ import type { Holding } from "@/hooks/useHoldings";
 import { AddHoldingDialog } from "./AddHoldingDialog";
 import { UpdatePricePopover } from "./UpdatePricePopover";
 import { HoldingDetailDialog } from "./HoldingDetailDialog";
-import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
+import { ASSET_CLASS_CONFIG, assetColorAlpha, assetColorDarken } from "./assetClassConfig";
 import { cn } from "@/lib/utils";
 
 type SortKey = "asset_name" | "current_value" | "unrealized_pnl" | "weight";
@@ -156,8 +156,8 @@ export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldin
                     <div
                       className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[14px] font-bold"
                       style={{
-                        backgroundColor: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}% / 0.15)`,
-                        color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light - 10}%)`,
+                        backgroundColor: assetColorAlpha(cfg, 0.15),
+                        color: assetColorDarken(cfg),
                       }}
                     >
                       {(h.ticker ?? h.asset_name).slice(0, 2).toUpperCase()}
@@ -246,8 +246,8 @@ export function HoldingsList({ holdings, totalValue, displayCurrency, bestHoldin
                             <div
                               className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold"
                               style={{
-                                backgroundColor: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}% / 0.15)`,
-                                color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light - 10}%)`,
+                                backgroundColor: assetColorAlpha(cfg, 0.15),
+                                color: assetColorDarken(cfg),
                               }}
                             >
                               {(h.ticker ?? h.asset_name).slice(0, 2).toUpperCase()}

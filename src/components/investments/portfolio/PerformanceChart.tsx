@@ -17,6 +17,49 @@ import { usePortfolioPerformance } from "@/hooks/usePortfolioPerformance";
 const PERIODS = ["1M", "3M", "6M", "YTD", "1Y", "ALL"] as const;
 type Period = (typeof PERIODS)[number];
 
+function PerformanceTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-card rounded-lg shadow-popup p-3 min-w-[170px]">
+      <p className="text-xs text-muted-foreground mb-1">{d.date}</p>
+      <div className="flex justify-between gap-4">
+        <span className="text-xs text-muted-foreground">
+          {d._labelValue}
+        </span>
+        <span className="text-sm font-semibold tabular-nums">
+          {d._fmtValue}
+        </span>
+      </div>
+      <div className="flex justify-between gap-4">
+        <span className="text-xs text-muted-foreground">
+          {d._labelCost}
+        </span>
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {d._fmtCost}
+        </span>
+      </div>
+      {d.pnl !== 0 && (
+        <div className="flex justify-between gap-4 mt-1 pt-1 border-t border-border">
+          <span className="text-xs text-muted-foreground">P&L</span>
+          <span
+            className={`text-sm font-semibold tabular-nums ${
+              d.pnl > 0
+                ? "text-success"
+                : d.pnl < 0
+                  ? "text-destructive"
+                  : "text-muted-foreground"
+            }`}
+          >
+            {d.pnl > 0 ? "+" : ""}
+            {d._fmtPnl}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PerformanceChart() {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
@@ -24,52 +67,17 @@ export function PerformanceChart() {
   const { performance, isLoading, takeSnapshot } = usePortfolioPerformance(period);
 
   const hasSeries = performance.series.length > 0;
-  const isPositive = performance.totalReturn >= 0;
+  const isPositive = performance.totalReturn > 0;
+  const isZero = performance.totalReturn === 0;
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="bg-card rounded-xl shadow-lg p-3 min-w-[170px]">
-        <p className="text-xs text-muted-foreground mb-1">{d.date}</p>
-        <div className="flex justify-between gap-4">
-          <span className="text-xs text-muted-foreground">
-            {t("portfolio.totalValue")}
-          </span>
-          <span className="text-sm font-semibold tabular-nums">
-            {formatCurrency(d.totalValue)}
-          </span>
-        </div>
-        <div className="flex justify-between gap-4">
-          <span className="text-xs text-muted-foreground">
-            {t("portfolio.costBasis")}
-          </span>
-          <span className="text-sm tabular-nums text-muted-foreground">
-            {formatCurrency(d.totalCostBasis)}
-          </span>
-        </div>
-        {d.pnl !== 0 && (
-          <div className="flex justify-between gap-4 mt-1 pt-1 border-t border-border">
-            <span className="text-xs text-muted-foreground">P&L</span>
-            <span
-              className="text-sm font-semibold tabular-nums"
-              style={{
-                color:
-                  d.pnl > 0
-                    ? "hsl(var(--success))"
-                    : d.pnl < 0
-                      ? "hsl(var(--destructive))"
-                      : "hsl(var(--muted-foreground))",
-              }}
-            >
-              {d.pnl > 0 ? "+" : ""}
-              {formatCurrency(d.pnl)}
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  };
+  const chartData = performance.series.map((pt: any) => ({
+    ...pt,
+    _labelValue: t("portfolio.totalValue"),
+    _labelCost: t("portfolio.costBasis"),
+    _fmtValue: formatCurrency(pt.totalValue),
+    _fmtCost: formatCurrency(pt.totalCostBasis),
+    _fmtPnl: formatCurrency(pt.pnl),
+  }));
 
   return (
     <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
@@ -77,18 +85,19 @@ export function PerformanceChart() {
         <div>
           <h3 className="text-base font-semibold">{t("performance.title")}</h3>
           <div className="flex items-center gap-2 mt-1">
-            {isPositive ? (
+            {!isZero && (isPositive ? (
               <TrendingUp className="w-4 h-4 text-success" />
             ) : (
               <TrendingDown className="w-4 h-4 text-destructive" />
-            )}
+            ))}
             <span
-              className="text-sm font-semibold tabular-nums"
-              style={{
-                color: isPositive
-                  ? "hsl(var(--success))"
-                  : "hsl(var(--destructive))",
-              }}
+              className={`text-sm font-semibold tabular-nums ${
+                isZero
+                  ? "text-muted-foreground"
+                  : isPositive
+                    ? "text-success"
+                    : "text-destructive"
+              }`}
             >
               {isPositive ? "+" : ""}
               {performance.totalReturnPercent.toFixed(1)}%
@@ -150,7 +159,7 @@ export function PerformanceChart() {
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={performance.series}
+                data={chartData}
                 margin={{ top: 6, right: 4, left: 4, bottom: 0 }}
               >
                 <defs>
@@ -198,7 +207,7 @@ export function PerformanceChart() {
                   domain={["auto", "auto"]}
                 />
                 <Tooltip
-                  content={<CustomTooltip />}
+                  content={<PerformanceTooltip />}
                   cursor={{
                     stroke: "hsl(var(--primary))",
                     strokeWidth: 1,
@@ -239,15 +248,15 @@ export function PerformanceChart() {
             <span className="text-xs text-muted-foreground">
               {t("performance.annualized")}:{" "}
               <span
-                className="font-semibold tabular-nums"
-                style={{
-                  color:
-                    performance.annualizedReturn >= 0
-                      ? "hsl(var(--success))"
-                      : "hsl(var(--destructive))",
-                }}
+                className={`font-semibold tabular-nums ${
+                  performance.annualizedReturn > 0
+                    ? "text-success"
+                    : performance.annualizedReturn < 0
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                }`}
               >
-                {performance.annualizedReturn >= 0 ? "+" : ""}
+                {performance.annualizedReturn > 0 ? "+" : ""}
                 {performance.annualizedReturn.toFixed(1)}%
               </span>
             </span>

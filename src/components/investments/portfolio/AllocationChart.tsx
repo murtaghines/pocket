@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useLocalization } from "@/hooks/useLocalization";
-import { ASSET_CLASS_CONFIG } from "./assetClassConfig";
+import { ASSET_CLASS_CONFIG, assetColor } from "./assetClassConfig";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "assetClass" | "account";
@@ -48,7 +48,7 @@ export function AllocationChart({ byAssetClass, byAccount, totalValue }: Allocat
           value: v.value,
           formattedValue: formatCurrency(v.value),
           weight: totalValue > 0 ? (v.value / totalValue) * 100 : 0,
-          color: `hsl(${cfg.hue} ${cfg.sat}% ${cfg.light}%)`,
+          color: assetColor(cfg),
         };
       }
       return {

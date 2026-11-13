@@ -16,6 +16,30 @@ import { useDividendCalendar, type DividendByHolding } from "@/hooks/useDividend
 
 const PREVIEW_LIMIT = 5;
 
+function DividendTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-card rounded-lg shadow-popup p-3 min-w-[140px]">
+      <p className="text-xs text-muted-foreground mb-1">{d.month}</p>
+      <div className="flex justify-between gap-4">
+        <span className="text-xs text-muted-foreground">
+          {d._labelTotal}
+        </span>
+        <span className="text-sm font-semibold tabular-nums">
+          {d._fmtAmount}
+        </span>
+      </div>
+      <div className="flex justify-between gap-4">
+        <span className="text-xs text-muted-foreground">
+          {d._labelPayments}
+        </span>
+        <span className="text-sm font-semibold tabular-nums">{d.payments}</span>
+      </div>
+    </div>
+  );
+}
+
 export function DividendCalendar() {
   const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
@@ -40,35 +64,14 @@ export function DividendCalendar() {
     month: m.month.slice(5),
     amount: m.amount,
     payments: m.payment_count,
+    _labelTotal: t("dividends.total"),
+    _labelPayments: t("dividends.payments"),
+    _fmtAmount: formatCurrency(m.amount),
   }));
 
   const visibleHoldings = showAllHoldings
     ? data.byHolding
     : data.byHolding.slice(0, PREVIEW_LIMIT);
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="bg-card rounded-xl shadow-lg p-3 min-w-[140px]">
-        <p className="text-xs text-muted-foreground mb-1">{d.month}</p>
-        <div className="flex justify-between gap-4">
-          <span className="text-xs text-muted-foreground">
-            {t("dividends.total")}
-          </span>
-          <span className="text-sm font-semibold tabular-nums">
-            {formatCurrency(d.amount)}
-          </span>
-        </div>
-        <div className="flex justify-between gap-4">
-          <span className="text-xs text-muted-foreground">
-            {t("dividends.payments")}
-          </span>
-          <span className="text-sm font-semibold tabular-nums">{d.payments}</span>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
@@ -139,7 +142,7 @@ export function DividendCalendar() {
                   tickFormatter={(v) => formatCurrency(v)}
                   width={70}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<DividendTooltip />} />
                 <Bar
                   dataKey="amount"
                   fill="hsl(var(--dividend))"
