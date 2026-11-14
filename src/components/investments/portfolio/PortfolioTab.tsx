@@ -13,7 +13,10 @@ import { CurrencyExposureCard } from "./CurrencyExposureCard";
 import { PerformanceChart } from "./PerformanceChart";
 import { DividendCalendar } from "./DividendCalendar";
 import { RebalancingCard } from "./RebalancingCard";
+import { PortfolioInfoCard } from "./PortfolioInfoCard";
+import { PositionHighlightsCard } from "./PositionHighlightsCard";
 import { AddHoldingDialog } from "./AddHoldingDialog";
+import { PORTFOLIO_GRID } from "./portfolioGridLayout";
 
 export function PortfolioTab() {
   const { t } = useTranslation("investments");
@@ -57,26 +60,25 @@ export function PortfolioTab() {
 
   return (
     <div className="flex flex-col gap-[14px]">
-      {/* Row 0: Header — total value, P&L, controls */}
+      {/* Row 0: Controls bar */}
       <PortfolioHeader
-        summary={summary}
-        pnlPercent={pnlPercent}
         isMultiCurrency={isMultiCurrency}
-        displayCurrency={displayCurrency}
         holdings={holdings}
       />
 
-      {/* Row 1: 4 consolidated KPIs */}
+      {/* Row 1: 5 KPIs in hierarchical grid */}
       <PortfolioKpis
         summary={summary}
         pnlPercent={pnlPercent}
         displayCurrency={currencyForDisplay}
         ytdReturnPct={highlights.ytdReturnPct}
         insights={insights}
+        winRate={highlights.winRate}
+        yieldOnCost={highlights.yieldOnCost}
       />
 
       {/* Row 2: Performance chart + Allocation (side by side) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px] lg:h-[300px]">
+      <div className={`${PORTFOLIO_GRID} lg:h-[300px]`}>
         <PerformanceChart />
         <AllocationChart
           byAssetClass={summary.byAssetClass}
@@ -85,7 +87,21 @@ export function PortfolioTab() {
         />
       </div>
 
-      {/* Row 3: Holdings table (promoted) */}
+      {/* Row 3: Portfolio Info + Position Highlights */}
+      <div className={`${PORTFOLIO_GRID} lg:h-[180px]`}>
+        <PortfolioInfoCard
+          info={highlights.info}
+          insights={insights}
+          displayCurrency={currencyForDisplay}
+        />
+        <PositionHighlightsCard
+          bestPosition={highlights.bestPosition}
+          worstPosition={highlights.worstPosition}
+          displayCurrency={currencyForDisplay}
+        />
+      </div>
+
+      {/* Row 4: Holdings table */}
       <HoldingsList
         holdings={holdings}
         totalValue={summary.totalValue}
@@ -94,13 +110,13 @@ export function PortfolioTab() {
         worstHoldingId={worstId}
       />
 
-      {/* Row 4: Dividend calendar + Rebalancing (conditional) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-[14px] lg:h-[370px]">
+      {/* Row 5: Dividend calendar + Rebalancing */}
+      <div className={`${PORTFOLIO_GRID} lg:h-[370px]`}>
         <DividendCalendar />
         <RebalancingCard summary={summary} />
       </div>
 
-      {/* Row 5: Currency exposure (conditional) */}
+      {/* Row 6: Currency exposure (conditional) */}
       {showCurrencyExposure && (
         <CurrencyExposureCard
           exposure={highlights.currencyExposure}
