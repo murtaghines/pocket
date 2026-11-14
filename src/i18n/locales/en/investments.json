@@ -241,7 +241,12 @@
     "firstOperation": "First Operation",
     "lastOperation": "Last Operation",
     "totalMovements": "Total Movements",
-    "movementsCount": "{{count}} records"
+    "movementsCount": "{{count}} records",
+    "yocShort": "YOC",
+    "winsOfTotal": "{{wins}} of {{total}} closed",
+    "positionHighlights": "Position Highlights",
+    "noPositionsToCompare": "Add positions to see highlights",
+    "buyVolume": "Buy Volume"
   },
   "taxLots": {
     "title": "Tax Lots",
