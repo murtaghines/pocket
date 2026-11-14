@@ -250,7 +250,12 @@
     "firstOperation": "Primera Operación",
     "lastOperation": "Última Operación",
     "totalMovements": "Total Movimientos",
-    "movementsCount": "{{count}} registros"
+    "movementsCount": "{{count}} registros",
+    "yocShort": "YOC",
+    "winsOfTotal": "{{wins}} de {{total}} cerradas",
+    "positionHighlights": "Posiciones Destacadas",
+    "noPositionsToCompare": "Agregá posiciones para ver destacadas",
+    "buyVolume": "Volumen de Compra"
   },
   "taxLots": {
     "title": "Lotes Fiscales",
