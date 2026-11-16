@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
 import { importTitle, useImportSummary, getImportDownloadUrl, monthsInRange } from "@/hooks/useImportFile";
-import { useLocalization } from "@/hooks/useLocalization";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { WorkspaceBanner } from "@/components/layout/WorkspaceShell";
 import { getFileKind } from "@/components/account/fileBits";
@@ -164,7 +163,6 @@ export function FilesWorkspace() {
   const { accounts } = useAccounts();
   const { imports, isLoading, deleteImport, isDeleting } = useImports();
   const setArchived = useSetImportArchived();
-  const { formatDate: _fd } = useLocalization();
   const [showArchived, setShowArchived] = useState(false);
 
   const accountFilter = searchParams.get("account");
