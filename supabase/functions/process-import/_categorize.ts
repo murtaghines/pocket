@@ -7,7 +7,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { categorize, normalize as normalizeForCategorizer, type UserContext, type CategorizationResult } from "../_shared/categorizer.ts";
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
-import { runningBalanceIsReliable, inferMultiTrackOpeningBalance } from "../_shared/runningBalance.ts";
+import { runningBalanceIsReliable, inferMultiTrackOpeningBalance, decomposeBalanceChains, type ChainDecomposition } from "../_shared/runningBalance.ts";
 import { merchantKey } from "../_shared/merchantKey.ts";
 import {
   type MovementType,
@@ -400,6 +400,7 @@ export interface CategorizeResult {
   insertFailedCount: number;
   insertErrorSamples: string[];
   inferredInitialBalance: number | null;
+  chainDecomposition: ChainDecomposition | null;
 }
 
 export async function categorizeAndInsert(
@@ -745,14 +746,20 @@ export async function categorizeAndInsert(
 
   // ── Running-balance reliability check ──
   let inferredInitialBalance: number | null = null;
+  let chainDecomposition: ChainDecomposition | null = null;
   const rbRowCount = newTransactions.filter((tx) => tx.running_balance != null).length;
   if (rbRowCount >= 5 && !runningBalanceIsReliable(newTransactions)) {
-    // Before NULLing, try to decompose into multiple chains and infer the total opening balance
-    inferredInitialBalance = inferMultiTrackOpeningBalance(newTransactions);
-    if (inferredInitialBalance != null) {
-      console.log(`[process-import] Running balance unreliable (multi-track) across ${rbRowCount} rows. Inferred combined opening balance: ${inferredInitialBalance}. NULLing running_balance.`);
+    chainDecomposition = decomposeBalanceChains(newTransactions);
+    if (chainDecomposition) {
+      inferredInitialBalance = Math.round(chainDecomposition.chains.reduce((s, c) => s + c.opening, 0) * 100) / 100;
+      console.log(`[process-import] Multi-track detected: ${chainDecomposition.chains.length} chains across ${rbRowCount} rows. Per-chain openings: [${chainDecomposition.chains.map(c => c.opening).join(', ')}]. NULLing running_balance.`);
     } else {
-      console.log(`[process-import] Running balance unreliable across ${rbRowCount} rows. NULLing running_balance for this import.`);
+      inferredInitialBalance = inferMultiTrackOpeningBalance(newTransactions);
+      if (inferredInitialBalance != null) {
+        console.log(`[process-import] Running balance unreliable (multi-track) across ${rbRowCount} rows. Inferred combined opening balance: ${inferredInitialBalance}. NULLing running_balance.`);
+      } else {
+        console.log(`[process-import] Running balance unreliable across ${rbRowCount} rows. NULLing running_balance for this import.`);
+      }
     }
     for (const tx of newTransactions) tx.running_balance = null;
   }
@@ -893,5 +900,6 @@ export async function categorizeAndInsert(
     insertFailedCount,
     insertErrorSamples,
     inferredInitialBalance,
+    chainDecomposition,
   };
 }

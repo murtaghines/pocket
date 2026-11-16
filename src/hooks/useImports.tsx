@@ -42,6 +42,14 @@ interface ProcessImportParams {
   fileHash?: string;
 }
 
+export interface SplitTrack {
+  chain_index: number;
+  opening_balance: number;
+  transaction_count: number;
+  sample_descriptions: string[];
+  assigned_account_id: string | null;
+}
+
 interface ProcessImportResult {
   success: boolean;
   message: string;
@@ -58,7 +66,19 @@ interface ProcessImportResult {
     expected: string;
     found: string;
   }>;
+  splitDetected?: boolean;
   error?: string;
+}
+
+export interface SplitDecision {
+  chain_index: number;
+  action: 'assign' | 'create' | 'discard';
+  account_id?: string;
+  new_account?: {
+    name: string;
+    institution?: string;
+    currency?: string;
+  };
 }
 
 export function useImports(domain?: AppDomain) {
@@ -278,6 +298,32 @@ export function useImports(domain?: AppDomain) {
     }
   };
 
+  const resolveImportSplit = useMutation({
+    mutationFn: async (params: { importId: string; decisions: SplitDecision[] }) => {
+      const { data, error } = await supabase.functions.invoke('resolve-import-split', {
+        body: { importId: params.importId, decisions: params.decisions },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['imports'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['month-transactions-inline'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-period-series'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-aggregates'] });
+      queryClient.invalidateQueries({ queryKey: ['account-period-summary'] });
+      toast.success('Split resolved successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error resolving split:', error);
+      toast.error(error?.message || 'Error resolving split');
+    },
+  });
+
   const getImportsByMonth = (monthKey: string): Import[] => {
     return imports.filter(i => {
       // Use target_month from period, normalize both to YYYY-MM
@@ -304,9 +350,11 @@ export function useImports(domain?: AppDomain) {
     error,
     processImport: processImport.mutateAsync,
     deleteImport: deleteImport.mutate,
+    resolveImportSplit: resolveImportSplit.mutateAsync,
     autoDeleteFailedImport,
     isProcessing: processImport.isPending,
     isDeleting: deleteImport.isPending,
+    isResolvingSplit: resolveImportSplit.isPending,
     getImportsByMonth
   };
 }

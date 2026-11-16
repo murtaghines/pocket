@@ -359,5 +359,19 @@
     "yourCountry": "Your Country",
     "baseCurrency": "Base Currency",
     "categories": "Categories"
+  },
+  "split": {
+    "dialogTitle": "Multiple accounts detected",
+    "dialogDescription": "This file contains transactions from {{count}} separate accounts. Choose where each set of transactions should go.",
+    "primaryTrack": "Primary account (already assigned)",
+    "secondaryTrack": "Track {{n}}",
+    "transactions": "transactions",
+    "assignToExisting": "Existing account",
+    "createNew": "New account",
+    "discard": "Discard",
+    "noOtherAccounts": "No other accounts available. Create one first.",
+    "later": "Decide later",
+    "resolving": "Resolving...",
+    "confirm": "Confirm"
   }
 }

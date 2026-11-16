@@ -18,6 +18,7 @@ import { isSavingsType } from "@/lib/accountTypes";
 import { DataToolbar, type SortColumn, type SortDirection, type DataFilters, type TabSummary } from "./cashflow/DataToolbar";
 import type { AccountTab } from "./cashflow/AccountSheetTabs";
 import { MobileUploadFAB } from "./MobileUploadFAB";
+import { ImportSplitDialog } from "./ImportSplitDialog";
 import { ExportDialog } from "./cashflow/ExportDialog";
 import { DEFAULT_MONTHS, MIN_MONTHS, MONTHS_INCREMENT } from "./cashflow/helpers";
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TRANSFER_CATEGORIES } from "@/lib/categoryTranslations";
@@ -41,6 +42,8 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
     addFiles,
     isProcessingMonth,
     pendingFilesByMonth,
+    pendingSplit,
+    clearPendingSplit,
   } = useMonthlyFileUpload();
 
   const { openingBalanceByMonth } = useDashboardData();
@@ -346,6 +349,14 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         currentMonthKey={activeKey}
         currentMonthLabel={activeSlot?.label ?? ""}
       />
+
+      {pendingSplit && (
+        <ImportSplitDialog
+          open={!!pendingSplit}
+          onOpenChange={(open) => { if (!open) clearPendingSplit(); }}
+          pendingSplit={pendingSplit}
+        />
+      )}
     </div>
   );
 }

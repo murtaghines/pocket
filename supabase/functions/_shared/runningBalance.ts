@@ -64,27 +64,43 @@ export function runningBalanceIsReliable(
   return consumed >= chain.length - 1;
 }
 
+// ── Chain decomposition ──
 // When runningBalanceIsReliable returns false, the pipeline NULLs running_balance and the
 // standard initial_balance inference (earliest tx with running_balance) finds nothing. This
-// function decomposes the rows into multiple balance chains (one per sub-account/pocket) and
-// sums each chain's opening balance to produce the account's total initial_balance.
-export function inferMultiTrackOpeningBalance(
+// module decomposes the rows into multiple balance chains (one per sub-account/pocket).
+
+export interface BalanceChain {
+  opening: number;
+  /** Indices into the ORIGINAL rows array (not the filtered data array). */
+  originalIndices: number[];
+}
+
+export interface ChainDecomposition {
+  chains: BalanceChain[];
+  /** Original-array indices of rows with running_balance that weren't assigned to any chain. */
+  unassignedIndices: number[];
+}
+
+export function decomposeBalanceChains(
   rows: Array<{ amount: number | string; running_balance: number | string | null }>,
-): number | null {
-  const data = rows
-    .filter((t) => t.running_balance != null)
-    .map((t) => ({ amt: r2(Number(t.amount)), rb: r2(Number(t.running_balance)) }))
-    .filter((r) => Number.isFinite(r.amt) && Number.isFinite(r.rb));
+): ChainDecomposition | null {
+  const data: Array<{ amt: number; rb: number; origIdx: number }> = [];
+  rows.forEach((t, i) => {
+    if (t.running_balance == null) return;
+    const amt = r2(Number(t.amount));
+    const rb = r2(Number(t.running_balance));
+    if (Number.isFinite(amt) && Number.isFinite(rb)) {
+      data.push({ amt, rb, origIdx: i });
+    }
+  });
 
   if (data.length < 2) return null;
 
   const used = new Array(data.length).fill(false);
-  let totalOpening = 0;
-  let chainsFound = 0;
+  const chains: BalanceChain[] = [];
   let totalConsumed = 0;
 
   for (let pass = 0; pass < 10; pass++) {
-    // Build index for remaining rows
     const byPred = new Map<number, number[]>();
     const rbSet = new Set<number>();
     data.forEach((row, i) => {
@@ -95,32 +111,41 @@ export function inferMultiTrackOpeningBalance(
       rbSet.add(row.rb);
     });
 
-    // Find start: unused row whose predecessor is not any unused row's rb
     const startIdx = data.findIndex((row, i) => !used[i] && !rbSet.has(r2(row.rb - row.amt)));
     if (startIdx < 0) break;
 
     const opening = r2(data[startIdx].rb - data[startIdx].amt);
+    const chainOrigIndices: number[] = [];
 
-    // Walk this chain greedily
     let cur = opening;
-    let consumed = 0;
     while (true) {
       const candidates = (byPred.get(cur) ?? []).filter((i) => !used[i]);
       if (candidates.length === 0) break;
-      used[candidates[0]] = true;
-      consumed++;
-      cur = data[candidates[0]].rb;
+      const picked = candidates[0];
+      used[picked] = true;
+      chainOrigIndices.push(data[picked].origIdx);
+      totalConsumed++;
+      cur = data[picked].rb;
     }
 
-    if (consumed === 0) break;
-    totalOpening += opening;
-    totalConsumed += consumed;
-    chainsFound++;
+    if (chainOrigIndices.length === 0) break;
+    chains.push({ opening, originalIndices: chainOrigIndices });
   }
 
-  if (chainsFound >= 2 && totalConsumed >= data.length * 0.8) {
-    return r2(totalOpening);
+  if (chains.length >= 2 && totalConsumed >= data.length * 0.8) {
+    const assignedSet = new Set(chains.flatMap((c) => c.originalIndices));
+    const unassignedIndices = data.filter((_, i) => !used[i]).map((d) => d.origIdx);
+    return { chains, unassignedIndices };
   }
 
   return null;
+}
+
+/** Legacy wrapper — returns the summed opening balance across all chains. */
+export function inferMultiTrackOpeningBalance(
+  rows: Array<{ amount: number | string; running_balance: number | string | null }>,
+): number | null {
+  const result = decomposeBalanceChains(rows);
+  if (!result) return null;
+  return r2(result.chains.reduce((sum, c) => sum + c.opening, 0));
 }
