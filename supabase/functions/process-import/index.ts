@@ -498,7 +498,7 @@ serve(async (req) => {
       { input: extraction.aiInputTokens, output: extraction.aiOutputTokens },
     );
 
-    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples, inferredInitialBalance } = catResult;
+    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples, inferredInitialBalance, splitTracks: detectedSplitTracks } = catResult;
 
     // ── Infer initial_balance from the earliest transaction with running_balance ──
     // Formula: initial_balance = earliest_tx.running_balance - earliest_tx.amount
@@ -567,49 +567,59 @@ serve(async (req) => {
       }
     }
 
-    // ── Infer initial_balance from the earliest transaction with running_balance ──
-    // Formula: initial_balance = earliest_tx.running_balance - earliest_tx.amount
-    // Runs on EVERY import for this account (not just when new transactions were
-    // added), because a re-import or correction could change running_balance data.
-    // The initial_balance always reflects the state before the globally-earliest
-    // known transaction.
-    if (accountId) {
-      try {
-        const { data: earliest } = await supabase
-          .from('transactions')
-          .select('amount, running_balance, date')
-          .eq('user_id', userId)
-          .eq('account_id', accountId)
-          .not('running_balance', 'is', null)
-          .order('date', { ascending: true })
-          .order('amount', { ascending: true })
-          .limit(1)
-          .maybeSingle();
+    // ── Multi-track split: hide secondary chain transactions and store metadata ──
+    let splitDetected = false;
+    if (detectedSplitTracks && detectedSplitTracks.length >= 2 && accountId) {
+      splitDetected = true;
+      const primaryTrack = detectedSplitTracks[0];
+      const secondaryTracks = detectedSplitTracks.slice(1);
+      const allSecondaryFps = secondaryTracks.flatMap(t => t.fingerprints);
 
-        if (earliest?.running_balance != null && earliest?.amount != null) {
-          const inferred = Math.round(
-            (parseFloat(String(earliest.running_balance)) - parseFloat(String(earliest.amount))) * 100
-          ) / 100;
-          if (Number.isFinite(inferred)) {
-            const { data: acct } = await supabase
-              .from('accounts')
-              .select('initial_balance')
-              .eq('id', accountId)
-              .single();
-            const current = parseFloat(String(acct?.initial_balance ?? 0));
-            if (current !== inferred) {
-              await supabase
-                .from('accounts')
-                .update({ initial_balance: inferred })
-                .eq('id', accountId);
-              console.log(`[process-import] Updated initial_balance: ${current} → ${inferred} (from ${earliest.date}: balance=${earliest.running_balance}, amount=${earliest.amount})`);
-            }
+      // Hide secondary transactions by looking up their IDs first
+      if (allSecondaryFps.length > 0) {
+        const { data: secTxRows } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('import_id', importId)
+          .in('fingerprint', allSecondaryFps);
+        const secTxIds = (secTxRows || []).map(r => r.id);
+        if (secTxIds.length > 0) {
+          const HIDE_BATCH = 50;
+          for (let start = 0; start < secTxIds.length; start += HIDE_BATCH) {
+            const batch = secTxIds.slice(start, start + HIDE_BATCH);
+            const { error } = await supabase
+              .from('transactions')
+              .update({ is_hidden: true })
+              .in('id', batch);
+            if (error) console.error(`[process-import] Error hiding secondary chain txns:`, error.message);
           }
-        } else {
-          console.log(`[process-import] No running_balance data for account ${accountId} — cannot infer initial_balance`);
+          console.log(`[process-import] Hid ${secTxIds.length} secondary-chain transactions pending user split decision.`);
         }
-      } catch (e) {
-        console.error(`[process-import] initial_balance inference failed for account ${accountId}:`, e);
+      }
+
+      // Store split metadata on the import (includes per-chain fingerprints for resolution)
+      const splitMeta = {
+        status: 'pending' as const,
+        primary_chain_index: 0,
+        tracks: detectedSplitTracks.map((track) => ({
+          ...track,
+          assigned_account_id: track.chain_index === 0 ? accountId : null,
+        })),
+      };
+
+      await supabase
+        .from('imports')
+        .update({ split_tracks: splitMeta })
+        .eq('id', importId);
+
+      // Set initial_balance from primary chain only
+      if (Number.isFinite(primaryTrack.opening_balance)) {
+        await supabase
+          .from('accounts')
+          .update({ initial_balance: primaryTrack.opening_balance, initial_balance_source: 'multi_track_primary' })
+          .eq('id', accountId);
+        console.log(`[process-import] Multi-track split: set primary chain initial_balance=${primaryTrack.opening_balance} for account ${accountId}`);
       }
     }
 
@@ -695,6 +705,7 @@ serve(async (req) => {
         skippedMonths,
         detectedMonths,
         autoDistributed: autoDistribute,
+        splitDetected,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

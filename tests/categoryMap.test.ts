@@ -21,7 +21,7 @@ const CATEGORIZER_EXPENSE = [
   'shopping', 'education', 'subscriptions', 'travel', 'sports', 'pets',
   'gifts_given', 'personal_services', 'taxes', 'family', 'donations', 'insurance', 'other_expense',
 ];
-const CATEGORIZER_TRANSFER = ['own_transfer', 'to_investment', 'to_joint_account', 'transfers_in'];
+const CATEGORIZER_TRANSFER = ['own_transfer', 'to_investment', 'transfers_in'];
 
 describe('mapCategorySlug', () => {
   it('passes through custom_ slugs untouched', () => {
@@ -99,23 +99,21 @@ describe('FIXED — custom_ slugs are not demoted to other_*', () => {
   });
 });
 
-describe('FIXED — to_joint_account no longer collapses to own_transfer', () => {
-  it('has its own TRANSFER slug, distinct from own_transfer', () => {
-    // The categorizer emits `to_joint_account` when a joint-account name matches. It used to
-    // collapse to own_transfer because TRANSFER_SLUGS didn't list it and no `categories` row
-    // existed for it — joint-account transfers were indistinguishable from the user's own
-    // inter-account transfers. Fixed 2026-07-07: added the category row (migration
-    // 20260707200000_add_to_joint_account_category.sql) and the TRANSFER_SLUGS entry. The
-    // frontend (categoryTranslations.ts) already had the label/icon/color wired for this slug.
-    expect(mapCategorySlug('to_joint_account')).toBe('to_joint_account');
-    expect(TRANSFER_SLUGS).toContain('to_joint_account');
-    expect(validateCategorySlug('to_joint_account', 'TRANSFER')).toBe('to_joint_account');
+describe('to_joint_account/from_joint_account map to own_transfer/from_myself', () => {
+  it('to_joint_account maps to own_transfer via CATEGORY_SLUG_MAP', () => {
+    expect(mapCategorySlug('to_joint_account')).toBe('own_transfer');
+    expect(validateCategorySlug('to_joint_account', 'TRANSFER')).toBe('own_transfer');
+  });
+
+  it('from_joint_account maps to from_myself via CATEGORY_SLUG_MAP', () => {
+    expect(mapCategorySlug('from_joint_account')).toBe('from_myself');
+    expect(validateCategorySlug('from_joint_account', 'TRANSFER')).toBe('from_myself');
   });
 });
 
-describe('FIXED — from_myself/from_investment/from_joint_account are valid TRANSFER slugs', () => {
+describe('FIXED — from_myself/from_investment are valid TRANSFER slugs', () => {
   it('own_transfer has a from_myself counterpart, distinct from itself', () => {
-    for (const slug of ['from_myself', 'from_investment', 'from_joint_account']) {
+    for (const slug of ['from_myself', 'from_investment']) {
       expect(mapCategorySlug(slug)).toBe(slug);
       expect(TRANSFER_SLUGS).toContain(slug);
       expect(validateCategorySlug(slug, 'TRANSFER')).toBe(slug);

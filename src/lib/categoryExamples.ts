@@ -26,12 +26,10 @@ export const categoryExamples: Record<string, string[]> = {
   other_expense: ['ATM', 'Bank fee', 'Commission'],
 
   // TRANSFERS
-  own_transfer: ['Transfer own', 'Traspaso'],
+  own_transfer: ['Transfer own', 'Traspaso', 'Shared account', 'Joint'],
   to_investment: ['Broker', 'Trading 212', 'Interactive Brokers'],
-  to_joint_account: ['Shared account', 'Joint'],
   to_savings: ['Savings vault', 'Pocket savings'],
-  from_myself: ['Transfer own', 'Traspaso'],
+  from_myself: ['Transfer own', 'Traspaso', 'Shared account'],
   from_investment: ['Broker', 'Trading withdrawal'],
-  from_joint_account: ['Shared account'],
   from_savings: ['Savings withdrawal'],
 };

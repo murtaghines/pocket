@@ -9,7 +9,7 @@ export type MovementType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 // ========== CATEGORY SLUGS BY MOVEMENT (app-level) ==========
 export const INCOME_SLUGS = ['salary', 'refunds', 'other_income', 'investment', 'freelance', 'rents'];
 export const EXPENSE_SLUGS = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'other_expense', 'pets', 'taxes', 'insurance', 'donations'];
-export const TRANSFER_SLUGS = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'to_savings', 'from_savings', 'transfers'];
+export const TRANSFER_SLUGS = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_savings', 'from_savings', 'transfers'];
 
 // ========== EXTENDED → APP CATEGORY MAPPING ==========
 // The advanced categorizer uses more categories than the app.
@@ -21,6 +21,9 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'transfers_in': 'own_transfer',
   'gifts_received': 'other_income',
   'sales': 'other_income',
+  // Transfer legacy → merged
+  'to_joint_account': 'own_transfer',
+  'from_joint_account': 'from_myself',
   // Expense extended → app
   'gifts_given': 'other_expense',
   'family': 'other_expense',

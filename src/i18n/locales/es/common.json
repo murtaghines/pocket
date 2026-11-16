@@ -359,5 +359,19 @@
     "yourCountry": "Tu País",
     "baseCurrency": "Moneda Base",
     "categories": "Categorías"
+  },
+  "split": {
+    "dialogTitle": "Varias cuentas detectadas",
+    "dialogDescription": "Este archivo contiene transacciones de {{count}} cuentas separadas. Elige a dónde van las transacciones de cada cuenta.",
+    "primaryTrack": "Cuenta principal (ya asignada)",
+    "secondaryTrack": "Pista {{n}}",
+    "transactions": "transacciones",
+    "assignToExisting": "Cuenta existente",
+    "createNew": "Nueva cuenta",
+    "discard": "Descartar",
+    "noOtherAccounts": "No hay otras cuentas disponibles. Crea una primero.",
+    "later": "Decidir después",
+    "resolving": "Resolviendo...",
+    "confirm": "Confirmar"
   }
 }

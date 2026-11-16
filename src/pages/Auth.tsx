@@ -458,10 +458,10 @@ export default function Auth() {
             pattern: coNorm,
             tokens: coTokens,
             movement: 'TRANSFER',
-            category: 'to_joint_account',
+            category: 'own_transfer',
             confidence: 0.85,
           });
-          // "From joint account" rule
+          // "From joint account" rule (now mapped to from_myself / "Between Accounts")
           rules.push({
             user_id: userId,
             source: 'onboarding',
@@ -469,7 +469,7 @@ export default function Auth() {
             pattern: coNorm,
             tokens: coTokens,
             movement: 'TRANSFER',
-            category: 'from_joint_account',
+            category: 'from_myself',
             confidence: 0.80,
           });
         }

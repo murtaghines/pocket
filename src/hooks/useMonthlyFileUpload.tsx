@@ -31,6 +31,17 @@ interface PendingFile {
 
 type PendingFilesByMonth = Record<string, PendingFile[]>;
 
+export interface PendingSplit {
+  importId: string;
+  tracks: Array<{
+    chain_index: number;
+    opening_balance: number;
+    transaction_count: number;
+    sample_descriptions: string[];
+    assigned_account_id: string | null;
+  }>;
+}
+
 // Special bucket key for files uploaded without a forced target month.
 const AUTO_BUCKET_KEY = "__auto__";
 
@@ -80,6 +91,7 @@ async function pollForImportSuccess(
 export function useMonthlyFileUpload() {
   const [pendingFilesByMonth, setPendingFilesByMonth] = useState<PendingFilesByMonth>({});
   const [retryingImportIds, setRetryingImportIds] = useState<Set<string>>(new Set());
+  const [pendingSplit, setPendingSplit] = useState<PendingSplit | null>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -362,6 +374,21 @@ export function useMonthlyFileUpload() {
           description: t('toast.skippedMonthsDescription', { list: skippedList }),
           variant: "destructive",
         });
+      }
+
+      // Check for multi-track split that needs user resolution
+      if (processData?.splitDetected && processData?.importId) {
+        const { data: impRow } = await supabase
+          .from('imports')
+          .select('split_tracks')
+          .eq('id', processData.importId)
+          .single();
+        if (impRow?.split_tracks?.status === 'pending') {
+          setPendingSplit({
+            importId: processData.importId,
+            tracks: impRow.split_tracks.tracks,
+          });
+        }
       }
 
       // Refresh data
@@ -699,5 +726,7 @@ export function useMonthlyFileUpload() {
     isProcessingAny,
     retryImport,
     retryingImportIds,
+    pendingSplit,
+    clearPendingSplit: () => setPendingSplit(null),
   };
 }

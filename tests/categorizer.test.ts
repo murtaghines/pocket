@@ -85,16 +85,16 @@ describe('categorize — name-based transfer detection (highest priority)', () =
     expect(r?.category).toBe('from_myself');
   });
 
-  it('matches a joint-account name → to_joint_account when amount is negative (outflow)', () => {
+  it('matches a joint-account name → own_transfer when amount is negative (outflow)', () => {
     const r = categorize('BIZUM DE MARIA GOMEZ', -100, ctx);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('to_joint_account');
+    expect(r?.category).toBe('own_transfer');
   });
 
-  it('matches a joint-account name → from_joint_account when amount is positive (inflow)', () => {
+  it('matches a joint-account name → from_myself when amount is positive (inflow)', () => {
     const r = categorize('BIZUM DE MARIA GOMEZ', 100, ctx);
     expect(r?.movement).toBe('TRANSFER');
-    expect(r?.category).toBe('from_joint_account');
+    expect(r?.category).toBe('from_myself');
   });
 });
 

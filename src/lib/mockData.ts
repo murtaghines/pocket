@@ -33,8 +33,6 @@ export type Category =
   | 'from_myself'
   | 'to_investment'
   | 'from_investment'
-  | 'to_joint_account'
-  | 'from_joint_account'
   | 'to_savings'
   | 'from_savings';
 
