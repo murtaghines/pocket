@@ -8,6 +8,12 @@ export type ImportStatus = 'UPLOADED' | 'PARSED' | 'NORMALIZED' | 'FAILED' | 'PA
 export type SourceType = 'BANK' | 'BROKER' | 'SAVINGS' | 'CARD' | 'OTHER';
 export type AppDomain = 'CASHFLOW' | 'INVESTING';
 
+export interface ImportSplitTracks {
+  status: 'pending' | 'resolved';
+  tracks: SplitTrack[];
+  resolved_at?: string;
+}
+
 export interface Import {
   id: string;
   user_id: string;
@@ -29,6 +35,7 @@ export interface Import {
   display_name?: string | null;
   archived?: boolean;
   target_month?: string; // YYYY-MM from period
+  split_tracks?: ImportSplitTracks | null;
 }
 
 interface ProcessImportParams {

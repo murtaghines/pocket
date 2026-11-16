@@ -1,11 +1,11 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Upload, Plus, Minus, ArrowRightLeft } from "lucide-react";
+import { Upload, Plus, Minus, ArrowRightLeft, GitBranch } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { uploadFileRejection } from "@/lib/fileExtract";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useImports, type Import } from "@/hooks/useImports";
+import { useImports, type Import, type SplitTrack } from "@/hooks/useImports";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useLocalization } from "@/hooks/useLocalization";
 import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
@@ -108,6 +108,33 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
     const keys = Object.keys(importsByMonth).sort();
     return keys.length > 0 ? keys[0] : null;
   }, [importsByMonth]);
+
+  const importsWithPendingSplit = useMemo(
+    () => imports.filter((i) => i.split_tracks?.status === "pending"),
+    [imports],
+  );
+
+  const openSplitForImport = useCallback((imp: Import) => {
+    if (!imp.split_tracks || imp.split_tracks.status !== "pending") return;
+    const tracks = imp.split_tracks.tracks as SplitTrack[];
+    clearPendingSplit();
+    // Set pendingSplit through the hook's setter isn't exposed — build it and set via
+    // the same state used by useMonthlyFileUpload's setPendingSplit. Instead, we use
+    // a local state override that the dialog also reads.
+    setSplitFromFiles({ importId: imp.id, tracks, primaryAccountId: imp.account_id ?? undefined });
+  }, [clearPendingSplit]);
+
+  const [splitFromFiles, setSplitFromFiles] = useState<{
+    importId: string;
+    tracks: SplitTrack[];
+    primaryAccountId?: string;
+  } | null>(null);
+
+  const activeSplit = splitFromFiles ?? pendingSplit;
+  const clearActiveSplit = () => {
+    setSplitFromFiles(null);
+    clearPendingSplit();
+  };
 
   const defaultMonth = monthSlots[0]?.key ?? "";
   const activeKey = activeMonth && monthSlots.some((s) => s.key === activeMonth) ? activeMonth : defaultMonth;
@@ -263,6 +290,27 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         globalSummary={globalSummary}
       />
 
+      {/* ============= Pending split banner ============= */}
+      {importsWithPendingSplit.length > 0 && !activeSplit && (
+        <div className="mx-4 md:mx-8 mt-3 flex items-center gap-3 rounded-lg border border-warning/40 bg-warning/10 px-4 py-2.5">
+          <GitBranch className="w-4 h-4 text-warning shrink-0" />
+          <p className="text-sm text-foreground flex-1">
+            {t(
+              "split.pendingBanner",
+              "{{count}} file has transactions from multiple accounts that need your attention.",
+              { count: importsWithPendingSplit.length },
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => openSplitForImport(importsWithPendingSplit[0])}
+            className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold bg-warning text-warning-foreground hover:bg-warning/90 transition-colors"
+          >
+            {t("split.resolve", "Resolve")}
+          </button>
+        </div>
+      )}
+
       {/* ============= Month Tab Strip (mobile only) ============= */}
       <MonthTabStrip
         slots={monthSlots}
@@ -350,11 +398,12 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
         currentMonthLabel={activeSlot?.label ?? ""}
       />
 
-      {pendingSplit && (
+      {activeSplit && (
         <ImportSplitDialog
-          open={!!pendingSplit}
-          onOpenChange={(open) => { if (!open) clearPendingSplit(); }}
-          pendingSplit={pendingSplit}
+          open={!!activeSplit}
+          onOpenChange={(open) => { if (!open) clearActiveSplit(); }}
+          pendingSplit={activeSplit}
+          primaryAccountId={activeSplit === splitFromFiles ? splitFromFiles?.primaryAccountId : undefined}
         />
       )}
     </div>

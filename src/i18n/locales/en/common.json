@@ -301,6 +301,7 @@
     "files": "files",
     "failedStatus": "Failed",
     "partialStatus": "Partial",
+    "pendingSplit": "Pending split",
     "unsavedLabel": "Unsaved",
     "deleteFileTitle": "Delete file?",
     "deleteFileDesc": "This will permanently remove {{fileName}} and all its transactions. This action cannot be undone.",
@@ -372,6 +373,9 @@
     "noOtherAccounts": "No other accounts available. Create one first.",
     "later": "Decide later",
     "resolving": "Resolving...",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "pendingBanner": "{{count}} file has transactions from multiple accounts that need your attention.",
+    "pendingBanner_plural": "{{count}} files have transactions from multiple accounts that need your attention.",
+    "resolve": "Resolve"
   }
 }
