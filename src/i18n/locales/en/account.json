@@ -277,7 +277,33 @@
     "txShort": "tx",
     "pendingSplit": "Pending split",
     "pendingSplitNotice": "This file has transactions from multiple accounts that haven't been assigned yet.",
-    "resolve": "Resolve"
+    "resolve": "Resolve",
+    "detail": {
+      "upload": "Upload",
+      "uploadedAt": "Uploaded on",
+      "account": "Account",
+      "period": "Period",
+      "summary": "Summary",
+      "transactionCount": "Transactions",
+      "income": "Income",
+      "expenses": "Expenses",
+      "transfers": "Transfers"
+    },
+    "actions": {
+      "view": "View contents"
+    },
+    "close": "Close",
+    "modal": {
+      "income": "Income",
+      "expense": "Expense",
+      "transfer": "Transfer",
+      "type": "Type",
+      "category": "Category"
+    },
+    "preview": {
+      "showing": "Showing {{shown}} of {{total}} transactions",
+      "openInTransactions": "Open in Transactions"
+    }
   },
   "settings": {
     "editProfile": "Edit profile",
