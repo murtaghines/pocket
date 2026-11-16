@@ -42,12 +42,10 @@ export const categoryLabels: Record<string, string> = {
   donations: 'Donations',
 
   // TRANSFER categories
-  own_transfer: 'To Myself',
-  from_myself: 'From Myself',
+  own_transfer: 'Between Accounts',
+  from_myself: 'Between Accounts',
   to_investment: 'To Investment',
   from_investment: 'From Investment',
-  to_joint_account: 'To Joint Account',
-  from_joint_account: 'From Joint Account',
   to_savings: 'To Savings',
   from_savings: 'From Savings',
 };
@@ -93,8 +91,6 @@ export const categoryIcons: Record<string, string> = {
   from_myself: 'arrow-left-right',
   to_investment: 'trending-up',
   from_investment: 'trending-down',
-  to_joint_account: 'users',
-  from_joint_account: 'users',
   to_savings: 'piggy-bank',
   from_savings: 'piggy-bank',
 };
@@ -136,8 +132,6 @@ export const categoryColors: Record<string, string> = {
   from_myself: 'category-from-myself',
   to_investment: 'category-to-investment',
   from_investment: 'category-from-investment',
-  to_joint_account: 'category-to-joint-account',
-  from_joint_account: 'category-from-joint-account',
   to_savings: 'category-to-savings',
   from_savings: 'category-from-savings',
 };
@@ -177,8 +171,6 @@ export const categoryHslValues: Record<string, string> = {
   'category-from-myself': '220 10% 65%',
   'category-to-investment': '216 75% 42%',
   'category-from-investment': '216 60% 55%',
-  'category-to-joint-account': '200 85% 50%',
-  'category-from-joint-account': '200 70% 58%',
   'category-to-savings': '160 55% 40%',
   'category-from-savings': '160 45% 52%',
 };
@@ -226,6 +218,8 @@ const legacySlugMap: Record<string, string> = {
   'internet': 'housing',
   'phone': 'subscriptions',
   'savings': 'to_savings',
+  'to_joint_account': 'own_transfer',
+  'from_joint_account': 'from_myself',
 };
 
 // Normalize a category slug (handle legacy values)
@@ -249,9 +243,9 @@ export function getMovementLabel(movement: string): string {
 // Categories by movement type (for onboarding)
 export const INCOME_CATEGORIES = ['salary', 'refunds', 'transfers', 'investment', 'freelance', 'rents', 'gifts', 'benefits', 'sales', 'interest', 'cashback', 'other_income'];
 export const EXPENSE_CATEGORIES = ['housing', 'groceries', 'restaurants', 'transport', 'health', 'entertainment', 'shopping', 'education', 'subscriptions', 'travel', 'sports', 'pets', 'taxes', 'insurance', 'donations', 'other_expense'];
-export const TRANSFER_CATEGORIES = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_joint_account', 'from_joint_account', 'to_savings', 'from_savings'];
-export const TRANSFER_OUTGOING = ['own_transfer', 'to_investment', 'to_joint_account', 'to_savings'];
-export const TRANSFER_INCOMING = ['from_myself', 'from_investment', 'from_joint_account', 'from_savings'];
+export const TRANSFER_CATEGORIES = ['own_transfer', 'from_myself', 'to_investment', 'from_investment', 'to_savings', 'from_savings'];
+export const TRANSFER_OUTGOING = ['own_transfer', 'to_investment', 'to_savings'];
+export const TRANSFER_INCOMING = ['from_myself', 'from_investment', 'from_savings'];
 
 // Default selected categories for new users
 export const DEFAULT_INCOME_CATEGORIES = ['salary', 'refunds', 'freelance', 'gifts', 'sales', 'other_income'];

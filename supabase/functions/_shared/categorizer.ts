@@ -73,7 +73,7 @@ export type ExpenseCategory =
   | 'insurance'
   | 'other_expense';
 
-export type TransferCategory = 'own_transfer' | 'from_myself' | 'to_investment' | 'from_investment' | 'to_joint_account' | 'from_joint_account';
+export type TransferCategory = 'own_transfer' | 'from_myself' | 'to_investment' | 'from_investment';
 export type Category = IncomeCategory | ExpenseCategory | TransferCategory;
 
 export interface CategorizationResult {
@@ -520,27 +520,6 @@ const RULE_BUCKETS: RuleBucket[] = [
     ], 0.99),
   },
 
-  // ── TRANSFER → to_joint_account ───────────────────────────
-  //
-  // Money sent to a shared/joint account. Expenses from this
-  // account are split by a configurable percentage (default 50%).
-  // The destination is recognized by joint account holder names
-  // injected at runtime via UserContext.joint_account_names.
-  //
-  // Static patterns here catch generic joint account keywords.
-  {
-    movement: 'TRANSFER',
-    category: 'to_joint_account',
-    rules: r([
-      'CUENTA\\s*CONJUNTA',
-      'CUENTA\\s*COMPARTIDA',
-      'JOINT\\s*ACCOUNT',
-      'SHARED\\s*ACCOUNT',
-      'CONTA\\s*CONJUNTA',
-      'CONTA\\s*COMPARTILHADA',
-    ], 0.95),
-  },
-
   // ── TRANSFER → to_savings ──────────────────────────────────
   // Money moved to/from savings pockets, vaults, and sub-accounts within
   // neobanks. Interest-earning but not broker-invested — distinct from
@@ -602,6 +581,13 @@ const RULE_BUCKETS: RuleBucket[] = [
         'TRASPASO\\s*ENTRE\\s*CUENTAS',
         'TRANSFERENCIA\\s*PROPIA',
         'TRANSFERENCIA\\s*ENTRE\\s*CUENTAS',
+        // Joint/shared account keywords (merged from former to_joint_account bucket)
+        'CUENTA\\s*CONJUNTA',
+        'CUENTA\\s*COMPARTIDA',
+        'JOINT\\s*ACCOUNT',
+        'SHARED\\s*ACCOUNT',
+        'CONTA\\s*CONJUNTA',
+        'CONTA\\s*COMPARTILHADA',
         'TRANSFERENCIA\\s*CUENTA\\s*PROPIA',
         'AUTOTRANSFERENCIA',
         'TRASPASO\\s*INTERNO',
@@ -4255,20 +4241,19 @@ export function categorize(
 
   // ── Step 1: Name-based transfer detection ───────────────────
   // Runs before everything.
-  // 1a. Joint account names → to_joint_account (checked first, more specific)
+  // 1a. Joint account holder names → own_transfer (treated as between-accounts)
   // 1b. User's own name → own_transfer
   if (ctx?.firstName && ctx?.lastName) {
-    // Check joint account names first (more specific)
     if (ctx.jointAccountNames?.length) {
       for (const name of ctx.jointAccountNames) {
         const normName = normalize(name);
         if (new RegExp(normName, 'i').test(norm)) {
-          return flipTransferDirection({
+          return {
             movement:    'TRANSFER',
-            category:    'to_joint_account',
+            category:    amount > 0 ? 'from_myself' : 'own_transfer',
             confidence:  0.99,
             matchedRule: 'JOINT_ACCOUNT_NAME_MATCH',
-          }, amount);
+          };
         }
       }
     }
@@ -4347,24 +4332,20 @@ export function categorize(
 
 /**
  * Flip directional transfer categories based on amount sign, for RULE_BUCKETS matches
- * (investment platforms, joint-account names). Description patterns match the platform/
- * account name regardless of flow direction; the amount sign disambiguates: negative =
- * outflow (to_*), positive = inflow (from_*).
+ * (investment platforms, savings). Description patterns match the platform name regardless
+ * of flow direction; the amount sign disambiguates: negative = outflow (to_*), positive =
+ * inflow (from_*).
  *
- * The generic own_transfer bucket (Revolut Vault, savings pockets, neobank sub-accounts, …)
- * is deliberately NOT flipped here — those are money moving within the same account, tested
- * as directionless. own_transfer DOES flip to from_myself, but only for the personal-name
- * match in Step 1b above (a transfer between two of the user's own distinct accounts), which
- * computes it inline rather than through this shared helper.
+ * The generic own_transfer bucket is deliberately NOT flipped here — those are money moving
+ * within the same account, tested as directionless. own_transfer DOES flip to from_myself,
+ * but only for name-based matches in Step 1a/1b above (transfers between the user's own
+ * distinct accounts or joint accounts), which compute direction inline.
  */
 function flipTransferDirection(result: CategorizationResult, amount: number): CategorizationResult {
   if (result.movement !== 'TRANSFER' || amount <= 0) return result;
 
   if (result.category === 'to_investment') {
     return { ...result, category: 'from_investment', matchedRule: result.matchedRule + ':FROM' };
-  }
-  if (result.category === 'to_joint_account') {
-    return { ...result, category: 'from_joint_account', matchedRule: result.matchedRule + ':FROM' };
   }
   if (result.category === 'to_savings') {
     return { ...result, category: 'from_savings', matchedRule: result.matchedRule + ':FROM' };

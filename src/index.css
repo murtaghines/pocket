@@ -80,8 +80,6 @@
     --category-from-myself: 220 10% 65%;     /* lighter neutral slate */
     --category-to-investment: 216 75% 42%;   /* deep brand blue */
     --category-from-investment: 216 60% 55%; /* lighter brand blue */
-    --category-to-joint-account: 200 85% 50%;/* bright sky blue */
-    --category-from-joint-account: 200 70% 58%;/* lighter sky blue */
     --category-to-savings: 160 55% 40%;      /* teal-green */
     --category-from-savings: 160 45% 52%;    /* lighter teal-green */
 
@@ -334,8 +332,6 @@
     --category-from-myself: 220 10% 72%;
     --category-to-investment: 216 75% 55%;
     --category-from-investment: 216 60% 62%;
-    --category-to-joint-account: 200 80% 58%;
-    --category-from-joint-account: 200 70% 65%;
     --category-to-savings: 160 55% 50%;
     --category-from-savings: 160 45% 60%;
   }
