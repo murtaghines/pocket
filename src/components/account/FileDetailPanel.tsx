@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Download, Archive, ArchiveRestore, Trash2, Lock, Pencil, Check, X } from "lucide-react";
+import { Download, Archive, ArchiveRestore, Trash2, Lock, Pencil, Check, X, GitBranch } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,7 @@ import {
   getImportDownloadUrl,
   importTitle,
 } from "@/hooks/useImportFile";
+import { useNavigate } from "react-router-dom";
 import { useLocalization } from "@/hooks/useLocalization";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelProps) {
   const { t } = useTranslation("account");
+  const navigate = useNavigate();
   const { formatDateTime, formatDate, formatMonthShort, formatCurrency } = useLocalization();
   const { accounts } = useAccounts();
   const reassign = useReassignImport();
@@ -213,6 +215,22 @@ export function FileDetailPanel({ file, onDelete, isDeleting }: FileDetailPanelP
         {file.error_message && (
           <div className="mx-[22px] mt-4 rounded-xl border border-destructive/20 bg-destructive/5 px-3.5 py-2.5 text-[13px] text-destructive">
             {file.error_message}
+          </div>
+        )}
+
+        {file.split_tracks?.status === "pending" && (
+          <div className="mx-[22px] mt-4 flex items-center gap-3 rounded-xl border border-warning/40 bg-warning/10 px-3.5 py-2.5">
+            <GitBranch className="h-4 w-4 shrink-0 text-warning" />
+            <p className="flex-1 text-[13px] text-foreground">
+              {t("files.pendingSplitNotice", "This file has transactions from multiple accounts that haven't been assigned yet.")}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/my-data?tab=transactions")}
+              className="shrink-0 rounded-full bg-warning px-3 py-1 text-xs font-semibold text-warning-foreground transition-colors hover:bg-warning/90"
+            >
+              {t("files.resolve", "Resolve")}
+            </button>
           </div>
         )}
 

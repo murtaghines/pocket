@@ -274,7 +274,10 @@
     "renamed": "Name updated",
     "renameError": "Couldn't rename the file",
     "editedOn": "edited {{date}}",
-    "txShort": "tx"
+    "txShort": "tx",
+    "pendingSplit": "Pending split",
+    "pendingSplitNotice": "This file has transactions from multiple accounts that haven't been assigned yet.",
+    "resolve": "Resolve"
   },
   "settings": {
     "editProfile": "Edit profile",

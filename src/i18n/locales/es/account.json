@@ -274,7 +274,10 @@
     "renamed": "Nombre actualizado",
     "renameError": "No se pudo renombrar el archivo",
     "editedOn": "editado {{date}}",
-    "txShort": "trans."
+    "txShort": "trans.",
+    "pendingSplit": "Split pendiente",
+    "pendingSplitNotice": "Este archivo tiene transacciones de varias cuentas que aún no fueron asignadas.",
+    "resolve": "Resolver"
   },
   "settings": {
     "editProfile": "Editar perfil",

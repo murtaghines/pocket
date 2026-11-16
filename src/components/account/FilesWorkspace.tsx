@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FileText, X } from "lucide-react";
+import { FileText, GitBranch, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
@@ -47,6 +47,12 @@ function FileRow({ f, active, onSelect, accountName, lastEdited }: {
         <span className="text-[11.5px] font-medium tabular-nums text-muted-foreground">
           {f.transactions_count ?? 0} {t("files.txShort", "tx")}
         </span>
+        {f.split_tracks?.status === "pending" && (
+          <span className="flex items-center gap-1 rounded-full bg-warning/20 px-1.5 py-px text-[10px] font-semibold text-warning-foreground">
+            <GitBranch className="h-2.5 w-2.5" />
+            {t("files.pendingSplit", "Pending split")}
+          </span>
+        )}
         {f.status !== "NORMALIZED" && (
           <span className={cn("rounded-full px-1.5 py-px text-[10px] font-semibold", f.status === "FAILED" ? "bg-destructive/10 text-destructive" : "bg-warning/20 text-warning-foreground")}>
             {t(`files.status.${f.status === "FAILED" ? "failed" : f.status === "PARTIAL" ? "partial" : f.status === "PARSED" ? "processing" : "uploading"}`)}
