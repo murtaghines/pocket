@@ -11,6 +11,10 @@ UPDATE transactions SET category = 'from_myself'   WHERE category = 'from_joint_
 UPDATE user_rules SET category = 'own_transfer'  WHERE category = 'to_joint_account';
 UPDATE user_rules SET category = 'from_myself'   WHERE category = 'from_joint_account';
 
+-- 2b. Remap categorizer_gaps log
+UPDATE categorizer_gaps SET final_category = 'own_transfer'  WHERE final_category = 'to_joint_account';
+UPDATE categorizer_gaps SET final_category = 'from_myself'   WHERE final_category = 'from_joint_account';
+
 -- 3. Remove the now-unused category rows (soft: only if no transactions reference them)
 DELETE FROM categories WHERE slug = 'to_joint_account'
   AND NOT EXISTS (SELECT 1 FROM transactions WHERE category = 'to_joint_account' LIMIT 1);

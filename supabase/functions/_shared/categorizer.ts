@@ -73,7 +73,7 @@ export type ExpenseCategory =
   | 'insurance'
   | 'other_expense';
 
-export type TransferCategory = 'own_transfer' | 'from_myself' | 'to_investment' | 'from_investment';
+export type TransferCategory = 'own_transfer' | 'from_myself' | 'to_investment' | 'from_investment' | 'to_savings' | 'from_savings';
 export type Category = IncomeCategory | ExpenseCategory | TransferCategory;
 
 export interface CategorizationResult {
