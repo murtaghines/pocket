@@ -1178,9 +1178,13 @@ const RULE_BUCKETS: RuleBucket[] = [
   // transfer), the name-match in Step 1 fires first at 0.99 and
   // overrides this to TRANSFER/own_transfer. So this bucket only
   // catches genuine third-party inflows.
+  // Uses "transfers" (not "other_income") so the user can see all
+  // received person-to-person payments grouped together. More-specific
+  // categories (gifts, salary, etc.) still win when the description
+  // contains relevant keywords, because their confidence is higher.
   {
     movement: 'INCOME',
-    category: 'other_income',
+    category: 'transfers',
     rules: r([
       'BIZUM\\s*DE\\b',
       'BIZUM\\s*RECIBIDO',
