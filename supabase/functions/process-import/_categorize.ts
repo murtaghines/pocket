@@ -7,7 +7,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { categorize, normalize as normalizeForCategorizer, type UserContext, type CategorizationResult } from "../_shared/categorizer.ts";
 import { sha256, normalizeDescription, calculateFingerprint, extractMonthKey } from "../_shared/fingerprint.ts";
-import { runningBalanceIsReliable, inferMultiTrackOpeningBalance, decomposeBalanceChains, type ChainDecomposition } from "../_shared/runningBalance.ts";
+import { runningBalanceIsReliable, inferMultiTrackOpeningBalance, decomposeBalanceChains } from "../_shared/runningBalance.ts";
 import { merchantKey } from "../_shared/merchantKey.ts";
 import {
   type MovementType,
@@ -390,6 +390,14 @@ export interface CategorizeStats {
   failed: number;
 }
 
+export interface SplitTrackInfo {
+  chain_index: number;
+  opening_balance: number;
+  transaction_count: number;
+  fingerprints: string[];
+  sample_descriptions: string[];
+}
+
 export interface CategorizeResult {
   stats: CategorizeStats;
   monthsDistribution: Record<string, { new: number; duplicates: number }>;
@@ -400,7 +408,7 @@ export interface CategorizeResult {
   insertFailedCount: number;
   insertErrorSamples: string[];
   inferredInitialBalance: number | null;
-  chainDecomposition: ChainDecomposition | null;
+  splitTracks: SplitTrackInfo[] | null;
 }
 
 export async function categorizeAndInsert(
@@ -746,13 +754,33 @@ export async function categorizeAndInsert(
 
   // ── Running-balance reliability check ──
   let inferredInitialBalance: number | null = null;
-  let chainDecomposition: ChainDecomposition | null = null;
+  let splitTracks: SplitTrackInfo[] | null = null;
   const rbRowCount = newTransactions.filter((tx) => tx.running_balance != null).length;
   if (rbRowCount >= 5 && !runningBalanceIsReliable(newTransactions)) {
-    chainDecomposition = decomposeBalanceChains(newTransactions);
-    if (chainDecomposition) {
-      inferredInitialBalance = Math.round(chainDecomposition.chains.reduce((s, c) => s + c.opening, 0) * 100) / 100;
-      console.log(`[process-import] Multi-track detected: ${chainDecomposition.chains.length} chains across ${rbRowCount} rows. Per-chain openings: [${chainDecomposition.chains.map(c => c.opening).join(', ')}]. NULLing running_balance.`);
+    const decomposition = decomposeBalanceChains(newTransactions);
+    if (decomposition) {
+      inferredInitialBalance = Math.round(decomposition.chains.reduce((s, c) => s + c.opening, 0) * 100) / 100;
+      // Build enriched per-chain info using newTransactions (correct indices)
+      splitTracks = decomposition.chains.map((chain, i) => {
+        const fps: string[] = [];
+        const descs: string[] = [];
+        for (const idx of chain.originalIndices) {
+          const tx = newTransactions[idx];
+          if (tx?.fingerprint) fps.push(tx.fingerprint);
+          if (descs.length < 3 && tx) {
+            const d = String(tx.description || tx.original_description || '').slice(0, 80);
+            if (d) descs.push(d);
+          }
+        }
+        return {
+          chain_index: i,
+          opening_balance: chain.opening,
+          transaction_count: chain.originalIndices.length,
+          fingerprints: fps,
+          sample_descriptions: i === 0 ? [] : descs,
+        };
+      });
+      console.log(`[process-import] Multi-track detected: ${decomposition.chains.length} chains across ${rbRowCount} rows. Per-chain openings: [${decomposition.chains.map(c => c.opening).join(', ')}]. NULLing running_balance.`);
     } else {
       inferredInitialBalance = inferMultiTrackOpeningBalance(newTransactions);
       if (inferredInitialBalance != null) {
@@ -900,6 +928,6 @@ export async function categorizeAndInsert(
     insertFailedCount,
     insertErrorSamples,
     inferredInitialBalance,
-    chainDecomposition,
+    splitTracks,
   };
 }

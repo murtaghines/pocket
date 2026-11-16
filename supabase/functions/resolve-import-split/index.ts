@@ -115,15 +115,19 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      // Get hidden transactions for this chain from this import
-      // We identify them by the import_id + is_hidden + account_id (they were inserted into the primary account)
+      // Get hidden transactions for this specific chain using per-chain fingerprints
+      const chainFps = track.fingerprints as string[] | undefined;
+      if (!chainFps || chainFps.length === 0) {
+        console.warn(`[resolve-import-split] No fingerprints for chain ${chain_index}`);
+        continue;
+      }
+
       const { data: hiddenTxns, error: txError } = await supabase
         .from('transactions')
-        .select('id, fingerprint')
+        .select('id')
         .eq('user_id', userId)
         .eq('import_id', importId)
-        .eq('account_id', primaryAccountId)
-        .eq('is_hidden', true);
+        .in('fingerprint', chainFps);
 
       if (txError) {
         console.error(`[resolve-import-split] Error fetching hidden txns for chain ${chain_index}:`, txError.message);

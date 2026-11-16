@@ -46,6 +46,7 @@ export interface SplitTrack {
   chain_index: number;
   opening_balance: number;
   transaction_count: number;
+  fingerprints: string[];
   sample_descriptions: string[];
   assigned_account_id: string | null;
 }

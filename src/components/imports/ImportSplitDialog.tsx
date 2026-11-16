@@ -257,7 +257,8 @@ export function ImportSplitDialog({
         onOpenChange={setShowNewForm}
         onSubmit={handleNewAccountCreated}
         isSubmitting={isCreating}
-        defaultRole="CASH"
+        mode="create"
+        typeFilter="bank"
       />
     </>
   );

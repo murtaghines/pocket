@@ -498,7 +498,7 @@ serve(async (req) => {
       { input: extraction.aiInputTokens, output: extraction.aiOutputTokens },
     );
 
-    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples, inferredInitialBalance, chainDecomposition } = catResult;
+    const { stats, monthsDistribution, insertFailedCount, insertErrorSamples, inferredInitialBalance, splitTracks: detectedSplitTracks } = catResult;
 
     // ── Infer initial_balance from the earliest transaction with running_balance ──
     // Formula: initial_balance = earliest_tx.running_balance - earliest_tx.amount
@@ -569,36 +569,20 @@ serve(async (req) => {
 
     // ── Multi-track split: hide secondary chain transactions and store metadata ──
     let splitDetected = false;
-    if (chainDecomposition && chainDecomposition.chains.length >= 2 && accountId) {
+    if (detectedSplitTracks && detectedSplitTracks.length >= 2 && accountId) {
       splitDetected = true;
-      const primaryChain = chainDecomposition.chains[0];
-      const secondaryChains = chainDecomposition.chains.slice(1);
-      const allSecondaryIndices = new Set(secondaryChains.flatMap(c => c.originalIndices));
+      const primaryTrack = detectedSplitTracks[0];
+      const secondaryTracks = detectedSplitTracks.slice(1);
+      const allSecondaryFps = secondaryTracks.flatMap(t => t.fingerprints);
 
-      // Collect secondary-chain sample descriptions and fingerprints for lookup
-      const secondaryFps: string[] = [];
-      const secondarySampleDescriptions: string[][] = secondaryChains.map(() => []);
-      for (const idx of allSecondaryIndices) {
-        const tx = allTransactions[idx];
-        if (tx) {
-          const fp = tx.fingerprint || tx.source_row_hash;
-          if (fp) secondaryFps.push(fp);
-          for (let ci = 0; ci < secondaryChains.length; ci++) {
-            if (secondaryChains[ci].originalIndices.includes(idx) && secondarySampleDescriptions[ci].length < 3) {
-              secondarySampleDescriptions[ci].push(String(tx.description || tx.original_description || '').slice(0, 80));
-            }
-          }
-        }
-      }
-
-      // Hide secondary transactions by looking up their IDs first (avoids updating by fingerprint)
-      if (secondaryFps.length > 0) {
+      // Hide secondary transactions by looking up their IDs first
+      if (allSecondaryFps.length > 0) {
         const { data: secTxRows } = await supabase
           .from('transactions')
           .select('id')
           .eq('user_id', userId)
           .eq('import_id', importId)
-          .in('fingerprint', secondaryFps);
+          .in('fingerprint', allSecondaryFps);
         const secTxIds = (secTxRows || []).map(r => r.id);
         if (secTxIds.length > 0) {
           const HIDE_BATCH = 50;
@@ -614,33 +598,28 @@ serve(async (req) => {
         }
       }
 
-      // Store split metadata on the import
-      const splitTracks = {
+      // Store split metadata on the import (includes per-chain fingerprints for resolution)
+      const splitMeta = {
         status: 'pending' as const,
         primary_chain_index: 0,
-        tracks: chainDecomposition.chains.map((chain, i) => ({
-          chain_index: i,
-          opening_balance: chain.opening,
-          transaction_count: chain.originalIndices.length,
-          sample_descriptions: i === 0
-            ? [] // primary chain — no samples needed
-            : (secondarySampleDescriptions[i - 1] || []),
-          assigned_account_id: i === 0 ? accountId : null,
+        tracks: detectedSplitTracks.map((track) => ({
+          ...track,
+          assigned_account_id: track.chain_index === 0 ? accountId : null,
         })),
       };
 
       await supabase
         .from('imports')
-        .update({ split_tracks: splitTracks })
+        .update({ split_tracks: splitMeta })
         .eq('id', importId);
 
       // Set initial_balance from primary chain only
-      if (Number.isFinite(primaryChain.opening)) {
+      if (Number.isFinite(primaryTrack.opening_balance)) {
         await supabase
           .from('accounts')
-          .update({ initial_balance: primaryChain.opening, initial_balance_source: 'multi_track_primary' })
+          .update({ initial_balance: primaryTrack.opening_balance, initial_balance_source: 'multi_track_primary' })
           .eq('id', accountId);
-        console.log(`[process-import] Multi-track split: set primary chain initial_balance=${primaryChain.opening} for account ${accountId}`);
+        console.log(`[process-import] Multi-track split: set primary chain initial_balance=${primaryTrack.opening_balance} for account ${accountId}`);
       }
     }
 
