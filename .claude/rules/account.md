@@ -15,16 +15,13 @@ paths:
 # Account hub & user settings
 - `/account` is three sidebar pages (no in-page tab bar): `?tab=accounts` (`AccountsWorkspace`),
   `?tab=files` (`FilesWorkspace`) and Settings (anything else, `AccountSettingsTab`: preference cards,
-  data export, danger zone). Accounts and Files are master/detail workspaces cloned from
-  Categories & rules and built on `components/layout/WorkspaceShell` — it owns the 180px banner, the
-  translucent action pill + Bank/Investment selector (both exactly 32px tall: frame h-8, buttons h-7), the
-  grid row capped to the viewport (`grid-rows-[minmax(0,1fr)]`, so long lists scroll inside their card and the
-  cards always keep 32px to the bottom edge) and the content overlap (cards start 78px from the top).
+  data export, danger zone). Accounts uses master/detail via `WorkspaceShell`. Files uses a **single-column
+  expandable list** on `WorkspaceBanner` (not `WorkspaceShell`) — no detail panel, no two-column grid.
   Page titles are `text-[19px] font-semibold tracking-[-0.01em]` Inter on every page (same as Transactions) —
-  never `font-heading`. Detail-panel hero titles are 17px. Never tweak those numbers per page; Categories uses `WorkspaceBanner` too.
+  never `font-heading`. Never tweak those numbers per page; Categories uses `WorkspaceBanner` too.
   `/profile` redirects to `/account`; `/my-data?tab=accounts` → `/account?tab=accounts`; old
-  `?tab=preferences|security` land on Settings. Deep links: `?account=<id>`, `?tab=files&file=<id>`,
-  `?tab=files&account=<id>` (filters the list).
+  `?tab=preferences|security` land on Settings. Deep links: `?account=<id>`,
+  `?tab=files&account=<id>` (filters the file list).
 - Accounts detail (`AccountDetailPanel`): no balance/transactions (those live in Dashboard/Transactions);
   shows four tiles (files, months, currency, period) and settings edited in place (initial balance, share % for JOINT,
   exclude-from-dashboard, notes). The icon is fixed per account type; hovering it opens
@@ -37,9 +34,12 @@ paths:
   transactions everywhere: `transactions.is_hidden` is set and `hidden_by_archive` remembers which rows
   were hidden by the archive, so restoring never unhides rows the user hid by hand. Account views skip
   archived files. Last edit per file comes from `get_import_last_edits`.
-- Files detail (`FileDetailPanel`): details (account selector via `useReassignImport`, type, size,
-  uploaded, last modified from `audit_log`, period, rows) and a raw-data preview from `useImportPreview`
-  (`import_rows` when present, else the saved transactions' original bank text — CSV/Excel keep no raw copy).
+- Files expanded row (`FileExpandedPanel` inside `FilesWorkspace`): two-block layout — "Upload" (uploaded
+  date, account, period via `monthsInRange`) and "Summary" (transaction count, income, expenses, transfer
+  net via `useImportSummary`). Eye button opens `FileContentsModal`: full-screen dialog with transaction
+  table (date, description, type pill, category dot, amount) + footer (download + "Open in Transactions"),
+  powered by `useImportTransactions`. Action buttons: eye, download, archive, delete, expand/collapse.
+  `FileDetailPanel` was deleted (orphaned after the redesign).
 - Settings page shell: the header (name, email, member since + an "Edit profile" pill that opens
   `EditProfileDialog`) sits on the layout's blue band — the profile is never repeated in a card, and logout
   lives only in the sidebar. Cards start ~20px below it. Every

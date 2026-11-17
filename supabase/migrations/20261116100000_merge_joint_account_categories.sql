@@ -3,6 +3,10 @@
 -- distinction — the split_percentage on the account already handles attribution.
 -- Both own_transfer and from_myself are now labelled "Between Accounts" / "Entre Cuentas".
 
+-- 0. Drop unique constraint on (domain, name) — slug is the real identifier,
+--    and both own_transfer and from_myself will share the display name "Between Accounts".
+ALTER TABLE categories DROP CONSTRAINT IF EXISTS categories_domain_name_key;
+
 -- 1. Remap existing transaction data
 UPDATE transactions SET category = 'own_transfer'  WHERE category = 'to_joint_account';
 UPDATE transactions SET category = 'from_myself'   WHERE category = 'from_joint_account';

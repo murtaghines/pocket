@@ -780,6 +780,49 @@ export async function categorizeAndInsert(
           sample_descriptions: i === 0 ? [] : descs,
         };
       });
+      // Merge secondary chains that belong to the same sub-account (e.g. savings vault
+      // split by a mid-month deposit whose positive-side entry was deduplicated with checking).
+      if (splitTracks.length > 2) {
+        const secondaries = splitTracks.filter(t => t.chain_index !== 0);
+        if (secondaries.length >= 2) {
+          const descPrefix = (track: SplitTrackInfo): string => {
+            const chain = decomposition.chains[track.chain_index];
+            const prefixes: Record<string, number> = {};
+            for (const idx of chain.originalIndices) {
+              const tx = newTransactions[idx];
+              const d = String(tx?.description || tx?.original_description || '').toLowerCase().slice(0, 30).trim();
+              if (d) prefixes[d] = (prefixes[d] || 0) + 1;
+            }
+            const sorted = Object.entries(prefixes).sort((a, b) => b[1] - a[1]);
+            return sorted[0]?.[0] || '';
+          };
+
+          const groups = new Map<string, SplitTrackInfo[]>();
+          for (const sec of secondaries) {
+            const sig = descPrefix(sec);
+            if (!groups.has(sig)) groups.set(sig, []);
+            groups.get(sig)!.push(sec);
+          }
+
+          for (const members of groups.values()) {
+            if (members.length < 2) continue;
+            const target = members[0];
+            for (let k = 1; k < members.length; k++) {
+              const source = members[k];
+              target.fingerprints.push(...source.fingerprints);
+              target.transaction_count += source.transaction_count;
+              target.opening_balance = Math.min(target.opening_balance, source.opening_balance);
+              if (target.sample_descriptions.length < 3) {
+                target.sample_descriptions.push(...source.sample_descriptions.slice(0, 3 - target.sample_descriptions.length));
+              }
+            }
+            const mergedIndices = new Set(members.slice(1).map(m => m.chain_index));
+            splitTracks = splitTracks!.filter(t => !mergedIndices.has(t.chain_index));
+          }
+          console.log(`[process-import] Merged secondary chains: ${decomposition.chains.length} → ${splitTracks!.length} tracks.`);
+        }
+      }
+
       console.log(`[process-import] Multi-track detected: ${decomposition.chains.length} chains across ${rbRowCount} rows. Per-chain openings: [${decomposition.chains.map(c => c.opening).join(', ')}]. NULLing running_balance.`);
     } else {
       inferredInitialBalance = inferMultiTrackOpeningBalance(newTransactions);

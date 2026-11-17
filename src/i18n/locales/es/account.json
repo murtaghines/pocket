@@ -274,7 +274,36 @@
     "renamed": "Nombre actualizado",
     "renameError": "No se pudo renombrar el archivo",
     "editedOn": "editado {{date}}",
-    "txShort": "trans."
+    "txShort": "trans.",
+    "pendingSplit": "Split pendiente",
+    "pendingSplitNotice": "Este archivo tiene transacciones de varias cuentas que aún no fueron asignadas.",
+    "resolve": "Resolver",
+    "detail": {
+      "upload": "Carga",
+      "uploadedAt": "Subido el",
+      "account": "Cuenta",
+      "period": "Período",
+      "summary": "Resumen",
+      "transactionCount": "Transacciones",
+      "income": "Ingresos",
+      "expenses": "Gastos",
+      "transfers": "Transferencias"
+    },
+    "actions": {
+      "view": "Ver contenido"
+    },
+    "close": "Cerrar",
+    "modal": {
+      "income": "Ingreso",
+      "expense": "Gasto",
+      "transfer": "Transferencia",
+      "type": "Tipo",
+      "category": "Categoría"
+    },
+    "preview": {
+      "showing": "Mostrando {{shown}} de {{total}} transacciones",
+      "openInTransactions": "Ver en Movimientos"
+    }
   },
   "settings": {
     "editProfile": "Editar perfil",

@@ -14,6 +14,7 @@ import {
   File as FileIcon,
   RotateCcw,
   Loader2,
+  GitBranch,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,7 @@ export interface UploadedFilesDropdownProps {
   pendingImportIds: Set<string>;
   retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
   retryingImportIds?: Set<string>;
+  onResolveSplit?: (imp: Import) => void;
 }
 
 export function UploadedFilesDropdown({
@@ -63,10 +65,12 @@ export function UploadedFilesDropdown({
   pendingImportIds,
   retryImport,
   retryingImportIds,
+  onResolveSplit,
 }: UploadedFilesDropdownProps) {
   const { t } = useTranslation("common");
   const count = imports.length;
-  const pendingCount = imports.filter((i) => pendingImportIds.has(i.id)).length;
+  const pendingSplitCount = imports.filter((i) => i.split_tracks?.status === "pending").length;
+  const pendingCount = imports.filter((i) => pendingImportIds.has(i.id)).length + pendingSplitCount;
 
   return (
     <Sheet>
@@ -110,6 +114,7 @@ export function UploadedFilesDropdown({
           pendingImportIds={pendingImportIds}
           retryImport={retryImport}
           retryingImportIds={retryingImportIds}
+          onResolveSplit={onResolveSplit}
         />
       </SheetContent>
     </Sheet>
@@ -126,6 +131,7 @@ export interface UploadedFilesHistoryListProps {
   pendingImportIds: Set<string>;
   retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
   retryingImportIds?: Set<string>;
+  onResolveSplit?: (imp: Import) => void;
 }
 
 export function UploadedFilesHistoryList({
@@ -136,6 +142,7 @@ export function UploadedFilesHistoryList({
   pendingImportIds,
   retryImport,
   retryingImportIds,
+  onResolveSplit,
 }: UploadedFilesHistoryListProps) {
   const { t } = useTranslation("common");
   const { formatMonth } = useLocalization();
@@ -293,6 +300,21 @@ export function UploadedFilesHistoryList({
         <PillBadge tone="amber" title={imp.error_message || undefined}>
           {t("imports.partialStatus")}
         </PillBadge>
+      );
+    }
+    if (imp.split_tracks?.status === "pending") {
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onResolveSplit?.(imp);
+          }}
+          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-warning/15 text-warning hover:bg-warning/25 transition-colors cursor-pointer"
+        >
+          <GitBranch className="w-3 h-3" />
+          {t("imports.pendingSplit", "Pending split")}
+        </button>
       );
     }
     if (imp.status === "PARSED" || imp.status === "UPLOADED") {

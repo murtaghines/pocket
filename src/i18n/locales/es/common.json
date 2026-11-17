@@ -301,6 +301,7 @@
     "files": "archivos",
     "failedStatus": "Fallido",
     "partialStatus": "Parcial",
+    "pendingSplit": "Split pendiente",
     "unsavedLabel": "Sin guardar",
     "deleteFileTitle": "¿Eliminar archivo?",
     "deleteFileDesc": "Esto eliminará permanentemente {{fileName}} y todas sus transacciones. Esta acción no se puede deshacer.",
@@ -372,6 +373,9 @@
     "noOtherAccounts": "No hay otras cuentas disponibles. Crea una primero.",
     "later": "Decidir después",
     "resolving": "Resolviendo...",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "pendingBanner": "{{count}} archivo tiene transacciones de varias cuentas que necesitan tu atención.",
+    "pendingBanner_plural": "{{count}} archivos tienen transacciones de varias cuentas que necesitan tu atención.",
+    "resolve": "Resolver"
   }
 }

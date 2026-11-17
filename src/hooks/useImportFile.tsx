@@ -199,6 +199,20 @@ export function useSetImportArchived() {
 }
 
 /** Last edit per file, from the audit log. Files never edited are absent from the map. */
+export function monthsInRange(firstDate: string, lastDate: string, locale: string): string {
+  const start = new Date(firstDate + "T00:00:00");
+  const end = new Date(lastDate + "T00:00:00");
+  const fmt = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" });
+  const months: string[] = [];
+  const cur = new Date(start.getFullYear(), start.getMonth(), 1);
+  const endM = new Date(end.getFullYear(), end.getMonth(), 1);
+  while (cur <= endM) {
+    months.push(fmt.format(cur));
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  return months.join(", ");
+}
+
 export function useImportLastEdits() {
   const { user } = useAuth();
   return useQuery<Map<string, string>>({
@@ -209,6 +223,75 @@ export function useImportLastEdits() {
       const { data, error } = await supabase.rpc("get_import_last_edits", { p_user_id: user!.id });
       if (error) throw error;
       return new Map((data ?? []).map((r) => [r.import_id, r.last_edited_at]));
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Per-file summary (totals for the detail panel)
+// ---------------------------------------------------------------------------
+
+export interface ImportSummary {
+  total: number;
+  income: number;
+  expenses: number;
+  transferNet: number;
+  firstDate: string | null;
+  lastDate: string | null;
+}
+
+export function useImportSummary(importId: string | null) {
+  return useQuery<ImportSummary>({
+    queryKey: ["import-summary", importId],
+    enabled: !!importId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("movement, amount, date")
+        .eq("import_id", importId!);
+      if (error) throw error;
+      let total = 0, income = 0, expenses = 0, transferNet = 0;
+      let firstDate: string | null = null, lastDate: string | null = null;
+      for (const r of data ?? []) {
+        total++;
+        if (r.movement === "INCOME") income += r.amount;
+        else if (r.movement === "EXPENSE") expenses += r.amount;
+        else if (r.movement === "TRANSFER") transferNet += r.amount;
+        if (!firstDate || r.date < firstDate) firstDate = r.date;
+        if (!lastDate || r.date > lastDate) lastDate = r.date;
+      }
+      return { total, income, expenses, transferNet, firstDate, lastDate };
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Per-file transactions (for the contents modal)
+// ---------------------------------------------------------------------------
+
+export interface ImportTransaction {
+  id: string;
+  date: string;
+  description: string;
+  movement: "INCOME" | "EXPENSE" | "TRANSFER";
+  category_id: string | null;
+  amount: number;
+}
+
+export function useImportTransactions(importId: string | null) {
+  return useQuery<ImportTransaction[]>({
+    queryKey: ["import-transactions", importId],
+    enabled: !!importId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("id, date, description, movement, category_id, amount")
+        .eq("import_id", importId!)
+        .order("date", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as ImportTransaction[];
     },
   });
 }
