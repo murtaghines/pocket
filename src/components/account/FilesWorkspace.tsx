@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, GitBranch, X } from "lucide-react";
+import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
@@ -77,6 +77,18 @@ function relativeTime(dateStr: string, t: (key: string, opts?: Record<string, un
   if (hours < 24) return t("imports.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
   return t("imports.daysAgo", { count: days });
+}
+
+function fileStatus(f: Import): { key: string; color: string } {
+  if (f.split_tracks?.status === "pending")
+    return { key: "pendingSplit", color: "bg-warning/20 text-warning-foreground" };
+  if (f.status === "FAILED")
+    return { key: "failed", color: "bg-destructive/10 text-destructive" };
+  if (f.status === "PARTIAL")
+    return { key: "partial", color: "bg-warning/20 text-warning-foreground" };
+  if (f.status !== "NORMALIZED")
+    return { key: "processing", color: "bg-primary/10 text-primary" };
+  return { key: "processed", color: "bg-success/10 text-success" };
 }
 
 // ---------------------------------------------------------------------------
@@ -262,21 +274,15 @@ export function FilesWorkspace() {
             </p>
           </div>
 
-          {f.split_tracks?.status === "pending" && (
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-[10.5px] font-semibold text-warning-foreground">
-              <GitBranch className="h-2.5 w-2.5" />
-              {t("files.pendingSplit")}
-            </span>
-          )}
-
-          {f.status !== "NORMALIZED" && (
-            <span className={cn(
-              "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-              f.status === "FAILED" ? "bg-destructive/10 text-destructive" : "bg-warning/20 text-warning-foreground",
-            )}>
-              {t(`files.status.${f.status === "FAILED" ? "failed" : f.status === "PARTIAL" ? "partial" : "processing"}`)}
-            </span>
-          )}
+          {(() => {
+            const st = fileStatus(f);
+            return (
+              <span className={cn("flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold", st.color)}>
+                {st.key === "pendingSplit" && <GitBranch className="h-2.5 w-2.5" />}
+                {t(`files.status.${st.key}`)}
+              </span>
+            );
+          })()}
 
           <span className="hidden shrink-0 text-[11.5px] text-muted-foreground sm:inline">{timeAgo}</span>
 
