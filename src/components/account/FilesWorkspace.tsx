@@ -95,71 +95,48 @@ function fileStatus(f: Import): { key: string; color: string } {
 // Expanded detail panel (Carga + Resumen)
 // ---------------------------------------------------------------------------
 
-function FileExpandedPanel({ file, accountName, locale, currency }: {
+function FileExpandedPanel({ file, accountName, locale }: {
   file: Import;
   accountName: string;
   locale: string;
-  currency?: string;
 }) {
   const { t } = useTranslation("account");
-  const { formatDateTime, formatCurrency } = useLocalization();
+  const { formatDateTime, formatDate } = useLocalization();
   const { data: summary, isLoading } = useImportSummary(file.id);
 
   const period = summary?.firstDate && summary.lastDate
     ? monthsInRange(summary.firstDate, summary.lastDate, locale)
     : "—";
 
-  const money = (n: number) => formatCurrency(n, currency);
-
-  const MetaRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-[7px] last:border-0">
-      <span className="text-[11.5px] text-muted-foreground">{label}</span>
-      <span className="text-right text-[12.5px] font-semibold text-foreground">{value}</span>
-    </div>
-  );
-
-  const SummaryRow = ({ label, value, color }: { label: string; value: React.ReactNode; color?: string }) => (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-[7px] last:border-0">
-      <span className="text-[11.5px] text-muted-foreground">{label}</span>
-      <span className={cn("text-right text-[13px] font-bold tabular-nums", color ?? "text-foreground")}>
+  const MetaRow = ({ label, value, numeric }: { label: string; value: React.ReactNode; numeric?: boolean }) => (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-[6px] last:border-0">
+      <span className="text-[12px] font-medium text-muted-foreground">{label}</span>
+      <span className={cn(
+        "text-right text-[12.5px] font-semibold text-foreground",
+        numeric && "font-title text-[13px] font-bold tabular-nums",
+      )}>
         {value}
       </span>
     </div>
   );
 
   return (
-    <div className="grid grid-cols-1 gap-3 px-1.5 pb-4 pt-0.5 md:grid-cols-2">
-      <div className="rounded-xl bg-muted/50 px-4 py-3">
-        <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
+    <div className="grid grid-cols-1 gap-3.5 px-1 pb-4 pt-1 md:grid-cols-2">
+      <div className="rounded-xl bg-muted/50 px-4 py-3.5">
+        <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
           {t("files.detail.upload", "Upload")}
         </p>
         <MetaRow label={t("files.detail.uploadedAt", "Uploaded on")} value={formatDateTime(file.uploaded_at)} />
         <MetaRow label={t("files.detail.account", "Account")} value={accountName} />
-        <MetaRow label={t("files.detail.period", "Period")} value={isLoading ? "…" : period} />
+        <MetaRow label={t("files.detail.transactionCount", "Transactions")} value={isLoading ? "…" : (summary?.total ?? 0)} numeric />
       </div>
-      <div className="rounded-xl bg-muted/50 px-4 py-3">
-        <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
-          {t("files.detail.summary", "Summary")}
+      <div className="rounded-xl bg-muted/50 px-4 py-3.5">
+        <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
+          {t("files.detail.dates", "Dates")}
         </p>
-        <SummaryRow
-          label={t("files.detail.transactionCount", "Transactions")}
-          value={isLoading ? "…" : (summary?.total ?? 0)}
-        />
-        <SummaryRow
-          label={t("files.detail.income", "Income")}
-          value={isLoading ? "…" : money(summary?.income ?? 0)}
-          color={summary?.income ? "text-success" : "text-muted-foreground"}
-        />
-        <SummaryRow
-          label={t("files.detail.expenses", "Expenses")}
-          value={isLoading ? "…" : money(summary?.expenses ?? 0)}
-          color={summary?.expenses ? "text-destructive" : "text-muted-foreground"}
-        />
-        <SummaryRow
-          label={t("files.detail.transfers", "Transfers")}
-          value={isLoading ? "…" : money(summary?.transferNet ?? 0)}
-          color="text-muted-foreground"
-        />
+        <MetaRow label={t("files.detail.period", "Period")} value={isLoading ? "…" : period} />
+        <MetaRow label={t("files.detail.from", "From")} value={isLoading ? "…" : (summary?.firstDate ? formatDate(summary.firstDate) : "—")} />
+        <MetaRow label={t("files.detail.to", "To")} value={isLoading ? "…" : (summary?.lastDate ? formatDate(summary.lastDate) : "—")} />
       </div>
     </div>
   );
@@ -321,7 +298,6 @@ export function FilesWorkspace() {
             file={f}
             accountName={accName}
             locale={locale}
-            currency={account?.currency_base}
           />
         )}
       </div>
