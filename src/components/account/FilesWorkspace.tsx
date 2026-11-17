@@ -109,7 +109,7 @@ function FileExpandedPanel({ file, accountName, locale, currency }: {
   const SummaryRow = ({ label, value, color }: { label: string; value: React.ReactNode; color?: string }) => (
     <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-[7px] last:border-0">
       <span className="text-[11.5px] text-muted-foreground">{label}</span>
-      <span className={cn("text-right font-heading text-[13px] font-bold tabular-nums", color ?? "text-foreground")}>
+      <span className={cn("text-right text-[13px] font-bold tabular-nums", color ?? "text-foreground")}>
         {value}
       </span>
     </div>
@@ -256,7 +256,7 @@ export function FilesWorkspace() {
           <FileBadge label={label} />
 
           <div className="min-w-0 flex-1">
-            <p className="truncate font-heading text-[13.5px] font-semibold text-foreground" title={title}>{title}</p>
+            <p className="truncate text-[13.5px] font-semibold text-foreground" title={title}>{title}</p>
             <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
               {accName} · {f.transactions_count ?? 0} {t("files.txShort", "tx")}
             </p>

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Download, X } from "lucide-react";
+import { ArrowRightLeft, Download, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -26,9 +26,9 @@ const EXT_STYLES: Record<string, string> = {
 };
 
 const MOVEMENT_STYLES = {
-  INCOME: { bg: "bg-success/[0.14]", text: "text-success", dot: "bg-success" },
-  EXPENSE: { bg: "bg-destructive/[0.14]", text: "text-destructive", dot: "bg-destructive" },
-  TRANSFER: { bg: "bg-muted-foreground/[0.16]", text: "text-muted-foreground", dot: "bg-muted-foreground" },
+  INCOME: { bg: "bg-success", text: "text-white", prefix: "+" },
+  EXPENSE: { bg: "bg-destructive", text: "text-white", prefix: "−" },
+  TRANSFER: { bg: "bg-warning", text: "text-warning-foreground", prefix: "" },
 } as const;
 
 export function FileContentsModal({ file, accountName, locale, currency, onClose }: Props) {
@@ -82,7 +82,7 @@ export function FileContentsModal({ file, accountName, locale, currency, onClose
             {ext}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-heading text-base font-bold text-foreground">{title}</p>
+            <p className="truncate text-base font-bold text-foreground">{title}</p>
             <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">
               {accountName}{period ? ` · ${period}` : ""} · {isLoading ? "…" : total} {t("files.detail.transactionCount", "transactions").toLowerCase()}
             </p>
@@ -140,10 +140,14 @@ export function FileContentsModal({ file, accountName, locale, currency, onClose
                     </td>
                     <td className="px-2.5 py-0">
                       <span className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-xs font-medium",
+                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-xs font-semibold",
                         mv.bg, mv.text,
                       )}>
-                        <span className={cn("h-1.5 w-1.5 rounded-full", mv.dot)} />
+                        {r.movement === "TRANSFER" ? (
+                          <ArrowRightLeft className="h-3 w-3" />
+                        ) : (
+                          <span>{mv.prefix}</span>
+                        )}
                         {movementLabel(r.movement)}
                       </span>
                     </td>
@@ -164,11 +168,13 @@ export function FileContentsModal({ file, accountName, locale, currency, onClose
                       "whitespace-nowrap px-2.5 py-0 pr-[22px] text-right font-medium tabular-nums",
                       r.amount === 0
                         ? "text-muted-foreground"
-                        : r.movement === "TRANSFER"
-                          ? "text-muted-foreground"
-                          : "text-foreground",
+                        : r.movement === "INCOME"
+                          ? "text-success"
+                          : r.movement === "TRANSFER"
+                            ? "text-muted-foreground"
+                            : "text-destructive",
                     )}>
-                      {money(r.amount)}
+                      {r.amount === 0 || r.movement === "TRANSFER" ? "" : r.movement === "INCOME" ? "+" : "−"}{money(Math.abs(r.amount))}
                     </td>
                   </tr>
                 );
