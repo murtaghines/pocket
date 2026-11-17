@@ -67,8 +67,8 @@
       }
     },
     "accountFiles": "Files",
-    "filesPendingSplit_one": "{{count}} file needs your attention",
-    "filesPendingSplit_other": "{{count}} files need your attention"
+    "filesPendingAction_one": "{{count}} file needs your attention",
+    "filesPendingAction_other": "{{count}} files need your attention"
   },
   "addData": {
     "title": "Add data",
@@ -303,7 +303,7 @@
     "files": "files",
     "failedStatus": "Failed",
     "partialStatus": "Partial",
-    "pendingSplit": "Pending split",
+    "pendingAction": "Pending action",
     "unsavedLabel": "Unsaved",
     "deleteFileTitle": "Delete file?",
     "deleteFileDesc": "This will permanently remove {{fileName}} and all its transactions. This action cannot be undone.",

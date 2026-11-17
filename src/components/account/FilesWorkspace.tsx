@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, GitBranch } from "lucide-react";
+import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
 import { importTitle, useImportSummary, getImportDownloadUrl, monthsInRange } from "@/hooks/useImportFile";
+import { ImportSplitDialog } from "@/components/imports/ImportSplitDialog";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { useLocalization } from "@/hooks/useLocalization";
 import { WorkspaceBanner } from "@/components/layout/WorkspaceShell";
@@ -79,9 +80,9 @@ function relativeTime(dateStr: string, t: (key: string, opts?: Record<string, un
   return t("imports.daysAgo", { count: days });
 }
 
-function fileStatus(f: Import): { key: string; color: string } {
+function fileStatus(f: Import): { key: string; color: string; actionable?: boolean } {
   if (f.split_tracks?.status === "pending")
-    return { key: "pendingSplit", color: "bg-warning/20 text-warning-foreground" };
+    return { key: "pendingAction", color: "bg-warning/20 text-warning-foreground", actionable: true };
   if (f.status === "FAILED")
     return { key: "failed", color: "bg-destructive/10 text-destructive" };
   if (f.status === "PARTIAL")
@@ -165,6 +166,7 @@ export function FilesWorkspace() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: "archive" | "delete"; file: Import } | null>(null);
+  const [splitFile, setSplitFile] = useState<Import | null>(null);
 
   const inRole = useMemo(
     () => imports.filter((i) => (i.domain === "INVESTING") === (role === "investment") && (!accountFilter || i.account_id === accountFilter)),
@@ -253,10 +255,23 @@ export function FilesWorkspace() {
 
           {(() => {
             const st = fileStatus(f);
-            return (
-              <span className={cn("flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold", st.color)}>
-                {st.key === "pendingSplit" && <GitBranch className="h-2.5 w-2.5" />}
+            const pill = (
+              <>
+                {st.actionable && <AlertTriangle className="h-2.5 w-2.5" />}
                 {t(`files.status.${st.key}`)}
+              </>
+            );
+            return st.actionable ? (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setSplitFile(f); }}
+                className={cn("flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold cursor-pointer hover:opacity-80 transition-opacity", st.color)}
+              >
+                {pill}
+              </button>
+            ) : (
+              <span className={cn("flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold", st.color)}>
+                {pill}
               </span>
             );
           })()}
@@ -409,6 +424,19 @@ export function FilesWorkspace() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Split resolution dialog */}
+      {splitFile?.split_tracks?.tracks && (
+        <ImportSplitDialog
+          open={!!splitFile}
+          onOpenChange={(open) => { if (!open) setSplitFile(null); }}
+          pendingSplit={{
+            importId: splitFile.id,
+            tracks: splitFile.split_tracks.tracks,
+          }}
+          primaryAccountId={splitFile.account_id ?? undefined}
+        />
+      )}
 
       {/* Delete confirmation */}
       <AlertDialog open={confirmAction?.type === "delete"} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
