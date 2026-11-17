@@ -215,8 +215,10 @@
       "uploading": "Subiendo",
       "processing": "Procesando",
       "ready": "Listo",
+      "processed": "Procesado",
       "partial": "Parcial",
-      "failed": "Fallido"
+      "failed": "Fallido",
+      "pendingSplit": "Split pendiente"
     },
     "details": "Detalles",
     "account": "Cuenta",
@@ -245,6 +247,7 @@
     "showingRows": "Mostrando {{shown}} de {{total}} filas",
     "col": {
       "date": "Fecha",
+      "week": "Semana",
       "description": "Descripción",
       "amount": "Importe",
       "balance": "Saldo",
@@ -282,26 +285,20 @@
       "upload": "Carga",
       "uploadedAt": "Subido el",
       "account": "Cuenta",
-      "period": "Período",
-      "summary": "Resumen",
       "transactionCount": "Transacciones",
-      "income": "Ingresos",
-      "expenses": "Gastos",
-      "transfers": "Transferencias"
+      "dates": "Fechas",
+      "period": "Período",
+      "from": "Desde",
+      "to": "Hasta"
     },
     "actions": {
       "view": "Ver contenido"
     },
     "close": "Cerrar",
-    "modal": {
-      "income": "Ingreso",
-      "expense": "Gasto",
-      "transfer": "Transferencia",
-      "type": "Tipo",
-      "category": "Categoría"
-    },
     "preview": {
-      "showing": "Mostrando {{shown}} de {{total}} transacciones",
+      "last10": "Últimas 10",
+      "first10": "Primeras 10",
+      "showing": "Mostrando {{shown}} de {{total}} transacciones · ordenadas por fecha",
       "openInTransactions": "Ver en Movimientos"
     }
   },

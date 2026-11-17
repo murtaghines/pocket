@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LogOut } from "lucide-react";
+import { AlertTriangle, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_SECTIONS, getActiveSection } from "@/config/navigation";
 import { Logo } from "@/components/brand/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useImports } from "@/hooks/useImports";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -122,6 +124,12 @@ export function Sidebar() {
 
   const planLabel = "Plan personal";
 
+  const { data: allImports = [] } = useImports();
+  const pendingSplitCount = useMemo(
+    () => allImports.filter((i) => i.split_tracks?.status === "pending").length,
+    [allImports],
+  );
+
   const linkFor = (tabKey: string) => {
     const params = new URLSearchParams();
     if (tabKey !== dataSection.defaultTab) params.set("tab", tabKey);
@@ -231,6 +239,7 @@ export function Sidebar() {
       <nav className="flex flex-col">
         {GROUP_3.map((item) => {
           const active = isGroup3Active(item.key);
+          const showWarning = item.key === "files" && pendingSplitCount > 0;
           return (
             <Link
               key={item.key}
@@ -251,6 +260,20 @@ export function Sidebar() {
               >
                 {t(item.i18nKey)}
               </span>
+              {showWarning && (
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="ml-auto flex h-5 w-5 items-center justify-center">
+                        <AlertTriangle className="h-[14px] w-[14px] text-warning" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs">
+                      {t("navigation.filesPendingSplit", { count: pendingSplitCount })}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </Link>
           );
         })}

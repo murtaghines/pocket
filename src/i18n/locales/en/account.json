@@ -215,8 +215,10 @@
       "uploading": "Uploading",
       "processing": "Processing",
       "ready": "Ready",
+      "processed": "Processed",
       "partial": "Partial",
-      "failed": "Failed"
+      "failed": "Failed",
+      "pendingSplit": "Pending split"
     },
     "details": "Details",
     "account": "Account",
@@ -245,6 +247,7 @@
     "showingRows": "Showing {{shown}} of {{total}} rows",
     "col": {
       "date": "Date",
+      "week": "Week",
       "description": "Description",
       "amount": "Amount",
       "balance": "Balance",
@@ -282,26 +285,20 @@
       "upload": "Upload",
       "uploadedAt": "Uploaded on",
       "account": "Account",
-      "period": "Period",
-      "summary": "Summary",
       "transactionCount": "Transactions",
-      "income": "Income",
-      "expenses": "Expenses",
-      "transfers": "Transfers"
+      "dates": "Dates",
+      "period": "Period",
+      "from": "From",
+      "to": "To"
     },
     "actions": {
       "view": "View contents"
     },
     "close": "Close",
-    "modal": {
-      "income": "Income",
-      "expense": "Expense",
-      "transfer": "Transfer",
-      "type": "Type",
-      "category": "Category"
-    },
     "preview": {
-      "showing": "Showing {{shown}} of {{total}} transactions",
+      "last10": "Last 10",
+      "first10": "First 10",
+      "showing": "Showing {{shown}} of {{total}} transactions · sorted by date",
       "openInTransactions": "Open in Transactions"
     }
   },

@@ -34,12 +34,14 @@ paths:
   transactions everywhere: `transactions.is_hidden` is set and `hidden_by_archive` remembers which rows
   were hidden by the archive, so restoring never unhides rows the user hid by hand. Account views skip
   archived files. Last edit per file comes from `get_import_last_edits`.
-- Files expanded row (`FileExpandedPanel` inside `FilesWorkspace`): two-block layout — "Upload" (uploaded
-  date, account, period via `monthsInRange`) and "Summary" (transaction count, income, expenses, transfer
-  net via `useImportSummary`). Eye button opens `FileContentsModal`: full-screen dialog with transaction
-  table (date, description, type pill, category dot, amount) + footer (download + "Open in Transactions"),
-  powered by `useImportTransactions`. Action buttons: eye, download, archive, delete, expand/collapse.
-  `FileDetailPanel` was deleted (orphaned after the redesign).
+- Files expanded row (`FileExpandedPanel` inside `FilesWorkspace`): two-block layout — "Upload"/Carga
+  (uploaded date+time, account, transaction count) and "Dates"/Fechas (período via `monthsInRange`,
+  first date, last date via `useImportSummary`). No income/expenses/transfers — those are categorization
+  data the user edits later. Eye button opens `FileContentsModal`: 960px dialog with 4-column table
+  (Date, Week, Amount, Description) — no movement badges, no category dots, no color on amounts.
+  Segmented "Last 10 / First 10" selector replaces the X close button; footer has Close + "Open in
+  Transactions" only (no download). Powered by `useImportTransactions`. Action buttons: eye, download,
+  archive, delete, expand/collapse. `FileDetailPanel` was deleted (orphaned after the redesign).
 - Settings page shell: the header (name, email, member since + an "Edit profile" pill that opens
   `EditProfileDialog`) sits on the layout's blue band — the profile is never repeated in a card, and logout
   lives only in the sidebar. Cards start ~20px below it. Every

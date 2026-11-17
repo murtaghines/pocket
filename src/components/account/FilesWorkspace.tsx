@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, GitBranch, X } from "lucide-react";
+import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
@@ -79,75 +79,64 @@ function relativeTime(dateStr: string, t: (key: string, opts?: Record<string, un
   return t("imports.daysAgo", { count: days });
 }
 
+function fileStatus(f: Import): { key: string; color: string } {
+  if (f.split_tracks?.status === "pending")
+    return { key: "pendingSplit", color: "bg-warning/20 text-warning-foreground" };
+  if (f.status === "FAILED")
+    return { key: "failed", color: "bg-destructive/10 text-destructive" };
+  if (f.status === "PARTIAL")
+    return { key: "partial", color: "bg-warning/20 text-warning-foreground" };
+  if (f.status !== "NORMALIZED")
+    return { key: "processing", color: "bg-primary/10 text-primary" };
+  return { key: "processed", color: "bg-success/10 text-success" };
+}
+
 // ---------------------------------------------------------------------------
 // Expanded detail panel (Carga + Resumen)
 // ---------------------------------------------------------------------------
 
-function FileExpandedPanel({ file, accountName, locale, currency }: {
+function FileExpandedPanel({ file, accountName, locale }: {
   file: Import;
   accountName: string;
   locale: string;
-  currency?: string;
 }) {
   const { t } = useTranslation("account");
-  const { formatDateTime, formatCurrency } = useLocalization();
+  const { formatDateTime, formatDate } = useLocalization();
   const { data: summary, isLoading } = useImportSummary(file.id);
 
   const period = summary?.firstDate && summary.lastDate
     ? monthsInRange(summary.firstDate, summary.lastDate, locale)
     : "—";
 
-  const money = (n: number) => formatCurrency(n, currency);
-
-  const MetaRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-[7px] last:border-0">
-      <span className="text-[11.5px] text-muted-foreground">{label}</span>
-      <span className="text-right text-[12.5px] font-semibold text-foreground">{value}</span>
-    </div>
-  );
-
-  const SummaryRow = ({ label, value, color }: { label: string; value: React.ReactNode; color?: string }) => (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-[7px] last:border-0">
-      <span className="text-[11.5px] text-muted-foreground">{label}</span>
-      <span className={cn("text-right text-[13px] font-bold tabular-nums", color ?? "text-foreground")}>
+  const MetaRow = ({ label, value, numeric }: { label: string; value: React.ReactNode; numeric?: boolean }) => (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-[6px] last:border-0">
+      <span className="text-[12px] font-medium text-muted-foreground">{label}</span>
+      <span className={cn(
+        "text-right text-[12.5px] font-semibold text-foreground",
+        numeric && "font-title text-[13px] font-bold tabular-nums",
+      )}>
         {value}
       </span>
     </div>
   );
 
   return (
-    <div className="grid grid-cols-1 gap-3 px-1.5 pb-4 pt-0.5 md:grid-cols-2">
-      <div className="rounded-xl bg-muted/50 px-4 py-3">
-        <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
+    <div className="grid grid-cols-1 gap-3.5 px-1 pb-4 pt-1 md:grid-cols-2">
+      <div className="rounded-xl bg-muted/50 px-4 py-3.5">
+        <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
           {t("files.detail.upload", "Upload")}
         </p>
         <MetaRow label={t("files.detail.uploadedAt", "Uploaded on")} value={formatDateTime(file.uploaded_at)} />
         <MetaRow label={t("files.detail.account", "Account")} value={accountName} />
-        <MetaRow label={t("files.detail.period", "Period")} value={isLoading ? "…" : period} />
+        <MetaRow label={t("files.detail.transactionCount", "Transactions")} value={isLoading ? "…" : (summary?.total ?? 0)} numeric />
       </div>
-      <div className="rounded-xl bg-muted/50 px-4 py-3">
-        <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
-          {t("files.detail.summary", "Summary")}
+      <div className="rounded-xl bg-muted/50 px-4 py-3.5">
+        <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
+          {t("files.detail.dates", "Dates")}
         </p>
-        <SummaryRow
-          label={t("files.detail.transactionCount", "Transactions")}
-          value={isLoading ? "…" : (summary?.total ?? 0)}
-        />
-        <SummaryRow
-          label={t("files.detail.income", "Income")}
-          value={isLoading ? "…" : money(summary?.income ?? 0)}
-          color={summary?.income ? "text-success" : "text-muted-foreground"}
-        />
-        <SummaryRow
-          label={t("files.detail.expenses", "Expenses")}
-          value={isLoading ? "…" : money(summary?.expenses ?? 0)}
-          color={summary?.expenses ? "text-destructive" : "text-muted-foreground"}
-        />
-        <SummaryRow
-          label={t("files.detail.transfers", "Transfers")}
-          value={isLoading ? "…" : money(summary?.transferNet ?? 0)}
-          color="text-muted-foreground"
-        />
+        <MetaRow label={t("files.detail.period", "Period")} value={isLoading ? "…" : period} />
+        <MetaRow label={t("files.detail.from", "From")} value={isLoading ? "…" : (summary?.firstDate ? formatDate(summary.firstDate) : "—")} />
+        <MetaRow label={t("files.detail.to", "To")} value={isLoading ? "…" : (summary?.lastDate ? formatDate(summary.lastDate) : "—")} />
       </div>
     </div>
   );
@@ -262,21 +251,15 @@ export function FilesWorkspace() {
             </p>
           </div>
 
-          {f.split_tracks?.status === "pending" && (
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-[10.5px] font-semibold text-warning-foreground">
-              <GitBranch className="h-2.5 w-2.5" />
-              {t("files.pendingSplit")}
-            </span>
-          )}
-
-          {f.status !== "NORMALIZED" && (
-            <span className={cn(
-              "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-              f.status === "FAILED" ? "bg-destructive/10 text-destructive" : "bg-warning/20 text-warning-foreground",
-            )}>
-              {t(`files.status.${f.status === "FAILED" ? "failed" : f.status === "PARTIAL" ? "partial" : "processing"}`)}
-            </span>
-          )}
+          {(() => {
+            const st = fileStatus(f);
+            return (
+              <span className={cn("flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold", st.color)}>
+                {st.key === "pendingSplit" && <GitBranch className="h-2.5 w-2.5" />}
+                {t(`files.status.${st.key}`)}
+              </span>
+            );
+          })()}
 
           <span className="hidden shrink-0 text-[11.5px] text-muted-foreground sm:inline">{timeAgo}</span>
 
@@ -315,7 +298,6 @@ export function FilesWorkspace() {
             file={f}
             accountName={accName}
             locale={locale}
-            currency={account?.currency_base}
           />
         )}
       </div>
