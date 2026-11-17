@@ -215,8 +215,10 @@
       "uploading": "Subiendo",
       "processing": "Procesando",
       "ready": "Listo",
+      "processed": "Procesado",
       "partial": "Parcial",
-      "failed": "Fallido"
+      "failed": "Fallido",
+      "pendingSplit": "Split pendiente"
     },
     "details": "Detalles",
     "account": "Cuenta",

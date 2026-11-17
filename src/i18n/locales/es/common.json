@@ -66,7 +66,9 @@
         "accounts": "Cuentas"
       }
     },
-    "accountFiles": "Archivos"
+    "accountFiles": "Archivos",
+    "filesPendingSplit_one": "{{count}} archivo necesita tu atención",
+    "filesPendingSplit_other": "{{count}} archivos necesitan tu atención"
   },
   "addData": {
     "title": "Agregar datos",
