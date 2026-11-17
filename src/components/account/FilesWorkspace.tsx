@@ -7,6 +7,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
 import { importTitle, useImportSummary, getImportDownloadUrl, monthsInRange } from "@/hooks/useImportFile";
 import { getAccountDisplayName } from "@/lib/accountColors";
+import { useLocalization } from "@/hooks/useLocalization";
 import { WorkspaceBanner } from "@/components/layout/WorkspaceShell";
 import { getFileKind } from "@/components/account/fileBits";
 import { FileContentsModal } from "@/components/account/FileContentsModal";
