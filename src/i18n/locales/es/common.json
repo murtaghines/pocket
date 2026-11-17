@@ -67,8 +67,8 @@
       }
     },
     "accountFiles": "Archivos",
-    "filesPendingSplit_one": "{{count}} archivo necesita tu atención",
-    "filesPendingSplit_other": "{{count}} archivos necesitan tu atención"
+    "filesPendingAction_one": "{{count}} archivo necesita tu atención",
+    "filesPendingAction_other": "{{count}} archivos necesitan tu atención"
   },
   "addData": {
     "title": "Agregar datos",
@@ -303,7 +303,7 @@
     "files": "archivos",
     "failedStatus": "Fallido",
     "partialStatus": "Parcial",
-    "pendingSplit": "Split pendiente",
+    "pendingAction": "Acción pendiente",
     "unsavedLabel": "Sin guardar",
     "deleteFileTitle": "¿Eliminar archivo?",
     "deleteFileDesc": "Esto eliminará permanentemente {{fileName}} y todas sus transacciones. Esta acción no se puede deshacer.",

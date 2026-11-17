@@ -218,7 +218,7 @@
       "processed": "Processed",
       "partial": "Partial",
       "failed": "Failed",
-      "pendingSplit": "Pending split"
+      "pendingAction": "Pending action"
     },
     "details": "Details",
     "account": "Account",
@@ -278,8 +278,8 @@
     "renameError": "Couldn't rename the file",
     "editedOn": "edited {{date}}",
     "txShort": "tx",
-    "pendingSplit": "Pending split",
-    "pendingSplitNotice": "This file has transactions from multiple accounts that haven't been assigned yet.",
+    "pendingAction": "Pending action",
+    "pendingActionNotice": "This file has transactions from multiple accounts that haven't been assigned yet.",
     "resolve": "Resolve",
     "detail": {
       "upload": "Upload",
