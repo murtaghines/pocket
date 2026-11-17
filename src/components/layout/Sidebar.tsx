@@ -124,7 +124,7 @@ export function Sidebar() {
 
   const planLabel = "Plan personal";
 
-  const { data: allImports = [] } = useImports();
+  const { imports: allImports = [] } = useImports();
   const pendingSplitCount = useMemo(
     () => allImports.filter((i) => i.split_tracks?.status === "pending").length,
     [allImports],
@@ -269,7 +269,7 @@ export function Sidebar() {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="right" className="text-xs">
-                      {t("navigation.filesPendingSplit", { count: pendingSplitCount })}
+                      {t("navigation.filesPendingAction", { count: pendingSplitCount })}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
