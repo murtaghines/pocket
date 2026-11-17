@@ -218,7 +218,7 @@
       "processed": "Procesado",
       "partial": "Parcial",
       "failed": "Fallido",
-      "pendingSplit": "Split pendiente"
+      "pendingAction": "Acción pendiente"
     },
     "details": "Detalles",
     "account": "Cuenta",
@@ -278,8 +278,8 @@
     "renameError": "No se pudo renombrar el archivo",
     "editedOn": "editado {{date}}",
     "txShort": "trans.",
-    "pendingSplit": "Split pendiente",
-    "pendingSplitNotice": "Este archivo tiene transacciones de varias cuentas que aún no fueron asignadas.",
+    "pendingAction": "Acción pendiente",
+    "pendingActionNotice": "Este archivo tiene transacciones de varias cuentas que aún no fueron asignadas.",
     "resolve": "Resolver",
     "detail": {
       "upload": "Carga",

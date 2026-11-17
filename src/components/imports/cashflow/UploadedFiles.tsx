@@ -313,7 +313,7 @@ export function UploadedFilesHistoryList({
           className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-warning/15 text-warning hover:bg-warning/25 transition-colors cursor-pointer"
         >
           <GitBranch className="w-3 h-3" />
-          {t("imports.pendingSplit", "Pending split")}
+          {t("imports.pendingAction", "Pending action")}
         </button>
       );
     }
