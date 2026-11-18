@@ -54,19 +54,22 @@ export interface PdfExtractResult {
 
 const PDF_MAX_PAGES = 50;
 
-// Revolut Custom Statements bundle ALL accounts into one PDF. The pipeline expects one
-// account per document, so we detect these early and reject with a helpful message.
-const MULTI_ACCOUNT_RE =
-  /Custom Statement|Savings Accounts Transaction Statements|Current Accounts Transaction Statements/i;
+// Revolut Custom Statements can bundle multiple accounts into one PDF. The pipeline expects
+// one account per document, so we detect multiple distinct account sections and reject early.
+// Each account section starts with a header like "Personal Account (EUR)" or "Savings (EUR)".
+const ACCOUNT_SECTION_RE =
+  /\b(?:Personal|Joint|Business)\s+Account\s*\([A-Z]{3}\)|\bSavings\s*\([A-Z]{3}\)/gi;
 
 function detectMultiAccountPdf(pages: PdfTextItem[][]): boolean {
-  const scanPages = Math.min(pages.length, 10);
-  let markers = 0;
+  const scanPages = Math.min(pages.length, 15);
+  const seen = new Set<string>();
   for (let p = 0; p < scanPages; p++) {
     const text = pages[p].map((it) => it.str).join(" ");
-    if (MULTI_ACCOUNT_RE.test(text)) markers++;
+    for (const m of text.matchAll(ACCOUNT_SECTION_RE)) {
+      seen.add(m[0].toLowerCase());
+    }
   }
-  return markers >= 2;
+  return seen.size >= 2;
 }
 
 /**
