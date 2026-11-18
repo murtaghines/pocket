@@ -61,6 +61,7 @@
     "scannedDetected": "PDF escaneado detectado",
     "scannedDescription": "Leyendo {{count}} página(s) con IA de visión…",
     "partiallyProcessed": "PDF parcialmente procesado",
-    "partiallyProcessedDescription": "Solo se procesaron {{processed}} de {{total}} páginas. Algunas transacciones podrían faltar."
+    "partiallyProcessedDescription": "Solo se procesaron {{processed}} de {{total}} páginas. Algunas transacciones podrían faltar.",
+    "multiAccountDetected": "Este PDF contiene varias cuentas (ej. Custom Statement de Revolut). Descargá un extracto individual por cada cuenta y subilo por separado."
   }
 }

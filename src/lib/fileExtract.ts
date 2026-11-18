@@ -48,12 +48,29 @@ export interface PdfExtractResult {
   truncated: boolean;
   /** True when the PDF has no selectable text (scanned / image-only). */
   scanned?: boolean;
+  /** True when the PDF contains multiple account sections (e.g. Revolut Custom Statement). */
+  multiAccount?: boolean;
 }
 
-const PDF_MAX_PAGES = 30;
+const PDF_MAX_PAGES = 50;
+
+// Revolut Custom Statements bundle ALL accounts into one PDF. The pipeline expects one
+// account per document, so we detect these early and reject with a helpful message.
+const MULTI_ACCOUNT_RE =
+  /Custom Statement|Savings Accounts Transaction Statements|Current Accounts Transaction Statements/i;
+
+function detectMultiAccountPdf(pages: PdfTextItem[][]): boolean {
+  const scanPages = Math.min(pages.length, 10);
+  let markers = 0;
+  for (let p = 0; p < scanPages; p++) {
+    const text = pages[p].map((it) => it.str).join(" ");
+    if (MULTI_ACCOUNT_RE.test(text)) markers++;
+  }
+  return markers >= 2;
+}
 
 /**
- * Extract selectable text from a PDF (first 30 pages), accepting either a File or a raw
+ * Extract selectable text from a PDF (first 50 pages), accepting either a File or a raw
  * ArrayBuffer. Throws if the PDF has essentially no text (i.e. a scanned/image-only PDF).
  *
  * The text handed to the AI extractor is reconstructed by `reconstructDocument`
@@ -84,6 +101,16 @@ export async function extractPdfText(
         y: item?.transform?.[5] ?? 0,
       })),
     );
+  }
+
+  if (detectMultiAccountPdf(pages)) {
+    return {
+      text: "",
+      totalPages: pdf.numPages,
+      processedPages,
+      truncated: false,
+      multiAccount: true,
+    };
   }
 
   const trimmed = reconstructDocument(pages, opts.reconstructTables ?? true);

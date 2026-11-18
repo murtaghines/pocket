@@ -563,6 +563,10 @@ export function useMonthlyFileUpload() {
     if (extension === "pdf") {
       const result = await extractPdfText(file);
 
+      if (result.multiAccount) {
+        throw new Error(t('pdf.multiAccountDetected'));
+      }
+
       if (result.scanned) {
         const pages = await renderPdfPagesToImages(file);
         if (pages.length === 0) {
