@@ -397,12 +397,15 @@ serve(async (req) => {
       const nextY = maxM === 12 ? maxY + 1 : maxY;
       const queryEnd = `${nextY}-${String(nextM).padStart(2, '0')}-01`;
 
+      // Check fingerprints across ALL user accounts in this domain, not just the
+      // target account. Transactions from a previous multi-track split may have been
+      // moved to a different account (e.g. savings). Without cross-account dedup,
+      // re-importing the same file would re-insert those transactions as "new".
       const { data: existingTxs } = await supabase
         .from('transactions')
         .select('fingerprint, date, amount, description_norm')
         .eq('user_id', userId)
         .eq('domain', domain)
-        .eq('account_id', accountId)
         .gte('date', queryStart)
         .lt('date', queryEnd);
 

@@ -179,11 +179,22 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        // Set initial_balance on the target account from this chain's opening
+        // Set initial_balance on the target account from this chain's opening,
+        // but only if the account has no prior transactions (first-time split).
+        // Re-importing a file that spans multiple months would compute a different
+        // chain opening; overwriting would break balance calculations for earlier months.
         if (Number.isFinite(track.opening_balance)) {
-          await supabase.from('accounts')
-            .update({ initial_balance: track.opening_balance, initial_balance_source: 'multi_track_secondary' })
-            .eq('id', targetAccountId);
+          const { count: priorTxCount } = await supabase
+            .from('transactions')
+            .select('id', { count: 'exact', head: true })
+            .eq('account_id', targetAccountId)
+            .eq('user_id', userId)
+            .neq('import_id', importId);
+          if (!priorTxCount || priorTxCount === 0) {
+            await supabase.from('accounts')
+              .update({ initial_balance: track.opening_balance, initial_balance_source: 'multi_track_secondary' })
+              .eq('id', targetAccountId);
+          }
         }
 
         results.push({ chain_index, action: 'assigned', account_id: targetAccountId, transaction_count: txIds.length });
