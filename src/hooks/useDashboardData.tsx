@@ -147,7 +147,7 @@ export function useAccountOpeningBalances(monthKey: string | null, domain: Datab
   const { user } = useAuth();
 
   const { data: balances = {}, isLoading } = useQuery({
-    queryKey: ["account-opening-balances", user?.id, domain, monthKey],
+    queryKey: ["dashboard-opening-balances", user?.id, domain, monthKey],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_account_opening_balances", {
         p_user_id: user!.id,
