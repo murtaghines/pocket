@@ -62,6 +62,6 @@
     "scannedDescription": "Reading {{count}} page(s) with AI vision…",
     "partiallyProcessed": "PDF partially processed",
     "partiallyProcessedDescription": "Only {{processed}} of {{total}} pages were processed. Some transactions may be missing.",
-    "multiAccountDetected": "This PDF contains multiple accounts (e.g. Revolut Custom Statement). Please download a separate statement for each account and upload them individually."
+    "multiAccountConfirm": "This PDF contains multiple accounts. The transactions will be separated automatically and you'll be able to assign each group to the correct account. Do you want to proceed?"
   }
 }

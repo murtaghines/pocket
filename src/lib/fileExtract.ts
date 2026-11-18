@@ -106,18 +106,10 @@ export async function extractPdfText(
     );
   }
 
-  if (detectMultiAccountPdf(pages)) {
-    return {
-      text: "",
-      totalPages: pdf.numPages,
-      processedPages,
-      truncated: false,
-      multiAccount: true,
-    };
-  }
+  const multiAccount = detectMultiAccountPdf(pages);
 
   const trimmed = reconstructDocument(pages, opts.reconstructTables ?? true);
-  if (trimmed.length < 50) {
+  if (!multiAccount && trimmed.length < 50) {
     return {
       text: "",
       totalPages: pdf.numPages,
@@ -132,6 +124,7 @@ export async function extractPdfText(
     totalPages: pdf.numPages,
     processedPages,
     truncated: pdf.numPages > PDF_MAX_PAGES,
+    multiAccount: multiAccount || undefined,
   };
 }
 

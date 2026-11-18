@@ -131,6 +131,15 @@ export function useMonthlyFileUpload() {
 
     try {
       const extracted = await extractFileContent(uploadFile.file);
+
+      if (extracted.multiAccount) {
+        const proceed = window.confirm(t('pdf.multiAccountConfirm'));
+        if (!proceed) {
+          patch({ status: "pending", progressLabel: "", progressPercent: 0 });
+          return;
+        }
+      }
+
       patch({ progressLabel: t('progress.checkingDuplicates'), progressPercent: 18 });
 
       const hasText = extracted.text.trim().length > 0;
@@ -542,6 +551,7 @@ export function useMonthlyFileUpload() {
   interface ExtractedContent {
     text: string;
     images?: Array<{ base64: string; mediaType: string }>;
+    multiAccount?: boolean;
   }
 
   const extractFileContent = async (file: File): Promise<ExtractedContent> => {
@@ -564,7 +574,7 @@ export function useMonthlyFileUpload() {
       const result = await extractPdfText(file);
 
       if (result.multiAccount) {
-        throw new Error(t('pdf.multiAccountDetected'));
+        return { text: result.text, multiAccount: true };
       }
 
       if (result.scanned) {
