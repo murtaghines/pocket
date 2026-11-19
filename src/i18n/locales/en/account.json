@@ -208,6 +208,7 @@
     "title": "Files",
     "subtitle": "{{files}} files · {{accounts}} accounts",
     "upload": "Upload files",
+    "newFile": "New file",
     "empty": "No files uploaded yet.",
     "unassigned": "Unassigned",
     "clearFilter": "Show all accounts",

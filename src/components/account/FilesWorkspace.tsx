@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, AlertTriangle } from "lucide-react";
@@ -7,13 +7,17 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
 import { importTitle, useImportSummary, getImportDownloadUrl, monthsInRange } from "@/hooks/useImportFile";
 import { ImportSplitDialog } from "@/components/imports/ImportSplitDialog";
+import { AccountSelectDialog } from "@/components/imports/AccountSelectDialog";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { useLocalization } from "@/hooks/useLocalization";
 import { WorkspaceBanner } from "@/components/layout/WorkspaceShell";
 import { getFileKind } from "@/components/account/fileBits";
 import { FileContentsModal } from "@/components/account/FileContentsModal";
+import { ProcessingPanel } from "@/components/imports/cashflow/ProcessingPanel";
 import { toast } from "sonner";
 import { useSetImportArchived } from "@/hooks/useImportFile";
+import { useMonthlyFileUpload } from "@/hooks/useMonthlyFileUpload";
+import { uploadFileRejection } from "@/lib/fileExtract";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -150,11 +154,17 @@ function FileExpandedPanel({ file, accountName, locale }: {
 export function FilesWorkspace() {
   const { t } = useTranslation("account");
   const { t: tc } = useTranslation("common");
+  const { t: ti } = useTranslation("imports");
   const [searchParams, setSearchParams] = useSearchParams();
   const { accounts } = useAccounts();
   const { imports, isLoading, deleteImport, isDeleting } = useImports();
   const setArchived = useSetImportArchived();
+  const { addFiles, pendingFilesByMonth, cancelFile, isProcessingAny } = useMonthlyFileUpload();
   const [showArchived, setShowArchived] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
 
   const accountFilter = searchParams.get("account");
   const initialFile = imports.find((i) => i.id === searchParams.get("file"));
@@ -226,6 +236,34 @@ export function FilesWorkspace() {
     if (expandedId === id) setExpandedId(null);
     deleteImport(id);
   };
+
+  const handleUploadPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const valid: File[] = [];
+    for (const f of Array.from(files)) {
+      const reason = uploadFileRejection(f);
+      if (reason) toast.error(`Skipped ${f.name}`, { description: reason });
+      else valid.push(f);
+    }
+    if (valid.length) {
+      setPendingUploadFiles(valid);
+      setAccountDialogOpen(true);
+    }
+    e.target.value = "";
+  };
+
+  const handleAccountConfirm = (accountId: string) => {
+    setAccountDialogOpen(false);
+    if (pendingUploadFiles.length) {
+      addFiles(pendingUploadFiles, accountId);
+      setPendingUploadFiles([]);
+    }
+  };
+
+  const activePending = [
+    ...(pendingFilesByMonth["__auto__"] || []),
+  ].filter((f) => f.status === "processing" || f.status === "pending");
 
   const locale = navigator.language;
   const previewFile = imports.find((i) => i.id === previewId) ?? null;
@@ -321,9 +359,19 @@ export function FilesWorkspace() {
 
   return (
     <div className="flex flex-col bg-background md:h-full md:overflow-hidden">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        accept=".xlsx,.csv,.pdf,.jpg,.jpeg,.png,.webp,.heic"
+        onChange={handleUploadPicked}
+      />
+
       <WorkspaceBanner
         title={t("files.title", "Files")}
         subtitle={t("files.subtitle", { files: active.length, accounts: accountsWithFiles })}
+        action={role === "bank" ? { label: t("files.newFile", "New file"), onClick: () => fileInputRef.current?.click() } : undefined}
         selector={{
           value: role,
           onChange: switchRole,
@@ -462,6 +510,24 @@ export function FilesWorkspace() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Upload processing panel */}
+      {activePending.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
+          <ProcessingPanel
+            files={activePending}
+            onCancel={(fileId) => cancelFile("__auto__", fileId)}
+          />
+        </div>
+      )}
+
+      {/* Account selection for upload */}
+      <AccountSelectDialog
+        open={accountDialogOpen}
+        onOpenChange={setAccountDialogOpen}
+        onConfirm={handleAccountConfirm}
+        domain="CASHFLOW"
+      />
     </div>
   );
 }

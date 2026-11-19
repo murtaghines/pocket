@@ -52,7 +52,7 @@ export interface PdfExtractResult {
   multiAccount?: boolean;
 }
 
-const PDF_MAX_PAGES = 50;
+const PDF_MAX_PAGES = 100;
 
 // Revolut Custom Statements can bundle multiple accounts into one PDF. The pipeline expects
 // one account per document, so we detect multiple distinct account sections and reject early.

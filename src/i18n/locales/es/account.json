@@ -208,6 +208,7 @@
     "title": "Archivos",
     "subtitle": "{{files}} archivos · {{accounts}} cuentas",
     "upload": "Subir archivos",
+    "newFile": "Nuevo archivo",
     "empty": "Aún no hay archivos subidos.",
     "unassigned": "Sin asignar",
     "clearFilter": "Ver todas las cuentas",
