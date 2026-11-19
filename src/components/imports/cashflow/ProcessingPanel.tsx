@@ -1,4 +1,4 @@
-import { Loader2, FileText, Check } from "lucide-react";
+import { Loader2, FileText, Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { PendingFileInfo } from "./types";
@@ -11,7 +11,12 @@ const STAGE_KEYS = [
   { threshold: 100, key: "imports.stageSaved" },
 ] as const;
 
-export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
+interface ProcessingPanelProps {
+  files: PendingFileInfo[];
+  onCancel?: (fileId: string) => void;
+}
+
+export function ProcessingPanel({ files, onCancel }: ProcessingPanelProps) {
   const { t } = useTranslation("common");
   return (
     <div className="rounded-xl border border-border/70 bg-card shadow-[0_2px_18px_-8px_rgb(8_8_8_/_0.08)] overflow-hidden">
@@ -32,14 +37,19 @@ export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
 
       <div className="px-5 py-4 space-y-5">
         {files.map((f) => (
-          <FileProgress key={f.id} file={f} />
+          <FileProgress key={f.id} file={f} onCancel={onCancel} />
         ))}
       </div>
     </div>
   );
 }
 
-export function FileProgress({ file }: { file: PendingFileInfo }) {
+interface FileProgressProps {
+  file: PendingFileInfo;
+  onCancel?: (fileId: string) => void;
+}
+
+export function FileProgress({ file, onCancel }: FileProgressProps) {
   const { t } = useTranslation("common");
   const pct = Math.max(0, Math.min(100, file.progressPercent ?? 0));
   const label = file.progressLabel || t("imports.preparing");
@@ -60,9 +70,21 @@ export function FileProgress({ file }: { file: PendingFileInfo }) {
             </span>
           )}
         </div>
-        <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">
-          {Math.round(pct)}%
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[11px] tabular-nums text-muted-foreground">
+            {Math.round(pct)}%
+          </span>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={() => onCancel(file.id)}
+              className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              title={t("imports.cancelUpload")}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Progress bar */}

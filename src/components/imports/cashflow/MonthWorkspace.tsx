@@ -19,6 +19,7 @@ export interface MonthWorkspaceProps {
   isDeleting: boolean;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
+  onCancelFile?: (fileId: string) => void;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
@@ -46,6 +47,7 @@ export function MonthWorkspace({
   isDeleting,
   isProcessing,
   pendingFiles,
+  onCancelFile,
   manualEntryOpen: externalManualEntryOpen,
   onManualEntryOpenChange,
   defaultMovement,
@@ -83,7 +85,7 @@ export function MonthWorkspace({
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
           {activePending.length > 0 && (
             <div className="w-full max-w-xl">
-              <ProcessingPanel files={activePending} />
+              <ProcessingPanel files={activePending} onCancel={onCancelFile} />
             </div>
           )}
         </div>
@@ -121,6 +123,7 @@ export function MonthWorkspace({
         onAddMore={() => fileInputRef.current?.click()}
         isProcessing={isProcessing}
         pendingFiles={activePending}
+        onCancelFile={onCancelFile}
         manualEntryOpen={manualEntryOpen}
         onManualEntryOpenChange={setManualEntryOpen}
         defaultMovement={defaultMovement}
