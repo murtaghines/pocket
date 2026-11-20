@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, AlertTriangle, RotateCcw, Loader2, Pencil, ExternalLink, Check, X } from "lucide-react";
+import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, AlertTriangle, RotateCcw, Loader2, Pencil, ExternalLink, Check, X, Lock, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
@@ -84,16 +84,16 @@ function relativeTime(dateStr: string, t: (key: string, opts?: Record<string, un
   return t("imports.daysAgo", { count: days });
 }
 
-function fileStatus(f: Import): { key: string; color: string; actionable?: boolean } {
+function fileStatus(f: Import): { key: string; color: string; actionable?: boolean; icon: React.ReactNode } {
   if (f.split_tracks?.status === "pending")
-    return { key: "pendingAction", color: "bg-warning/20 text-warning-foreground", actionable: true };
+    return { key: "pendingAction", color: "bg-warning/20 text-warning-foreground", actionable: true, icon: <AlertTriangle className="h-2.5 w-2.5" /> };
   if (f.status === "FAILED")
-    return { key: "failed", color: "bg-destructive/10 text-destructive" };
+    return { key: "failed", color: "bg-destructive/10 text-destructive", icon: <XCircle className="h-2.5 w-2.5" /> };
   if (f.status === "PARTIAL")
-    return { key: "partial", color: "bg-warning/20 text-warning-foreground" };
+    return { key: "partial", color: "bg-warning/20 text-warning-foreground", icon: <AlertTriangle className="h-2.5 w-2.5" /> };
   if (f.status !== "NORMALIZED")
-    return { key: "processing", color: "bg-primary/10 text-primary" };
-  return { key: "processed", color: "bg-success/10 text-success" };
+    return { key: "processing", color: "bg-primary/10 text-primary", icon: <Loader2 className="h-2.5 w-2.5 animate-spin" /> };
+  return { key: "processed", color: "bg-success/10 text-success", icon: <CheckCircle2 className="h-2.5 w-2.5" /> };
 }
 
 // ---------------------------------------------------------------------------
@@ -395,6 +395,7 @@ export function FilesWorkspace() {
               </div>
             ) : (
               <div className="group/title flex items-center gap-1">
+                {f.locked && <Lock className="h-3 w-3 shrink-0 text-muted-foreground/50" />}
                 <p className="truncate text-[13.5px] font-semibold text-foreground" title={title}>{title}</p>
                 <button
                   type="button"
@@ -416,7 +417,7 @@ export function FilesWorkspace() {
             const errorTip = (f.status === "FAILED" || f.status === "PARTIAL") ? f.error_message : undefined;
             const pill = (
               <>
-                {st.actionable && <AlertTriangle className="h-2.5 w-2.5" />}
+                {st.icon}
                 {t(`files.status.${st.key}`)}
               </>
             );
