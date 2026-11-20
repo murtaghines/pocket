@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, AlertTriangle } from "lucide-react";
+import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, AlertTriangle, RotateCcw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
@@ -125,23 +125,46 @@ function FileExpandedPanel({ file, accountName, locale }: {
     </div>
   );
 
+  const hasError = (file.status === "FAILED" || file.status === "PARTIAL") && file.error_message;
+
   return (
-    <div className="grid grid-cols-1 gap-3.5 px-1 pb-4 pt-1 md:grid-cols-2">
-      <div className="rounded-xl bg-muted/50 px-4 py-3.5">
-        <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
-          {t("files.detail.upload", "Upload")}
-        </p>
-        <MetaRow label={t("files.detail.uploadedAt", "Uploaded on")} value={formatDateTime(file.uploaded_at)} />
-        <MetaRow label={t("files.detail.account", "Account")} value={accountName} />
-        <MetaRow label={t("files.detail.transactionCount", "Transactions")} value={isLoading ? "…" : (summary?.total ?? 0)} numeric />
-      </div>
-      <div className="rounded-xl bg-muted/50 px-4 py-3.5">
-        <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
-          {t("files.detail.dates", "Dates")}
-        </p>
-        <MetaRow label={t("files.detail.period", "Period")} value={isLoading ? "…" : period} />
-        <MetaRow label={t("files.detail.from", "From")} value={isLoading ? "…" : (summary?.firstDate ? formatDate(summary.firstDate) : "—")} />
-        <MetaRow label={t("files.detail.to", "To")} value={isLoading ? "…" : (summary?.lastDate ? formatDate(summary.lastDate) : "—")} />
+    <div className="space-y-3 px-1 pb-4 pt-1">
+      {hasError && (
+        <div className={cn(
+          "rounded-xl px-4 py-3",
+          file.status === "FAILED" ? "bg-destructive/8" : "bg-warning/10",
+        )}>
+          <p className={cn(
+            "text-[10.5px] font-bold uppercase tracking-[0.09em] mb-1.5",
+            file.status === "FAILED" ? "text-destructive/70" : "text-warning-foreground/70",
+          )}>
+            {t("files.detail.error", "Error")}
+          </p>
+          <p className={cn(
+            "text-[12px] leading-relaxed",
+            file.status === "FAILED" ? "text-destructive" : "text-warning-foreground",
+          )}>
+            {file.error_message}
+          </p>
+        </div>
+      )}
+      <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+        <div className="rounded-xl bg-muted/50 px-4 py-3.5">
+          <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
+            {t("files.detail.upload", "Upload")}
+          </p>
+          <MetaRow label={t("files.detail.uploadedAt", "Uploaded on")} value={formatDateTime(file.uploaded_at)} />
+          <MetaRow label={t("files.detail.account", "Account")} value={accountName} />
+          <MetaRow label={t("files.detail.transactionCount", "Transactions")} value={isLoading ? "…" : (summary?.total ?? 0)} numeric />
+        </div>
+        <div className="rounded-xl bg-muted/50 px-4 py-3.5">
+          <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted-foreground/70">
+            {t("files.detail.dates", "Dates")}
+          </p>
+          <MetaRow label={t("files.detail.period", "Period")} value={isLoading ? "…" : period} />
+          <MetaRow label={t("files.detail.from", "From")} value={isLoading ? "…" : (summary?.firstDate ? formatDate(summary.firstDate) : "—")} />
+          <MetaRow label={t("files.detail.to", "To")} value={isLoading ? "…" : (summary?.lastDate ? formatDate(summary.lastDate) : "—")} />
+        </div>
       </div>
     </div>
   );
@@ -159,7 +182,7 @@ export function FilesWorkspace() {
   const { accounts } = useAccounts();
   const { imports, isLoading, deleteImport, isDeleting } = useImports();
   const setArchived = useSetImportArchived();
-  const { addFiles, pendingFilesByMonth, cancelFile, isProcessingAny } = useMonthlyFileUpload();
+  const { addFiles, pendingFilesByMonth, cancelFile, isProcessingAny, retryImport, retryingImportIds } = useMonthlyFileUpload();
   const [showArchived, setShowArchived] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -293,6 +316,7 @@ export function FilesWorkspace() {
 
           {(() => {
             const st = fileStatus(f);
+            const errorTip = (f.status === "FAILED" || f.status === "PARTIAL") ? f.error_message : undefined;
             const pill = (
               <>
                 {st.actionable && <AlertTriangle className="h-2.5 w-2.5" />}
@@ -308,7 +332,10 @@ export function FilesWorkspace() {
                 {pill}
               </button>
             ) : (
-              <span className={cn("flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold", st.color)}>
+              <span
+                className={cn("flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold", st.color)}
+                title={errorTip || undefined}
+              >
                 {pill}
               </span>
             );
@@ -317,6 +344,20 @@ export function FilesWorkspace() {
           <span className="hidden shrink-0 text-[11.5px] text-muted-foreground sm:inline">{timeAgo}</span>
 
           <span className="flex shrink-0 items-center gap-0.5">
+            {(f.status === "FAILED" || f.status === "PARTIAL") && (
+              <ActionBtn
+                title={t("files.actions.retry", "Retry")}
+                onClick={() => retryImport(f.id, f.file_storage_url, f.file_name, f.account_id)}
+                className={cn(
+                  "text-primary hover:bg-primary/10",
+                  retryingImportIds.has(f.id) && "pointer-events-none opacity-60",
+                )}
+              >
+                {retryingImportIds.has(f.id)
+                  ? <Loader2 className="h-[15px] w-[15px] animate-spin" />
+                  : <RotateCcw className="h-[14px] w-[14px]" />}
+              </ActionBtn>
+            )}
             <ActionBtn title={t("files.actions.view", "View contents")} onClick={() => setPreviewId(f.id)}>
               <Eye className="h-[15px] w-[15px]" />
             </ActionBtn>

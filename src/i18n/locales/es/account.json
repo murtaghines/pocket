@@ -290,10 +290,12 @@
       "dates": "Fechas",
       "period": "Período",
       "from": "Desde",
-      "to": "Hasta"
+      "to": "Hasta",
+      "error": "Error"
     },
     "actions": {
-      "view": "Ver contenido"
+      "view": "Ver contenido",
+      "retry": "Reintentar"
     },
     "close": "Cerrar",
     "preview": {
