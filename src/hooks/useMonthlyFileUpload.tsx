@@ -207,6 +207,8 @@ export function useMonthlyFileUpload() {
 
       if (isCancelled()) return;
 
+      if (isCancelled()) return;
+
       patch({
         progressLabel: t('progress.readingWithAi'),
         progressPercent: 38,
