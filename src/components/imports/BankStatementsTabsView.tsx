@@ -42,6 +42,7 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
     addFiles,
     isProcessingMonth,
     pendingFilesByMonth,
+    cancelFile,
     pendingSplit,
     clearPendingSplit,
   } = useMonthlyFileUpload();
@@ -305,6 +306,13 @@ export function BankStatementsTabsView({ activeMonth, onMonthChange }: BankState
             ...(pendingFilesByMonth[activeSlot.key] || []),
             ...(pendingFilesByMonth["__auto__"] || []),
           ]}
+          onCancelFile={(fileId) => {
+            if ((pendingFilesByMonth[activeSlot.key] || []).some(f => f.id === fileId)) {
+              cancelFile(activeSlot.key, fileId);
+            } else {
+              cancelFile("__auto__", fileId);
+            }
+          }}
           manualEntryOpen={manualEntryOpen}
           onManualEntryOpenChange={setManualEntryOpen}
           defaultMovement={defaultMovement}

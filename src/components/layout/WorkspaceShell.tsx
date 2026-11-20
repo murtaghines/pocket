@@ -29,9 +29,9 @@ export function WorkspaceBanner<T extends string>({ title, subtitle, action, sel
           <h1 className="select-none text-[19px] font-semibold leading-none tracking-[-0.01em] text-white">{title}</h1>
           <p className="mt-1.5 text-[12.5px] font-medium tabular-nums text-white/80">{subtitle}</p>
         </div>
-        <div className="flex items-center gap-2 self-start">
-          {action && (
-            <div className="flex h-9 items-center rounded-[12px] bg-white/[0.16] p-1">
+        <div className="flex items-center self-start">
+          <div className="flex h-9 items-center gap-[2px] rounded-[12px] bg-white/[0.16] p-1" role="tablist">
+            {action && (
               <button
                 type="button"
                 onClick={action.onClick}
@@ -40,9 +40,7 @@ export function WorkspaceBanner<T extends string>({ title, subtitle, action, sel
                 <Plus className="h-[14px] w-[14px]" strokeWidth={2.2} />
                 {action.label}
               </button>
-            </div>
-          )}
-          <div className="flex h-9 items-center gap-[2px] rounded-[12px] bg-white/[0.16] p-1" role="tablist">
+            )}
             {selector.options.map((opt) => {
               const active = opt.value === selector.value;
               return (

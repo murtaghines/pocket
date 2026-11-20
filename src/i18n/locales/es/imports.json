@@ -61,6 +61,7 @@
     "scannedDetected": "PDF escaneado detectado",
     "scannedDescription": "Leyendo {{count}} página(s) con IA de visión…",
     "partiallyProcessed": "PDF parcialmente procesado",
-    "partiallyProcessedDescription": "Solo se procesaron {{processed}} de {{total}} páginas. Algunas transacciones podrían faltar."
+    "partiallyProcessedDescription": "Solo se procesaron {{processed}} de {{total}} páginas. Algunas transacciones podrían faltar.",
+    "multiAccountConfirm": "Este PDF contiene varias cuentas. Las transacciones se van a separar automáticamente y vas a poder asignar cada grupo a la cuenta correcta. ¿Querés continuar?"
   }
 }

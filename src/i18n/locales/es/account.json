@@ -208,6 +208,7 @@
     "title": "Archivos",
     "subtitle": "{{files}} archivos · {{accounts}} cuentas",
     "upload": "Subir archivos",
+    "newFile": "Nuevo archivo",
     "empty": "Aún no hay archivos subidos.",
     "unassigned": "Sin asignar",
     "clearFilter": "Ver todas las cuentas",
@@ -289,10 +290,13 @@
       "dates": "Fechas",
       "period": "Período",
       "from": "Desde",
-      "to": "Hasta"
+      "to": "Hasta",
+      "error": "Error",
+      "openInTransactions": "Ver en Movimientos"
     },
     "actions": {
-      "view": "Ver contenido"
+      "view": "Ver contenido",
+      "retry": "Reintentar"
     },
     "close": "Cerrar",
     "preview": {

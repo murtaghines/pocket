@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -92,6 +92,7 @@ export function useMonthlyFileUpload() {
   const [pendingFilesByMonth, setPendingFilesByMonth] = useState<PendingFilesByMonth>({});
   const [retryingImportIds, setRetryingImportIds] = useState<Set<string>>(new Set());
   const [pendingSplit, setPendingSplit] = useState<PendingSplit | null>(null);
+  const cancelledIdsRef = useRef<Set<string>>(new Set());
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -129,8 +130,21 @@ export function useMonthlyFileUpload() {
       startedAt: Date.now(),
     });
 
+    const isCancelled = () => cancelledIdsRef.current.has(uploadFile.id);
+
     try {
       const extracted = await extractFileContent(uploadFile.file);
+      if (isCancelled()) return;
+
+      if (extracted.multiAccount) {
+        const proceed = window.confirm(t('pdf.multiAccountConfirm'));
+        if (!proceed) {
+          patch({ status: "pending", progressLabel: "", progressPercent: 0 });
+          return;
+        }
+        if (isCancelled()) return;
+      }
+
       patch({ progressLabel: t('progress.checkingDuplicates'), progressPercent: 18 });
 
       const hasText = extracted.text.trim().length > 0;
@@ -177,6 +191,7 @@ export function useMonthlyFileUpload() {
         return;
       }
 
+      if (isCancelled()) return;
       patch({ progressLabel: t('progress.uploading'), progressPercent: 28 });
       // Upload original file to storage
       const filePath = `${user.id}/${Date.now()}_${uploadFile.name}`;
@@ -187,6 +202,8 @@ export function useMonthlyFileUpload() {
       if (uploadError) {
         throw new Error(t('error.couldNotUpload'));
       }
+
+      if (isCancelled()) return;
 
       patch({
         progressLabel: t('progress.readingWithAi'),
@@ -244,6 +261,8 @@ export function useMonthlyFileUpload() {
           },
         }
       ).finally(() => clearInterval(aiRamp));
+
+      if (isCancelled()) return;
 
       // RECOVERY: edge functions sometimes finish processing successfully but
       // the HTTP connection drops before we get the response (timeout / network
@@ -433,8 +452,9 @@ export function useMonthlyFileUpload() {
       }, 2000);
 
     } catch (error: any) {
+      if (isCancelled()) return;
       console.error("Error processing file:", error);
-      
+
       setPendingFilesByMonth((prev) => ({
         ...prev,
         [monthKey]: (prev[monthKey] || []).map((f) =>
@@ -449,6 +469,8 @@ export function useMonthlyFileUpload() {
         description: error.message || t('error.couldNotProcess'),
         variant: "destructive",
       });
+    } finally {
+      cancelledIdsRef.current.delete(uploadFile.id);
     }
   }, [user, toast, queryClient, t]);
 
@@ -539,9 +561,18 @@ export function useMonthlyFileUpload() {
     }));
   }, []);
 
+  const cancelFile = useCallback((monthKey: string, fileId: string) => {
+    cancelledIdsRef.current.add(fileId);
+    setPendingFilesByMonth((prev) => ({
+      ...prev,
+      [monthKey]: (prev[monthKey] || []).filter((f) => f.id !== fileId),
+    }));
+  }, []);
+
   interface ExtractedContent {
     text: string;
     images?: Array<{ base64: string; mediaType: string }>;
+    multiAccount?: boolean;
   }
 
   const extractFileContent = async (file: File): Promise<ExtractedContent> => {
@@ -562,6 +593,10 @@ export function useMonthlyFileUpload() {
 
     if (extension === "pdf") {
       const result = await extractPdfText(file);
+
+      if (result.multiAccount) {
+        return { text: result.text, multiAccount: true };
+      }
 
       if (result.scanned) {
         const pages = await renderPdfPagesToImages(file);
@@ -720,6 +755,7 @@ export function useMonthlyFileUpload() {
     addFilesForMonth,
     addFiles,
     removeFileFromMonth,
+    cancelFile,
     processFilesForMonth,
     isProcessingMonth,
     getPendingCountForMonth,

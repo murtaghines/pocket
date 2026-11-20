@@ -112,6 +112,7 @@ export interface InlineTransactionsEditorProps {
   onAddMore: () => void;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
+  onCancelFile?: (fileId: string) => void;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
   defaultMovement?: MovementType;
@@ -137,6 +138,7 @@ export function InlineTransactionsEditor({
   onAddMore,
   isProcessing,
   pendingFiles,
+  onCancelFile,
   manualEntryOpen: externalManualEntryOpen,
   onManualEntryOpenChange,
   defaultMovement,
@@ -1811,7 +1813,7 @@ export function InlineTransactionsEditor({
         {pendingFiles && pendingFiles.length > 0 && (
           <div className="bg-card px-6 py-6 flex items-start justify-center border-t border-border">
             <div className="w-full max-w-xl">
-              <ProcessingPanel files={pendingFiles} />
+              <ProcessingPanel files={pendingFiles} onCancel={onCancelFile} />
             </div>
           </div>
         )}

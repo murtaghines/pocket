@@ -208,6 +208,7 @@
     "title": "Files",
     "subtitle": "{{files}} files · {{accounts}} accounts",
     "upload": "Upload files",
+    "newFile": "New file",
     "empty": "No files uploaded yet.",
     "unassigned": "Unassigned",
     "clearFilter": "Show all accounts",
@@ -289,10 +290,13 @@
       "dates": "Dates",
       "period": "Period",
       "from": "From",
-      "to": "To"
+      "to": "To",
+      "error": "Error",
+      "openInTransactions": "Open in Transactions"
     },
     "actions": {
-      "view": "View contents"
+      "view": "View contents",
+      "retry": "Retry"
     },
     "close": "Close",
     "preview": {

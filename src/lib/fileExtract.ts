@@ -48,12 +48,32 @@ export interface PdfExtractResult {
   truncated: boolean;
   /** True when the PDF has no selectable text (scanned / image-only). */
   scanned?: boolean;
+  /** True when the PDF contains multiple account sections (e.g. Revolut Custom Statement). */
+  multiAccount?: boolean;
 }
 
-const PDF_MAX_PAGES = 30;
+const PDF_MAX_PAGES = 100;
+
+// Revolut Custom Statements can bundle multiple accounts into one PDF. The pipeline expects
+// one account per document, so we detect multiple distinct account sections and reject early.
+// Each account section starts with a header like "Personal Account (EUR)" or "Savings (EUR)".
+const ACCOUNT_SECTION_RE =
+  /\b(?:Personal|Joint|Business)\s+Account\s*\([A-Z]{3}\)|\bSavings\s*\([A-Z]{3}\)/gi;
+
+function detectMultiAccountPdf(pages: PdfTextItem[][]): boolean {
+  const scanPages = Math.min(pages.length, 15);
+  const seen = new Set<string>();
+  for (let p = 0; p < scanPages; p++) {
+    const text = pages[p].map((it) => it.str).join(" ");
+    for (const m of text.matchAll(ACCOUNT_SECTION_RE)) {
+      seen.add(m[0].toLowerCase());
+    }
+  }
+  return seen.size >= 2;
+}
 
 /**
- * Extract selectable text from a PDF (first 30 pages), accepting either a File or a raw
+ * Extract selectable text from a PDF (first 50 pages), accepting either a File or a raw
  * ArrayBuffer. Throws if the PDF has essentially no text (i.e. a scanned/image-only PDF).
  *
  * The text handed to the AI extractor is reconstructed by `reconstructDocument`
@@ -86,8 +106,10 @@ export async function extractPdfText(
     );
   }
 
+  const multiAccount = detectMultiAccountPdf(pages);
+
   const trimmed = reconstructDocument(pages, opts.reconstructTables ?? true);
-  if (trimmed.length < 50) {
+  if (!multiAccount && trimmed.length < 50) {
     return {
       text: "",
       totalPages: pdf.numPages,
@@ -102,6 +124,7 @@ export async function extractPdfText(
     totalPages: pdf.numPages,
     processedPages,
     truncated: pdf.numPages > PDF_MAX_PAGES,
+    multiAccount: multiAccount || undefined,
   };
 }
 
